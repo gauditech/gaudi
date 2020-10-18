@@ -12,7 +12,11 @@ import {
 
 export function readDefinition(modelDefs: ModelDef[]): Definition {
   const models = constructModels(modelDefs);
-  return { models };
+  const fieldMap = Object.fromEntries(
+    models.flatMap((m) => m.fields).map((f) => [f.selfRef, f])
+  );
+  const modelMap = Object.fromEntries(models.map((m) => [m.selfRef, m]));
+  return { models: modelMap, fields: fieldMap };
 }
 
 function constructModels(modelDefs: ModelDef[]): Model[] {
@@ -25,22 +29,49 @@ function constructModels(modelDefs: ModelDef[]): Model[] {
 }
 
 function constructBaseModels(modelDefs: ModelDef[]): BaseModel[] {
-  return modelDefs.map((def: ModelDef) => ({
+  return modelDefs.map((def: ModelDef) => {
+    const modelRef = def.name;
+    const idField: Field = {
+      selfRef: `${modelRef}.id`,
+      modelRef,
+      name: "id",
+      type: "serial",
+      dbname: "id",
+      nullable: false,
+    };
+    return {
+      ...def,
+      selfRef: modelRef,
+      dbname: def.name.toLowerCase(),
+      fields: [
+        idField,
+        ...def.fields.map((fieldDef) => constructField(fieldDef, modelRef)),
+      ],
+      referenceDefs: def.references ?? [],
+    };
+  });
+}
+
+function constructField(def: FieldDef, modelRef: string): Field {
+  return {
     ...def,
-    idname: def.idname ?? "id",
-    dbname: def.dbname ?? def.name,
-    fields: def.fields.map(constructField),
-    references: def.references ?? [],
-  }));
+    selfRef: `${modelRef}.${def.name}`,
+    modelRef,
+    dbname: def.name,
+    nullable: def.nullable ?? false,
+  };
 }
 
 function constructRefModels(baseModels: BaseModel[]): RefModel[] {
   return baseModels.map((baseModel) => {
-    const references = baseModel.references.map((refDef) =>
+    const fieldReferenceTuples = baseModel.referenceDefs.map((refDef) =>
       constructReference(refDef, baseModels)
     );
+    const fields = fieldReferenceTuples.map(([field, _]) => field);
+    const references = fieldReferenceTuples.map(([_, reference]) => reference);
     return {
       ...baseModel,
+      fields: baseModel.fields.concat(fields),
       references,
     };
   });
@@ -49,27 +80,20 @@ function constructRefModels(baseModels: BaseModel[]): RefModel[] {
 function constructReference(
   refDef: ReferenceDef,
   baseModels: BaseModel[]
-): Reference {
+): [Field, Reference] {
   const model = baseModels.find((m) => m.name === refDef.model)!; // TODO: Throw
-  const defaultFieldName = `${refDef.name}_${model.idname}`;
-  const fieldName = refDef.fieldName ?? defaultFieldName;
-  const fieldDbName = refDef.fieldDbName ?? fieldName;
-  const modelFieldName = refDef.modelFieldName ?? model.idname;
-  const targetField = model.fields.find((f) => f.name === modelFieldName)!; // TODO: Throw
-  const modelFieldDbName = targetField.dbname;
-  return {
-    ...refDef,
-    fieldName,
-    fieldDbName,
-    modelFieldName,
-    modelFieldDbName,
+  const field: Field = {
+    selfRef: `${model.selfRef}.${refDef.name}_id`,
+    dbname: `${refDef.name}_id`,
+    modelRef: model.selfRef,
+    name: `${refDef.name}_id`,
+    type: "integer",
+    nullable: false,
   };
-}
-
-function constructField(def: FieldDef): Field {
-  return {
-    ...def,
-    dbname: def.dbname ?? def.name,
-    nullable: def.nullable ?? false,
+  const reference: Reference = {
+    name: refDef.name,
+    fieldRef: field.selfRef,
+    targetFieldRef: `${model.selfRef}.id`,
   };
+  return [field, reference];
 }

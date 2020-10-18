@@ -1,37 +1,44 @@
 export interface ModelDef {
   name: string;
-  idname?: string;
   fields: FieldDef[];
-  dbname?: string;
   references?: ReferenceDef[];
 }
 
 export interface FieldDef {
   name: string;
   type: "string" | "integer" | "datetime";
-  dbname?: string;
   nullable?: boolean;
 }
 
 export interface ReferenceDef {
   name: string;
   model: string;
-  fieldName?: string;
-  fieldDbName?: string;
-  modelFieldName?: string;
 }
 
-export interface BaseModel extends Required<ModelDef> {
+export interface BaseModel {
+  name: string;
+  dbname: string;
+  selfRef: string;
   fields: Field[];
+  referenceDefs: ReferenceDef[];
 }
-export interface RefModel extends BaseModel {
+export interface RefModel extends Omit<BaseModel, "referenceDefs"> {
   references: Reference[];
 }
 
 export type Model = RefModel;
 
-export type Field = Required<FieldDef>;
+export interface Field {
+  name: string;
+  nullable: boolean;
+  type: FieldDef["type"] | "serial";
+  dbname: string;
+  selfRef: string;
+  modelRef: string;
+}
 
-export interface Reference extends Required<ReferenceDef> {
-  modelFieldDbName: string;
+export interface Reference {
+  name: string;
+  fieldRef: string;
+  targetFieldRef: string;
 }

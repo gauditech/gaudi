@@ -1,5 +1,6 @@
-import { Model } from "./model";
+import { Field, Model } from "./model";
 
 export interface Definition {
-  models: Model[];
+  models: Record<string, Model>;
+  fields: Record<string, Field>;
 }
