@@ -1,0 +1,9 @@
+model Player {
+  field name string
+  field created_at datetime
+}
+
+model Game {
+  field created_at datetime
+  reference player Player
+}
