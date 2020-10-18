@@ -8,3 +8,6 @@ fs.writeFileSync(
   "examples/arcade/data.json",
   JSON.stringify(definition, null, 2)
 );
+
+const dbSetup = setupDb(definition);
+fs.writeFileSync("examples/arcade/dbSetup.sql", dbSetup);
