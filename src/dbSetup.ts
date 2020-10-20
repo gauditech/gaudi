@@ -15,7 +15,7 @@ function createTable(model: Model): string {
   const fieldTab = 4 * Math.ceil(1 + fieldMaxLen / 4);
   const fieldDefs = model.fields
     .map((f) => createTableField(f, fieldTab))
-    .join("\n");
+    .join(",\n");
   return `\
 CREATE TABLE ${model.dbname} (
 ${fieldDefs}
