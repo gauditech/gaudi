@@ -25,7 +25,8 @@ function constructModels(modelDefs: Parsed.ModelDef[]): Model[] {
   const baseModels = constructBaseModels(modelDefs);
   // Phase 2: build field references
   const refModels = constructRefModels(baseModels);
-  return refModels;
+  const relModels = constructRelModels(refModels);
+  return relModels;
 }
 
 function constructBaseModels(modelDefs: Parsed.ModelDef[]): BaseModel[] {
@@ -100,4 +101,33 @@ function constructReference(
     targetFieldRef: `${targetModel.selfRef}.id`,
   };
   return [field, reference];
+}
+
+function constructRelModels(refModels: RefModel[]): RelModel[] {
+  return refModels.map((refModel) => ({
+    ...refModel,
+    relationDefs: undefined,
+    relations: refModel.relationDefs.map((def) =>
+      constructRelation(def, refModel, refModels)
+    ),
+  }));
+}
+
+function constructRelation(
+  def: Parsed.RelationDef,
+  parentModel: RefModel,
+  models: RefModel[]
+): Relation {
+  const targetModel = models.find((m) => m.name === def.model)!; // TODO: Throw
+  // FIXME Don't assume there's only one reference, reference name should be customizable
+
+  // find a reference pointing to parent model
+  const ref = targetModel.references.find(
+    (ref) => ref.targetFieldRef === `${parentModel.selfRef}.id`
+  )!; // TODO: Throw;
+  return {
+    name: def.name,
+    selfRef: `${parentModel.selfRef}.${def.name}`,
+    referenceRef: ref.selfRef,
+  };
 }

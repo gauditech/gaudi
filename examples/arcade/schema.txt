@@ -1,6 +1,7 @@
 model Player {
   field name string
   field created_at datetime
+  relation games Game
 }
 
 model Game {

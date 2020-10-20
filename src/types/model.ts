@@ -33,3 +33,9 @@ export interface Reference {
   fieldRef: string; // a model field referencing another table (eg foo_id) - holds modelRef
   targetFieldRef: string; // a field referenced in another table (eg Foo.id)
 }
+
+export interface Relation {
+  name: string;
+  selfRef: string;
+  referenceRef: string;
+}

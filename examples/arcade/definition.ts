@@ -7,6 +7,7 @@ const models: Parsed.ModelDef[] = [
       { name: "name", type: "string" },
       { name: "created_at", type: "datetime" },
     ],
+    relations: [{ name: "games", model: "Game" }],
   },
   {
     name: "Game",

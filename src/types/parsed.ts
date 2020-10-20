@@ -15,3 +15,8 @@ export interface ReferenceDef {
   name: string;
   model: string;
 }
+
+export interface RelationDef {
+  name: string;
+  model: string;
+}
