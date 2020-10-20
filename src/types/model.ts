@@ -1,37 +1,27 @@
-export interface ModelDef {
-  name: string;
-  fields: FieldDef[];
-  references?: ReferenceDef[];
-}
-
-export interface FieldDef {
-  name: string;
-  type: "string" | "integer" | "datetime";
-  nullable?: boolean;
-}
-
-export interface ReferenceDef {
-  name: string;
-  model: string;
-}
+import * as Parsed from "./parsed";
 
 export interface BaseModel {
   name: string;
   dbname: string;
   selfRef: string;
   fields: Field[];
-  referenceDefs: ReferenceDef[];
+  referenceDefs: Parsed.ReferenceDef[];
+  relationDefs: Parsed.RelationDef[];
 }
 export interface RefModel extends Omit<BaseModel, "referenceDefs"> {
   references: Reference[];
 }
 
-export type Model = RefModel;
+export interface RelModel extends Omit<RefModel, "relationDefs"> {
+  relations: Relation[];
+}
+
+export type Model = RelModel;
 
 export interface Field {
   name: string;
   nullable: boolean;
-  type: FieldDef["type"] | "serial";
+  type: Parsed.FieldDef["type"] | "serial";
   dbname: string;
   selfRef: string;
   modelRef: string;
@@ -39,6 +29,7 @@ export interface Field {
 
 export interface Reference {
   name: string;
-  fieldRef: string;
-  targetFieldRef: string;
+  selfRef: string;
+  fieldRef: string; // a model field referencing another table (eg foo_id) - holds modelRef
+  targetFieldRef: string; // a field referenced in another table (eg Foo.id)
 }

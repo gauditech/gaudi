@@ -1,6 +1,6 @@
-import { ModelDef } from "../../src/types/model";
+import * as Parsed from "../../src/types/parsed";
 
-const models: ModelDef[] = [
+const models: Parsed.ModelDef[] = [
   {
     name: "Player",
     fields: [
