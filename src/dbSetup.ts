@@ -1,3 +1,4 @@
+import { findField } from "./refs";
 import { Blueprint } from "./types/blueprint";
 import { Field, Model, Reference } from "./types/model";
 
@@ -64,9 +65,9 @@ function createFks(bp: Blueprint): string {
 }
 
 function createFk(reference: Reference, bp: Blueprint): string {
-  const field = bp.fields[reference.fieldRef];
+  const field = findField(bp, reference.fieldRef);
   const model = bp.models[field.modelRef];
-  const targetField = bp.fields[reference.targetFieldRef];
+  const targetField = findField(bp, reference.targetFieldRef);
   const targetModel = bp.models[targetField.modelRef];
   return `\
 ALTER TABLE ${model.dbname} \

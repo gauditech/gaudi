@@ -12,11 +12,8 @@ import {
 
 export function readDefinition(modelDefs: Parsed.ModelDef[]): Blueprint {
   const models = constructModels(modelDefs);
-  const fieldMap = Object.fromEntries(
-    models.flatMap((m) => m.fields).map((f) => [f.selfRef, f])
-  );
   const modelMap = Object.fromEntries(models.map((m) => [m.selfRef, m]));
-  return { models: modelMap, fields: fieldMap };
+  return { models: modelMap };
 }
 
 function constructModels(modelDefs: Parsed.ModelDef[]): Model[] {
