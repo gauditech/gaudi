@@ -5,9 +5,9 @@ import { readDefinition } from "./parser";
 const definition = readDefinition(Arcade.models);
 // ok now we have definition, let's build something with it!
 fs.writeFileSync(
-  "examples/arcade/data.json",
+  "examples/arcade/_data.json",
   JSON.stringify(definition, null, 2)
 );
 
 const dbSetup = setupDb(definition);
-fs.writeFileSync("examples/arcade/dbSetup.sql", dbSetup);
+fs.writeFileSync("examples/arcade/_db_setup.sql", dbSetup);
