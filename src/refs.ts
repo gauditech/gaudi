@@ -15,15 +15,15 @@ export function findModel(bp: Blueprint, ref: string): Model {
 
 export function findField(bp: Blueprint, ref: string): Field {
   const [modelName, _fieldName] = splitRef(ref);
-  return bp.models[modelName].fields.find((f) => (f.selfRef = ref))!; // TODO: Throw;
+  return bp.models[modelName].fields.find((f) => f.selfRef === ref)!; // TODO: Throw;
 }
 
 export function findReference(bp: Blueprint, ref: string): Reference {
   const [modelName, _fieldName] = splitRef(ref);
-  return bp.models[modelName].references.find((f) => (f.selfRef = ref))!; // TODO: Throw;
+  return bp.models[modelName].references.find((f) => f.selfRef === ref)!; // TODO: Throw;
 }
 
 export function findRelation(bp: Blueprint, ref: string): Relation {
   const [modelName, _fieldName] = splitRef(ref);
-  return bp.models[modelName].relations.find((f) => (f.selfRef = ref))!; // TODO: Throw;
+  return bp.models[modelName].relations.find((f) => f.selfRef === ref)!; // TODO: Throw;
 }
