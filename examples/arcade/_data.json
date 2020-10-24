@@ -78,6 +78,85 @@
       "selfRef": "Game",
       "dbname": "game",
       "relations": []
+    },
+    "GameAward": {
+      "name": "GameAward",
+      "fields": [
+        {
+          "selfRef": "GameAward.id",
+          "modelRef": "GameAward",
+          "name": "id",
+          "type": "serial",
+          "dbname": "id",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "selfRef": "GameAward.created_at",
+          "modelRef": "GameAward",
+          "dbname": "created_at",
+          "nullable": false
+        },
+        {
+          "selfRef": "GameAward.game_id",
+          "dbname": "game_id",
+          "modelRef": "GameAward",
+          "name": "game_id",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "selfRef": "GameAward.award_id",
+          "dbname": "award_id",
+          "modelRef": "GameAward",
+          "name": "award_id",
+          "type": "integer",
+          "nullable": false
+        }
+      ],
+      "references": [
+        {
+          "selfRef": "GameAward.game",
+          "name": "game",
+          "fieldRef": "GameAward.game_id",
+          "targetFieldRef": "Game.id"
+        },
+        {
+          "selfRef": "GameAward.award",
+          "name": "award",
+          "fieldRef": "GameAward.award_id",
+          "targetFieldRef": "Award.id"
+        }
+      ],
+      "selfRef": "GameAward",
+      "dbname": "gameaward",
+      "relations": []
+    },
+    "Award": {
+      "name": "Award",
+      "fields": [
+        {
+          "selfRef": "Award.id",
+          "modelRef": "Award",
+          "name": "id",
+          "type": "serial",
+          "dbname": "id",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "selfRef": "Award.name",
+          "modelRef": "Award",
+          "dbname": "name",
+          "nullable": false
+        }
+      ],
+      "selfRef": "Award",
+      "dbname": "award",
+      "references": [],
+      "relations": []
     }
   }
 }

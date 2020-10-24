@@ -14,6 +14,18 @@ const models: Parsed.ModelDef[] = [
     fields: [{ name: "created_at", type: "datetime" }],
     references: [{ name: "player", model: "Player" }],
   },
+  {
+    name: "GameAward",
+    fields: [{ name: "created_at", type: "datetime" }],
+    references: [
+      { name: "game", model: "Game" },
+      { name: "award", model: "Award" },
+    ],
+  },
+  {
+    name: "Award",
+    fields: [{ name: "name", type: "string" }],
+  },
 ];
 
 export default { models };
