@@ -36,7 +36,7 @@ function createTableField(f: Field, tab: number): string {
 function getFieldDbType(f: Field): string {
   switch (f.type) {
     case "serial":
-      return "serial";
+      return "serial PRIMARY KEY";
     case "string":
       return "text";
     case "integer":
@@ -72,7 +72,7 @@ function createFk(reference: Reference, bp: Blueprint): string {
   return `\
 ALTER TABLE ${model.dbname} \
 ADD CONSTRAINT fk_${field.dbname} \
-FOREIGN_KEY (${field.dbname}) \
+FOREIGN KEY (${field.dbname}) \
 REFERENCES ${targetModel.dbname}(${targetField.dbname}) \
 ON DELETE NO ACTION \
 ON UPDATE CASCADE;`;
