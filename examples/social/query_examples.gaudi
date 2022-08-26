@@ -1,0 +1,5 @@
+# NOTE
+# in order to implement various relations, computeds etc. we must implement
+# 1. a function that fetches for a single record (batch of 1?)
+# 2. a function that fetches for a batch of records
+# 3. potential merge with another relation if subquery can be reused

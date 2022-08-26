@@ -1,0 +1,37 @@
+
+config populator {
+    # HELP does populator belong to data migrations?
+    enabled ENV.environment === "dev"
+    autopopulator # tries to automatically fill tables
+    exclude Logs # leave these tables empty
+}
+
+populate User {
+    hint full_name is human_name
+    min 100 max 100
+    populate posts min 5 max 50 {
+        hint message is lorem_ipsum
+        require message length min 20 max 200
+    }
+    populate comments min 2 max 20
+    populate posts.likes min 3 max 80
+}
+
+populate Group as g {
+    min 20 max 20
+    populate all_memberships {
+        require is_admin is true {
+            min 1 max 3
+        }
+        require is_admin is false {
+            min 3 max 17
+        }
+        
+    }
+    populate all_applications {
+        require g.user not in all_memberships.user {
+            min 0 max 5
+        } # block not needed if requirement is global?
+
+    }
+}

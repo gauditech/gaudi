@@ -1,0 +1,9 @@
+transform {
+    nest [posts] by parent # record has "parent" field
+    nest reverse [posts] by parent as comments # record has "comments" field (list)
+    flatten parent # flatten nested
+    flatten comments # flatten nested
+    rename count_posts to "Number of posts"
+    rename user.full_name to name
+    remove user.password
+}

@@ -1,0 +1,39 @@
+# auth plugin using multiple tables, but adds "auth_id" as field to User
+
+model User {
+    auth {
+        using some_plugin
+        session dbname auth_sessions
+        emails dbname auth_emails
+        ... 
+}
+
+# nested relation with custom throughs
+# TODO naming !!!!
+
+model User {
+    relation applied_to_groups {
+        relation GroupMembership through user as gm {
+            relation gm.group
+        } 
+    }
+}
+
+# States in practice
+
+model Org {
+    relation all_users User
+    relation active_users User.Active
+    # alternate syntax
+    relation active_users all_users filter {
+        state Active
+    }
+}
+
+# RECURSIVE STUFF NEEDS WORK
+
+computed root_post {
+    recursive parent_post
+    filter { parent_post is null }
+    first
+}

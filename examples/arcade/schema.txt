@@ -1,10 +1,75 @@
 model Player {
   field name string
+  field email email
+  field string password
   field created_at datetime
+
   relation games Game
+  relation games_won games filter {
+    win = true
+  }
+
+  relation games_lost games filter {
+    win = false
+  }
+
+  relation latest_games {
+    from games
+    order by created_at descending
+    limit 20
+  }
+  
+  relation first_week_games {
+    from games
+    filter {
+      created_at < player.created_at + '1 week'
+    }
+  }
+
+  computed email_lower string fragment {
+    my_extension_lowercase('email')
+  }
+
+  computed num_games_won count(games_won)
+  computed num_games_lost count(games_lost)
+  computed num_total_games count(games)
+  computed winrate percentage num_games_won / num_total_games
 }
 
 model Game {
   field created_at datetime
+  field score integer
   reference player Player
+  computed win boolean score > 10000
+}
+
+import @headers from ivokosir/headers
+
+entrypoint ... {
+  @headers {
+    MyHeader = "Sponsors: Coca Cola"
+  }
+}
+
+query TopPlayers {
+  from Player
+  order by winrate
+  filter {
+    winrate > 70%
+  }
+  select {
+    name,
+    created_at,
+    num_total_games,
+    latest_games {
+      select { created_at, score }
+  }
+
+}
+
+
+model GameAward {}
+
+model Award {
+
 }
