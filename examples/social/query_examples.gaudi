@@ -3,3 +3,53 @@
 # 1. a function that fetches for a single record (batch of 1?)
 # 2. a function that fetches for a batch of records
 # 3. potential merge with another relation if subquery can be reused
+
+# TODO
+# 4. query (in model) vs standalone query vs entrypoint vs endpoint vs view
+
+query PostWithLikes {
+    from Post
+    computed num_of_likes = ...
+}
+
+serializer Active for User {
+    user { mentor { mentor { mentor } } }
+}
+
+extend User as ActiveUsers {
+    from User
+    filter is_active is true
+    query...
+    query approved_posts { from posts filter is_approved is true }
+    extend approved_posts {
+        computed ...
+    }
+    remove deleted_users
+    filter { posts.is_approved is true }
+    computed...
+}
+
+serializer ActiveUsersSerializer {
+    from ActiveUsers
+    select {.......{...{...}}}
+}
+
+query AllUsers {
+    from User
+    filter is_enabled is true
+
+    select { full_name, recent_approved_posts(filter) { message, created_at } }
+}
+
+endpoint AllUsers {
+    path /users/all
+    query AllUsers { ... }
+    query PostsToday {from posts, filter created_at ..., select ... }
+    headers {
+        CustomHeader: "JustName"
+    }
+
+    returns {
+        all_users: AllUsers
+    }
+}

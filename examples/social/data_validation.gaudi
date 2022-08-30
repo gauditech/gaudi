@@ -1,0 +1,8 @@
+validation {
+    field full_name {
+        string "invalid type"
+        min 1 "too short"
+        max 10 "too long"
+    }
+}
+

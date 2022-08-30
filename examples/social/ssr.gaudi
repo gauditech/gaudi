@@ -1,0 +1,11 @@
+ssr {
+    queries =
+    auth =
+    route = '/home'
+    output {
+
+        <html>
+    }
+}
+
+`/home/`

@@ -13,7 +13,10 @@ model User [as this] {
     field full_name text
     field is_enabled boolean default true
     relation groups GroupMembership.group
-    relation pending_group_applications GroupApplication through user
+    relation pending_group_applications GroupApplication through user {
+        relation group.members filter this is not in members
+    }
+
     relation pending_groups pending_group_applications.group
     relation all_posts Post
     relation posts Post filter parent_post is null
