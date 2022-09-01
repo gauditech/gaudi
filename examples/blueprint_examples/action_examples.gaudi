@@ -34,8 +34,7 @@ endpoint CreatePost {
     validate $uuid using ????
 
     action {
-        repo = run UserQuery
-        validatedbody = validate ..
+        repo = run UserQuery($uuid)
         issue = transform @request.body {
             add repo repo
         }
