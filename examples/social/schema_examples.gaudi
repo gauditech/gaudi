@@ -73,6 +73,9 @@ model User as author {
 
     # order / limit examples
 
+    field latest_post, type: Post
+    field recent_posts, type: list_of(Post)
+
     query latest_post {
         from posts
         filter created_at > now - 1_year

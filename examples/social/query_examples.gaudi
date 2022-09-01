@@ -4,6 +4,229 @@
 # 2. a function that fetches for a batch of records
 # 3. potential merge with another relation if subquery can be reused
 
+
+
+model User {
+    field a
+    field b
+    reference c
+    query posts filter ...
+    computed e
+    computed f(p)
+}
+
+serialize User.Common {..}
+query User.Recent { filter }
+
+serialize User as CommonUser {
+    a, b, c { id, whatever }, e
+}
+
+user.latest_posts (filtira postove)
+
+
+query UserView(p_id, viewer) {
+    from User
+    filter id == p_id
+    order_by id asc
+    first
+
+    query latest_posts {
+        from posts
+        filter { viewer in circles.members.user.id or viewer is author.id }
+        order_by id desc
+        limit 3 
+        query likes_count ...
+    }
+
+    select latest_posts, Common
+    select *, remove password
+    query latest_posts.likes_count 
+    remove latest_posts.likes.user.password
+
+
+}
+
+query Stats {
+    # nema from !!!
+    base = {}
+    query total_users { from User, count }
+    query total_posts { from Post, count }
+    query top_daily_post { from Post, filter { created_at is today }, order_by likes_count desc, first }
+
+    {
+        total_users,
+        total_posts,
+    }
+
+    select total_users, total_posts, top_daily_post
+}
+
+graphql /gql {
+    graph stats Stats
+    graph users UserView
+}
+
+endpoint /user/[id] {
+    headers ...
+    query {
+        from UserView(id: @params.id)
+        select {
+            posts(limit: @params.id) {
+                likes_count
+                likes {
+                    user {
+                        profile_pic
+                        friends_count
+                        mutual_friend_count(viewer: @session.user)
+                    }
+                }
+            }
+        }
+    }
+}
+
+user(ivo_id: 101) {
+    posts(limit: 10) {
+        likes_count
+        likes {
+            user {
+                profile_pic
+                friends_count
+                mutual_friend_count(viewer)
+            }
+        }
+    }
+}
+
+
+from User
+#tipicni graphql
+#graphql podrzava "fragment"
+# pogledati hasura
+
+
+view RestrictedUser {
+    from User
+    extend posts ...
+}
+
+view UserProfile {
+    arg viewer
+    from User
+    filter is_deleted is false
+    query visible_posts {
+        from posts as p,
+        filter { viewer is in p.circles.members or viewer is p.author }
+    }
+    select id, name, visible_posts
+}
+
+endpoint /settings {
+    alias id is @session.user
+    alias calibrations is CalibrationsBaseView(id=id)
+    alias features is view {
+        from Features
+        filter is_disabled is false
+        select version, name
+    }
+
+    returns {
+        calibrations, features
+    }
+}
+
+endpoint /user/[id] {
+    alias user view {
+        from UserProfile(viewer=@session.user)
+        filter id == @params.id 
+    }
+    select user
+}
+
+user.friends[0].posts
+
+select {
+    full_name,
+    posts(filter: ...) {
+        id, message, created_at,
+        likes: likes(filter...) {
+            user {id, ...},
+            created_at
+        }
+        all_likes: likes() {}
+        likes_count: computed = {
+            query { from likes, count }
+            select {
+                ...
+            }
+        }
+    }
+}
+
+model User ...
+view BaseUser ...
+
+view PrivateUser {
+    from User
+}
+
+view ... (auth.user)
+
+endpoint    -> parsira user input
+            -> poziva view funkciju
+graphql query
+
+
+
+from User
+select {
+    full_name
+    posts: query {
+        from posts
+        filter {...}
+        select {
+            id, message, created_at
+        }
+    }
+}
+
+model User {
+    query posts {
+        select {likes}
+        hide {likes}
+    }
+
+    serializer AllUsers {
+        hide {password_hash}???
+    }
+}
+
+view UserBaseBase ...
+
+view UserBase {
+    model User
+    query
+    computed
+    query all_posts {
+        from UserBaseBase.all_posts,
+        filter {},
+        select {
+            x,
+            likes: query { from likes, filter {...} }
+        }
+    }
+    pick UserBaseBase.{all_posts.likes}
+
+    query posts.likes.icon.alt { from posts.likes.icon_retina.alt, filter ... }
+
+    select { ... }
+}
+
+from User
+...
+  query posts.likes
+
 # TODO
 # 4. query (in model) vs standalone query vs entrypoint vs endpoint vs view
 
@@ -13,7 +236,11 @@ query PostWithLikes {
 }
 
 serializer Active for User {
-    user { mentor { mentor { mentor } } }
+    user { mentor_tree } } }
+}
+
+transform {
+    nest by mentor
 }
 
 extend User as ActiveUsers {

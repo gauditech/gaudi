@@ -1,0 +1,47 @@
+fieldset CreatePostFS {
+    pick Post.{ message, is_public, user_id }
+
+    validate message {
+        min 2
+        max 500
+    }
+}
+model Post as p
+reference user User
+    field user_id User.id (integer)
+    query user { from User, filter id == p.user_id, first }
+
+endpoint CreatePost {
+    path /posts/create
+    method POST
+
+    post_fs = validate @request.body using CreatePostFS
+    post_fs = transform post_fs {
+        add user @session.auth.user
+    }
+    insert post_fs into Post
+}
+
+
+find Repo with slug=$slug as repo or error with 404
+ensure auth.user in repo.members or error with 403
+
+query RepoFindByUUID(uuid) { from Repo as r, filter { uuid == r.uuid and auth.user in members }, one }}
+
+endpoint CreatePost {
+    path /repo/$uuid/issues/create
+    method POST
+    validate $uuid using ????
+
+    action {
+        repo = run UserQuery
+        validatedbody = validate ..
+        issue = transform @request.body {
+            add repo repo
+        }
+        validated_issue = validate issue using CreateIssueFS
+        i = insert validated_issue into Issue
+        response i
+    }
+
+}
