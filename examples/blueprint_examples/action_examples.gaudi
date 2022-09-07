@@ -28,10 +28,14 @@ ensure auth.user in repo.members or error with 403
 
 query RepoFindByUUID(uuid) { from Repo as r, filter { uuid == r.uuid and auth.user in members }, one }}
 
+fieldset CreatePostPathFiedlset {
+    field uuid { type string }
+}
+
 endpoint CreatePost {
     path /repo/$uuid/issues/create
     method POST
-    validate $uuid using ????
+    validate @request.path_params using CreatePostPathFiedlset
 
     action {
         repo = run UserQuery($uuid)
@@ -42,5 +46,235 @@ endpoint CreatePost {
         i = insert validated_issue into Issue
         response i
     }
+}
 
+endpoint_set {
+    path /repo/$uuid/
+    queryset = query { from Repo filter repo.uuid == @request.path_params.uuid }
+
+    endpoint_set {
+        path /repo/$uuid/issues
+
+        queryset = parent.queryset.issues
+
+        endpoint {
+                entry :id
+                update fieldset {
+                    pick Issue.{id, ...........}
+                }
+        }
+        endpoint {
+                path /
+                queryset = query { from parent.queryset?, omit {...} }
+                list
+        }
+        endpoint {
+                path /$id
+                queryset = query { from parent.queryset?, filter id == $id, select {...} }
+                get
+        }
+    }
+}
+
+endpoint CreatePost {
+    path /repo/$id/issues/$id
+
+    query { from Issue filter repo.uuid == @request.path_params.uuid }
+
+    update fieldset {
+        pick Issue.{id, ...........}
+    }
+
+    create fieldset {...}
+
+    list query { title, id, comments {..} }
+}
+
+ViewSet(List, Get, Create, Update, Delete):
+
+
+    query : select { repo, { issues } }
+
+    auth repo.issues {}
+    auth {
+
+    }
+    repo.issues -> admin sve, user: sve osim delete, reporter nema nista
+
+    create : POST /repo/
+    update : PUT /repo/.id/
+
+    create : POST /repo/.id/issues/
+    update : PUT /repo/.id/issues/.id/
+
+    list : GET /repo/.uuid/issues
+    get : GET /repo/.uuid/issues/.id
+    create : POST /repo/.uuid/issues
+    delete : DELETE /repo/.uuid/issues/.id
+    update : PUT /repo/.uuid/issues/.id
+    *follow: PUT /repo/.uuid/follow
+
+    create: POST /repo/.uuid/issues/.id/comments
+
+    1. koje akcije dozvoljavam
+    2. path/query definicija
+    3. auth (tko sto smije)
+    4. fieldset
+    5. nestanje??
+
+    query = ... List, Get
+
+
+scope Org {
+    scope repos {
+        pull_request_count <-- ovisi o vieweru, vide razlicite brojeve
+        scope pull_requests(viewer) {
+            apply filter (hidden)
+        }
+        scope issues
+    }
+    memberships {
+        // members ??
+    }
+}
+
+model Repo {
+    computed pull_request_count(viewer) = count pull_requests(viewer)
+    query pull_requests(viewer) { filter is_removed is false or viewer.is_admin }
+}
+
+//
+// Users can own up to 5 organizations, if they are paid users.
+//
+
+endpoint generator {
+    // shortcut for @session.auth.user
+    computed viewer = @session.auth.user
+    query viewer { from User as u, filter { u is @session.auth.user }}
+
+    scope Org as o {
+        identify with slug # used in get/update request paths, must be unique field
+
+        custom endpoint {
+            method PUT
+        }
+        create endpoint {
+            // HELP validation - fieldset? non_field_errors? global http errors?
+            # should this be multiple assets, with > 5, or do we utilize max 5 for the error?
+            assert viewer.num_of_orgs {
+                max 5 {
+                    code "too many orgs"
+                    args {
+                        num_of_orgs : viewer.num_of_orgs
+                    }
+                }
+            }
+            assert viewer.is_paid_user code "not a paid user", status 403-forbidden # no assert block, assume is_true ?
+        
+            # while technically we can infer validation (type) based on Model/insert...
+            # it's reverse infer (by usage) and compiler can't help until you finish the insert
+            # this is not true here since model is defined upfront but in "custom" actions it is
+            # maybe using `pick` would fit better here, eg. pick Org.{slug, name}
+            fieldset = { field slug { type text }, field name { type text }}
+
+            # let's add the owner, we don't know otherwise!
+            # transform before or after validation? is there use case where it matters?
+            # eg validation is composite based on something from the context?
+            # what if idk user needs to submit a password to validate something?
+            # stupid example - might be better to add it beforehand but this
+            # makes validation more complex as it needs to be aware of
+            # custom transformations so it doesn't remove it from obj (as a non field)
+            transform = { add owner viewer }
+
+            response select { id, org_name, slug, owner { id, full_name, profile_pic } }
+        }
+        update endpoint {
+            computed is_owner = o in viewer.org_ownerships
+            computed is_admin = viewer in o.admins
+            # or, model doesn't have relevant queries so we define some
+            query active_memberships { from o.memberships, filter { is_deleted is false } }
+            computed is_admin = viewer in active_memberships
+            fieldset { field name }
+            assert is_owner or is_admin, status 403 # no code??
+            # can we have custom stuff based on permissions
+            # what if user applies to multiple personas and their fieldsets are distinctive?
+            # if user tries to update a field he has no access to, is it ignored or 403?
+            # if you use personas, should endpoint-scoped definitions be forbidden?
+            persona is_owner {
+                fieldset { field name, field slug }
+            }
+            persona is_admin {
+                fieldset { field name }
+            }
+            default persona {
+                assert false, status 403
+            }
+            # response not given, give Org.Fields since we don't have Org.Common serializer
+        }
+        list endpoint {
+            # how do we say which ones we can view?
+            # we can use persona to specify differences
+            apply filter {
+                [o.]is_public is true or o.has_view_access(viewer)
+                # ha, a computed that does stuff for us!
+            }
+            computed user_is_member = viewer in memberships or owner is viewer # does viewer is owner work?
+            response { id, slug, name, user_is_member }
+            # FYI persona can also define a scope of response selector
+        }
+        get endpoint {
+            # would be great if we could just extend the response scope from `list`
+            # without redefining everything
+            # idea: what if personas are defined on root level (scope)
+            # personas would need to have a name then
+            # and queries too...
+            # if response block is top-level this could be empty
+        }
+
+        // not sure if this is the right way but let's enter a new scope
+
+        scope repos.Visible as r {
+            identify as slug
+            # orgs/.slug/visible_repos/.slug
+            # btw could have done visible_repos to apply common filter,
+            # would have to fix paths through
+            # repos.Visible would work as expected though...
+            # let's assume queries and personas are Org level now
+            # let's add additional persona that has no sense on Org
+            persona is_maintainer {
+                # assert not the best keyword as I made it ambiguous
+                assert viewer in r.maintainers
+                # hm, now personas in Org are biting us for providing fieldsets
+                # would be better to redefine all personas, but keep queries top-level
+                # for an easy assert?
+                # it makes sense to keep persona here for fieldset / response
+                # BUT fieldset is often different for create and update :(
+            }
+            create endpoint {
+                # add another usecase for create and update
+                # org can have max. 5 private and max 10 public repos
+                # and can toggle between private->public
+                computed can_create_private = query { from o.public_repos, count } < 5 # can we do this?
+                computed can_create_public = query { from o.private_repos, count } < 10 # can we do this?
+
+                # how can assert access validated data?
+                assert @@fieldset.is_public and can_create_public, code "no public credits"
+                assert @@fieldset.is_public is false and can_create_private, code "no private credits"
+
+                #### What if we could set magic requirements (eg. on Model)
+                #### And it would automatically check if still in range? Trippy...
+
+                persona is_owner or is_admin {
+                    fieldset { name, is_public }
+                }
+                # default persona not needed, implicit 403?
+            }
+        }
+    }
+}
+
+model Org {
+    ...
+
+    ensure num_of_private_repos = query { from repos, filter { is_private is true }, count } <= 5
 }

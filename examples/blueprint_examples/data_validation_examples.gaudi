@@ -103,7 +103,7 @@ validator after {
 }
 
 
-changeset registration {
+fieldset registration {
     field email, type email <-- User
     field org_name, type text <-- Organization
     field full_name, type text <-- User
@@ -116,6 +116,61 @@ changeset registration {
     validate org_name {
         min 6, max 20
     }
+}
+
+fieldset details {
+    field summary type text
+    field dob type datetime
+
+    add summary { type text }
+    add dob { type datetime }
+    add foo User.email
+}
+
+validate xy {
+    key ab
+    ...
+} => validate: { name: xy, key: ab, validators: [] }
+
+transform {
+    add new_field @session.some_key
+}
+
+fieldset User {
+    # field user_email
+    # field group_email
+    field user_email User.email
+    validate some_other_name User.a_validator
+    pick V.{xy}
+    rename xy.key new_key
+    pick User.{email}
+    rename email user_email
+    pick Group.{email}
+    rename email group_email
+}
+
+fieldset registration {
+    field email { type text, is_email_regex }
+    field org_name { type email, min 4, max 20 }
+    field password { type text }
+    field password_confirm { type text }
+    fieldset registrated_user User
+
+    validate {
+        min minimum_amount amount # ===> neka bude u amount erroru 
+        min 6 email
+    }
+
+    validate pwds_same {
+        for password_confirm # default is non_field_errors
+        is_equal password password_confirm
+        min 5 org_name
+    }
+}
+
+fieldset somesdlfk {
+    pick registration.{password, password_confirm, pwds_same, registrated_user}
+    flatten registrated_user
 }
 
 insert ch into User (compile-time errors)
@@ -133,7 +188,7 @@ insert org_ch into Organization
 
 autoadmin { except User, GroupMembership }
 
-changeset changeset1 {
+fieldset fieldset1 {
     field ...
     field ...
 }
@@ -141,7 +196,7 @@ changeset changeset1 {
 admin UserView {
     model User
     select ...
-    create_changeset changeset1
+    create_fieldset fieldset1
     # create_action {...}
 }
 
@@ -176,16 +231,16 @@ endpoint /search_by_oib {
     imas POST /users/1/posts
     imas @request.path_params.user_id == 1
     imas @request.body koji ima { message, is_private }
-    imas changeset za body
-    validiras changeset
+    imas fieldset za body
+    validiras fieldset
     validiras auth za user_id
-    zelis insertat changeset, errora jer nema user_id
+    zelis insertat fieldset, errora jer nema user_id
     rjesenje transform pa ga dodas
-    changeset = {message, is_private}
+    fieldset = {message, is_private}
     baza requirera {message, user_id, is_private}
-    ne mozes insertat changeset jer nema user_id
+    ne mozes insertat fieldset jer nema user_id
 
-    ch1 = validate @request.body with RegistrationChangeset
+    ch1 = validate @request.body with Registrationfieldset
     if/else
     if ch1.ok ...
         ch1.data

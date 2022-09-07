@@ -4,6 +4,68 @@ var {
     foo: ENV.foo
 }
 
+password = field { ... }
+field password { ... }
+
+fieldset {
+    field sdafzdsf User.asdfasdf
+    sdafzdsf = UserFieldset.asdfasdf
+    field password password
+    field password_confirm password
+    field pwd field { ... }
+}
+
+fieldset A {
+    field foo { type text, nullable }
+    fielset By { ... }
+}
+
+fieldset B {
+    fieldset bar {..}
+    field bar A.foo
+    field bar {type A.{foo}, list, nullable }
+
+    Pick<A, 'foo' | 'bar'>
+    field bar {type { pick A.{foo} }, list, nullable }
+
+
+    reference bar { from A }
+    query foo
+    computed bar = foo
+    query bar { from foo }
+
+    fieldset bar A.By
+    bar = listof A, nullable
+}
+
+fieldset B {
+    fieldset bar {
+        field foo {}
+    }
+}
+
+transform User {
+    add password field {...}
+    add field password { ... }
+    add dbname users
+    add mykey : myvalue
+    add users dbname <---
+}
+
+User = model {...}
+
+model User {
+    dbname users
+    field full_name { type text, unique, nullable }
+
+
+    full_name = field { type text, unique, nullable }
+    full_name = field type text, unique, nullable
+    field full_name type text, unique, nullable
+    field full_name { type text, unique, nullable }
+    field full_name { type text, unique, nullable }
+}
+
 
 model User {
     dbname users
@@ -144,3 +206,4 @@ model User {
     auth Auth0 # ?
     reference auth Auth0/User # ?
 }
+d

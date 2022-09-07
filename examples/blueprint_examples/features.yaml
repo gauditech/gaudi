@@ -1,0 +1,83 @@
+Features:
+  Models:
+    Fields:
+      Type: v0
+      Nullable: v0
+      Unique: v0
+      Validators: v1
+      Hooks: v1
+      Lists: v2
+    References: v0
+    Relations: v0
+    Indexes: v1
+    PartialIndexes: v2
+    Queries:
+      Chaining: v0
+      Filters:
+        Equal: v0
+        Gt/Gte/Lt/Lte: v0
+        Nested: v0
+        As: v0 / v1
+        Lower: v1
+        Like: v1
+      Aggregates:
+        Count: v0
+        Sum: v0
+      Recursive: v2
+      RankOver: v2
+      Select:
+        Basic: v0
+        Serializers: v2
+    Computeds: v0
+    Roles: v1
+    Ensures: v1
+  Fieldsets:
+    Field: v0
+    FieldList: v0
+    Validators:
+      Builtin: v0
+      Hooks: v1
+      Plugins: v2
+      Custom: v2
+    NestFieldset: v0
+    PickModel: v1
+    PickFieldset: v1
+  Entrypoints:
+    List: v0
+    Delete: v0
+    Get: v0
+    Create: v0
+    Update: v0
+    M2mNesting: v1
+    Custom: v2
+    Hooks: v1
+    Graphql: v0
+    Rest:
+      Endpoints: v0
+      Swagger: v1
+    Transform: v1 # auth? v0? # user automatically inserted from auth?
+  Environments: v1
+  Releases:
+    Migrations: v0
+    Snapshots: v1
+    JsLib: v1
+    Docker: v1
+  Cli:
+    DevServer: v1
+    Init: v1
+  Admin:
+    Autoadmin: v0
+    Fieldsets: v1
+    Graphs: v2
+  Populator:
+    Constant: v0
+    Ranges: v1
+    Hints: v1
+  Transform:
+    JqHook: never # discuss!
+    Pick: v1
+    Drop: v1
+    Merge: v2
+    ListToMap: v2
+    MapToList: v2
+    Filter: v1

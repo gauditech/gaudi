@@ -1,0 +1,72 @@
+var {
+    pg_conn_string: ENV.PG_CONN_STRING
+}
+
+database Default {
+    engine pg
+    connection_string var.pg_conn_string
+}
+
+model User {
+    field full_name, type string, nullable
+    field email { type string, unique }
+}
+
+
+TODO: should replace block with token:blockstart and token:blockend
+ast => {
+    [
+        { word: "var" },
+        { block: [
+            { word: "pg_conn_string" },
+            { token: "colon" },
+            { word: "ENV.PG_CONN_STRING" }
+        ] },
+        { word: "database" },
+        { word: "Default" },
+        { block: [
+            { word: "engine" },
+            { word: "pg" },
+            { token: "newline" },
+            { word: "connection_string" },
+            { word: "var.pg_conn_string" }
+        ] },
+        { word: "model" },
+        { word: "User" },
+        { block: [
+            { word: "field" },
+            { word: "full_name" },
+            { token: "comma" },
+            { word: "type" },
+            { word: "string" },
+            { token: "comma" },
+            { word: nullable" },
+            { token: "newline" },
+            { word: "field" },
+            { word: "email" },  
+            { block: [
+                { word: "type" },
+                { word: "string" },
+                { token: "comma" },
+                { word: unique" },
+            ] },
+
+        ] },
+    ]
+}
+
+A compiler would move on to another step (plugins would do this as well):
+
+# define ENDING:
+# - nothing
+# - token:comma
+# - token:newline
+
+consume word:var -> block
+    consume word:^key -> token:colon -> word:^value -> ENDING
+    consume word:^key -> token:colon -> token:quote2 -> word: ^const -> token:quote2 -> ENDING
+
+
+consume word:database -> word:^name -> block
+consume word:model -> word:^name -> block
+consume word:endpoint -> word:^name -> block
