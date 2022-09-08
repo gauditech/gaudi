@@ -8,34 +8,39 @@ Features:
       Type: v0
       Nullable: v0
       Unique: v0
+      UniqueLower: v1
       Default: v1
       Validators: v1
-      Hooks: v1
       Dbname: v1
       Lists: v2
       JSON: v2
+      TypedJSON: v3
       OneOf: v2
       Custom PK: v2
     References:
       Nullable: v0
       Unique: v0
       Dbname: v1
+      DefaultNull: v1
       Through: v2
       No FK: v2
     Relations:
       Basic: v0
       Optional through: v2
     Constraints:
-      Indexes: v1
+      Indexes: v2
       Checks: v2
       Partial indexes: v2
       Custom indexes: v2
       Composite indexes: v2
-      Auto suggestion: v2
+      Auto-suggested indexes: v2
     Queries:
       Filters:
         Equal: v0
         Gt/Gte/Lt/Lte: v0
+        In: v0
+        Between: v2
+        And/Or: v0
         Nested: v0
         As: v0 / v1
         Lower: v1
@@ -44,7 +49,10 @@ Features:
         Count: v0
         Sum: v0
       Chaining: v0
-      Order By: v0
+      Order By:
+        SingleAsc/Desc: v0
+        MultiAsc/Desc: v1
+        NullsFirst/NullsLast: v2
       Limit: v0
       First: v1
       Exists: v2
@@ -56,7 +64,10 @@ Features:
       Select:
         Basic: v0
         Serializers: v2
-    Computeds: v0
+    Computeds:
+      FromRecord: v0
+      FromQuery: v1
+      Hooks: v1
     Roles: v2
     Ensures: v2
   Fieldsets:
@@ -115,8 +126,17 @@ Features:
     Sort: v2
     ListToMap: v3
     MapToList: v3
+    Unions/OneOfs: v3
+  FileIO:
+    JSON: v3
+    YAML: v3
+    CSV/TSV: v3
+    Typesafe: v3
   Task queue: v2
   Plugins: v3
   Other:
     Editor plugin: v3
+    Production dashboard:
+      Query performance analysis: v3
+      System overview: v3
 
