@@ -1,18 +1,38 @@
 Features:
   Models:
+    Dbname: v1
+    Auth:
+      Password: v0
+      Auth0: v1/v2
     Fields:
       Type: v0
       Nullable: v0
       Unique: v0
+      Default: v1
       Validators: v1
       Hooks: v1
+      Dbname: v1
       Lists: v2
-    References: v0
-    Relations: v0
-    Indexes: v1
-    PartialIndexes: v2
+      JSON: v2
+      OneOf: v2
+      Custom PK: v2
+    References:
+      Nullable: v0
+      Unique: v0
+      Dbname: v1
+      Through: v2
+      No FK: v2
+    Relations:
+      Basic: v0
+      Optional through: v2
+    Constraints:
+      Indexes: v1
+      Checks: v2
+      Partial indexes: v2
+      Custom indexes: v2
+      Composite indexes: v2
+      Auto suggestion: v2
     Queries:
-      Chaining: v0
       Filters:
         Equal: v0
         Gt/Gte/Lt/Lte: v0
@@ -23,25 +43,33 @@ Features:
       Aggregates:
         Count: v0
         Sum: v0
+      Chaining: v0
+      Order By: v0
+      Limit: v0
+      First: v1
+      Exists: v2
+      Last: v2
+      One: v2
+      Distinct: v2
       Recursive: v2
       RankOver: v2
       Select:
         Basic: v0
         Serializers: v2
     Computeds: v0
-    Roles: v1
-    Ensures: v1
+    Roles: v2
+    Ensures: v2
   Fieldsets:
     Field: v0
     FieldList: v0
     Validators:
       Builtin: v0
       Hooks: v1
-      Plugins: v2
+      Plugins: v3
       Custom: v2
     NestFieldset: v0
-    PickModel: v1
-    PickFieldset: v1
+    PickModel: v2
+    PickFieldset: v2
   Entrypoints:
     List: v0
     Delete: v0
@@ -51,33 +79,44 @@ Features:
     M2mNesting: v1
     Custom: v2
     Hooks: v1
-    Graphql: v0
+    Graphql: v2
+    Assert: v0
     Rest:
       Endpoints: v0
       Swagger: v1
+    Autofill/transform: v0/v1
     Transform: v1 # auth? v0? # user automatically inserted from auth?
-  Environments: v1
+  Environments:
+    Python: v2
   Releases:
     Migrations: v0
     Snapshots: v1
-    JsLib: v1
+    JsLib: v2
     Docker: v1
   Cli:
-    DevServer: v1
+    Dev server basic: v0
+    Migrate: v0
+    Release: v1
     Init: v1
+    Dev server autoreload: v1
   Admin:
     Autoadmin: v0
-    Fieldsets: v1
+    Fieldsets: v2
     Graphs: v2
   Populator:
     Constant: v0
     Ranges: v1
     Hints: v1
   Transform:
-    JqHook: never # discuss!
     Pick: v1
     Drop: v1
+    Filter: v2
     Merge: v2
-    ListToMap: v2
-    MapToList: v2
-    Filter: v1
+    Sort: v2
+    ListToMap: v3
+    MapToList: v3
+  Task queue: v2
+  Plugins: v3
+  Other:
+    Editor plugin: v3
+
