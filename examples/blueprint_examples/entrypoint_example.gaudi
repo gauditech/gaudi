@@ -191,7 +191,8 @@ entrypoint {
             assert @@fieldset
         }
     }
-    identify with slug as o {
+    single o {
+        search_key slug
         get {}
         action search {
             single
