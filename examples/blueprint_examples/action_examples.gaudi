@@ -175,7 +175,7 @@ endpoint generator {
             # it's reverse infer (by usage) and compiler can't help until you finish the insert
             # this is not true here since model is defined upfront but in "custom" actions it is
             # maybe using `pick` would fit better here, eg. pick Org.{slug, name}
-            fieldset = { field slug { type text }, field name { type text }}
+            fieldset = { field slug Org.slug, field name { type text } }
 
             # let's add the owner, we don't know otherwise!
             # transform before or after validation? is there use case where it matters?

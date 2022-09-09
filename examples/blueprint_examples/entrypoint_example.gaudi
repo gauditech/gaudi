@@ -42,43 +42,143 @@ org.user_is_admin(user)
 # What if one of roles is needed (OR)
 # Think documentation
 
-entrypoint Org as o {
-    name Organizations
-    identify with slug
-    action create {
-        role free_user, fieldset CreateFreeOrgFieldset
-        role paid_user, fieldset CreateOrgFieldset
+entrypoint Auth {
+    action login {}
+    action register {}
+}
+
+model Customer {
+    name, 
+    notes,
+    relation contacts { type CustomerContact }
+}
+
+model CustomerContact {
+    reference customer
+    type, email? { address }, phone? { phnum }
+}
+
+fieldest { name, notes, contacts: { list, type, email, phone, validate xor {}}}
+
+{
+    name,
+    notes,
+
+    contacts: [
+        { type: 'email', email: { address:'nest@nest' }},
+        { type: "phone", phone: {phnum: "123456789" } }
+    ]
+}
+
+
+
+{ id: 1, full_name: "marko" }
+User<{ id: 1, full_name: "marko" }>
+
+signup: kreiraj org, usera, membership <-- custom action
+
+Db query:
+1. beskonacno nema smisla
+2. dolazak do nekog kraja / roota: `recursive`
+3. graphql generirani kveriji
+
+Rest vs Graphql
+
+Entrypoint ::: User { name, friends { name, friends {name, friends { name }}}}
+
+
+schema :org {
+    field :name
+    field :slug
+    field :repos, list(:fullrepo)
+}
+
+schema :fullrepo {
+    field :org, :org
+    field :name
+    field :slug
+    field :num_of_prs
+}
+
+schema :repo {
+    field :org_id
+    field :name
+    field :slug
+    field :num_of_prs
+}
+
+
+
+{
+    Org(id: 10, limit: 5): { <--- id moze biti optional
+        <--- vraca listu
+        name, slug,
+        repos(limit: 5) {
+            name, slug, num_of_issues, num_of_prs
+        }
+    }
+
+    SingleOrg(id: 10) { <--- id jes required param
+        <--- vraca 1 org
+    }
+}
+
+entrypoint Auth {
+    action login {}
+    action logout {}
+    action register {}
+    action forgot_password {}
+    action reset_password {}
+    action update_password {}
+}
+
+entrypoint OrgEP {
+    source Org
+    name Organizations <-- v2
+    identify with slug <-- v2
+    create {
+        role free_user { fieldset CreateFreeOrgFieldset }
+        role paid_user { fieldset CreateOrgFieldset }
 
         # what if there's extra memberships data sent from client, but server adds
         # @auth as a user, would we assume `memberships.0`?
         # we're inserting two records, custom action or? this is common req I think
-        transform { push memberships, { add user @auth }}
+        transform { push memberships, { add user { "full_name" : "Mirko" } }} <-- kreiro bi se user
+        transform { add memberships, [{user: @auth, org: o}]}
     }
-    action list {
+    list {
         role superadmin
         role org_member(o), filter { is_public or } <--- ??
         role *, filter { is_public } # anyone, including anonymous Users
         # should we have implicit anonymous role? authenticated too?
     }
-    action get {
+    get {
         role org_member(o)
         role *, filter { is_public }
     }
-    action update {
-        role free_user, fieldset UpdateFreeOrgFieldset
-        role paid_user, fieldset UpdateOrgFieldset
+    update {
+        role free_user { fieldset UpdateFreeOrgFieldset }
+        role paid_user { fieldset UpdateOrgFieldset }
+
+        cu fieldset UpdateFreeOrgFieldset
+        crudl assert ...
+        l filter ...
+        crul response ...
     }
-    action delete { role org_admin(o) or org_editor(o) }
-    entrypoint repos as r {
+    delete { role org_admin(o) or org_editor(o) }
+    entrypoint Repos {
+        source o.repos
         ...
-        action list {
+        list {
             role org_member(o)
         }
+        create {}
     }
 }
 
-entrypoint Org as o {
-    action list {
+entrypoint {
+    root Org
+    list {
         features {
             search_fields org.members.full_name, min 4, pg_trym, like / startwith, required
             limit, default 10, max 1000
@@ -91,8 +191,26 @@ entrypoint Org as o {
             assert @@fieldset
         }
     }
-    action get {}
-    action search { <-- /list sa obaveznim paramom min 4 znaka npr }
+    identify with slug as o {
+        get {}
+        action search {
+            single
+            multi
+            filter
+            query_params ...
+            fieldset ...
+            assert ...
+            @hook {
+                source 'hooks.js:search'
+                >> context [o, r]
+                >> auth @auth
+                >> query_params ...
+                >> data
+                extra_params {...}
+                
+            }
+        }
+    }
 }
 
 fieldset CreateOrgFieldset {
@@ -155,14 +273,89 @@ Decisions:
 
 1. finalna sintaksa za:
 - modele +
-    - auth i role!
-    - vise authova?
-    - token auth?
+    - auth i role! <-- no rola
+    - vise authova? <-- no
+    - token auth? <-- no
 - hooks (model, fieldset, entrypoint)
 - validaciju s custom validatorima +
 - entrypointove / endpointove / graphql, stogod, razmisliti o live queryjima
-    - hookanje autha
-    - custom actione??
-    - slackops?
-    - jslib naminga?
-- transformacije vrijednosti
+    - hookanje autha <-- no
+    - custom actione?? <-- hook
+    - slackops? <-- no
+    - jslib naminga? <-- no
+- transformacije vrijednosti <-- no
+
+
+query UsersAndPosts {
+    query users { from User }
+    query posts { from Posts }
+}
+
+Post.author > reference User
+User.posts -> relation Post through author
+
+FS1 {
+    field id
+    field name
+}
+
+FS2 { field name }
+
+FS3 { field id }
+
+fieldest {
+    field update FS1
+    field add FS2
+    field remove FS3
+} > transform {
+    move update memberships.$update
+}
+
+Org.insert({
+    name: "my Org",
+    memberships: [
+        { user: { id: 1, name: "Hrvoj", "posts": [ {body: "my first post"} }]},
+        { user: { name: "Marin" }}
+    ]
+})
+
+Org.update({
+    memberships: [{user_id: 5}]
+})
+
+$add: {}
+$update: {}
+$push: {}
+
+fieldset CreatePost {
+    field body string
+}
+
+fieldest CreateUser {
+    field name string
+    field posts CreatePost
+
+}
+
+fieldset CreateOrgMembership {
+    field user CreateUser
+}
+
+fieldset CreateOrg {
+    field name string
+    field memberships CreateOrgMembership
+}
+
+fieldset CreateOrg {
+    field name string
+    field user_email string
+}
+
+fieldset <-- validacija podatka koji dolazi izvana
+
+transform {
+    add memberships []
+    push memberships { user : {} }
+    move user_email memberships.0.user.email
+    move user_full_name 
+}
