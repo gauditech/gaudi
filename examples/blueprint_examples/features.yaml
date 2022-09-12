@@ -24,6 +24,7 @@ Features:
       Unique: v0
       Dbname: v1
       DefaultNull: v0
+      OnDelete/OnUpdate: v1
       Through: v2
       No FK: v2
     Relations:
