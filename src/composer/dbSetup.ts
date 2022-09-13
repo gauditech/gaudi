@@ -14,9 +14,7 @@ function createTables(bp: Blueprint): string {
 function createTable(model: Model): string {
   const fieldMaxLen = Math.max(...model.fields.map((f) => f.dbname.length));
   const fieldTab = 4 * Math.ceil(1 + fieldMaxLen / 4);
-  const fieldDefs = model.fields
-    .map((f) => createTableField(f, fieldTab))
-    .join(",\n");
+  const fieldDefs = model.fields.map((f) => createTableField(f, fieldTab)).join(",\n");
   return `\
 CREATE TABLE ${model.dbname} (
 ${fieldDefs}
@@ -27,10 +25,7 @@ function createTableField(f: Field, tab: number): string {
   const nullableStr = f.type === "serial" ? "" : f.nullable ? "" : " NOT NULL";
   const dbTypeStr = getFieldDbType(f);
   const defaultStr = getDefaultStr(f);
-  return `    ${f.dbname.padEnd(
-    tab,
-    " "
-  )} ${dbTypeStr}${nullableStr}${defaultStr}`;
+  return `    ${f.dbname.padEnd(tab, " ")} ${dbTypeStr}${nullableStr}${defaultStr}`;
 }
 
 function getFieldDbType(f: Field): string {

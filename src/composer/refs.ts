@@ -1,5 +1,5 @@
 import { Blueprint } from "./types/blueprint";
-import { Model, Field, Reference, Relation } from "./types/model";
+import { Field, Model, Reference, Relation } from "./types/model";
 
 export function splitRef(ref: string): [string, string] {
   const path = ref.split(".");

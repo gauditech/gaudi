@@ -1,12 +1,13 @@
 import fs from "fs";
+
+import astInput from "../examples/git/ast.json";
+import definitionInput from "../examples/git/definition.json";
+import specificationInput from "../examples/git/specification.json";
+
 import { build } from "./builder/builder";
 import { compile } from "./compiler/compiler";
 import { compose } from "./composer/composer";
 import { parse } from "./parser/parser";
-
-import astInput from "../examples/git/ast.json";
-import specificationInput from "../examples/git/specification.json";
-import definitionInput from "../examples/git/definition.json";
 
 const blueprintPath = "./examples/git/blueprint.gaudi";
 

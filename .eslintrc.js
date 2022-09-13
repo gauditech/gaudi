@@ -2,18 +2,35 @@
 module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "import", "prettier"],
+  plugins: ["@typescript-eslint", "import"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier",
-    "prettier/@typescript-eslint",
-    "plugin:import/errors",
-    "plugin:import/warnings",
+    "plugin:import/recommended",
     "plugin:import/typescript",
-    "plugin:prettier/recommended",
+    "prettier",
   ],
+  settings: {
+    "import/resolver": {
+      typescript: true,
+      node: true,
+    },
+  },
   rules: {
+    "sort-imports": [
+      "warn",
+      {
+        ignoreDeclarationSort: true,
+      },
+    ],
+    "import/order": [
+      "warn",
+      {
+        "newlines-between": "always",
+        alphabetize: { order: "asc" },
+      },
+    ],
+    "import/newline-after-import": "warn",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-unused-vars": [
       "warn",

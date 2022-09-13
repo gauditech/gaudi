@@ -39,9 +39,10 @@ Required attributes:
 - `type` - can be: `text`, `number`, `decimal`, `boolean`, `datetime`
 
 Optional attributes:
+
 - `unique`
 - `nullable`
-- `default <value>` - sets default value of a field. `default null` implicitely sets `nullable` 
+- `default <value>` - sets default value of a field. `default null` implicitely sets `nullable`
 - `dbname` - SQL name of the table
 
 ### Reference
@@ -85,10 +86,12 @@ relation posts Post through author_id
 ```
 
 Required attributes:
+
 - `name` - a name of the attribute
 - `ref_model` - a referencing model
 
 Optional attributes:
+
 - `through <field>` - a referencing model field to join on. This attribute is required if a referencing model defines multiple `references` to the referenced model
 - `filter` - a filter block; see [filtering(todo)](#)
 

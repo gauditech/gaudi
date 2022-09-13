@@ -1,14 +1,6 @@
 import { Blueprint } from "./types/blueprint";
+import { BaseModel, Field, Model, RefModel, Reference, RelModel, Relation } from "./types/model";
 import * as Parsed from "./types/parsed";
-import {
-  BaseModel,
-  Field,
-  Model,
-  Reference,
-  RefModel,
-  Relation,
-  RelModel,
-} from "./types/model";
 
 export function readDefinition(modelDefs: Parsed.ModelDef[]): Blueprint {
   const models = constructModels(modelDefs);
@@ -41,10 +33,7 @@ function constructBaseModels(modelDefs: Parsed.ModelDef[]): BaseModel[] {
       ...def,
       selfRef: modelRef,
       dbname: def.name.toLowerCase(),
-      fields: [
-        idField,
-        ...def.fields.map((fieldDef) => constructField(fieldDef, modelRef)),
-      ],
+      fields: [idField, ...def.fields.map((fieldDef) => constructField(fieldDef, modelRef))],
       referenceDefs: def.references ?? [],
       relationDefs: def.relations ?? [],
     };
@@ -104,9 +93,7 @@ function constructRelModels(refModels: RefModel[]): RelModel[] {
   return refModels.map((refModel) => ({
     ...refModel,
     relationDefs: undefined,
-    relations: refModel.relationDefs.map((def) =>
-      constructRelation(def, refModel, refModels)
-    ),
+    relations: refModel.relationDefs.map((def) => constructRelation(def, refModel, refModels)),
   }));
 }
 
