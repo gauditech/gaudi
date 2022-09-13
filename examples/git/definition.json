@@ -1,0 +1,124 @@
+{
+  "models": [
+    {
+      "name": "Org",
+      "dbname": "org",
+      "fields": [
+        {
+          "refKey": "Org.id",
+          "name": "id",
+          "type": "integer",
+          "dbtype": "serial",
+          "dbname": "id",
+          "primary": true,
+          "unique": false,
+          "nullable": false
+        },
+        {
+          "refKey": "Org.name",
+          "name": "name",
+          "type": "text",
+          "dbname": "name",
+          "dbtype": "text",
+          "primary": false,
+          "unique": false,
+          "nullable": false
+        },
+        {
+          "refKey": "Org.slug",
+          "name": "slug",
+          "type": "text",
+          "dbname": "name",
+          "primary": false,
+          "unique": true,
+          "nullable": false
+        },
+        {
+          "refKey": "Org.description",
+          "name": "description",
+          "type": "text",
+          "dbname": "description",
+          "dbtype": "text",
+          "primary": false,
+          "unique": false,
+          "nullable": false
+        }
+      ],
+      "relations": [
+        {
+          "refKey": "Org.repos",
+          "name": "repos",
+          "fromModel": "Repo",
+          "type": "Repo[]",
+          "through": "org",
+          "fromRefKey": "Repo.org"
+        }
+      ]
+    },
+    {
+      "name": "Repo",
+      "fields": [
+        {
+          "refKey": "Repo.id",
+          "name": "id",
+          "type": "integer",
+          "dbtype": "serial",
+          "dbname": "id",
+          "primary": true,
+          "unique": false,
+          "nullable": false
+        },
+        {
+          "refKey": "Repo.name",
+          "name": "name",
+          "type": "text",
+          "dbname": "name",
+          "dbtype": "text",
+          "primary": false,
+          "unique": false,
+          "nullable": false
+        },
+        {
+          "refKey": "Repo.slug",
+          "name": "slug",
+          "type": "text",
+          "dbname": "name",
+          "primary": false,
+          "unique": true,
+          "nullable": false
+        },
+        {
+          "refKey": "Repo.description",
+          "name": "description",
+          "type": "text",
+          "dbname": "description",
+          "dbtype": "text",
+          "primary": false,
+          "unique": false,
+          "nullable": false
+        },
+        {
+          "refKey": "Repo.org_id",
+          "name": "org_id",
+          "type": "integer",
+          "dbname": "org_id",
+          "dbtype": "integer",
+          "primary": false,
+          "unique": false,
+          "nullable": false
+        }
+      ],
+      "references": [
+        {
+          "refKey": "Repo.org",
+          "name": "org",
+          "toModel": "Org",
+          "toModelField": "id",
+          "toModelRefKey": "Org",
+          "fieldRefKey": "Repo.org_id",
+          "toModelFielRefKey": "Org.id"
+        }
+      ]
+    }
+  ]
+}
