@@ -1,5 +1,5 @@
 import fs from "fs";
-import Arcade from "../examples/arcade/definition";
+import Arcade from "../../examples/arcade/definition";
 import { setupDb } from "./dbSetup";
 import { readDefinition } from "./parser";
 const definition = readDefinition(Arcade.models);
