@@ -1,0 +1,17 @@
+// database {
+//     engine pg
+//     uri 'postgresql://postgres@localhost:5342'
+// }
+
+model Org {
+    field name { type text }
+    field slug { type text, unique }
+    field description { type text }
+}
+
+model Repo {
+    field name { type text }
+    field slug { type text, unique }
+    field description { type text }
+    reference org { to Org }
+}
