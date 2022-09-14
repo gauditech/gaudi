@@ -5,11 +5,10 @@
 		}
 	],
 	"settings": {
-		"eslint.format.enable": true,
-		"eslint.run": "onSave",
 		"editor.codeActionsOnSave": {
 			"source.fixAll": true,
 		},
+		"editor.formatOnSave": true,
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	}
 }
