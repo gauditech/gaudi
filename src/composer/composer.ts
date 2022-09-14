@@ -87,7 +87,7 @@ function composeReferences(models: ModelDef[], specs: ModelSpec[]): ModelDef[] {
       const refField = ensureFind(refModel.fields, (f) => f.name === "id");
 
       return {
-        refKey: `${model.refKey}.${spec.name}`,
+        refKey: `${model.refKey}.${ref.name}`,
         name: ref.name,
         modelRefKey: model.refKey,
         fieldRefKey: `${model.refKey}.${ref.name}_id`,
