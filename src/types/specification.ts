@@ -5,8 +5,8 @@ export type Specification = {
 export type ModelSpec = {
   name: string;
   fields: FieldSpec[];
-  references?: ReferenceSpec[];
-  relations?: RelationSpec[];
+  references: ReferenceSpec[];
+  relations: RelationSpec[];
 };
 
 export type FieldSpec = {

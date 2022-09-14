@@ -18,6 +18,8 @@ describe("compose models", () => {
             { name: "name", type: "text" },
             { name: "name", type: "text" },
           ],
+          relations: [],
+          references: [],
         },
       ],
     };
@@ -30,6 +32,7 @@ describe("compose models", () => {
           name: "Org",
           fields: [{ name: "name", type: "text" }],
           references: [{ name: "name", toModel: "Org" }],
+          relations: [],
         },
       ],
     };
