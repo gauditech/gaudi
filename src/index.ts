@@ -1,6 +1,5 @@
 import fs from "fs";
 
-import astInput from "../examples/git/ast.json";
 import definitionInput from "../examples/git/definition.json";
 import specificationInput from "../examples/git/specification.json";
 
@@ -12,7 +11,7 @@ import { parse } from "./parser/parser";
 const blueprintPath = "./examples/git/blueprint.gaudi";
 
 const input = fs.readFileSync(blueprintPath).toString("utf-8");
-const _ast = parse(input);
-const _specification = compile(astInput);
+const ast = parse(input);
+const _specification = compile(ast);
 const _definition = compose(specificationInput);
 build(definitionInput as any);
