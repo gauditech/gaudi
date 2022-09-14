@@ -1,1 +1,23 @@
-{}
+{
+  "models": [
+    {
+      "name": "Org",
+      "body": [
+        { "kind": "field", "name": "name", "body": [{ "type": "text" }] },
+        { "kind": "field", "name": "slug", "body": [{ "type": "text" }, "unique"] },
+        { "kind": "field", "name": "description", "body": [{ "type": "text" }] },
+        { "kind": "field", "name": "optOut", "body": [{ "type": "text" }, "nullable"] },
+        { "kind": "relation", "name": "repos", "body": [{ "from": "Repo" }, { "through": "org" }] }
+      ]
+    },
+    {
+      "name": "Repo",
+      "body": [
+        { "kind": "field", "name": "name", "body": [{ "type": "text" }] },
+        { "kind": "field", "name": "slug", "body": [{ "type": "text" }, "unique"] },
+        { "kind": "field", "name": "description", "body": [{ "type": "text" }] },
+        { "kind": "reference", "name": "org", "body": [{ "to": "Org" }] }
+      ]
+    }
+  ]
+}
