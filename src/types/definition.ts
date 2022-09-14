@@ -23,16 +23,18 @@ export type FieldDef = {
   nullable: boolean;
 };
 
-type ReferenceDef = {
+export type ReferenceDef = {
   refKey: string;
   modelRefKey: string;
   name: string;
   fieldRefKey: string;
   toModelRefKey: string;
   toModelFieldRefKey: string;
+  nullable: boolean;
+  unique: boolean;
 };
 
-type RelationDef = {
+export type RelationDef = {
   refKey: string;
   modelRefKey: string;
   name: string;

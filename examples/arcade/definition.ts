@@ -1,6 +1,4 @@
-import * as Parsed from "../../src/composer/types/parsed";
-
-const models: Parsed.ModelDef[] = [
+const models = [
   {
     name: "Player",
     fields: [
