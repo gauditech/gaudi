@@ -15,4 +15,4 @@ const input = fs.readFileSync(blueprintPath).toString("utf-8");
 const _ast = parse(input);
 const _specification = compile(astInput);
 const _definition = compose(specificationInput);
-build(definitionInput);
+build(definitionInput as any);
