@@ -6,7 +6,11 @@ Features:
       Auth0: v1/v2
       Token/Hook: v3
     Fields:
-      Type: v0
+      Type:
+        Integer/Text/Boolean: v0
+        Date/DateTime: v0
+        Double: v1
+        Decimal: v2
       FileUpload: v2
       Nullable: v0
       Unique: v0
