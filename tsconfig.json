@@ -11,7 +11,8 @@
     "baseUrl": ".",
     "paths": {
       "*": ["node_modules/*"],
-      "src/*": ["src/*"]
+      "src/*": ["src/*"],
+      "examples/*": ["examples/*"]
     },
     "lib": ["es2020"]
   }
