@@ -2,14 +2,14 @@ export type Specification = {
   models: ModelSpec[];
 };
 
-type ModelSpec = {
+export type ModelSpec = {
   name: string;
   fields: FieldSpec[];
   references: ReferenceSpec[];
   relations: RelationSpec[];
 };
 
-type FieldSpec = {
+export type FieldSpec = {
   name: string;
   type: string;
   unique?: boolean;

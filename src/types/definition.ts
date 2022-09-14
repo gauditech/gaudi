@@ -2,7 +2,7 @@ export type Definition = {
   models: ModelDef[];
 };
 
-type ModelDef = {
+export type ModelDef = {
   refKey: string;
   name: string;
   dbname: string;
@@ -11,7 +11,7 @@ type ModelDef = {
   relations: RelationDef[];
 };
 
-type FieldDef = {
+export type FieldDef = {
   refKey: string;
   modelRefKey: string;
   name: string;
