@@ -1,14 +1,51 @@
-import express from "express";
-
+import fs from "fs";
+import path from "path";
 import { Definition } from "src/types/definition";
+import { render } from "./render/renderer";
 
-const app = express();
-const port = 3000;
+// TODO: read from config
+const SERVER_PORT = 3001
+const TEMPLATE_PATH = path.join(__dirname, 'templates')
+const OUTPUT_PATH = path.join(process.cwd(), './dist/output')
 
-export function build(input: Definition): void {
-  app.get("/", (req, res) => res.send("Hello world!"));
+export function build(definition: Definition): void {
+/*
+
+ - template renderer
+ - server (express)
+ 	* read env/config with defaults
+ 	* index.js
+ - includes file
+ 	* append any rendered file import
+ - model
+ 	* build DB schema
+ 	* 
+ - fieldset
+ - entrypoint
+ - action
+*/
+
+  prepareOutputFolder()
+  buildIndex()
+  buildServer()
 }
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+
+// ---------- part builders
+
+function prepareOutputFolder() {
+  fs.mkdirSync(OUTPUT_PATH, {recursive: true})
+}
+
+
+function buildIndex() {
+  render(path.join(TEMPLATE_PATH, 'index.eta'), path.join(OUTPUT_PATH, 'index.js'))
+}
+
+function buildServer() {
+  const data = {
+    serverPort: SERVER_PORT
+  }
+
+  render(path.join(TEMPLATE_PATH, 'server.eta'), path.join(OUTPUT_PATH, 'server.js'), data)
+}
