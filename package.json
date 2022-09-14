@@ -6,12 +6,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run grammar && tsc -p tsconfig.json && npm run copy-static && npm run compile",
+    "build": "npm run generate-grammar && tsc -p tsconfig.json && npm run copy-static && npm run compile",
     "compile": "node dist/src/index.js",
     "lint": "eslint --fix .; prettier --loglevel warn --write .",
     "copy-static": "npm run copy-static:builder-templates",
     "copy-static:builder-templates": "copyfiles src/builder/templates/* dist",
-    "grammar": "ohm generateBundles --withTypes src/parser/grammar/gaudi.ohm"
+    "generate-grammar": "ohm generateBundles --withTypes src/parser/grammar/gaudi.ohm"
   },
   "repository": {
     "type": "git",
