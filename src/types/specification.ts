@@ -1,5 +1,5 @@
 export type Specification = {
-  models: ModelSpec;
+  models: ModelSpec[];
 };
 
 type ModelSpec = {
