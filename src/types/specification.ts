@@ -16,14 +16,14 @@ export type FieldSpec = {
   nullable?: boolean;
 };
 
-type ReferenceSpec = {
+export type ReferenceSpec = {
   name: string;
   toModel: string;
   unique?: boolean;
   nullable?: boolean;
 };
 
-type RelationSpec = {
+export type RelationSpec = {
   name: string;
   fromModel: string;
   through: string;

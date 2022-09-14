@@ -1,0 +1,60 @@
+Gaudi {
+  Definition
+    = NewlineBody<Model, ";">
+
+  // Override Ohm's built-in definition of space.
+  space += comment
+
+  Model
+    = "model" identifier "{" NewlineBody<ModelBody, ";"> "}"
+
+  ModelBody
+    = Field
+    | Reference
+    | Relation
+
+  Field
+    = "field" identifier "{" NonemptyNewlineBody<FieldBody, ","> "}"
+
+  FieldBody
+    = TypeDefinition
+    | FieldTag
+
+  TypeDefinition = "type" Type
+
+  FieldTag = "nullable" | "unique"
+
+  Reference
+    = "reference" identifier "{" NonemptyNewlineBody<ReferenceBody, ","> "}"
+
+  ReferenceBody
+    = "to" identifier
+
+  Relation
+    = "relation" identifier "{" NonemptyNewlineBody<RelationBody, ","> "}"
+
+  RelationBody
+    = "from" identifier -- from
+    | "through" identifier -- through
+
+  Type = "text" | "integer"
+
+  identifier (an identifier) = letter alnum*
+
+  NewlineBody<Exp, delimiter>
+    = NonemptyNewlineBody<Exp, delimiter>
+    | -- empty
+
+  NonemptyNewlineBody<Exp, delimiter>
+    = Exp (#delimiterOrNL<delimiter> Exp)* #delimiterOrNL<delimiter>?
+
+  lineTerminator (a new line) = "\n" | "\r" | "\u2028" | "\u2029"
+
+  delimiterOrNL<delimiter>
+     = (~lineTerminator space)* (lineTerminator | delimiter)
+
+  comment = multiLineComment | singleLineComment
+
+  multiLineComment = "/*" (~"*/" any)* "*/"
+  singleLineComment = "//" (~lineTerminator any)*
+}

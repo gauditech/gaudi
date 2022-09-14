@@ -6,12 +6,13 @@
 model Org {
     field name { type text }
     field slug { type text, unique }
-    field description { type text }
+    field description { type text, nullable }
+    relation repos { from repo, through org }
 }
 
 model Repo {
     field name { type text }
-    field slug { type text, unique }
+    field slug { type text, nullable, unique }
     field description { type text }
     reference org { to Org }
 }
