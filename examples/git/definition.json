@@ -13,7 +13,7 @@
           "dbname": "id",
           "dbtype": "serial",
           "primary": true,
-          "unique": false,
+          "unique": true,
           "nullable": false
         },
         {
@@ -31,8 +31,9 @@
           "refKey": "Org.slug",
           "modelRefKey": "Org",
           "name": "slug",
-          "dbname": "name",
+          "dbname": "slug",
           "type": "text",
+          "dbtype": "text",
           "primary": false,
           "unique": true,
           "nullable": false
@@ -49,6 +50,7 @@
           "nullable": false
         }
       ],
+      "references": [],
       "relations": [
         {
           "refKey": "Org.repos",
@@ -62,7 +64,9 @@
       ]
     },
     {
+      "refKey": "Repo",
       "name": "Repo",
+      "dbname": "repo",
       "fields": [
         {
           "refKey": "Repo.id",
@@ -72,7 +76,7 @@
           "dbname": "id",
           "dbtype": "serial",
           "primary": true,
-          "unique": false,
+          "unique": true,
           "nullable": false
         },
         {
@@ -90,10 +94,11 @@
           "refKey": "Repo.slug",
           "modelRefKey": "Repo",
           "name": "slug",
-          "dbname": "name",
+          "dbname": "slug",
           "type": "text",
+          "dbtype": "text",
           "primary": false,
-          "unique": true,
+          "unique": false,
           "nullable": false
         },
         {
@@ -126,9 +131,12 @@
           "modelRefKey": "Repo",
           "fieldRefKey": "Repo.org_id",
           "toModelRefKey": "Org",
-          "toModelFielRefKey": "Org.id"
+          "toModelFieldRefKey": "Org.id",
+          "unique": false,
+          "nullable": false
         }
-      ]
+      ],
+      "relations": []
     }
   ]
 }
