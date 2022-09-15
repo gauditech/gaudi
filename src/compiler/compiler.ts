@@ -9,6 +9,7 @@ import {
 
 function compileField(field: FieldAST): FieldSpec {
   let type = "unknown";
+  let default_: unknown;
   let nullable: boolean;
   let unique: boolean;
   field.body.forEach((b) => {
@@ -16,12 +17,14 @@ function compileField(field: FieldAST): FieldSpec {
       nullable = true;
     } else if (b === "unique") {
       unique = true;
-    } else {
+    } else if ("type" in b) {
       type = b.type;
+    } else if ("default" in b) {
+      default_ = b.default;
     }
   });
 
-  return { name: field.name, type, nullable, unique };
+  return { name: field.name, type, default: default_, nullable, unique };
 }
 
 function compileReference(reference: ReferenceAST): ReferenceSpec {

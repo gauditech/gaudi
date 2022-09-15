@@ -1,0 +1,27 @@
+{
+  "models": [
+    {
+      "fields": [],
+      "name": "Vehicle",
+      "references": [
+        {
+          "name": "make",
+          "nullable": true,
+          "toModel": "Make"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "fields": [
+        {
+          "name": "name",
+          "type": "text"
+        }
+      ],
+      "name": "Make",
+      "references": [],
+      "relations": []
+    }
+  ]
+}
