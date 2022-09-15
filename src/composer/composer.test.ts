@@ -1,8 +1,8 @@
 import { compose } from "./composer";
 
-import definitionInput from "examples/git/definition.json";
-import specificationInput from "examples/git/specification.json";
-import { Specification } from "src/types/specification";
+import definitionInput from "@examples/git/definition.json";
+import specificationInput from "@examples/git/specification.json";
+import { Specification } from "@src/types/specification";
 
 describe("compose models", () => {
   it("correctly composes the git example", () => {

@@ -7,6 +7,6 @@ import { addAliases } from "module-alias";
  */
 
 addAliases({
-  src: path.join(__dirname, ".."),
-  examples: path.join(__dirname, "..", "..", "examples"),
+  "@src": path.join(__dirname, ".."),
+  "@examples": path.join(__dirname, "..", "..", "examples"),
 });

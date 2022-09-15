@@ -5,8 +5,8 @@ module.exports = async () => {
     preset: "ts-jest",
     modulePathIgnorePatterns: ["<rootDir>/dist/"],
     moduleNameMapper: {
-      "src/(.*)": "<rootDir>/src/$1",
-      "examples/(.*)": "<rootDir>/examples/$1",
+      "@src/(.*)": "<rootDir>/src/$1",
+      "@examples/(.*)": "<rootDir>/examples/$1",
     },
   };
 };

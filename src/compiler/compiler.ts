@@ -1,11 +1,11 @@
-import { AST, FieldAST, ModelAST, ReferenceAST, RelationAST } from "src/types/ast";
+import { AST, FieldAST, ModelAST, ReferenceAST, RelationAST } from "@src/types/ast";
 import {
   FieldSpec,
   ModelSpec,
   ReferenceSpec,
   RelationSpec,
   Specification,
-} from "src/types/specification";
+} from "@src/types/specification";
 
 function compileField(field: FieldAST): FieldSpec {
   let type = "unknown";

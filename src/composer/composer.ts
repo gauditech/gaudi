@@ -1,6 +1,6 @@
-import { ensureFind, ensureUnique } from "src/common/utils";
-import { Definition, FieldDef, ModelDef, ReferenceDef, RelationDef } from "src/types/definition";
-import { FieldSpec, ModelSpec, Specification } from "src/types/specification";
+import { ensureFind, ensureUnique } from "@src/common/utils";
+import { Definition, FieldDef, ModelDef, ReferenceDef, RelationDef } from "@src/types/definition";
+import { FieldSpec, ModelSpec, Specification } from "@src/types/specification";
 
 export function compose(input: Specification): Definition {
   return {

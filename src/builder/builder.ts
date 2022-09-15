@@ -3,7 +3,7 @@ import path from "path";
 
 import { render } from "./render/renderer";
 
-import { Definition } from "src/types/definition";
+import { Definition } from "@src/types/definition";
 
 // TODO: read from config
 const SERVER_PORT = 3001;
@@ -21,7 +21,7 @@ export function build(definition: Definition): void {
  	* append any rendered file import
  - model
  	* build DB schema
- 	* 
+ 	*
  - fieldset
  - entrypoint
  - action

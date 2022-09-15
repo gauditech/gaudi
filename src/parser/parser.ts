@@ -9,7 +9,7 @@ import {
   ReferenceBodyAST,
   RelationAST,
   RelationBodyAST,
-} from "src/types/ast";
+} from "@src/types/ast";
 
 const semantics = grammar.createSemantics();
 
