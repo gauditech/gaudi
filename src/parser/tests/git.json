@@ -8,6 +8,7 @@
         { "name": "description", "type": "text" },
         { "name": "optOut", "type": "text", "nullable": true }
       ],
+      "queries": [],
       "references": [],
       "relations": [{ "name": "repos", "fromModel": "Repo", "through": "org" }]
     },
@@ -18,6 +19,7 @@
         { "name": "slug", "type": "text", "unique": true },
         { "name": "description", "type": "text" }
       ],
+      "queries": [],
       "references": [{ "name": "org", "toModel": "Org" }],
       "relations": []
     }

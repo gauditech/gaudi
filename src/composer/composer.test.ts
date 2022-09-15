@@ -20,6 +20,7 @@ describe("compose models", () => {
           ],
           relations: [],
           references: [],
+          queries: [],
         },
       ],
     };
@@ -33,6 +34,7 @@ describe("compose models", () => {
           fields: [{ name: "name", type: "text" }],
           references: [{ name: "name", toModel: "Org" }],
           relations: [],
+          queries: [],
         },
       ],
     };

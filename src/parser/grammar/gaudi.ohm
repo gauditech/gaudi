@@ -12,6 +12,7 @@ Gaudi {
     = Field
     | Reference
     | Relation
+    | Query
 
   Field
     = "field" identifier "{" NonemptyNewlineBody<FieldBody, ","> "}"
@@ -35,7 +36,42 @@ Gaudi {
     = "from" identifier -- from
     | "through" identifier -- through
 
-  literal = null | boolean | integer | float | string
+  Query
+    = "query" identifier "{" NonemptyNewlineBody<QueryBody, ","> "}"
+
+  QueryBody
+    = "from" identifier -- from
+    | "filter" QueryExp -- filter
+
+  QueryExp = OrExp
+
+  OrExp
+    = OrExp "or" AndExp -- or
+    | AndExp
+
+  AndExp
+    = AndExp "and" EqExp -- and
+    | EqExp
+
+  EqExp
+    = AndExp "==" CompExp -- eq
+    | AndExp "!=" CompExp -- neq
+    | CompExp
+
+  CompExp
+    = CompExp "<" PrimaryExp -- lt
+    | CompExp "<=" PrimaryExp -- lteq
+    | CompExp ">" PrimaryExp -- gt
+    | CompExp ">=" PrimaryExp -- gteq
+    | PrimaryExp
+
+  PrimaryExp
+    = "(" QueryExp ")"  -- paren
+    | "!" PrimaryExp   -- not
+    | identifier
+    | literal
+
+  literal (an literal) = null | boolean | integer | float | string
 
   null = "null"
   boolean = "true" | "false"
@@ -43,7 +79,9 @@ Gaudi {
   float = digit* "." digit*
   string = "\"" (~"\"" any)* "\""
 
-  identifier (an identifier) = letter alnum*
+  identifier (an identifier) = identifierStart identifierPart*
+  identifierStart = letter | "$" | "_"
+  identifierPart = identifierStart | alnum
 
   NewlineBody<Exp, delimiter>
     = NonemptyNewlineBody<Exp, delimiter>

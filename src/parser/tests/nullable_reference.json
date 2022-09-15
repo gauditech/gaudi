@@ -3,6 +3,7 @@
     {
       "fields": [],
       "name": "Vehicle",
+      "queries": [],
       "references": [
         {
           "name": "make",
@@ -20,6 +21,7 @@
         }
       ],
       "name": "Make",
+      "queries": [],
       "references": [],
       "relations": []
     }

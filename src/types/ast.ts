@@ -7,7 +7,7 @@ export type ModelAST = {
   body: ModelBodyAST[];
 };
 
-export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST;
+export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST;
 
 export type FieldAST = {
   kind: "field";
@@ -32,3 +32,25 @@ export type RelationAST = {
 };
 
 export type RelationBodyAST = { from: string } | { through: string };
+
+export type QueryAST = {
+  kind: "query";
+  name: string;
+  body: QueryBodyAST[];
+};
+
+export type QueryBodyAST = { from: string } | { filter: ExpAST };
+
+export type ExpAST =
+  | {
+      kind: "binary";
+      operator: BinaryOperator;
+      lhs: ExpAST;
+      rhs: ExpAST;
+    }
+  | { kind: "paren"; exp: ExpAST }
+  | { kind: "unary"; operator: UnaryOperator; exp: ExpAST };
+
+export type BinaryOperator = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=";
+
+export type UnaryOperator = "!";

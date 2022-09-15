@@ -9,7 +9,8 @@
         { "name": "optOut", "type": "text", "nullable": true }
       ],
       "references": [],
-      "relations": [{ "name": "repos", "fromModel": "Repo", "through": "org" }]
+      "relations": [{ "name": "repos", "fromModel": "Repo", "through": "org" }],
+      "queries": []
     },
     {
       "name": "Repo",
@@ -19,7 +20,8 @@
         { "name": "description", "type": "text" }
       ],
       "references": [{ "name": "org", "toModel": "Org" }],
-      "relations": []
+      "relations": [],
+      "queries": []
     }
   ]
 }

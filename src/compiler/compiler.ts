@@ -1,7 +1,17 @@
-import { AST, FieldAST, ModelAST, ReferenceAST, RelationAST } from "@src/types/ast";
 import {
+  AST,
+  ExpAST,
+  FieldAST,
+  ModelAST,
+  QueryAST,
+  ReferenceAST,
+  RelationAST,
+} from "@src/types/ast";
+import {
+  ExpSpec,
   FieldSpec,
   ModelSpec,
+  QuerySpec,
   ReferenceSpec,
   RelationSpec,
   Specification,
@@ -58,10 +68,29 @@ function compileRelation(relation: RelationAST): RelationSpec {
   return { name: relation.name, fromModel, through };
 }
 
+function compileQuery(query: QueryAST): QuerySpec {
+  let fromModel: string;
+  let filter: ExpSpec;
+  query.body.forEach((b) => {
+    if ("from" in b) {
+      fromModel = b.from;
+    } else {
+      filter = compileQueryExp(b.filter);
+    }
+  });
+
+  return { name: query.name, fromModel, filter };
+}
+
+function compileQueryExp(exp: ExpAST): ExpSpec {
+  return exp;
+}
+
 function compileModel(model: ModelAST): ModelSpec {
   const fields: FieldSpec[] = [];
   const references: ReferenceSpec[] = [];
   const relations: RelationSpec[] = [];
+  const queries: QuerySpec[] = [];
 
   model.body.forEach((b) => {
     if (b.kind === "field") {
@@ -70,10 +99,12 @@ function compileModel(model: ModelAST): ModelSpec {
       references.push(compileReference(b));
     } else if (b.kind === "relation") {
       relations.push(compileRelation(b));
+    } else if (b.kind === "query") {
+      queries.push(compileQuery(b));
     }
   });
 
-  return { name: model.name, fields, references, relations };
+  return { name: model.name, fields, references, relations, queries };
 }
 
 export function compile(input: AST): Specification {

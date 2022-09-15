@@ -1,0 +1,53 @@
+{
+  "models": [
+    {
+      "fields": [],
+      "name": "Class",
+      "queries": [
+        {
+          "kind": "binary",
+          "lhs": {
+            "exp": {
+              "kind": "binary",
+              "lhs": "is_active",
+              "operator": "or",
+              "rhs": "is_registred"
+            },
+            "kind": "paren"
+          },
+          "operator": "and",
+          "rhs": "true"
+        }
+      ],
+      "references": [],
+      "relations": [
+        {
+          "fromModel": "Student",
+          "name": "students",
+          "through": "class"
+        }
+      ]
+    },
+    {
+      "fields": [
+        {
+          "name": "is_active",
+          "type": "boolean"
+        },
+        {
+          "name": "is_registred",
+          "type": "boolean"
+        }
+      ],
+      "name": "Student",
+      "queries": [],
+      "references": [
+        {
+          "name": "class",
+          "toModel": "Class"
+        }
+      ],
+      "relations": []
+    }
+  ]
+}

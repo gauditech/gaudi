@@ -20,6 +20,7 @@
         }
       ],
       "name": "Vehicle",
+      "queries": [],
       "references": [],
       "relations": []
     }

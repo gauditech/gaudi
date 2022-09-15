@@ -1,0 +1,11 @@
+model Class {
+  relation students { from Student, through class}
+
+  query active_students { from students, filter (is_active or is_registred) and true }
+}
+
+model Student {
+  field is_active { type boolean }
+  field is_registred { type boolean }
+  reference class { to Class }
+}
