@@ -2,6 +2,7 @@ import {
   AST,
   ExpAST,
   FieldAST,
+  LiteralValue,
   ModelAST,
   QueryAST,
   ReferenceAST,
@@ -19,7 +20,7 @@ import {
 
 function compileField(field: FieldAST): FieldSpec {
   let type = "unknown";
-  let default_: unknown;
+  let default_: LiteralValue;
   let nullable: boolean;
   let unique: boolean;
   field.body.forEach((b) => {

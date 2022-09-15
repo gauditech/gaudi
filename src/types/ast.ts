@@ -15,7 +15,7 @@ export type FieldAST = {
   body: FieldBodyAST[];
 };
 
-export type FieldBodyAST = { type: string } | { default: unknown } | "nullable" | "unique";
+export type FieldBodyAST = { type: string } | { default: LiteralValue } | "nullable" | "unique";
 
 export type ReferenceAST = {
   kind: "reference";
@@ -51,7 +51,9 @@ export type ExpAST =
   | { kind: "paren"; exp: ExpAST }
   | { kind: "unary"; operator: UnaryOperator; exp: ExpAST }
   | { kind: "identifier"; name: string }
-  | { kind: "literal"; value: unknown };
+  | { kind: "literal"; value: LiteralValue };
+
+export type LiteralValue = null | boolean | number | string;
 
 export type BinaryOperator = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=";
 

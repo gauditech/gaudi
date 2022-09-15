@@ -1,4 +1,4 @@
-import { BinaryOperator, UnaryOperator } from "./ast";
+import { BinaryOperator, LiteralValue, UnaryOperator } from "./ast";
 
 export type Specification = {
   models: ModelSpec[];
@@ -15,7 +15,7 @@ export type ModelSpec = {
 export type FieldSpec = {
   name: string;
   type: string;
-  default?: unknown;
+  default?: LiteralValue;
   unique?: boolean;
   nullable?: boolean;
 };
@@ -48,4 +48,4 @@ export type ExpSpec =
     }
   | { kind: "unary"; operator: UnaryOperator; exp: ExpSpec }
   | { kind: "identifier"; name: string }
-  | { kind: "literal"; value: unknown };
+  | { kind: "literal"; value: LiteralValue };
