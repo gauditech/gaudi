@@ -9,14 +9,14 @@ describe("compose models", () => {
     expect(compose(specificationInput)).toStrictEqual(definitionInput);
   });
 
-  it("fails on duplicate field name", () => {
+  it("fails on case insensitive duplicate field name", () => {
     const specification: Specification = {
       models: [
         {
           name: "Org",
           fields: [
             { name: "name", type: "text" },
-            { name: "name", type: "text" },
+            { name: "Name", type: "text" },
           ],
           relations: [],
           references: [],

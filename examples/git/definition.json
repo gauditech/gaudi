@@ -48,6 +48,17 @@
           "primary": false,
           "unique": false,
           "nullable": false
+        },
+        {
+          "refKey": "Org.optOut",
+          "modelRefKey": "Org",
+          "name": "optOut",
+          "dbname": "optout",
+          "type": "text",
+          "dbtype": "text",
+          "primary": false,
+          "unique": false,
+          "nullable": true
         }
       ],
       "references": [],
@@ -98,7 +109,7 @@
           "type": "text",
           "dbtype": "text",
           "primary": false,
-          "unique": false,
+          "unique": true,
           "nullable": false
         },
         {
