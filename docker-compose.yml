@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  db:
+    image: postgres:14-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: gaudip
+    shm_size: 256MB
+    ports:
+      - 5433:5432
+  adminer:
+    image: adminer
+    restart: on-failure
+    ports:
+      - 8080:8080
