@@ -46,5 +46,6 @@ export type ExpSpec =
       lhs: ExpSpec;
       rhs: ExpSpec;
     }
-  | { kind: "paren"; exp: ExpSpec }
-  | { kind: "unary"; operator: UnaryOperator; exp: ExpSpec };
+  | { kind: "unary"; operator: UnaryOperator; exp: ExpSpec }
+  | { kind: "identifier"; name: string }
+  | { kind: "literal"; value: unknown };

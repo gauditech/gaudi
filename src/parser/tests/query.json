@@ -5,18 +5,19 @@
       "name": "Class",
       "queries": [
         {
-          "kind": "binary",
-          "lhs": {
-            "exp": {
+          "filter": {
+            "kind": "binary",
+            "lhs": {
               "kind": "binary",
-              "lhs": "is_active",
+              "lhs": { "kind": "identifier", "name": "is_active" },
               "operator": "or",
-              "rhs": "is_registred"
+              "rhs": { "kind": "identifier", "name": "is_registred" }
             },
-            "kind": "paren"
+            "operator": "and",
+            "rhs": { "kind": "literal", "value": true }
           },
-          "operator": "and",
-          "rhs": "true"
+          "fromModel": "students",
+          "name": "active_students"
         }
       ],
       "references": [],

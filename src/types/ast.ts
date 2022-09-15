@@ -49,7 +49,9 @@ export type ExpAST =
       rhs: ExpAST;
     }
   | { kind: "paren"; exp: ExpAST }
-  | { kind: "unary"; operator: UnaryOperator; exp: ExpAST };
+  | { kind: "unary"; operator: UnaryOperator; exp: ExpAST }
+  | { kind: "identifier"; name: string }
+  | { kind: "literal"; value: unknown };
 
 export type BinaryOperator = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=";
 

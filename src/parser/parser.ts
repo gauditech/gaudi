@@ -92,6 +92,12 @@ semantics.addOperation("parse()", {
   PrimaryExp_not(_not, exp): ExpAST {
     return { kind: "unary", operator: "!", exp: exp.parse() };
   },
+  PrimaryExp_identifier(identifier): ExpAST {
+    return { kind: "identifier", name: identifier.parse() };
+  },
+  PrimaryExp_literal(literal): ExpAST {
+    return { kind: "literal", value: literal.parse() };
+  },
   null(_null) {
     return null;
   },

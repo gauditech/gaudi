@@ -66,10 +66,10 @@ Gaudi {
     | PrimaryExp
 
   PrimaryExp
-    = "(" QueryExp ")"  -- paren
-    | "!" PrimaryExp   -- not
-    | identifier
-    | literal
+    = "(" QueryExp ")" -- paren
+    | "!" PrimaryExp -- not
+    | literal -- literal
+    | identifier -- identifier
 
   literal (an literal) = null | boolean | integer | float | string
 

@@ -83,7 +83,20 @@ function compileQuery(query: QueryAST): QuerySpec {
 }
 
 function compileQueryExp(exp: ExpAST): ExpSpec {
-  return exp;
+  if (exp.kind === "paren") {
+    return compileQueryExp(exp.exp);
+  } else if (exp.kind === "binary") {
+    return {
+      kind: "binary",
+      operator: exp.operator,
+      lhs: compileQueryExp(exp.lhs),
+      rhs: compileQueryExp(exp.rhs),
+    };
+  } else if (exp.kind === "unary") {
+    return { kind: "unary", operator: exp.operator, exp: compileQueryExp(exp.exp) };
+  } else {
+    return exp;
+  }
 }
 
 function compileModel(model: ModelAST): ModelSpec {
