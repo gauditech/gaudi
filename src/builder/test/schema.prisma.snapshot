@@ -1,0 +1,24 @@
+
+model org {
+  id serial @id @unique
+  name text
+  slug text @unique
+  description text
+  optout text?
+  
+  repos repo[]
+  
+  }
+
+model repo {
+  id serial @id @unique
+  name text
+  slug text @unique
+  description text
+  org_id integer
+  
+  
+  org org @relation(fields: [org_id], references: [id])
+
+  }
+

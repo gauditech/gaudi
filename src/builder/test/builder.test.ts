@@ -1,70 +1,39 @@
+import fs from "fs";
+import path from "path";
 import { renderDbSchema, renderIndex, renderServer } from "@src/builder/builder";
-
 import definition from "@examples/git/definition.json";
 
-describe("builder", () => {
-  describe("builder", () => {
-    describe("build index", () => {
-      it("renders index template correctly", async () => {
-        expect(await renderIndex()).toEqual(INDEX_OUTPUT);
-      });
-    });
+const SNAPSHOT_FOLDER = __dirname;
 
-    const INDEX_OUTPUT = `
-require('./server.js')
-`;
+describe("builder", () => {
+  describe("build index", () => {
+    it("renders index template correctly", async () => {
+      const snapshot = readSnapshot("index.js");
+
+      expect(await renderIndex()).toEqual(snapshot);
+    });
   });
 
   describe("build server", () => {
     it("renders server template correctly", async () => {
       const serverData = { serverPort: 3000 };
+      const snapshot = readSnapshot("server.js");
 
-      expect(await renderServer(serverData)).toEqual(SERVER_OUTPUT);
+      expect(await renderServer(serverData)).toEqual(snapshot);
     });
-
-    const SERVER_OUTPUT = `var express = require("express");
-
-const app = express();
-const port = 3001;
-
-app.get("/", (req, res) => res.send("Hello world!"));
-
-app.listen(port, () => {
-  console.log(\`Example app listening on port \${port}\`);
-});
-
-`;
   });
 
   describe("build DB schema", () => {
     it("renders DB schema template correctly", async () => {
-      expect(await renderDbSchema({ definition: definition as any })).toEqual(DB_SCHEMA_OUTPUT);
+      const snapshot = readSnapshot("schema.prisma");
+
+      expect(await renderDbSchema({ definition: definition as any })).toEqual(snapshot);
     });
-
-    const DB_SCHEMA_OUTPUT = `
-model org {
-  id serial @id @unique
-  name text
-  slug text @unique
-  description text
-  optout text?
-  
-  repos repo[]
-  
-  }
-
-model repo {
-  id serial @id @unique
-  name text
-  slug text @unique
-  description text
-  org_id integer
-  
-  
-  org org @relation(fields: [org_id], references: [id])
-
-  }
-
-`;
   });
 });
+
+// ---------- helpers
+
+function readSnapshot(baseFilename: string): string {
+  return fs.readFileSync(path.join(SNAPSHOT_FOLDER, `${baseFilename}.snapshot`)).toString();
+}
