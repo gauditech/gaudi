@@ -54,8 +54,12 @@ Gaudi {
     | EqExp
 
   EqExp
-    = AndExp "==" CompExp -- eq
-    | AndExp "!=" CompExp -- neq
+    = EqExp "==" InExp -- eq
+    | EqExp "!=" InExp -- neq
+    | InExp
+
+  InExp
+    = InExp "in" CompExp -- in
     | CompExp
 
   CompExp

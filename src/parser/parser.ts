@@ -74,6 +74,9 @@ semantics.addOperation("parse()", {
   EqExp_neq(lhs, _neq, rhs): ExpAST {
     return { kind: "binary", operator: "!=", lhs: lhs.parse(), rhs: rhs.parse() };
   },
+  InExp_in(lhs, _in, rhs): ExpAST {
+    return { kind: "binary", operator: "in", lhs: lhs.parse(), rhs: rhs.parse() };
+  },
   CompExp_lt(lhs, _lt, rhs): ExpAST {
     return { kind: "binary", operator: "<", lhs: lhs.parse(), rhs: rhs.parse() };
   },

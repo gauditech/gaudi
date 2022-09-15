@@ -55,6 +55,6 @@ export type ExpAST =
 
 export type LiteralValue = null | boolean | number | string;
 
-export type BinaryOperator = "or" | "and" | "==" | "!=" | "<" | "<=" | ">" | ">=";
+export type BinaryOperator = "or" | "and" | "==" | "!=" | "in" | "<" | "<=" | ">" | ">=";
 
 export type UnaryOperator = "!";
