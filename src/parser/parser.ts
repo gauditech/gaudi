@@ -69,11 +69,8 @@ semantics.addOperation("parse()", {
 
 export function parse(input: string): AST {
   const m = grammar.match(input);
-  if (m.succeeded()) {
-    console.log("Success");
-  } else {
-    console.log("Fail");
-    console.log(m.message);
+  if (!m.succeeded()) {
+    throw Error(m.message);
   }
 
   const ast: AST = semantics(m).parse();
