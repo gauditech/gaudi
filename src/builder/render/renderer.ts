@@ -9,11 +9,11 @@ export function render(srcFilename: string, destFilename: string, data?: unknown
   });
 }
 
-function renderTemplate(filename: string, data?: unknown): Promise<string> {
+export function renderTemplate(filename: string, data?: unknown): Promise<string> {
   return Eta.renderFileAsync(filename, data) || Promise.resolve("");
 }
 
-function storeTemplateOutput(filename: string, content: string): void {
+export function storeTemplateOutput(filename: string, content: string): void {
   // create folder(s) if they don't exist
   const dir = path.dirname(filename);
   if (!fs.existsSync(dir)) {

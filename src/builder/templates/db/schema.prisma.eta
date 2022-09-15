@@ -19,26 +19,25 @@ function fieldDbName(modelRefKey, fieldRefKey) {
 %>
 
 <% /* ----- Template ----- */ %>
-
 <% ;(it.definition.models ?? []).forEach((model) => { %>
-  model <%=model.dbname %> {
-    <% /* ----- fields ----- */ %>
-    <% ;(model.fields ?? []).forEach((field) => { %>
-      <%= field.dbname %> <%= field.dbtype %><%= field.nullable ? '?' : '' %><%= field.primary ? ' @id' : '' %><%= field.unique ? ' @unique' : '' %>
+model <%=model.dbname %> {
+  <% /* ----- fields ----- */ %>
+  <%_ ;(model.fields ?? []).forEach((field) => { %>
+    <%_ = field.dbname %> <%= field.dbtype %><%= field.nullable ? '?' : '' %><%= field.primary ? ' @id' : '' %><%= field.unique ? ' @unique' : '' %>
 
-    <% }) %>
+  <% }) %>
 
-    <% /* ----- relations ----- */ %>
-    <% ;(model.relations ?? []).forEach((relation) => { %>
-      <%= relation.name%> <%= modelDbName(relation.fromModelRefKey)%><%= !relation.unique ? '[]' : ''%><%= relation.nullable ? '?' : '' %>
+  <% /* ----- relations ----- */ %>
+  <%_ ;(model.relations ?? []).forEach((relation) => { %>
+    <%_ = relation.name%> <%= modelDbName(relation.fromModelRefKey)%><%= !relation.unique ? '[]' : ''%><%= relation.nullable ? '?' : '' %>
 
-    <% }) %>
+  <% }) %>
 
-    <% /* ----- references ----- */ %>
-    <% ;(model.references ?? []).forEach((reference) => { %>
-      <%= reference.name%> <%= modelDbName(reference.toModelRefKey)%> @relation(fields: [<%= fieldDbName(reference.modelRefKey, reference.fieldRefKey)%>], references: [<%= fieldDbName(reference.toModelRefKey, reference.toModelFieldRefKey)%>])
+  <% /* ----- references ----- */ %>
+  <%_ ;(model.references ?? []).forEach((reference) => { %>
+    <%_ = reference.name%> <%= modelDbName(reference.toModelRefKey)%> @relation(fields: [<%= fieldDbName(reference.modelRefKey, reference.fieldRefKey)%>], references: [<%= fieldDbName(reference.toModelRefKey, reference.toModelFieldRefKey)%>])
 
-    <% }) %>
-  }
+  <% }) %>
+}
 
 <% }) %>
