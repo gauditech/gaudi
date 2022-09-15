@@ -68,11 +68,14 @@ semantics.addOperation("parse()", {
   AndExp_and(lhs, _and, rhs): ExpAST {
     return { kind: "binary", operator: "and", lhs: lhs.parse(), rhs: rhs.parse() };
   },
-  EqExp_eq(lhs, _eq, rhs): ExpAST {
-    return { kind: "binary", operator: "==", lhs: lhs.parse(), rhs: rhs.parse() };
+  IsExp_is_not(lhs, _is, _not, rhs): ExpAST {
+    return { kind: "binary", operator: "is not", lhs: lhs.parse(), rhs: rhs.parse() };
   },
-  EqExp_neq(lhs, _neq, rhs): ExpAST {
-    return { kind: "binary", operator: "!=", lhs: lhs.parse(), rhs: rhs.parse() };
+  IsExp_is(lhs, _is, rhs): ExpAST {
+    return { kind: "binary", operator: "is", lhs: lhs.parse(), rhs: rhs.parse() };
+  },
+  InExp_not_in(lhs, _not, _in, rhs): ExpAST {
+    return { kind: "binary", operator: "not in", lhs: lhs.parse(), rhs: rhs.parse() };
   },
   InExp_in(lhs, _in, rhs): ExpAST {
     return { kind: "binary", operator: "in", lhs: lhs.parse(), rhs: rhs.parse() };
@@ -93,7 +96,7 @@ semantics.addOperation("parse()", {
     return { kind: "paren", exp: exp.parse() };
   },
   PrimaryExp_not(_not, exp): ExpAST {
-    return { kind: "unary", operator: "!", exp: exp.parse() };
+    return { kind: "unary", operator: "not", exp: exp.parse() };
   },
   PrimaryExp_identifier(identifier): ExpAST {
     return { kind: "identifier", name: identifier.parse() };

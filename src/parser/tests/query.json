@@ -18,6 +18,26 @@
           },
           "fromModel": "students",
           "name": "active_students"
+        },
+        {
+          "filter": {
+            "kind": "binary",
+            "lhs": {
+              "kind": "binary",
+              "lhs": { "kind": "identifier", "name": "grade" },
+              "operator": ">=",
+              "rhs": { "kind": "literal", "value": 3 }
+            },
+            "operator": "or",
+            "rhs": {
+              "kind": "binary",
+              "lhs": { "kind": "identifier", "name": "behaviour" },
+              "operator": "is not",
+              "rhs": { "kind": "literal", "value": "bad" }
+            }
+          },
+          "fromModel": "students",
+          "name": "good_students"
         }
       ],
       "references": [],
@@ -38,6 +58,14 @@
         {
           "name": "is_registred",
           "type": "boolean"
+        },
+        {
+          "name": "grade",
+          "type": "integer"
+        },
+        {
+          "name": "behaviour",
+          "type": "text"
         }
       ],
       "name": "Student",

@@ -46,20 +46,21 @@ Gaudi {
   QueryExp = OrExp
 
   OrExp
-    = OrExp "or" AndExp -- or
+    = OrExp or AndExp -- or
     | AndExp
 
   AndExp
-    = AndExp "and" EqExp -- and
-    | EqExp
+    = AndExp and IsExp -- and
+    | IsExp
 
-  EqExp
-    = EqExp "==" InExp -- eq
-    | EqExp "!=" InExp -- neq
+  IsExp
+    = IsExp is not InExp -- is_not
+    | IsExp is InExp -- is
     | InExp
 
   InExp
-    = InExp "in" CompExp -- in
+    = InExp not in CompExp -- not_in
+    | InExp in CompExp -- in
     | CompExp
 
   CompExp
@@ -71,17 +72,26 @@ Gaudi {
 
   PrimaryExp
     = "(" QueryExp ")" -- paren
-    | "!" PrimaryExp -- not
+    | not PrimaryExp -- not
     | literal -- literal
     | identifier -- identifier
 
   literal (an literal) = null | boolean | integer | float | string
 
-  null = "null"
-  boolean = "true" | "false"
+  boolean = true | false
   integer = digit+
   float = digit* "." digit*
   string = "\"" (~"\"" any)* "\""
+
+  keywords = null | true | false | is | not | in
+  null = "null" ~identifierPart
+  true = "true" ~identifierPart
+  false = "false" ~identifierPart
+  or = "or" ~identifierPart
+  and = "and" ~identifierPart
+  is = "is" ~identifierPart
+  not = "not" ~identifierPart
+  in = "in" ~identifierPart
 
   identifier (an identifier) = identifierStart identifierPart*
   identifierStart = letter | "_"
