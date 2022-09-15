@@ -1,0 +1,44 @@
+<%
+
+/** ----- Helpers ----- */
+
+function modelDbName(modelRefKey) {
+  return (it.definition.models || [])
+    .find(model => model.refKey === modelRefKey)
+    ?.dbname
+}
+
+function fieldDbName(modelRefKey, fieldRefKey) {
+  return (it.definition.models || [])
+    .find(model => model.refKey === modelRefKey)
+    ?.fields
+    .find(field => field.refKey === fieldRefKey)
+    ?.dbname
+}
+
+%>
+
+<% /* ----- Template ----- */ %>
+
+<% ;(it.definition.models ?? []).forEach((model) => { %>
+  model <%=model.dbname %> {
+    <% /* ----- fields ----- */ %>
+    <% ;(model.fields ?? []).forEach((field) => { %>
+      <%= field.dbname %> <%= field.dbtype %><%= field.nullable ? '?' : '' %><%= field.primary ? ' @id' : '' %><%= field.unique ? ' @unique' : '' %>
+
+    <% }) %>
+
+    <% /* ----- relations ----- */ %>
+    <% ;(model.relations ?? []).forEach((relation) => { %>
+      <%= relation.name%> <%= modelDbName(relation.fromModelRefKey)%><%= !relation.unique ? '[]' : ''%><%= relation.nullable ? '?' : '' %>
+
+    <% }) %>
+
+    <% /* ----- references ----- */ %>
+    <% ;(model.references ?? []).forEach((reference) => { %>
+      <%= reference.name%> <%= modelDbName(reference.toModelRefKey)%> @relation(fields: [<%= fieldDbName(reference.modelRefKey, reference.fieldRefKey)%>], references: [<%= fieldDbName(reference.toModelRefKey, reference.toModelFieldRefKey)%>])
+
+    <% }) %>
+  }
+
+<% }) %>
