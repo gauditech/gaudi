@@ -4,7 +4,7 @@ import { compile } from "../compiler/compiler";
 
 import { parse } from "./parser";
 
-import specification from "examples/git/specification.json";
+import specification from "@examples/git/specification.json";
 
 const blueprint = fs.readFileSync("./examples/git/blueprint.gaudi").toString();
 
