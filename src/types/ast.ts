@@ -15,9 +15,7 @@ export type FieldAST = {
   body: FieldBodyAST[];
 };
 
-export type FieldBodyAST = { type: TypeAST } | "nullable" | "unique";
-
-export type TypeAST = "text" | "integer";
+export type FieldBodyAST = { type: string } | { default: unknown } | "nullable" | "unique";
 
 export type ReferenceAST = {
   kind: "reference";

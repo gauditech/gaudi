@@ -12,6 +12,7 @@ export type ModelSpec = {
 export type FieldSpec = {
   name: string;
   type: string;
+  default?: unknown;
   unique?: boolean;
   nullable?: boolean;
 };

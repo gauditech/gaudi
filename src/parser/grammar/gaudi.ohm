@@ -17,18 +17,16 @@ Gaudi {
     = "field" identifier "{" NonemptyNewlineBody<FieldBody, ","> "}"
 
   FieldBody
-    = TypeDefinition
-    | FieldTag
-
-  TypeDefinition = "type" Type
-
-  FieldTag = "nullable" | "unique"
+    = "type" identifier -- type
+    | "default" literal -- default // we allow only literals for now
+    | ("nullable" | "unique") -- tag
 
   Reference
     = "reference" identifier "{" NonemptyNewlineBody<ReferenceBody, ","> "}"
 
   ReferenceBody
-    = "to" identifier
+    = "to" identifier -- to
+    | ("nullable" | "unique") -- tag
 
   Relation
     = "relation" identifier "{" NonemptyNewlineBody<RelationBody, ","> "}"
@@ -37,7 +35,13 @@ Gaudi {
     = "from" identifier -- from
     | "through" identifier -- through
 
-  Type = "text" | "integer"
+  literal = null | boolean | integer | float | string
+
+  null = "null"
+  boolean = "true" | "false"
+  integer = digit+
+  float = digit* "." digit*
+  string = "\"" (~"\"" any)* "\""
 
   identifier (an identifier) = letter alnum*
 

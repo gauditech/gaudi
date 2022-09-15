@@ -1,0 +1,27 @@
+{
+  "models": [
+    {
+      "fields": [
+        {
+          "default": "car",
+          "name": "type",
+          "type": "text"
+        },
+        {
+          "default": true,
+          "name": "active",
+          "type": "boolean"
+        },
+        {
+          "default": null,
+          "name": "make",
+          "nullable": true,
+          "type": "text"
+        }
+      ],
+      "name": "Vehicle",
+      "references": [],
+      "relations": []
+    }
+  ]
+}
