@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "npm run generate-grammar && jest",
     "build": "npm run generate-grammar && tsc -p tsconfig.json && npm run copy-static && npm run compile",
     "compile": "node dist/src/index.js",
     "lint": "eslint --fix .; prettier --loglevel warn --write .",
