@@ -16,6 +16,23 @@ function fieldDbName(modelRefKey, fieldRefKey) {
     ?.dbname
 }
 
+function typeToDbType(type) {
+  if (type === 'serial') {
+    return 'Int'
+  }
+  else if (type === 'integer') {
+    return 'Int'
+  }
+  else if (type === 'text') {
+    return 'String'
+  }
+  else if (type === 'boolean') {
+    return 'Boolean'
+  }
+
+  throw 'UNHANDLED_GAUDI_TYPE'
+}
+
 %>
 
 <% /* ----- Template ----- */ %>
@@ -23,7 +40,7 @@ function fieldDbName(modelRefKey, fieldRefKey) {
 model <%=model.dbname %> {
   <% /* ----- fields ----- */ %>
   <%_ ;(model.fields ?? []).forEach((field) => { %>
-    <%_ = field.dbname %> <%= field.dbtype %><%= field.nullable ? '?' : '' %><%= field.primary ? ' @id' : '' %><%= field.unique ? ' @unique' : '' %>
+    <%_ = field.dbname %> <%= typeToDbType(field.dbtype) %><%= field.nullable ? '?' : '' %><%= field.primary ? ' @id' : '' %><%= field.unique ? ' @unique' : '' %><%= field.dbtype === 'serial' ? ' @default(autoincrement())' : ''%>
 
   <% }) %>
 

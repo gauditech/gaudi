@@ -1,21 +1,21 @@
 
 model org {
-  id serial @id @unique
-  name text
-  slug text @unique
-  description text
-  optout text?
+  id Int @id @unique @default(autoincrement())
+  name String
+  slug String @unique
+  description String
+  optout String?
   
   repos repo[]
   
   }
 
 model repo {
-  id serial @id @unique
-  name text
-  slug text @unique
-  description text
-  org_id integer
+  id Int @id @unique @default(autoincrement())
+  name String
+  slug String @unique
+  description String
+  org_id Int
   
   
   org org @relation(fields: [org_id], references: [id])
