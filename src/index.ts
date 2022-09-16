@@ -2,7 +2,7 @@ import fs from "fs";
 
 import "./common/setupAliases";
 
-import definitionInput from "../examples/git/definition.json";
+import definitionInput from "@examples/git/definition.json";
 import specificationInput from "@examples/git/specification.json";
 
 import { build } from "./builder/builder";
