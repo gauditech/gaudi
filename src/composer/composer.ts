@@ -138,6 +138,8 @@ function composeRelations(models: ModelDef[], specs: ModelSpec[]): ModelDef[] {
         fromModelRefKey: relModel.refKey,
         through: rel.through,
         throughRefKey: relReference.refKey,
+        nullable: relReference.nullable,
+        unique: relReference.unique,
       };
     });
     ensureUnique([

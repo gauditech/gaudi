@@ -67,10 +67,12 @@
           "refKey": "Org.repos",
           "modelRefKey": "Org",
           "name": "repos",
+          "nullable": false,
           "fromModel": "Repo",
           "fromModelRefKey": "Repo",
           "through": "org",
-          "throughRefKey": "Repo.org"
+          "throughRefKey": "Repo.org",
+          "unique": false
         }
       ]
     },
