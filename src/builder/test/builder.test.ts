@@ -27,7 +27,13 @@ describe("builder", () => {
     it("renders DB schema template correctly", async () => {
       const snapshot = readSnapshot("schema.prisma");
 
-      expect(await renderDbSchema({ definition: definition as any })).toEqual(snapshot);
+      expect(
+        await renderDbSchema({
+          definition: definition as any,
+          dbProvider: "DB_PROVIDER",
+          dbConnectionUrl: "DB_CONNECTION_URL",
+        })
+      ).toEqual(snapshot);
     });
   });
 });

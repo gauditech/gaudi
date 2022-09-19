@@ -7,6 +7,8 @@ import { Definition } from "@src/types/definition";
 
 // TODO: read from config
 const SERVER_PORT = 3001;
+const DB_PROVIDER = "postgresql";
+const DB_CONNECTION_URL = "postgresql://gaudi:gaudi123@localhost:5432/gaudi-dev";
 const TEMPLATE_PATH = path.join(__dirname, "templates");
 const OUTPUT_PATH = path.join(process.cwd(), "./dist/output");
 
@@ -24,7 +26,7 @@ export async function build(definition: Definition): Promise<void> {
 
   prepareOutputFolder();
   buildIndex();
-  await buildDbSchema({ definition });
+  await buildDbSchema({ definition, dbProvider: DB_PROVIDER, dbConnectionUrl: DB_CONNECTION_URL });
   await buildServer({
     serverPort: SERVER_PORT,
   });
@@ -58,7 +60,11 @@ async function buildIndex() {
 
 // ---------- DB
 
-export type BuildDbSchemaData = { definition: Definition };
+export type BuildDbSchemaData = {
+  definition: Definition;
+  dbProvider: string;
+  dbConnectionUrl: string;
+};
 
 export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
   return renderTemplate(path.join(TEMPLATE_PATH, "db/schema.prisma.eta"), data);
