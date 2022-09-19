@@ -77,7 +77,7 @@ export type BuildServerData = {
 };
 
 export async function renderServer(data: BuildServerData): Promise<string> {
-  return renderTemplate(path.join(OUTPUT_PATH, "server.js"), data);
+  return renderTemplate(path.join(TEMPLATE_PATH, "server.eta"), data);
 }
 
 async function buildServer(data: BuildServerData): Promise<void> {
