@@ -103,6 +103,8 @@ Features:
     Get: v0
     Create: v0
     Update: v0
+    Upsert: v3
+    BatchMode: v3 # all or nothing, any
     O2mNesting: v0
     M2mNesting: v2
     Custom: v2
