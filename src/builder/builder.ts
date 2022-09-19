@@ -1,16 +1,18 @@
 import fs from "fs";
 import path from "path";
 
-import { render, renderTemplate, storeTemplateOutput } from "./render/renderer";
+import { renderTemplate, storeTemplateOutput } from "@src/builder/render/renderer";
 
 import { Definition } from "@src/types/definition";
+import { applyDbChanges } from "@src/builder/migration/migrator";
 
-// TODO: read from config
-const SERVER_PORT = 3001;
-const DB_PROVIDER = "postgresql";
-const DB_CONNECTION_URL = "postgresql://gaudi:gaudi123@localhost:5432/gaudi-dev";
+// TODO: read from definition
 const TEMPLATE_PATH = path.join(__dirname, "templates");
 const OUTPUT_PATH = path.join(process.cwd(), "./dist/output");
+const DB_OUTPUT_PATH = `${OUTPUT_PATH}/db`;
+const SERVER_PORT = 3001;
+const DB_PROVIDER = "postgresql";
+const DB_CONNECTION_URL = "postgresql://gaudi:gaudip@localhost:5432/gaudi";
 
 export async function build(definition: Definition): Promise<void> {
   /* TODO
@@ -26,7 +28,7 @@ export async function build(definition: Definition): Promise<void> {
 
   prepareOutputFolder();
   buildIndex();
-  await buildDbSchema({ definition, dbProvider: DB_PROVIDER, dbConnectionUrl: DB_CONNECTION_URL });
+  await buildDb({ definition, dbProvider: DB_PROVIDER, dbConnectionUrl: DB_CONNECTION_URL });
   await buildServer({
     serverPort: SERVER_PORT,
   });
@@ -70,9 +72,17 @@ export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
   return renderTemplate(path.join(TEMPLATE_PATH, "db/schema.prisma.eta"), data);
 }
 
-async function buildDbSchema(data: BuildDbSchemaData): Promise<void> {
-  return renderDbSchema(data).then((content) =>
-    storeTemplateOutput(path.join(OUTPUT_PATH, "db/schema.prisma"), content)
+async function buildDb(data: BuildDbSchemaData): Promise<void> {
+  const schemaFile = path.join(DB_OUTPUT_PATH, "/schema.prisma");
+
+  return (
+    // render DB schema
+    renderDbSchema(data)
+      .then((content) => storeTemplateOutput(schemaFile, content))
+      // apply DB schema
+      .then(() => {
+        applyDbChanges({ schema: schemaFile });
+      })
   );
 }
 
