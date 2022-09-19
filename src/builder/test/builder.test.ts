@@ -16,7 +16,7 @@ describe("builder", () => {
 
   describe("build server", () => {
     it("renders server template correctly", async () => {
-      const serverData = { serverPort: 3000 };
+      const serverData = { serverPort: 3001 };
       const snapshot = readSnapshot("server.js");
 
       expect(await renderServer(serverData)).toEqual(snapshot);
