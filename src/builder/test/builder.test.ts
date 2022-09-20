@@ -1,11 +1,26 @@
 import fs from "fs";
 import path from "path";
-import { renderDbSchema, renderIndex, renderServer } from "@src/builder/builder";
+import { renderDbSchema, renderIndex, renderPackage, renderServer } from "@src/builder/builder";
 import definition from "@examples/git/definition.json";
 
 const SNAPSHOT_FOLDER = __dirname;
 
 describe("builder", () => {
+  describe("build package", () => {
+    it("renders package template correctly", async () => {
+      const data = {
+        package: {
+          name: "test",
+          description: "Test description",
+          version: "0.0.1",
+        },
+      };
+      const snapshot = readSnapshot("package.json");
+
+      expect(await renderPackage(data)).toEqual(snapshot);
+    });
+  });
+
   describe("build index", () => {
     it("renders index template correctly", async () => {
       const snapshot = readSnapshot("index.js");
@@ -16,24 +31,23 @@ describe("builder", () => {
 
   describe("build server", () => {
     it("renders server template correctly", async () => {
-      const serverData = { serverPort: 3001 };
+      const data = { serverPort: 3001 };
       const snapshot = readSnapshot("server.js");
 
-      expect(await renderServer(serverData)).toEqual(snapshot);
+      expect(await renderServer(data)).toEqual(snapshot);
     });
   });
 
   describe("build DB schema", () => {
     it("renders DB schema template correctly", async () => {
+      const data = {
+        definition: definition as any,
+        dbProvider: "DB_PROVIDER",
+        dbConnectionUrl: "DB_CONNECTION_URL",
+      };
       const snapshot = readSnapshot("schema.prisma");
 
-      expect(
-        await renderDbSchema({
-          definition: definition as any,
-          dbProvider: "DB_PROVIDER",
-          dbConnectionUrl: "DB_CONNECTION_URL",
-        })
-      ).toEqual(snapshot);
+      expect(await renderDbSchema(data)).toEqual(snapshot);
     });
   });
 });

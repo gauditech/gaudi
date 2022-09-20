@@ -8,6 +8,7 @@
     "test": "npm run generate-grammar && jest",
     "build": "npm run generate-grammar && tsc -p tsconfig.json && npm run copy-static && npm run compile",
     "compile": "node dist/src/index.js",
+    "start-build": "cd dist/output && npm run start-server",
     "lint": "eslint --fix .; prettier --loglevel warn --write .",
     "copy-static": "npm run copy-static:builder-templates",
     "copy-static:builder-templates": "copyfiles 'src/builder/templates/**' dist",
