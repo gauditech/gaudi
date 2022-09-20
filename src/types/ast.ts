@@ -1,47 +1,61 @@
+import { WithContext } from "@src/common/error";
+
 export type AST = {
   models: ModelAST[];
 };
 
-export type ModelAST = {
+export type ModelAST = WithContext<{
   name: string;
   body: ModelBodyAST[];
-};
+}>;
 
 export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST;
 
-export type FieldAST = {
+export type FieldAST = WithContext<{
   kind: "field";
   name: string;
   body: FieldBodyAST[];
-};
+}>;
 
-export type FieldBodyAST = { type: string } | { default: LiteralValue } | "nullable" | "unique";
+export type FieldBodyAST = WithContext<
+  | { kind: "type"; type: string }
+  | { kind: "default"; default: LiteralValue }
+  | { kind: "tag"; tag: FieldTag }
+>;
 
-export type ReferenceAST = {
+export type FieldTag = "nullable" | "unique";
+
+export type ReferenceAST = WithContext<{
   kind: "reference";
   name: string;
   body: ReferenceBodyAST[];
-};
+}>;
 
-export type ReferenceBodyAST = { to: string } | "nullable" | "unique";
+export type ReferenceBodyAST = WithContext<
+  { kind: "to"; to: string } | { kind: "tag"; tag: ReferenceTag }
+>;
 
-export type RelationAST = {
+export type ReferenceTag = "nullable" | "unique";
+
+export type RelationAST = WithContext<{
   kind: "relation";
   name: string;
   body: RelationBodyAST[];
-};
+}>;
 
-export type RelationBodyAST = { from: string } | { through: string };
+export type RelationBodyAST = WithContext<
+  { kind: "from"; from: string } | { kind: "through"; through: string }
+>;
 
-export type QueryAST = {
+export type QueryAST = WithContext<{
   kind: "query";
   name: string;
   body: QueryBodyAST[];
-};
+}>;
 
-export type QueryBodyAST = { from: string } | { filter: ExpAST };
+export type QueryBodyAST = WithContext<{ from: string } | { filter: ExpAST }>;
 
-export type ExpAST =
+export type ExpAST = WithContext<
   | {
       kind: "binary";
       operator: BinaryOperator;
@@ -51,7 +65,8 @@ export type ExpAST =
   | { kind: "paren"; exp: ExpAST }
   | { kind: "unary"; operator: UnaryOperator; exp: ExpAST }
   | { kind: "identifier"; name: string }
-  | { kind: "literal"; value: LiteralValue };
+  | { kind: "literal"; value: LiteralValue }
+>;
 
 export type LiteralValue = null | boolean | number | string;
 
@@ -68,3 +83,14 @@ export type BinaryOperator =
   | ">=";
 
 export type UnaryOperator = "not";
+
+export type SourceContext = {
+  offset: number;
+  lineNum: number;
+  colNum: number;
+  line: string;
+  prevLine: string;
+  nextLine: string;
+  messagePrefix: string;
+  toString: () => string;
+};

@@ -18,7 +18,7 @@ describe("parser", () => {
       const specificationPath = blueprintPath.slice(0, -extenstion.length) + ".json";
       const specification = JSON.parse(fs.readFileSync(specificationPath).toString());
 
-      expect(compile(parse(blueprint))).toEqual(specification);
+      expect(compile(parse(blueprint))).toMatchObject(specification);
     });
   });
 });
