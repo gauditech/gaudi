@@ -197,3 +197,25 @@ query {
 
 # zelimo izbacit pwd_hash iz selecta globalno
 # zelimo izbacit is_deleted usere globalno
+
+
+
+query {
+    from Org
+    alias org
+    query repos1 {
+        from org.repos
+        filter { ... }
+        select ...
+    }
+    select { name, repos1 as repos, select slug } }
+}
+
+query {
+    from Org
+    query members {
+        from memberships.user as m.u
+        filter { ... }
+    }
+    select { .. }
+}
