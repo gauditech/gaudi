@@ -6,13 +6,14 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run generate-grammar && jest",
-    "build": "npm run generate-grammar && tsc -p tsconfig.json && npm run copy-static && npm run compile",
-    "compile": "node dist/src/index.js",
-    "start-build": "cd dist/output && npm run start-server",
+    "build": "npm run generate-grammar && tsc -p tsconfig.json && npm run copy-static && npm run dist:compile",
     "lint": "eslint --fix .; prettier --loglevel warn --write .",
-    "copy-static": "npm run copy-static:builder-templates",
+    "copy-static": "npm run copy-static:builder-templates && npm run copy-static:build-package",
+    "copy-static:build-package": "copyfiles -f 'src/package.json' dist",
     "copy-static:builder-templates": "copyfiles 'src/builder/templates/**' dist",
-    "generate-grammar": "ohm generateBundles --withTypes src/parser/grammar/gaudi.ohm"
+    "generate-grammar": "ohm generateBundles --withTypes src/parser/grammar/gaudi.ohm",
+    "dist:compile": "cd dist && npm run compile",
+    "dist:start-server": "cd dist/output && npm run start-server"
   },
   "repository": {
     "type": "git",
