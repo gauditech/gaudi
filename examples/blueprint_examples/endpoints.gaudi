@@ -41,7 +41,7 @@ entrypoint Orgs {
     }
 
     entrypoint Repositories {
-        target query { from repos }
+        target query { from repos, filter is_deleted is false }
         # target MyQuery
         identify with slug
         alias repo
