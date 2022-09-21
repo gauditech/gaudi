@@ -11,7 +11,8 @@
           "toModel": "Make"
         }
       ],
-      "relations": []
+      "relations": [],
+      "computeds": []
     },
     {
       "fields": [
@@ -23,7 +24,8 @@
       "name": "Make",
       "queries": [],
       "references": [],
-      "relations": []
+      "relations": [],
+      "computeds": []
     }
   ]
 }

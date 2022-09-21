@@ -27,21 +27,21 @@ Gaudi {
     = "reference" identifier "{" NonemptyNewlineBody<ReferenceBody, ","> "}"
 
   ReferenceBody
-    = "to" identifier -- to
+    = "to" IdentifierPath -- to
     | ("nullable" | "unique") -- tag
 
   Relation
     = "relation" identifier "{" NonemptyNewlineBody<RelationBody, ","> "}"
 
   RelationBody
-    = "from" identifier -- from
+    = "from" IdentifierPath -- from
     | "through" identifier -- through
 
   Query
     = "query" identifier "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
   QueryBody
-    = "from" identifier -- from
+    = "from" IdentifierPath -- from
     | "filter" QueryExp -- filter
 
   Computed
@@ -78,7 +78,9 @@ Gaudi {
     = "(" QueryExp ")" -- paren
     | not PrimaryExp -- not
     | literal -- literal
-    | identifier -- identifier
+    | IdentifierPath -- identifier
+
+  IdentifierPath = identifier ("." identifier)*
 
   literal (an literal) = null | boolean | integer | float | string
 

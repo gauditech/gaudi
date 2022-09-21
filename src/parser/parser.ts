@@ -195,6 +195,10 @@ semantics.addOperation("parse()", {
   PrimaryExp_literal(this, literal): ExpAST {
     return { kind: "literal", value: literal.parse(), interval: this.source };
   },
+  IdentifierPath(this, head, _dot, tail): string {
+    const path = [head.parse(), ...tail.children.map((child) => child.parse())];
+    return path.join(".");
+  },
   null(_null) {
     return null;
   },

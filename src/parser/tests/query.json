@@ -1,7 +1,12 @@
 {
   "models": [
     {
-      "fields": [],
+      "fields": [
+        {
+          "name": "year",
+          "type": "integer"
+        }
+      ],
       "name": "Class",
       "queries": [
         {
@@ -47,7 +52,8 @@
           "name": "students",
           "through": "class"
         }
-      ]
+      ],
+      "computeds": []
     },
     {
       "fields": [
@@ -76,7 +82,18 @@
           "toModel": "Class"
         }
       ],
-      "relations": []
+      "relations": [],
+      "computeds": [
+        {
+          "name": "is_senior",
+          "exp": {
+            "kind": "binary",
+            "lhs": { "kind": "identifier", "name": "class.year" },
+            "operator": ">=",
+            "rhs": { "kind": "literal", "value": 4 }
+          }
+        }
+      ]
     }
   ]
 }

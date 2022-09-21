@@ -22,7 +22,8 @@
       "name": "Vehicle",
       "queries": [],
       "references": [],
-      "relations": []
+      "relations": [],
+      "computeds": []
     }
   ]
 }
