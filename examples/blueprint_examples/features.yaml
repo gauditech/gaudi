@@ -8,7 +8,7 @@ Features:
     Fields:
       Type:
         Integer/Text/Boolean: v0
-        Date/DateTime: v0
+        Date/Time/DateTime: v0
         Double: v1
         Decimal: v2
       FileUpload: v2
@@ -47,6 +47,8 @@ Features:
         Equal: v0
         Gt/Gte/Lt/Lte: v0
         In: v0
+        Date/Time/DateTime: v3
+        MultiFieldArithmetics: v1
         Between: v3
         And/Or: v0
         Nested: v0
@@ -101,6 +103,8 @@ Features:
     Get: v0
     Create: v0
     Update: v0
+    Upsert: v3
+    BatchErrMode: v3 # abort, skip
     O2mNesting: v0
     M2mNesting: v2
     Custom: v2

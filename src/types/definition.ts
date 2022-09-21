@@ -42,4 +42,6 @@ export type RelationDef = {
   fromModelRefKey: string;
   through: string;
   throughRefKey: string;
+  nullable: boolean;
+  unique: boolean;
 };

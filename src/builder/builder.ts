@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { render } from "./render/renderer";
+import { render, renderTemplate, storeTemplateOutput } from "./render/renderer";
 
 import { Definition } from "@src/types/definition";
 
@@ -10,18 +10,13 @@ const SERVER_PORT = 3001;
 const TEMPLATE_PATH = path.join(__dirname, "templates");
 const OUTPUT_PATH = path.join(process.cwd(), "./dist/output");
 
-export function build(definition: Definition): void {
-  /*
+export async function build(definition: Definition): Promise<void> {
+  /* TODO
 
- - template renderer
  - server (express)
  	* read env/config with defaults
- 	* index.js
- - includes file
- 	* append any rendered file import
  - model
- 	* build DB schema
- 	*
+ 	* many-to-many relations
  - fieldset
  - entrypoint
  - action
@@ -29,23 +24,64 @@ export function build(definition: Definition): void {
 
   prepareOutputFolder();
   buildIndex();
-  buildServer();
+  await buildDbSchema({ definition });
+  await buildServer({
+    serverPort: SERVER_PORT,
+  });
 }
 
-// ---------- part builders
+// -------------------- part builders
+
+// ---------- Output
 
 function prepareOutputFolder() {
+  // clear output folder
+  if (!fs.existsSync(OUTPUT_PATH)) {
+    fs.rmSync(OUTPUT_PATH, { recursive: true, force: true });
+  }
+
+  // (re)create output folder
   fs.mkdirSync(OUTPUT_PATH, { recursive: true });
 }
 
-function buildIndex() {
-  render(path.join(TEMPLATE_PATH, "index.eta"), path.join(OUTPUT_PATH, "index.js"));
+// ---------- Index
+
+export async function renderIndex(): Promise<string> {
+  return renderTemplate(path.join(TEMPLATE_PATH, "index.eta"));
 }
 
-function buildServer() {
-  const data = {
-    serverPort: SERVER_PORT,
-  };
+async function buildIndex() {
+  return renderIndex().then((content) =>
+    storeTemplateOutput(path.join(OUTPUT_PATH, "index.js"), content)
+  );
+}
 
-  render(path.join(TEMPLATE_PATH, "server.eta"), path.join(OUTPUT_PATH, "server.js"), data);
+// ---------- DB
+
+export type BuildDbSchemaData = { definition: Definition };
+
+export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
+  return renderTemplate(path.join(TEMPLATE_PATH, "db/schema.prisma.eta"), data);
+}
+
+async function buildDbSchema(data: BuildDbSchemaData): Promise<void> {
+  return renderDbSchema(data).then((content) =>
+    storeTemplateOutput(path.join(OUTPUT_PATH, "db/schema.prisma"), content)
+  );
+}
+
+// ---------- Server
+
+export type BuildServerData = {
+  serverPort: number;
+};
+
+export async function renderServer(data: BuildServerData): Promise<string> {
+  return renderTemplate(path.join(TEMPLATE_PATH, "server.eta"), data);
+}
+
+async function buildServer(data: BuildServerData): Promise<void> {
+  return renderServer(data).then((content) => {
+    storeTemplateOutput(path.join(OUTPUT_PATH, "server.js"), content);
+  });
 }
