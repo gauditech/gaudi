@@ -10,7 +10,8 @@
       ],
       "references": [],
       "relations": [{ "name": "repos", "fromModel": "Repo", "through": "org" }],
-      "queries": []
+      "queries": [],
+      "computeds": []
     },
     {
       "name": "Repo",
@@ -21,7 +22,8 @@
       ],
       "references": [{ "name": "org", "toModel": "Org" }],
       "relations": [],
-      "queries": []
+      "queries": [],
+      "computeds": []
     }
   ]
 }

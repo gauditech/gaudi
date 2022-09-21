@@ -13,6 +13,7 @@ Gaudi {
     | Reference
     | Relation
     | Query
+    | Computed
 
   Field
     = "field" identifier "{" NonemptyNewlineBody<FieldBody, ","> "}"
@@ -42,6 +43,9 @@ Gaudi {
   QueryBody
     = "from" identifier -- from
     | "filter" QueryExp -- filter
+
+  Computed
+    = "computed" identifier "{" QueryExp "}"
 
   QueryExp = OrExp
 

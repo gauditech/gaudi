@@ -2,6 +2,7 @@ import grammar from "./grammar/gaudi.ohm-bundle.js";
 
 import {
   AST,
+  ComputedAST,
   ExpAST,
   FieldAST,
   FieldBodyAST,
@@ -83,6 +84,14 @@ semantics.addOperation("parse()", {
   },
   QueryBody_filter(this, _filter, exp): QueryBodyAST {
     return { filter: exp.parse(), interval: this.source };
+  },
+  Computed(this, _computed, identifier, _parenL, exp, _parenR): ComputedAST {
+    return {
+      kind: "computed",
+      name: identifier.parse(),
+      exp: exp.parse(),
+      interval: this.source,
+    };
   },
   OrExp_or(this, lhs, _or, rhs): ExpAST {
     return {

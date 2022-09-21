@@ -12,6 +12,7 @@ export type ModelSpec = WithContext<{
   references: ReferenceSpec[];
   relations: RelationSpec[];
   queries: QuerySpec[];
+  computeds: ComputedSpec[];
 }>;
 
 export type FieldSpec = WithContext<{
@@ -39,6 +40,11 @@ export type QuerySpec = WithContext<{
   name: string;
   fromModel: string;
   filter?: ExpSpec;
+}>;
+
+export type ComputedSpec = WithContext<{
+  name: string;
+  exp: ExpSpec;
 }>;
 
 export type ExpSpec = WithContext<

@@ -1,0 +1,4 @@
+model Vehicle {
+  field serial_number { type text, nullable }
+  computed is_registred { serial_number is not null }
+}

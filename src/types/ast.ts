@@ -9,7 +9,7 @@ export type ModelAST = WithContext<{
   body: ModelBodyAST[];
 }>;
 
-export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST;
+export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST;
 
 export type FieldAST = WithContext<{
   kind: "field";
@@ -54,6 +54,8 @@ export type QueryAST = WithContext<{
 }>;
 
 export type QueryBodyAST = WithContext<{ from: string } | { filter: ExpAST }>;
+
+export type ComputedAST = WithContext<{ kind: "computed"; name: string; exp: ExpAST }>;
 
 export type ExpAST = WithContext<
   | {

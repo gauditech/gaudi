@@ -1,6 +1,7 @@
 import { CompilerError } from "@src/common/error";
 import {
   AST,
+  ComputedAST,
   ExpAST,
   FieldAST,
   LiteralValue,
@@ -10,6 +11,7 @@ import {
   RelationAST,
 } from "@src/types/ast";
 import {
+  ComputedSpec,
   ExpSpec,
   FieldSpec,
   ModelSpec,
@@ -111,6 +113,14 @@ function compileQuery(query: QueryAST): QuerySpec {
   return { name: query.name, fromModel, filter, interval: query.interval };
 }
 
+function compileComputed(computed: ComputedAST): ComputedSpec {
+  return {
+    name: computed.name,
+    exp: compileQueryExp(computed.exp),
+    interval: computed.interval,
+  };
+}
+
 function compileQueryExp(exp: ExpAST): ExpSpec {
   if (exp.kind === "paren") {
     return compileQueryExp(exp.exp);
@@ -139,6 +149,7 @@ function compileModel(model: ModelAST): ModelSpec {
   const references: ReferenceSpec[] = [];
   const relations: RelationSpec[] = [];
   const queries: QuerySpec[] = [];
+  const computeds: ComputedSpec[] = [];
 
   model.body.forEach((b) => {
     if (b.kind === "field") {
@@ -149,10 +160,20 @@ function compileModel(model: ModelAST): ModelSpec {
       relations.push(compileRelation(b));
     } else if (b.kind === "query") {
       queries.push(compileQuery(b));
+    } else if (b.kind === "computed") {
+      computeds.push(compileComputed(b));
     }
   });
 
-  return { name: model.name, fields, references, relations, queries, interval: model.interval };
+  return {
+    name: model.name,
+    fields,
+    references,
+    relations,
+    queries,
+    computeds,
+    interval: model.interval,
+  };
 }
 
 export function compile(input: AST): Specification {

@@ -1,0 +1,28 @@
+{
+  "models": [
+    {
+      "fields": [
+        {
+          "name": "serial_number",
+          "nullable": true,
+          "type": "text"
+        }
+      ],
+      "name": "Vehicle",
+      "queries": [],
+      "references": [],
+      "relations": [],
+      "computeds": [
+        {
+          "name": "is_registred",
+          "exp": {
+            "kind": "binary",
+            "lhs": { "kind": "identifier", "name": "serial_number" },
+            "operator": "is not",
+            "rhs": { "kind": "literal", "value": null }
+          }
+        }
+      ]
+    }
+  ]
+}
