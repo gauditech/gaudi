@@ -36,6 +36,13 @@ function typeToDbType(type) {
 %>
 
 <% /* ----- Template ----- */ %>
+
+<% /* TODO: datasource should come from definition instead of being hardcoded */ %>
+datasource db {
+  provider = "<%= it.dbProvider %>"
+  url      = "<%= it.dbConnectionUrl%>"
+}
+
 <% ;(it.definition.models ?? []).forEach((model) => { %>
 model <%=model.dbname %> {
   <% /* ----- fields ----- */ %>
