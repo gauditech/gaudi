@@ -10,7 +10,6 @@
     "node": ">=16.15.0"
   },
   "dependencies": {
-    "express": "^4.18.1",
     "prisma": "^4.3.1"
   }
 }
