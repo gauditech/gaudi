@@ -13,6 +13,6 @@ const blueprintPath = "../examples/git/blueprint.gaudi";
 
 const input = fs.readFileSync(blueprintPath).toString("utf-8");
 const ast = parse(input);
-const _specification = compile(ast);
-const _definition = compose(_specification);
-build(_definition);
+const specification = compile(ast);
+const definition = compose(specification);
+build(definition);
