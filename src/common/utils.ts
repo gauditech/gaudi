@@ -18,10 +18,8 @@ export function ensureExists<I>(item: I | null | undefined): void {
 
 /** Concat all keys who's value is `true` using `delimiter` */
 export function concatKeys(map: Record<string, boolean>, delimiter = " "): string {
-  return Object.keys(map).reduce((accum, className) => {
-    if (map[className]) {
-      accum += (accum ? " " : "") + className;
-    }
-    return accum;
-  }, "");
+  return Object.entries(map)
+    .filter(([_key, value]) => value)
+    .map(([key, _value]) => key)
+    .join(delimiter);
 }
