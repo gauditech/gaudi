@@ -17,9 +17,9 @@
           "name": "is_registred",
           "exp": {
             "kind": "binary",
-            "lhs": { "kind": "identifier", "name": "serial_number" },
+            "lhs": { "kind": "identifier", "identifier": ["serial_number"] },
             "operator": "is not",
-            "rhs": { "kind": "literal", "value": null }
+            "rhs": { "kind": "literal", "literal": null }
           }
         }
       ]

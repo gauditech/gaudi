@@ -14,14 +14,14 @@
             "kind": "binary",
             "lhs": {
               "kind": "binary",
-              "lhs": { "kind": "identifier", "name": "is_active" },
+              "lhs": { "kind": "identifier", "identifier": ["is_active"] },
               "operator": "or",
-              "rhs": { "kind": "identifier", "name": "is_registred" }
+              "rhs": { "kind": "identifier", "identifier": ["is_registred"] }
             },
             "operator": "and",
-            "rhs": { "kind": "literal", "value": true }
+            "rhs": { "kind": "literal", "literal": true }
           },
-          "fromModel": "students",
+          "fromModel": ["students"],
           "name": "active_students"
         },
         {
@@ -29,19 +29,19 @@
             "kind": "binary",
             "lhs": {
               "kind": "binary",
-              "lhs": { "kind": "identifier", "name": "grade" },
+              "lhs": { "kind": "identifier", "identifier": ["grade"] },
               "operator": ">=",
-              "rhs": { "kind": "literal", "value": 3 }
+              "rhs": { "kind": "literal", "literal": 3 }
             },
             "operator": "or",
             "rhs": {
               "kind": "binary",
-              "lhs": { "kind": "identifier", "name": "behaviour" },
+              "lhs": { "kind": "identifier", "identifier": ["behaviour"] },
               "operator": "is not",
-              "rhs": { "kind": "literal", "value": "bad" }
+              "rhs": { "kind": "literal", "literal": "bad" }
             }
           },
-          "fromModel": "students",
+          "fromModel": ["students"],
           "name": "good_students"
         }
       ],
@@ -88,9 +88,9 @@
           "name": "is_senior",
           "exp": {
             "kind": "binary",
-            "lhs": { "kind": "identifier", "name": "class.year" },
+            "lhs": { "kind": "identifier", "identifier": ["class", "year"] },
             "operator": ">=",
-            "rhs": { "kind": "literal", "value": 4 }
+            "rhs": { "kind": "literal", "literal": 4 }
           }
         }
       ]
