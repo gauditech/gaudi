@@ -27,14 +27,14 @@ Gaudi {
     = "reference" identifier "{" NonemptyNewlineBody<ReferenceBody, ","> "}"
 
   ReferenceBody
-    = "to" IdentifierPath -- to
+    = "to" identifier -- to
     | ("nullable" | "unique") -- tag
 
   Relation
     = "relation" identifier "{" NonemptyNewlineBody<RelationBody, ","> "}"
 
   RelationBody
-    = "from" IdentifierPath -- from
+    = "from" identifier -- from
     | "through" identifier -- through
 
   Query

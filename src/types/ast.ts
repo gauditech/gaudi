@@ -53,7 +53,7 @@ export type QueryAST = WithContext<{
   body: QueryBodyAST[];
 }>;
 
-export type QueryBodyAST = WithContext<{ from: string } | { filter: ExpAST }>;
+export type QueryBodyAST = WithContext<{ from: string[] } | { filter: ExpAST }>;
 
 export type ComputedAST = WithContext<{ kind: "computed"; name: string; exp: ExpAST }>;
 
@@ -66,8 +66,8 @@ export type ExpAST = WithContext<
     }
   | { kind: "paren"; exp: ExpAST }
   | { kind: "unary"; operator: UnaryOperator; exp: ExpAST }
-  | { kind: "identifier"; name: string }
-  | { kind: "literal"; value: LiteralValue }
+  | { kind: "identifier"; identifier: string[] }
+  | { kind: "literal"; literal: LiteralValue }
 >;
 
 export type LiteralValue = null | boolean | number | string;
@@ -85,14 +85,3 @@ export type BinaryOperator =
   | ">=";
 
 export type UnaryOperator = "not";
-
-export type SourceContext = {
-  offset: number;
-  lineNum: number;
-  colNum: number;
-  line: string;
-  prevLine: string;
-  nextLine: string;
-  messagePrefix: string;
-  toString: () => string;
-};

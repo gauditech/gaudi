@@ -95,7 +95,7 @@ function compileRelation(relation: RelationAST): RelationSpec {
 }
 
 function compileQuery(query: QueryAST): QuerySpec {
-  let fromModel: string;
+  let fromModel: string[];
   let filter: ExpSpec;
 
   query.body.forEach((b) => {

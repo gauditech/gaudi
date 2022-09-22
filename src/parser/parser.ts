@@ -190,14 +190,13 @@ semantics.addOperation("parse()", {
     return { kind: "unary", operator: "not", exp: exp.parse(), interval: this.source };
   },
   PrimaryExp_identifier(this, identifier): ExpAST {
-    return { kind: "identifier", name: identifier.parse(), interval: this.source };
+    return { kind: "identifier", identifier: identifier.parse(), interval: this.source };
   },
   PrimaryExp_literal(this, literal): ExpAST {
-    return { kind: "literal", value: literal.parse(), interval: this.source };
+    return { kind: "literal", literal: literal.parse(), interval: this.source };
   },
-  IdentifierPath(this, head, _dot, tail): string {
-    const path = [head.parse(), ...tail.children.map((child) => child.parse())];
-    return path.join(".");
+  IdentifierPath(this, head, _dot, tail): string[] {
+    return [head.parse(), ...tail.children.map((child) => child.parse())];
   },
   null(_null) {
     return null;

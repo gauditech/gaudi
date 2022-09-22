@@ -38,7 +38,7 @@ export type RelationSpec = WithContext<{
 
 export type QuerySpec = WithContext<{
   name: string;
-  fromModel: string;
+  fromModel: string[];
   filter?: ExpSpec;
 }>;
 
@@ -55,6 +55,6 @@ export type ExpSpec = WithContext<
       rhs: ExpSpec;
     }
   | { kind: "unary"; operator: UnaryOperator; exp: ExpSpec }
-  | { kind: "identifier"; name: string }
-  | { kind: "literal"; value: LiteralValue }
+  | { kind: "identifier"; identifier: string[] }
+  | { kind: "literal"; literal: LiteralValue }
 >;
