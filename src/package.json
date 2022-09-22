@@ -1,0 +1,15 @@
+{
+  "name": "gaudi",
+  "description": "Gaudi app builder",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "compile": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=16.15.0"
+  },
+  "dependencies": {
+    "prisma": "^4.3.1"
+  }
+}
