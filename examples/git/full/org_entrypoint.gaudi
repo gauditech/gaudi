@@ -1,105 +1,76 @@
-entrypoint Orgs {
-  target model Org as o
-  filter ...
+entrypoint Organizations {
+  target model Org
   identify with slug
-  endpoint {
-    list {}
-    respond with select { slug, description, avatar_url }
-  }
-  endpoint {
-    get {}
-    respond with select { slug, description, avatar_url, name, public_repos_count, type }
-  }
-  endpoint {
-    deny { @auth is null }
-    # TODO defult fields, created_at, updated_at ???
-    create Org as org {
-      references plan through name
-    }
-    create OrgMembership as membership {
-      set user @auth
-      set org o
-      set role "owner"
+  response {
+    select { name, description, slug }
+    role org_admin or org_member {
+      select { member_count }
+      select { plan { name, space, seats } }
     }
   }
-
+  list endpoint {}
+  get endpoint {}
   create endpoint {
-    fields ...
-    validate with fieldset { ... }
-    responds with ...
-  }
-
-  custom endpoint {
-    create Org {
-      create OrgMembership { set ... }
-    }
-  }
-
-  endpoint {
-    update {
-    }
-    create AuditLog as al {
-      set decription "..."
-    }
-
-    respond with select from o *
-  }
-  endpoint {
-    deny { @auth is null }
-    list Org as o {
-      filter { is_public or @auth in members }
-      respond with ...
-    }
-  }
-  update {
-    deny { when @auth not in admins, code "not an admin" }
-    validate with fieldset { field name, field description, field avatar_url }
-    goal {
-      updates Org as o {
-        fields { name, description, avatar_url }
+    validate with fieldset {
+      pick Org.{name, description, slug }
+      pick OrgPaymentPlan.{name as plan_name}
+      validate plan_name {
+        allow when one_of ["free", "business"]
       }
-      responds with select {
-        slug, description, name, avatar_url
-        plan {
-          select name, space, private_repos,
-            seats, filled_seats(o)
+    }
+    action {
+      create Org as org {
+        reference plan through name
+      }
+      create OrgMembership {
+        set user @auth
+        set org org
+        set role "owner"
+      }
+    }
+  }
+  update endpoint {
+    validate with fieldset {
+      pick Org.{ name, description, slug }
+    }
+  }
+  update endpoint upgrade {
+    # TODO
+  }
+  delete endpoint {
+    allow when @auth in admins
+  }
+
+  entrypoint Repositories {
+    target relation repos
+    identify with slug
+    response {
+      select { slug, description, private, full_name, owner, labels }
+    }
+
+    list endpoint {
+      role org_member or repo_collaborator {}
+      role * { filter { not private } }
+    }
+
+    get endpoint {
+      role org_member or repo_collaborator {}
+      role * { filter { not private } }
+    }
+
+    create endpoint {
+      role org_admin { allow }
+      action {
+        create Repo as repo {
+          set org org ???
+        }
+        create RepoLabel from query {
+          from org.defaultLabels
+          select { name, description, color }
+          set is_default true
+          set repo repo
         }
       }
-    }
-  }
-  delete {
-    deny { when  }
-  }
-}
-
-# contact_person -> field email { type text } -> trazi Contact s tim emailom
-# org -> plan ("business", "medium", "free", "enterprise")
-
-
-
-endpoint X {
-  creates User as u
-  creates Plan as p
-  creates Org as o {
-    # references plan through name
-    # creates plan
-    plan is p
-  }
-  creates OrgMembership {
-    #creates org
-    #creates user
-    org is o
-    user is u
-    role is "admin"
-  }
-}
-
-entrypoint Org {...}
-entrypoint Repo {
-  target query { from Repo }
-  create {
-    goal {
-      creates Repo
     }
   }
 }

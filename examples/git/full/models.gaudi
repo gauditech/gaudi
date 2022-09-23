@@ -2,29 +2,36 @@
 
 # https://docs.github.com/en/rest/orgs/orgs
 
-model OrgPaymentPlan {
+model PaymentPlan {
   field name { type text, default "free", unique }
   field space { type integer, default 976562499 }
   field private_repos { type integer, default 10000 }
   field seats { type integer, default 0 }
   
-  relation orgs { from Org, through plan }
+  relation consumers { from Owner, through plan }
+}
+
+model Owner {
+  reference plan { to PaymentPlan }
+  reference user { to User, unique, nullable }
+  reference org { to Org, unique, nullable }
+  field slug { type text, unique, validate { is_lowercase } }
+  field avatar_url { type text }
+
+  constraint user_xor_org { ... }
 }
 
 model Org {
-  reference plan { to OrgPaymentPlan }
-  field name { type text }
-  field slug { type text, unique, validate { is_lowercase } }
+  reference owner { to Owner, unique }
+
   field description { type text, default '' }
   field avatar_url { type text }
 
   relation owned_repos { from Repo, through org }
-
   relation memberships { from OrgMember, through org }
   
   query members { from memberships.user, filter { state is "active" } }
   query member_count { from members, count }
-
   query public_members { from memberships.user as m.u, filter { not m.private } }
   query admins { from memberships.user as m.u, filter { m.role in ["admin", "owner"] } }
   query public_repos { from owned_repos, filter { not private }}
@@ -36,8 +43,8 @@ model Org {
 # https://docs.github.com/en/rest/users/users
 
 model User {
-  field name { type text }
-  field avatar_url { type text, nullable }
+  reference owner { to Owner, unique }
+
   field email { type text, nullable }
   field company { type text, nullable }
   field site_admin { type boolean, default false }
@@ -49,16 +56,6 @@ model User {
   query orgs { from memberships.org } 
 
   computed username { owner.name }
-}
-
-model Owner {
-  reference user { to User, nullable }
-  reference org { to Org, nullable }
-  field name { type text, unique }
-
-  #constraint has_nonnullable {
-  #  ...
-  #}
 }
 
 # https://docs.github.com/en/rest/repos/repos#get-a-repository
