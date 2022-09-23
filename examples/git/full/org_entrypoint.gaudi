@@ -1,6 +1,7 @@
 entrypoint Organizations {
   target model Org
   identify with slug
+  alias org
   response {
     select { name, description, slug }
     role org_admin or org_member {
@@ -44,6 +45,7 @@ entrypoint Organizations {
   entrypoint Repositories {
     target relation repos
     identify with slug
+    alias repo
     response {
       select { slug, description, private, full_name, owner, labels }
     }
@@ -62,7 +64,7 @@ entrypoint Organizations {
       role org_admin { allow }
       action {
         create Repo as repo {
-          set org org ???
+          set org org
         }
         create RepoLabel from query {
           from org.defaultLabels
@@ -72,5 +74,64 @@ entrypoint Organizations {
         }
       }
     }
-  }
-}
+
+    delete endpoint {
+      role org_admin { allow }
+    }
+
+    entrypoint Issues {
+      target relation issues
+      identify with number
+      alias issue
+
+      response {
+        select { number, state, title, body, locked, locked_reason }
+      }
+      role org_member or repo_collaborator { allow }
+      role * {
+        deny when repo.private, code 404
+        # deny method update, delete # !!!
+      }
+
+      list endpoint {}
+      get endpoint {}
+      update endpoint {
+        role org_admin or repo_admin { allow }
+        validate with fieldset {
+          pick Issue.{title, body}
+        }
+      }
+      delete endpoint {
+        role org_admin or repo_admin { allow }
+        # NOTE: GitHub API doesn't document this, it's UI only action
+      }
+      update endpoint lock {
+        role org_admin or repo_admin { allow }
+        action {
+          update Issue as issue {
+            set locked true
+            input locked_reason
+          }
+          create IssueEvent {
+            set issue issue
+            set actor @auth
+            set event "locked"
+          }
+        }
+      }
+      delete endpoint unlock {
+        role org_admin or repo_admin { allow }
+        action {
+          update Issue as issue {
+            set locked false, set locked_reason null
+          }
+          create IssueEvent {
+            set issue issue
+            set actor @auth
+            set event "locked"
+          }
+        }
+      }
+    } #> entrypoint Issues
+  } #> entrypoint Repos
+} #> entrypoint Organizations

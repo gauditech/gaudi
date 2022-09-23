@@ -135,7 +135,7 @@ model IssueComment {
 model IssueEvent {
   reference issue { to Issue }
   reference actor { to User }
-  reference label { to RepoLabel, nullable }
+  reference label { to RepoLabel, nullable, default null }
   field event { type text }
-  field commit_id { type text }
+  field commit_id { type text, nullable, default null }
 }
