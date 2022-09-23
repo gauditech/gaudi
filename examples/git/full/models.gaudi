@@ -1,0 +1,144 @@
+# source of truth: https://docs.github.com/en/rest
+
+# https://docs.github.com/en/rest/orgs/orgs
+
+model OrgPaymentPlan {
+  field name { type text, default "free", unique }
+  field space { type integer, default 976562499 }
+  field private_repos { type integer, default 10000 }
+  field seats { type integer, default 0 }
+  
+  relation orgs { from Org, through plan }
+}
+
+model Org {
+  reference plan { to OrgPaymentPlan }
+  field name { type text }
+  field slug { type text, unique, validate { is_lowercase } }
+  field description { type text, default '' }
+  field avatar_url { type text }
+
+  relation owned_repos { from Repo, through org }
+
+  relation memberships { from OrgMember, through org }
+  
+  query members { from memberships.user, filter { state is "active" } }
+  query member_count { from members, count }
+
+  query public_members { from memberships.user as m.u, filter { not m.private } }
+  query admins { from memberships.user as m.u, filter { m.role in ["admin", "owner"] } }
+  query public_repos { from owned_repos, filter { not private }}
+  query public_repos_count { from public_repos, count }
+
+  computed type { "Organization" }
+}
+
+# https://docs.github.com/en/rest/users/users
+
+model User {
+  field name { type text }
+  field avatar_url { type text, nullable }
+  field email { type text, nullable }
+  field company { type text, nullable }
+  field site_admin { type boolean, default false }
+
+  relation owned_repos { from Repo, through user }
+  relation owner { from Owner, nonnullable! }
+
+  query memberships { from OrgMember, through user }
+  query orgs { from memberships.org } 
+
+  computed username { owner.name }
+}
+
+model Owner {
+  reference user { to User, nullable }
+  reference org { to Org, nullable }
+  field name { type text, unique }
+
+  #constraint has_nonnullable {
+  #  ...
+  #}
+}
+
+# https://docs.github.com/en/rest/repos/repos#get-a-repository
+
+model Repo {
+  reference owner { to Owner }
+  reference template_repo { to Repo, nullable }
+  field slug { type text } # unique per org, partial unique index!
+  field description { type text }
+  field private { type boolean, default false }
+
+  computed full_name { org.name + '/' + slug }
+
+  query labels { from RepoLabel, through repo, select { name, descriptio, color, default } } 
+}
+
+model OrgMember {
+  reference user { to User }
+  reference org { to Org }
+  field state { type text }
+  field role { type text, validate { one_of ["member", "admin", "owner"] }}
+  field private { type boolean, default true }
+}
+
+# https://docs.github.com/en/rest/collaborators/collaborators#list-repository-collaborators
+
+model RepoCollaborator {
+  reference user { to User }
+  reference repo { to Repo }
+  role { type text, validate { one_of ["read", "write", "maintain", "admin"] }}
+}
+
+model OrgDefaultLabel {
+  reference org { to Org }
+  field name { type text }
+  field description { type text, default '', validate { max 100 } }
+  field color { type text, validate { regex /^[0-9a-f]{6}/$ }}
+}
+
+model RepoLabel {
+  reference repo { to Repo }
+  field name { type text }
+  field description { type text, default '', validate { max 100 } }
+  field color { type text, validate { regex /^[0-9a-f]{6}/$ }}
+  field default { type boolean, default true }
+}
+
+model Issue {
+  reference repo { to Repo }
+  reference user { to User }
+  field number { type integer } # partial unique index, custom autoincrement??
+  field state { type text, validate { one_of ["open", "closed"]} }
+  field title { type text }
+  field body { type text }
+  field locked { type boolean, default false }
+  field locked_reason { type text }
+
+  relation pr { from PullRequest, through base_issue }
+  computed is_real_issue { pr is null }
+}
+
+model PullRequest {
+  reference base_issue { to Issue, unique }
+}
+
+model IssueAssignee {
+  reference issue { to Issue }
+  reference user { to User }
+}
+
+model IssueComment {
+  reference issue { to Issue }
+  reference user { to User }
+  field body { type text }
+}
+
+model IssueEvent {
+  reference issue { to Issue }
+  reference actor { to User }
+  reference label { to RepoLabel, nullable }
+  field event { type text }
+  field commit_id { type text }
+}
