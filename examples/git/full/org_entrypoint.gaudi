@@ -91,6 +91,7 @@ entrypoint Organizations {
       role * {
         deny when repo.private, code 404
         # deny method update, delete # !!!
+        # deny method lock, unlock # ???
       }
 
       list endpoint {}
