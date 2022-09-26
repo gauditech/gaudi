@@ -133,6 +133,37 @@ entrypoint Organizations {
           }
         }
       }
+
+      entrypoint Comments {
+        target relation comments
+        identify with number
+
+        response {
+          select { number, body, user }
+        }
+
+        list endpoint {}
+        get endpoint {}
+        create endpoint {
+          allow when @admin in issue.user or not issue.locked
+          action {
+            create IssueComment {
+              set issue issue
+              set user @auth
+            }
+          }
+        }
+        update endpoint {
+          allow when @admin in issue.user or not issue.locked
+          action {
+            update IssueComment {
+              validate with fieldset {
+                pick IssueComment.{body}
+              }
+            }
+          }
+        }
+      }
     } #> entrypoint Issues
   } #> entrypoint Repos
 } #> entrypoint Organizations

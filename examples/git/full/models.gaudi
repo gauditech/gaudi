@@ -115,6 +115,7 @@ model Issue {
 
   relation pr { from PullRequest, through base_issue }
   computed is_real_issue { pr is null }
+  relation comments { from IssueComment, through issue }
 }
 
 model PullRequest {
@@ -127,6 +128,7 @@ model IssueAssignee {
 }
 
 model IssueComment {
+  field number { type integer } # partial unique index, custom autoincrement??
   reference issue { to Issue }
   reference user { to User }
   field body { type text }
