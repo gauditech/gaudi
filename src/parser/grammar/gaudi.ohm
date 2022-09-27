@@ -42,7 +42,7 @@ Gaudi {
 
   QueryBody
     = "from" IdentifierPath -- from
-    | "filter" QueryExp -- filter
+    | "filter" OptionalBraces<QueryExp> -- filter
 
   Computed
     = "computed" identifier "{" QueryExp "}"
@@ -102,6 +102,10 @@ Gaudi {
   identifier (an identifier) = identifierStart identifierPart*
   identifierStart = letter | "_"
   identifierPart = identifierStart | alnum
+
+  OptionalBraces<Exp>
+    = Exp -- no_braces
+    | "{" Exp "}" -- braces
 
   NewlineBody<Exp, delimiter>
     = NonemptyNewlineBody<Exp, delimiter>

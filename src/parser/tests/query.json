@@ -43,6 +43,16 @@
           },
           "fromModel": ["students"],
           "name": "good_students"
+        },
+        {
+          "filter": {
+            "kind": "binary",
+            "lhs": { "kind": "identifier", "identifier": ["grade"] },
+            "operator": ">=",
+            "rhs": { "kind": "literal", "literal": 3 }
+          },
+          "fromModel": ["students"],
+          "name": "good_students_alt"
         }
       ],
       "references": [],

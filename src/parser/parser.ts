@@ -216,6 +216,12 @@ semantics.addOperation("parse()", {
   identifier(this, _letter, _alnum) {
     return this.sourceString;
   },
+  OptionalBraces_no_braces(exp) {
+    return exp.parse();
+  },
+  OptionalBraces_braces(_braceL, exp, _braceR) {
+    return exp.parse();
+  },
   NewlineBody_empty() {
     return [];
   },
