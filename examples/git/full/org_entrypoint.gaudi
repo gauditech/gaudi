@@ -134,12 +134,14 @@ entrypoint Organizations {
         }
       }
 
+      # TODO: /repos/{owner}/{repo}/issues/comments
+
       entrypoint Comments {
         target relation comments
-        identify with number
+        identify with id
 
         response {
-          select { number, body, user }
+          select { id, body, user }
         }
 
         list endpoint {}

@@ -128,7 +128,6 @@ model IssueAssignee {
 }
 
 model IssueComment {
-  field number { type integer } # partial unique index, custom autoincrement??
   reference issue { to Issue }
   reference user { to User }
   field body { type text }
