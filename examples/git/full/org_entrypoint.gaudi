@@ -79,6 +79,21 @@ entrypoint Organizations {
       role org_admin { allow }
     }
 
+    entrypoint IssuesComments {
+      target relation issues.comments
+
+      role org_member or repo_collaborator { allow }
+      role * {
+        deny when repo.private, code 404
+      }
+
+      list entrypoint {
+        response {
+          select { number, state, title, body, locked, locked_reason }
+        }
+      }
+    }
+
     entrypoint Issues {
       target relation issues
       identify with number
@@ -146,7 +161,9 @@ entrypoint Organizations {
         }
 
         list endpoint {}
+
         get endpoint {}
+
         create endpoint {
           # private repo
           role org_member and repo_collaborator # allow for these roles
@@ -163,6 +180,7 @@ entrypoint Organizations {
             }
           }
         }
+
         update endpoint {
           # private repo
           role org_member and repo_collaborator # allow everything for these roles
@@ -180,6 +198,10 @@ entrypoint Organizations {
             }
           }
         }
+      } #> entrypoint Comments
+
+      entrypoint PullRequests {
+
       }
     } #> entrypoint Issues
   } #> entrypoint Repos
