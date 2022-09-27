@@ -139,6 +139,7 @@ entrypoint Organizations {
       entrypoint Comments {
         target relation comments
         identify with id
+        alias comment
 
         response {
           select { id, body, user }
@@ -147,7 +148,14 @@ entrypoint Organizations {
         list endpoint {}
         get endpoint {}
         create endpoint {
-          allow when @admin in issue.user or not issue.locked
+          # private repo
+          role org_member and repo_collaborator # allow for these roles
+          role * { # "all other" roles
+            deny when repo.private # deny for private repo
+            deny when issue.locked # deny for locked issue
+          }
+          # alternatives syntax: allow NOT repo.private OR (role org_member OR repo_collaborator)
+
           action {
             create IssueComment {
               set issue issue
@@ -156,7 +164,14 @@ entrypoint Organizations {
           }
         }
         update endpoint {
-          allow when @admin in issue.user or not issue.locked
+          # private repo
+          role org_member and repo_collaborator # allow everything for these roles
+          role * { # "all other" roles
+            deny when repo.private # deny if private repo
+            deny when issue.locked # deny if locked issue
+            allow @auth is comment.user # allow only to author
+          }
+
           action {
             update IssueComment {
               validate with fieldset {
