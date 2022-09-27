@@ -166,7 +166,9 @@ entrypoint Organizations {
 
         create endpoint {
           # private repo
-          role org_member and repo_collaborator # allow for these roles
+          role org_member and repo_collaborator {
+            allow # allow for these roles
+          }
           role * { # "all other" roles
             deny when repo.private # deny for private repo
             deny when issue.locked # deny for locked issue
@@ -183,7 +185,9 @@ entrypoint Organizations {
 
         update endpoint {
           # private repo
-          role org_member and repo_collaborator # allow everything for these roles
+          role org_member and repo_collaborator {
+            allow # allow everything for these roles
+          }
           role * { # "all other" roles
             deny when repo.private # deny if private repo
             deny when issue.locked # deny if locked issue
