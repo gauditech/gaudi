@@ -12,6 +12,8 @@ Gaudi {
     = Field
     | Reference
     | Relation
+    | Query
+    | Computed
 
   Field
     = "field" identifier "{" NonemptyNewlineBody<FieldBody, ","> "}"
@@ -35,15 +37,75 @@ Gaudi {
     = "from" identifier -- from
     | "through" identifier -- through
 
-  literal = null | boolean | integer | float | string
+  Query
+    = "query" identifier "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
-  null = "null"
-  boolean = "true" | "false"
+  QueryBody
+    = "from" IdentifierPath -- from
+    | "filter" OptionalBraces<QueryExp> -- filter
+
+  Computed
+    = "computed" identifier "{" QueryExp "}"
+
+  QueryExp = OrExp
+
+  OrExp
+    = OrExp or AndExp -- or
+    | AndExp
+
+  AndExp
+    = AndExp and IsExp -- and
+    | IsExp
+
+  IsExp
+    = IsExp is not InExp -- is_not
+    | IsExp is InExp -- is
+    | InExp
+
+  InExp
+    = InExp not in CompExp -- not_in
+    | InExp in CompExp -- in
+    | CompExp
+
+  CompExp
+    = CompExp "<" PrimaryExp -- lt
+    | CompExp "<=" PrimaryExp -- lteq
+    | CompExp ">" PrimaryExp -- gt
+    | CompExp ">=" PrimaryExp -- gteq
+    | PrimaryExp
+
+  PrimaryExp
+    = "(" QueryExp ")" -- paren
+    | not PrimaryExp -- not
+    | literal -- literal
+    | IdentifierPath -- identifier
+
+  IdentifierPath = identifier ("." identifier)*
+
+  literal (an literal) = null | boolean | integer | float | string
+
+  boolean = true | false
   integer = digit+
   float = digit* "." digit*
   string = "\"" (~"\"" any)* "\""
 
-  identifier (an identifier) = letter alnum*
+  keywords = null | true | false | is | not | in
+  null = "null" ~identifierPart
+  true = "true" ~identifierPart
+  false = "false" ~identifierPart
+  or = "or" ~identifierPart
+  and = "and" ~identifierPart
+  is = "is" ~identifierPart
+  not = "not" ~identifierPart
+  in = "in" ~identifierPart
+
+  identifier (an identifier) = identifierStart identifierPart*
+  identifierStart = letter | "_"
+  identifierPart = identifierStart | alnum
+
+  OptionalBraces<Exp>
+    = Exp -- no_braces
+    | "{" Exp "}" -- braces
 
   NewlineBody<Exp, delimiter>
     = NonemptyNewlineBody<Exp, delimiter>

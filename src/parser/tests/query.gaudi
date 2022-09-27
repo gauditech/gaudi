@@ -1,0 +1,25 @@
+model Class {
+  field year { type integer }
+
+  relation students { from Student, through class}
+
+  query active_students { from students, filter (is_active or is_registred) and true }
+  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
+  query good_students_alt {
+    from students
+    filter {
+      grade >= 3
+    }
+  }
+}
+
+model Student {
+  field is_active { type boolean }
+  field is_registred { type boolean }
+  field grade { type integer}
+  field behaviour { type text }
+
+  reference class { to Class }
+
+  computed is_senior { class.year >= 4 }
+}

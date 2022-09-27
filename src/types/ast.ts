@@ -1,34 +1,87 @@
+import { WithContext } from "@src/common/error";
+
 export type AST = {
   models: ModelAST[];
 };
 
-export type ModelAST = {
+export type ModelAST = WithContext<{
   name: string;
   body: ModelBodyAST[];
-};
+}>;
 
-export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST;
+export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST;
 
-export type FieldAST = {
+export type FieldAST = WithContext<{
   kind: "field";
   name: string;
   body: FieldBodyAST[];
-};
+}>;
 
-export type FieldBodyAST = { type: string } | { default: unknown } | "nullable" | "unique";
+export type FieldBodyAST = WithContext<
+  | { kind: "type"; type: string }
+  | { kind: "default"; default: LiteralValue }
+  | { kind: "tag"; tag: FieldTag }
+>;
 
-export type ReferenceAST = {
+export type FieldTag = "nullable" | "unique";
+
+export type ReferenceAST = WithContext<{
   kind: "reference";
   name: string;
   body: ReferenceBodyAST[];
-};
+}>;
 
-export type ReferenceBodyAST = { to: string } | "nullable" | "unique";
+export type ReferenceBodyAST = WithContext<
+  { kind: "to"; to: string } | { kind: "tag"; tag: ReferenceTag }
+>;
 
-export type RelationAST = {
+export type ReferenceTag = "nullable" | "unique";
+
+export type RelationAST = WithContext<{
   kind: "relation";
   name: string;
   body: RelationBodyAST[];
-};
+}>;
 
-export type RelationBodyAST = { from: string } | { through: string };
+export type RelationBodyAST = WithContext<
+  { kind: "from"; from: string } | { kind: "through"; through: string }
+>;
+
+export type QueryAST = WithContext<{
+  kind: "query";
+  name: string;
+  body: QueryBodyAST[];
+}>;
+
+export type QueryBodyAST = WithContext<{ from: string[] } | { filter: ExpAST }>;
+
+export type ComputedAST = WithContext<{ kind: "computed"; name: string; exp: ExpAST }>;
+
+export type ExpAST = WithContext<
+  | {
+      kind: "binary";
+      operator: BinaryOperator;
+      lhs: ExpAST;
+      rhs: ExpAST;
+    }
+  | { kind: "paren"; exp: ExpAST }
+  | { kind: "unary"; operator: UnaryOperator; exp: ExpAST }
+  | { kind: "identifier"; identifier: string[] }
+  | { kind: "literal"; literal: LiteralValue }
+>;
+
+export type LiteralValue = null | boolean | number | string;
+
+export type BinaryOperator =
+  | "or"
+  | "and"
+  | "is not"
+  | "is"
+  | "not in"
+  | "in"
+  | "<"
+  | "<="
+  | ">"
+  | ">=";
+
+export type UnaryOperator = "not";

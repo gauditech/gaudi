@@ -1,10 +1,9 @@
 import fs from "fs";
 import path from "path";
 
-import { renderTemplate, storeTemplateOutput } from "@src/builder/render/renderer";
-
-import { Definition } from "@src/types/definition";
 import { applyDbChanges } from "@src/builder/migration/migrator";
+import { renderTemplate, storeTemplateOutput } from "@src/builder/render/renderer";
+import { Definition } from "@src/types/definition";
 
 // TODO: read from definition
 const APP_NAME = "demoapp";

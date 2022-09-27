@@ -1,7 +1,8 @@
-import { compose } from "./composer";
-
 import definitionInput from "@examples/git/definition.json";
 import specificationInput from "@examples/git/specification.json";
+
+import { compose } from "./composer";
+
 import { Specification } from "@src/types/specification";
 
 describe("compose models", () => {
@@ -20,6 +21,8 @@ describe("compose models", () => {
           ],
           relations: [],
           references: [],
+          queries: [],
+          computeds: [],
         },
       ],
     };
@@ -33,6 +36,8 @@ describe("compose models", () => {
           fields: [{ name: "name", type: "text" }],
           references: [{ name: "name", toModel: "Org" }],
           relations: [],
+          queries: [],
+          computeds: [],
         },
       ],
     };

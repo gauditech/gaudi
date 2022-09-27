@@ -1,7 +1,9 @@
 import fs from "fs";
 import path from "path";
-import { renderDbSchema, renderIndex, renderPackage, renderServer } from "@src/builder/builder";
+
 import definition from "@examples/git/definition.json";
+
+import { renderDbSchema, renderIndex, renderPackage, renderServer } from "@src/builder/builder";
 
 const SNAPSHOT_FOLDER = __dirname;
 

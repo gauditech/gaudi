@@ -8,8 +8,10 @@
         { "name": "description", "type": "text" },
         { "name": "optOut", "type": "text", "nullable": true }
       ],
+      "queries": [],
       "references": [],
-      "relations": [{ "name": "repos", "fromModel": "Repo", "through": "org" }]
+      "relations": [{ "name": "repos", "fromModel": "Repo", "through": "org" }],
+      "computeds": []
     },
     {
       "name": "Repo",
@@ -18,8 +20,10 @@
         { "name": "slug", "type": "text", "unique": true },
         { "name": "description", "type": "text" }
       ],
+      "queries": [],
       "references": [{ "name": "org", "toModel": "Org" }],
-      "relations": []
+      "relations": [],
+      "computeds": []
     }
   ]
 }

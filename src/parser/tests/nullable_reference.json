@@ -3,6 +3,7 @@
     {
       "fields": [],
       "name": "Vehicle",
+      "queries": [],
       "references": [
         {
           "name": "make",
@@ -10,7 +11,8 @@
           "toModel": "Make"
         }
       ],
-      "relations": []
+      "relations": [],
+      "computeds": []
     },
     {
       "fields": [
@@ -20,8 +22,10 @@
         }
       ],
       "name": "Make",
+      "queries": [],
       "references": [],
-      "relations": []
+      "relations": [],
+      "computeds": []
     }
   ]
 }

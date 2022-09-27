@@ -1,6 +1,7 @@
-import { concatKeys } from "@src/common/utils";
 import { exec } from "child_process";
 import { promisify } from "util";
+
+import { concatKeys } from "@src/common/utils";
 
 const execWithPromise = promisify(exec);
 
