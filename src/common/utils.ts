@@ -15,3 +15,11 @@ export function ensureExists<I>(item: I | null | undefined): void {
     throw new Error(`Expected a value, found ${item}`);
   }
 }
+
+/** Concat all keys who's value is `true` using `delimiter` */
+export function concatKeys(map: Record<string, boolean>, delimiter = " "): string {
+  return Object.entries(map)
+    .filter(([_key, value]) => value)
+    .map(([key, _value]) => key)
+    .join(delimiter);
+}

@@ -1,0 +1,186 @@
+entrypoint Organizations {
+  target model Org
+  identify with slug
+  alias org
+  response {
+    select { name, description, slug }
+    role org_admin or org_member {
+      select { member_count }
+      select { plan { name, space, seats } }
+    }
+  }
+  list endpoint {}
+  get endpoint {}
+  create endpoint {
+    validate with fieldset {
+      pick Org.{name, description, slug }
+      pick OrgPaymentPlan.{name as plan_name}
+      validate plan_name {
+        allow when one_of ["free", "business"]
+      }
+    }
+    action {
+      create Org as org {
+        reference plan through name
+      }
+      create OrgMembership {
+        set user @auth
+        set org org
+        set role "owner"
+      }
+    }
+  }
+  update endpoint {
+    validate with fieldset {
+      pick Org.{ name, description, slug }
+    }
+  }
+  update endpoint upgrade {
+    # TODO
+  }
+  delete endpoint {
+    allow when @auth in admins
+  }
+
+  entrypoint Repositories {
+    target relation repos
+    identify with slug
+    alias repo
+    response {
+      select { slug, description, private, full_name, owner, labels }
+    }
+
+    list endpoint {
+      role org_member or repo_collaborator {}
+      role * { filter { not private } }
+    }
+
+    get endpoint {
+      role org_member or repo_collaborator {}
+      role * { filter { not private } }
+    }
+
+    create endpoint {
+      role org_admin { allow }
+      action {
+        create Repo as repo {
+          set org org
+        }
+        create RepoLabel from query {
+          from org.defaultLabels
+          select { name, description, color }
+          set is_default true
+          set repo repo
+        }
+      }
+    }
+
+    delete endpoint {
+      role org_admin { allow }
+    }
+
+    entrypoint Issues {
+      target relation issues
+      identify with number
+      alias issue
+
+      response {
+        select { number, state, title, body, locked, locked_reason }
+      }
+      role org_member or repo_collaborator { allow }
+      role * {
+        deny when repo.private, code 404
+        # deny method update, delete # !!!
+        # deny method lock, unlock # ???
+      }
+
+      list endpoint {}
+      get endpoint {}
+      update endpoint {
+        role org_admin or repo_admin { allow }
+        validate with fieldset {
+          pick Issue.{title, body}
+        }
+      }
+      delete endpoint {
+        role org_admin or repo_admin { allow }
+        # NOTE: GitHub API doesn't document this, it's UI only action
+      }
+      update endpoint lock {
+        role org_admin or repo_admin { allow }
+        action {
+          update Issue as issue {
+            set locked true
+            input locked_reason
+          }
+          create IssueEvent {
+            set issue issue
+            set actor @auth
+            set event "locked"
+          }
+        }
+      }
+      delete endpoint unlock {
+        role org_admin or repo_admin { allow }
+        action {
+          update Issue as issue {
+            set locked false, set locked_reason null
+          }
+          create IssueEvent {
+            set issue issue
+            set actor @auth
+            set event "locked"
+          }
+        }
+      }
+
+      # TODO: /repos/{owner}/{repo}/issues/comments
+
+      entrypoint Comments {
+        target relation comments
+        identify with id
+        alias comment
+
+        response {
+          select { id, body, user }
+        }
+
+        list endpoint {}
+        get endpoint {}
+        create endpoint {
+          # private repo
+          role org_member and repo_collaborator # allow for these roles
+          role * { # "all other" roles
+            deny when repo.private # deny for private repo
+            deny when issue.locked # deny for locked issue
+          }
+          # alternatives syntax: allow NOT repo.private OR (role org_member OR repo_collaborator)
+
+          action {
+            create IssueComment {
+              set issue issue
+              set user @auth
+            }
+          }
+        }
+        update endpoint {
+          # private repo
+          role org_member and repo_collaborator # allow everything for these roles
+          role * { # "all other" roles
+            deny when repo.private # deny if private repo
+            deny when issue.locked # deny if locked issue
+            allow @auth is comment.user # allow only to author
+          }
+
+          action {
+            update IssueComment {
+              validate with fieldset {
+                pick IssueComment.{body}
+              }
+            }
+          }
+        }
+      }
+    } #> entrypoint Issues
+  } #> entrypoint Repos
+} #> entrypoint Organizations
