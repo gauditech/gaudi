@@ -10,6 +10,8 @@ model Class {
     filter {
       grade >= 3
     }
+    order by behaviour, grade desc
+    limit 10
   }
 }
 

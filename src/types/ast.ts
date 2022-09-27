@@ -53,7 +53,14 @@ export type QueryAST = WithContext<{
   body: QueryBodyAST[];
 }>;
 
-export type QueryBodyAST = WithContext<{ from: string[] } | { filter: ExpAST }>;
+export type QueryBodyAST = WithContext<
+  | { kind: "from"; from: string[] }
+  | { kind: "filter"; filter: ExpAST }
+  | { kind: "orderBy"; orderings: QueryOrderAST[] }
+  | { kind: "limit"; limit: number }
+>;
+
+export type QueryOrderAST = WithContext<{ field: string[]; order?: "asc" | "desc" }>;
 
 export type ComputedAST = WithContext<{ kind: "computed"; name: string; exp: ExpAST }>;
 

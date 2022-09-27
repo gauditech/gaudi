@@ -10,6 +10,7 @@ import {
   ModelAST,
   QueryAST,
   QueryBodyAST,
+  QueryOrderAST,
   ReferenceAST,
   ReferenceBodyAST,
   ReferenceTag,
@@ -80,10 +81,25 @@ semantics.addOperation("parse()", {
     };
   },
   QueryBody_from(this, _from, identifier): QueryBodyAST {
-    return { from: identifier.parse(), interval: this.source };
+    return { kind: "from", from: identifier.parse(), interval: this.source };
   },
   QueryBody_filter(this, _filter, exp): QueryBodyAST {
-    return { filter: exp.parse(), interval: this.source };
+    return { kind: "filter", filter: exp.parse(), interval: this.source };
+  },
+  QueryBody_order_by(this, _order, _by, fields): QueryBodyAST {
+    return { kind: "orderBy", orderings: fields.parse(), interval: this.source };
+  },
+  QueryBody_limit_by(this, _limit, limit): QueryBodyAST {
+    return { kind: "limit", limit: limit.parse(), interval: this.source };
+  },
+  QueryOrder(this, field, orderNode): QueryOrderAST {
+    const order =
+      orderNode.sourceString === "asc"
+        ? "asc"
+        : orderNode.sourceString === "desc"
+        ? "desc"
+        : undefined;
+    return { field: field.parse(), order, interval: this.source };
   },
   Computed(this, _computed, identifier, _parenL, exp, _parenR): ComputedAST {
     return {
@@ -227,6 +243,9 @@ semantics.addOperation("parse()", {
   },
   NonemptyNewlineBody(head, _delimiter, tail, _delimiterTail) {
     return [head.parse(), ...tail.children.map((child) => child.parse())];
+  },
+  NonemptyListOf(this, head, _seperator, tail) {
+    return [head.parse(), ...tail.children.map((c) => c.parse())];
   },
 });
 

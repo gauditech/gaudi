@@ -43,6 +43,10 @@ Gaudi {
   QueryBody
     = "from" IdentifierPath -- from
     | "filter" OptionalBraces<QueryExp> -- filter
+    | "order" "by" NonemptyListOf<QueryOrder, ","> -- order_by
+    | "limit" integer -- limit_by
+
+  QueryOrder = IdentifierPath ("asc" | "desc")?
 
   Computed
     = "computed" identifier "{" QueryExp "}"
