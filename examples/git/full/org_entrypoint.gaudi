@@ -121,6 +121,7 @@ entrypoint Organizations {
         role org_admin or repo_admin { allow }
         # NOTE: GitHub API doesn't document this, it's UI only action
       }
+
       update endpoint lock {
         role org_admin or repo_admin { allow }
         action {
@@ -203,10 +204,71 @@ entrypoint Organizations {
           }
         }
       } #> entrypoint Comments
+    } #> entrypoint Issues
 
-      entrypoint PullRequests {
+    entrypoint PullRequests {
+      target relation pulls
+      identify with number
+      alias pull
+
+      response {
+        select { number, state, title, body, locked, locked_reason }
+      }
+
+      list endpoint {}
+      get endpoint {}
+
+      # if org is owner of repo then @auth must be org member
+
+      create endpoint {
+        role org_member {
+          allow
+        }
+        # will this automatically fail for all other roles?
+
+        action {
+          validate with fieldset {
+            pick PullRequest.base_issue.{ title, body, issue }
+            # TODO: issue is required if title is empty
+          }
+
+          # create a new issue
+          if (issue is empty) {
+            create Issue as base_issue {
+              set state "open"
+              set title title
+              set body body
+            }
+          }
+          # fetch existing issue
+          else {
+            query base_issue { from Issues, filter number=issue, first }
+          }
+
+          create PullRequest {
+            set base_issue base_issue
+          }
+        }
+      }
+
+      update endpoint {
+        role org_member {
+          allow
+        }
+        # will this automatically fail for all other roles?
+
+        action {
+          validate with fieldset {
+            pick PullRequest.base_issue.{ title, body, state }
+          }
+
+          update Issue {
+          }
+          # all available fields are located on Issue so do we update issue itself or through pull.base_issue?
+        }
 
       }
-    } #> entrypoint Issues
+    }
+
   } #> entrypoint Repos
 } #> entrypoint Organizations
