@@ -41,6 +41,8 @@ describe("compose models", () => {
         },
       ],
     };
-    expect(() => compose(specification)).toThrowError("Items not unique!");
+    expect(() => compose(specification)).toThrowError(
+      "Expecting type reference but found a type field"
+    );
   });
 });

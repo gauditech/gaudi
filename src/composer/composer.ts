@@ -1,6 +1,36 @@
-import { ensureFind, ensureUnique } from "@src/common/utils";
+import e from "express";
+
+import { ensureUnique } from "@src/common/utils";
 import { Definition, FieldDef, ModelDef, ReferenceDef, RelationDef } from "@src/types/definition";
-import { FieldSpec, ModelSpec, Specification } from "@src/types/specification";
+import {
+  FieldSpec,
+  ModelSpec,
+  QuerySpec,
+  ReferenceSpec,
+  RelationSpec,
+  Specification,
+} from "@src/types/specification";
+
+enum RefType {
+  Model = "model",
+  Field = "field",
+  Reference = "reference",
+  Relation = "relation",
+  Query = "query",
+  Computed = "computed",
+}
+
+type Mapping = {
+  [RefType.Model]: ModelDef;
+  [RefType.Field]: FieldDef;
+  [RefType.Reference]: ReferenceDef;
+  [RefType.Relation]: RelationDef;
+  [RefType.Query]: ModelDef;
+  [RefType.Computed]: ModelDef;
+};
+
+type Cached<T extends RefType> = [T, Mapping[T]];
+const cache = new Map<string, Cached<RefType>>();
 
 export function compose(input: Specification): Definition {
   return {
@@ -9,42 +39,96 @@ export function compose(input: Specification): Definition {
 }
 
 function composeModels(specs: ModelSpec[]): ModelDef[] {
-  // ensure model names are unique
-  ensureUnique(specs.map((m) => m.name));
+  let needsExtraStep = true;
+  function tryCall<T>(fn: () => T): T | null {
+    try {
+      return fn();
+    } catch (e) {
+      if (e === "cache-miss") {
+        needsExtraStep = true;
+        return null;
+      } else {
+        throw e;
+      }
+    }
+  }
+  let defs: ModelDef[] = [];
+  while (needsExtraStep) {
+    // FIXME ensure no infinite looping
+    needsExtraStep = false;
+    // ensure model uniqueness
+    ensureUnique(specs.map((s) => s.name.toLowerCase()));
+    defs = specs.map((mspec) => {
+      // ensure prop uniqueness
+      ensureUnique([
+        ...mspec.fields.map((f) => f.name.toLowerCase()),
+        ...mspec.references.map((r) => r.name.toLowerCase()),
+        ...mspec.relations.map((r) => r.name.toLowerCase()),
+        ...mspec.queries.map((q) => q.name.toLowerCase()),
+        ...mspec.computeds.map((c) => c.name.toLowerCase()),
+      ]);
+      const mdef = defineModel(mspec);
+      mspec.fields.forEach((fspec) => {
+        defineField(mdef, fspec);
+      });
+      mspec.references.forEach((rspec) => {
+        tryCall(() => defineReference(mdef, rspec));
+      });
+      mspec.relations.forEach((rspec) => {
+        tryCall(() => defineRelation(mdef, rspec));
+      });
+      mspec.queries.forEach((qspec) => {
+        // tryCall(() => defineQuery(mdef, qspec));
+      });
 
-  // step 1: model + fields
-  let models = specs.map((model) => ({
-    refKey: model.name,
-    name: model.name,
-    dbname: model.name.toLowerCase(),
-    fields: composeModelFields(model.fields, model.name),
-    references: [] as ReferenceDef[],
-    relations: [] as RelationDef[],
-  }));
-
-  // step 2: references
-  models = composeReferences(models, specs);
-  // step 3: relations
-  models = composeRelations(models, specs);
-
-  return models;
+      return mdef;
+    });
+  }
+  return defs;
 }
 
-function composeModelFields(fields: FieldSpec[], modelRefKey: string): FieldDef[] {
-  const fieldDefs = fields.map((field) => ({
-    refKey: `${modelRefKey}.${field.name}`,
-    modelRefKey,
-    name: field.name,
-    dbname: field.name.toLowerCase(),
-    type: validateType(field.type),
-    dbtype: constructDbType(validateType(field.type)),
-    primary: false,
-    unique: !!field.unique,
-    nullable: !!field.nullable,
-  }));
-  const id: FieldDef = {
-    refKey: `${modelRefKey}.id`,
-    modelRefKey,
+function getDefinition<T extends RefType, F extends true | undefined>(
+  refKey: string,
+  type: T,
+  fail?: F
+): F extends true ? Mapping[T] : Mapping[T] | null {
+  const definition = cache.get(refKey);
+  if (!definition) {
+    if (fail) {
+      throw "cache-miss";
+    } else {
+      return null as F extends true ? Mapping[T] : Mapping[T] | null;
+    }
+  }
+  try {
+    ensureEqual(type, definition[0]);
+  } catch (e) {
+    throw new Error(`Expecting type ${type} but found a type ${definition[0]}`);
+  }
+  return definition[1] as F extends true ? Mapping[T] : Mapping[T] | null;
+}
+
+function defineModel(spec: ModelSpec): ModelDef {
+  const ex = getDefinition(spec.name, RefType.Model);
+  if (ex) return ex;
+
+  const model: ModelDef = {
+    dbname: spec.name.toLowerCase(),
+    name: spec.name,
+    refKey: spec.name,
+    fields: [],
+    references: [],
+    relations: [],
+  };
+  model.fields.push(constructIdField(model));
+  cache.set(model.refKey, [RefType.Model, model]);
+  return model;
+}
+
+function constructIdField(mdef: ModelDef): FieldDef {
+  return {
+    refKey: `${mdef.refKey}.id`,
+    modelRefKey: mdef.refKey,
     name: "id",
     dbname: "id",
     type: "integer",
@@ -53,11 +137,93 @@ function composeModelFields(fields: FieldSpec[], modelRefKey: string): FieldDef[
     unique: true,
     nullable: false,
   };
-  // ensure field names are unique, including the `id` field
-  const allFieldDefs = [id, ...fieldDefs];
-  ensureUnique(allFieldDefs.map((f) => f.name));
-  ensureUnique(allFieldDefs.map((f) => f.dbname));
-  return allFieldDefs;
+}
+
+function defineField(mdef: ModelDef, fspec: FieldSpec): FieldDef {
+  const refKey = `${mdef.refKey}.${fspec.name}`;
+  const ex = getDefinition(refKey, RefType.Field);
+  if (ex) return ex;
+
+  const f: FieldDef = {
+    refKey,
+    modelRefKey: mdef.refKey,
+    name: fspec.name,
+    dbname: fspec.name.toLowerCase(),
+    type: validateType(fspec.type),
+    dbtype: constructDbType(validateType(fspec.type)),
+    primary: false,
+    unique: !!fspec.unique,
+    nullable: !!fspec.nullable,
+  };
+  cache.set(refKey, [RefType.Field, f]);
+  mdef.fields.push(f);
+  return f;
+}
+
+function defineReference(mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
+  const refKey = `${mdef.refKey}.${rspec.name}`;
+  const ex = getDefinition(refKey, RefType.Reference);
+  if (ex) return ex;
+
+  const fieldRefKey = `${refKey}_id`; // or `Id`?? FIXME decide casing logic
+  if (getDefinition(refKey, RefType.Field)) {
+    throw new Error("Can't make reference field, name taken");
+  }
+  const f: FieldDef = {
+    refKey: fieldRefKey,
+    modelRefKey: mdef.refKey,
+    name: `${rspec.name}_id`,
+    dbname: `${rspec.name}_id`.toLowerCase(),
+    type: "integer",
+    dbtype: "integer",
+    primary: false,
+    unique: !!rspec.unique,
+    nullable: !!rspec.nullable,
+  };
+  cache.set(fieldRefKey, [RefType.Field, f]);
+  mdef.fields.push(f);
+
+  const ref: ReferenceDef = {
+    refKey,
+    fieldRefKey,
+    modelRefKey: mdef.refKey,
+    toModelFieldRefKey: `${rspec.toModel}.id`,
+    toModelRefKey: rspec.toModel,
+    name: rspec.name,
+    unique: !!rspec.unique,
+    nullable: !!rspec.nullable,
+  };
+  cache.set(refKey, [RefType.Reference, ref]);
+  mdef.references.push(ref);
+  return ref;
+}
+
+function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
+  const refKey = `${mdef.refKey}.${rspec.name}`;
+  getDefinition(rspec.fromModel, RefType.Model, true);
+  const throughRef = getDefinition(`${rspec.fromModel}.${rspec.through}`, RefType.Reference, true);
+
+  const rel: RelationDef = {
+    refKey,
+    modelRefKey: mdef.refKey,
+    name: rspec.name,
+    fromModel: rspec.fromModel,
+    fromModelRefKey: rspec.fromModel,
+    through: rspec.through,
+    throughRefKey: throughRef.refKey,
+    nullable: throughRef.nullable,
+    unique: throughRef.unique,
+  };
+  cache.set(refKey, [RefType.Relation, rel]);
+  mdef.relations.push(rel);
+  return rel;
+}
+
+// function defineQuery(mdef: ModelDef, qspec: QuerySpec): void {}
+
+function ensureEqual<T>(a: T, b: T): a is T {
+  if (a === b) return true;
+  throw new Error("Not equal");
 }
 
 function validateType(type: string): FieldDef["type"] {
@@ -75,78 +241,4 @@ function validateType(type: string): FieldDef["type"] {
 
 function constructDbType(type: FieldDef["type"]): FieldDef["dbtype"] {
   return type;
-}
-
-function composeReferences(models: ModelDef[], specs: ModelSpec[]): ModelDef[] {
-  return models.map((model) => {
-    // find the spec
-    const spec = ensureFind(specs, (spec) => spec.name === model.name);
-    const references = spec.references.map((ref): ReferenceDef => {
-      const refModel = ensureFind(models, (m) => m.name === ref.toModel);
-      const refField = ensureFind(refModel.fields, (f) => f.name === "id");
-
-      return {
-        refKey: `${model.refKey}.${ref.name}`,
-        name: ref.name,
-        modelRefKey: model.refKey,
-        fieldRefKey: `${model.refKey}.${ref.name}_id`,
-        toModelRefKey: refModel.refKey,
-        toModelFieldRefKey: refField.refKey,
-        nullable: !!ref.nullable,
-        unique: !!ref.unique,
-      };
-    });
-
-    const refFields = references.map(
-      (ref): FieldDef => ({
-        refKey: ref.fieldRefKey,
-        name: `${ref.name}_id`,
-        dbname: `${ref.name}_id`.toLowerCase(),
-        type: "integer",
-        dbtype: "integer",
-        nullable: ref.nullable,
-        unique: ref.unique,
-        primary: false,
-        modelRefKey: ref.modelRefKey,
-      })
-    );
-
-    // ensure no name collisions between model fields, references and reference fields
-    ensureUnique([
-      ...refFields.map((f) => f.name),
-      ...references.map((r) => r.name),
-      ...model.fields.map((f) => f.name),
-    ]);
-    // ensure no dbname collisions between reference fields and regular fields
-    ensureUnique([...refFields.map((f) => f.dbname), ...model.fields.map((f) => f.dbname)]);
-
-    return { ...model, fields: [...model.fields, ...refFields], references };
-  });
-}
-
-function composeRelations(models: ModelDef[], specs: ModelSpec[]): ModelDef[] {
-  return models.map((model) => {
-    const spec = ensureFind(specs, (spec) => spec.name === model.name);
-    const relations = spec.relations.map((rel): RelationDef => {
-      const relModel = ensureFind(models, (m) => m.name === rel.fromModel);
-      const relReference = ensureFind(relModel.references, (ref) => ref.name === rel.through);
-      return {
-        refKey: `${model.refKey}.${rel.name}`,
-        modelRefKey: model.refKey,
-        name: rel.name,
-        fromModel: rel.fromModel,
-        fromModelRefKey: relModel.refKey,
-        through: rel.through,
-        throughRefKey: relReference.refKey,
-        nullable: relReference.nullable,
-        unique: relReference.unique,
-      };
-    });
-    ensureUnique([
-      ...model.fields.map((f) => f.name),
-      ...model.references.map((r) => r.name),
-      ...relations.map((r) => r.name),
-    ]);
-    return { ...model, relations };
-  });
 }
