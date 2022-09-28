@@ -79,6 +79,21 @@ entrypoint Organizations {
       role org_admin { allow }
     }
 
+    entrypoint IssuesComments {
+      target relation issues.comments
+
+      role org_member or repo_collaborator { allow }
+      role * {
+        deny when repo.private, code 404
+      }
+
+      list entrypoint {
+        response {
+          select { number, state, title, body, locked, locked_reason }
+        }
+      }
+    }
+
     entrypoint Issues {
       target relation issues
       identify with number
@@ -106,6 +121,7 @@ entrypoint Organizations {
         role org_admin or repo_admin { allow }
         # NOTE: GitHub API doesn't document this, it's UI only action
       }
+
       update endpoint lock {
         role org_admin or repo_admin { allow }
         action {
@@ -146,10 +162,14 @@ entrypoint Organizations {
         }
 
         list endpoint {}
+
         get endpoint {}
+
         create endpoint {
           # private repo
-          role org_member and repo_collaborator # allow for these roles
+          role org_member and repo_collaborator {
+            allow # allow for these roles
+          }
           role * { # "all other" roles
             deny when repo.private # deny for private repo
             deny when issue.locked # deny for locked issue
@@ -163,9 +183,12 @@ entrypoint Organizations {
             }
           }
         }
+
         update endpoint {
           # private repo
-          role org_member and repo_collaborator # allow everything for these roles
+          role org_member and repo_collaborator {
+            allow # allow everything for these roles
+          }
           role * { # "all other" roles
             deny when repo.private # deny if private repo
             deny when issue.locked # deny if locked issue
@@ -180,7 +203,72 @@ entrypoint Organizations {
             }
           }
         }
-      }
+      } #> entrypoint Comments
     } #> entrypoint Issues
+
+    entrypoint PullRequests {
+      target relation pulls
+      identify with number
+      alias pull
+
+      response {
+        select { number, state, title, body, locked, locked_reason }
+      }
+
+      list endpoint {}
+      get endpoint {}
+
+      # if org is owner of repo then @auth must be org member
+
+      create endpoint {
+        role org_member {
+          allow
+        }
+        # will this automatically fail for all other roles?
+
+        action {
+          validate with fieldset {
+            pick PullRequest.base_issue.{ title, body, issue }
+            # TODO: issue is required if title is empty
+          }
+
+          # create a new issue
+          if (issue is empty) {
+            create Issue as base_issue {
+              set state "open"
+              set title title
+              set body body
+            }
+          }
+          # fetch existing issue
+          else {
+            query base_issue { from Issues, filter number=issue, first }
+          }
+
+          create PullRequest {
+            set base_issue base_issue
+          }
+        }
+      }
+
+      update endpoint {
+        role org_member {
+          allow
+        }
+        # will this automatically fail for all other roles?
+
+        action {
+          validate with fieldset {
+            pick PullRequest.base_issue.{ title, body, state }
+          }
+
+          update Issue {
+          }
+          # all available fields are located on Issue so do we update issue itself or through pull.base_issue?
+        }
+
+      }
+    }
+
   } #> entrypoint Repos
 } #> entrypoint Organizations

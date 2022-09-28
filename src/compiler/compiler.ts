@@ -22,10 +22,10 @@ import {
 } from "@src/types/specification";
 
 function compileField(field: FieldAST): FieldSpec {
-  let type: string;
-  let default_: LiteralValue;
-  let nullable: boolean;
-  let unique: boolean;
+  let type: string | undefined;
+  let default_: LiteralValue | undefined;
+  let nullable: boolean | undefined;
+  let unique: boolean | undefined;
 
   field.body.forEach((b) => {
     if (b.kind === "tag") {
@@ -49,9 +49,9 @@ function compileField(field: FieldAST): FieldSpec {
 }
 
 function compileReference(reference: ReferenceAST): ReferenceSpec {
-  let toModel: string;
-  let nullable: boolean;
-  let unique: boolean;
+  let toModel: string | undefined;
+  let nullable: boolean | undefined;
+  let unique: boolean | undefined;
 
   reference.body.forEach((b) => {
     if (b.kind === "tag") {
@@ -73,8 +73,8 @@ function compileReference(reference: ReferenceAST): ReferenceSpec {
 }
 
 function compileRelation(relation: RelationAST): RelationSpec {
-  let fromModel: string;
-  let through: string;
+  let fromModel: string | undefined;
+  let through: string | undefined;
 
   relation.body.forEach((b) => {
     if (b.kind === "from") {
@@ -95,10 +95,10 @@ function compileRelation(relation: RelationAST): RelationSpec {
 }
 
 function compileQuery(query: QueryAST): QuerySpec {
-  let fromModel: string[];
-  let filter: ExpSpec;
+  let fromModel: string[] | undefined;
+  let filter: ExpSpec | undefined;
   let orderBy: QuerySpec["orderBy"];
-  let limit: number;
+  let limit: number | undefined;
 
   query.body.forEach((b) => {
     if (b.kind === "from") {

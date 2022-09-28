@@ -70,6 +70,7 @@ model Repo {
   computed full_name { org.name + '/' + slug }
 
   query labels { from RepoLabel, through repo, select { name, descriptio, color, default } } 
+  query pulls { from PullRequest, though repo }
 }
 
 model OrgMember {
@@ -116,10 +117,16 @@ model Issue {
   relation pr { from PullRequest, through base_issue }
   computed is_real_issue { pr is null }
   relation comments { from IssueComment, through issue }
+
+  // TODO: assignee/assignees, Assignees model (github has both and the same user is in both of them)
+  // TODO: labels
 }
 
 model PullRequest {
   reference base_issue { to Issue, unique }
+  // TODO: head/base branch, Branches model
+  // TODO: requested_reviewers - list of users
+  // TODO: draft
 }
 
 model IssueAssignee {
