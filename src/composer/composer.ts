@@ -18,8 +18,8 @@ function composeModels(specs: ModelSpec[]): ModelDef[] {
     name: model.name,
     dbname: model.name.toLowerCase(),
     fields: composeModelFields(model.fields, model.name),
-    references: [],
-    relations: [],
+    references: [] as ReferenceDef[],
+    relations: [] as RelationDef[],
   }));
 
   // step 2: references

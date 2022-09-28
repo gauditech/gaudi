@@ -3,13 +3,20 @@ import path from "path";
 
 import * as Eta from "eta";
 
-export function render(srcFilename: string, destFilename: string, data?: unknown): Promise<void> {
+export function render(
+  srcFilename: string,
+  destFilename: string,
+  data?: Record<string, unknown>
+): Promise<void> {
   return renderTemplate(srcFilename, data).then((content) => {
     storeTemplateOutput(destFilename, content);
   });
 }
 
-export function renderTemplate(filename: string, data?: unknown): Promise<string> {
+export function renderTemplate(
+  filename: string,
+  data: Record<string, unknown> = {}
+): Promise<string> {
   return Eta.renderFileAsync(filename, data) || Promise.resolve("");
 }
 
