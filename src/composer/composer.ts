@@ -219,7 +219,21 @@ function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
   return rel;
 }
 
-// function defineQuery(mdef: ModelDef, qspec: QuerySpec): void {}
+type QueryChain = any[];
+
+function defineQuery(mdef: ModelDef, qspec: QuerySpec): void {
+  // qspec.fromModel.reduce(
+  //   ([chain, context], from) => {
+  //     // what is this?
+  //     const target = cache.get(`${context.name}.${from}`);
+  //     chain.push()
+  //   },
+  //   [[], mdef] as [QueryChain, ModelDef]
+  // );
+  // const chain: any[] = [];
+  // for (const from of qspec.fromModel) {
+  // }
+}
 
 function ensureEqual<T>(a: T, b: T): a is T {
   if (a === b) return true;
