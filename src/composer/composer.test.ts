@@ -41,6 +41,29 @@ describe("compose models", () => {
         },
       ],
     };
+    expect(() => compose(specification)).toThrowError("Items not unique!");
+  });
+  it("fails when relation doesn't point to a reference", () => {
+    const specification: Specification = {
+      models: [
+        {
+          name: "Org",
+          fields: [{ name: "name", type: "text" }],
+          references: [],
+          relations: [{ name: "repos", fromModel: "Repo", through: "name" }],
+          queries: [],
+          computeds: [],
+        },
+        {
+          name: "Repo",
+          fields: [{ name: "name", type: "text" }],
+          references: [{ name: "org", toModel: "Org" }],
+          relations: [],
+          queries: [],
+          computeds: [],
+        },
+      ],
+    };
     expect(() => compose(specification)).toThrowError(
       "Expecting type reference but found a type field"
     );
