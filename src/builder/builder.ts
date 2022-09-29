@@ -2,14 +2,14 @@ import fs from "fs";
 import path from "path";
 
 import { applyDbChanges } from "@src/builder/migration/migrator";
-import { renderTemplate, storeTemplateOutput } from "@src/builder/render/renderer";
+import { renderTemplate, storeTemplateOutput } from "@src/builder/renderer/renderer";
 import { Definition } from "@src/types/definition";
 
 // TODO: read from definition
 const APP_NAME = "demoapp";
 const PACKAGE_DESCRIPTION = "Demo app built by Gaudi";
 const PACKAGE_VERSION = "0.0.1";
-const TEMPLATE_PATH = path.join(__dirname, "templates");
+const TEMPLATE_PATH = path.join(__dirname, "renderer/templates");
 const OUTPUT_PATH = path.join(process.cwd(), "./output");
 const DB_OUTPUT_PATH = `${OUTPUT_PATH}/db`;
 const SERVER_PORT = 3001;
