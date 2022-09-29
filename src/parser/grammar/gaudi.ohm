@@ -44,7 +44,7 @@ Gaudi {
     = "from" IdentifierPath -- from
     | "filter" OptionalBraces<QueryExp> -- filter
     | "order" "by" NonemptyListOf<QueryOrder, ","> -- order_by
-    | "limit" integer -- limit_by
+    | "limit" integer -- limit
 
   QueryOrder = IdentifierPath ("asc" | "desc")?
 
@@ -83,6 +83,28 @@ Gaudi {
     | not PrimaryExp -- not
     | literal -- literal
     | IdentifierPath -- identifier
+
+  Entrypoint = "entrypoint" identifier "{" NewlineBody<EntrypointBody, ";"> "}"
+
+  EntrypointBody
+    = "target" "model" identifier -- target
+    | "identify" "with" identifier -- identify
+    | "alias" identifier -- alias
+    | "response" "{" NewlineBody<identifier, ","> "}" -- response
+    | Endpoint -- endpoint
+    | Entrypoint -- entrypoint
+
+  Endpoint = EndpointType "endpoint" "{" NewlineBody<EndpointBody, ";"> "}"
+
+  EndpointType
+    = "list"
+    | "get"
+    | "create"
+    | "update"
+    | "delete"
+
+  EndpointBody
+    = "action" "{" "}" -- action
 
   IdentifierPath = identifier ("." identifier)*
 

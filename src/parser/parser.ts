@@ -3,6 +3,9 @@ import grammar from "./grammar/gaudi.ohm-bundle.js";
 import {
   AST,
   ComputedAST,
+  Endpoint,
+  Entrypoint,
+  EntrypointBody,
   ExpAST,
   FieldAST,
   FieldBodyAST,
@@ -89,7 +92,7 @@ semantics.addOperation("parse()", {
   QueryBody_order_by(this, _order, _by, fields): QueryBodyAST {
     return { kind: "orderBy", orderings: fields.parse(), interval: this.source };
   },
-  QueryBody_limit_by(this, _limit, limit): QueryBodyAST {
+  QueryBody_limit(this, _limit, limit): QueryBodyAST {
     return { kind: "limit", limit: limit.parse(), interval: this.source };
   },
   QueryOrder(this, field, orderNode): QueryOrderAST {
@@ -213,6 +216,44 @@ semantics.addOperation("parse()", {
   },
   IdentifierPath(this, head, _dot, tail): string[] {
     return [head.parse(), ...tail.children.map((child) => child.parse())];
+  },
+  Entrypoint(this, _enrtypoint, identifier, _braceL, body, _braceR): Entrypoint {
+    return {
+      name: identifier.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  EntrypointBody_target(this, _target, _model, identifier): EntrypointBody {
+    return { kind: "target", identifier: identifier.parse(), interval: this.source };
+  },
+  EntrypointBody_identify(this, _identify, _with, identifier): EntrypointBody {
+    return { kind: "identify", identifier: identifier.parse(), interval: this.source };
+  },
+  EntrypointBody_alias(this, _alias, identifier): EntrypointBody {
+    return { kind: "alias", identifier: identifier.parse(), interval: this.source };
+  },
+  EntrypointBody_response(this, _response, identifiers, _seperator): EntrypointBody {
+    return { kind: "response", select: identifiers.parse(), interval: this.source };
+  },
+  EntrypointBody_endpoint(this, endpoint): EntrypointBody {
+    return { kind: "endpoint", endpoint: endpoint.parse() };
+  },
+  EntrypointBody_entrypoint(this, entrypoint): EntrypointBody {
+    return { kind: "entrypoint", entrypoint: entrypoint.parse() };
+  },
+  Endpoint(this, endpointType, _endpoint, _braceL, body, _braceR): Endpoint {
+    return {
+      type: endpointType.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  EndpointType(this) {
+    return this.sourceString;
+  },
+  EndpointBody_action(this, _action, _braceL, _braceR) {
+    return { kind: "action", interval: this.source };
   },
   null(_null) {
     return null;

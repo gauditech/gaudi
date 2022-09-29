@@ -77,6 +77,29 @@ export type ExpAST = WithContext<
   | { kind: "literal"; literal: LiteralValue }
 >;
 
+export type Entrypoint = WithContext<{
+  name: string;
+  body: EntrypointBody[];
+}>;
+
+export type EntrypointBody = WithContext<
+  | { kind: "target"; identifier: string }
+  | { kind: "identify"; identifier: string }
+  | { kind: "alias"; identifier: string }
+  | { kind: "response"; select: string[] }
+  | { kind: "endpoint"; endpoint: Endpoint }
+  | { kind: "entrypoint"; entrypoint: Entrypoint }
+>;
+
+export type Endpoint = WithContext<{
+  type: EndpointType;
+  body: EndpointBody;
+}>;
+
+export type EndpointType = "list" | "get" | "create" | "update" | "delete";
+
+export type EndpointBody = WithContext<{ kind: "action" }>;
+
 export type LiteralValue = null | boolean | number | string;
 
 export type BinaryOperator =
