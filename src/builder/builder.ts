@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { applyDbChanges } from "@src/builder/migration/migrator";
+import { applyDbChanges } from "@src/builder/migrator/migrator";
 import { renderTemplate, storeTemplateOutput } from "@src/builder/renderer/renderer";
 import { Definition } from "@src/types/definition";
 
