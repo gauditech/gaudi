@@ -1,5 +1,3 @@
-import { format } from "path";
-
 import { ensureUnique } from "@src/common/utils";
 import {
   Definition,
@@ -41,6 +39,7 @@ type Cached<T extends RefType> = [T, Mapping[T]];
 const cache = new Map<string, Cached<RefType>>();
 
 export function compose(input: Specification): Definition {
+  cache.clear();
   return {
     models: composeModels(input.models),
   };
@@ -229,6 +228,24 @@ function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
 }
 
 function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
+  const qpath = defineQueryPaths(mdef, qspec);
+
+  const leaf = qpath.at(-1)!; // FIXME empty `from`?
+  const retCardinality = qpath.every((p) => p.refCardinality === "one") ? "one" : "many";
+  const query: QueryDef = {
+    name: qspec.name,
+    filters: [],
+    nullable: leaf.nullable,
+    retCardinality,
+    retType: leaf.retType,
+    path: qpath,
+  };
+  cache.set(`${mdef.name}.${qspec.name.toLowerCase()}`, [RefType.Query, query]);
+  mdef.queries.push(query);
+  return query;
+}
+
+function defineQueryPaths(mdef: ModelDef, qspec: QuerySpec): QueryDefPath[] {
   const [qpath, _] = qspec.fromModel.reduce(
     ([chain, context], from, index): [QueryDefPath[], ModelDef] => {
       const refKey = `${context.name}.${from}`;
@@ -255,7 +272,7 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
             retType: targetModel.name,
             alias: `path${index}`,
             bpAlias: null,
-            nullable: reference.nullable,
+            nullable: reference.nullable, // FIXME may be nullable if filters are applied
             path: [],
             select: [],
           };
@@ -273,7 +290,7 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
             retType: targetModel.name,
             alias: `path${index}`,
             bpAlias: null,
-            nullable: reference.unique ? reference.nullable : false,
+            nullable: reference.unique ? reference.nullable : false, // FIXME may be nullable if filters are applied
             path: [],
             select: [],
           };
@@ -283,6 +300,7 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
         case RefType.Query: {
           const query = getDefinition(refKey, target[0], true);
           const targetModel = getDefinition(query.retType, RefType.Model, true);
+          ensureEqual(query.retType, mdef.refKey); // query can only point to it's own model
           const p: QueryDefPath = {
             name: from,
             refKey,
@@ -290,7 +308,7 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
             retType: query.retType,
             alias: `path${index}`,
             bpAlias: null,
-            nullable: query.nullable,
+            nullable: query.nullable, // FIXME may be nullable if filters are applied
             path: [],
             select: [],
           };
@@ -301,19 +319,7 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
     },
     [[], mdef] as [QueryDefPath[], ModelDef]
   );
-
-  const leaf = qpath.at(-1)!; // FIXME empty `from`?
-  const query: QueryDef = {
-    name: qspec.name,
-    filters: [],
-    nullable: leaf.nullable,
-    retCardinality: leaf.refCardinality,
-    retType: leaf.retType,
-    path: qpath,
-  };
-  cache.set(`${mdef.name}.${qspec.name.toLowerCase()}`, [RefType.Query, query]);
-  mdef.queries.push(query);
-  return query;
+  return qpath;
 }
 
 function ensureEqual<T>(a: T, b: T): a is T {
