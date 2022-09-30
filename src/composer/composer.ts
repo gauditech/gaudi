@@ -1,7 +1,15 @@
-import e from "express";
+import { format } from "path";
 
 import { ensureUnique } from "@src/common/utils";
-import { Definition, FieldDef, ModelDef, ReferenceDef, RelationDef } from "@src/types/definition";
+import {
+  Definition,
+  FieldDef,
+  ModelDef,
+  QueryDef,
+  QueryDefPath,
+  ReferenceDef,
+  RelationDef,
+} from "@src/types/definition";
 import {
   FieldSpec,
   ModelSpec,
@@ -25,7 +33,7 @@ type Mapping = {
   [RefType.Field]: FieldDef;
   [RefType.Reference]: ReferenceDef;
   [RefType.Relation]: RelationDef;
-  [RefType.Query]: ModelDef;
+  [RefType.Query]: QueryDef;
   [RefType.Computed]: ModelDef;
 };
 
@@ -78,7 +86,7 @@ function composeModels(specs: ModelSpec[]): ModelDef[] {
         tryCall(() => defineRelation(mdef, rspec));
       });
       mspec.queries.forEach((qspec) => {
-        // tryCall(() => defineQuery(mdef, qspec));
+        tryCall(() => defineQuery(mdef, qspec));
       });
 
       return mdef;
@@ -219,20 +227,91 @@ function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
   return rel;
 }
 
-type QueryChain = any[];
+function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
+  const [qpath, _] = qspec.fromModel.reduce(
+    ([chain, context], from, index): [QueryDefPath[], ModelDef] => {
+      const refKey = `${context.name}.${from}`;
+      // what is this?
+      const target = cache.get(refKey);
+      if (!target) {
+        throw "cache-miss";
+      }
+      // target type can be:
+      // relation, reference, query
+      // TODO add models
+      switch (target[0]) {
+        case RefType.Computed:
+        case RefType.Field:
+        case RefType.Model:
+          throw new Error(`Query feature doesn't support ${target[0]} in the 'from' chain`);
+        case RefType.Reference: {
+          const reference = getDefinition(refKey, target[0], true);
+          const targetModel = getDefinition(reference.toModelRefKey, RefType.Model, true);
+          const p: QueryDefPath = {
+            name: from,
+            refKey,
+            refCardinality: "one",
+            retType: targetModel.name,
+            alias: `path${index}`,
+            bpAlias: null,
+            nullable: reference.nullable,
+            path: [],
+            select: [],
+          };
+          chain.push(p);
+          return [chain, targetModel];
+        }
+        case RefType.Relation: {
+          const relation = getDefinition(refKey, target[0], true);
+          const reference = getDefinition(relation.throughRefKey, RefType.Reference, true);
+          const targetModel = getDefinition(relation.fromModelRefKey, RefType.Model, true);
+          const p: QueryDefPath = {
+            name: from,
+            refKey,
+            refCardinality: reference.unique ? "one" : "many",
+            retType: targetModel.name,
+            alias: `path${index}`,
+            bpAlias: null,
+            nullable: reference.unique ? reference.nullable : false,
+            path: [],
+            select: [],
+          };
+          chain.push(p);
+          return [chain, targetModel];
+        }
+        case RefType.Query: {
+          const query = getDefinition(refKey, target[0], true);
+          const targetModel = getDefinition(query.retType, RefType.Model, true);
+          const p: QueryDefPath = {
+            name: from,
+            refKey,
+            refCardinality: query.retCardinality,
+            retType: query.retType,
+            alias: `path${index}`,
+            bpAlias: null,
+            nullable: query.nullable,
+            path: [],
+            select: [],
+          };
+          chain.push(p);
+          return [chain, targetModel];
+        }
+      }
+    },
+    [[], mdef] as [QueryDefPath[], ModelDef]
+  );
 
-function defineQuery(mdef: ModelDef, qspec: QuerySpec): void {
-  // qspec.fromModel.reduce(
-  //   ([chain, context], from) => {
-  //     // what is this?
-  //     const target = cache.get(`${context.name}.${from}`);
-  //     chain.push()
-  //   },
-  //   [[], mdef] as [QueryChain, ModelDef]
-  // );
-  // const chain: any[] = [];
-  // for (const from of qspec.fromModel) {
-  // }
+  const leaf = qpath.at(-1)!; // FIXME empty `from`?
+  const query: QueryDef = {
+    name: qspec.name,
+    filters: [],
+    nullable: leaf.nullable,
+    retCardinality: leaf.refCardinality,
+    retType: leaf.retType,
+    path: qpath,
+  };
+  cache.set(`${mdef.name}.${qspec.name.toLowerCase()}`, [RefType.Query, query]);
+  return query;
 }
 
 function ensureEqual<T>(a: T, b: T): a is T {

@@ -105,17 +105,21 @@ let x = {
  */
 
 /*
-  from recent_memberships.user as m.u
-  filter m.is_active is true
-    and u.is_active is true
-    and u.org_count is 1
-    and u.repo_count is u.org_count
-    and u.profile.verified is true
-    or u.profile is null
+  query featured_members:
+    from recent_memberships.user as m.u
+    filter m.is_active is true
+      and u.is_active is true
+      and u.org_count is 1
+      and u.repo_count is u.org_count
+      and u.profile.verified is true
+      or u.profile is null
 
 // imamo listu orgova, dohvati gornje za svaku!
 */
 /*
+
+select { featured_members { id, posts {} } }
+
   SELECT u1.*
 
   FROM
@@ -156,7 +160,7 @@ let x = {
     om0.is_active = true
     AND u1.is_active = true
     AND u1.org_count = 1
-    AND u1.repo_count = 1
+    AND u1.repo_count = u1.org_count
     AND u1.profile__verified = true
         OR u1.profile__id IS NULL
     -- we are accesing this for a list of orgs

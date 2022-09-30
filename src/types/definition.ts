@@ -45,3 +45,37 @@ export type RelationDef = {
   nullable: boolean;
   unique: boolean;
 };
+
+type QueryDefPathSelect = {
+  name: string;
+  retType: string; // fixme
+  refKey: string;
+};
+
+export type QueryDefPath = {
+  name: string;
+  refKey: string;
+  retType: string;
+  refCardinality: "one" | "many";
+  nullable: boolean;
+  alias: string;
+  bpAlias: string | null;
+  path: QueryDefPath[];
+  select: QueryDefPathSelect[];
+};
+
+type QueryDefFilter = {
+  type: string;
+  lhs: string | number | boolean;
+  rhs: string | number | boolean;
+};
+
+export type QueryDef = {
+  name: string;
+  retType: string;
+  retCardinality: "one" | "many";
+  nullable: boolean;
+  // unique: boolean;
+  path: QueryDefPath[];
+  filters: QueryDefFilter[];
+};
