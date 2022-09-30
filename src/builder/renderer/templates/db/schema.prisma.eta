@@ -1,41 +1,3 @@
-<%
-
-/** ----- Helpers ----- */
-
-function modelDbName(modelRefKey) {
-  return (it.definition.models || [])
-    .find(model => model.refKey === modelRefKey)
-    ?.dbname
-}
-
-function fieldDbName(modelRefKey, fieldRefKey) {
-  return (it.definition.models || [])
-    .find(model => model.refKey === modelRefKey)
-    ?.fields
-    .find(field => field.refKey === fieldRefKey)
-    ?.dbname
-}
-
-function typeToDbType(type) {
-  if (type === 'serial') {
-    return 'Int'
-  }
-  else if (type === 'integer') {
-    return 'Int'
-  }
-  else if (type === 'text') {
-    return 'String'
-  }
-  else if (type === 'boolean') {
-    return 'Boolean'
-  }
-
-  throw 'UNHANDLED_GAUDI_TYPE'
-}
-
-%>
-
-<% /* ----- Template ----- */ %>
 
 <% /* TODO: datasource should come from definition instead of being hardcoded */ %>
 datasource db {
@@ -47,19 +9,19 @@ datasource db {
 model <%=model.dbname %> {
   <% /* ----- fields ----- */ %>
   <%_ ;(model.fields ?? []).forEach((field) => { %>
-    <%_ = field.dbname %> <%= typeToDbType(field.dbtype) %><%= field.nullable ? '?' : '' %><%= field.primary ? ' @id' : '' %><%= field.unique ? ' @unique' : '' %><%= field.dbtype === 'serial' ? ' @default(autoincrement())' : ''%>
+    <%_ ~ includeFile('./schema_field.prisma.eta', { field, definition: it.definition }) %>
 
   <% }) %>
 
   <% /* ----- relations ----- */ %>
   <%_ ;(model.relations ?? []).forEach((relation) => { %>
-    <%_ = relation.name%> <%= modelDbName(relation.fromModelRefKey)%><%= !relation.unique ? '[]' : ''%><%= relation.nullable ? '?' : '' %>
+    <%_ ~ includeFile('./schema_relation.prisma.eta', { relation, definition: it.definition }) %>
 
   <% }) %>
 
   <% /* ----- references ----- */ %>
   <%_ ;(model.references ?? []).forEach((reference) => { %>
-    <%_ = reference.name%> <%= modelDbName(reference.toModelRefKey)%> @relation(fields: [<%= fieldDbName(reference.modelRefKey, reference.fieldRefKey)%>], references: [<%= fieldDbName(reference.toModelRefKey, reference.toModelFieldRefKey)%>])
+    <%_ ~ includeFile('./schema_reference.prisma.eta', { reference, definition: it.definition }) %>
 
   <% }) %>
 }

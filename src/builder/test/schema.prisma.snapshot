@@ -1,5 +1,4 @@
 
-
 datasource db {
   provider = "DB_PROVIDER"
   url      = "DB_CONNECTION_URL"

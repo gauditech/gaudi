@@ -2,6 +2,15 @@ import fs from "fs";
 import path from "path";
 
 import * as Eta from "eta";
+import * as definitionHelpers from "@src/builder/renderer/templates/util/definition";
+
+// make helper functions available to templates
+// helpers are grouped under property `G` (as in Gaudi :)) to avoid namespace collisions
+Eta.configure({
+  G: {
+    ...definitionHelpers,
+  },
+});
 
 export function render(
   srcFilename: string,
