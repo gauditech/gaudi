@@ -9,6 +9,7 @@ export type ModelDef = {
   fields: FieldDef[];
   references: ReferenceDef[];
   relations: RelationDef[];
+  queries: QueryDef[];
 };
 
 export type FieldDef = {

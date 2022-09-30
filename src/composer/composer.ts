@@ -127,6 +127,7 @@ function defineModel(spec: ModelSpec): ModelDef {
     fields: [],
     references: [],
     relations: [],
+    queries: [],
   };
   model.fields.push(constructIdField(model));
   cache.set(model.refKey, [RefType.Model, model]);
@@ -311,6 +312,7 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
     path: qpath,
   };
   cache.set(`${mdef.name}.${qspec.name.toLowerCase()}`, [RefType.Query, query]);
+  mdef.queries.push(query);
   return query;
 }
 

@@ -74,7 +74,8 @@
           "throughRefKey": "Repo.org",
           "unique": false
         }
-      ]
+      ],
+      "queries": []
     },
     {
       "refKey": "Repo",
@@ -149,7 +150,8 @@
           "nullable": false
         }
       ],
-      "relations": []
+      "relations": [],
+      "queries": []
     }
   ]
 }
