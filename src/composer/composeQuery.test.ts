@@ -17,6 +17,7 @@ describe("compose model queries", () => {
     const def = compose(compile(parse(bp)));
     expect(def.models[0].queries).toStrictEqual([
       {
+        refKey: "Org.back_to_org",
         name: "back_to_org",
         retCardinality: "many",
         retType: "Org",
@@ -63,6 +64,7 @@ describe("compose model queries", () => {
     const def = compose(compile(parse(bp)));
     expect(def.models[0].queries).toStrictEqual([
       {
+        refKey: "Org.repos_if_one",
         name: "repos_if_one",
         retCardinality: "many",
         retType: "Repo",

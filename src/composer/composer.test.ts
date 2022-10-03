@@ -3,6 +3,8 @@ import specificationInput from "@examples/git/specification.json";
 
 import { compose } from "./composer";
 
+import { compile } from "@src/compiler/compiler";
+import { parse } from "@src/parser/parser";
 import { Specification } from "@src/types/specification";
 
 describe("compose models", () => {
@@ -67,5 +69,11 @@ describe("compose models", () => {
     expect(() => compose(specification)).toThrowError(
       "Expecting type reference but found a type field"
     );
+  });
+  it("detect infinite loop when resolving", () => {
+    const bp = `
+    model Org { reference no { to Unknown } }
+    `;
+    expect(() => compose(compile(parse(bp)))).toThrowError("infinite-loop");
   });
 });

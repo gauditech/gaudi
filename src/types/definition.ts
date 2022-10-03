@@ -72,6 +72,7 @@ type QueryDefFilter = {
 };
 
 export type QueryDef = {
+  refKey: string;
   name: string;
   retType: string;
   retCardinality: "one" | "many";

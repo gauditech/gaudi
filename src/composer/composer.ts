@@ -61,7 +61,7 @@ function composeModels(specs: ModelSpec[]): ModelDef[] {
   }
   let defs: ModelDef[] = [];
   while (needsExtraStep) {
-    // FIXME ensure no infinite looping
+    const cacheSize = cache.size;
     needsExtraStep = false;
     // ensure model uniqueness
     ensureUnique(specs.map((s) => s.name.toLowerCase()));
@@ -90,6 +90,10 @@ function composeModels(specs: ModelSpec[]): ModelDef[] {
 
       return mdef;
     });
+    if (cache.size === cacheSize) {
+      // whole iteration has passed, nothing has changed
+      throw "infinite-loop";
+    }
   }
   return defs;
 }
@@ -172,6 +176,7 @@ function defineReference(mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
   const refKey = `${mdef.refKey}.${rspec.name}`;
   const ex = getDefinition(refKey, RefType.Reference);
   if (ex) return ex;
+  getDefinition(rspec.toModel, RefType.Model, true);
 
   const fieldRefKey = `${refKey}_id`; // or `Id`?? FIXME decide casing logic
   if (getDefinition(refKey, RefType.Field)) {
@@ -208,6 +213,9 @@ function defineReference(mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
 
 function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
   const refKey = `${mdef.refKey}.${rspec.name}`;
+  const ex = getDefinition(refKey, RefType.Relation);
+  if (ex) return ex;
+
   getDefinition(rspec.fromModel, RefType.Model, true);
   const throughRef = getDefinition(`${rspec.fromModel}.${rspec.through}`, RefType.Reference, true);
 
@@ -228,11 +236,15 @@ function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
 }
 
 function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
-  const qpath = defineQueryPaths(mdef, qspec);
+  const refKey = `${mdef.refKey}.${qspec.name.toLowerCase()}`;
+  const ex = getDefinition(refKey, RefType.Query);
+  if (ex) return ex;
 
+  const qpath = defineQueryPaths(mdef, qspec);
   const leaf = qpath.at(-1)!; // FIXME empty `from`?
   const retCardinality = qpath.every((p) => p.refCardinality === "one") ? "one" : "many";
   const query: QueryDef = {
+    refKey,
     name: qspec.name,
     filters: [],
     nullable: leaf.nullable,
