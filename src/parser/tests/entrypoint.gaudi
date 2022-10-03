@@ -1,0 +1,14 @@
+entrypoint ItemEntry {
+  target model Item
+  identify with slug
+  alias item
+  response { name, price }
+  list endpoint {}
+  get endpoint {}
+  update endpoint {}
+  create endpoint {}
+  entrypoint Review {
+    target relation reviews
+    create endpoint {}
+  }
+}

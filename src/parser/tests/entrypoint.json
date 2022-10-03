@@ -1,0 +1,24 @@
+{
+  "models": [],
+  "entrypoints": [
+    {
+      "name": "ItemEntry",
+      "targetModel": "Item",
+      "identify": "slug",
+      "alias": "item",
+      "response": ["name", "price"],
+      "endpoints": [
+        { "type": "list" },
+        { "type": "get" },
+        { "type": "update" },
+        { "type": "create" }
+      ],
+      "entrypoints": [
+        {
+          "name": "Review",
+          "endpoints": [{ "type": "create" }]
+        }
+      ]
+    }
+  ]
+}

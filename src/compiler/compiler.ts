@@ -1,7 +1,10 @@
 import { CompilerError } from "@src/common/error";
 import {
   AST,
+  ActionBodyAST,
   ComputedAST,
+  EndpointAST,
+  EntrypointAST,
   ExpAST,
   FieldAST,
   LiteralValue,
@@ -11,7 +14,10 @@ import {
   RelationAST,
 } from "@src/types/ast";
 import {
+  ActionSpec,
   ComputedSpec,
+  EndpointSpec,
+  EntrypointSpec,
   ExpSpec,
   FieldSpec,
   ModelSpec,
@@ -182,6 +188,72 @@ function compileModel(model: ModelAST): ModelSpec {
   };
 }
 
+function compileAction(action: ActionBodyAST): ActionSpec {
+  return { kind: action.kind, target: action.target, actionAtoms: action.body };
+}
+
+function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
+  let action: ActionSpec[] | undefined;
+
+  endpoint.body.map((b) => {
+    if (b.kind === "action") {
+      action = b.body.map(compileAction);
+    }
+  });
+
+  return { type: endpoint.type, action, interval: endpoint.interval };
+}
+
+function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
+  let targetModel: string | undefined;
+  let targetRelation: string | undefined;
+  let identify: string | undefined;
+  let alias: string | undefined;
+  let response: string[] | undefined;
+  const endpoints: EndpointSpec[] = [];
+  const entrypoints: EntrypointSpec[] = [];
+
+  entrypoint.body.forEach((b) => {
+    if (b.kind === "targetModel") {
+      targetModel = b.identifier;
+    } else if (b.kind === "targetRelation") {
+      targetRelation = b.identifier;
+    } else if (b.kind === "identify") {
+      identify = b.identifier;
+    } else if (b.kind === "alias") {
+      alias = b.identifier;
+    } else if (b.kind === "response") {
+      response = b.select;
+    } else if (b.kind === "endpoint") {
+      endpoints.push(compileEndpoint(b.endpoint));
+    } else if (b.kind === "entrypoint") {
+      entrypoints.push(compileEntrypoint(b.entrypoint));
+    }
+  });
+
+  return {
+    name: entrypoint.name,
+    targetModel,
+    targetRelation,
+    identify,
+    alias,
+    response,
+    endpoints,
+    entrypoints,
+    interval: entrypoint.interval,
+  };
+}
 export function compile(input: AST): Specification {
-  return { models: input.models.map(compileModel) };
+  const models: ModelSpec[] = [];
+  const entrypoints: EntrypointSpec[] = [];
+
+  input.map((definition) => {
+    if (definition.kind === "model") {
+      models.push(compileModel(definition));
+    } else {
+      entrypoints.push(compileEntrypoint(definition));
+    }
+  });
+
+  return { models, entrypoints };
 }

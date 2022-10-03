@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<Model, ";">
+    = NewlineBody<(Model | Entrypoint), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -87,7 +87,8 @@ Gaudi {
   Entrypoint = "entrypoint" identifier "{" NewlineBody<EntrypointBody, ";"> "}"
 
   EntrypointBody
-    = "target" "model" identifier -- target
+    = "target" "model" identifier -- target_model
+    | "target" "relation" identifier -- target_relation
     | "identify" "with" identifier -- identify
     | "alias" identifier -- alias
     | "response" "{" NewlineBody<identifier, ","> "}" -- response
@@ -104,7 +105,14 @@ Gaudi {
     | "delete"
 
   EndpointBody
-    = "action" "{" "}" -- action
+    = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
+
+  ActionBody
+    = ("create" | "update") identifier "{" NewlineBody<ActionAtomBody, ";"> "}"
+
+  ActionAtomBody
+    = "set" identifier (identifier | literal) -- set
+    | "reference" identifier "through" identifier -- reference
 
   IdentifierPath = identifier ("." identifier)*
 
