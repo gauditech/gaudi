@@ -23,7 +23,7 @@ describe("compose model queries", () => {
         nullable: false,
         path: [
           {
-            alias: "path0",
+            alias: "r0",
             bpAlias: null,
             name: "repos",
             nullable: false,
@@ -34,7 +34,7 @@ describe("compose model queries", () => {
             select: [],
           },
           {
-            alias: "path1",
+            alias: "o1",
             bpAlias: null,
             name: "org",
             nullable: false,
@@ -73,7 +73,7 @@ describe("compose model queries", () => {
             refKey: "Org.repos",
             refCardinality: "many",
             retType: "Repo",
-            alias: "path0",
+            alias: "r0",
             bpAlias: null,
             nullable: false,
             path: [
@@ -82,7 +82,7 @@ describe("compose model queries", () => {
                 refKey: "Repo.org",
                 refCardinality: "one",
                 retType: "Org",
-                alias: "path1",
+                alias: "r0.o0",
                 bpAlias: null,
                 nullable: false,
                 path: [],
@@ -96,8 +96,8 @@ describe("compose model queries", () => {
           },
         ],
         filters: [
-          // { type: "numeric", lhs: "path0.path1__id", rhs: 1 },
-          // { type: "boolean", lhs: "path0.path1__is_active", rhs: true },
+          // { type: "numeric", lhs: "r0.p0.id", rhs: 1 },
+          // { type: "boolean", lhs: "r0.p0.is_active", rhs: true },
         ],
       },
     ]);

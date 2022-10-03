@@ -1,4 +1,4 @@
-import { ensureUnique } from "@src/common/utils";
+import { ensureUnique, nameInitials } from "@src/common/utils";
 import {
   Definition,
   FieldDef,
@@ -270,7 +270,7 @@ function defineQueryPaths(mdef: ModelDef, qspec: QuerySpec): QueryDefPath[] {
             refKey,
             refCardinality: "one",
             retType: targetModel.name,
-            alias: `path${index}`,
+            alias: `${nameInitials(from)}${index}`,
             bpAlias: null,
             nullable: reference.nullable, // FIXME may be nullable if filters are applied
             path: [],
@@ -288,7 +288,7 @@ function defineQueryPaths(mdef: ModelDef, qspec: QuerySpec): QueryDefPath[] {
             refKey,
             refCardinality: reference.unique ? "one" : "many",
             retType: targetModel.name,
-            alias: `path${index}`,
+            alias: `${nameInitials(from)}${index}`,
             bpAlias: null,
             nullable: reference.unique ? reference.nullable : false, // FIXME may be nullable if filters are applied
             path: [],
@@ -306,7 +306,7 @@ function defineQueryPaths(mdef: ModelDef, qspec: QuerySpec): QueryDefPath[] {
             refKey,
             refCardinality: query.retCardinality,
             retType: query.retType,
-            alias: `path${index}`,
+            alias: `${nameInitials(from)}${index}`,
             bpAlias: null,
             nullable: query.nullable, // FIXME may be nullable if filters are applied
             path: [],

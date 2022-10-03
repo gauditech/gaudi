@@ -26,3 +26,32 @@ export function concatKeys(map: Record<string, boolean>, delimiter = " "): strin
     .map(([key, _value]) => key)
     .join(delimiter);
 }
+
+function isLetter(char: string) {
+  return (
+    (char.length === 1 && char.toUpperCase() != char.toLowerCase()) || char.codePointAt(0)! > 127
+  );
+}
+
+function isUppercase(char: string) {
+  return char === char.toUpperCase();
+}
+
+export function nameInitials(input: string): string {
+  const [_, acc] = input.split("").reduce(
+    (acc, char): [boolean, string[]] => {
+      if (!isLetter(char)) {
+        return [true, acc[1]];
+      }
+      if (acc[0]) {
+        acc[1].push(char);
+        return [false, acc[1]];
+      } else {
+        if (isUppercase(char)) acc[1].push(char);
+        return [false, acc[1]];
+      }
+    },
+    [true, []] as [boolean, string[]]
+  );
+  return acc.join("").toLowerCase();
+}
