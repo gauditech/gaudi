@@ -15,13 +15,6 @@ export function renderTemplate(
   filename: string,
   data: Record<string, unknown> = {}
 ): Promise<string> {
-  return import(filename).then((m) => m.render(data));
-}
-
-export function renderTsTemplate(
-  filename: string,
-  data: Record<string, unknown> = {}
-): Promise<string> {
   return import(filename).then((template) => {
     return template.render(data);
   });
