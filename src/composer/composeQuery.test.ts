@@ -22,27 +22,30 @@ describe("compose model queries", () => {
         retCardinality: "many",
         retType: "Org",
         nullable: false,
-        path: [
+        joinPaths: [
           {
-            alias: "r0",
+            alias: "o.r0",
             bpAlias: null,
             name: "repos",
             nullable: false,
-            path: [],
+            joinPaths: [
+              {
+                alias: "o.r0.o0",
+                bpAlias: null,
+                name: "org",
+                nullable: false,
+                joinPaths: [],
+                joinType: "inner",
+                refCardinality: "one",
+                refKey: "Repo.org",
+                retType: "Org",
+                select: [],
+              },
+            ],
+            joinType: "inner",
             refCardinality: "many",
             refKey: "Org.repos",
             retType: "Repo",
-            select: [],
-          },
-          {
-            alias: "o1",
-            bpAlias: null,
-            name: "org",
-            nullable: false,
-            path: [],
-            refCardinality: "one",
-            refKey: "Repo.org",
-            retType: "Org",
             select: [],
           },
         ],
@@ -50,7 +53,7 @@ describe("compose model queries", () => {
       },
     ]);
   });
-  it("nested example with filters", () => {
+  it("example with nested filters", () => {
     const bp = `
     model Org {
       relation repos { from Repo, through org }
@@ -69,31 +72,33 @@ describe("compose model queries", () => {
         retCardinality: "many",
         retType: "Repo",
         nullable: false,
-        path: [
+        joinPaths: [
           {
             name: "repos",
             refKey: "Org.repos",
             refCardinality: "many",
             retType: "Repo",
-            alias: "r0",
+            alias: "o.r0",
             bpAlias: null,
             nullable: false,
-            path: [
+            joinPaths: [
               {
                 name: "org",
                 refKey: "Repo.org",
                 refCardinality: "one",
                 retType: "Org",
-                alias: "r0.o0",
+                alias: "o.r0.o0",
                 bpAlias: null,
                 nullable: false,
-                path: [],
+                joinPaths: [],
+                joinType: "inner",
                 select: [
-                  { type: "integer", name: "id", refKey: "Org.id" },
-                  { type: "boolean", name: "is_active", refKey: "Org.is_active" },
+                  // { type: "integer", name: "id", refKey: "Org.id" },
+                  // { type: "boolean", name: "is_active", refKey: "Org.is_active" },
                 ],
               },
             ],
+            joinType: "inner",
             select: [],
           },
         ],

@@ -49,19 +49,21 @@ export type RelationDef = {
 
 type QueryDefPathSelect = {
   name: string;
-  retType: string; // fixme
+  retType: string;
+  nullable: boolean;
   refKey: string;
 };
 
 export type QueryDefPath = {
-  name: string;
   refKey: string;
+  name: string;
   retType: string;
-  refCardinality: "one" | "many";
+  retCardinality: "one" | "many"; // should be retCard,...
   nullable: boolean;
+  joinType: "inner" | "left";
   alias: string;
   bpAlias: string | null;
-  path: QueryDefPath[];
+  joinPaths: QueryDefPath[];
   select: QueryDefPathSelect[];
 };
 
@@ -78,6 +80,6 @@ export type QueryDef = {
   retCardinality: "one" | "many";
   nullable: boolean;
   // unique: boolean;
-  path: QueryDefPath[];
+  joinPaths: QueryDefPath[];
   filters: QueryDefFilter[];
 };

@@ -9,6 +9,7 @@ import {
   RelationDef,
 } from "@src/types/definition";
 import {
+  ExpSpec,
   FieldSpec,
   ModelSpec,
   QuerySpec,
@@ -51,7 +52,7 @@ function composeModels(specs: ModelSpec[]): ModelDef[] {
     try {
       return fn();
     } catch (e) {
-      if (e === "cache-miss") {
+      if (Array.isArray(e) && e[0] === "cache-miss") {
         needsExtraStep = true;
         return null;
       } else {
@@ -106,7 +107,7 @@ function getDefinition<T extends RefType, F extends true | undefined>(
   const definition = cache.get(refKey);
   if (!definition) {
     if (fail) {
-      throw "cache-miss";
+      throw ["cache-miss", refKey];
     } else {
       return null as F extends true ? Mapping[T] : Mapping[T] | null;
     }
@@ -132,7 +133,10 @@ function defineModel(spec: ModelSpec): ModelDef {
     relations: [],
     queries: [],
   };
-  model.fields.push(constructIdField(model));
+  const idField = constructIdField(model);
+  cache.set(idField.refKey, [RefType.Field, idField]);
+
+  model.fields.push(idField);
   cache.set(model.refKey, [RefType.Model, model]);
   return model;
 }
@@ -240,98 +244,132 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
   const ex = getDefinition(refKey, RefType.Query);
   if (ex) return ex;
 
-  const qpath = defineQueryPaths(mdef, qspec);
-  const leaf = qpath.at(-1)!; // FIXME empty `from`?
-  const retCardinality = qpath.every((p) => p.refCardinality === "one") ? "one" : "many";
+  const filterPaths = qspec.filter ? getFilterPaths(qspec.filter) : [];
+  // detect default context for each filter
+  for (const path of filterPaths) {
+    // TODO no bpAliases support yet, so all must belong to leaf context
+    path.unshift(...qspec.fromModel);
+  }
+  const collect = [qspec.fromModel, ...filterPaths];
+  // flatten?
+
+  const paths = defineQueryJoinPaths(mdef, `${nameInitials(mdef.name)}`, collect);
+  const [mainPath, leaf] = qspec.fromModel.reduce(
+    (a, from): [QueryDefPath[], QueryDefPath] => {
+      const next = a[1].joinPaths.find((p) => p.name === from)!;
+      a[0].push(next);
+      return [a[0], next];
+    },
+    [
+      [],
+      {
+        name: "",
+        joinPaths: paths,
+      } as QueryDefPath,
+    ] as [QueryDefPath[], QueryDefPath]
+  );
+
   const query: QueryDef = {
     refKey,
     name: qspec.name,
-    filters: [],
-    nullable: leaf.nullable,
-    retCardinality,
     retType: leaf.retType,
-    path: qpath,
+    retCardinality: mainPath.every((v) => v.retCardinality === "one") ? "one" : "many",
+    nullable: leaf.nullable,
+    joinPaths: paths,
+    filters: [],
   };
+
   cache.set(`${mdef.name}.${qspec.name.toLowerCase()}`, [RefType.Query, query]);
   mdef.queries.push(query);
   return query;
 }
 
-function defineQueryPaths(mdef: ModelDef, qspec: QuerySpec): QueryDefPath[] {
-  const [qpath, _] = qspec.fromModel.reduce(
-    ([chain, context], from, index): [QueryDefPath[], ModelDef] => {
-      const refKey = `${context.name}.${from}`;
-      // what is this?
+function filterCollects(path: string, collect: string[][]): string[][] {
+  return collect.filter((c) => c[0] === path && c.length > 1).map((c) => c.slice(1, c.length));
+}
+
+function defineQueryJoinPaths(mdef: ModelDef, prefix: string, collect: string[][]): QueryDefPath[] {
+  const directCollect = Array.from(new Set(collect.map((c) => c[0])));
+  return directCollect
+    .map((name, index): QueryDefPath | undefined => {
+      const refKey = `${mdef.refKey}.${name}`;
       const target = cache.get(refKey);
-      if (!target) {
-        throw "cache-miss";
-      }
-      // target type can be:
-      // relation, reference, query
-      // TODO add models
+      if (!target) throw ["cache-miss", name];
+
+      const alias = `${prefix}.${nameInitials(name)}${index}`;
+
       switch (target[0]) {
-        case RefType.Computed:
-        case RefType.Field:
         case RefType.Model:
-          throw new Error(`Query feature doesn't support ${target[0]} in the 'from' chain`);
+          throw new Error(`${target[0]} type is not supported in queries`);
+        case RefType.Field:
+        case RefType.Computed:
+          return;
         case RefType.Reference: {
           const reference = getDefinition(refKey, target[0], true);
-          const targetModel = getDefinition(reference.toModelRefKey, RefType.Model, true);
-          const p: QueryDefPath = {
-            name: from,
+          const toModel = getDefinition(reference.toModelRefKey, RefType.Model, true);
+          return {
             refKey,
-            refCardinality: "one",
-            retType: targetModel.name,
-            alias: `${nameInitials(from)}${index}`,
+            name,
+            retType: toModel.name,
+            retCardinality: "one",
+            alias,
             bpAlias: null,
-            nullable: reference.nullable, // FIXME may be nullable if filters are applied
-            path: [],
+            nullable: reference.nullable, // FIXME filters?
+            joinType: "inner", // FIXME filters?
+            joinPaths: defineQueryJoinPaths(toModel, alias, filterCollects(name, collect)),
             select: [],
           };
-          chain.push(p);
-          return [chain, targetModel];
         }
         case RefType.Relation: {
           const relation = getDefinition(refKey, target[0], true);
-          const reference = getDefinition(relation.throughRefKey, RefType.Reference, true);
-          const targetModel = getDefinition(relation.fromModelRefKey, RefType.Model, true);
-          const p: QueryDefPath = {
-            name: from,
+          const fromModel = getDefinition(relation.fromModelRefKey, RefType.Model, true);
+          return {
             refKey,
-            refCardinality: reference.unique ? "one" : "many",
-            retType: targetModel.name,
-            alias: `${nameInitials(from)}${index}`,
+            name,
+            retType: fromModel.name,
+            retCardinality: relation.unique ? "one" : "many",
+            alias,
             bpAlias: null,
-            nullable: reference.unique ? reference.nullable : false, // FIXME may be nullable if filters are applied
-            path: [],
+            nullable: relation.nullable,
+            joinType: "inner",
+            joinPaths: defineQueryJoinPaths(fromModel, alias, filterCollects(name, collect)),
             select: [],
           };
-          chain.push(p);
-          return [chain, targetModel];
         }
         case RefType.Query: {
           const query = getDefinition(refKey, target[0], true);
-          const targetModel = getDefinition(query.retType, RefType.Model, true);
-          ensureEqual(query.retType, mdef.refKey); // query can only point to it's own model
-          const p: QueryDefPath = {
-            name: from,
+          const model = getDefinition(query.retType, RefType.Model, true);
+          return {
             refKey,
-            refCardinality: query.retCardinality,
+            name,
             retType: query.retType,
-            alias: `${nameInitials(from)}${index}`,
+            retCardinality: query.retCardinality,
+            alias,
             bpAlias: null,
             nullable: query.nullable, // FIXME may be nullable if filters are applied
-            path: [],
+            joinType: "inner",
+            joinPaths: defineQueryJoinPaths(model, alias, filterCollects(name, collect)),
             select: [],
           };
-          chain.push(p);
-          return [chain, targetModel];
         }
       }
-    },
-    [[], mdef] as [QueryDefPath[], ModelDef]
-  );
-  return qpath;
+    })
+    .filter((ret): ret is QueryDefPath => !!ret);
+}
+
+function getFilterPaths(filter: ExpSpec): string[][] {
+  switch (filter.kind) {
+    case "literal":
+      return [];
+    case "unary": {
+      return getFilterPaths(filter.exp);
+    }
+    case "identifier":
+      return [[...filter.identifier]];
+    case "binary": {
+      return [...getFilterPaths(filter.lhs), ...getFilterPaths(filter.rhs)];
+    }
+  }
 }
 
 function ensureEqual<T>(a: T, b: T): a is T {

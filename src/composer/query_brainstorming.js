@@ -110,12 +110,78 @@ let x = {
     filter m.is_active is true
       and u.is_active is true
       and u.org_count is 1
+x     and u in org_admins
       and u.repo_count is u.org_count
-      and u.profile.verified is true
-      or u.profile is null
-
+      and (u.profile.verified is true or u.profile is null)
 // imamo listu orgova, dohvati gornje za svaku!
 */
+
+/*
+paths: [recent_memberships, user]
+pathovi moraju biti: reference, relation, query!
+filters:
+  [recent_memberships, is_active]
+x [org_admins]
+  [user, is_active]
+  [user, org_count]
+  [user, repo_count]
+  [user, profile]
+  [user, profile, verified]
+  [user, org_admins]
+
+logika:
+x vidjeti ima li "root" contexta
+- osigurati path-level joinove (inner)
+- za svaki path level, definirati interne joinove (path) i selectove
+- TODO: implementirati "in" logiku (user in admins)
+- pozovi path:collect:
+  - recent_memberships: [is_active]
+  - user: [ is_active, org_count, repo_count, profile, [profile, verified] ]
+
+poziva se:
+  - recent_memberships
+    - collect:
+      - recent_memberships: [is_active]
+      - user: [ [is_active], [org_count], [repo_count], [profile], [profile, verified], [org_admins] ]
+        direct:
+          - [ is_active, org_count, repo_count, profile, org_admins ]
+          - to vraca sljedece:
+            - join: [], select: [is_active]
+            - join: [org], select: [count]
+            - join: [repo], select: [count]
+            - join: [org_membership, user], select: []
+            - left join: profile, select: [id, verified]
+
+
+query:
+
+  FROM
+    ( recent_memberships JOIN [] , select is_active )
+    JOIN ( user JOIN [left profile, org, repo, orgmembership, user],
+                SELECT count(org), count(repo), org_membership.user.id, profile.id, profile.verified)
+
+
+recent_memberships:
+      paths: [
+        user:
+          paths: [
+            org:
+              paths: [], select: [count]
+            repos:
+              paths: [], select: [count]
+            profile:
+              paths: [], select: [id, verified], left: true
+            org_membership:
+              paths: [
+                user:
+                  paths: [], select: [id]
+              ], select: []
+          ]
+          selects: [is_active]
+      ]
+      selects: [is_active]
+*/
+
 /*
 
 select { featured_members { id, posts {} } }
