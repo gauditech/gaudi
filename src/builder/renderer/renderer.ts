@@ -1,17 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-import * as Eta from "eta";
-import * as definitionHelpers from "@src/builder/renderer/templates/util/definition";
-
-// make helper functions available to templates
-// helpers are grouped under property `G` (as in Gaudi :)) to avoid namespace collisions
-Eta.configure({
-  G: {
-    ...definitionHelpers,
-  },
-});
-
 export function render(
   srcFilename: string,
   destFilename: string,
@@ -26,7 +15,16 @@ export function renderTemplate(
   filename: string,
   data: Record<string, unknown> = {}
 ): Promise<string> {
-  return Eta.renderFileAsync(filename, data) || Promise.resolve("");
+  return import(filename).then((m) => m.render(data));
+}
+
+export function renderTsTemplate(
+  filename: string,
+  data: Record<string, unknown> = {}
+): Promise<string> {
+  return import(filename).then((template) => {
+    return template.render(data);
+  });
 }
 
 export function storeTemplateOutput(filename: string, content: string): void {

@@ -1,1 +1,0 @@
-<%_ = it.reference.name%> <%= E.G.modelDbName(it.reference.toModelRefKey, it.definition) %> @relation(fields: [<%= E.G.fieldDbName(it.reference.modelRefKey, it.reference.fieldRefKey, it.definition)%>], references: [<%= E.G.fieldDbName(it.reference.toModelRefKey, it.reference.toModelFieldRefKey, it.definition)%>])

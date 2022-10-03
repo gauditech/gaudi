@@ -1,29 +1,27 @@
-
 datasource db {
-  provider = "DB_PROVIDER"
-  url      = "DB_CONNECTION_URL"
+      provider = "DB_PROVIDER"
+      url      = "DB_CONNECTION_URL"
+    }
+
+    model org {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+optout String?
+
+repos repo[]
+
+
 }
+    model repo {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+org_id Int
 
-model org {
-  id Int @id @unique @default(autoincrement())
-  name String
-  slug String @unique
-  description String
-  optout String?
-  
-  repos repo[]
-  
-  }
 
-model repo {
-  id Int @id @unique @default(autoincrement())
-  name String
-  slug String @unique
-  description String
-  org_id Int
-  
-  
-  org org @relation(fields: [org_id], references: [id])
 
-  }
-
+org org @relation(fields: [org_id], references: [id])
+}

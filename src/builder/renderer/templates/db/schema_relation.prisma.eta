@@ -1,1 +1,0 @@
-<%_ = it.relation.name%> <%= E.G.modelDbName(it.relation.fromModelRefKey, it.definition)%><%= !it.relation.unique ? '[]' : ''%><%= it.relation.nullable ? '?' : '' %>

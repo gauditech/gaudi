@@ -1,1 +1,0 @@
-<%_ = it.field.dbname %> <%= E.G.typeToDbType(it.field.dbtype) %><%= it.field.nullable ? '?' : '' %><%= it.field.primary ? ' @id' : '' %><%= it.field.unique ? ' @unique' : '' %><%= it.field.dbtype === 'serial' ? ' @default(autoincrement())' : ''%>
