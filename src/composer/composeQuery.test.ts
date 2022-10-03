@@ -36,14 +36,14 @@ describe("compose model queries", () => {
                 nullable: false,
                 joinPaths: [],
                 joinType: "inner",
-                refCardinality: "one",
+                retCardinality: "one",
                 refKey: "Repo.org",
                 retType: "Org",
                 select: [],
               },
             ],
             joinType: "inner",
-            refCardinality: "many",
+            retCardinality: "many",
             refKey: "Org.repos",
             retType: "Repo",
             select: [],
@@ -65,6 +65,7 @@ describe("compose model queries", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
+
     expect(def.models[0].queries).toStrictEqual([
       {
         refKey: "Org.repos_if_one",
@@ -76,30 +77,43 @@ describe("compose model queries", () => {
           {
             name: "repos",
             refKey: "Org.repos",
-            refCardinality: "many",
+            retCardinality: "many",
             retType: "Repo",
             alias: "o.r0",
             bpAlias: null,
             nullable: false,
+            select: [
+              {
+                refKey: "Repo.is_active",
+                name: "is_active",
+                alias: "o.r0.is_active",
+                retType: "boolean",
+                nullable: false,
+              },
+            ],
+            joinType: "inner",
             joinPaths: [
               {
                 name: "org",
                 refKey: "Repo.org",
-                refCardinality: "one",
+                retCardinality: "one",
                 retType: "Org",
                 alias: "o.r0.o0",
                 bpAlias: null,
                 nullable: false,
-                joinPaths: [],
-                joinType: "inner",
                 select: [
-                  // { type: "integer", name: "id", refKey: "Org.id" },
-                  // { type: "boolean", name: "is_active", refKey: "Org.is_active" },
+                  {
+                    refKey: "Org.id",
+                    name: "id",
+                    alias: "o.r0.o0.id",
+                    retType: "integer",
+                    nullable: false,
+                  },
                 ],
+                joinType: "inner",
+                joinPaths: [],
               },
             ],
-            joinType: "inner",
-            select: [],
           },
         ],
         filters: [

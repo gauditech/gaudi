@@ -47,11 +47,12 @@ export type RelationDef = {
   unique: boolean;
 };
 
-type QueryDefPathSelect = {
+export type QueryDefPathSelect = {
+  refKey: string;
   name: string;
+  alias: string;
   retType: string;
   nullable: boolean;
-  refKey: string;
 };
 
 export type QueryDefPath = {
