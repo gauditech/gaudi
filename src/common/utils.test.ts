@@ -6,7 +6,7 @@ describe("nameInitials", () => {
     expect(nameInitials("MYWord")).toBe("myw");
   });
 
-  it("succeds for snake_case examples", () => {
+  it("succeeds for snake_case examples", () => {
     expect(nameInitials("my_first_word")).toBe("mfw");
   });
 
