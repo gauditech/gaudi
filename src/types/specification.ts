@@ -40,6 +40,8 @@ export type QuerySpec = WithContext<{
   name: string;
   fromModel: string[];
   filter?: ExpSpec;
+  orderBy?: { field: string[]; order?: "asc" | "desc" }[];
+  limit?: number;
 }>;
 
 export type ComputedSpec = WithContext<{

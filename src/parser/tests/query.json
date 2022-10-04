@@ -52,6 +52,8 @@
             "rhs": { "kind": "literal", "literal": 3 }
           },
           "fromModel": ["students"],
+          "orderBy": [{ "field": ["behaviour"] }, { "field": ["grade"], "order": "desc" }],
+          "limit": 10,
           "name": "good_students_alt"
         }
       ],
