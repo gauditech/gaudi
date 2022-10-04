@@ -24,13 +24,13 @@ describe("compose model queries", () => {
         nullable: false,
         joinPaths: [
           {
-            alias: "o.r0",
+            namePath: ["repos"],
             bpAlias: null,
             name: "repos",
             nullable: false,
             joinPaths: [
               {
-                alias: "o.r0.o0",
+                namePath: ["repos", "org"],
                 bpAlias: null,
                 name: "org",
                 nullable: false,
@@ -49,7 +49,7 @@ describe("compose model queries", () => {
             select: [],
           },
         ],
-        filters: [],
+        filter: undefined,
       },
     ]);
   });
@@ -79,14 +79,14 @@ describe("compose model queries", () => {
             refKey: "Org.repos",
             retCardinality: "many",
             retType: "Repo",
-            alias: "o.r0",
+            namePath: ["repos"],
             bpAlias: null,
             nullable: false,
             select: [
               {
                 refKey: "Repo.is_active",
                 name: "is_active",
-                alias: "o.r0.is_active",
+                namePath: ["repos", "is_active"],
                 retType: "boolean",
                 nullable: false,
               },
@@ -98,14 +98,14 @@ describe("compose model queries", () => {
                 refKey: "Repo.org",
                 retCardinality: "one",
                 retType: "Org",
-                alias: "o.r0.o0",
+                namePath: ["repos", "org"],
                 bpAlias: null,
                 nullable: false,
                 select: [
                   {
                     refKey: "Org.id",
                     name: "id",
-                    alias: "o.r0.o0.id",
+                    namePath: ["repos", "org", "id"],
                     retType: "integer",
                     nullable: false,
                   },
@@ -116,10 +116,28 @@ describe("compose model queries", () => {
             ],
           },
         ],
-        filters: [
-          // { type: "numeric", lhs: "r0.p0.id", rhs: 1 },
-          // { type: "boolean", lhs: "r0.p0.is_active", rhs: true },
-        ],
+        filter: {
+          kind: "binary",
+          lhs: {
+            kind: "binary",
+            lhs: {
+              kind: "alias",
+              namePath: ["org", "id"],
+            },
+            operator: "is",
+            rhs: {
+              kind: "literal",
+              type: "numeric",
+              value: 1,
+            },
+          },
+          operator: "and",
+          rhs: {
+            kind: "alias",
+            namePath: ["is_active"],
+            // FIXME this should compare `is_active` with true!!
+          },
+        },
       },
     ]);
   });

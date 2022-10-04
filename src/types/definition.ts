@@ -1,3 +1,5 @@
+import { BinaryOperator } from "./ast";
+
 export type Definition = {
   models: ModelDef[];
 };
@@ -50,7 +52,7 @@ export type RelationDef = {
 export type QueryDefPathSelect = {
   refKey: string;
   name: string;
-  alias: string;
+  namePath: string[];
   retType: string;
   nullable: boolean;
 };
@@ -62,17 +64,24 @@ export type QueryDefPath = {
   retCardinality: "one" | "many"; // should be retCard,...
   nullable: boolean;
   joinType: "inner" | "left";
-  alias: string;
+  namePath: string[];
   bpAlias: string | null;
   joinPaths: QueryDefPath[];
   select: QueryDefPathSelect[];
 };
 
-type QueryDefFilter = {
-  type: string;
-  lhs: string | number | boolean;
-  rhs: string | number | boolean;
-};
+// simple filter types, for now
+
+export type FilterDef =
+  | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
+  | { kind: "alias"; namePath: string[] }
+  | LiteralFilterDef;
+
+export type LiteralFilterDef =
+  | { kind: "literal"; type: "numeric"; value: number }
+  | { kind: "literal"; type: "null"; value: null }
+  | { kind: "literal"; type: "text"; value: string }
+  | { kind: "literal"; type: "boolean"; value: boolean };
 
 export type QueryDef = {
   refKey: string;
@@ -82,5 +91,5 @@ export type QueryDef = {
   nullable: boolean;
   // unique: boolean;
   joinPaths: QueryDefPath[];
-  filters: QueryDefFilter[];
+  filter: FilterDef | undefined;
 };

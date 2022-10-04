@@ -105,6 +105,14 @@ let x = {
  */
 
 /*
+Org:
+ query recent_members {
+  from memberships.user as m.u
+  filter { m.created_at < now - 1_week }
+  order by created_at desc/asc
+  limit 10
+ }
+
   query featured_members:
     from recent_memberships.user as m.u
     filter m.is_active is true
@@ -272,3 +280,52 @@ I'm in memberships, let's join user stuff
 
 
  */
+
+/*
+
+This is for brainstorming filters
+
+- is, is not
+
+id is 5                 4 is not id
+verified is not true    false is verified
+status is 'active'      'active' is not status
+profile is not null     null is profile
+4 is not 6              active is not disabled
+
+>> but also
+>> verified and id > 45 or status is not 'active'
+
+==
+is | is not, boolalias | boolliteral ## | boolfunction??
+is | is not, numericalias | numericliteral
+
+
+- numeric comparison (<, <=, >=, >)
+
+id > 100                100 <= id
+id = user_id            100 < 200
+score + bonus < high_score . 1 + 2 > 0
+score + 4 > hs * 2 + bx - 1
+
+==
+< | > | <= | >=, numarithmetics
+numarithmetic:
+numliteral | numalias | (+ | - | * | / | numfn ), numliteral | numalias, numliteral | numalias (op, lhs, rhs)
+
+
+and, or
+boolexp:
+and | or, equalityexp | numericexp | boolexp
+
+
+
+Logical: AND/OR
+
+Filter moze biti:
+    Logical | Numerical | ... svaki
+    Logical moze biti:
+      Logical | svaki
+    Svaki ne moze biti logical
+
+*/
