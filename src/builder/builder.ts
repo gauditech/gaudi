@@ -1,15 +1,27 @@
 import fs from "fs";
 import path from "path";
 
-import { applyDbChanges } from "@src/builder/migration/migrator";
-import { renderTemplate, storeTemplateOutput } from "@src/builder/render/renderer";
+import { applyDbChanges } from "@src/builder/migrator/migrator";
+import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import { Definition } from "@src/types/definition";
+import {
+  BuildDbSchemaData,
+  render as renderDbSchemaTpl,
+} from "@src/builder/renderer/templates/schema.prisma.tpl";
+import {
+  BuildPackageData,
+  render as renderPackageTpl,
+} from "@src/builder/renderer/templates/package.json.tpl";
+import {
+  BuildServerData,
+  render as renderServerTpl,
+} from "@src/builder/renderer/templates/server.tpl";
+import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
 
 // TODO: read from definition
 const APP_NAME = "demoapp";
 const PACKAGE_DESCRIPTION = "Demo app built by Gaudi";
 const PACKAGE_VERSION = "0.0.1";
-const TEMPLATE_PATH = path.join(__dirname, "templates");
 const OUTPUT_PATH = path.join(process.cwd(), "./output");
 const DB_OUTPUT_PATH = `${OUTPUT_PATH}/db`;
 const SERVER_PORT = 3001;
@@ -45,7 +57,7 @@ export async function build(definition: Definition): Promise<void> {
 
 function prepareOutputFolder() {
   // clear output folder
-  if (!fs.existsSync(OUTPUT_PATH)) {
+  if (fs.existsSync(OUTPUT_PATH)) {
     fs.rmSync(OUTPUT_PATH, { recursive: true, force: true });
   }
 
@@ -55,16 +67,8 @@ function prepareOutputFolder() {
 
 // ---------- Package
 
-export type BuildPackageData = {
-  package: {
-    name: string;
-    description: string;
-    version: string;
-  };
-};
-
 export async function renderPackage(data: BuildPackageData): Promise<string> {
-  return renderTemplate(path.join(TEMPLATE_PATH, "package.json.eta"), data);
+  return renderPackageTpl(data);
 }
 
 async function buildPackage(data: BuildPackageData) {
@@ -76,7 +80,7 @@ async function buildPackage(data: BuildPackageData) {
 // ---------- Index
 
 export async function renderIndex(): Promise<string> {
-  return renderTemplate(path.join(TEMPLATE_PATH, "index.eta"));
+  return renderIndexTpl();
 }
 
 async function buildIndex() {
@@ -87,18 +91,12 @@ async function buildIndex() {
 
 // ---------- DB
 
-export type BuildDbSchemaData = {
-  definition: Definition;
-  dbProvider: string;
-  dbConnectionUrl: string;
-};
-
 export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
-  return renderTemplate(path.join(TEMPLATE_PATH, "db/schema.prisma.eta"), data);
+  return renderDbSchemaTpl(data);
 }
 
 async function buildDb(data: BuildDbSchemaData): Promise<void> {
-  const schemaFile = path.join(DB_OUTPUT_PATH, "/schema.prisma");
+  const schemaFile = path.join(DB_OUTPUT_PATH, "db/schema.prisma");
 
   return (
     // render DB schema
@@ -113,12 +111,8 @@ async function buildDb(data: BuildDbSchemaData): Promise<void> {
 
 // ---------- Server
 
-export type BuildServerData = {
-  serverPort: number;
-};
-
 export async function renderServer(data: BuildServerData): Promise<string> {
-  return renderTemplate(path.join(TEMPLATE_PATH, "server.eta"), data);
+  return renderServerTpl(data);
 }
 
 async function buildServer(data: BuildServerData): Promise<void> {
