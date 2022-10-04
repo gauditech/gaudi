@@ -97,12 +97,18 @@ function compileRelation(relation: RelationAST): RelationSpec {
 function compileQuery(query: QueryAST): QuerySpec {
   let fromModel: string[] | undefined;
   let filter: ExpSpec | undefined;
+  let orderBy: QuerySpec["orderBy"];
+  let limit: number | undefined;
 
   query.body.forEach((b) => {
-    if ("from" in b) {
+    if (b.kind === "from") {
       fromModel = b.from;
-    } else {
+    } else if (b.kind === "filter") {
       filter = compileQueryExp(b.filter);
+    } else if (b.kind === "orderBy") {
+      orderBy = b.orderings;
+    } else if (b.kind === "limit") {
+      limit = b.limit;
     }
   });
 
@@ -110,7 +116,7 @@ function compileQuery(query: QueryAST): QuerySpec {
     throw new CompilerError("'query' has no 'from'", query);
   }
 
-  return { name: query.name, fromModel, filter, interval: query.interval };
+  return { name: query.name, fromModel, filter, interval: query.interval, orderBy, limit };
 }
 
 function compileComputed(computed: ComputedAST): ComputedSpec {
