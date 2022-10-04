@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-import * as Eta from "eta";
-
 export function render(
   srcFilename: string,
   destFilename: string,
@@ -17,7 +15,9 @@ export function renderTemplate(
   filename: string,
   data: Record<string, unknown> = {}
 ): Promise<string> {
-  return Eta.renderFileAsync(filename, data) || Promise.resolve("");
+  return import(filename).then((template) => {
+    return template.render(data);
+  });
 }
 
 export function storeTemplateOutput(filename: string, content: string): void {
