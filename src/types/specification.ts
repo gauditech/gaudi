@@ -85,6 +85,7 @@ export type ActionSpec = WithContext<{
 }>;
 
 export type ActionAtomSpec = WithContext<
-  | { kind: "set"; target: string; value: LiteralValue }
+  | { kind: "setValue"; target: string; value: LiteralValue }
+  | { kind: "setReference"; target: string; reference: string }
   | { kind: "reference"; target: string; through: string }
 >;

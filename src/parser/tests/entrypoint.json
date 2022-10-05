@@ -17,13 +17,13 @@
             {
               "kind": "create",
               "target": "Item",
-              "actionAtoms": [{ "kind": "set", "target": "foo", "value": "bar" }]
+              "actionAtoms": [{ "kind": "setReference", "target": "foo", "reference": "bar" }]
             },
             {
               "kind": "update",
               "target": "Item",
               "actionAtoms": [
-                { "kind": "set", "target": "foo", "value": 10 },
+                { "kind": "setValue", "target": "foo", "value": 10 },
                 { "kind": "reference", "target": "factory", "through": "factory" }
               ]
             }

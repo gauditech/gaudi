@@ -111,8 +111,8 @@ Gaudi {
     = ("create" | "update") identifier "{" NewlineBody<ActionAtomBody, ";"> "}"
 
   ActionAtomBody
-    = "set" identifier identifier -- set_value
-    | "set" identifier literal -- set_reference
+    = "set" identifier literal -- set_value
+    | "set" identifier identifier -- set_reference
     | "reference" identifier "through" identifier -- reference
 
   IdentifierPath = identifier ("." identifier)*
