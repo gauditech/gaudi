@@ -271,11 +271,19 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionAtomBody_set(this, _set, identifier, value): ActionAtomBodyAST {
+  ActionAtomBody_set_value(this, _set, identifier, value): ActionAtomBodyAST {
     return {
-      kind: "set",
+      kind: "setValue",
       target: identifier.parse(),
       value: value.parse(),
+      interval: this.source,
+    };
+  },
+  ActionAtomBody_set_reference(this, _set, identifier, value): ActionAtomBodyAST {
+    return {
+      kind: "setReference",
+      target: identifier.parse(),
+      reference: value.parse(),
       interval: this.source,
     };
   },
