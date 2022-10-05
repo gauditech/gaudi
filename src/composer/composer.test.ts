@@ -70,6 +70,7 @@ describe("compose models", () => {
           computeds: [],
         },
       ],
+      entrypoints: [],
     };
     expect(() => compose(specification)).toThrowError(
       "Expecting type reference but found a type field"
