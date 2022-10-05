@@ -3,9 +3,14 @@ import specificationInput from "@examples/git/specification.json";
 
 import { compose } from "./composer";
 
+import { compile } from "@src/compiler/compiler";
+import { parse } from "@src/parser/parser";
 import { Specification } from "@src/types/specification";
 
 describe("compose models", () => {
+  it("doesn't crash on empty blueprint", () => {
+    expect(() => compose(compile(parse("")))).not.toThrow();
+  });
   it("correctly composes the git example", () => {
     expect(compose(specificationInput)).toStrictEqual(definitionInput);
   });
@@ -44,5 +49,36 @@ describe("compose models", () => {
       entrypoints: [],
     };
     expect(() => compose(specification)).toThrowError("Items not unique!");
+  });
+  it("fails when relation doesn't point to a reference", () => {
+    const specification: Specification = {
+      models: [
+        {
+          name: "Org",
+          fields: [{ name: "name", type: "text" }],
+          references: [],
+          relations: [{ name: "repos", fromModel: "Repo", through: "name" }],
+          queries: [],
+          computeds: [],
+        },
+        {
+          name: "Repo",
+          fields: [{ name: "name", type: "text" }],
+          references: [{ name: "org", toModel: "Org" }],
+          relations: [],
+          queries: [],
+          computeds: [],
+        },
+      ],
+    };
+    expect(() => compose(specification)).toThrowError(
+      "Expecting type reference but found a type field"
+    );
+  });
+  it("detect infinite loop when resolving", () => {
+    const bp = `
+    model Org { reference no { to Unknown } }
+    `;
+    expect(() => compose(compile(parse(bp)))).toThrowError("infinite-loop");
   });
 });
