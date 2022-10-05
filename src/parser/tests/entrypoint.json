@@ -1,0 +1,41 @@
+{
+  "models": [],
+  "entrypoints": [
+    {
+      "name": "ItemEntry",
+      "targetModel": "Item",
+      "identify": "slug",
+      "alias": "item",
+      "response": ["name", "price"],
+      "endpoints": [
+        { "type": "list" },
+        { "type": "get" },
+        { "type": "update" },
+        {
+          "type": "create",
+          "action": [
+            {
+              "kind": "create",
+              "target": "Item",
+              "actionAtoms": [{ "kind": "set", "target": "foo", "value": "bar" }]
+            },
+            {
+              "kind": "update",
+              "target": "Item",
+              "actionAtoms": [
+                { "kind": "set", "target": "foo", "value": 10 },
+                { "kind": "reference", "target": "factory", "through": "factory" }
+              ]
+            }
+          ]
+        }
+      ],
+      "entrypoints": [
+        {
+          "name": "Review",
+          "endpoints": [{ "type": "create" }]
+        }
+      ]
+    }
+  ]
+}

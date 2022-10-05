@@ -1,10 +1,11 @@
 import { WithContext } from "@src/common/error";
 
-export type AST = {
-  models: ModelAST[];
-};
+export type AST = DefinitionAST[];
+
+export type DefinitionAST = ModelAST | EntrypointAST;
 
 export type ModelAST = WithContext<{
+  kind: "model";
   name: string;
   body: ModelBodyAST[];
 }>;
@@ -75,6 +76,42 @@ export type ExpAST = WithContext<
   | { kind: "unary"; operator: UnaryOperator; exp: ExpAST }
   | { kind: "identifier"; identifier: string[] }
   | { kind: "literal"; literal: LiteralValue }
+>;
+
+export type EntrypointAST = WithContext<{
+  kind: "entrypoint";
+  name: string;
+  body: EntrypointBodyAST[];
+}>;
+
+export type EntrypointBodyAST = WithContext<
+  | { kind: "targetModel"; identifier: string }
+  | { kind: "targetRelation"; identifier: string }
+  | { kind: "identify"; identifier: string }
+  | { kind: "alias"; identifier: string }
+  | { kind: "response"; select: string[] }
+  | { kind: "endpoint"; endpoint: EndpointAST }
+  | { kind: "entrypoint"; entrypoint: EntrypointAST }
+>;
+
+export type EndpointAST = WithContext<{
+  type: EndpointType;
+  body: EndpointBodyAST[];
+}>;
+
+export type EndpointType = "list" | "get" | "create" | "update" | "delete";
+
+export type EndpointBodyAST = WithContext<{ kind: "action"; body: ActionBodyAST[] }>;
+
+export type ActionBodyAST = WithContext<{
+  kind: "create" | "update";
+  target: string;
+  body: ActionAtomBodyAST[];
+}>;
+
+export type ActionAtomBodyAST = WithContext<
+  | { kind: "set"; target: string; value: LiteralValue }
+  | { kind: "reference"; target: string; through: string }
 >;
 
 export type LiteralValue = null | boolean | number | string;

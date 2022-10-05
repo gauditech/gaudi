@@ -2,7 +2,14 @@ import grammar from "./grammar/gaudi.ohm-bundle.js";
 
 import {
   AST,
+  ActionAtomBodyAST,
+  ActionBodyAST,
   ComputedAST,
+  EndpointAST,
+  EndpointBodyAST,
+  EndpointType,
+  EntrypointAST,
+  EntrypointBodyAST,
   ExpAST,
   FieldAST,
   FieldBodyAST,
@@ -21,11 +28,11 @@ import {
 const semantics = grammar.createSemantics();
 
 semantics.addOperation("parse()", {
-  Definition(models) {
-    return { models: models.parse() };
+  Definition(definitions) {
+    return definitions.parse();
   },
   Model(this, _model, identifier, _parenL, body, _parenR): ModelAST {
-    return { name: identifier.parse(), body: body.parse(), interval: this.source };
+    return { kind: "model", name: identifier.parse(), body: body.parse(), interval: this.source };
   },
   Field(this, _field, identifier, _parenL, body, _parenR): FieldAST {
     return {
@@ -89,7 +96,7 @@ semantics.addOperation("parse()", {
   QueryBody_order_by(this, _order, _by, fields): QueryBodyAST {
     return { kind: "orderBy", orderings: fields.parse(), interval: this.source };
   },
-  QueryBody_limit_by(this, _limit, limit): QueryBodyAST {
+  QueryBody_limit(this, _limit, limit): QueryBodyAST {
     return { kind: "limit", limit: limit.parse(), interval: this.source };
   },
   QueryOrder(this, field, orderNode): QueryOrderAST {
@@ -213,6 +220,72 @@ semantics.addOperation("parse()", {
   },
   IdentifierPath(this, head, _dot, tail): string[] {
     return [head.parse(), ...tail.children.map((child) => child.parse())];
+  },
+  Entrypoint(this, _enrtypoint, identifier, _braceL, body, _braceR): EntrypointAST {
+    return {
+      kind: "entrypoint",
+      name: identifier.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  EntrypointBody_target_model(this, _target, _model, identifier): EntrypointBodyAST {
+    return { kind: "targetModel", identifier: identifier.parse(), interval: this.source };
+  },
+  EntrypointBody_target_relation(this, _target, _relation, identifier): EntrypointBodyAST {
+    return { kind: "targetRelation", identifier: identifier.parse(), interval: this.source };
+  },
+  EntrypointBody_identify(this, _identify, _with, identifier): EntrypointBodyAST {
+    return { kind: "identify", identifier: identifier.parse(), interval: this.source };
+  },
+  EntrypointBody_alias(this, _alias, identifier): EntrypointBodyAST {
+    return { kind: "alias", identifier: identifier.parse(), interval: this.source };
+  },
+  EntrypointBody_response(this, _response, _braceL, identifiers, _braceR): EntrypointBodyAST {
+    return { kind: "response", select: identifiers.parse(), interval: this.source };
+  },
+  EntrypointBody_endpoint(this, endpoint): EntrypointBodyAST {
+    return { kind: "endpoint", endpoint: endpoint.parse() };
+  },
+  EntrypointBody_entrypoint(this, entrypoint): EntrypointBodyAST {
+    return { kind: "entrypoint", entrypoint: entrypoint.parse() };
+  },
+  Endpoint(this, endpointType, _endpoint, _braceL, body, _braceR): EndpointAST {
+    return {
+      type: endpointType.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  EndpointType(endpointType): EndpointType {
+    return endpointType.sourceString as EndpointType;
+  },
+  EndpointBody_action(this, _action, _braceL, body, _braceR): EndpointBodyAST {
+    return { kind: "action", body: body.parse(), interval: this.source };
+  },
+  ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionBodyAST["kind"],
+      target: identifier.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionAtomBody_set(this, _set, identifier, value): ActionAtomBodyAST {
+    return {
+      kind: "set",
+      target: identifier.parse(),
+      value: value.parse(),
+      interval: this.source,
+    };
+  },
+  ActionAtomBody_reference(this, _reference, identifier, _through, through): ActionAtomBodyAST {
+    return {
+      kind: "reference",
+      target: identifier.parse(),
+      through: through.parse(),
+      interval: this.source,
+    };
   },
   null(_null) {
     return null;

@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<Model, ";">
+    = NewlineBody<(Model | Entrypoint), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -44,7 +44,7 @@ Gaudi {
     = "from" IdentifierPath -- from
     | "filter" OptionalBraces<QueryExp> -- filter
     | "order" "by" NonemptyListOf<QueryOrder, ","> -- order_by
-    | "limit" integer -- limit_by
+    | "limit" integer -- limit
 
   QueryOrder = IdentifierPath ("asc" | "desc")?
 
@@ -83,6 +83,36 @@ Gaudi {
     | not PrimaryExp -- not
     | literal -- literal
     | IdentifierPath -- identifier
+
+  Entrypoint = "entrypoint" identifier "{" NewlineBody<EntrypointBody, ";"> "}"
+
+  EntrypointBody
+    = "target" "model" identifier -- target_model
+    | "target" "relation" identifier -- target_relation
+    | "identify" "with" identifier -- identify
+    | "alias" identifier -- alias
+    | "response" "{" NewlineBody<identifier, ","> "}" -- response
+    | Endpoint -- endpoint
+    | Entrypoint -- entrypoint
+
+  Endpoint = EndpointType "endpoint" "{" NewlineBody<EndpointBody, ";"> "}"
+
+  EndpointType
+    = "list"
+    | "get"
+    | "create"
+    | "update"
+    | "delete"
+
+  EndpointBody
+    = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
+
+  ActionBody
+    = ("create" | "update") identifier "{" NewlineBody<ActionAtomBody, ";"> "}"
+
+  ActionAtomBody
+    = "set" identifier (identifier | literal) -- set
+    | "reference" identifier "through" identifier -- reference
 
   IdentifierPath = identifier ("." identifier)*
 

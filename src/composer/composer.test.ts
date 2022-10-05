@@ -25,6 +25,7 @@ describe("compose models", () => {
           computeds: [],
         },
       ],
+      entrypoints: [],
     };
     expect(() => compose(specification)).toThrowError("Items not unique!");
   });
@@ -40,6 +41,7 @@ describe("compose models", () => {
           computeds: [],
         },
       ],
+      entrypoints: [],
     };
     expect(() => compose(specification)).toThrowError("Items not unique!");
   });
