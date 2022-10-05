@@ -8,6 +8,9 @@ import { parse } from "@src/parser/parser";
 import { Specification } from "@src/types/specification";
 
 describe("compose models", () => {
+  it("doesn't crash on empty blueprint", () => {
+    expect(() => compose(compile(parse("")))).not.toThrow();
+  });
   it("correctly composes the git example", () => {
     expect(compose(specificationInput)).toStrictEqual(definitionInput);
   });

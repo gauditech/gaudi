@@ -95,8 +95,8 @@ function composeModels(specs: ModelSpec[]): ModelDef[] {
 
       return mdef;
     });
-    if (cache.size === cacheSize) {
-      // whole iteration has passed, nothing has changed
+    if (cache.size === cacheSize && needsExtraStep) {
+      // whole iteration has passed, nothing has changed, but not everything's defined
       throw "infinite-loop";
     }
   }
