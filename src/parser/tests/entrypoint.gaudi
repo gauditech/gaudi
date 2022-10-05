@@ -6,7 +6,17 @@ entrypoint ItemEntry {
   list endpoint {}
   get endpoint {}
   update endpoint {}
-  create endpoint {}
+  create endpoint {
+    action {
+      create Item {
+        set foo bar
+      }
+      update Item {
+        set foo 10
+        reference factory through factory
+      }
+    }
+  }
   entrypoint Review {
     target relation reviews
     create endpoint {}

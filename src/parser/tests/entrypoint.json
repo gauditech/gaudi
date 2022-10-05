@@ -11,7 +11,24 @@
         { "type": "list" },
         { "type": "get" },
         { "type": "update" },
-        { "type": "create" }
+        {
+          "type": "create",
+          "action": [
+            {
+              "kind": "create",
+              "target": "Item",
+              "actionAtoms": [{ "kind": "set", "target": "foo", "value": "bar" }]
+            },
+            {
+              "kind": "update",
+              "target": "Item",
+              "actionAtoms": [
+                { "kind": "set", "target": "foo", "value": 10 },
+                { "kind": "reference", "target": "factory", "through": "factory" }
+              ]
+            }
+          ]
+        }
       ],
       "entrypoints": [
         {
