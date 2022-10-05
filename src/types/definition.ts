@@ -2,6 +2,7 @@ import { BinaryOperator } from "./ast";
 
 export type Definition = {
   models: ModelDef[];
+  entrypoints: EntrypointDef[];
 };
 
 export type ModelDef = {
@@ -93,3 +94,73 @@ export type QueryDef = {
   joinPaths: QueryDefPath[];
   filter: FilterDef | undefined;
 };
+
+/**
+ * ENTRYPOINTS
+ */
+
+export type EntrypointDef = {
+  name: string;
+  targetModelRef: string;
+  endpoints: EndpointDef[];
+};
+type EndpointDef = ListEndpointDef | GetEndpointDef;
+
+type ListEndpointDef = {
+  kind: "list";
+  name: string;
+  path: PathFragment[];
+  actions: ActionDef[];
+};
+
+type GetEndpointDef = {
+  kind: "get";
+  name: string;
+  path: PathFragment[];
+  identifyRefPath: string[];
+  actions: ActionDef[];
+};
+
+type PathFragment =
+  | { type: "literal"; value: string }
+  | { type: "numeric"; varname: string }
+  | { type: "text"; varname: string };
+
+type SelectDef = {
+  fieldRefs: string[];
+  references: { refKey: string; select: SelectDef }[];
+  relations: { refKey: string; select: SelectDef }[];
+  queries: { refKey: string; select: SelectDef }[];
+};
+
+type FetchOne = {
+  kind: "fetch one";
+  modelRef: string;
+  filter: FetchFilter;
+  select: SelectDef;
+  varname: string;
+  onError: HttpResponse;
+};
+
+type FetchMany = {
+  kind: "fetch many";
+  modelRef: string;
+  filter: FetchFilter | undefined;
+  varname: string;
+  select: SelectDef;
+};
+
+type HttpResponse = {
+  statusCode: number;
+  body: object;
+};
+
+type Respond = {
+  kind: "respond";
+  varname: string;
+};
+
+type ActionDef = FetchOne | FetchMany | Respond;
+
+type FetchFilter = { kind: "binary"; operation: "is"; lhs: string; rhs: VarRef };
+type VarRef = { kind: "var ref"; varname: string };
