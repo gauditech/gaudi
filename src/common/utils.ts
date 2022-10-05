@@ -19,6 +19,11 @@ export function ensureExists<I>(item: I | null | undefined): asserts item is I {
   }
 }
 
+export function ensureEqual<T>(a: T, b: T) {
+  if (a === b) return true;
+  throw new Error("Not equal");
+}
+
 /** Concat all keys who's value is `true` using `delimiter` */
 export function concatKeys(map: Record<string, boolean>, delimiter = " "): string {
   return Object.entries(map)

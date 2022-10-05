@@ -4,20 +4,11 @@
  */
 
 /*
-Org:
- query recent_members {
-  from memberships.user as m.u
-  filter { m.created_at < now - 1_week }
-  order by created_at desc/asc
-  limit 10
- }
-
   query featured_members:
     from recent_memberships.user as m.u
     filter m.is_active is true
       and u.is_active is true
       and u.org_count is 1
-x     and u in org_admins
       and u.repo_count is u.org_count
       and (u.profile.verified is true or u.profile is null)
 // imamo listu orgova, dohvati gornje za svaku!
@@ -98,13 +89,13 @@ select { featured_members { id, posts {} } }
   FROM
   -- fetch `recent_memberships`
   
-  ( SELECT om0.*
+  ( SELECT om0.user_id, om0.is_active
     FROM orgmembership om0
     WHERE created_at > now - '1 week'
   ) om0
   JOIN
-    -- fetch `user`, including `org_count`, `repo_count`, and `profile_verified`
-    (SELECT u0.*,
+    -- fetch `user`, including `org_count`, `repo_count`, and `profile.verified`
+    (SELECT u0.*, -- user input
             oc1.org_count,
             rc3.repo_count,
             p4.verified as profile__verified,
@@ -123,7 +114,7 @@ select { featured_members { id, posts {} } }
       ) rc3
         ON u0.id = rc3.owner_id
       LEFT JOIN (
-        SELECT p0.*
+        SELECT p0.verified
         FROM profile p0
       ) p4
         ON u0.id = p4.user_id

@@ -1,4 +1,4 @@
-import { ensureUnique, nameInitials } from "@src/common/utils";
+import { ensureEqual, ensureUnique } from "@src/common/utils";
 import { LiteralValue } from "@src/types/ast";
 import {
   Definition,
@@ -346,7 +346,7 @@ function defineQueryPathDeps(
 ): Pick<QueryDefPath, "select" | "joinPaths"> {
   const directCollect = Array.from(new Set(collect.map((c) => c[0])));
   const selectsAndJoins = directCollect.map(
-    (name, index): ["select", QueryDefPathSelect] | ["join", QueryDefPath] => {
+    (name, _index): ["select", QueryDefPathSelect] | ["join", QueryDefPath] => {
       const refKey = `${mdef.refKey}.${name}`;
       const target = cache.get(refKey);
       if (!target) throw ["cache-miss", name];
@@ -450,11 +450,6 @@ function getFilterPaths(filter: ExpSpec): string[][] {
       return [...getFilterPaths(filter.lhs), ...getFilterPaths(filter.rhs)];
     }
   }
-}
-
-function ensureEqual<T>(a: T, b: T): a is T {
-  if (a === b) return true;
-  throw new Error("Not equal");
 }
 
 function validateType(type: string): FieldDef["type"] {
