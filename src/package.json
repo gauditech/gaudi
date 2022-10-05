@@ -2,7 +2,7 @@
   "name": "gaudi",
   "description": "Gaudi app builder",
   "version": "0.0.1",
-  "main": "index.js",
+  "main": "engine.js",
   "scripts": {
     "compile": "node src/index.js"
   },

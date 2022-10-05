@@ -1,17 +1,4 @@
-import fs from "fs";
-
-import "./common/setupAliases";
-// import definitionInput from "@examples/git/definition.json";
-// import specificationInput from "@examples/git/specification.json";
-import { build } from "./builder/builder";
-import { compile } from "./compiler/compiler";
-import { compose } from "./composer/composer";
-import { parse } from "./parser/parser";
-
-const blueprintPath = "../examples/git/blueprint.gaudi";
-
-const input = fs.readFileSync(blueprintPath).toString("utf-8");
-const ast = parse(input);
-const specification = compile(ast);
-const definition = compose(specification);
-build(definition);
+export { parse } from "./parser/parser";
+export { compile } from "./compiler/compiler";
+export { compose } from "./composer/composer";
+export { build } from "./builder/builder";
