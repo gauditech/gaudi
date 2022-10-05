@@ -45,7 +45,7 @@ describe("entrypoint", () => {
           {
             name: "get",
             kind: "get",
-            identifyRefPath: ["Org.id"],
+            identifyRefPath: ["Org.id"], // should not use this
             path: [
               { type: "literal", value: "org" },
               { type: "numeric", varname: "org_id" },
@@ -55,6 +55,7 @@ describe("entrypoint", () => {
                 kind: "fetch one",
                 modelRef: "Org",
                 filter: {
+                  // this needs more work, not only expanding the options but define joins for nested lookups
                   kind: "binary",
                   operation: "is",
                   lhs: "Org.id",
