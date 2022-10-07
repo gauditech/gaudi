@@ -1,5 +1,56 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`builder build DB schema renders DB schema template correctly 1`] = `
+"datasource db {
+      provider = "DB_PROVIDER"
+      url      = "DB_CONNECTION_URL"
+    }
+
+    model org {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+optout String?
+
+repos repo[]
+
+
+}
+    model repo {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+org_id Int
+
+
+
+org org @relation(fields: [org_id], references: [id])
+}"
+`;
+
+exports[`builder build index renders index template correctly 1`] = `"require('./server/main.js')"`;
+
+exports[`builder build package renders package template correctly 1`] = `
+"{
+  "name": "test",
+  "description": "Test description",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "start-server": "node index.js"
+  },
+  "engines": {
+    "node": ">=16.15.0"
+  },
+  "dependencies": {
+    "express": "^4.18.1",
+    "prisma": "^4.3.1"
+  }
+}"
+`;
+
 exports[`builder build server renders server get endpoints correctly 1`] = `
 "const { endpointHandlerGuard, EndpointError } = require("./common.js");
 

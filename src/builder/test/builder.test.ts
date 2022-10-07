@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 import definition from "@examples/git/definition.json";
 
 import {
@@ -10,8 +7,6 @@ import {
   renderPackage,
   renderServer,
 } from "@src/builder/builder";
-
-const SNAPSHOT_FOLDER = __dirname;
 
 describe("builder", () => {
   describe("build package", () => {
@@ -23,17 +18,14 @@ describe("builder", () => {
           version: "0.0.1",
         },
       };
-      const snapshot = readSnapshot("package.json");
 
-      expect(await renderPackage(data)).toEqual(snapshot);
+      expect(await renderPackage(data)).toMatchSnapshot();
     });
   });
 
   describe("build index", () => {
     it("renders index template correctly", async () => {
-      const snapshot = readSnapshot("index.js");
-
-      expect(await renderIndex()).toEqual(snapshot);
+      expect(await renderIndex()).toMatchSnapshot();
     });
   });
 
@@ -44,9 +36,8 @@ describe("builder", () => {
         dbProvider: "DB_PROVIDER",
         dbConnectionUrl: "DB_CONNECTION_URL",
       };
-      const snapshot = readSnapshot("schema.prisma");
 
-      expect(await renderDbSchema(data)).toEqual(snapshot);
+      expect(await renderDbSchema(data)).toMatchSnapshot();
     });
   });
 
@@ -138,9 +129,3 @@ describe("builder", () => {
     });
   });
 });
-
-// ---------- helpers
-
-function readSnapshot(baseFilename: string): string {
-  return fs.readFileSync(path.join(SNAPSHOT_FOLDER, `${baseFilename}.snapshot`)).toString();
-}
