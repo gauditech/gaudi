@@ -3,9 +3,8 @@
   "entrypoints": [
     {
       "name": "ItemEntry",
-      "target": { "kind": "model", "identifier": "Item" },
+      "target": { "kind": "model", "identifier": "Item", "alias": "item" },
       "identify": "slug",
-      "alias": "item",
       "response": ["name", "price"],
       "endpoints": [
         { "type": "list" },
@@ -39,6 +38,7 @@
       "entrypoints": [
         {
           "name": "Review",
+          "target": { "kind": "relation", "identifier": "reviews" },
           "endpoints": [{ "type": "create" }]
         }
       ]

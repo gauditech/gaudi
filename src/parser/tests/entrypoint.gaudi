@@ -1,7 +1,6 @@
 entrypoint ItemEntry {
-  target model Item
+  target model Item as item
   identify with slug
-  alias item
   response { name, price }
   list endpoint {}
   get endpoint {}

@@ -102,6 +102,7 @@ function compileRelation(relation: RelationAST): RelationSpec {
 
 function compileQuery(query: QueryAST): QuerySpec {
   let fromModel: string[] | undefined;
+  let fromAlias: string[] | undefined;
   let filter: ExpSpec | undefined;
   let orderBy: QuerySpec["orderBy"];
   let limit: number | undefined;
@@ -109,6 +110,7 @@ function compileQuery(query: QueryAST): QuerySpec {
   query.body.forEach((b) => {
     if (b.kind === "from") {
       fromModel = b.from;
+      fromAlias = b.alias;
     } else if (b.kind === "filter") {
       filter = compileQueryExp(b.filter);
     } else if (b.kind === "orderBy") {
@@ -122,7 +124,15 @@ function compileQuery(query: QueryAST): QuerySpec {
     throw new CompilerError("'query' has no 'from'", query);
   }
 
-  return { name: query.name, fromModel, filter, interval: query.interval, orderBy, limit };
+  return {
+    name: query.name,
+    fromModel,
+    fromAlias,
+    filter,
+    interval: query.interval,
+    orderBy,
+    limit,
+  };
 }
 
 function compileComputed(computed: ComputedAST): ComputedSpec {
@@ -179,6 +189,7 @@ function compileModel(model: ModelAST): ModelSpec {
 
   return {
     name: model.name,
+    alias: model.alias,
     fields,
     references,
     relations,
@@ -207,7 +218,6 @@ function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   let target: EntrypointSpec["target"] | undefined;
   let identify: string | undefined;
-  let alias: string | undefined;
   let response: string[] | undefined;
   const endpoints: EndpointSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
@@ -217,8 +227,6 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
       target = b.target;
     } else if (b.kind === "identify") {
       identify = b.identifier;
-    } else if (b.kind === "alias") {
-      alias = b.identifier;
     } else if (b.kind === "response") {
       response = b.select;
     } else if (b.kind === "endpoint") {
@@ -236,7 +244,6 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
     name: entrypoint.name,
     target,
     identify,
-    alias,
     response,
     endpoints,
     entrypoints,

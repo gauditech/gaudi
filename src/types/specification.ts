@@ -9,6 +9,7 @@ export type Specification = {
 
 export type ModelSpec = WithContext<{
   name: string;
+  alias?: string;
   fields: FieldSpec[];
   references: ReferenceSpec[];
   relations: RelationSpec[];
@@ -40,6 +41,7 @@ export type RelationSpec = WithContext<{
 export type QuerySpec = WithContext<{
   name: string;
   fromModel: string[];
+  fromAlias?: string[];
   filter?: ExpSpec;
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;

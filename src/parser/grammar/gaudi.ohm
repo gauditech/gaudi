@@ -5,8 +5,7 @@ Gaudi {
   // Override Ohm's built-in definition of space.
   space += comment
 
-  Model
-    = "model" identifier "{" NewlineBody<ModelBody, ";"> "}"
+  Model = "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
 
   ModelBody
     = Field
@@ -41,7 +40,7 @@ Gaudi {
     = "query" identifier "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
   QueryBody
-    = "from" IdentifierPath -- from
+    = "from" IdentifierPathWithAs -- from
     | "filter" OptionalBraces<QueryExp> -- filter
     | "order" "by" NonemptyListOf<QueryOrder, ","> -- order_by
     | "limit" integer -- limit
@@ -87,10 +86,8 @@ Gaudi {
   Entrypoint = "entrypoint" identifier "{" NewlineBody<EntrypointBody, ";"> "}"
 
   EntrypointBody
-    = "target" "model" identifier -- target_model
-    | "target" "relation" identifier -- target_relation
+    = "target" ("model" | "relation") IdentifierWithAs -- target
     | "identify" "with" identifier -- identify
-    | "alias" identifier -- alias
     | "response" "{" NewlineBody<identifier, ","> "}" -- response
     | Endpoint -- endpoint
     | Entrypoint -- entrypoint
@@ -116,6 +113,14 @@ Gaudi {
     | "reference" identifier "through" identifier -- reference
 
   IdentifierPath = identifier ("." identifier)*
+
+  IdentifierWithAs
+    = identifier "as" identifier -- identifier_as
+    | identifier -- identifier
+
+  IdentifierPathWithAs
+    = IdentifierPath "as" IdentifierPath -- identifier_as
+    | IdentifierPath -- identifier
 
   literal (an literal) = null | boolean | integer | float | string
 
