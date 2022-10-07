@@ -85,8 +85,7 @@ export type EntrypointAST = WithContext<{
 }>;
 
 export type EntrypointBodyAST = WithContext<
-  | { kind: "targetModel"; identifier: string }
-  | { kind: "targetRelation"; identifier: string }
+  | { kind: "target"; target: { kind: "model" | "relation"; identifier: string } }
   | { kind: "identify"; identifier: string }
   | { kind: "alias"; identifier: string }
   | { kind: "response"; select: string[] }
@@ -110,8 +109,11 @@ export type ActionBodyAST = WithContext<{
 }>;
 
 export type ActionAtomBodyAST = WithContext<
-  | { kind: "setValue"; target: string; value: LiteralValue }
-  | { kind: "setReference"; target: string; reference: string }
+  | {
+      kind: "set";
+      target: string;
+      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
+    }
   | { kind: "reference"; target: string; through: string }
 >;
 

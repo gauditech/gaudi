@@ -205,8 +205,7 @@ function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
 }
 
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
-  let targetModel: string | undefined;
-  let targetRelation: string | undefined;
+  let target: EntrypointSpec["target"] | undefined;
   let identify: string | undefined;
   let alias: string | undefined;
   let response: string[] | undefined;
@@ -214,10 +213,8 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   const entrypoints: EntrypointSpec[] = [];
 
   entrypoint.body.forEach((b) => {
-    if (b.kind === "targetModel") {
-      targetModel = b.identifier;
-    } else if (b.kind === "targetRelation") {
-      targetRelation = b.identifier;
+    if (b.kind === "target") {
+      target = b.target;
     } else if (b.kind === "identify") {
       identify = b.identifier;
     } else if (b.kind === "alias") {
@@ -231,10 +228,13 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
     }
   });
 
+  if (target === undefined) {
+    throw new CompilerError("'entrypoint' has no 'target'", entrypoint);
+  }
+
   return {
     name: entrypoint.name,
-    targetModel,
-    targetRelation,
+    target,
     identify,
     alias,
     response,

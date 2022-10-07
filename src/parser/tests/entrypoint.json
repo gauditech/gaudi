@@ -3,7 +3,7 @@
   "entrypoints": [
     {
       "name": "ItemEntry",
-      "targetModel": "Item",
+      "target": { "kind": "model", "identifier": "Item" },
       "identify": "slug",
       "alias": "item",
       "response": ["name", "price"],
@@ -17,13 +17,19 @@
             {
               "kind": "create",
               "target": "Item",
-              "actionAtoms": [{ "kind": "setReference", "target": "foo", "reference": "bar" }]
+              "actionAtoms": [
+                {
+                  "kind": "set",
+                  "target": "foo",
+                  "set": { "kind": "reference", "reference": "bar" }
+                }
+              ]
             },
             {
               "kind": "update",
               "target": "Item",
               "actionAtoms": [
-                { "kind": "setValue", "target": "foo", "value": 10 },
+                { "kind": "set", "target": "foo", "set": { "kind": "value", "value": 10 } },
                 { "kind": "reference", "target": "factory", "through": "factory" }
               ]
             }

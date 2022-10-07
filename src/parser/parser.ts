@@ -230,10 +230,18 @@ semantics.addOperation("parse()", {
     };
   },
   EntrypointBody_target_model(this, _target, _model, identifier): EntrypointBodyAST {
-    return { kind: "targetModel", identifier: identifier.parse(), interval: this.source };
+    return {
+      kind: "target",
+      target: { kind: "model", identifier: identifier.parse() },
+      interval: this.source,
+    };
   },
   EntrypointBody_target_relation(this, _target, _relation, identifier): EntrypointBodyAST {
-    return { kind: "targetRelation", identifier: identifier.parse(), interval: this.source };
+    return {
+      kind: "target",
+      target: { kind: "relation", identifier: identifier.parse() },
+      interval: this.source,
+    };
   },
   EntrypointBody_identify(this, _identify, _with, identifier): EntrypointBodyAST {
     return { kind: "identify", identifier: identifier.parse(), interval: this.source };
@@ -273,17 +281,17 @@ semantics.addOperation("parse()", {
   },
   ActionAtomBody_set_value(this, _set, identifier, value): ActionAtomBodyAST {
     return {
-      kind: "setValue",
+      kind: "set",
       target: identifier.parse(),
-      value: value.parse(),
+      set: { kind: "value", value: value.parse() },
       interval: this.source,
     };
   },
-  ActionAtomBody_set_reference(this, _set, identifier, value): ActionAtomBodyAST {
+  ActionAtomBody_set_reference(this, _set, identifier, reference): ActionAtomBodyAST {
     return {
-      kind: "setReference",
+      kind: "set",
       target: identifier.parse(),
-      reference: value.parse(),
+      set: { kind: "reference", reference: reference.parse() },
       interval: this.source,
     };
   },

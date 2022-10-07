@@ -64,8 +64,7 @@ export type ExpSpec = WithContext<
 
 export type EntrypointSpec = WithContext<{
   name: string;
-  targetModel?: string;
-  targetRelation?: string;
+  target: { kind: "model" | "relation"; identifier: string };
   identify?: string;
   alias?: string;
   response?: string[];
@@ -85,7 +84,10 @@ export type ActionSpec = WithContext<{
 }>;
 
 export type ActionAtomSpec = WithContext<
-  | { kind: "setValue"; target: string; value: LiteralValue }
-  | { kind: "setReference"; target: string; reference: string }
+  | {
+      kind: "set";
+      target: string;
+      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
+    }
   | { kind: "reference"; target: string; through: string }
 >;
