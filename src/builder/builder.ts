@@ -15,8 +15,13 @@ import {
 import {
   BuildServerData,
   render as renderServerTpl,
-} from "@src/builder/renderer/templates/server.tpl";
+} from "@src/builder/renderer/templates/server/server.tpl";
 import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
+import {
+  render as renderEndpointsTpl,
+  RenderEndpointsData,
+} from "@src/builder/renderer/templates/server/endpoints.tpl";
+import { render as renderServerCommonTpl } from "@src/builder/renderer/templates/server/common.tpl";
 
 // TODO: read from definition
 const APP_NAME = "demoapp";
@@ -40,7 +45,7 @@ export async function build(definition: Definition): Promise<void> {
  - action
 */
 
-  prepareOutputFolder();
+  setupOutputFolder();
   buildPackage({
     package: { name: APP_NAME, description: PACKAGE_DESCRIPTION, version: PACKAGE_VERSION },
   });
@@ -49,13 +54,15 @@ export async function build(definition: Definition): Promise<void> {
   await buildServer({
     serverPort: SERVER_PORT,
   });
+  await buildServerCommon();
+  await buildServerEndpoints({ definition });
 }
 
 // -------------------- part builders
 
 // ---------- Output
 
-function prepareOutputFolder() {
+function setupOutputFolder() {
   // clear output folder
   if (fs.existsSync(OUTPUT_PATH)) {
     fs.rmSync(OUTPUT_PATH, { recursive: true, force: true });
@@ -72,9 +79,9 @@ export async function renderPackage(data: BuildPackageData): Promise<string> {
 }
 
 async function buildPackage(data: BuildPackageData) {
-  return renderPackage(data).then((content) =>
-    storeTemplateOutput(path.join(OUTPUT_PATH, "package.json"), content)
-  );
+  const outFile = path.join(OUTPUT_PATH, "package.json");
+
+  return renderPackage(data).then((content) => storeTemplateOutput(outFile, content));
 }
 
 // ---------- Index
@@ -84,9 +91,9 @@ export async function renderIndex(): Promise<string> {
 }
 
 async function buildIndex() {
-  return renderIndex().then((content) =>
-    storeTemplateOutput(path.join(OUTPUT_PATH, "index.js"), content)
-  );
+  const outFile = path.join(OUTPUT_PATH, "index.js");
+
+  return renderIndex().then((content) => storeTemplateOutput(outFile, content));
 }
 
 // ---------- DB
@@ -96,20 +103,22 @@ export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
 }
 
 async function buildDb(data: BuildDbSchemaData): Promise<void> {
-  const schemaFile = path.join(DB_OUTPUT_PATH, "db/schema.prisma");
+  const outFile = path.join(DB_OUTPUT_PATH, "db/schema.prisma");
 
   return (
     // render DB schema
     renderDbSchema(data)
-      .then((content) => storeTemplateOutput(schemaFile, content))
+      .then((content) => storeTemplateOutput(outFile, content))
       // apply DB schema
       .then(() => {
-        applyDbChanges({ schema: schemaFile });
+        applyDbChanges({ schema: outFile });
       })
   );
 }
 
 // ---------- Server
+
+// --- Main
 
 export async function renderServer(data: BuildServerData): Promise<string> {
   return renderServerTpl(data);
@@ -117,6 +126,30 @@ export async function renderServer(data: BuildServerData): Promise<string> {
 
 async function buildServer(data: BuildServerData): Promise<void> {
   return renderServer(data).then((content) => {
-    storeTemplateOutput(path.join(OUTPUT_PATH, "server.js"), content);
+    storeTemplateOutput(path.join(OUTPUT_PATH, "server/main.js"), content);
   });
+}
+
+// --- Common
+
+export async function renderServerCommon(): Promise<string> {
+  return renderServerCommonTpl();
+}
+
+async function buildServerCommon(): Promise<void> {
+  const outFile = path.join(OUTPUT_PATH, "server/common.js");
+
+  return renderServerCommon().then((content) => storeTemplateOutput(outFile, content));
+}
+
+// --- Endpoints
+
+export async function renderServerEndpoints(data: RenderEndpointsData): Promise<string> {
+  return renderEndpointsTpl(data);
+}
+
+async function buildServerEndpoints(data: RenderEndpointsData): Promise<void> {
+  const outFile = path.join(OUTPUT_PATH, "server/endpoints.js");
+
+  return renderServerEndpoints(data).then((content) => storeTemplateOutput(outFile, content));
 }

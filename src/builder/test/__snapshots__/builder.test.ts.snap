@@ -1,0 +1,161 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`builder build server renders server get endpoints correctly 1`] = `
+"const { endpointHandlerGuard, EndpointError } = require("./common.js");
+
+  // setup endpoints
+  const endpointConfigs = [];
+  function setupEndpoints(app) {
+    endpointConfigs.forEach((ep) => {
+      app[ep.method](ep.path, endpointHandlerGuard(ep.handler));
+    })
+  } 
+
+  // hello world endpoint
+  function helloEndpoint(req, res) { res.send("Hello world!") }
+  endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
+
+  // definition endpoints
+  // getEndpoint
+    async function getEndpoint(req, resp) {
+      // TODO: role auth
+      // TODO: select
+      // TODO: filter
+
+      const ctx = new Map();
+
+      // extract path vars
+      ctx.set("org_id", req.params["org_id"]);
+          
+      try {
+        // actions
+        try {
+  const var0 = await fetchOneAction(ctx);
+  ctx.set("var0", var0)
+}
+catch(err) {
+  throw new EndpointError(404, {"message":"Not found"}, err)
+}
+        resp.send(ctx.get("var0"))
+      } catch(err) {
+        if (err instanceof EndpointError) {
+          throw err;
+        }
+        else {
+          throw new EndpointError(500, 'Error processing request: ' + err);
+        }
+      }
+    }
+    endpointConfigs.push({ path: "/org/:org_id", method: "get", handler: getEndpoint })
+
+  // ----- commons
+  
+  async function fetchOneAction(ctx) {
+    // example endpoint error
+    const orgId = ctx.get('org_id');
+    if (orgId == 3) {
+      throw new Error('Example action error')
+    }
+
+    // TODO: execute query
+
+    return \`Example fetch-one action result: \${orgId}\`
+  }
+
+  async function fetchManyAction(ctx) {
+    // TODO: execute query
+    return ['Example list action result']
+  }
+
+  // ----- export
+
+  module.exports = {
+    setupEndpoints
+  }"
+`;
+
+exports[`builder build server renders server list endpoints correctly 1`] = `
+"const { endpointHandlerGuard, EndpointError } = require("./common.js");
+
+  // setup endpoints
+  const endpointConfigs = [];
+  function setupEndpoints(app) {
+    endpointConfigs.forEach((ep) => {
+      app[ep.method](ep.path, endpointHandlerGuard(ep.handler));
+    })
+  } 
+
+  // hello world endpoint
+  function helloEndpoint(req, res) { res.send("Hello world!") }
+  endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
+
+  // definition endpoints
+  // listEndpoint
+    async function listEndpoint(req, resp) {
+      // TODO: role auth
+      // TODO: select
+      // TODO: filter
+    
+      const ctx = new Map();
+
+      
+          
+      try {
+        const var0 = await fetchManyAction(ctx);
+ctx.set("var0", var0)
+        resp.send(ctx.get("var0"))
+      } catch(err) {
+        if (err instanceof EndpointError) {
+          throw err;
+        }
+        else {
+          throw new EndpointError(500, 'Error processing request: ' + err);
+        }
+      }
+    }
+    endpointConfigs.push({ path: "/org", method: "get", handler: listEndpoint })
+
+  // ----- commons
+  
+  async function fetchOneAction(ctx) {
+    // example endpoint error
+    const orgId = ctx.get('org_id');
+    if (orgId == 3) {
+      throw new Error('Example action error')
+    }
+
+    // TODO: execute query
+
+    return \`Example fetch-one action result: \${orgId}\`
+  }
+
+  async function fetchManyAction(ctx) {
+    // TODO: execute query
+    return ['Example list action result']
+  }
+
+  // ----- export
+
+  module.exports = {
+    setupEndpoints
+  }"
+`;
+
+exports[`builder build server renders server template correctly 1`] = `
+"const express = require("express");
+const { requestLogger, errorLogger, errorResponder } = require("./common.js");
+const { setupEndpoints } = require("./endpoints.js");
+
+const app = express();
+const port = 3001;
+
+setupEndpoints(app);
+
+app.use(requestLogger)
+app.use(errorLogger)
+app.use(errorResponder)
+
+app.listen(port, () => {
+  console.log(\`Example app listening on port \${port}\`);
+});"
+`;

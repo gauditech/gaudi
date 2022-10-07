@@ -119,12 +119,12 @@ export type EndpointDef =
   | DeleteEndpointDef;
 // | CustomEndpointDef;
 
-type ListEndpointDef = {
+export type ListEndpointDef = {
   kind: "list";
   response: SelectDef;
 };
 
-type GetEndpointDef = {
+export type GetEndpointDef = {
   kind: "get";
   response: SelectDef;
 };
