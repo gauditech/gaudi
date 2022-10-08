@@ -7,6 +7,7 @@ export type DefinitionAST = ModelAST | EntrypointAST;
 export type ModelAST = WithContext<{
   kind: "model";
   name: string;
+  alias?: string;
   body: ModelBodyAST[];
 }>;
 
@@ -55,7 +56,7 @@ export type QueryAST = WithContext<{
 }>;
 
 export type QueryBodyAST = WithContext<
-  | { kind: "from"; from: string[] }
+  | { kind: "from"; from: string[]; alias?: string[] }
   | { kind: "filter"; filter: ExpAST }
   | { kind: "orderBy"; orderings: QueryOrderAST[] }
   | { kind: "limit"; limit: number }
@@ -85,10 +86,8 @@ export type EntrypointAST = WithContext<{
 }>;
 
 export type EntrypointBodyAST = WithContext<
-  | { kind: "targetModel"; identifier: string }
-  | { kind: "targetRelation"; identifier: string }
+  | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
   | { kind: "identify"; identifier: string }
-  | { kind: "alias"; identifier: string }
   | { kind: "response"; select: string[] }
   | { kind: "endpoint"; endpoint: EndpointAST }
   | { kind: "entrypoint"; entrypoint: EntrypointAST }
@@ -110,8 +109,11 @@ export type ActionBodyAST = WithContext<{
 }>;
 
 export type ActionAtomBodyAST = WithContext<
-  | { kind: "setValue"; target: string; value: LiteralValue }
-  | { kind: "setReference"; target: string; reference: string }
+  | {
+      kind: "set";
+      target: string;
+      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
+    }
   | { kind: "reference"; target: string; through: string }
 >;
 
