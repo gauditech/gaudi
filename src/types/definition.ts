@@ -98,9 +98,6 @@ export type QueryDef = {
 /**
  * ENTRYPOINTS
  */
-
-export type EndpointDef = ListEndpointDef | GetEndpointDef;
-
 export type EntrypointDef = {
   name: string;
   target: {
@@ -114,6 +111,13 @@ export type EntrypointDef = {
   entrypoints: EntrypointDef[];
 };
 
+export type EndpointDef =
+  | CreateEndpointDef
+  | ListEndpointDef
+  | GetEndpointDef
+  | UpdateEndpointDef
+  | DeleteEndpointDef;
+
 type ListEndpointDef = {
   kind: "list";
   response: SelectDef;
@@ -124,9 +128,59 @@ type GetEndpointDef = {
   response: SelectDef;
 };
 
+type CreateEndpointDef = {
+  kind: "create";
+  response: SelectDef;
+  fieldset: FieldsetDef;
+  contextActionSetters: Record<string, FieldSetter>;
+  // actions: ActionDef[];
+};
+
+type UpdateEndpointDef = {
+  kind: "update";
+  response: SelectDef;
+  fieldset: FieldsetDef;
+  contextActionSetters: Record<string, FieldSetter>;
+  // actions: ActionDef[];
+};
+
+type DeleteEndpointDef = {
+  kind: "delete";
+  // actions: ActionDef[];
+};
+
 export type SelectDef = {
   fieldRefs: string[];
   references: { refKey: string; select: SelectDef }[];
   relations: { refKey: string; select: SelectDef }[];
   queries: { refKey: string; select: SelectDef }[];
 };
+
+type FieldsetDef = { fields: Record<string, FieldsetRecordDef | FieldsetFieldDef> };
+
+type FieldsetRecordDef = {
+  kind: "record";
+  record: FieldsetDef;
+  nullable: boolean;
+};
+
+type FieldsetFieldDef = {
+  kind: "field";
+  type: FieldDef["type"];
+  nullable: boolean;
+};
+
+// type ActionDef = never;
+
+type FieldSetter =
+  // TODO add algebra
+  | { kind: "value"; type: "text"; value: string }
+  | { kind: "value"; type: "boolean"; value: boolean }
+  | { kind: "value"; type: "integer"; value: number }
+  | { kind: "fieldset-input"; type: FieldDef["type"]; fieldsetAccess: string[] }
+  | { kind: "reference-value"; type: FieldDef["type"]; fromAlias: string; aliasAccess: string[] }
+  | {
+      kind: "fieldset-reference-input";
+      fieldsetAccess: string[];
+      throughField: { name: string; refKey: string };
+    };
