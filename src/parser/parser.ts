@@ -31,8 +31,9 @@ semantics.addOperation("parse()", {
   Definition(definitions) {
     return definitions.parse();
   },
-  Model(this, _model, identifier, _parenL, body, _parenR): ModelAST {
-    return { kind: "model", name: identifier.parse(), body: body.parse(), interval: this.source };
+  Model(this, _model, identifierAs, _parenL, body, _parenR): ModelAST {
+    const [name, alias] = identifierAs.parse();
+    return { kind: "model", name, alias, body: body.parse(), interval: this.source };
   },
   Field(this, _field, identifier, _parenL, body, _parenR): FieldAST {
     return {
@@ -87,8 +88,9 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  QueryBody_from(this, _from, identifier): QueryBodyAST {
-    return { kind: "from", from: identifier.parse(), interval: this.source };
+  QueryBody_from(this, _from, identifierAs): QueryBodyAST {
+    const [from, alias] = identifierAs.parse();
+    return { kind: "from", from, alias, interval: this.source };
   },
   QueryBody_filter(this, _filter, exp): QueryBodyAST {
     return { kind: "filter", filter: exp.parse(), interval: this.source };
@@ -218,9 +220,6 @@ semantics.addOperation("parse()", {
   PrimaryExp_literal(this, literal): ExpAST {
     return { kind: "literal", literal: literal.parse(), interval: this.source };
   },
-  IdentifierPath(this, head, _dot, tail): string[] {
-    return [head.parse(), ...tail.children.map((child) => child.parse())];
-  },
   Entrypoint(this, _enrtypoint, identifier, _braceL, body, _braceR): EntrypointAST {
     return {
       kind: "entrypoint",
@@ -229,17 +228,16 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  EntrypointBody_target_model(this, _target, _model, identifier): EntrypointBodyAST {
-    return { kind: "targetModel", identifier: identifier.parse(), interval: this.source };
-  },
-  EntrypointBody_target_relation(this, _target, _relation, identifier): EntrypointBodyAST {
-    return { kind: "targetRelation", identifier: identifier.parse(), interval: this.source };
+  EntrypointBody_target(this, _target, kind, identifierAs): EntrypointBodyAST {
+    const [identifier, alias] = identifierAs.parse();
+    return {
+      kind: "target",
+      target: { kind: kind.sourceString as "model" | "relation", identifier, alias },
+      interval: this.source,
+    };
   },
   EntrypointBody_identify(this, _identify, _with, identifier): EntrypointBodyAST {
     return { kind: "identify", identifier: identifier.parse(), interval: this.source };
-  },
-  EntrypointBody_alias(this, _alias, identifier): EntrypointBodyAST {
-    return { kind: "alias", identifier: identifier.parse(), interval: this.source };
   },
   EntrypointBody_response(this, _response, _braceL, identifiers, _braceR): EntrypointBodyAST {
     return { kind: "response", select: identifiers.parse(), interval: this.source };
@@ -273,17 +271,17 @@ semantics.addOperation("parse()", {
   },
   ActionAtomBody_set_value(this, _set, identifier, value): ActionAtomBodyAST {
     return {
-      kind: "setValue",
+      kind: "set",
       target: identifier.parse(),
-      value: value.parse(),
+      set: { kind: "value", value: value.parse() },
       interval: this.source,
     };
   },
-  ActionAtomBody_set_reference(this, _set, identifier, value): ActionAtomBodyAST {
+  ActionAtomBody_set_reference(this, _set, identifier, reference): ActionAtomBodyAST {
     return {
-      kind: "setReference",
+      kind: "set",
       target: identifier.parse(),
-      reference: value.parse(),
+      set: { kind: "reference", reference: reference.parse() },
       interval: this.source,
     };
   },
@@ -294,6 +292,21 @@ semantics.addOperation("parse()", {
       through: through.parse(),
       interval: this.source,
     };
+  },
+  IdentifierPath(this, head, _dot, tail): string[] {
+    return [head.parse(), ...tail.children.map((child) => child.parse())];
+  },
+  IdentifierWithAs_identifier(this, identifier) {
+    return [identifier.parse(), undefined];
+  },
+  IdentifierWithAs_identifier_as(this, identifier, _as, alias) {
+    return [identifier.parse(), alias.parse()];
+  },
+  IdentifierPathWithAs_identifier(this, identifier) {
+    return [identifier.parse(), undefined];
+  },
+  IdentifierPathWithAs_identifier_as(this, identifier, _as, alias) {
+    return [identifier.parse(), alias.parse()];
   },
   null(_null) {
     return null;

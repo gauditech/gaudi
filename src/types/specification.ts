@@ -9,6 +9,7 @@ export type Specification = {
 
 export type ModelSpec = WithContext<{
   name: string;
+  alias?: string;
   fields: FieldSpec[];
   references: ReferenceSpec[];
   relations: RelationSpec[];
@@ -40,6 +41,7 @@ export type RelationSpec = WithContext<{
 export type QuerySpec = WithContext<{
   name: string;
   fromModel: string[];
+  fromAlias?: string[];
   filter?: ExpSpec;
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;
@@ -64,8 +66,7 @@ export type ExpSpec = WithContext<
 
 export type EntrypointSpec = WithContext<{
   name: string;
-  targetModel?: string;
-  targetRelation?: string;
+  target: { kind: "model" | "relation"; identifier: string };
   identify?: string;
   alias?: string;
   response?: string[];
@@ -85,7 +86,10 @@ export type ActionSpec = WithContext<{
 }>;
 
 export type ActionAtomSpec = WithContext<
-  | { kind: "setValue"; target: string; value: LiteralValue }
-  | { kind: "setReference"; target: string; reference: string }
+  | {
+      kind: "set";
+      target: string;
+      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
+    }
   | { kind: "reference"; target: string; through: string }
 >;
