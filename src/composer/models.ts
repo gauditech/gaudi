@@ -287,7 +287,7 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
 
 function getLiteralType(literal: LiteralValue): LiteralFilterDef["type"] {
   if (typeof literal === "string") return "text";
-  if (typeof literal === "number") return "numeric";
+  if (typeof literal === "number") return "integer";
   if (typeof literal === "boolean") return "boolean";
   if (literal === "null") return "null";
   throw new Error(`Literal ${literal} not supported`);

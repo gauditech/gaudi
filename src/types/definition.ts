@@ -79,7 +79,7 @@ export type FilterDef =
   | LiteralFilterDef;
 
 export type LiteralFilterDef =
-  | { kind: "literal"; type: "numeric"; value: number }
+  | { kind: "literal"; type: "integer"; value: number }
   | { kind: "literal"; type: "null"; value: null }
   | { kind: "literal"; type: "text"; value: string }
   | { kind: "literal"; type: "boolean"; value: boolean };

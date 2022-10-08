@@ -127,7 +127,7 @@ describe("compose model queries", () => {
             operator: "is",
             rhs: {
               kind: "literal",
-              type: "numeric",
+              type: "integer",
               value: 1,
             },
           },
