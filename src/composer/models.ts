@@ -460,3 +460,11 @@ function validateType(type: string): FieldDef["type"] {
 function constructDbType(type: FieldDef["type"]): FieldDef["dbtype"] {
   return type;
 }
+
+export type Cache =
+  | { kind: "model"; model: ModelDef }
+  | { kind: "field"; field: FieldDef }
+  | { kind: "reference"; reference: ReferenceDef }
+  | { kind: "relation"; relation: RelationDef }
+  | { kind: "query"; query: QueryDef };
+// | { kind: "computed", computed: ComputedDef}

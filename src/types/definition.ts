@@ -99,68 +99,34 @@ export type QueryDef = {
  * ENTRYPOINTS
  */
 
+export type EndpointDef = ListEndpointDef | GetEndpointDef;
+
 export type EntrypointDef = {
   name: string;
-  targetModelRef: string;
+  target: {
+    kind: "model" | "reference" | "relation" | "query";
+    name: string;
+    refKey: string;
+    type: string;
+  };
+  identifyWith: { name: string; refKey: string; type: "text" | "integer" };
   endpoints: EndpointDef[];
+  entrypoints: EntrypointDef[];
 };
-type EndpointDef = ListEndpointDef | GetEndpointDef;
 
 type ListEndpointDef = {
   kind: "list";
-  name: string;
-  path: PathFragment[];
-  actions: ActionDef[];
+  response: SelectDef;
 };
 
 type GetEndpointDef = {
   kind: "get";
-  name: string;
-  path: PathFragment[];
-  identifyRefPath: string[];
-  actions: ActionDef[];
+  response: SelectDef;
 };
 
-type PathFragment =
-  | { type: "literal"; value: string }
-  | { type: "numeric"; varname: string }
-  | { type: "text"; varname: string };
-
-type SelectDef = {
+export type SelectDef = {
   fieldRefs: string[];
   references: { refKey: string; select: SelectDef }[];
   relations: { refKey: string; select: SelectDef }[];
   queries: { refKey: string; select: SelectDef }[];
 };
-
-type FetchOne = {
-  kind: "fetch one";
-  modelRef: string;
-  filter: FetchFilter;
-  select: SelectDef;
-  varname: string;
-  onError: HttpResponse;
-};
-
-type FetchMany = {
-  kind: "fetch many";
-  modelRef: string;
-  filter: FetchFilter | undefined;
-  varname: string;
-  select: SelectDef;
-};
-
-type HttpResponse = {
-  statusCode: number;
-  body: object;
-};
-
-type Respond = {
-  kind: "respond";
-  varname: string;
-};
-
-type ActionDef = FetchOne | FetchMany | Respond;
-
-type FetchFilter = { kind: "binary"; operation: "is"; lhs: string; rhs: VarRef };
-type VarRef = { kind: "var ref"; varname: string };

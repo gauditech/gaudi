@@ -2,76 +2,87 @@ import { compile, compose, parse } from "@src/index";
 import { EntrypointDef } from "@src/types/definition";
 
 describe("entrypoint", () => {
-  it.skip("composes basic example", () => {
+  it("composes basic example", () => {
     const bp = `
     model Org {
+      field slug { type text, unique }
       field name { type text }
+      relation repos { from Repo, through org }
+    }
+    model Repo {
+      reference org { to Org }
+      field title { type text }
     }
 
     entrypoint Orgs {
       target model Org
-      response{ id, name }
+      identify with slug
+      response { id, name, slug }
+    
       list endpoint {}
       get endpoint {}
+    
+      entrypoint Repositories {
+        target relation repos
+
+        list endpoint {}
+        get endpoint {}
+      }
     }
     `;
     const spec = compile(parse(bp));
     const def = compose(spec);
     const ep: EntrypointDef[] = [
       {
+        target: { kind: "model", name: "Org", refKey: "Org", type: "Org" },
+        identifyWith: { name: "slug", refKey: "Org.slug", type: "text" },
         name: "Orgs",
-        targetModelRef: "Org",
         endpoints: [
           {
-            name: "list",
             kind: "list",
-            path: [{ type: "literal", value: "org" }],
-            actions: [
-              {
-                kind: "fetch many",
-                modelRef: "Org",
-                filter: undefined,
-                select: {
-                  fieldRefs: ["Org.id", "Org.name"],
-                  queries: [],
-                  references: [],
-                  relations: [],
-                },
-                varname: "var0",
-              },
-              { kind: "respond", varname: "var0" },
-            ],
+            response: {
+              fieldRefs: ["Org.id", "Org.name", "Org.slug"],
+              references: [],
+              relations: [],
+              queries: [],
+            },
           },
           {
-            name: "get",
             kind: "get",
-            identifyRefPath: ["Org.id"], // should not use this
-            path: [
-              { type: "literal", value: "org" },
-              { type: "numeric", varname: "org_id" },
-            ],
-            actions: [
+            response: {
+              fieldRefs: ["Org.id", "Org.name", "Org.slug"],
+              references: [],
+              relations: [],
+              queries: [],
+            },
+          },
+        ],
+        entrypoints: [
+          {
+            name: "Orgs.Repositories",
+            target: { kind: "relation", name: "repos", refKey: "Org.repos", type: "Repo" },
+            identifyWith: { name: "id", refKey: "Repo.id", type: "integer" },
+            endpoints: [
               {
-                kind: "fetch one",
-                modelRef: "Org",
-                filter: {
-                  // this needs more work, not only expanding the options but define joins for nested lookups
-                  kind: "binary",
-                  operation: "is",
-                  lhs: "Org.id",
-                  rhs: { kind: "var ref", varname: "org_id" },
-                },
-                select: {
-                  fieldRefs: ["Org.id", "Org.name"],
-                  queries: [],
+                kind: "list",
+                response: {
+                  fieldRefs: ["Repo.id", "Repo.title", "Repo.org_id"],
                   references: [],
                   relations: [],
+                  queries: [],
                 },
-                varname: "var0",
-                onError: { statusCode: 404, body: { message: "Not found" } },
               },
-              { kind: "respond", varname: "var0" },
+              {
+                kind: "get",
+                response: {
+                  fieldRefs: ["Repo.id", "Repo.title", "Repo.org_id"],
+                  references: [],
+                  relations: [],
+                  queries: [],
+                },
+              },
             ],
+            entrypoints: [],
           },
         ],
       },
