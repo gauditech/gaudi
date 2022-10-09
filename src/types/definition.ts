@@ -186,7 +186,7 @@ type FieldsetFieldDef = {
   nullable: boolean;
 };
 
-type ActionDef = CreateOneAction | UpdateOneAction | DeleteManyAction;
+export type ActionDef = CreateOneAction | UpdateOneAction | DeleteManyAction;
 
 type CreateOneAction = {
   kind: "create-one";

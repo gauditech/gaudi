@@ -1,4 +1,4 @@
-import { Definition, PathFragment } from "@src/types/definition";
+import { Definition, EntrypointDef } from "@src/types/definition";
 
 /*
  * Template helper functions for Gaudi definition
@@ -26,12 +26,4 @@ export function typeToDbType(type: string) {
   }
 
   throw "UNHANDLED_GAUDI_TYPE";
-}
-
-export function buildEndpointPath(parts: PathFragment[]): string {
-  return parts.reduce((accum, part) => {
-    const pathPart =
-      part.type === "numeric" || part.type === "text" ? `:${part.varname}` : part.value;
-    return `${accum}/${pathPart}`;
-  }, "");
 }
