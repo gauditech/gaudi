@@ -116,8 +116,8 @@ export type EndpointDef =
   | ListEndpointDef
   | GetEndpointDef
   | UpdateEndpointDef
-  | DeleteEndpointDef
-  | CustomEndpointDef;
+  | DeleteEndpointDef;
+// | CustomEndpointDef;
 
 type ListEndpointDef = {
   kind: "list";
@@ -154,6 +154,12 @@ type CustomEndpointDef = {
   kind: "custom";
   method: "post" | "get" | "put" | "delete";
   actions: ActionDef[];
+  respondWith: {
+    // should be respond with query or something
+    alias: string;
+    modeel: string;
+    response: SelectDef;
+  };
 };
 
 export type SelectDef = {
