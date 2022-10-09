@@ -105,8 +105,9 @@ export type EntrypointDef = {
     name: string;
     refKey: string;
     type: string;
+    alias: string | null;
+    identifyWith: { name: string; refKey: string; type: "text" | "integer" };
   };
-  identifyWith: { name: string; refKey: string; type: "text" | "integer" };
   endpoints: EndpointDef[];
   entrypoints: EntrypointDef[];
 };
@@ -122,11 +123,13 @@ export type EndpointDef =
 export type ListEndpointDef = {
   kind: "list";
   response: SelectDef;
+  actions: ActionDef[];
 };
 
 export type GetEndpointDef = {
   kind: "get";
   response: SelectDef;
+  actions: ActionDef[];
 };
 
 type CreateEndpointDef = {
@@ -216,7 +219,7 @@ type FieldSetter =
   | { kind: "value"; type: "boolean"; value: boolean }
   | { kind: "value"; type: "integer"; value: number }
   | { kind: "fieldset-input"; type: FieldDef["type"]; fieldsetAccess: string[] }
-  | { kind: "reference-value"; type: FieldDef["type"]; fromAlias: string; aliasAccess: string[] }
+  | { kind: "reference-value"; type: FieldDef["type"]; target: { alias: string; access: string[] } }
   | {
       kind: "fieldset-reference-input";
       fieldsetAccess: string[];

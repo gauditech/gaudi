@@ -23,10 +23,11 @@ describe("entrypoint", () => {
       get endpoint {}
     
       entrypoint Repositories {
-        target relation repos
+        target relation repos as repo
 
         list endpoint {}
         get endpoint {}
+        create endpoint {}
       }
     }
     `;
@@ -34,8 +35,14 @@ describe("entrypoint", () => {
     const def = compose(spec);
     const ep: EntrypointDef[] = [
       {
-        target: { kind: "model", name: "Org", refKey: "Org", type: "Org" },
-        identifyWith: { name: "slug", refKey: "Org.slug", type: "text" },
+        target: {
+          kind: "model",
+          name: "Org",
+          refKey: "Org",
+          type: "Org",
+          identifyWith: { name: "slug", refKey: "Org.slug", type: "text" },
+          alias: null,
+        },
         name: "Orgs",
         endpoints: [
           {
@@ -60,8 +67,14 @@ describe("entrypoint", () => {
         entrypoints: [
           {
             name: "Orgs.Repositories",
-            target: { kind: "relation", name: "repos", refKey: "Org.repos", type: "Repo" },
-            identifyWith: { name: "id", refKey: "Repo.id", type: "integer" },
+            target: {
+              kind: "relation",
+              name: "repos",
+              refKey: "Org.repos",
+              type: "Repo",
+              alias: "repo",
+              identifyWith: { name: "id", refKey: "Repo.id", type: "integer" },
+            },
             endpoints: [
               {
                 kind: "list",
@@ -74,6 +87,25 @@ describe("entrypoint", () => {
               },
               {
                 kind: "get",
+                response: {
+                  fieldRefs: ["Repo.id", "Repo.title", "Repo.org_id"],
+                  references: [],
+                  relations: [],
+                  queries: [],
+                },
+              },
+              {
+                kind: "create",
+                fieldset: { fields: { title: { kind: "field", nullable: false, type: "text" } } },
+                contextActionChangeset: {
+                  org_id: {
+                    kind: "reference-value",
+                    type: "integer",
+                    target: { alias: "org", access: ["id"] },
+                  },
+                  title: { kind: "fieldset-input", type: "text", fieldsetAccess: ["title"] },
+                },
+                actions: [],
                 response: {
                   fieldRefs: ["Repo.id", "Repo.title", "Repo.org_id"],
                   references: [],
