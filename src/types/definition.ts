@@ -116,7 +116,8 @@ export type EndpointDef =
   | ListEndpointDef
   | GetEndpointDef
   | UpdateEndpointDef
-  | DeleteEndpointDef;
+  | DeleteEndpointDef
+  | CustomEndpointDef;
 
 type ListEndpointDef = {
   kind: "list";
@@ -132,21 +133,27 @@ type CreateEndpointDef = {
   kind: "create";
   response: SelectDef;
   fieldset: FieldsetDef;
-  contextActionSetters: Record<string, FieldSetter>;
-  // actions: ActionDef[];
+  contextActionChangeset: Changeset;
+  actions: ActionDef[];
 };
 
 type UpdateEndpointDef = {
   kind: "update";
   response: SelectDef;
   fieldset: FieldsetDef;
-  contextActionSetters: Record<string, FieldSetter>;
-  // actions: ActionDef[];
+  contextActionChangeset: Changeset;
+  actions: ActionDef[];
 };
 
 type DeleteEndpointDef = {
   kind: "delete";
-  // actions: ActionDef[];
+  actions: ActionDef[];
+};
+
+type CustomEndpointDef = {
+  kind: "custom";
+  method: "post" | "get" | "put" | "delete";
+  actions: ActionDef[];
 };
 
 export type SelectDef = {
@@ -170,7 +177,22 @@ type FieldsetFieldDef = {
   nullable: boolean;
 };
 
-// type ActionDef = never;
+type ActionDef = CreateOneAction | UpdateOneAction;
+
+type CreateOneAction = {
+  kind: "create-one";
+  model: string;
+  changeset: Changeset;
+};
+
+type UpdateOneAction = {
+  kind: "update-one";
+  model: string;
+  filter: FilterDef;
+  changeset: Changeset;
+};
+
+export type Changeset = Record<string, FieldSetter>;
 
 type FieldSetter =
   // TODO add algebra
