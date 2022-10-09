@@ -53,6 +53,7 @@ describe("entrypoint", () => {
               relations: [],
               queries: [],
             },
+            actions: [],
           },
           {
             kind: "get",
@@ -62,6 +63,7 @@ describe("entrypoint", () => {
               relations: [],
               queries: [],
             },
+            actions: [],
           },
         ],
         entrypoints: [
@@ -84,6 +86,7 @@ describe("entrypoint", () => {
                   relations: [],
                   queries: [],
                 },
+                actions: [],
               },
               {
                 kind: "get",
@@ -93,6 +96,7 @@ describe("entrypoint", () => {
                   relations: [],
                   queries: [],
                 },
+                actions: [],
               },
               {
                 kind: "create",
