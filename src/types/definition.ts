@@ -183,7 +183,7 @@ type FieldsetFieldDef = {
   nullable: boolean;
 };
 
-type ActionDef = CreateOneAction | UpdateOneAction | DeleteAction;
+type ActionDef = CreateOneAction | UpdateOneAction | DeleteManyAction;
 
 type CreateOneAction = {
   kind: "create-one";
@@ -194,18 +194,20 @@ type CreateOneAction = {
 type UpdateOneAction = {
   kind: "update-one";
   model: string;
+  target: {
+    alias: string;
+    access: string[];
+  };
   filter: FilterDef;
   changeset: Changeset;
 };
 
-type DeleteAction = {
-  kind: "delete";
-  cardinality: Cardinality;
+type DeleteManyAction = {
+  kind: "delete-many";
   model: string;
   filter: FilterDef;
 };
 
-type Cardinality = "one" | "many";
 export type Changeset = Record<string, FieldSetter>;
 
 type FieldSetter =
