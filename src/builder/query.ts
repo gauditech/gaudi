@@ -46,8 +46,12 @@ export function queriableEntrypoints(def: Definition, inputs: EpWithId[]): Queri
         value: val,
       } as LiteralFilterDef,
     },
-    joins: queriableJoins(def, rest, [modelEp.target.name]),
+    joins: queriableJoins(def, rest, [modelEp.target.name]).map((j) => forceLeftJoins(j)),
   };
+}
+
+function forceLeftJoins(j: Join): Join {
+  return { ...j, joinType: "left", joins: j.joins.map((j) => forceLeftJoins(j)) };
 }
 
 function queriableJoins(def: Definition, inputs: EpWithId[], parentNamePath: string[]): Join[] {
@@ -64,7 +68,7 @@ function queriableJoins(def: Definition, inputs: EpWithId[], parentNamePath: str
       refKey: ep.target.refKey,
       namePath,
       kind: ep.target.kind,
-      joinType: "left",
+      joinType: "inner",
       on: {
         kind: "binary",
         operator: "and",
@@ -171,8 +175,9 @@ function opToString(op: BinaryOperator): string {
 
 function joinToString(def: Definition, join: Join): string {
   const model = getTargetModel(def, join.refKey);
+  const joinMode = join.joinType === "inner" ? "JOIN" : "LEFT JOIN";
   return source`
-  LEFT JOIN ${model.dbname} AS ${toAlias(join.namePath)}
+  ${joinMode} ${model.dbname} AS ${toAlias(join.namePath)}
   ON ${filterToString(join.on)}
   ${join.joins.map((j) => joinToString(def, j))}`;
 }
