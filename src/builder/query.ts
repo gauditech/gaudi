@@ -36,16 +36,18 @@ export function queriableEntrypoints(def: Definition, inputs: EpWithId[]): Queri
   const [[modelEp, val], ...rest] = inputs;
   return {
     modelRefKey: modelEp.target.refKey,
-    filter: {
-      kind: "binary",
-      operator: "is",
-      lhs: { kind: "alias", namePath: [modelEp.target.name, modelEp.target.identifyWith.name] },
-      rhs: {
-        kind: "literal",
-        type: modelEp.target.identifyWith.type,
-        value: val,
-      } as LiteralFilterDef,
-    },
+    filter: val
+      ? {
+          kind: "binary",
+          operator: "is",
+          lhs: { kind: "alias", namePath: [modelEp.target.name, modelEp.target.identifyWith.name] },
+          rhs: {
+            kind: "literal",
+            type: modelEp.target.identifyWith.type,
+            value: val,
+          } as LiteralFilterDef,
+        }
+      : undefined,
     joins: queriableJoins(def, rest, [modelEp.target.name]).map((j) => forceLeftJoins(j)),
   };
 }
@@ -78,16 +80,18 @@ function queriableJoins(def: Definition, inputs: EpWithId[], parentNamePath: str
           lhs: { kind: "alias", namePath: [...parentNamePath, joinNames.that] },
           rhs: { kind: "alias", namePath: [...namePath, joinNames.this] },
         },
-        rhs: {
-          kind: "binary",
-          operator: "is",
-          lhs: { kind: "alias", namePath: [...namePath, ep.target.identifyWith.name] },
-          rhs: {
-            kind: "literal",
-            type: ep.target.identifyWith.type,
-            value: val,
-          } as LiteralFilterDef,
-        },
+        rhs: val
+          ? {
+              kind: "binary",
+              operator: "is",
+              lhs: { kind: "alias", namePath: [...namePath, ep.target.identifyWith.name] },
+              rhs: {
+                kind: "literal",
+                type: ep.target.identifyWith.type,
+                value: val,
+              } as LiteralFilterDef,
+            }
+          : undefined,
       },
       joins: queriableJoins(def, rest, namePath),
     },
