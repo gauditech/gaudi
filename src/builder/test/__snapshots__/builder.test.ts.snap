@@ -67,55 +67,53 @@ exports[`builder build server renders server get endpoints correctly 1`] = `
   endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
 
   // definition endpoints
-  // getEndpoint
-    async function getEndpoint(req, resp) {
-      // TODO: role auth
-      // TODO: select
-      // TODO: filter
+  // --- getOrgsEndpoint
+async function getOrgsEndpoint(req, resp) {
+  // TODO: role auth
+  // TODO: select
+  // TODO: filter
 
-      const ctx = new Map();
+  const ctx = new Map();
 
-      // extract path vars
-      ctx.set("org_id", req.params["org_id"]);
-          
-      try {
-        // actions
-        try {
-  const var0 = await fetchOneAction(ctx);
-  ctx.set("var0", var0)
-}
-catch(err) {
-  throw new EndpointError(404, {"message":"Not found"}, err)
-}
-        resp.send(ctx.get("var0"))
-      } catch(err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        }
-        else {
-          throw new EndpointError(500, 'Error processing request: ' + err);
-        }
-      }
+  // extract path vars
+  ctx.set("org_slug", req.params["org_slug"])
+
+  try {
+    try {
+      const result = await fetchSingleAction(ctx);
+      ctx.set("__gaudi_action_result__", result)
     }
-    endpointConfigs.push({ path: "/org/:org_id", method: "get", handler: getEndpoint })
+    catch(err) {
+      // TODO: custom user message
+      throw new EndpointError(404, {"message":"Not found"})
+    }
+
+    // actions
+    
+
+    resp.send(ctx.get("__gaudi_action_result__"))
+  } catch(err) {
+    if (err instanceof EndpointError) {
+      throw err;
+    }
+    else {
+      throw new EndpointError(500, 'Error processing request: ' + err);
+    }
+  }
+}
+endpointConfigs.push({ path: "/org/:org_slug", method: "get", handler: getOrgsEndpoint })
 
   // ----- commons
   
-  async function fetchOneAction(ctx) {
-    // example endpoint error
-    const orgId = ctx.get('org_id');
-    if (orgId == 3) {
-      throw new Error('Example action error')
-    }
-
+  async function fetchSingleAction(ctx) {
     // TODO: execute query
 
-    return \`Example fetch-one action result: \${orgId}\`
+    return \`Example fetch-one action result \${new Date().toISOString()}\`
   }
 
   async function fetchManyAction(ctx) {
     // TODO: execute query
-    return ['Example list action result']
+    return [\`Example list action result \${new Date().toISOString()}\`]
   }
 
   // ----- export
@@ -141,48 +139,45 @@ exports[`builder build server renders server list endpoints correctly 1`] = `
   endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
 
   // definition endpoints
-  // listEndpoint
-    async function listEndpoint(req, resp) {
-      // TODO: role auth
-      // TODO: select
-      // TODO: filter
-    
-      const ctx = new Map();
+  // listOrgsEndpoint
+async function listOrgsEndpoint(req, resp) {
+  // TODO: role auth
+  // TODO: select
+  // TODO: filter
 
-      
-          
-      try {
-        const var0 = await fetchManyAction(ctx);
-ctx.set("var0", var0)
-        resp.send(ctx.get("var0"))
-      } catch(err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        }
-        else {
-          throw new EndpointError(500, 'Error processing request: ' + err);
-        }
-      }
+  const ctx = new Map();
+
+  
+
+  try {
+    const result = await fetchManyAction(ctx);
+    ctx.set("__gaudi_action_result__", result)
+
+    
+
+    resp.send(ctx.get("__gaudi_action_result__"))
+  } catch(err) {
+    if (err instanceof EndpointError) {
+      throw err;
     }
-    endpointConfigs.push({ path: "/org", method: "get", handler: listEndpoint })
+    else {
+      throw new EndpointError(500, 'Error processing request: ' + err);
+    }
+  }
+}
+endpointConfigs.push({ path: "/org", method: "get", handler: listOrgsEndpoint })
 
   // ----- commons
   
-  async function fetchOneAction(ctx) {
-    // example endpoint error
-    const orgId = ctx.get('org_id');
-    if (orgId == 3) {
-      throw new Error('Example action error')
-    }
-
+  async function fetchSingleAction(ctx) {
     // TODO: execute query
 
-    return \`Example fetch-one action result: \${orgId}\`
+    return \`Example fetch-one action result \${new Date().toISOString()}\`
   }
 
   async function fetchManyAction(ctx) {
     // TODO: execute query
-    return ['Example list action result']
+    return [\`Example list action result \${new Date().toISOString()}\`]
   }
 
   // ----- export

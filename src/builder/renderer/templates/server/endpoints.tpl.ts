@@ -12,8 +12,19 @@ export type RenderEndpointsData = {
   definition: Definition;
 };
 
+/** Used as a context var name where action result is stored. */
+export const EndpointResponseVarname = "__gaudi_action_result__";
+
+export type EndpointActionDefaultResponse = { message: string };
+
+export function renderEndpointActionErrorDefaultResponse(message: string): string {
+  const response: EndpointActionDefaultResponse = { message };
+
+  return JSON.stringify(response);
+}
+
 export function buildParamName(ep: EntrypointDef): string {
-  return `${ep.target.type}_${ep.target.identifyWith.name}`;
+  return `${ep.target.type}_${ep.target.identifyWith.name}`.toLowerCase();
 }
 
 type PathParam = { path: string; params: { name: string; type: "integer" | "text" }[] };
@@ -23,17 +34,23 @@ export function buildEndpointPaths(entrypoints: EntrypointDef[]): {
   multi: PathParam;
 } {
   const pairs = entrypoints.map((ep) => ({
-    name: ep.target.name,
+    name: ep.target.name.toLowerCase(),
     param: { name: buildParamName(ep), type: ep.target.identifyWith.type },
   }));
   const single = {
-    path: pairs.map(({ name, param }) => [name, param.name].join("/")).join("/"),
+    path: [
+      "", // add leading slash
+      ...pairs.map(({ name, param }) => [name, `:${param.name}`].join("/")),
+    ].join("/"),
     params: pairs.map(({ param }) => param),
   };
   const multi = {
     path: [
-      ...pairs.slice(0, pairs.length - 1).map(({ name, param }) => [name, param.name].join("/")),
-      pairs[pairs.length].name,
+      "", // add leading slash
+      ...pairs
+        .slice(0, pairs.length - 1)
+        .map(({ name, param }) => [name, `:${param.name}`].join("/")),
+      pairs[pairs.length - 1].name,
     ].join("/"),
     params: pairs.slice(0, pairs.length - 1).map(({ param }) => param),
   };
@@ -58,25 +75,19 @@ export function render(data: RenderEndpointsData): string {
   endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
 
   // definition endpoints
-  ${data.definition.entrypoints.flatMap(entrypoint => processEntrypoint(entrypoint, []))}
+  ${(data.definition.entrypoints ?? []).flatMap(entrypoint => processEntrypoint(entrypoint, []))}
 
   // ----- commons
   
-  async function fetchOneAction(ctx) {
-    // example endpoint error
-    const orgId = ctx.get('org_id');
-    if (orgId == 3) {
-      throw new Error('Example action error')
-    }
-
+  async function fetchSingleAction(ctx) {
     // TODO: execute query
 
-    return \`Example fetch-one action result: \${orgId}\`
+    return \`Example fetch-one action result \${new Date().toISOString()}\`
   }
 
   async function fetchManyAction(ctx) {
     // TODO: execute query
-    return ['Example list action result']
+    return [\`Example list action result \${new Date().toISOString()}\`]
   }
 
   // ----- export
@@ -96,7 +107,7 @@ function processEntrypoint(
 
   return [
     ...endpointOuts,
-    ...entrypoint.entrypoints.flatMap((ep) => processEntrypoint(ep, entrypoints)),
+    ...(entrypoint.entrypoints?.flatMap((ep) => processEntrypoint(ep, entrypoints)) ?? []),
   ];
 }
 
@@ -107,7 +118,7 @@ function processEndpoint(endpoint: EndpointDef, parentEntrypoints: EntrypointDef
     case "list":
       return renderListEndpoint(endpoint, parentEntrypoints);
     default:
-      throw "todo";
+      return `// TODO: implement endpoint kind "${endpoint.kind}"`;
   }
 }
 
@@ -119,7 +130,7 @@ export function renderGetEndpoint(endpoint: GetEndpointDef, entrypoints: Entrypo
 
   // prettier-ignore
   return source`
-    // ${endpointName}
+    // --- ${endpointName}
     async function ${endpointName}(req, resp) {
       // TODO: role auth
       // TODO: select
@@ -134,10 +145,14 @@ export function renderGetEndpoint(endpoint: GetEndpointDef, entrypoints: Entrypo
       })}
 
       try {
+        ${renderFetchSingleAction(endpoint)}
+
         // actions
         ${endpoint.actions.map(action => ''
           // renderEndpointAction(action)
         )}
+
+        resp.send(ctx.get("${EndpointResponseVarname}"))
       } catch(err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -158,7 +173,7 @@ export function renderListEndpoint(
 ): string {
   const entryName = entrypoints.map((e) => e.name).join("");
   const endpointName = `list${entryName}Endpoint`;
-  const httpMethod = "list";
+  const httpMethod = "get";
   const endpointPath = buildEndpointPaths(entrypoints).multi;
 
   // prettier-ignore
@@ -177,9 +192,13 @@ export function renderListEndpoint(
       })}
 
       try {
+        ${renderFetchManyAction(endpoint)}
+
         ${endpoint.actions.map(action => ''
           // renderEndpointAction(action)
         )}
+
+        resp.send(ctx.get("${EndpointResponseVarname}"))
       } catch(err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -194,35 +213,25 @@ export function renderListEndpoint(
   `
 }
 
-// export function renderEndpointAction(action: ActionDef): string {
-//   // fetch one
-//   if (action.kind === "fetch one") {
-//     // prettier-ignore
-//     return source`
-//       try {
-//         const ${action.varname} = await fetchOneAction(ctx);
-//         ctx.set("${action.varname}", ${action.varname})
-//       }
-//       catch(err) {
-//         throw new EndpointError(${action.onError.statusCode}, ${JSON.stringify(action.onError.body)}, err)
-//       }
-//     `;
-//   }
-//   // fetch many
-//   else if (action.kind === "fetch many") {
-//     // prettier-ignore
-//     return source`
-//       const ${action.varname} = await fetchManyAction(ctx);
-//       ctx.set("${action.varname}", ${action.varname})
-//     `;
-//   }
-//   // respond
-//   else if (action.kind === "respond") {
-//     // prettier-ignore
-//     return source`
-//       resp.send(ctx.get("${action.varname}"))
-//     `;
-//   } else {
-//     throw `Unknown endpoint action kind`;
-//   }
-// }
+// --------- endpoint
+
+function renderFetchSingleAction(ep: EndpointDef): string {
+  // prettier-ignore
+  return source`
+      try {
+        const result = await fetchSingleAction(ctx);
+        ctx.set("${EndpointResponseVarname}", result)
+      }
+      catch(err) {
+        // TODO: custom user message
+        throw new EndpointError(404, ${renderEndpointActionErrorDefaultResponse('Not found')})
+      }
+    `;
+}
+function renderFetchManyAction(ep: EndpointDef): string {
+  // prettier-ignore
+  return source`
+      const result = await fetchManyAction(ctx);
+      ctx.set("${EndpointResponseVarname}", result)
+  `;
+}

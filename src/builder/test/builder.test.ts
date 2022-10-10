@@ -7,6 +7,7 @@ import {
   renderServer,
   renderServerEndpoints,
 } from "@src/builder/builder";
+import { RenderEndpointsData } from "@src/builder/renderer/templates/server/endpoints.tpl";
 
 describe("builder", () => {
   describe("build package", () => {
@@ -49,83 +50,83 @@ describe("builder", () => {
     });
 
     it("renders server get endpoints correctly", async () => {
-      const data = {
+      const data: RenderEndpointsData = {
         definition: {
+          models: [],
           entrypoints: [
             {
+              name: "Orgs",
+              target: {
+                alias: null,
+                identifyWith: {
+                  name: "slug",
+                  refKey: "Org.slug",
+                  type: "text",
+                },
+                kind: "model",
+                name: "Org",
+                refKey: "Org",
+                type: "Org",
+              },
               endpoints: [
                 {
-                  name: "get",
+                  actions: [],
                   kind: "get",
-                  identifyRefPath: ["Org.id"],
-                  path: [
-                    { type: "literal", value: "org" },
-                    { type: "numeric", varname: "org_id" },
-                  ],
-                  actions: [
-                    {
-                      kind: "fetch one",
-                      modelRef: "Org",
-                      filter: {
-                        kind: "binary",
-                        operation: "is",
-                        lhs: "Org.id",
-                        rhs: { kind: "var ref", varname: "org_id" },
-                      },
-                      select: {
-                        fieldRefs: ["Org.id", "Org.name"],
-                        queries: [],
-                        references: [],
-                        relations: [],
-                      },
-                      varname: "var0",
-                      onError: { statusCode: 404, body: { message: "Not found" } },
-                    },
-                    { kind: "respond", varname: "var0" },
-                  ],
+                  response: {
+                    fieldRefs: ["Org.id", "Org.name", "Org.slug"],
+                    queries: [],
+                    references: [],
+                    relations: [],
+                  },
                 },
               ],
-            },
-          ],
-        } as any,
-      };
-
-      expect(await renderServerEndpoints(data as any)).toMatchSnapshot();
-    });
-
-    it("renders server list endpoints correctly", async () => {
-      const data = {
-        definition: {
-          entrypoints: [
-            {
-              endpoints: [
-                {
-                  name: "list",
-                  kind: "list",
-                  path: [{ type: "literal", value: "org" }],
-                  actions: [
-                    {
-                      kind: "fetch many",
-                      modelRef: "Org",
-                      filter: undefined,
-                      select: {
-                        fieldRefs: ["Org.id", "Org.name"],
-                        queries: [],
-                        references: [],
-                        relations: [],
-                      },
-                      varname: "var0",
-                    },
-                    { kind: "respond", varname: "var0" },
-                  ],
-                },
-              ],
+              entrypoints: [],
             },
           ],
         },
       };
 
-      expect(await renderServerEndpoints(data as any)).toMatchSnapshot();
+      expect(await renderServerEndpoints(data)).toMatchSnapshot();
+    });
+
+    it("renders server list endpoints correctly", async () => {
+      const data: RenderEndpointsData = {
+        definition: {
+          models: [],
+          entrypoints: [
+            {
+              name: "Orgs",
+              target: {
+                alias: null,
+                identifyWith: {
+                  name: "slug",
+                  refKey: "Org.slug",
+                  type: "text",
+                },
+                kind: "model",
+                name: "Org",
+                refKey: "Org",
+                type: "Org",
+              },
+              endpoints: [
+                {
+                  actions: [],
+                  kind: "list",
+                  response: {
+                    fieldRefs: ["Org.id", "Org.name", "Org.slug"],
+                    queries: [],
+                    references: [],
+                    relations: [],
+                  },
+                },
+              ],
+              entrypoints: [],
+            },
+          ],
+        },
+      };
+
+      expect(await renderServerEndpoints(data)).toMatchSnapshot();
     });
   });
 });
