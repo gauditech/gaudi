@@ -1,0 +1,145 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`entrypoint composes basic example 1`] = `
+[
+  {
+    "endpoints": [
+      {
+        "actions": [],
+        "kind": "list",
+        "response": {
+          "fieldRefs": [
+            "Org.id",
+            "Org.name",
+            "Org.slug",
+          ],
+          "queries": [],
+          "references": [],
+          "relations": [],
+        },
+      },
+      {
+        "actions": [],
+        "kind": "get",
+        "response": {
+          "fieldRefs": [
+            "Org.id",
+            "Org.name",
+            "Org.slug",
+          ],
+          "queries": [],
+          "references": [],
+          "relations": [],
+        },
+      },
+    ],
+    "entrypoints": [
+      {
+        "endpoints": [
+          {
+            "actions": [],
+            "kind": "list",
+            "response": {
+              "fieldRefs": [
+                "Repo.id",
+                "Repo.title",
+                "Repo.org_id",
+              ],
+              "queries": [],
+              "references": [],
+              "relations": [],
+            },
+          },
+          {
+            "actions": [],
+            "kind": "get",
+            "response": {
+              "fieldRefs": [
+                "Repo.id",
+                "Repo.title",
+                "Repo.org_id",
+              ],
+              "queries": [],
+              "references": [],
+              "relations": [],
+            },
+          },
+          {
+            "actions": [],
+            "contextActionChangeset": {
+              "org_id": {
+                "fieldsetAccess": [
+                  "org_id",
+                ],
+                "kind": "fieldset-input",
+                "type": "integer",
+              },
+              "title": {
+                "fieldsetAccess": [
+                  "title",
+                ],
+                "kind": "fieldset-input",
+                "type": "text",
+              },
+            },
+            "fieldset": {
+              "kind": "record",
+              "nullable": false,
+              "record": {
+                "org_id": {
+                  "kind": "field",
+                  "nullable": false,
+                  "type": "integer",
+                },
+                "title": {
+                  "kind": "field",
+                  "nullable": false,
+                  "type": "text",
+                },
+              },
+            },
+            "kind": "create",
+            "response": {
+              "fieldRefs": [
+                "Repo.id",
+                "Repo.title",
+                "Repo.org_id",
+              ],
+              "queries": [],
+              "references": [],
+              "relations": [],
+            },
+          },
+        ],
+        "entrypoints": [],
+        "name": "Repositories",
+        "target": {
+          "alias": null,
+          "identifyWith": {
+            "name": "id",
+            "refKey": "Repo.id",
+            "type": "integer",
+          },
+          "kind": "relation",
+          "name": "repos",
+          "refKey": "Org.repos",
+          "type": "Repo",
+        },
+      },
+    ],
+    "name": "Orgs",
+    "target": {
+      "alias": null,
+      "identifyWith": {
+        "name": "slug",
+        "refKey": "Org.slug",
+        "type": "text",
+      },
+      "kind": "model",
+      "name": "Org",
+      "refKey": "Org",
+      "type": "Org",
+    },
+  },
+]
+`;
