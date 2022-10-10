@@ -76,7 +76,8 @@ export type QueryDefPath = {
 export type FilterDef =
   | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
   | { kind: "alias"; namePath: string[] }
-  | LiteralFilterDef;
+  | LiteralFilterDef
+  | undefined;
 
 export type LiteralFilterDef =
   | { kind: "literal"; type: "integer"; value: number }
@@ -92,7 +93,7 @@ export type QueryDef = {
   nullable: boolean;
   // unique: boolean;
   joinPaths: QueryDefPath[];
-  filter: FilterDef | undefined;
+  filter: FilterDef;
 };
 
 /**
