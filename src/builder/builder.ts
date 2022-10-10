@@ -3,25 +3,25 @@ import path from "path";
 
 import { applyDbChanges } from "@src/builder/migrator/migrator";
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
-import { Definition } from "@src/types/definition";
-import {
-  BuildDbSchemaData,
-  render as renderDbSchemaTpl,
-} from "@src/builder/renderer/templates/schema.prisma.tpl";
+import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
 import {
   BuildPackageData,
   render as renderPackageTpl,
 } from "@src/builder/renderer/templates/package.json.tpl";
 import {
+  BuildDbSchemaData,
+  render as renderDbSchemaTpl,
+} from "@src/builder/renderer/templates/schema.prisma.tpl";
+import { render as renderServerCommonTpl } from "@src/builder/renderer/templates/server/common.tpl";
+import {
+  RenderEndpointsData,
+  render as renderEndpointsTpl,
+} from "@src/builder/renderer/templates/server/endpoints.tpl";
+import {
   BuildServerData,
   render as renderServerTpl,
 } from "@src/builder/renderer/templates/server/server.tpl";
-import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
-import {
-  render as renderEndpointsTpl,
-  RenderEndpointsData,
-} from "@src/builder/renderer/templates/server/endpoints.tpl";
-import { render as renderServerCommonTpl } from "@src/builder/renderer/templates/server/common.tpl";
+import { Definition } from "@src/types/definition";
 
 // TODO: read from definition
 const APP_NAME = "demoapp";

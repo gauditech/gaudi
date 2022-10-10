@@ -1,5 +1,6 @@
 node_modules
 dist
+.eslintrc.js
 
 *.ohm-bundle.js
 *.ohm-bundle.d.ts

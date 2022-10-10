@@ -2,10 +2,10 @@ import definition from "@examples/git/definition.json";
 
 import {
   renderDbSchema,
-  renderServerEndpoints,
   renderIndex,
   renderPackage,
   renderServer,
+  renderServerEndpoints,
 } from "@src/builder/builder";
 
 describe("builder", () => {
