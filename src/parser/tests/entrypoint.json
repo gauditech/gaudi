@@ -5,7 +5,7 @@
       "name": "ItemEntry",
       "target": { "kind": "model", "identifier": "Item", "alias": "item" },
       "identify": "slug",
-      "response": ["name", "price"],
+      "response": { "select": { "name": {}, "price": {}, "brand": { "select": { "name": {} } } } },
       "endpoints": [
         { "type": "list" },
         { "type": "get" },
