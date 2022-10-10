@@ -5,10 +5,12 @@ services:
     image: postgres:14-alpine
     restart: on-failure
     environment:
+      POSTGRES_USER: gaudi
       POSTGRES_PASSWORD: gaudip
     shm_size: 256MB
     ports:
-      - 5433:5432
+      - 5432:5432
+
   adminer:
     image: adminer
     restart: on-failure
