@@ -172,11 +172,11 @@ export type SelectDef = {
   queries: { refKey: string; select: SelectDef }[];
 };
 
-type FieldsetDef = { fields: Record<string, FieldsetRecordDef | FieldsetFieldDef> };
+export type FieldsetDef = FieldsetRecordDef | FieldsetFieldDef;
 
 type FieldsetRecordDef = {
   kind: "record";
-  record: FieldsetDef;
+  record: Record<string, FieldsetDef>;
   nullable: boolean;
 };
 
@@ -213,7 +213,7 @@ type DeleteManyAction = {
 
 export type Changeset = Record<string, FieldSetter>;
 
-type FieldSetter =
+export type FieldSetter =
   // TODO add algebra
   | { kind: "value"; type: "text"; value: string }
   | { kind: "value"; type: "boolean"; value: boolean }

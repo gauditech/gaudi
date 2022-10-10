@@ -1,6 +1,14 @@
 import { Cache } from "./models";
 
-import { EndpointDef, EntrypointDef, ModelDef, SelectDef } from "@src/types/definition";
+import {
+  Changeset,
+  EndpointDef,
+  EntrypointDef,
+  FieldSetter,
+  FieldsetDef,
+  ModelDef,
+  SelectDef,
+} from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(models: ModelDef[], input: EntrypointSpec[]): EntrypointDef[] {
@@ -118,6 +126,17 @@ function processEndpoints(model: ModelDef, entrySpec: EntrypointSpec): EndpointD
       case "list": {
         return { kind: "list", response: responseToSelect(model, entrySpec.response), actions: [] };
       }
+      case "create": {
+        const fieldset = calculateCreateFieldsetForModel(model);
+        const changeset = calculateCreateChangesetForModel(model);
+        return {
+          kind: "create",
+          fieldset,
+          contextActionChangeset: changeset,
+          actions: [],
+          response: responseToSelect(model, entrySpec.response),
+        };
+      }
       default: {
         throw "TODO";
       }
@@ -156,6 +175,26 @@ function responseToSelect(model: ModelDef, select: string[] | undefined): Select
       } as SelectDef
     );
   }
+}
+
+function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
+  const fields = model.fields
+    .filter((f) => !f.primary)
+    .map((f): [string, FieldsetDef] => [
+      f.name,
+      { kind: "field", nullable: f.nullable, type: f.type },
+    ]);
+  return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
+}
+
+function calculateCreateChangesetForModel(model: ModelDef): Changeset {
+  const fields = model.fields
+    .filter((f) => !f.primary)
+    .map((f): [string, FieldSetter] => [
+      f.name,
+      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name] },
+    ]);
+  return Object.fromEntries(fields);
 }
 
 export function findModel(models: ModelDef[], name: string): ModelDef {
