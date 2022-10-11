@@ -214,18 +214,19 @@ export function renderListEndpoint(
 
       const ctx = new Map();
 
+      // TODO: validate path vars before extracting?
+      // extract path vars
       ${endpointPath.params.map(param => {
         const varname = param.name
-        return `ctx.set("${varname}", req.params["${varname}"])`
+        return `const ${varname} = ${paramToType(`req.params["${varname}"]`, param.type)}`
       })}
 
       let result;
       try {
-        result = await fetchManyAction(ctx);
-
-        ${endpoint.actions.map(action => ''
-          // renderEndpointAction(action)
-        )}
+        result = await prisma.$queryRaw\`${buildTargetsSQL(data.definition, entrypoints, endpointPath)}\`;
+        if(result.length === 0) {
+          throw new EndpointError(404, 'Resource not found')
+        }
 
         resp.send(result)
       } catch(err) {
