@@ -78,20 +78,14 @@ async function getOrgsEndpoint(req, resp) {
   // extract path vars
   ctx.set("org_slug", req.params["org_slug"])
 
+  let result;
   try {
-    try {
-      const result = await fetchSingleAction(ctx);
-      ctx.set("__gaudi_action_result__", result)
-    }
-    catch(err) {
-      // TODO: custom user message
-      throw new EndpointError(404, {"message":"Not found"})
-    }
+    result = await fetchSingleAction(ctx);
 
     // actions
     
 
-    resp.send(ctx.get("__gaudi_action_result__"))
+    resp.send(result)
   } catch(err) {
     if (err instanceof EndpointError) {
       throw err;
@@ -107,8 +101,13 @@ endpointConfigs.push({ path: "/org/:org_slug", method: "get", handler: getOrgsEn
   
   async function fetchSingleAction(ctx) {
     // TODO: execute query
-
-    return \`Example fetch-one action result \${new Date().toISOString()}\`
+    try {
+      return \`Example fetch-one action result \${new Date().toISOString()}\`
+    }
+    catch(err) {
+      // TODO: custom user message
+      throw new EndpointError(404, {"message":"Not found"})
+    }
   }
 
   async function fetchManyAction(ctx) {
@@ -149,13 +148,13 @@ async function listOrgsEndpoint(req, resp) {
 
   
 
+  let result;
   try {
-    const result = await fetchManyAction(ctx);
-    ctx.set("__gaudi_action_result__", result)
+    result = await fetchManyAction(ctx);
 
     
 
-    resp.send(ctx.get("__gaudi_action_result__"))
+    resp.send(result)
   } catch(err) {
     if (err instanceof EndpointError) {
       throw err;
@@ -171,8 +170,13 @@ endpointConfigs.push({ path: "/org", method: "get", handler: listOrgsEndpoint })
   
   async function fetchSingleAction(ctx) {
     // TODO: execute query
-
-    return \`Example fetch-one action result \${new Date().toISOString()}\`
+    try {
+      return \`Example fetch-one action result \${new Date().toISOString()}\`
+    }
+    catch(err) {
+      // TODO: custom user message
+      throw new EndpointError(404, {"message":"Not found"})
+    }
   }
 
   async function fetchManyAction(ctx) {

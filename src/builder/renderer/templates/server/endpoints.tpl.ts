@@ -81,8 +81,13 @@ export function render(data: RenderEndpointsData): string {
   
   async function fetchSingleAction(ctx) {
     // TODO: execute query
-
-    return \`Example fetch-one action result \${new Date().toISOString()}\`
+    try {
+      return \`Example fetch-one action result \${new Date().toISOString()}\`
+    }
+    catch(err) {
+      // TODO: custom user message
+      throw new EndpointError(404, ${renderEndpointActionErrorDefaultResponse('Not found')})
+    }
   }
 
   async function fetchManyAction(ctx) {
@@ -144,15 +149,16 @@ export function renderGetEndpoint(endpoint: GetEndpointDef, entrypoints: Entrypo
         return `ctx.set("${varname}", req.params["${varname}"])`
       })}
 
+      let result;
       try {
-        ${renderFetchSingleAction(endpoint)}
+        result = await fetchSingleAction(ctx);
 
         // actions
         ${endpoint.actions.map(action => ''
           // renderEndpointAction(action)
         )}
 
-        resp.send(ctx.get("${EndpointResponseVarname}"))
+        resp.send(result)
       } catch(err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -191,14 +197,15 @@ export function renderListEndpoint(
         return `ctx.set("${varname}", req.params["${varname}"])`
       })}
 
+      let result;
       try {
-        ${renderFetchManyAction(endpoint)}
+        result = await fetchManyAction(ctx);
 
         ${endpoint.actions.map(action => ''
           // renderEndpointAction(action)
         )}
 
-        resp.send(ctx.get("${EndpointResponseVarname}"))
+        resp.send(result)
       } catch(err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -211,27 +218,4 @@ export function renderListEndpoint(
     endpointConfigs.push({ path: "${endpointPath.path}", method: "${httpMethod}", handler: ${endpointName} })
 
   `
-}
-
-// --------- endpoint
-
-function renderFetchSingleAction(ep: EndpointDef): string {
-  // prettier-ignore
-  return source`
-      try {
-        const result = await fetchSingleAction(ctx);
-        ctx.set("${EndpointResponseVarname}", result)
-      }
-      catch(err) {
-        // TODO: custom user message
-        throw new EndpointError(404, ${renderEndpointActionErrorDefaultResponse('Not found')})
-      }
-    `;
-}
-function renderFetchManyAction(ep: EndpointDef): string {
-  // prettier-ignore
-  return source`
-      const result = await fetchManyAction(ctx);
-      ctx.set("${EndpointResponseVarname}", result)
-  `;
 }
