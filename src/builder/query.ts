@@ -1,4 +1,7 @@
 import { source } from "common-tags";
+import _ from "lodash";
+
+import { PathParam } from "./renderer/templates/server/endpoints.tpl";
 
 import { BinaryOperator } from "@src/types/ast";
 import {
@@ -30,6 +33,19 @@ type Join = {
 };
 
 type EpWithVar = [EntrypointDef, string | undefined];
+
+export function buildTargetsSQL(
+  def: Definition,
+  entrypoints: EntrypointDef[],
+  param: PathParam
+): string {
+  const inputs = _.zip(
+    entrypoints,
+    param.params.map((p) => p.name)
+  ) as EpWithVar[];
+  const q = queriableEntrypoints(def, inputs);
+  return queriableToString(def, q);
+}
 
 export function queriableEntrypoints(def: Definition, inputs: EpWithVar[]): Queriable {
   const [[modelEp, varName], ...rest] = inputs;

@@ -1,5 +1,6 @@
 import { source } from "common-tags";
 
+import { buildTargetsSQL } from "@src/builder/query";
 import {
   Definition,
   EndpointDef,
@@ -27,7 +28,7 @@ function buildParamName(ep: EntrypointDef): string {
   return `${ep.target.type}_${ep.target.identifyWith.name}`.toLowerCase();
 }
 
-type PathParam = { path: string; params: { name: string; type: "integer" | "text" }[] };
+export type PathParam = { path: string; params: { name: string; type: "integer" | "text" }[] };
 
 export function buildEndpointPaths(entrypoints: EntrypointDef[]): {
   single: PathParam;
@@ -75,7 +76,7 @@ export function render(data: RenderEndpointsData): string {
   endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
 
   // definition endpoints
-  ${(data.definition.entrypoints ?? []).flatMap(entrypoint => processEntrypoint(entrypoint, []))}
+  ${(data.definition.entrypoints).flatMap(entrypoint => processEntrypoint(data, entrypoint, []))}
 
   // ----- commons
   
@@ -104,30 +105,39 @@ export function render(data: RenderEndpointsData): string {
 }
 
 function processEntrypoint(
+  data: RenderEndpointsData,
   entrypoint: EntrypointDef,
   parentEntrypoints: EntrypointDef[]
 ): string[] {
   const entrypoints = [...parentEntrypoints, entrypoint];
-  const endpointOuts = entrypoint.endpoints.map((ep) => processEndpoint(ep, entrypoints));
+  const endpointOuts = entrypoint.endpoints.map((ep) => processEndpoint(data, ep, entrypoints));
 
   return [
     ...endpointOuts,
-    ...(entrypoint.entrypoints?.flatMap((ep) => processEntrypoint(ep, entrypoints)) ?? []),
+    ...(entrypoint.entrypoints?.flatMap((ep) => processEntrypoint(data, ep, entrypoints)) ?? []),
   ];
 }
 
-function processEndpoint(endpoint: EndpointDef, parentEntrypoints: EntrypointDef[]): string {
+function processEndpoint(
+  data: RenderEndpointsData,
+  endpoint: EndpointDef,
+  parentEntrypoints: EntrypointDef[]
+): string {
   switch (endpoint.kind) {
     case "get":
-      return renderGetEndpoint(endpoint, parentEntrypoints);
+      return renderGetEndpoint(data, endpoint, parentEntrypoints);
     case "list":
-      return renderListEndpoint(endpoint, parentEntrypoints);
+      return renderListEndpoint(data, endpoint, parentEntrypoints);
     default:
       return `// TODO: implement endpoint kind "${endpoint.kind}"`;
   }
 }
 
-export function renderGetEndpoint(endpoint: GetEndpointDef, entrypoints: EntrypointDef[]): string {
+export function renderGetEndpoint(
+  data: RenderEndpointsData,
+  endpoint: GetEndpointDef,
+  entrypoints: EntrypointDef[]
+): string {
   const entryName = entrypoints.map((e) => e.name).join("");
   const endpointName = `get${entryName}Endpoint`;
   const httpMethod = "get";
@@ -146,17 +156,17 @@ export function renderGetEndpoint(endpoint: GetEndpointDef, entrypoints: Entrypo
       // extract path vars
       ${endpointPath.params.map(param => {
         const varname = param.name
-        return `ctx.set("${varname}", req.params["${varname}"])`
+        return `const ${varname} = req.params["${varname}"]`
       })}
+
+      // TODO: validate path vars?
 
       let result;
       try {
-        result = await fetchSingleAction(ctx);
-
-        // actions
-        ${endpoint.actions.map(action => ''
-          // renderEndpointAction(action)
-        )}
+        result = await prisma.$queryRaw\`${buildTargetsSQL(data.definition, entrypoints, endpointPath)}\`;
+        if(result.length === 0) {
+          throw new EndpointError(404, 'Resource not found')
+        }
 
         resp.send(result)
       } catch(err) {
@@ -174,6 +184,7 @@ export function renderGetEndpoint(endpoint: GetEndpointDef, entrypoints: Entrypo
 }
 
 export function renderListEndpoint(
+  data: RenderEndpointsData,
   endpoint: ListEndpointDef,
   entrypoints: EntrypointDef[]
 ): string {
