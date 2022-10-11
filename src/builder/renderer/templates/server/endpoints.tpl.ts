@@ -218,7 +218,7 @@ export function renderListEndpoint(
       // extract path vars
       ${endpointPath.params.map(param => {
         const varname = param.name
-        return `const ${varname} = ${paramToType(`req.params["${varname}"]`, param.type)}`
+        return `const ${varname} = ${paramToType(`req.params["${varname}"]`, param.type)};`
       })}
 
       let result;
