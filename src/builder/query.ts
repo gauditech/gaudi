@@ -154,6 +154,8 @@ function filterToString(filter: FilterDef): string {
           return filter.value.toString();
       }
     }
+    // Due to bug in eslint/prettier, linter complains that `break` is expected in the case "literal"
+    // Since inner switch is exaustive, break is unreachable so prettier deletes it
     // eslint-disable-next-line no-fallthrough
     case "alias": {
       const np = filter.namePath.slice(0, filter.namePath.length - 1);
