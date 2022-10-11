@@ -135,6 +135,15 @@ function processEndpoint(
   }
 }
 
+function paramToType(paramStr: string, type: EntrypointDef["target"]["identifyWith"]["type"]) {
+  switch (type) {
+    case "integer":
+      return `parseInt(${paramStr}, 10)`;
+    case "text":
+      return paramStr;
+  }
+}
+
 export function renderGetEndpoint(
   data: RenderEndpointsData,
   endpoint: GetEndpointDef,
@@ -155,13 +164,13 @@ export function renderGetEndpoint(
 
       const ctx = new Map();
 
+      // TODO: validate path vars before extracting?
       // extract path vars
       ${endpointPath.params.map(param => {
         const varname = param.name
-        return `const ${varname} = req.params["${varname}"]`
+        return `const ${varname} = ${paramToType(`req.params["${varname}"]`, param.type)}`
       })}
 
-      // TODO: validate path vars?
 
       let result;
       try {
