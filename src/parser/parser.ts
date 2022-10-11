@@ -23,6 +23,7 @@ import {
   ReferenceTag,
   RelationAST,
   RelationBodyAST,
+  SelectAST,
 } from "@src/types/ast";
 
 const semantics = grammar.createSemantics();
@@ -239,14 +240,23 @@ semantics.addOperation("parse()", {
   EntrypointBody_identify(this, _identify, _with, identifier): EntrypointBodyAST {
     return { kind: "identify", identifier: identifier.parse(), interval: this.source };
   },
-  EntrypointBody_response(this, _response, _braceL, identifiers, _braceR): EntrypointBodyAST {
-    return { kind: "response", select: identifiers.parse(), interval: this.source };
+  EntrypointBody_response(this, _response, body): EntrypointBodyAST {
+    return { kind: "response", select: body.parse(), interval: this.source };
   },
   EntrypointBody_endpoint(this, endpoint): EntrypointBodyAST {
     return { kind: "endpoint", endpoint: endpoint.parse() };
   },
   EntrypointBody_entrypoint(this, entrypoint): EntrypointBodyAST {
     return { kind: "entrypoint", entrypoint: entrypoint.parse() };
+  },
+  SelectBody(this, _braceL, body, _braceR): SelectAST {
+    return { select: Object.fromEntries(body.parse()), interval: this.source };
+  },
+  Select_nested(this, name, nested): [string, SelectAST] {
+    return [name.parse(), nested.parse()];
+  },
+  Select_single(this, name): [string, SelectAST] {
+    return [name.parse(), { interval: this.source }];
   },
   Endpoint(this, endpointType, _endpoint, _braceL, body, _braceR): EndpointAST {
     return {

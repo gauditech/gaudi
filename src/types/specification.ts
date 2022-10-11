@@ -1,4 +1,4 @@
-import { BinaryOperator, EndpointType, LiteralValue, UnaryOperator } from "./ast";
+import { BinaryOperator, EndpointType, LiteralValue, SelectAST, UnaryOperator } from "./ast";
 
 import { WithContext } from "@src/common/error";
 
@@ -69,7 +69,7 @@ export type EntrypointSpec = WithContext<{
   target: { kind: "model" | "relation"; identifier: string };
   identify?: string;
   alias?: string;
-  response?: string[];
+  response?: SelectAST;
   endpoints: EndpointSpec[];
   entrypoints: EntrypointSpec[];
 }>;
