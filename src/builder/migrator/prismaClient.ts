@@ -1,9 +1,6 @@
-import { exec } from "child_process";
-import { promisify } from "util";
+import { execWithPromise } from "./utils";
 
 import { concatKeys } from "@src/common/utils";
-
-const execWithPromise = promisify(exec);
 
 // ----- dev
 
@@ -22,7 +19,11 @@ function dbPush(args?: DbPushProps) {
   // TODO: read process output and detect errors
 }
 
-const db = { push: dbPush };
+function genClient() {
+  return execWithPromise(`npx prisma generate`);
+}
+
+const db = { genClient, push: dbPush };
 
 // -----
 

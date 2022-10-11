@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 
+import { execWithPromise } from "./migrator/utils";
+
 import { applyDbChanges } from "@src/builder/migrator/migrator";
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
@@ -50,6 +52,7 @@ export async function build(definition: Definition): Promise<void> {
     package: { name: APP_NAME, description: PACKAGE_DESCRIPTION, version: PACKAGE_VERSION },
   });
   buildIndex();
+  await installDeps();
   await buildDb({ definition, dbProvider: DB_PROVIDER, dbConnectionUrl: DB_CONNECTION_URL });
   await buildServer({
     serverPort: SERVER_PORT,
@@ -82,6 +85,10 @@ async function buildPackage(data: BuildPackageData) {
   const outFile = path.join(OUTPUT_PATH, "package.json");
 
   return renderPackage(data).then((content) => storeTemplateOutput(outFile, content));
+}
+
+export async function installDeps(): Promise<void> {
+  execWithPromise(`npm i`);
 }
 
 // ---------- Index

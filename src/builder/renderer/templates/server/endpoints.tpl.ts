@@ -62,6 +62,8 @@ export function render(data: RenderEndpointsData): string {
   // prettier-ignore
   return source`
   const { endpointHandlerGuard, EndpointError } = require("./common.js");
+  const { Prisma, PrismaClient } = require("@prisma/client");
+  const prisma = new PrismaClient();
 
   // setup endpoints
   const endpointConfigs = [];
@@ -168,7 +170,7 @@ export function renderGetEndpoint(
           throw new EndpointError(404, 'Resource not found')
         }
 
-        resp.send(result)
+        resp.send(result[0])
       } catch(err) {
         if (err instanceof EndpointError) {
           throw err;

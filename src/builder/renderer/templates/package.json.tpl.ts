@@ -23,8 +23,9 @@ export function render(data: BuildPackageData): string {
         "node": ">=16.15.0"
       },
       "dependencies": {
-        "express": "^4.18.1",
-        "prisma": "^4.3.1"
+        "express": "^4.18.2",
+        "prisma": "^4.4.0",
+        "@prisma/client": "^4.4.0"
       }
     }
   `
