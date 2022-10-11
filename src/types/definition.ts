@@ -77,6 +77,7 @@ export type FilterDef =
   | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
   | { kind: "alias"; namePath: string[] }
   | LiteralFilterDef
+  | { kind: "variable"; type: "integer" | "text" | "boolean"; name: string }
   | undefined;
 
 export type LiteralFilterDef =

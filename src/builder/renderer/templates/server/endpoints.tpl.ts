@@ -23,7 +23,7 @@ export function renderEndpointActionErrorDefaultResponse(message: string): strin
   return JSON.stringify(response);
 }
 
-export function buildParamName(ep: EntrypointDef): string {
+function buildParamName(ep: EntrypointDef): string {
   return `${ep.target.type}_${ep.target.identifyWith.name}`.toLowerCase();
 }
 

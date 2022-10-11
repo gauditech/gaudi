@@ -27,7 +27,7 @@ describe("queriables", () => {
     const def = compose(compile(parse(bp)));
     const eps = flattenEntrypoints(def.entrypoints[0]);
     expect(eps).toHaveLength(2);
-    const q = queriableEntrypoints(def, _.zip(eps, ["myorg", 4]) as any);
+    const q = queriableEntrypoints(def, _.zip(eps, ["org_id", "repo_id"]) as any);
     const s = queriableToString(def, q);
     console.log(s);
   });

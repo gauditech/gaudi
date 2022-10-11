@@ -6,7 +6,6 @@ import {
   EntrypointDef,
   FieldDef,
   FilterDef,
-  LiteralFilterDef,
   ModelDef,
   QueryDef,
   ReferenceDef,
@@ -30,22 +29,22 @@ type Join = {
   joins: Join[];
 };
 
-type EpWithId = [EntrypointDef, string | number];
+type EpWithVar = [EntrypointDef, string | undefined];
 
-export function queriableEntrypoints(def: Definition, inputs: EpWithId[]): Queriable {
-  const [[modelEp, val], ...rest] = inputs;
+export function queriableEntrypoints(def: Definition, inputs: EpWithVar[]): Queriable {
+  const [[modelEp, varName], ...rest] = inputs;
   return {
     modelRefKey: modelEp.target.refKey,
-    filter: val
+    filter: varName
       ? {
           kind: "binary",
           operator: "is",
           lhs: { kind: "alias", namePath: [modelEp.target.name, modelEp.target.identifyWith.name] },
           rhs: {
-            kind: "literal",
+            kind: "variable",
             type: modelEp.target.identifyWith.type,
-            value: val,
-          } as LiteralFilterDef,
+            name: varName,
+          },
         }
       : undefined,
     joins: queriableJoins(def, rest, [modelEp.target.name]).map((j) => forceLeftJoins(j)),
@@ -56,9 +55,9 @@ function forceLeftJoins(j: Join): Join {
   return { ...j, joinType: "left", joins: j.joins.map((j) => forceLeftJoins(j)) };
 }
 
-function queriableJoins(def: Definition, inputs: EpWithId[], parentNamePath: string[]): Join[] {
+function queriableJoins(def: Definition, inputs: EpWithVar[], parentNamePath: string[]): Join[] {
   if (!inputs.length) return [];
-  const [[ep, val], ...rest] = inputs;
+  const [[ep, varName], ...rest] = inputs;
   if (ep.target.kind === "model") throw new Error(`Cannot join with models!`);
   const namePath = [...parentNamePath, ep.target.name];
 
@@ -80,16 +79,16 @@ function queriableJoins(def: Definition, inputs: EpWithId[], parentNamePath: str
           lhs: { kind: "alias", namePath: [...parentNamePath, joinNames.that] },
           rhs: { kind: "alias", namePath: [...namePath, joinNames.this] },
         },
-        rhs: val
+        rhs: varName
           ? {
               kind: "binary",
               operator: "is",
               lhs: { kind: "alias", namePath: [...namePath, ep.target.identifyWith.name] },
               rhs: {
-                kind: "literal",
+                kind: "variable",
                 type: ep.target.identifyWith.type,
-                value: val,
-              } as LiteralFilterDef,
+                name: varName,
+              },
             }
           : undefined,
       },
@@ -166,6 +165,9 @@ function filterToString(filter: FilterDef): string {
       return `(${filterToString(filter.lhs)} ${opToString(filter.operator)} ${filterToString(
         filter.rhs
       )})`;
+    }
+    case "variable": {
+      return `$\{${filter.name}}`;
     }
   }
 }
