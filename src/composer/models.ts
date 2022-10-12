@@ -109,7 +109,7 @@ function getDefinition<T extends RefType, F extends true | undefined>(
     }
   }
   try {
-    ensureEqual(type, definition[0]);
+    ensureEqual(definition[0], type);
   } catch (e) {
     throw new Error(`Expecting type ${type} but found a type ${definition[0]}`);
   }

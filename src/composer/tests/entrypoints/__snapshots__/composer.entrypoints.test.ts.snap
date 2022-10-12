@@ -7,30 +7,44 @@ exports[`entrypoint composes basic example 1`] = `
       {
         "actions": [],
         "kind": "list",
-        "response": {
-          "fieldRefs": [
-            "Org.id",
-            "Org.name",
-            "Org.slug",
-          ],
-          "queries": [],
-          "references": [],
-          "relations": [],
-        },
+        "response": [
+          {
+            "kind": "field",
+            "name": "id",
+            "refKey": "Org.id",
+          },
+          {
+            "kind": "field",
+            "name": "slug",
+            "refKey": "Org.slug",
+          },
+          {
+            "kind": "field",
+            "name": "name",
+            "refKey": "Org.name",
+          },
+        ],
       },
       {
         "actions": [],
         "kind": "get",
-        "response": {
-          "fieldRefs": [
-            "Org.id",
-            "Org.name",
-            "Org.slug",
-          ],
-          "queries": [],
-          "references": [],
-          "relations": [],
-        },
+        "response": [
+          {
+            "kind": "field",
+            "name": "id",
+            "refKey": "Org.id",
+          },
+          {
+            "kind": "field",
+            "name": "slug",
+            "refKey": "Org.slug",
+          },
+          {
+            "kind": "field",
+            "name": "name",
+            "refKey": "Org.name",
+          },
+        ],
       },
     ],
     "entrypoints": [
@@ -39,30 +53,66 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "actions": [],
             "kind": "list",
-            "response": {
-              "fieldRefs": [
-                "Repo.id",
-                "Repo.title",
-                "Repo.org_id",
-              ],
-              "queries": [],
-              "references": [],
-              "relations": [],
-            },
+            "response": [
+              {
+                "kind": "field",
+                "name": "id",
+                "refKey": "Repo.id",
+              },
+              {
+                "kind": "reference",
+                "name": "org",
+                "select": [
+                  {
+                    "kind": "field",
+                    "name": "id",
+                    "refKey": "Org.id",
+                  },
+                  {
+                    "kind": "field",
+                    "name": "slug",
+                    "refKey": "Org.slug",
+                  },
+                  {
+                    "kind": "field",
+                    "name": "name",
+                    "refKey": "Org.name",
+                  },
+                ],
+              },
+            ],
           },
           {
             "actions": [],
             "kind": "get",
-            "response": {
-              "fieldRefs": [
-                "Repo.id",
-                "Repo.title",
-                "Repo.org_id",
-              ],
-              "queries": [],
-              "references": [],
-              "relations": [],
-            },
+            "response": [
+              {
+                "kind": "field",
+                "name": "id",
+                "refKey": "Repo.id",
+              },
+              {
+                "kind": "reference",
+                "name": "org",
+                "select": [
+                  {
+                    "kind": "field",
+                    "name": "id",
+                    "refKey": "Org.id",
+                  },
+                  {
+                    "kind": "field",
+                    "name": "slug",
+                    "refKey": "Org.slug",
+                  },
+                  {
+                    "kind": "field",
+                    "name": "name",
+                    "refKey": "Org.name",
+                  },
+                ],
+              },
+            ],
           },
           {
             "actions": [],
@@ -99,16 +149,34 @@ exports[`entrypoint composes basic example 1`] = `
               },
             },
             "kind": "create",
-            "response": {
-              "fieldRefs": [
-                "Repo.id",
-                "Repo.title",
-                "Repo.org_id",
-              ],
-              "queries": [],
-              "references": [],
-              "relations": [],
-            },
+            "response": [
+              {
+                "kind": "field",
+                "name": "id",
+                "refKey": "Repo.id",
+              },
+              {
+                "kind": "reference",
+                "name": "org",
+                "select": [
+                  {
+                    "kind": "field",
+                    "name": "id",
+                    "refKey": "Org.id",
+                  },
+                  {
+                    "kind": "field",
+                    "name": "slug",
+                    "refKey": "Org.slug",
+                  },
+                  {
+                    "kind": "field",
+                    "name": "name",
+                    "refKey": "Org.name",
+                  },
+                ],
+              },
+            ],
           },
         ],
         "entrypoints": [],

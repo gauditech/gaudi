@@ -19,9 +19,13 @@ export function ensureExists<I>(item: I | null | undefined): asserts item is I {
   }
 }
 
-export function ensureEqual<T>(a: T, b: T) {
-  if (a === b) return true;
+export function ensureEqual<T, Tx extends T>(a: T, b: Tx): asserts a is Tx {
+  if (a === b) return;
   throw new Error("Not equal");
+}
+
+export function ensureNot<T, Tx extends T>(a: T, b: Tx): asserts a is Exclude<T, Tx> {
+  if (a === b) throw new Error("Must not be equal!");
 }
 
 /** Concat all keys who's value is `true` using `delimiter` */

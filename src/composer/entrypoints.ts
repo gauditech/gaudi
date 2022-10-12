@@ -1,5 +1,8 @@
 import { Cache } from "./models";
 
+import { getModelProp, getTargetModel } from "@src/common/refs";
+import { ensureEqual, ensureNot } from "@src/common/utils";
+import { SelectAST } from "@src/types/ast";
 import {
   Changeset,
   EndpointDef,
@@ -8,6 +11,7 @@ import {
   FieldsetDef,
   ModelDef,
   SelectDef,
+  SelectItem,
 } from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
@@ -23,37 +27,40 @@ function calculateTarget(
   identify: string
 ): EntrypointDef["target"] {
   if (ctxModel) {
-    const prop = findModelProp(ctxModel, name);
+    const prop = getModelProp(ctxModel, name);
     switch (prop.kind) {
       case "reference": {
-        const model = findModel(models, prop.reference.toModelRefKey);
+        const reference = prop.value;
+        const model = findModel(models, reference.toModelRefKey);
         return {
           kind: "reference",
           name,
-          type: prop.reference.toModelRefKey,
-          refKey: prop.reference.refKey,
+          type: reference.toModelRefKey,
+          refKey: reference.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
         };
       }
       case "relation": {
-        const model = findModel(models, prop.relation.fromModelRefKey);
+        const relation = prop.value;
+        const model = findModel(models, relation.fromModelRefKey);
         return {
           kind: "relation",
           name,
-          type: prop.relation.fromModel,
-          refKey: prop.relation.refKey,
+          type: relation.fromModel,
+          refKey: relation.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
         };
       }
       case "query": {
-        const model = findModel(models, prop.query.retType);
+        const query = prop.value;
+        const model = findModel(models, query.retType);
         return {
           kind: "query",
           name,
-          type: prop.query.retType,
-          refKey: prop.query.refKey,
+          type: query.retType,
+          refKey: query.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
         };
@@ -80,10 +87,10 @@ function calculateIdentifyWith(
   identify: string | undefined
 ): EntrypointDef["target"]["identifyWith"] {
   const name = identify ?? "id";
-  const prop = findModelProp(model, name);
+  const prop = getModelProp(model, name);
   switch (prop.kind) {
     case "field": {
-      const field = prop.field;
+      const field = prop.value;
       if (field.type === "boolean") {
         throw "invalid-type";
       }
@@ -107,34 +114,46 @@ function processEntrypoint(
     spec.identify || "id"
   );
   const name = spec.name;
-  const model = findModel(models, target.type);
+  const targetModel = findModel(models, target.type);
 
   return {
     name,
     target,
-    endpoints: processEndpoints(model, spec),
-    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(models, ispec, model)),
+    endpoints: processEndpoints(models, targetModel, spec),
+    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(models, ispec, targetModel)),
   };
 }
 
-function processEndpoints(model: ModelDef, entrySpec: EntrypointSpec): EndpointDef[] {
+function processEndpoints(
+  models: ModelDef[],
+  targetModel: ModelDef,
+  entrySpec: EntrypointSpec
+): EndpointDef[] {
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     switch (endSpec.type) {
       case "get": {
-        return { kind: "get", response: responseToSelect(model, entrySpec.response), actions: [] };
+        return {
+          kind: "get",
+          response: processSelect(models, targetModel, entrySpec.response),
+          actions: [],
+        };
       }
       case "list": {
-        return { kind: "list", response: responseToSelect(model, entrySpec.response), actions: [] };
+        return {
+          kind: "list",
+          response: processSelect(models, targetModel, entrySpec.response),
+          actions: [],
+        };
       }
       case "create": {
-        const fieldset = calculateCreateFieldsetForModel(model);
-        const changeset = calculateCreateChangesetForModel(model);
+        const fieldset = calculateCreateFieldsetForModel(targetModel);
+        const changeset = calculateCreateChangesetForModel(targetModel);
         return {
           kind: "create",
           fieldset,
           contextActionChangeset: changeset,
           actions: [],
-          response: responseToSelect(model, entrySpec.response),
+          response: processSelect(models, targetModel, entrySpec.response),
         };
       }
       default: {
@@ -144,36 +163,33 @@ function processEndpoints(model: ModelDef, entrySpec: EntrypointSpec): EndpointD
   });
 }
 
-function responseToSelect(model: ModelDef, select: string[] | undefined): SelectDef {
-  if (select === undefined) {
-    return {
-      fieldRefs: model.fields.map((f) => f.refKey),
-      queries: [],
-      references: [],
-      relations: [],
-    };
+function processSelect(
+  models: ModelDef[],
+  model: ModelDef,
+  selectAST: SelectAST | undefined
+): SelectDef {
+  if (selectAST === undefined) {
+    return model.fields.map((f) => ({ kind: "field", name: f.name, refKey: f.refKey }));
   } else {
-    return select.reduce(
-      (def, name) => {
-        const prop = findModelProp(model, name);
-        switch (prop.kind) {
-          case "field": {
-            def.fieldRefs.push(prop.field.refKey);
-            return def;
-          }
-          case "reference":
-          case "relation":
-          case "query":
-            throw new Error("Not implemented");
-        }
-      },
-      {
-        fieldRefs: [],
-        queries: [],
-        references: [],
-        relations: [],
-      } as SelectDef
-    );
+    if (selectAST.select === undefined) {
+      // throw new Error(`Select block is missing`);
+      // for simplicity, we will allow missing nested select blocks
+      return model.fields.map((f) => ({ kind: "field", name: f.name, refKey: f.refKey }));
+    }
+    const s = selectAST.select;
+
+    return Object.keys(selectAST.select).map((name: string): SelectItem => {
+      // what is this?
+      const ref = getModelProp(model, name);
+      if (ref.kind === "field") {
+        ensureEqual(s[name].select, undefined);
+        return { kind: ref.kind, name, refKey: ref.value.refKey };
+      } else {
+        ensureNot(ref.kind, "model" as const);
+        const targetModel = getTargetModel(models, ref.value.refKey);
+        return { kind: ref.kind, name, select: processSelect(models, targetModel, s[name]) };
+      }
+    });
   }
 }
 
@@ -197,22 +213,10 @@ function calculateCreateChangesetForModel(model: ModelDef): Changeset {
   return Object.fromEntries(fields);
 }
 
-export function findModel(models: ModelDef[], name: string): ModelDef {
+function findModel(models: ModelDef[], name: string): ModelDef {
   const model = models.find((m) => m.name === name);
   if (!model) {
     throw ["model-not-defined", name];
   }
   return model;
-}
-
-export function findModelProp(model: ModelDef, name: string): Exclude<Cache, { kind: "model" }> {
-  const field = model.fields.find((f) => f.name === name);
-  if (field) return { kind: "field", field };
-  const reference = model.references.find((r) => r.name === name);
-  if (reference) return { kind: "reference", reference };
-  const relation = model.relations.find((r) => r.name === name);
-  if (relation) return { kind: "relation", relation };
-  const query = model.queries.find((q) => q.name === name);
-  if (query) return { kind: "query", query };
-  throw ["prop-not-defined", model.name, name];
 }

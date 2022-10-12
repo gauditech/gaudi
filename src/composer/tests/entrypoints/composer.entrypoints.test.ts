@@ -2,6 +2,8 @@ import { compile, compose, parse } from "@src/index";
 
 describe("entrypoint", () => {
   it("composes basic example", () => {
+    // Orgs assumes default response
+    // Orgs.Repositories assumes default identifyWith; nested org select assuming all fields since not given
     const bp = `
     model Org {
       field slug { type text, unique }
@@ -16,13 +18,13 @@ describe("entrypoint", () => {
     entrypoint Orgs {
       target model Org
       identify with slug
-      response { id, name, slug }
     
       list endpoint {}
       get endpoint {}
     
       entrypoint Repositories {
         target relation repos as repo
+        response { id, org }
 
         list endpoint {}
         get endpoint {}

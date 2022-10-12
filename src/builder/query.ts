@@ -3,14 +3,12 @@ import _ from "lodash";
 
 import { PathParam } from "./renderer/templates/server/endpoints.tpl";
 
+import { getRef, getTargetModel } from "@src/common/refs";
 import { BinaryOperator } from "@src/types/ast";
 import {
   Definition,
   EntrypointDef,
-  FieldDef,
   FilterDef,
-  ModelDef,
-  QueryDef,
   ReferenceDef,
   RelationDef,
 } from "@src/types/definition";
@@ -114,7 +112,7 @@ function queriableJoins(def: Definition, inputs: EpWithVar[], parentNamePath: st
 }
 
 function getJoinNames(def: Definition, refKey: string): { this: string; that: string } {
-  const prop = getRef<"reference" | "relation">(def, refKey);
+  const prop = getRef(def, refKey);
   switch (prop.kind) {
     case "reference": {
       const reference = prop.value as ReferenceDef;
@@ -138,20 +136,6 @@ function getJoinNames(def: Definition, refKey: string): { this: string; that: st
 
 function toAlias(np: string[]): string {
   return `"${np.join(".")}"`;
-}
-
-function getTargetModel(def: Definition, refKey: string): ModelDef {
-  const prop = getRef(def, refKey);
-  switch (prop.kind) {
-    case "reference": {
-      return getRef<"model">(def, (prop.value as ReferenceDef).toModelRefKey).value;
-    }
-    case "relation": {
-      return getRef<"model">(def, (prop.value as RelationDef).fromModelRefKey).value;
-    }
-    default:
-      throw new Error(`Kind ${prop.kind} not supported`);
-  }
 }
 
 function filterToString(filter: FilterDef): string {
@@ -198,7 +182,7 @@ function opToString(op: BinaryOperator): string {
 }
 
 function joinToString(def: Definition, join: Join): string {
-  const model = getTargetModel(def, join.refKey);
+  const model = getTargetModel(def.models, join.refKey);
   const joinMode = join.joinType === "inner" ? "JOIN" : "LEFT JOIN";
   return source`
   ${joinMode} ${model.dbname} AS ${toAlias(join.namePath)}
@@ -216,7 +200,7 @@ function queriableSelectAll(def: Definition, q: Queriable): string {
 }
 
 function joinSelectAll(def: Definition, j: Join): string {
-  const model = getTargetModel(def, j.refKey);
+  const model = getTargetModel(def.models, j.refKey);
   return model.fields
     .map((f) => `${toAlias(j.namePath)}.${f.dbname} AS ${toAlias([...j.namePath, f.name])}`)
     .join(",");
@@ -234,33 +218,4 @@ export function queriableToString(def: Definition, q: Queriable): string {
 
 export function flattenEntrypoints(ep: EntrypointDef): EntrypointDef[] {
   return [ep, ...ep.entrypoints.flatMap((e) => flattenEntrypoints(e))];
-}
-
-type Mapping = {
-  model: ModelDef;
-  field: FieldDef;
-  reference: ReferenceDef;
-  relation: RelationDef;
-  query: QueryDef;
-  // [RefType.Computed]: ModelDef;
-};
-
-type Ref<T extends keyof Mapping> = { kind: T; value: Mapping[T] };
-function getRef<T extends keyof Mapping>(definition: Definition, refKey: string): Ref<T> {
-  const model = definition.models.find((m) => m.refKey === refKey);
-  if (model) return { kind: "model", value: model } as Ref<T>;
-
-  const field = definition.models.flatMap((m) => m.fields).find((f) => f.refKey === refKey);
-  if (field) return { kind: "field", value: field } as Ref<T>;
-
-  const reference = definition.models.flatMap((m) => m.references).find((r) => r.refKey === refKey);
-  if (reference) return { kind: "reference", value: reference } as Ref<T>;
-
-  const relation = definition.models.flatMap((m) => m.relations).find((r) => r.refKey === refKey);
-  if (relation) return { kind: "relation", value: relation } as Ref<T>;
-
-  const query = definition.models.flatMap((m) => m.queries).find((q) => q.refKey === refKey);
-  if (query) return { kind: "query", value: query } as Ref<T>;
-
-  throw new Error(`Unknown`);
 }

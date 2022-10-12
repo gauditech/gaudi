@@ -167,12 +167,18 @@ type CustomEndpointDef = {
   };
 };
 
-export type SelectDef = {
-  fieldRefs: string[];
-  references: { refKey: string; select: SelectDef }[];
-  relations: { refKey: string; select: SelectDef }[];
-  queries: { refKey: string; select: SelectDef }[];
-};
+// export type SelectDef = {
+//   fieldRefs: string[];
+//   references: { refKey: string; select: SelectDef }[];
+//   relations: { refKey: string; select: SelectDef }[];
+//   queries: { refKey: string; select: SelectDef }[];
+// };
+
+export type SelectItem =
+  | { kind: "field"; name: string; refKey: string }
+  | { kind: "reference" | "relation" | "query"; name: string; select: SelectItem[] };
+
+export type SelectDef = SelectItem[];
 
 export type FieldsetDef = FieldsetRecordDef | FieldsetFieldDef;
 

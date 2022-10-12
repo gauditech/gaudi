@@ -8,6 +8,7 @@ import {
   renderServerEndpoints,
 } from "@src/builder/builder";
 import { RenderEndpointsData } from "@src/builder/renderer/templates/server/endpoints.tpl";
+import { compile, compose, parse } from "@src/index";
 
 describe("builder", () => {
   describe("build package", () => {
@@ -50,80 +51,38 @@ describe("builder", () => {
     });
 
     it("renders server get endpoints correctly", async () => {
+      const bp = `
+      model Org {
+        field slug { type text, unique }
+      }
+      entrypoint Orgs {
+        target model Org
+        identify with slug
+        response { id, name, slug }
+      }
+      `;
+      const definition = compose(compile(parse(bp)));
       const data: RenderEndpointsData = {
-        definition: {
-          models: [],
-          entrypoints: [
-            {
-              name: "Orgs",
-              target: {
-                alias: null,
-                identifyWith: {
-                  name: "slug",
-                  refKey: "Org.slug",
-                  type: "text",
-                },
-                kind: "model",
-                name: "Org",
-                refKey: "Org",
-                type: "Org",
-              },
-              endpoints: [
-                {
-                  actions: [],
-                  kind: "get",
-                  response: {
-                    fieldRefs: ["Org.id", "Org.name", "Org.slug"],
-                    queries: [],
-                    references: [],
-                    relations: [],
-                  },
-                },
-              ],
-              entrypoints: [],
-            },
-          ],
-        },
+        definition,
       };
 
       expect(await renderServerEndpoints(data)).toMatchSnapshot();
     });
 
     it("renders server list endpoints correctly", async () => {
+      const bp = `
+      model Org {
+        field slug { type text, unique }
+      }
+      entrypoint Orgs {
+        target model Org
+        identify with slug
+        response { id, name, slug }
+      }
+      `;
+      const definition = compose(compile(parse(bp)));
       const data: RenderEndpointsData = {
-        definition: {
-          models: [],
-          entrypoints: [
-            {
-              name: "Orgs",
-              target: {
-                alias: null,
-                identifyWith: {
-                  name: "slug",
-                  refKey: "Org.slug",
-                  type: "text",
-                },
-                kind: "model",
-                name: "Org",
-                refKey: "Org",
-                type: "Org",
-              },
-              endpoints: [
-                {
-                  actions: [],
-                  kind: "list",
-                  response: {
-                    fieldRefs: ["Org.id", "Org.name", "Org.slug"],
-                    queries: [],
-                    references: [],
-                    relations: [],
-                  },
-                },
-              ],
-              entrypoints: [],
-            },
-          ],
-        },
+        definition,
       };
 
       expect(await renderServerEndpoints(data)).toMatchSnapshot();
