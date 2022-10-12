@@ -25,6 +25,7 @@ export function render(data: BuildPackageData): string {
       "dependencies": {
         "express": "^4.18.2",
         "prisma": "^4.4.0",
+        "yup": "^0.32.11",
         "@prisma/client": "^4.4.0"
       }
     }

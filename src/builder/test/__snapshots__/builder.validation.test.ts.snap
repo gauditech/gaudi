@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`builder validation renders fieldset validation schema correctly 1`] = `
+"yup
+.object({
+  "optional": yup.number(),
+  "required": yup.string() .required(),
+  "something": yup.boolean() .required(),
+  "subrecord": yup.object({ "prop": yup.string() .required() })
+})"
+`;

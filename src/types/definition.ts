@@ -176,13 +176,13 @@ export type SelectDef = {
 
 export type FieldsetDef = FieldsetRecordDef | FieldsetFieldDef;
 
-type FieldsetRecordDef = {
+export type FieldsetRecordDef = {
   kind: "record";
   record: Record<string, FieldsetDef>;
   nullable: boolean;
 };
 
-type FieldsetFieldDef = {
+export type FieldsetFieldDef = {
   kind: "field";
   type: FieldDef["type"];
   nullable: boolean;

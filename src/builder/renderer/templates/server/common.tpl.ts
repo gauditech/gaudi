@@ -3,6 +3,8 @@ import { source } from "common-tags";
 export function render(): string {
   // prettier-ignore
   return source`
+    // ----- server
+
     /** Catch and report async endpoint errors like normal ones. This will become unnecessary in express 5.x */
     function endpointHandlerGuard(handler) {
       return async (req, resp, next) => {
@@ -23,6 +25,27 @@ export function render(): string {
         this.status = status;
         this.body = body;
         this.cause = cause;
+      }
+    }
+
+    // ----- validation&transformation
+
+    async function validateRecord(record, schema) {
+      try {
+        return await schema.validate(record, {
+          abortEarly: false, // report ALL errors, not just the first one
+        })
+      }
+      catch(err) {
+        // error should be an instance of Yup's ValidationError
+        // https://github.com/jquense/yup#validationerrorerrors-string--arraystring-value-any-path-string
+
+        // map inner errors to more appropriate structure
+        const errors = err.inner.map((inner) => ({
+          [inner.path]: inner.errors
+        }))
+    
+        throw new EndpointError(400, { message: err.errors }, err)
       }
     }
 
@@ -58,6 +81,7 @@ export function render(): string {
     module.exports = {
       endpointHandlerGuard,
       EndpointError,
+      validateRecord,
       requestLogger, errorLogger, errorResponder
     };
   `

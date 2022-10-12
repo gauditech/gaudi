@@ -1,6 +1,7 @@
 import { source } from "common-tags";
 
 import { buildTargetsSQL } from "@src/builder/query";
+import { renderFieldsetValidationSchema } from "@src/builder/renderer/templates/server/validation.tpl";
 import {
   Definition,
   EndpointDef,
@@ -13,18 +14,7 @@ export type RenderEndpointsData = {
   definition: Definition;
 };
 
-/** Used as a context var name where action result is stored. */
-export const EndpointResponseVarname = "__gaudi_action_result__";
-
-export type EndpointActionDefaultResponse = { message: string };
-
-export function renderEndpointActionErrorDefaultResponse(message: string): string {
-  const response: EndpointActionDefaultResponse = { message };
-
-  return JSON.stringify(response);
-}
-
-function buildParamName(ep: EntrypointDef): string {
+export function buildParamName(ep: EntrypointDef): string {
   return `${ep.target.type}_${ep.target.identifyWith.name}`.toLowerCase();
 }
 
@@ -61,8 +51,10 @@ export function buildEndpointPaths(entrypoints: EntrypointDef[]): {
 export function render(data: RenderEndpointsData): string {
   // prettier-ignore
   return source`
-  const { endpointHandlerGuard, EndpointError } = require("./common.js");
+  const yup = require("yup")
   const { Prisma, PrismaClient } = require("@prisma/client");
+  const { endpointHandlerGuard, validateRecord, EndpointError } = require("./common.js");
+
   const prisma = new PrismaClient();
 
   // setup endpoints
@@ -88,8 +80,12 @@ export function render(data: RenderEndpointsData): string {
       return \`Example fetch-one action result \${new Date().toISOString()}\`
     }
     catch(err) {
-      // TODO: custom user message
-      throw new EndpointError(404, ${renderEndpointActionErrorDefaultResponse('Not found')})
+      if (err instanceof EndpointError) {
+        throw err
+      }
+      else {
+        throw new EndpointError(404, { message: 'Not found' }, err)
+      }
     }
   }
 
@@ -97,6 +93,32 @@ export function render(data: RenderEndpointsData): string {
     // TODO: execute query
     return [\`Example list action result \${new Date().toISOString()}\`]
   }
+
+  /*
+  // example validation use
+  const schema = ${renderFieldsetValidationSchema({
+    kind: "record",
+    nullable: false,
+    record: {
+      org_id: {
+        kind: "field",
+        nullable: false,
+        type: "integer",
+      },
+      title: {
+        kind: "field",
+        nullable: false,
+        type: "text",
+      },
+    },
+  })};
+
+  const value = await validateRecord({
+    org_id: "1", title: 'asdf'
+  }, schema);
+  console.log('VALID', value)
+
+  */
 
   // ----- export
 

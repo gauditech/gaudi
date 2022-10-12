@@ -1,7 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`builder build DB schema renders DB schema template correctly 1`] = `
-"datasource db {
+"generator client {
+      provider = "prisma-client-js"
+    }
+
+    
+    datasource db {
       provider = "DB_PROVIDER"
       url      = "DB_CONNECTION_URL"
     }
@@ -30,7 +35,7 @@ org org @relation(fields: [org_id], references: [id])
 }"
 `;
 
-exports[`builder build index renders index template correctly 1`] = `"require('./server/main.js')"`;
+exports[`builder build index renders index template correctly 1`] = `"require('./server/main.js');"`;
 
 exports[`builder build package renders package template correctly 1`] = `
 "{
@@ -45,14 +50,17 @@ exports[`builder build package renders package template correctly 1`] = `
     "node": ">=16.15.0"
   },
   "dependencies": {
-    "express": "^4.18.1",
-    "prisma": "^4.3.1"
+    "express": "^4.18.2",
+    "prisma": "^4.4.0",
+    "yup": "^0.32.11",
+    "@prisma/client": "^4.4.0"
   }
 }"
 `;
 
 exports[`builder build server renders server get endpoints correctly 1`] = `
-"const { endpointHandlerGuard, EndpointError } = require("./common.js");
+"const yup = require("yup")
+  const { endpointHandlerGuard, validateRecord, EndpointError } = require("./common.js");
 
   // setup endpoints
   const endpointConfigs = [];
@@ -102,11 +110,22 @@ endpointConfigs.push({ path: "/org/:org_slug", method: "get", handler: getOrgsEn
   async function fetchSingleAction(ctx) {
     // TODO: execute query
     try {
+      const schema = yup .object({   "org_id": yup.number() .required(),   "title": yup.string() .required() }) .required();
+  
+      const v = await validateRecord({
+        org_id: 1, title: 'asdf'
+      }, schema);
+      console.log('VALID', v)
+  
       return \`Example fetch-one action result \${new Date().toISOString()}\`
     }
     catch(err) {
-      // TODO: custom user message
-      throw new EndpointError(404, {"message":"Not found"})
+      if (err instanceof EndpointError) {
+        throw err
+      }
+      else {
+        throw new EndpointError(404, { message: 'Not found' }, err)
+      }
     }
   }
 
@@ -123,7 +142,8 @@ endpointConfigs.push({ path: "/org/:org_slug", method: "get", handler: getOrgsEn
 `;
 
 exports[`builder build server renders server list endpoints correctly 1`] = `
-"const { endpointHandlerGuard, EndpointError } = require("./common.js");
+"const yup = require("yup")
+  const { endpointHandlerGuard, validateRecord, EndpointError } = require("./common.js");
 
   // setup endpoints
   const endpointConfigs = [];
@@ -171,11 +191,22 @@ endpointConfigs.push({ path: "/org", method: "get", handler: listOrgsEndpoint })
   async function fetchSingleAction(ctx) {
     // TODO: execute query
     try {
+      const schema = yup .object({   "org_id": yup.number() .required(),   "title": yup.string() .required() }) .required();
+  
+      const v = await validateRecord({
+        org_id: 1, title: 'asdf'
+      }, schema);
+      console.log('VALID', v)
+  
       return \`Example fetch-one action result \${new Date().toISOString()}\`
     }
     catch(err) {
-      // TODO: custom user message
-      throw new EndpointError(404, {"message":"Not found"})
+      if (err instanceof EndpointError) {
+        throw err
+      }
+      else {
+        throw new EndpointError(404, { message: 'Not found' }, err)
+      }
     }
   }
 
