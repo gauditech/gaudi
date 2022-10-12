@@ -218,7 +218,7 @@ function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   let target: EntrypointSpec["target"] | undefined;
   let identify: string | undefined;
-  let response: string[] | undefined;
+  let response: EntrypointSpec["response"] | undefined;
   const endpoints: EndpointSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
 

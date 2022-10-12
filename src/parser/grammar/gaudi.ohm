@@ -88,9 +88,14 @@ Gaudi {
   EntrypointBody
     = "target" ("model" | "relation") IdentifierWithAs -- target
     | "identify" "with" identifier -- identify
-    | "response" "{" NewlineBody<identifier, ","> "}" -- response
+    | "response" SelectBody -- response
     | Endpoint -- endpoint
     | Entrypoint -- entrypoint
+
+  SelectBody = "{" NewlineBody<Select, ","> "}"
+  Select
+    = identifier SelectBody -- nested
+    | identifier -- single
 
   Endpoint = EndpointType "endpoint" "{" NewlineBody<EndpointBody, ";"> "}"
 

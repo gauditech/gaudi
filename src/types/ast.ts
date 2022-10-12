@@ -88,10 +88,14 @@ export type EntrypointAST = WithContext<{
 export type EntrypointBodyAST = WithContext<
   | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
   | { kind: "identify"; identifier: string }
-  | { kind: "response"; select: string[] }
+  | { kind: "response"; select: SelectAST }
   | { kind: "endpoint"; endpoint: EndpointAST }
   | { kind: "entrypoint"; entrypoint: EntrypointAST }
 >;
+
+export type SelectAST = WithContext<{
+  select?: Record<string, SelectAST>;
+}>;
 
 export type EndpointAST = WithContext<{
   type: EndpointType;

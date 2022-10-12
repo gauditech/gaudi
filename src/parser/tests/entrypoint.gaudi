@@ -1,7 +1,7 @@
 entrypoint ItemEntry {
   target model Item as item
   identify with slug
-  response { name, price }
+  response { name, price, brand { name } }
   list endpoint {}
   get endpoint {}
   update endpoint {}
