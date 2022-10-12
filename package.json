@@ -18,7 +18,7 @@
     "copy-static:build-package": "copyfiles -f 'src/package.json' dist",
     "generate-grammar": "ohm generateBundles --withTypes src/parser/grammar/gaudi.ohm",
     "dist:compile": "cd dist && npm run compile",
-    "dist:start-server": "cd dist/output && npm run start-server"
+    "dist:start-server": "cd dist/output && npm install && npm run start-server"
   },
   "repository": {
     "type": "git",
