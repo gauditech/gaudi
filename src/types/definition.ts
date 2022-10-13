@@ -110,10 +110,11 @@ export type EntrypointDef = {
 export type TargetDef = {
   kind: "model" | "reference" | "relation" | "query";
   name: string;
+  namePath: string[];
   refKey: string;
   retType: string;
   alias: string | null;
-  identifyWith: { name: string; refKey: string; type: "text" | "integer" };
+  identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
 };
 
 export type EndpointDef =
@@ -160,6 +161,7 @@ type DeleteEndpointDef = {
   kind: "delete";
   targets: TargetDef[];
   actions: ActionDef[];
+  response: undefined;
 };
 
 type CustomEndpointDef = {
@@ -183,8 +185,14 @@ type CustomEndpointDef = {
 // };
 
 export type SelectItem =
-  | { kind: "field"; name: string; refKey: string }
-  | { kind: "reference" | "relation" | "query"; name: string; select: SelectItem[] };
+  | { kind: "field"; name: string; refKey: string; namePath: string[]; alias: string }
+  | {
+      kind: "reference" | "relation" | "query";
+      name: string;
+      namePath: string[];
+      alias: string;
+      select: SelectItem[];
+    };
 
 export type SelectDef = SelectItem[];
 

@@ -36,18 +36,21 @@ type Join = {
 type TargetWithVar = [TargetDef, string | undefined];
 
 export function buildEndpointTargetsSQL(def: Definition, endpoint: EndpointDef): string {
+  const q = queryableFromEndpointTargets(def, endpoint);
+  return queriableToString(def, q);
+}
+
+export function queryableFromEndpointTargets(def: Definition, endpoint: EndpointDef): Queriable {
   const pathParam = buildEndpointPath(endpoint);
   const inputs = _.zip(
     endpoint.targets,
     pathParam.params.map((p) => p.name)
   ) as TargetWithVar[];
-  const q = queryableFromTargets(def, inputs);
-  return queriableToString(def, q);
-}
-
-export function queryableFromTargets(def: Definition, inputs: TargetWithVar[]): Queriable {
   const [[target, varName], ...rest] = inputs;
-  // const select = rest.length > 0 ? [] : [];
+  // const select = rest.length > 0 ? [] : endpoint.response?.map((s) => s.kind === "field") ?? [];
+  // must select all the ids at least
+  // inputs.map(([target, _]) => target.)
+
   return {
     modelRefKey: target.refKey,
     filter: varName
@@ -220,8 +223,4 @@ export function queriableToString(def: Definition, q: Queriable): string {
     ${q.joins.map((j) => joinToString(def, j))}
     WHERE ${filterToString(q.filter)};
   `;
-}
-
-export function flattenEntrypoints(ep: EntrypointDef): EntrypointDef[] {
-  return [ep, ...ep.entrypoints.flatMap((e) => flattenEntrypoints(e))];
 }

@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { compile, compose, parse } from "../index";
 
-import { flattenEntrypoints, queryableFromTargets, queriableToString } from "./query";
+import { queriableToString, queryableFromEndpointTargets } from "./query";
 
 describe("queriables", () => {
   it("works 1", () => {
@@ -20,14 +20,13 @@ describe("queriables", () => {
       identify with slug
       entrypoint Repos {
         target relation repos
+        get endpoint {}
       }
     }
 
     `;
     const def = compose(compile(parse(bp)));
-    const eps = flattenEntrypoints(def.entrypoints[0]);
-    expect(eps).toHaveLength(2);
-    const q = queryableFromTargets(def, _.zip(eps, ["org_id", "repo_id"]) as any);
+    const q = queryableFromEndpointTargets(def, def.entrypoints[0].entrypoints[0].endpoints[0]);
     const s = queriableToString(def, q);
     console.log(s);
   });

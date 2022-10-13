@@ -30,10 +30,9 @@ function processEntrypoint(
   spec: EntrypointSpec,
   parents: EndpointContext[]
 ): EntrypointDef {
-  const ctxModel = _.last(parents)?.model ?? null;
   const target = calculateTarget(
     models,
-    ctxModel,
+    parents,
     spec.target.identifier,
     spec.alias ?? null,
     spec.identify || "id"
@@ -54,11 +53,13 @@ function processEntrypoint(
 
 function calculateTarget(
   models: ModelDef[],
-  ctxModel: ModelDef | null,
+  parents: EndpointContext[],
   name: string,
   alias: string | null,
   identify: string
-): EntrypointDef["target"] {
+): TargetDef {
+  const ctxModel = _.last(parents)?.model ?? null;
+  const namePath = [...parents.map((p) => p.target.name), name];
   if (ctxModel) {
     const prop = getModelProp(ctxModel, name);
     switch (prop.kind) {
@@ -68,6 +69,7 @@ function calculateTarget(
         return {
           kind: "reference",
           name,
+          namePath,
           retType: reference.toModelRefKey,
           refKey: reference.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
@@ -80,6 +82,7 @@ function calculateTarget(
         return {
           kind: "relation",
           name,
+          namePath,
           retType: relation.fromModel,
           refKey: relation.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
@@ -92,6 +95,7 @@ function calculateTarget(
         return {
           kind: "query",
           name,
+          namePath,
           retType: query.retType,
           refKey: query.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
@@ -107,6 +111,7 @@ function calculateTarget(
     return {
       kind: "model",
       name,
+      namePath,
       refKey: model.refKey,
       retType: model.name,
       identifyWith: calculateIdentifyWith(model, identify),
@@ -127,7 +132,12 @@ function calculateIdentifyWith(
       if (field.type === "boolean") {
         throw "invalid-type";
       }
-      return { name, type: field.type, refKey: field.refKey };
+      return {
+        name,
+        type: field.type,
+        refKey: field.refKey,
+        paramName: `${model.name.toLowerCase()}_${name}`,
+      };
     }
     default:
       throw "invalid-kind";
@@ -147,7 +157,12 @@ function processEndpoints(
       case "get": {
         return {
           kind: "get",
-          response: processSelect(models, context.model, entrySpec.response),
+          response: processSelect(
+            models,
+            context.model,
+            entrySpec.response,
+            context.target.namePath
+          ),
           actions: [],
           targets,
         };
@@ -155,7 +170,12 @@ function processEndpoints(
       case "list": {
         return {
           kind: "list",
-          response: processSelect(models, context.model, entrySpec.response),
+          response: processSelect(
+            models,
+            context.model,
+            entrySpec.response,
+            context.target.namePath
+          ),
           actions: [],
           targets,
         };
@@ -168,7 +188,12 @@ function processEndpoints(
           fieldset,
           contextActionChangeset: changeset,
           actions: [],
-          response: processSelect(models, context.model, entrySpec.response),
+          response: processSelect(
+            models,
+            context.model,
+            entrySpec.response,
+            context.target.namePath
+          ),
           targets,
         };
       }
@@ -182,15 +207,28 @@ function processEndpoints(
 function processSelect(
   models: ModelDef[],
   model: ModelDef,
-  selectAST: SelectAST | undefined
+  selectAST: SelectAST | undefined,
+  namePath: string[]
 ): SelectDef {
   if (selectAST === undefined) {
-    return model.fields.map((f) => ({ kind: "field", name: f.name, refKey: f.refKey }));
+    return model.fields.map((f) => ({
+      kind: "field",
+      name: f.name,
+      alias: f.name,
+      namePath: [...namePath, f.name],
+      refKey: f.refKey,
+    }));
   } else {
     if (selectAST.select === undefined) {
       // throw new Error(`Select block is missing`);
       // for simplicity, we will allow missing nested select blocks
-      return model.fields.map((f) => ({ kind: "field", name: f.name, refKey: f.refKey }));
+      return model.fields.map((f) => ({
+        kind: "field",
+        name: f.name,
+        alias: f.name,
+        namePath: [...namePath, f.name],
+        refKey: f.refKey,
+      }));
     }
     const s = selectAST.select;
 
@@ -199,11 +237,23 @@ function processSelect(
       const ref = getModelProp(model, name);
       if (ref.kind === "field") {
         ensureEqual(s[name].select, undefined);
-        return { kind: ref.kind, name, refKey: ref.value.refKey };
+        return {
+          kind: ref.kind,
+          name,
+          alias: name,
+          namePath: [...namePath, name],
+          refKey: ref.value.refKey,
+        };
       } else {
         ensureNot(ref.kind, "model" as const);
         const targetModel = getTargetModel(models, ref.value.refKey);
-        return { kind: ref.kind, name, select: processSelect(models, targetModel, s[name]) };
+        return {
+          kind: ref.kind,
+          name,
+          namePath: [...namePath, name],
+          alias: name,
+          select: processSelect(models, targetModel, s[name], [...namePath, name]),
+        };
       }
     });
   }
