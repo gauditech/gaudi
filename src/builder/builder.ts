@@ -1,9 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-import { execWithPromise } from "./migrator/utils";
-
-import { applyDbChanges } from "@src/builder/migrator/migrator";
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
 import {
@@ -30,7 +27,6 @@ const APP_NAME = "demoapp";
 const PACKAGE_DESCRIPTION = "Demo app built by Gaudi";
 const PACKAGE_VERSION = "0.0.1";
 const OUTPUT_PATH = path.join(process.cwd(), "./output");
-const DB_OUTPUT_PATH = `${OUTPUT_PATH}/db`;
 const SERVER_PORT = 3001;
 const DB_PROVIDER = "postgresql";
 const DB_CONNECTION_URL = "postgresql://gaudi:gaudip@localhost:5432/gaudi";
@@ -52,7 +48,6 @@ export async function build(definition: Definition): Promise<void> {
     package: { name: APP_NAME, description: PACKAGE_DESCRIPTION, version: PACKAGE_VERSION },
   });
   buildIndex();
-  await installDeps();
   await buildDb({ definition, dbProvider: DB_PROVIDER, dbConnectionUrl: DB_CONNECTION_URL });
   await buildServer({
     serverPort: SERVER_PORT,
@@ -67,12 +62,10 @@ export async function build(definition: Definition): Promise<void> {
 
 function setupOutputFolder() {
   // clear output folder
-  if (fs.existsSync(OUTPUT_PATH)) {
-    fs.rmSync(OUTPUT_PATH, { recursive: true, force: true });
+  if (!fs.existsSync(OUTPUT_PATH)) {
+    // (re)create output folder
+    fs.mkdirSync(OUTPUT_PATH, { recursive: true });
   }
-
-  // (re)create output folder
-  fs.mkdirSync(OUTPUT_PATH, { recursive: true });
 }
 
 // ---------- Package
@@ -85,10 +78,6 @@ async function buildPackage(data: BuildPackageData) {
   const outFile = path.join(OUTPUT_PATH, "package.json");
 
   return renderPackage(data).then((content) => storeTemplateOutput(outFile, content));
-}
-
-export async function installDeps(): Promise<void> {
-  execWithPromise(`npm i`);
 }
 
 // ---------- Index
@@ -110,16 +99,11 @@ export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
 }
 
 async function buildDb(data: BuildDbSchemaData): Promise<unknown> {
-  const outFile = path.join(DB_OUTPUT_PATH, "db/schema.prisma");
+  const outFile = path.join(OUTPUT_PATH, "db/schema.prisma");
 
   return (
     // render DB schema
-    renderDbSchema(data)
-      .then((content) => storeTemplateOutput(outFile, content))
-      // apply DB schema
-      .then(async () => {
-        return applyDbChanges({ schema: outFile });
-      })
+    renderDbSchema(data).then((content) => storeTemplateOutput(outFile, content))
   );
 }
 

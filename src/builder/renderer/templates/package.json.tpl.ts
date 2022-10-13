@@ -17,8 +17,13 @@ export function render(data: BuildPackageData): string {
       "version": "${data.package.version}",
       "main": "index.js",
       "scripts": {
-        "start-server": "node index.js",
-        "postinstall": "npx prisma generate --schema=./db/db/schema.prisma"
+        "server:start": "node index.js",
+        "server:stop": "pkill -f 'node index.js'",
+        "generate": "npm run generate-db-client ",
+        "generate-db-client": "npx prisma generate --schema=./db/schema.prisma",
+        "migrate": "npm run migrate-db && npm run generate",
+        "migrate-db": "npx prisma db push --schema=./db/schema.prisma --accept-data-loss",
+        "postinstall": "npm run generate"
       },
       "engines": {
         "node": ">=16.15.0"
