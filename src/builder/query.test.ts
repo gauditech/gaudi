@@ -20,6 +20,8 @@ describe("queriables", () => {
       identify with slug
       entrypoint Repos {
         target relation repos
+        response { id, name }
+
         get endpoint {}
       }
     }

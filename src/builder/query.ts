@@ -8,7 +8,6 @@ import { BinaryOperator } from "@src/types/ast";
 import {
   Definition,
   EndpointDef,
-  EntrypointDef,
   FilterDef,
   ReferenceDef,
   RelationDef,
@@ -20,7 +19,7 @@ type Queriable = {
   modelRefKey: string;
   joins: Join[];
   filter: FilterDef;
-  // select: SelectDef;
+  select: SelectDef;
 };
 
 type Join = {
@@ -47,9 +46,7 @@ export function queryableFromEndpointTargets(def: Definition, endpoint: Endpoint
     pathParam.params.map((p) => p.name)
   ) as TargetWithVar[];
   const [[target, varName], ...rest] = inputs;
-  // const select = rest.length > 0 ? [] : endpoint.response?.map((s) => s.kind === "field") ?? [];
-  // must select all the ids at least
-  // inputs.map(([target, _]) => target.)
+  const select = endpoint.response?.filter((s) => s.kind === "field") ?? [];
 
   return {
     modelRefKey: target.refKey,
@@ -66,7 +63,7 @@ export function queryableFromEndpointTargets(def: Definition, endpoint: Endpoint
         }
       : undefined,
     joins: queriableJoins(def, rest, [target.name]).map((j) => forceLeftJoins(j)),
-    // select,
+    select,
   };
 }
 
@@ -199,28 +196,42 @@ function joinToString(def: Definition, join: Join): string {
   ${join.joins.map((j) => joinToString(def, j))}`;
 }
 
-function queriableSelectAll(def: Definition, q: Queriable): string {
-  const { value: model } = getRef<"model">(def, q.modelRefKey);
-  const fieldSels = model.fields.map(
-    (f) => `${toAlias([model.name])}.${f.dbname} AS ${toAlias([model.name, f.name])}`
-  );
-  const joinSels = q.joins.map((j) => joinSelectAll(def, j));
-  return [...fieldSels, ...joinSels].join(",");
-}
-
-function joinSelectAll(def: Definition, j: Join): string {
-  const model = getTargetModel(def.models, j.refKey);
-  return model.fields
-    .map((f) => `${toAlias(j.namePath)}.${f.dbname} AS ${toAlias([...j.namePath, f.name])}`)
-    .join(",");
+function selectToString(def: Definition, select: SelectDef) {
+  return select
+    .map((item) => {
+      if (item.kind !== "field") throw new Error(`Only fields can be selected`);
+      const { value: field } = getRef<"field">(def, item.refKey);
+      return `${toAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
+    })
+    .join(", ");
 }
 
 export function queriableToString(def: Definition, q: Queriable): string {
   const { value: model } = getRef<"model">(def, q.modelRefKey);
   return source`
-    SELECT ${queriableSelectAll(def, q)}
+    SELECT ${selectToString(def, q.select)}
     FROM ${model.dbname} as ${toAlias([model.name])}
     ${q.joins.map((j) => joinToString(def, j))}
     WHERE ${filterToString(q.filter)};
   `;
+}
+
+/*
+-- Unused functions, but may be used for dev/testing/debugging.
+ */
+
+function _queriableSelectAll(def: Definition, q: Queriable): string {
+  const { value: model } = getRef<"model">(def, q.modelRefKey);
+  const fieldSels = model.fields.map(
+    (f) => `${toAlias([model.name])}.${f.dbname} AS ${toAlias([model.name, f.name])}`
+  );
+  const joinSels = q.joins.map((j) => _joinSelectAll(def, j));
+  return [...fieldSels, ...joinSels].join(",");
+}
+
+function _joinSelectAll(def: Definition, j: Join): string {
+  const model = getTargetModel(def.models, j.refKey);
+  return model.fields
+    .map((f) => `${toAlias(j.namePath)}.${f.dbname} AS ${toAlias([...j.namePath, f.name])}`)
+    .join(",");
 }
