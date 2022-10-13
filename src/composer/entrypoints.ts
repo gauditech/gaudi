@@ -1,4 +1,4 @@
-import { Cache } from "./models";
+import _ from "lodash";
 
 import { getModelProp, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
@@ -12,11 +12,44 @@ import {
   ModelDef,
   SelectDef,
   SelectItem,
+  TargetDef,
 } from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(models: ModelDef[], input: EntrypointSpec[]): EntrypointDef[] {
-  return input.map((spec) => processEntrypoint(models, spec, null));
+  return input.map((spec) => processEntrypoint(models, spec, []));
+}
+
+type EndpointContext = {
+  model: ModelDef;
+  target: TargetDef;
+};
+
+function processEntrypoint(
+  models: ModelDef[],
+  spec: EntrypointSpec,
+  parents: EndpointContext[]
+): EntrypointDef {
+  const ctxModel = _.last(parents)?.model ?? null;
+  const target = calculateTarget(
+    models,
+    ctxModel,
+    spec.target.identifier,
+    spec.alias ?? null,
+    spec.identify || "id"
+  );
+  const name = spec.name;
+  const targetModel = findModel(models, target.retType);
+
+  const thisContext: EndpointContext = { model: targetModel, target };
+  const targetParents = [...parents, thisContext];
+
+  return {
+    name,
+    target,
+    endpoints: processEndpoints(models, targetParents, spec),
+    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(models, ispec, targetParents)),
+  };
 }
 
 function calculateTarget(
@@ -35,7 +68,7 @@ function calculateTarget(
         return {
           kind: "reference",
           name,
-          type: reference.toModelRefKey,
+          retType: reference.toModelRefKey,
           refKey: reference.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
@@ -47,7 +80,7 @@ function calculateTarget(
         return {
           kind: "relation",
           name,
-          type: relation.fromModel,
+          retType: relation.fromModel,
           refKey: relation.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
@@ -59,7 +92,7 @@ function calculateTarget(
         return {
           kind: "query",
           name,
-          type: query.retType,
+          retType: query.retType,
           refKey: query.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
@@ -75,7 +108,7 @@ function calculateTarget(
       kind: "model",
       name,
       refKey: model.refKey,
-      type: model.name,
+      retType: model.name,
       identifyWith: calculateIdentifyWith(model, identify),
       alias,
     };
@@ -101,59 +134,42 @@ function calculateIdentifyWith(
   }
 }
 
-function processEntrypoint(
-  models: ModelDef[],
-  spec: EntrypointSpec,
-  ctxModel: ModelDef | null
-): EntrypointDef {
-  const target = calculateTarget(
-    models,
-    ctxModel,
-    spec.target.identifier,
-    spec.alias ?? null,
-    spec.identify || "id"
-  );
-  const name = spec.name;
-  const targetModel = findModel(models, target.type);
-
-  return {
-    name,
-    target,
-    endpoints: processEndpoints(models, targetModel, spec),
-    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(models, ispec, targetModel)),
-  };
-}
-
 function processEndpoints(
   models: ModelDef[],
-  targetModel: ModelDef,
+  parents: EndpointContext[],
   entrySpec: EntrypointSpec
 ): EndpointDef[] {
+  const context = _.last(parents)!;
+  const targets = parents.map((p) => p.target);
+
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     switch (endSpec.type) {
       case "get": {
         return {
           kind: "get",
-          response: processSelect(models, targetModel, entrySpec.response),
+          response: processSelect(models, context.model, entrySpec.response),
           actions: [],
+          targets,
         };
       }
       case "list": {
         return {
           kind: "list",
-          response: processSelect(models, targetModel, entrySpec.response),
+          response: processSelect(models, context.model, entrySpec.response),
           actions: [],
+          targets,
         };
       }
       case "create": {
-        const fieldset = calculateCreateFieldsetForModel(targetModel);
-        const changeset = calculateCreateChangesetForModel(targetModel);
+        const fieldset = calculateCreateFieldsetForModel(context.model);
+        const changeset = calculateCreateChangesetForModel(context.model);
         return {
           kind: "create",
           fieldset,
           contextActionChangeset: changeset,
           actions: [],
-          response: processSelect(models, targetModel, entrySpec.response),
+          response: processSelect(models, context.model, entrySpec.response),
+          targets,
         };
       }
       default: {

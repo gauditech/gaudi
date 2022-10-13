@@ -15,7 +15,7 @@ export type RenderEndpointsData = {
 };
 
 export function buildParamName(ep: EntrypointDef): string {
-  return `${ep.target.type}_${ep.target.identifyWith.name}`.toLowerCase();
+  return `${ep.target.retType.toLowerCase()}_${ep.target.identifyWith.name}`;
 }
 
 export type PathParam = { path: string; params: { name: string; type: "integer" | "text" }[] };

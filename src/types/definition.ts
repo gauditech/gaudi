@@ -102,16 +102,18 @@ export type QueryDef = {
  */
 export type EntrypointDef = {
   name: string;
-  target: {
-    kind: "model" | "reference" | "relation" | "query";
-    name: string;
-    refKey: string;
-    type: string;
-    alias: string | null;
-    identifyWith: { name: string; refKey: string; type: "text" | "integer" };
-  };
+  target: TargetDef;
   endpoints: EndpointDef[];
   entrypoints: EntrypointDef[];
+};
+
+export type TargetDef = {
+  kind: "model" | "reference" | "relation" | "query";
+  name: string;
+  refKey: string;
+  retType: string;
+  alias: string | null;
+  identifyWith: { name: string; refKey: string; type: "text" | "integer" };
 };
 
 export type EndpointDef =
@@ -124,18 +126,21 @@ export type EndpointDef =
 
 export type ListEndpointDef = {
   kind: "list";
+  targets: TargetDef[];
   response: SelectDef;
   actions: ActionDef[];
 };
 
 export type GetEndpointDef = {
   kind: "get";
+  targets: TargetDef[];
   response: SelectDef;
   actions: ActionDef[];
 };
 
 type CreateEndpointDef = {
   kind: "create";
+  targets: TargetDef[];
   response: SelectDef;
   fieldset: FieldsetDef;
   contextActionChangeset: Changeset;
@@ -144,6 +149,7 @@ type CreateEndpointDef = {
 
 type UpdateEndpointDef = {
   kind: "update";
+  targets: TargetDef[];
   response: SelectDef;
   fieldset: FieldsetDef;
   contextActionChangeset: Changeset;
@@ -152,11 +158,13 @@ type UpdateEndpointDef = {
 
 type DeleteEndpointDef = {
   kind: "delete";
+  targets: TargetDef[];
   actions: ActionDef[];
 };
 
 type CustomEndpointDef = {
   kind: "custom";
+  targets: TargetDef[];
   method: "post" | "get" | "put" | "delete";
   actions: ActionDef[];
   respondWith: {

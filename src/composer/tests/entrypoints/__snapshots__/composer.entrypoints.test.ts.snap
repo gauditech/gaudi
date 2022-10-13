@@ -24,6 +24,20 @@ exports[`entrypoint composes basic example 1`] = `
             "refKey": "Org.name",
           },
         ],
+        "targets": [
+          {
+            "alias": null,
+            "identifyWith": {
+              "name": "slug",
+              "refKey": "Org.slug",
+              "type": "text",
+            },
+            "kind": "model",
+            "name": "Org",
+            "refKey": "Org",
+            "retType": "Org",
+          },
+        ],
       },
       {
         "actions": [],
@@ -43,6 +57,20 @@ exports[`entrypoint composes basic example 1`] = `
             "kind": "field",
             "name": "name",
             "refKey": "Org.name",
+          },
+        ],
+        "targets": [
+          {
+            "alias": null,
+            "identifyWith": {
+              "name": "slug",
+              "refKey": "Org.slug",
+              "type": "text",
+            },
+            "kind": "model",
+            "name": "Org",
+            "refKey": "Org",
+            "retType": "Org",
           },
         ],
       },
@@ -81,6 +109,32 @@ exports[`entrypoint composes basic example 1`] = `
                 ],
               },
             ],
+            "targets": [
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "refKey": "Org",
+                "retType": "Org",
+              },
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "id",
+                  "refKey": "Repo.id",
+                  "type": "integer",
+                },
+                "kind": "relation",
+                "name": "repos",
+                "refKey": "Org.repos",
+                "retType": "Repo",
+              },
+            ],
           },
           {
             "actions": [],
@@ -111,6 +165,32 @@ exports[`entrypoint composes basic example 1`] = `
                     "refKey": "Org.name",
                   },
                 ],
+              },
+            ],
+            "targets": [
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "refKey": "Org",
+                "retType": "Org",
+              },
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "id",
+                  "refKey": "Repo.id",
+                  "type": "integer",
+                },
+                "kind": "relation",
+                "name": "repos",
+                "refKey": "Org.repos",
+                "retType": "Repo",
               },
             ],
           },
@@ -177,6 +257,32 @@ exports[`entrypoint composes basic example 1`] = `
                 ],
               },
             ],
+            "targets": [
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "refKey": "Org",
+                "retType": "Org",
+              },
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "id",
+                  "refKey": "Repo.id",
+                  "type": "integer",
+                },
+                "kind": "relation",
+                "name": "repos",
+                "refKey": "Org.repos",
+                "retType": "Repo",
+              },
+            ],
           },
         ],
         "entrypoints": [],
@@ -191,7 +297,7 @@ exports[`entrypoint composes basic example 1`] = `
           "kind": "relation",
           "name": "repos",
           "refKey": "Org.repos",
-          "type": "Repo",
+          "retType": "Repo",
         },
       },
     ],
@@ -206,7 +312,7 @@ exports[`entrypoint composes basic example 1`] = `
       "kind": "model",
       "name": "Org",
       "refKey": "Org",
-      "type": "Org",
+      "retType": "Org",
     },
   },
 ]
