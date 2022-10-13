@@ -1,6 +1,10 @@
 import { source } from "common-tags";
 
-import { buildEndpointTargetsSQL } from "@src/builder/query";
+import {
+  buildEndpointContextSql,
+  buildEndpointPath,
+  buildEndpointTargetSql,
+} from "@src/builder/query";
 import { renderFieldsetValidationSchema } from "@src/builder/renderer/templates/server/validation.tpl";
 import {
   Definition,
@@ -8,49 +12,14 @@ import {
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
-  TargetDef,
+  SelectableItem,
 } from "@src/types/definition";
 
 export type RenderEndpointsData = {
   definition: Definition;
 };
 
-export function buildParamName(target: TargetDef): string {
-  return `${target.retType.toLowerCase()}_${target.identifyWith.name}`;
-}
-
 export type PathParam = { path: string; params: { name: string; type: "integer" | "text" }[] };
-
-export function buildEndpointPath(endpoint: EndpointDef): PathParam {
-  const pairs = endpoint.targets.map((target) => ({
-    name: target.name.toLowerCase(),
-    param: { name: buildParamName(target), type: target.identifyWith.type },
-  }));
-  switch (endpoint.kind) {
-    case "get":
-    case "update":
-    case "delete":
-      return {
-        path: [
-          "", // add leading slash
-          ...pairs.map(({ name, param }) => [name, `:${param.name}`].join("/")),
-        ].join("/"),
-        params: pairs.map(({ param }) => param),
-      };
-    case "list":
-    case "create":
-      return {
-        path: [
-          "", // add leading slash
-          ...pairs
-            .slice(0, pairs.length - 1)
-            .map(({ name, param }) => [name, `:${param.name}`].join("/")),
-          pairs[pairs.length - 1].name,
-        ].join("/"),
-        params: pairs.slice(0, pairs.length - 1).map(({ param }) => param),
-      };
-  }
-}
 
 export function render(data: RenderEndpointsData): string {
   // prettier-ignore
@@ -170,6 +139,16 @@ function paramToType(paramStr: string, type: EntrypointDef["target"]["identifyWi
   }
 }
 
+function renderTargetContext(sql: string | null): string {
+  if (!sql) return "";
+  return source`
+  const contextRows = await prisma.$queryRaw\`${sql}\`;
+  if(contextRows.length === 0) {
+    throw new EndpointError(404, 'Resource not found')
+  }
+  `;
+}
+
 export function renderGetEndpoint(
   data: RenderEndpointsData,
   endpoint: GetEndpointDef,
@@ -179,33 +158,26 @@ export function renderGetEndpoint(
   const endpointName = `get${entryName}Endpoint`;
   const httpMethod = "get";
   const endpointPath = buildEndpointPath(endpoint);
+  const resultSql = buildEndpointContextSql(data.definition, endpoint);
 
   // prettier-ignore
   return source`
     // --- ${endpointName}
     async function ${endpointName}(req, resp) {
       // TODO: role auth
-      // TODO: select
+      // TODO: nested select
       // TODO: filter
-
-      const ctx = new Map();
-
       // TODO: validate path vars before extracting?
+
       // extract path vars
       ${endpointPath.params.map(param => {
         const varname = param.name
         return `const ${varname} = ${paramToType(`req.params["${varname}"]`, param.type)}`
       })}
 
-
-      let result;
       try {
-        result = await prisma.$queryRaw\`${buildEndpointTargetsSQL(data.definition, endpoint)}\`;
-        if(result.length === 0) {
-          throw new EndpointError(404, 'Resource not found')
-        }
-
-        resp.send(result[0])
+        ${renderTargetContext(resultSql)}
+        resp.send(contextRows[0])
       } catch(err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -229,16 +201,21 @@ export function renderListEndpoint(
   const endpointName = `list${entryName}Endpoint`;
   const httpMethod = "get";
   const endpointPath = buildEndpointPath(endpoint);
+  const targetChecksSql = buildEndpointContextSql(data.definition, endpoint);
+  const listSql = buildEndpointTargetSql(
+    data.definition,
+    endpoint.targets,
+    endpoint.response.filter((s): s is SelectableItem => s.kind === "field"),
+    "multi"
+  );
 
   // prettier-ignore
   return source`
     // ${endpointName}
     async function ${endpointName}(req, resp) {
       // TODO: role auth
-      // TODO: select
+      // TODO: nested select
       // TODO: filter
-
-      const ctx = new Map();
 
       // TODO: validate path vars before extracting?
       // extract path vars
@@ -247,14 +224,10 @@ export function renderListEndpoint(
         return `const ${varname} = ${paramToType(`req.params["${varname}"]`, param.type)};`
       })}
 
-      let result;
       try {
-        result = await prisma.$queryRaw\`${buildEndpointTargetsSQL(data.definition, endpoint)}\`;
-        if(result.length === 0) {
-          throw new EndpointError(404, 'Resource not found')
-        }
-
-        resp.send(result)
+        ${renderTargetContext(targetChecksSql)}
+        const results = await prisma.$queryRaw\`${listSql}\`
+        resp.send(results)
       } catch(err) {
         if (err instanceof EndpointError) {
           throw err;

@@ -181,8 +181,25 @@ type CustomEndpointDef = {
 //   queries: { refKey: string; select: SelectDef }[];
 // };
 
+export type SelectableItem = SelectFieldItem | SelectConstantItem;
+
+export type SelectFieldItem = {
+  kind: "field";
+  name: string;
+  refKey: string;
+  namePath: string[];
+  alias: string;
+};
+
+export type SelectConstantItem = {
+  kind: "constant";
+  type: "integer";
+  value: number;
+  alias: string;
+};
+
 export type SelectItem =
-  | { kind: "field"; name: string; refKey: string; namePath: string[]; alias: string }
+  | SelectableItem
   | {
       kind: "reference" | "relation" | "query";
       name: string;

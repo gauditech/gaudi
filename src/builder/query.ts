@@ -1,9 +1,8 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { buildEndpointPath } from "./renderer/templates/server/endpoints.tpl";
-
 import { getRef, getTargetModel } from "@src/common/refs";
+import { ensureEqual } from "@src/common/utils";
 import { BinaryOperator } from "@src/types/ast";
 import {
   Definition,
@@ -11,15 +10,17 @@ import {
   FilterDef,
   ReferenceDef,
   RelationDef,
-  SelectDef,
+  SelectConstantItem,
+  SelectFieldItem,
+  SelectableItem,
   TargetDef,
 } from "@src/types/definition";
 
-type Queriable = {
+type Queryable = {
   modelRefKey: string;
   joins: Join[];
   filter: FilterDef;
-  select: SelectDef;
+  select: SelectableItem[];
 };
 
 type Join = {
@@ -32,25 +33,57 @@ type Join = {
   joins: Join[];
 };
 
-type TargetWithVar = [TargetDef, string | undefined];
-
-export function buildEndpointTargetsSQL(def: Definition, endpoint: EndpointDef): string {
-  const q = queryableFromEndpointTargets(def, endpoint);
-  return queriableToString(def, q);
+export function buildEndpointContextSql(def: Definition, endpoint: EndpointDef): string | null {
+  const exists: SelectConstantItem = {
+    kind: "constant",
+    type: "integer",
+    value: 1,
+    alias: "exists",
+  };
+  switch (endpoint.kind) {
+    case "create":
+    case "list": {
+      const q = queryableFromEndpointTargets(def, _.initial(endpoint.targets), [exists], "multi");
+      return q && queryableToString(def, q);
+    }
+    case "get":
+    case "update": {
+      const fields = endpoint.response.filter((s): s is SelectFieldItem => s.kind === "field");
+      return buildEndpointTargetSql(def, endpoint.targets, fields, "single");
+    }
+    case "delete": {
+      return buildEndpointTargetSql(def, endpoint.targets, [exists], "single");
+    }
+  }
 }
 
-export function queryableFromEndpointTargets(def: Definition, endpoint: EndpointDef): Queriable {
-  const pathParam = buildEndpointPath(endpoint);
-  const inputs = _.zip(
-    endpoint.targets,
-    pathParam.params.map((p) => p.name)
-  ) as TargetWithVar[];
-  const [[target, varName], ...rest] = inputs;
-  const select = endpoint.response?.filter((s) => s.kind === "field") ?? [];
+export function buildEndpointTargetSql(
+  def: Definition,
+  targets: TargetDef[],
+  select: SelectableItem[],
+  mode: "single" | "multi"
+): string {
+  const q = queryableFromEndpointTargets(def, targets, select, mode);
+  if (!q) {
+    throw new Error(`Unable to build queryable record! Check targets.`);
+  }
+  return queryableToString(def, q);
+}
 
+// export buildSqlFromTargets()
+
+export function queryableFromEndpointTargets(
+  def: Definition,
+  targets: TargetDef[],
+  select: SelectableItem[],
+  mode: "single" | "multi"
+): Queryable | null {
+  if (!targets.length) return null;
+  const [target, ...rest] = targets;
+  const shouldFilterByIdentity = rest.length > 0 || mode === "single";
   return {
     modelRefKey: target.refKey,
-    filter: varName
+    filter: shouldFilterByIdentity
       ? {
           kind: "binary",
           operator: "is",
@@ -58,30 +91,83 @@ export function queryableFromEndpointTargets(def: Definition, endpoint: Endpoint
           rhs: {
             kind: "variable",
             type: target.identifyWith.type,
-            name: varName,
+            name: target.identifyWith.paramName,
           },
         }
       : undefined,
-    joins: queriableJoins(def, rest, [target.name]).map((j) => forceLeftJoins(j)),
+    joins: queryableJoins(def, rest, [target.name], mode),
     select,
   };
 }
 
-function forceLeftJoins(j: Join): Join {
-  return { ...j, joinType: "left", joins: j.joins.map((j) => forceLeftJoins(j)) };
-}
+export type PathParam = { path: string; params: { name: string; type: "integer" | "text" }[] };
 
-function queriableJoins(
+export function buildEndpointPath(endpoint: EndpointDef): PathParam {
+  const pairs = endpoint.targets.map((target) => ({
+    name: target.name.toLowerCase(),
+    param: { name: target.identifyWith.paramName, type: target.identifyWith.type },
+  }));
+  switch (endpoint.kind) {
+    case "get":
+    case "update":
+    case "delete":
+      return {
+        path: [
+          "", // add leading slash
+          ...pairs.map(({ name, param }) => [name, `:${param.name}`].join("/")),
+        ].join("/"),
+        params: pairs.map(({ param }) => param),
+      };
+    case "list":
+    case "create":
+      return {
+        path: [
+          "", // add leading slash
+          ...pairs
+            .slice(0, pairs.length - 1)
+            .map(({ name, param }) => [name, `:${param.name}`].join("/")),
+          pairs[pairs.length - 1].name,
+        ].join("/"),
+        params: pairs.slice(0, pairs.length - 1).map(({ param }) => param),
+      };
+  }
+}
+function queryableJoins(
   def: Definition,
-  inputs: TargetWithVar[],
-  parentNamePath: string[]
+  targets: TargetDef[],
+  parentNamePath: string[],
+  mode: "single" | "multi"
 ): Join[] {
-  if (!inputs.length) return [];
-  const [[target, varName], ...rest] = inputs;
+  if (!targets.length) return [];
+  const [target, ...rest] = targets;
   if (target.kind === "model") throw new Error(`Cannot join with models!`);
   const namePath = [...parentNamePath, target.name];
-
   const joinNames = getJoinNames(def, target.refKey);
+  const shouldFilterByIdentity = rest.length > 0 || mode === "single";
+
+  const joinFilter: FilterDef = {
+    kind: "binary",
+    operator: "is",
+    lhs: { kind: "alias", namePath: [...parentNamePath, joinNames.that] },
+    rhs: { kind: "alias", namePath: [...namePath, joinNames.this] },
+  };
+  const onFilter: FilterDef = shouldFilterByIdentity
+    ? {
+        kind: "binary",
+        operator: "and",
+        lhs: joinFilter,
+        rhs: {
+          kind: "binary",
+          operator: "is",
+          lhs: { kind: "alias", namePath: [...namePath, target.identifyWith.name] },
+          rhs: {
+            kind: "variable",
+            type: target.identifyWith.type,
+            name: target.identifyWith.paramName,
+          },
+        },
+      }
+    : joinFilter;
 
   return [
     {
@@ -90,29 +176,8 @@ function queriableJoins(
       namePath,
       kind: target.kind,
       joinType: "inner",
-      on: {
-        kind: "binary",
-        operator: "and",
-        lhs: {
-          kind: "binary",
-          operator: "is",
-          lhs: { kind: "alias", namePath: [...parentNamePath, joinNames.that] },
-          rhs: { kind: "alias", namePath: [...namePath, joinNames.this] },
-        },
-        rhs: varName
-          ? {
-              kind: "binary",
-              operator: "is",
-              lhs: { kind: "alias", namePath: [...namePath, target.identifyWith.name] },
-              rhs: {
-                kind: "variable",
-                type: target.identifyWith.type,
-                name: varName,
-              },
-            }
-          : undefined,
-      },
-      joins: queriableJoins(def, rest, namePath),
+      on: onFilter,
+      joins: queryableJoins(def, rest, namePath, mode),
     },
   ];
 }
@@ -196,17 +261,25 @@ function joinToString(def: Definition, join: Join): string {
   ${join.joins.map((j) => joinToString(def, j))}`;
 }
 
-function selectToString(def: Definition, select: SelectDef) {
+function selectToString(def: Definition, select: SelectableItem[]) {
   return select
     .map((item) => {
-      if (item.kind !== "field") throw new Error(`Only fields can be selected`);
-      const { value: field } = getRef<"field">(def, item.refKey);
-      return `${toAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
+      switch (item.kind) {
+        case "field": {
+          const { value: field } = getRef<"field">(def, item.refKey);
+          return `${toAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
+        }
+        case "constant": {
+          // FIXME security issue, this is not an escaped value!!
+          ensureEqual(item.type, "integer");
+          return `${item.value} AS "${item.alias}"`;
+        }
+      }
     })
     .join(", ");
 }
 
-export function queriableToString(def: Definition, q: Queriable): string {
+export function queryableToString(def: Definition, q: Queryable): string {
   const { value: model } = getRef<"model">(def, q.modelRefKey);
   return source`
     SELECT ${selectToString(def, q.select)}
@@ -220,7 +293,7 @@ export function queriableToString(def: Definition, q: Queriable): string {
 -- Unused functions, but may be used for dev/testing/debugging.
  */
 
-function _queriableSelectAll(def: Definition, q: Queriable): string {
+function _queryableSelectAll(def: Definition, q: Queryable): string {
   const { value: model } = getRef<"model">(def, q.modelRefKey);
   const fieldSels = model.fields.map(
     (f) => `${toAlias([model.name])}.${f.dbname} AS ${toAlias([model.name, f.name])}`
