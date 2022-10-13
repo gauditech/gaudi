@@ -10,7 +10,7 @@
     "build:grammar": "npm run generate-grammar",
     "build:runtime": "tsc -p tsconfig.json && npm run copy-static && npm run dist:compile",
     "dev": "concurrently \"tsc -w -p tsconfig.json\" \"chokidar 'dist/**/*' -i 'dist/output' -i 'dist/package*' -i 'dist/node_modules' --initial -c 'npm run dev:onchange'\"",
-    "dev:onchange": "npm run dist:compile; pkill -f 'node index.js'; npm run dist:start-server",
+    "dev:onchange": "npm run copy-static; npm run dist:compile; pkill -f 'node index.js'; npm run dist:start-server",
     "lint": "eslint --fix .; prettier --loglevel warn --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "typecheck:watch": "tsc -w --noEmit -p tsconfig.json",
@@ -18,7 +18,7 @@
     "copy-static:build-package": "copyfiles -f 'src/package.json' dist",
     "generate-grammar": "ohm generateBundles --withTypes src/parser/grammar/gaudi.ohm",
     "dist:compile": "cd dist && npm run compile",
-    "dist:start-server": "cd dist/output && npm install && npm run start-server"
+    "dist:start-server": "cd dist/output && npm install && npx prisma generate --schema=./db/db/schema.prisma && npm run start-server"
   },
   "repository": {
     "type": "git",
