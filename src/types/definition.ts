@@ -170,10 +170,7 @@ type CustomEndpointDef = {
   method: "post" | "get" | "put" | "delete";
   actions: ActionDef[];
   respondWith: {
-    // should be respond with query or something
-    alias: string;
-    modeel: string;
-    response: SelectDef;
+    // TODO
   };
 };
 
