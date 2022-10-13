@@ -17,7 +17,8 @@ export function render(data: BuildPackageData): string {
       "version": "${data.package.version}",
       "main": "index.js",
       "scripts": {
-        "start-server": "node index.js"
+        "start-server": "node index.js",
+        "postinstall": "npx prisma generate --schema=./db/db/schema.prisma"
       },
       "engines": {
         "node": ">=16.15.0"
