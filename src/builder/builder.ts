@@ -109,7 +109,7 @@ export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
   return renderDbSchemaTpl(data);
 }
 
-async function buildDb(data: BuildDbSchemaData): Promise<void> {
+async function buildDb(data: BuildDbSchemaData): Promise<unknown> {
   const outFile = path.join(DB_OUTPUT_PATH, "db/schema.prisma");
 
   return (
@@ -117,8 +117,8 @@ async function buildDb(data: BuildDbSchemaData): Promise<void> {
     renderDbSchema(data)
       .then((content) => storeTemplateOutput(outFile, content))
       // apply DB schema
-      .then(() => {
-        applyDbChanges({ schema: outFile });
+      .then(async () => {
+        return applyDbChanges({ schema: outFile });
       })
   );
 }
