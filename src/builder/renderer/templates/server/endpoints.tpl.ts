@@ -1,6 +1,6 @@
 import { source } from "common-tags";
 
-import { buildTargetsSQL } from "@src/builder/query";
+import { buildEndpointTargetsSQL } from "@src/builder/query";
 import { renderFieldsetValidationSchema } from "@src/builder/renderer/templates/server/validation.tpl";
 import {
   Definition,
@@ -8,44 +8,48 @@ import {
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
+  TargetDef,
 } from "@src/types/definition";
 
 export type RenderEndpointsData = {
   definition: Definition;
 };
 
-export function buildParamName(ep: EntrypointDef): string {
-  return `${ep.target.retType.toLowerCase()}_${ep.target.identifyWith.name}`;
+export function buildParamName(target: TargetDef): string {
+  return `${target.retType.toLowerCase()}_${target.identifyWith.name}`;
 }
 
 export type PathParam = { path: string; params: { name: string; type: "integer" | "text" }[] };
 
-export function buildEndpointPaths(entrypoints: EntrypointDef[]): {
-  single: PathParam;
-  multi: PathParam;
-} {
-  const pairs = entrypoints.map((ep) => ({
-    name: ep.target.name.toLowerCase(),
-    param: { name: buildParamName(ep), type: ep.target.identifyWith.type },
+export function buildEndpointPath(endpoint: EndpointDef): PathParam {
+  const pairs = endpoint.targets.map((target) => ({
+    name: target.name.toLowerCase(),
+    param: { name: buildParamName(target), type: target.identifyWith.type },
   }));
-  const single = {
-    path: [
-      "", // add leading slash
-      ...pairs.map(({ name, param }) => [name, `:${param.name}`].join("/")),
-    ].join("/"),
-    params: pairs.map(({ param }) => param),
-  };
-  const multi = {
-    path: [
-      "", // add leading slash
-      ...pairs
-        .slice(0, pairs.length - 1)
-        .map(({ name, param }) => [name, `:${param.name}`].join("/")),
-      pairs[pairs.length - 1].name,
-    ].join("/"),
-    params: pairs.slice(0, pairs.length - 1).map(({ param }) => param),
-  };
-  return { single, multi };
+  switch (endpoint.kind) {
+    case "get":
+    case "update":
+    case "delete":
+      return {
+        path: [
+          "", // add leading slash
+          ...pairs.map(({ name, param }) => [name, `:${param.name}`].join("/")),
+        ].join("/"),
+        params: pairs.map(({ param }) => param),
+      };
+    case "list":
+    case "create":
+      return {
+        path: [
+          "", // add leading slash
+          ...pairs
+            .slice(0, pairs.length - 1)
+            .map(({ name, param }) => [name, `:${param.name}`].join("/")),
+          pairs[pairs.length - 1].name,
+        ].join("/"),
+        params: pairs.slice(0, pairs.length - 1).map(({ param }) => param),
+      };
+  }
 }
 
 export function render(data: RenderEndpointsData): string {
@@ -174,7 +178,7 @@ export function renderGetEndpoint(
   const entryName = entrypoints.map((e) => e.name).join("");
   const endpointName = `get${entryName}Endpoint`;
   const httpMethod = "get";
-  const endpointPath = buildEndpointPaths(entrypoints).single;
+  const endpointPath = buildEndpointPath(endpoint);
 
   // prettier-ignore
   return source`
@@ -196,7 +200,7 @@ export function renderGetEndpoint(
 
       let result;
       try {
-        result = await prisma.$queryRaw\`${buildTargetsSQL(data.definition, entrypoints, endpointPath)}\`;
+        result = await prisma.$queryRaw\`${buildEndpointTargetsSQL(data.definition, endpoint)}\`;
         if(result.length === 0) {
           throw new EndpointError(404, 'Resource not found')
         }
@@ -224,7 +228,7 @@ export function renderListEndpoint(
   const entryName = entrypoints.map((e) => e.name).join("");
   const endpointName = `list${entryName}Endpoint`;
   const httpMethod = "get";
-  const endpointPath = buildEndpointPaths(entrypoints).multi;
+  const endpointPath = buildEndpointPath(endpoint);
 
   // prettier-ignore
   return source`
@@ -245,7 +249,7 @@ export function renderListEndpoint(
 
       let result;
       try {
-        result = await prisma.$queryRaw\`${buildTargetsSQL(data.definition, entrypoints, endpointPath)}\`;
+        result = await prisma.$queryRaw\`${buildEndpointTargetsSQL(data.definition, endpoint)}\`;
         if(result.length === 0) {
           throw new EndpointError(404, 'Resource not found')
         }

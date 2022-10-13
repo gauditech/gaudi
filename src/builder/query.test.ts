@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { compile, compose, parse } from "../index";
 
-import { flattenEntrypoints, queriableEntrypoints, queriableToString } from "./query";
+import { flattenEntrypoints, queryableFromTargets, queriableToString } from "./query";
 
 describe("queriables", () => {
   it("works 1", () => {
@@ -27,7 +27,7 @@ describe("queriables", () => {
     const def = compose(compile(parse(bp)));
     const eps = flattenEntrypoints(def.entrypoints[0]);
     expect(eps).toHaveLength(2);
-    const q = queriableEntrypoints(def, _.zip(eps, ["org_id", "repo_id"]) as any);
+    const q = queryableFromTargets(def, _.zip(eps, ["org_id", "repo_id"]) as any);
     const s = queriableToString(def, q);
     console.log(s);
   });

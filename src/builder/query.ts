@@ -1,16 +1,19 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { PathParam } from "./renderer/templates/server/endpoints.tpl";
+import { buildEndpointPath } from "./renderer/templates/server/endpoints.tpl";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { BinaryOperator } from "@src/types/ast";
 import {
   Definition,
+  EndpointDef,
   EntrypointDef,
   FilterDef,
   ReferenceDef,
   RelationDef,
+  SelectDef,
+  TargetDef,
 } from "@src/types/definition";
 
 type Queriable = {
@@ -30,38 +33,37 @@ type Join = {
   joins: Join[];
 };
 
-type EpWithVar = [EntrypointDef, string | undefined];
+type TargetWithVar = [TargetDef, string | undefined];
 
-export function buildTargetsSQL(
-  def: Definition,
-  entrypoints: EntrypointDef[],
-  param: PathParam
-): string {
+export function buildEndpointTargetsSQL(def: Definition, endpoint: EndpointDef): string {
+  const pathParam = buildEndpointPath(endpoint);
   const inputs = _.zip(
-    entrypoints,
-    param.params.map((p) => p.name)
-  ) as EpWithVar[];
-  const q = queriableEntrypoints(def, inputs);
+    endpoint.targets,
+    pathParam.params.map((p) => p.name)
+  ) as TargetWithVar[];
+  const q = queryableFromTargets(def, inputs);
   return queriableToString(def, q);
 }
 
-export function queriableEntrypoints(def: Definition, inputs: EpWithVar[]): Queriable {
-  const [[modelEp, varName], ...rest] = inputs;
+export function queryableFromTargets(def: Definition, inputs: TargetWithVar[]): Queriable {
+  const [[target, varName], ...rest] = inputs;
+  // const select = rest.length > 0 ? [] : [];
   return {
-    modelRefKey: modelEp.target.refKey,
+    modelRefKey: target.refKey,
     filter: varName
       ? {
           kind: "binary",
           operator: "is",
-          lhs: { kind: "alias", namePath: [modelEp.target.name, modelEp.target.identifyWith.name] },
+          lhs: { kind: "alias", namePath: [target.name, target.identifyWith.name] },
           rhs: {
             kind: "variable",
-            type: modelEp.target.identifyWith.type,
+            type: target.identifyWith.type,
             name: varName,
           },
         }
       : undefined,
-    joins: queriableJoins(def, rest, [modelEp.target.name]).map((j) => forceLeftJoins(j)),
+    joins: queriableJoins(def, rest, [target.name]).map((j) => forceLeftJoins(j)),
+    // select,
   };
 }
 
@@ -69,20 +71,24 @@ function forceLeftJoins(j: Join): Join {
   return { ...j, joinType: "left", joins: j.joins.map((j) => forceLeftJoins(j)) };
 }
 
-function queriableJoins(def: Definition, inputs: EpWithVar[], parentNamePath: string[]): Join[] {
+function queriableJoins(
+  def: Definition,
+  inputs: TargetWithVar[],
+  parentNamePath: string[]
+): Join[] {
   if (!inputs.length) return [];
-  const [[ep, varName], ...rest] = inputs;
-  if (ep.target.kind === "model") throw new Error(`Cannot join with models!`);
-  const namePath = [...parentNamePath, ep.target.name];
+  const [[target, varName], ...rest] = inputs;
+  if (target.kind === "model") throw new Error(`Cannot join with models!`);
+  const namePath = [...parentNamePath, target.name];
 
-  const joinNames = getJoinNames(def, ep.target.refKey);
+  const joinNames = getJoinNames(def, target.refKey);
 
   return [
     {
-      name: ep.target.name,
-      refKey: ep.target.refKey,
+      name: target.name,
+      refKey: target.refKey,
       namePath,
-      kind: ep.target.kind,
+      kind: target.kind,
       joinType: "inner",
       on: {
         kind: "binary",
@@ -97,10 +103,10 @@ function queriableJoins(def: Definition, inputs: EpWithVar[], parentNamePath: st
           ? {
               kind: "binary",
               operator: "is",
-              lhs: { kind: "alias", namePath: [...namePath, ep.target.identifyWith.name] },
+              lhs: { kind: "alias", namePath: [...namePath, target.identifyWith.name] },
               rhs: {
                 kind: "variable",
-                type: ep.target.identifyWith.type,
+                type: target.identifyWith.type,
                 name: varName,
               },
             }
