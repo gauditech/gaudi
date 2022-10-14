@@ -4,6 +4,8 @@ export type ApplySchemaProps = {
   schema: string;
 };
 
-export function applyDbChanges(props: ApplySchemaProps) {
-  return PrismaClient.db.push(props);
+export async function applyDbChanges(props: ApplySchemaProps) {
+  return PrismaClient.db.genClient().then(() => {
+    return PrismaClient.db.push(props);
+  });
 }

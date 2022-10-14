@@ -4,12 +4,14 @@
   "version": "0.0.1",
   "main": "engine.js",
   "scripts": {
-    "compile": "node src/engine.js"
+    "compile": "node src/engine.js",
+    "migrate": "cd output && npm run migrate"
   },
   "engines": {
     "node": ">=16.15.0"
   },
   "dependencies": {
-    "prisma": "^4.3.1"
+    "prisma": "^4.4.0",
+    "@prisma/client": "^4.4.0"
   }
 }

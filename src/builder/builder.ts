@@ -1,29 +1,32 @@
 import fs from "fs";
 import path from "path";
 
-import { applyDbChanges } from "@src/builder/migrator/migrator";
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
-import { Definition } from "@src/types/definition";
-import {
-  BuildDbSchemaData,
-  render as renderDbSchemaTpl,
-} from "@src/builder/renderer/templates/schema.prisma.tpl";
+import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
 import {
   BuildPackageData,
   render as renderPackageTpl,
 } from "@src/builder/renderer/templates/package.json.tpl";
 import {
+  BuildDbSchemaData,
+  render as renderDbSchemaTpl,
+} from "@src/builder/renderer/templates/schema.prisma.tpl";
+import { render as renderServerCommonTpl } from "@src/builder/renderer/templates/server/common.tpl";
+import {
+  RenderEndpointsData,
+  render as renderEndpointsTpl,
+} from "@src/builder/renderer/templates/server/endpoints.tpl";
+import {
   BuildServerData,
   render as renderServerTpl,
-} from "@src/builder/renderer/templates/server.tpl";
-import { render as renderIndexTpl } from "@src/builder/renderer/templates/index.tpl";
+} from "@src/builder/renderer/templates/server/server.tpl";
+import { Definition } from "@src/types/definition";
 
 // TODO: read from definition
 const APP_NAME = "demoapp";
 const PACKAGE_DESCRIPTION = "Demo app built by Gaudi";
 const PACKAGE_VERSION = "0.0.1";
 const OUTPUT_PATH = path.join(process.cwd(), "./output");
-const DB_OUTPUT_PATH = `${OUTPUT_PATH}/db`;
 const SERVER_PORT = 3001;
 const DB_PROVIDER = "postgresql";
 const DB_CONNECTION_URL = "postgresql://gaudi:gaudip@localhost:5432/gaudi";
@@ -40,7 +43,7 @@ export async function build(definition: Definition): Promise<void> {
  - action
 */
 
-  prepareOutputFolder();
+  setupOutputFolder();
   buildPackage({
     package: { name: APP_NAME, description: PACKAGE_DESCRIPTION, version: PACKAGE_VERSION },
   });
@@ -49,20 +52,20 @@ export async function build(definition: Definition): Promise<void> {
   await buildServer({
     serverPort: SERVER_PORT,
   });
+  await buildServerCommon();
+  await buildServerEndpoints({ definition });
 }
 
 // -------------------- part builders
 
 // ---------- Output
 
-function prepareOutputFolder() {
+function setupOutputFolder() {
   // clear output folder
-  if (fs.existsSync(OUTPUT_PATH)) {
-    fs.rmSync(OUTPUT_PATH, { recursive: true, force: true });
+  if (!fs.existsSync(OUTPUT_PATH)) {
+    // (re)create output folder
+    fs.mkdirSync(OUTPUT_PATH, { recursive: true });
   }
-
-  // (re)create output folder
-  fs.mkdirSync(OUTPUT_PATH, { recursive: true });
 }
 
 // ---------- Package
@@ -72,9 +75,9 @@ export async function renderPackage(data: BuildPackageData): Promise<string> {
 }
 
 async function buildPackage(data: BuildPackageData) {
-  return renderPackage(data).then((content) =>
-    storeTemplateOutput(path.join(OUTPUT_PATH, "package.json"), content)
-  );
+  const outFile = path.join(OUTPUT_PATH, "package.json");
+
+  return renderPackage(data).then((content) => storeTemplateOutput(outFile, content));
 }
 
 // ---------- Index
@@ -84,9 +87,9 @@ export async function renderIndex(): Promise<string> {
 }
 
 async function buildIndex() {
-  return renderIndex().then((content) =>
-    storeTemplateOutput(path.join(OUTPUT_PATH, "index.js"), content)
-  );
+  const outFile = path.join(OUTPUT_PATH, "index.js");
+
+  return renderIndex().then((content) => storeTemplateOutput(outFile, content));
 }
 
 // ---------- DB
@@ -95,21 +98,18 @@ export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
   return renderDbSchemaTpl(data);
 }
 
-async function buildDb(data: BuildDbSchemaData): Promise<void> {
-  const schemaFile = path.join(DB_OUTPUT_PATH, "db/schema.prisma");
+async function buildDb(data: BuildDbSchemaData): Promise<unknown> {
+  const outFile = path.join(OUTPUT_PATH, "db/schema.prisma");
 
   return (
     // render DB schema
-    renderDbSchema(data)
-      .then((content) => storeTemplateOutput(schemaFile, content))
-      // apply DB schema
-      .then(() => {
-        applyDbChanges({ schema: schemaFile });
-      })
+    renderDbSchema(data).then((content) => storeTemplateOutput(outFile, content))
   );
 }
 
 // ---------- Server
+
+// --- Main
 
 export async function renderServer(data: BuildServerData): Promise<string> {
   return renderServerTpl(data);
@@ -117,6 +117,30 @@ export async function renderServer(data: BuildServerData): Promise<string> {
 
 async function buildServer(data: BuildServerData): Promise<void> {
   return renderServer(data).then((content) => {
-    storeTemplateOutput(path.join(OUTPUT_PATH, "server.js"), content);
+    storeTemplateOutput(path.join(OUTPUT_PATH, "server/main.js"), content);
   });
+}
+
+// --- Common
+
+export async function renderServerCommon(): Promise<string> {
+  return renderServerCommonTpl();
+}
+
+async function buildServerCommon(): Promise<void> {
+  const outFile = path.join(OUTPUT_PATH, "server/common.js");
+
+  return renderServerCommon().then((content) => storeTemplateOutput(outFile, content));
+}
+
+// --- Endpoints
+
+export async function renderServerEndpoints(data: RenderEndpointsData): Promise<string> {
+  return renderEndpointsTpl(data);
+}
+
+async function buildServerEndpoints(data: RenderEndpointsData): Promise<void> {
+  const outFile = path.join(OUTPUT_PATH, "server/endpoints.js");
+
+  return renderServerEndpoints(data).then((content) => storeTemplateOutput(outFile, content));
 }

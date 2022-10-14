@@ -1,0 +1,208 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`builder build DB schema renders DB schema template correctly 1`] = `
+"generator client {
+      provider = "prisma-client-js"
+    }
+
+    
+    datasource db {
+      provider = "DB_PROVIDER"
+      url      = "DB_CONNECTION_URL"
+    }
+
+    model org {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+optout String?
+
+repos repo[]
+
+
+}
+    model repo {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+org_id Int
+
+
+
+org org @relation(fields: [org_id], references: [id])
+}"
+`;
+
+exports[`builder build index renders index template correctly 1`] = `"require('./server/main.js');"`;
+
+exports[`builder build package renders package template correctly 1`] = `
+"{
+  "name": "test",
+  "description": "Test description",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "server:start": "node index.js",
+    "server:stop": "pkill -f 'node index.js'",
+    "generate": "npm run generate-db-client ",
+    "generate-db-client": "npx prisma generate --schema=./db/schema.prisma",
+    "migrate": "npm run migrate-db && npm run generate",
+    "migrate-db": "npx prisma db push --schema=./db/schema.prisma --accept-data-loss",
+    "postinstall": "npm run generate"
+  },
+  "engines": {
+    "node": ">=16.15.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "prisma": "^4.4.0",
+    "yup": "^0.32.11",
+    "@prisma/client": "^4.4.0"
+  }
+}"
+`;
+
+exports[`builder build server renders server get endpoints correctly 1`] = `
+"const yup = require("yup")
+const { Prisma, PrismaClient } = require("@prisma/client");
+const { endpointHandlerGuard, validateRecord, EndpointError } = require("./common.js");
+
+const prisma = new PrismaClient();
+
+// setup endpoints
+const endpointConfigs = [];
+function setupEndpoints(app) {
+  endpointConfigs.forEach((ep) => {
+    app[ep.method](ep.path, endpointHandlerGuard(ep.handler));
+  })
+} 
+
+// hello world endpoint
+function helloEndpoint(req, res) { res.send("Hello world!") }
+endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
+
+// definition endpoints
+
+
+// ----- commons
+
+async function fetchSingleAction(ctx) {
+  // TODO: execute query
+  try {
+    return \`Example fetch-one action result \${new Date().toISOString()}\`
+  }
+  catch(err) {
+    if (err instanceof EndpointError) {
+      throw err
+    }
+    else {
+      throw new EndpointError(404, { message: 'Not found' }, err)
+    }
+  }
+}
+
+async function fetchManyAction(ctx) {
+  // TODO: execute query
+  return [\`Example list action result \${new Date().toISOString()}\`]
+}
+
+/*
+// example validation use
+const schema = yup .object({   "org_id": yup.number() .required(),   "title": yup.string() .required() }) .required();
+
+const value = await validateRecord({
+  org_id: "1", title: 'asdf'
+}, schema);
+console.log('VALID', value)
+
+*/
+
+// ----- export
+
+module.exports = {
+  setupEndpoints
+}"
+`;
+
+exports[`builder build server renders server list endpoints correctly 1`] = `
+"const yup = require("yup")
+const { Prisma, PrismaClient } = require("@prisma/client");
+const { endpointHandlerGuard, validateRecord, EndpointError } = require("./common.js");
+
+const prisma = new PrismaClient();
+
+// setup endpoints
+const endpointConfigs = [];
+function setupEndpoints(app) {
+  endpointConfigs.forEach((ep) => {
+    app[ep.method](ep.path, endpointHandlerGuard(ep.handler));
+  })
+} 
+
+// hello world endpoint
+function helloEndpoint(req, res) { res.send("Hello world!") }
+endpointConfigs.push({ path: '/hello', method: 'get', handler: helloEndpoint })
+
+// definition endpoints
+
+
+// ----- commons
+
+async function fetchSingleAction(ctx) {
+  // TODO: execute query
+  try {
+    return \`Example fetch-one action result \${new Date().toISOString()}\`
+  }
+  catch(err) {
+    if (err instanceof EndpointError) {
+      throw err
+    }
+    else {
+      throw new EndpointError(404, { message: 'Not found' }, err)
+    }
+  }
+}
+
+async function fetchManyAction(ctx) {
+  // TODO: execute query
+  return [\`Example list action result \${new Date().toISOString()}\`]
+}
+
+/*
+// example validation use
+const schema = yup .object({   "org_id": yup.number() .required(),   "title": yup.string() .required() }) .required();
+
+const value = await validateRecord({
+  org_id: "1", title: 'asdf'
+}, schema);
+console.log('VALID', value)
+
+*/
+
+// ----- export
+
+module.exports = {
+  setupEndpoints
+}"
+`;
+
+exports[`builder build server renders server template correctly 1`] = `
+"const express = require("express");
+const { requestLogger, errorLogger, errorResponder } = require("./common.js");
+const { setupEndpoints } = require("./endpoints.js");
+
+const app = express();
+const port = 3001;
+
+setupEndpoints(app);
+
+app.use(requestLogger)
+app.use(errorLogger)
+app.use(errorResponder)
+
+app.listen(port, () => {
+  console.log(\`Example app listening on port \${port}\`);
+});"
+`;

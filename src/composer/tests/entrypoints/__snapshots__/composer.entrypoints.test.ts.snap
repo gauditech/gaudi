@@ -1,0 +1,492 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`entrypoint composes basic example 1`] = `
+[
+  {
+    "endpoints": [
+      {
+        "actions": [],
+        "kind": "list",
+        "response": [
+          {
+            "alias": "id",
+            "kind": "field",
+            "name": "id",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+            "refKey": "Org.id",
+          },
+          {
+            "alias": "slug",
+            "kind": "field",
+            "name": "slug",
+            "namePath": [
+              "Org",
+              "slug",
+            ],
+            "refKey": "Org.slug",
+          },
+          {
+            "alias": "name",
+            "kind": "field",
+            "name": "name",
+            "namePath": [
+              "Org",
+              "name",
+            ],
+            "refKey": "Org.name",
+          },
+        ],
+        "targets": [
+          {
+            "alias": null,
+            "identifyWith": {
+              "name": "slug",
+              "paramName": "org_slug",
+              "refKey": "Org.slug",
+              "type": "text",
+            },
+            "kind": "model",
+            "name": "Org",
+            "namePath": [
+              "Org",
+            ],
+            "refKey": "Org",
+            "retType": "Org",
+          },
+        ],
+      },
+      {
+        "actions": [],
+        "kind": "get",
+        "response": [
+          {
+            "alias": "id",
+            "kind": "field",
+            "name": "id",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+            "refKey": "Org.id",
+          },
+          {
+            "alias": "slug",
+            "kind": "field",
+            "name": "slug",
+            "namePath": [
+              "Org",
+              "slug",
+            ],
+            "refKey": "Org.slug",
+          },
+          {
+            "alias": "name",
+            "kind": "field",
+            "name": "name",
+            "namePath": [
+              "Org",
+              "name",
+            ],
+            "refKey": "Org.name",
+          },
+        ],
+        "targets": [
+          {
+            "alias": null,
+            "identifyWith": {
+              "name": "slug",
+              "paramName": "org_slug",
+              "refKey": "Org.slug",
+              "type": "text",
+            },
+            "kind": "model",
+            "name": "Org",
+            "namePath": [
+              "Org",
+            ],
+            "refKey": "Org",
+            "retType": "Org",
+          },
+        ],
+      },
+    ],
+    "entrypoints": [
+      {
+        "endpoints": [
+          {
+            "actions": [],
+            "kind": "list",
+            "response": [
+              {
+                "alias": "id",
+                "kind": "field",
+                "name": "id",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "id",
+                ],
+                "refKey": "Repo.id",
+              },
+              {
+                "alias": "org",
+                "kind": "reference",
+                "name": "org",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "org",
+                ],
+                "select": [
+                  {
+                    "alias": "id",
+                    "kind": "field",
+                    "name": "id",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "id",
+                    ],
+                    "refKey": "Org.id",
+                  },
+                  {
+                    "alias": "slug",
+                    "kind": "field",
+                    "name": "slug",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "slug",
+                    ],
+                    "refKey": "Org.slug",
+                  },
+                  {
+                    "alias": "name",
+                    "kind": "field",
+                    "name": "name",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "name",
+                    ],
+                    "refKey": "Org.name",
+                  },
+                ],
+              },
+            ],
+            "targets": [
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "slug",
+                  "paramName": "org_slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "refKey": "Org",
+                "retType": "Org",
+              },
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "id",
+                  "paramName": "repo_id",
+                  "refKey": "Repo.id",
+                  "type": "integer",
+                },
+                "kind": "relation",
+                "name": "repos",
+                "namePath": [
+                  "Org",
+                  "repos",
+                ],
+                "refKey": "Org.repos",
+                "retType": "Repo",
+              },
+            ],
+          },
+          {
+            "actions": [],
+            "kind": "get",
+            "response": [
+              {
+                "alias": "id",
+                "kind": "field",
+                "name": "id",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "id",
+                ],
+                "refKey": "Repo.id",
+              },
+              {
+                "alias": "org",
+                "kind": "reference",
+                "name": "org",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "org",
+                ],
+                "select": [
+                  {
+                    "alias": "id",
+                    "kind": "field",
+                    "name": "id",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "id",
+                    ],
+                    "refKey": "Org.id",
+                  },
+                  {
+                    "alias": "slug",
+                    "kind": "field",
+                    "name": "slug",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "slug",
+                    ],
+                    "refKey": "Org.slug",
+                  },
+                  {
+                    "alias": "name",
+                    "kind": "field",
+                    "name": "name",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "name",
+                    ],
+                    "refKey": "Org.name",
+                  },
+                ],
+              },
+            ],
+            "targets": [
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "slug",
+                  "paramName": "org_slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "refKey": "Org",
+                "retType": "Org",
+              },
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "id",
+                  "paramName": "repo_id",
+                  "refKey": "Repo.id",
+                  "type": "integer",
+                },
+                "kind": "relation",
+                "name": "repos",
+                "namePath": [
+                  "Org",
+                  "repos",
+                ],
+                "refKey": "Org.repos",
+                "retType": "Repo",
+              },
+            ],
+          },
+          {
+            "actions": [],
+            "contextActionChangeset": {
+              "org_id": {
+                "fieldsetAccess": [
+                  "org_id",
+                ],
+                "kind": "fieldset-input",
+                "type": "integer",
+              },
+              "title": {
+                "fieldsetAccess": [
+                  "title",
+                ],
+                "kind": "fieldset-input",
+                "type": "text",
+              },
+            },
+            "fieldset": {
+              "kind": "record",
+              "nullable": false,
+              "record": {
+                "org_id": {
+                  "kind": "field",
+                  "nullable": false,
+                  "type": "integer",
+                },
+                "title": {
+                  "kind": "field",
+                  "nullable": false,
+                  "type": "text",
+                },
+              },
+            },
+            "kind": "create",
+            "response": [
+              {
+                "alias": "id",
+                "kind": "field",
+                "name": "id",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "id",
+                ],
+                "refKey": "Repo.id",
+              },
+              {
+                "alias": "org",
+                "kind": "reference",
+                "name": "org",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "org",
+                ],
+                "select": [
+                  {
+                    "alias": "id",
+                    "kind": "field",
+                    "name": "id",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "id",
+                    ],
+                    "refKey": "Org.id",
+                  },
+                  {
+                    "alias": "slug",
+                    "kind": "field",
+                    "name": "slug",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "slug",
+                    ],
+                    "refKey": "Org.slug",
+                  },
+                  {
+                    "alias": "name",
+                    "kind": "field",
+                    "name": "name",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "org",
+                      "name",
+                    ],
+                    "refKey": "Org.name",
+                  },
+                ],
+              },
+            ],
+            "targets": [
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "slug",
+                  "paramName": "org_slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "refKey": "Org",
+                "retType": "Org",
+              },
+              {
+                "alias": null,
+                "identifyWith": {
+                  "name": "id",
+                  "paramName": "repo_id",
+                  "refKey": "Repo.id",
+                  "type": "integer",
+                },
+                "kind": "relation",
+                "name": "repos",
+                "namePath": [
+                  "Org",
+                  "repos",
+                ],
+                "refKey": "Org.repos",
+                "retType": "Repo",
+              },
+            ],
+          },
+        ],
+        "entrypoints": [],
+        "name": "Repositories",
+        "target": {
+          "alias": null,
+          "identifyWith": {
+            "name": "id",
+            "paramName": "repo_id",
+            "refKey": "Repo.id",
+            "type": "integer",
+          },
+          "kind": "relation",
+          "name": "repos",
+          "namePath": [
+            "Org",
+            "repos",
+          ],
+          "refKey": "Org.repos",
+          "retType": "Repo",
+        },
+      },
+    ],
+    "name": "Orgs",
+    "target": {
+      "alias": null,
+      "identifyWith": {
+        "name": "slug",
+        "paramName": "org_slug",
+        "refKey": "Org.slug",
+        "type": "text",
+      },
+      "kind": "model",
+      "name": "Org",
+      "namePath": [
+        "Org",
+      ],
+      "refKey": "Org",
+      "retType": "Org",
+    },
+  },
+]
+`;

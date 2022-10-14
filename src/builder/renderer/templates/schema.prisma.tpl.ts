@@ -1,10 +1,11 @@
+import { oneLine, source } from "common-tags";
+
 import {
   fieldDbName,
   modelDbName,
   typeToDbType,
 } from "@src/builder/renderer/templates/util/definition";
 import { Definition } from "@src/types/definition";
-import { oneLine, source } from "common-tags";
 
 export type BuildDbSchemaData = {
   definition: Definition;
@@ -17,6 +18,10 @@ export function render(data: BuildDbSchemaData): string {
 
   // prettier-ignore
   return source`
+    generator client {
+      provider = "prisma-client-js"
+    }
+
     ${ /* TODO: datasource should come from definition instead of being hardcoded */'' }
     datasource db {
       provider = "${data.dbProvider}"

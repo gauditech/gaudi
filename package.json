@@ -5,22 +5,30 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run generate-grammar && jest",
-    "build": "npm run generate-grammar && tsc -p tsconfig.json && npm run copy-static && npm run dist:compile",
+    "test": "npm run build:grammar && jest",
+    "build": "npm run build:grammar && npm run build:runtime",
+    "build:grammar": "npm run generate-grammar",
+    "build:runtime": "tsc -p tsconfig.json && npm run copy-static && npm run dist:compile",
+    "dev": "make-dir dist; concurrently \"tsc -w -p tsconfig.json\" \"chokidar 'dist/**/*' -i 'dist/output' -i 'dist/package*' -i 'dist/node_modules' -c 'npm run dev:onchange'\"",
+    "dev:onchange": "npm run copy-static; npm run dist:install; npm run dist:compile; npm run dist:migrate; npm run dist:server:install; npm run dist:server:stop; npm run dist:server:start",
     "lint": "eslint --fix .; prettier --loglevel warn --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "typecheck:watch": "tsc -w --noEmit -p tsconfig.json",
     "copy-static": "npm run copy-static:build-package",
     "copy-static:build-package": "copyfiles -f 'src/package.json' dist",
     "generate-grammar": "ohm generateBundles --withTypes src/parser/grammar/gaudi.ohm",
+    "dist:install": "cd dist && npm install",
     "dist:compile": "cd dist && npm run compile",
-    "dist:start-server": "cd dist/output && npm run start-server"
+    "dist:migrate": "cd dist && npm run migrate",
+    "dist:server:install": "cd dist/output && npm install",
+    "dist:server:start": "cd dist/output && npm run server:start",
+    "dist:server:stop": "cd dist/output && npm run server:stop"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@gitlab.com/gaudiorg/gaudi.git"
   },
-  "author": "Marin Pranjic, Ivo Kosir",
+  "author": "Marin Pranjic, Ivo Kosir, Hrvoje Kasabasic",
   "license": "UNLICENCED",
   "bugs": {
     "url": "https://gitlab.com/gaudiorg/gaudi/issues"
@@ -31,16 +39,20 @@
     "@types/common-tags": "^1.8.1",
     "@types/express": "^4.17.13",
     "@types/jest": "^29.0.1",
+    "@types/lodash": "^4.14.186",
     "@types/module-alias": "^2.0.1",
     "@types/node": "^18.7.17",
     "@typescript-eslint/eslint-plugin": "^5.37.0",
     "@typescript-eslint/parser": "^5.37.0",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^7.4.0",
     "copyfiles": "^2.4.1",
     "eslint": "^8.23.1",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-typescript": "^3.5.1",
     "eslint-plugin-import": "^2.26.0",
     "jest": "^29.0.3",
+    "make-dir-cli": "^3.0.0",
     "prettier": "^2.7.1",
     "ts-jest": "^29.0.1",
     "typescript": "^4.8.3"
@@ -51,6 +63,7 @@
   "dependencies": {
     "common-tags": "^1.8.2",
     "express": "^4.18.1",
+    "lodash": "^4.17.21",
     "module-alias": "^2.2.2",
     "ohm-js": "^16.4.0"
   }

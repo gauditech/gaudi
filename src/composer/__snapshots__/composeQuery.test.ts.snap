@@ -1,0 +1,139 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`compose model queries example with nested filters 1`] = `
+[
+  {
+    "filter": {
+      "kind": "binary",
+      "lhs": {
+        "kind": "binary",
+        "lhs": {
+          "kind": "alias",
+          "namePath": [
+            "org",
+            "id",
+          ],
+        },
+        "operator": "is",
+        "rhs": {
+          "kind": "literal",
+          "type": "integer",
+          "value": 1,
+        },
+      },
+      "operator": "and",
+      "rhs": {
+        "kind": "alias",
+        "namePath": [
+          "is_active",
+        ],
+      },
+    },
+    "joinPaths": [
+      {
+        "bpAlias": null,
+        "joinPaths": [
+          {
+            "bpAlias": null,
+            "joinPaths": [],
+            "joinType": "inner",
+            "name": "org",
+            "namePath": [
+              "repos",
+              "org",
+            ],
+            "nullable": false,
+            "refKey": "Repo.org",
+            "retCardinality": "one",
+            "retType": "Org",
+            "select": [
+              {
+                "name": "id",
+                "namePath": [
+                  "repos",
+                  "org",
+                  "id",
+                ],
+                "nullable": false,
+                "refKey": "Org.id",
+                "retType": "integer",
+              },
+            ],
+          },
+        ],
+        "joinType": "inner",
+        "name": "repos",
+        "namePath": [
+          "repos",
+        ],
+        "nullable": false,
+        "refKey": "Org.repos",
+        "retCardinality": "many",
+        "retType": "Repo",
+        "select": [
+          {
+            "name": "is_active",
+            "namePath": [
+              "repos",
+              "is_active",
+            ],
+            "nullable": false,
+            "refKey": "Repo.is_active",
+            "retType": "boolean",
+          },
+        ],
+      },
+    ],
+    "name": "repos_if_one",
+    "nullable": false,
+    "refKey": "Org.repos_if_one",
+    "retCardinality": "many",
+    "retType": "Repo",
+  },
+]
+`;
+
+exports[`compose model queries nested example without filters 1`] = `
+[
+  {
+    "filter": undefined,
+    "joinPaths": [
+      {
+        "bpAlias": null,
+        "joinPaths": [
+          {
+            "bpAlias": null,
+            "joinPaths": [],
+            "joinType": "inner",
+            "name": "org",
+            "namePath": [
+              "repos",
+              "org",
+            ],
+            "nullable": false,
+            "refKey": "Repo.org",
+            "retCardinality": "one",
+            "retType": "Org",
+            "select": [],
+          },
+        ],
+        "joinType": "inner",
+        "name": "repos",
+        "namePath": [
+          "repos",
+        ],
+        "nullable": false,
+        "refKey": "Org.repos",
+        "retCardinality": "many",
+        "retType": "Repo",
+        "select": [],
+      },
+    ],
+    "name": "back_to_org",
+    "nullable": false,
+    "refKey": "Org.back_to_org",
+    "retCardinality": "many",
+    "retType": "Org",
+  },
+]
+`;

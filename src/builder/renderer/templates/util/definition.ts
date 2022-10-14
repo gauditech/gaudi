@@ -1,4 +1,4 @@
-import { Definition } from "@src/types/definition";
+import { Definition, EntrypointDef } from "@src/types/definition";
 
 /*
  * Template helper functions for Gaudi definition

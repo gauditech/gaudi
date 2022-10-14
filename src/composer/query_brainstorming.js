@@ -219,3 +219,29 @@ Filter moze biti:
     Svaki ne moze biti logical
 
 */
+
+/*
+-- Fetch path action
+
+{
+  kind: "fetch kroz model definiciju", <-- url path params XXXX
+  model: "Org",
+  path: [
+    { kind: "model", name: "Org", model: { name: "Org", refKey: "Org" }, identifier: { name: "slug", refKey: "Org.id" } }
+    { kind: "query", name: "public_issues", refKey: "Org.public_issues", modelRefKey: "Issue", identifier: "slug", identifierRefKey: "Issue.slug" },
+    { kind: "relation", name: "comments", refKey: "Repo.comments", modelRefKey: "Comment", identifier: "number", identifierRefKey: "Org.id" },
+  ]
+}
+*/
+
+/*
+app.get('pathx', (req, res) => {
+  const org = knex("org").where("slug", "=", req.path_params.org_slug)
+  if(!org.length) throw "404"
+  const repo = knex("repo")....
+  if(!repo.length) throw "404"
+  const issue = knex("issue")....
+  if(!issue.length) throw "404"
+  const comments = knex("comment").where("issue_id", "=", issue.id)
+})
+ */

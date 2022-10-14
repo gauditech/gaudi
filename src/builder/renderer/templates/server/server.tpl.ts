@@ -8,14 +8,21 @@ export function render(data: BuildServerData): string {
   // prettier-ignore
   return source`
     const express = require("express");
+    const { requestLogger, errorLogger, errorResponder } = require("./common.js");
+    const { setupEndpoints } = require("./endpoints.js");
 
     const app = express();
-    const port = ${data.serverPort };
+    const port = ${data.serverPort};
 
-    app.get("/", (req, res) => res.send("Hello world!"));
+    setupEndpoints(app);
+
+    app.use(requestLogger)
+    app.use(errorLogger)
+    app.use(errorResponder)
 
     app.listen(port, () => {
       console.log(\`Example app listening on port \${port}\`);
     });
+
   `
 }
