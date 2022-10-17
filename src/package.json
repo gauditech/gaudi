@@ -1,12 +1,9 @@
 {
-  "name": "gaudi",
+  "name": "@gaudi/engine",
   "description": "Gaudi app builder",
   "version": "0.0.1",
   "main": "engine.js",
-  "scripts": {
-    "compile": "node src/engine.js",
-    "migrate": "cd output && npm run migrate"
-  },
+  "scripts": {},
   "engines": {
     "node": ">=16.15.0"
   },
