@@ -14,10 +14,10 @@
     "// --- dev": "",
     "dev": "concurrently \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
     "dev:compile": "chokidar ./src \"./node_modules/@gaudi/engine/\" --debounce 100 --initial --command \"npm run build:compile\"",
-    "dev:migrate": "make-dir ./dist/db && chokidar ./dist/db/ --debounce 300 --initial --command \"npm run build:migrate\"",
+    "dev:migrate": "make-dir ./dist/db && chokidar ./dist/db/ --debounce 500 --initial --command \"npm run build:migrate\"",
     "dev:start": "npm start",
     "// --- server": "",
-    "start": "GAUDI_IN=./dist nodemon ./node_modules/@gaudi/engine/runtime/runtime.js",
+    "start": "GAUDI_IN=./dist nodemon --watch ./node_modules/@gaudi/engine/runtime ./node_modules/@gaudi/engine/runtime/runtime.js",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
