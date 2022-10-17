@@ -1,5 +1,3 @@
-import definition from "@examples/git/definition.json";
-
 import {
   renderDbSchema,
   renderIndex,
@@ -8,6 +6,7 @@ import {
   renderServerEndpoints,
 } from "@src/builder/builder";
 import { RenderEndpointsData } from "@src/builder/renderer/templates/server/endpoints.tpl";
+import definition from "@src/composer/tests/data/definition.json";
 import { compile, compose, parse } from "@src/index";
 
 describe("builder", () => {
