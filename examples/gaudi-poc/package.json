@@ -5,34 +5,31 @@
   "main": "index.js",
   "scripts": {
     "// --- build": "",
-    "build": "npm run build:compile",
+    "build": "npm run build:compile && npm run build:migrate",
     "build:compile": "GAUDI_IN=./src/poc.gaudi GAUDI_OUT=./dist node ./node_modules/@gaudi/engine/engine.js",
-    "build:migrate": "npm run build:migrate:db && npm run build:generate:db-client",
+    "build:migrate": "npm run build:migrate:db",
     "build:migrate:db": "npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss",
-    "build:generate:db-client": "npx prisma generate --schema=./dist/db/schema.prisma",
-    "build:copy": "",
     "// --- dev": "",
-    "dev": "concurrently \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
-    "dev:compile": "chokidar ./src \"./node_modules/@gaudi/engine/\" --debounce 100 --initial --command \"npm run build:compile\"",
-    "dev:migrate": "make-dir ./dist/db && chokidar ./dist/db/ --debounce 500 --initial --command \"npm run build:migrate\"",
-    "dev:start": "npm start",
+    "dev": "npm run dev:prepare; concurrently \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
+    "// prepare - precreate output folder(s) so watchers work as expected": "",
+    "dev:prepare": "make-dir ./dist/db;",
+    "dev:compile": "chokidar ./src \"./node_modules/@gaudi/engine/\" --debounce --initial --command \"npm run build:compile\"",
+    "dev:migrate": "chokidar ./dist/db/ --debounce --initial --command \"npm run build:migrate\"",
+    "dev:start": "chokidar ./dist/definition.json --command \"if [ '{event}' = 'add' ]; then npm start; fi;\"",
     "// --- server": "",
-    "start": "GAUDI_IN=./dist nodemon --watch ./node_modules/@gaudi/engine/runtime ./node_modules/@gaudi/engine/runtime/runtime.js",
+    "start": "GAUDI_IN=./dist/definition.json nodemon --watch ./node_modules/@gaudi/engine/runtime --watch ./dist/definition.json ./node_modules/@gaudi/engine/runtime/runtime.js",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@gaudi/engine": "file:../../dist",
-    "@prisma/client": "^4.4.0"
+    "@gaudi/engine": "file:../../dist"
   },
   "devDependencies": {
     "chokidar-cli": "^3.0.0",
-    "copyfiles": "^2.4.1",
     "make-dir-cli": "^3.0.0",
     "nodemon": "^2.0.20",
-    "prisma": "^4.4.0",
     "rimraf": "^3.0.2"
   }
 }

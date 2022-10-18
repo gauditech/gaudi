@@ -18,10 +18,6 @@ export function render(data: BuildDbSchemaData): string {
 
   // prettier-ignore
   return source`
-    generator client {
-      provider = "prisma-client-js"
-    }
-
     ${ /* TODO: datasource should come from definition instead of being hardcoded */'' }
     datasource db {
       provider = "${data.dbProvider}"

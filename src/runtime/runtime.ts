@@ -1,13 +1,19 @@
-import express, { Request, Response } from "express";
+import fs from "fs";
 
-const app = express();
+// import this file only with relative path because this file actually configures path aliasaes (eg @src, ...)
+import "../common/setupAliases";
+
+import { createServer as setupServer } from "@src/runtime/server/server";
+
+const host = "127.0.0.1";
 const port = 3001; // TODO: read port from env
+const definitionPath = process.env.GAUDI_IN || "";
 
-function helloEndpoint(req: Request, res: Response) {
-  res.send("Hello world!!!");
+if (!fs.existsSync(definitionPath)) {
+  throw `Definition file not found: "${definitionPath}"`;
 }
-app.get("/hello", helloEndpoint);
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+const definitionStr = fs.readFileSync(definitionPath).toString("utf-8");
+const definition = JSON.parse(definitionStr);
+//
+setupServer({ host, port, definition });
