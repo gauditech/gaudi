@@ -1,3 +1,4 @@
+import knex from "knex";
 import _ from "lodash";
 
 import { compile, compose, parse } from "../index";
@@ -5,6 +6,8 @@ import { compile, compose, parse } from "../index";
 import { queryableFromEndpointTargets, queryableToString } from "./query";
 
 import { SelectConstantItem } from "@src/types/definition";
+
+const pg = knex({ client: "pg" });
 
 describe("queryables", () => {
   it("works 1", () => {
@@ -43,6 +46,7 @@ describe("queryables", () => {
       "single"
     );
     const s = q ? queryableToString(def, q) : "not queryable";
-    console.log(s);
+    const sql = pg.raw(s, { repo_id: 4, org_slug: "myorg" }).toQuery();
+    console.log(sql);
   });
 });

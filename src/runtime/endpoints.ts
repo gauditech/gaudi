@@ -3,27 +3,24 @@ import knex from "knex";
 
 const app = express();
 const port = 3002;
-
+const pg = knex({ client: "pg" });
 import {
   PathParam,
   buildEndpointPath,
   queryableFromEndpointTargets,
+  queryableToString,
   selectToSelectable,
 } from "@src/builder/query";
-import { Definition, QueryDef, QueryDefPath, TargetDef } from "@src/types/definition";
+import { Definition } from "@src/types/definition";
 
-function validatePathParam(param: PathParam["params"][number], val: string): PathVariable {
+function validatePathParam(param: PathParam["params"][number], val: string): string | number {
   switch (param.type) {
     case "integer":
-      return { name: param.name, type: param.type, value: parseInt(val, 10) };
+      return parseInt(val, 10);
     case "text":
-      return { name: param.name, type: param.type, value: val };
+      return val;
   }
 }
-
-type PathVariable =
-  | { name: string; type: "text"; value: string }
-  | { name: string; type: "integer"; value: number };
 
 export function setupEndpoints(def: Definition) {
   for (const entrypoint of def.entrypoints) {
@@ -33,7 +30,9 @@ export function setupEndpoints(def: Definition) {
           const { path, params } = buildEndpointPath(endpoint);
           app.get(path, (req: Request, res) => {
             // collect path params
-            const vars = params.map((p) => validatePathParam(p, req.params[p.name]));
+            const vars = Object.fromEntries(
+              params.map((p) => [p.name, validatePathParam(p, req.params[p.name])])
+            );
 
             // get targets
             const q = queryableFromEndpointTargets(
@@ -42,6 +41,9 @@ export function setupEndpoints(def: Definition) {
               selectToSelectable(endpoint.response),
               "single"
             );
+            const sqlTpl = queryableToString(def, q!);
+            const target = pg.raw(sqlTpl, vars);
+            res.json(target);
           });
         }
       }

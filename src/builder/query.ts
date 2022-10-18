@@ -243,7 +243,7 @@ function filterToString(filter: FilterDef): string {
       )})`;
     }
     case "variable": {
-      return `$\{${filter.name}}`;
+      return `:${filter.name}`;
     }
   }
 }
