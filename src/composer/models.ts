@@ -370,6 +370,7 @@ function defineQueryPathDeps(
             "join",
             {
               refKey,
+              kind: "reference",
               name,
               retType: toModel.name,
               retCardinality: "one",
@@ -388,6 +389,7 @@ function defineQueryPathDeps(
             "join",
             {
               refKey,
+              kind: "relation",
               name,
               retType: fromModel.name,
               retCardinality: relation.unique ? "one" : "many",
@@ -406,6 +408,7 @@ function defineQueryPathDeps(
             "join",
             {
               refKey,
+              kind: "query",
               name,
               retType: query.retType,
               retCardinality: query.retCardinality,

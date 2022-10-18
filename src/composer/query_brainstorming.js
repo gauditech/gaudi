@@ -245,3 +245,13 @@ app.get('pathx', (req, res) => {
   const comments = knex("comment").where("issue_id", "=", issue.id)
 })
  */
+
+/*
+Back to queries:
+
+- from Org.repos.issues
+- where repo.is_public
+    and issues.comment_count > 10
+    and @auth in repo.members 
+
+*/

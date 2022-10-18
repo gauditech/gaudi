@@ -1,16 +1,18 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { getRef, getTargetModel } from "@src/common/refs";
+import { Ref, getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import { BinaryOperator } from "@src/types/ast";
 import {
   Definition,
   EndpointDef,
   FilterDef,
+  ModelDef,
   ReferenceDef,
   RelationDef,
   SelectConstantItem,
+  SelectDef,
   SelectFieldItem,
   SelectableItem,
   TargetDef,
@@ -57,6 +59,10 @@ export function buildEndpointContextSql(def: Definition, endpoint: EndpointDef):
   }
 }
 
+export function selectToSelectable(select: SelectDef): SelectableItem[] {
+  return select.filter((s): s is SelectableItem => s.kind === "field" || s.kind === "constant");
+}
+
 export function buildEndpointTargetSql(
   def: Definition,
   targets: TargetDef[],
@@ -70,8 +76,6 @@ export function buildEndpointTargetSql(
   return queryableToString(def, q);
 }
 
-// export buildSqlFromTargets()
-
 export function queryableFromEndpointTargets(
   def: Definition,
   targets: TargetDef[],
@@ -79,6 +83,7 @@ export function queryableFromEndpointTargets(
   mode: "single" | "multi"
 ): Queryable | null {
   if (!targets.length) return null;
+
   const [target, ...rest] = targets;
   const shouldFilterByIdentity = rest.length > 0 || mode === "single";
   return {
@@ -307,4 +312,227 @@ function _joinSelectAll(def: Definition, j: Join): string {
   return model.fields
     .map((f) => `${toAlias(j.namePath)}.${f.dbname} AS ${toAlias([...j.namePath, f.name])}`)
     .join(",");
+}
+
+/**
+ * Second attempt. Filters included.
+ */
+
+export function buildContextQueryable(def: Definition, targets: TargetDef[]): Queryable | null {
+  // this is a "multi" builder, don't fetch leaf target, as it's fetched in a separate query
+
+  // if this is root level endpoint, there is no context to fetch
+  if (targets.length <= 1) {
+    return null;
+  }
+  return buildTargetQueryable(def, _.initial(targets));
+}
+
+export function buildTargetQueryable(def: Definition, targets: TargetDef[]): Queryable {
+  // this is a "single" builder, let's just join all the `join` stuff together
+
+  // assumes there's at least 1 target
+  const rootTarget = targets[0];
+  const { value: model } = getRef<"model">(def, rootTarget.refKey);
+  const allFilterPaths = targets.flatMap((t) => getFilterPaths(t.filter));
+  const fromPath = _.last(targets)!.namePath;
+  const allPaths = _.uniqWith([fromPath, ...allFilterPaths], _.isEqual);
+  const relativePaths = allPaths.map(_.tail); // drop context from namespace
+
+  const joins = buildJoins(def, model, [rootTarget.name], relativePaths);
+
+  return {
+    modelRefKey: rootTarget.refKey,
+    filter: undefined, // TODO read filters from all targets
+    joins,
+    select: [],
+  };
+}
+
+function buildJoins(
+  def: Definition,
+  parent: ModelDef,
+  namePathPrefix: string[],
+  relativeJoinPaths: string[][]
+): Join[] {
+  const direct = _.chain(relativeJoinPaths)
+    .map((p) => p[0]) // take direct
+    .compact() // remove empty paths
+    .uniq()
+    // .map((name) => buildJoin(def, parentContext, namePath, name))
+    .value();
+
+  return direct.map((name): Join => {
+    // for each direct join, find relative paths
+    const joinPaths = relativeJoinPaths.filter((p) => p[0] === name).map(_.tail);
+    // define next context
+    const ref = getModelProp<"reference" | "relation" | "query">(parent, name);
+    const model = getTargetModel(def.models, ref.value.refKey);
+
+    const joins = buildJoins(def, model, [...namePathPrefix, name], joinPaths);
+
+    return {
+      kind: ref.kind,
+      refKey: ref.value.refKey,
+      name,
+      namePath: namePathPrefix,
+      joinType: "inner",
+      on: undefined,
+      joins,
+    };
+  });
+}
+
+function getJoinFilter(
+  def: Definition,
+  model: ModelDef,
+  namePath: string[],
+  ref: Ref<"reference" | "relation" | "query">
+): FilterDef {
+  switch (ref.kind) {
+    case "reference": {
+      const { value: field } = getRef<"field">(def, ref.value.fieldRefKey);
+      return {
+        kind: "binary",
+        operator: "is",
+        lhs: { kind: "alias", namePath: [...namePath, field.name] }, // Org.repos.author_id
+        rhs: { kind: "alias", namePath: [...namePath, ref.value.name, "id"] }, // Org.repos.author.id
+      };
+    }
+    case "relation": {
+      const { value: reference } = getRef<"reference">(def, ref.value.throughRefKey);
+      const { value: field } = getRef<"field">(def, reference.fieldRefKey);
+      return {
+        kind: "binary",
+        operator: "is",
+        lhs: { kind: "alias", namePath: [...namePath, "id"] }, // Org.repos.id
+        rhs: { kind: "alias", namePath: [...namePath, ref.value.name, field.name] }, // Org.repos.issues.repo_id
+      };
+    }
+    case "query": {
+      const model = getTargetModel(def.models, ref.value.retType);
+    }
+  }
+}
+
+/*
+
+
+SELECT -
+FROM org "Org"
+JOIN (
+  SELECT *
+  FROM repo "Org.issues_with_many_commenteers:top_repos:repos"
+  JOIN 
+  WHERE "Org.issues_with_many_commenteers:top_repos:repos".
+) ON "Org".id = "Org.issues_with_many_commenteers:top_repos:repos".org_id
+
+
+SELECT -
+FROM org "Org"
+JOIN repo "Org.repos"
+  ON "Org".id = "Org.repos".org_id
+  AND "Org.repos".is_public IS TRUE
+
+JOIN issues "Org.repos.issues"
+  ON "Org.repos".id = "Org.repos.issues".repo_id
+
+
+model Org {
+  relation repos
+
+  query top_repos {
+    from repos
+    filter { is_public is true }
+    order by star_count desc
+    limit 5
+  }
+
+  query issues_with_many_commenteers {
+    from top_repos.public_issues
+    filter { comment_count > 1000 }
+    order_by comment_count
+    limit 5
+  }
+}
+
+model Repo {
+  reference Org
+  relation issues
+}
+
+model RepoStar {
+  reference Repo
+  query public_issues {
+    from issues
+    filter { is_public is true }
+  }
+}
+
+model Issue {
+  reference Repo
+  relation comments
+}
+
+model Comment {
+  reference Issue
+}
+
+
+
+
+SELECT *
+FROM org "Org"
+JOIN (
+  SELECT *
+  FROM org_membership "Org.recent_memberships:org_membership"
+  JOIN users u
+    ON om.user_id = u.id
+) 
+  ON om.org_id = o.id
+
+PROBLEM:
+joinPathovi ne uzimaju u obzir da query moze imat svojih hrpu join pathova!
+Query se moze prikazivati u:
+1. from / targets
+2. filterima ako je IN za liste
+3. filterima ako je filtrirani reference
+4. filterima ako je aggregate
+5. filterima ako je FIRST
+
+Kako god, query moze imati deeply nested path putanju (query na query na query...)
+to mozemo / moramo rijesiti sa subqueryima ILI ih resolveat - flattenat
+
+from repos.issues
+filt author.id == 100
+and  @auth in members
+- repos, issues
+- repos, issues, author
+- repos, members
+
+
+
+
+from Org.repos as o.r
+filter @auth in o.members # query
+    or @auth in r.collaborators # query
+    or o.members.id in [1,3,5] <-- this becomes many! count? some?
+    or o.members.id in [4,5,6]
+
+
+
+ */
+
+function getFilterPaths(filter: FilterDef): string[][] {
+  switch (filter?.kind) {
+    case undefined:
+    case "literal":
+    case "variable":
+      return [];
+    case "alias":
+      return [filter.namePath];
+    case "binary": {
+      return [...getFilterPaths(filter.lhs), ...getFilterPaths(filter.rhs)];
+    }
+  }
 }

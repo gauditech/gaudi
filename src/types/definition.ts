@@ -61,8 +61,9 @@ export type QueryDefPathSelect = {
 export type QueryDefPath = {
   refKey: string;
   name: string;
+  kind: "reference" | "relation" | "query";
   retType: string;
-  retCardinality: "one" | "many"; // should be retCard,...
+  retCardinality: "one" | "many";
   nullable: boolean;
   joinType: "inner" | "left";
   namePath: string[];
@@ -89,6 +90,8 @@ export type LiteralFilterDef =
 export type QueryDef = {
   refKey: string;
   name: string;
+  // fromNamePath: string[];
+  // rootModelRefKey: string;
   retType: string;
   retCardinality: "one" | "many";
   nullable: boolean;
@@ -115,6 +118,7 @@ export type TargetDef = {
   retType: string;
   alias: string | null;
   identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
+  filter: FilterDef;
 };
 
 export type EndpointDef =

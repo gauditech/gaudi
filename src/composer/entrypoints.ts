@@ -74,6 +74,7 @@ function calculateTarget(
           refKey: reference.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
+          filter: undefined,
         };
       }
       case "relation": {
@@ -87,6 +88,7 @@ function calculateTarget(
           refKey: relation.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
+          filter: undefined,
         };
       }
       case "query": {
@@ -100,6 +102,7 @@ function calculateTarget(
           refKey: query.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
           alias,
+          filter: undefined,
         };
       }
       default: {
@@ -116,6 +119,7 @@ function calculateTarget(
       retType: model.name,
       identifyWith: calculateIdentifyWith(model, identify),
       alias,
+      filter: undefined,
     };
   }
 }
