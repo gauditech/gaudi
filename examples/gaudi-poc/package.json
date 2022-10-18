@@ -10,7 +10,7 @@
     "build:migrate": "npm run build:migrate:db",
     "build:migrate:db": "npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss",
     "// --- dev": "",
-    "dev": "npm run dev:prepare; concurrently \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
+    "dev": "npm run dev:prepare; concurrently --names BUILD,MIGR,RUN --prefix-colors blue,magenta,yellow \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
     "// - prepare - precreate output folder(s) so watchers work as expected": "",
     "dev:prepare": "make-dir ./dist/db;",
     "dev:compile": "chokidar ./src \"./node_modules/@gaudi/engine/\" --debounce --initial --command \"npm run build:compile\"",
