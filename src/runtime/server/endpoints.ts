@@ -4,6 +4,7 @@ import { db } from "./dbConn";
 
 import {
   PathParam,
+  buildEndpointContextSql,
   buildEndpointPath,
   buildEndpointTargetSql,
   selectToSelectable,
@@ -72,7 +73,7 @@ export function createGetEndpoint(def: Definition, endpoint: GetEndpointDef): En
     method: "get",
     handler: async (req: Request, resp: Response) => {
       try {
-        const contextParams = extractMapProps(endpointPath.params, req.params);
+        const contextParams = extractParams(endpointPath.params, req.params);
 
         // build target SQL
         const s = buildEndpointTargetSql(
@@ -81,11 +82,11 @@ export function createGetEndpoint(def: Definition, endpoint: GetEndpointDef): En
           selectToSelectable(endpoint.response),
           "single"
         );
-        const res = await db.raw(s, contextParams);
-        if (res.rowCount !== 1) {
+        const targetQueryResult = await db.raw(s, contextParams);
+        if (targetQueryResult.rowCount !== 1) {
           throw new EndpointError(404, "Resource not found");
         }
-        resp.json(res.rows[0]);
+        resp.json(targetQueryResult.rows[0]);
       } catch (err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -106,10 +107,23 @@ export function createListEndpoint(def: Definition, endpoint: ListEndpointDef): 
     method: "get",
     handler: async (req: Request, resp: Response) => {
       try {
-        const contextParams = extractMapProps(endpointPath.params, req.params);
+        const contextParams = extractParams(endpointPath.params, req.params);
 
-        // TODO: replace dummy reponse
-        resp.send(contextParams);
+        const ctxTpl = await buildEndpointContextSql(def, endpoint);
+        if (ctxTpl) {
+          const contextResponse = await db.raw(ctxTpl, contextParams);
+          if (contextResponse.rowCount !== 1) {
+            throw new EndpointError(404, "Resource not found");
+          }
+        }
+        const targetTpl = buildEndpointTargetSql(
+          def,
+          endpoint.targets,
+          selectToSelectable(endpoint.response),
+          "multi"
+        );
+        const targetQueryResult = await db.raw(targetTpl, contextParams);
+        resp.json(targetQueryResult.rows);
       } catch (err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -124,7 +138,7 @@ export function createListEndpoint(def: Definition, endpoint: ListEndpointDef): 
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
-export function extractMapProps(
+export function extractParams(
   params: PathParam["params"],
   sourceMap: Record<string, string>
 ): Record<string, string | number> {
