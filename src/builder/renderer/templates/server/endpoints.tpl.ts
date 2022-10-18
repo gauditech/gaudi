@@ -5,7 +5,6 @@ import {
   buildEndpointPath,
   buildEndpointTargetSql,
 } from "@src/builder/query";
-import { renderFieldsetValidationSchema } from "@src/builder/renderer/templates/server/validation.tpl";
 import {
   Definition,
   EndpointDef,
@@ -66,32 +65,6 @@ export function render(data: RenderEndpointsData): string {
     // TODO: execute query
     return [\`Example list action result \${new Date().toISOString()}\`]
   }
-
-  /*
-  // example validation use
-  const schema = ${renderFieldsetValidationSchema({
-    kind: "record",
-    nullable: false,
-    record: {
-      org_id: {
-        kind: "field",
-        nullable: false,
-        type: "integer",
-      },
-      title: {
-        kind: "field",
-        nullable: false,
-        type: "text",
-      },
-    },
-  })};
-
-  const value = await validateRecord({
-    org_id: "1", title: 'asdf'
-  }, schema);
-  console.log('VALID', value)
-
-  */
 
   // ----- export
 

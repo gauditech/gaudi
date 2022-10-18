@@ -9,10 +9,12 @@ import {
   buildEndpointTargetSql,
   selectToSelectable,
 } from "@src/builder/query";
+import { buildFieldsetValidationSchema, validateRecord } from "@src/runtime/common/validation";
 import { EndpointError } from "@src/runtime/server/error";
 import { endpointHandlerGuard } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
 import {
+  CreateEndpointDef,
   Definition,
   EndpointDef,
   EntrypointDef,
@@ -55,9 +57,11 @@ export function processEntrypoint(
 function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig | null {
   switch (endpoint.kind) {
     case "get":
-      return createGetEndpoint(def, endpoint);
+      return buildGetEndpoint(def, endpoint);
     case "list":
-      return createListEndpoint(def, endpoint);
+      return buildListEndpoint(def, endpoint);
+    case "create":
+      return buildCreateEndpoint(def, endpoint);
     default:
       console.warn(`Endpoint kind "${endpoint.kind}" not yet implemented`);
       return null;
@@ -65,7 +69,7 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
 }
 
 /** Create "get" endpoint handler from definition */
-export function createGetEndpoint(def: Definition, endpoint: GetEndpointDef): EndpointConfig {
+export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
   return {
@@ -99,7 +103,7 @@ export function createGetEndpoint(def: Definition, endpoint: GetEndpointDef): En
 }
 
 /** Create "list" endpoint handler from definition */
-export function createListEndpoint(def: Definition, endpoint: ListEndpointDef): EndpointConfig {
+export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
   return {
@@ -124,6 +128,35 @@ export function createListEndpoint(def: Definition, endpoint: ListEndpointDef): 
         );
         const targetQueryResult = await db.raw(targetTpl, contextParams);
         resp.json(targetQueryResult.rows);
+      } catch (err) {
+        if (err instanceof EndpointError) {
+          throw err;
+        } else {
+          throw new EndpointError(500, "Error processing request: " + err);
+        }
+      }
+    },
+  };
+}
+
+/** Build "create" endpoint handler from definition */
+export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef): EndpointConfig {
+  const endpointPath = buildEndpointPath(endpoint);
+
+  return {
+    path: endpointPath.path,
+    method: "post",
+    handler: async (req: Request, resp: Response) => {
+      try {
+        const contextParams = extractParams(endpointPath.params, req.params);
+        const body = req.body;
+        console.log("BODY", body);
+
+        const validationSchema = buildFieldsetValidationSchema(endpoint.fieldset);
+        const validationResult = await validateRecord(body, validationSchema);
+        console.log("Result", validationResult);
+
+        resp.json(validationResult);
       } catch (err) {
         if (err instanceof EndpointError) {
           throw err;

@@ -1,4 +1,4 @@
-import { renderFieldsetValidationSchema } from "@src/builder/renderer/templates/server/validation.tpl";
+import { buildFieldsetValidationSchema } from "@src/runtime/common/validation";
 import { FieldsetDef } from "@src/types/definition";
 
 describe("builder", () => {
@@ -38,7 +38,7 @@ describe("builder", () => {
         },
       };
 
-      expect(renderFieldsetValidationSchema(data)).toMatchSnapshot();
+      expect(buildFieldsetValidationSchema(data)).toMatchSnapshot();
     });
   });
 });

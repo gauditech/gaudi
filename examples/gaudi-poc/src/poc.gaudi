@@ -33,5 +33,6 @@ entrypoint Orgs {
 
         get endpoint {}
         list endpoint {}
+        create endpoint {}
     }
 }
