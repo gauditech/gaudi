@@ -11,10 +11,15 @@ import {
   ReferenceDef,
   RelationDef,
   SelectConstantItem,
+  SelectDef,
   SelectFieldItem,
   SelectableItem,
   TargetDef,
 } from "@src/types/definition";
+
+export function selectToSelectable(select: SelectDef): SelectableItem[] {
+  return select.filter((s): s is SelectableItem => s.kind === "field" || s.kind === "constant");
+}
 
 type Queryable = {
   modelRefKey: string;
@@ -238,7 +243,7 @@ function filterToString(filter: FilterDef): string {
       )})`;
     }
     case "variable": {
-      return `$\{${filter.name}}`;
+      return `:${filter.name}`;
     }
   }
 }

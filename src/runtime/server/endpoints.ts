@@ -1,6 +1,13 @@
 import { Express, Request, Response } from "express";
 
-import { buildEndpointPath } from "@src/builder/query";
+import { db } from "./dbConn";
+
+import {
+  PathParam,
+  buildEndpointPath,
+  buildEndpointTargetSql,
+  selectToSelectable,
+} from "@src/builder/query";
 import { EndpointError } from "@src/runtime/server/error";
 import { endpointHandlerGuard } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -65,13 +72,20 @@ export function createGetEndpoint(def: Definition, endpoint: GetEndpointDef): En
     method: "get",
     handler: async (req: Request, resp: Response) => {
       try {
-        const contextParams = extractMapProps(
-          endpointPath.params.map((p) => p.name),
-          req.params
-        );
+        const contextParams = extractMapProps(endpointPath.params, req.params);
 
-        // TODO: replace dummy response
-        resp.send(contextParams);
+        // build target SQL
+        const s = buildEndpointTargetSql(
+          def,
+          endpoint.targets,
+          selectToSelectable(endpoint.response),
+          "single"
+        );
+        const res = await db.raw(s, contextParams);
+        if (res.rowCount !== 1) {
+          throw new EndpointError(404, "Resource not found");
+        }
+        resp.json(res.rows[0]);
       } catch (err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -92,10 +106,7 @@ export function createListEndpoint(def: Definition, endpoint: ListEndpointDef): 
     method: "get",
     handler: async (req: Request, resp: Response) => {
       try {
-        const contextParams = extractMapProps(
-          endpointPath.params.map((p) => p.name),
-          req.params
-        );
+        const contextParams = extractMapProps(endpointPath.params, req.params);
 
         // TODO: replace dummy reponse
         resp.send(contextParams);
@@ -114,12 +125,20 @@ export function createListEndpoint(def: Definition, endpoint: ListEndpointDef): 
  * Extract/filter only required props from source map (eg. from request params).
  */
 export function extractMapProps(
-  names: string[],
+  params: PathParam["params"],
   sourceMap: Record<string, string>
-): Record<string, string> {
-  return names.reduce((accum, name) => {
-    accum[name] = sourceMap[name];
+): Record<string, string | number> {
+  return Object.fromEntries(params.map((p) => [p.name, validatePathParam(p, sourceMap[p.name])]));
+}
 
-    return accum;
-  }, {} as Record<string, string>);
+/**
+ * Cast an input based on PathParam.param definition.
+ */
+function validatePathParam(param: PathParam["params"][number], val: string): string | number {
+  switch (param.type) {
+    case "integer":
+      return parseInt(val, 10);
+    case "text":
+      return val;
+  }
 }
