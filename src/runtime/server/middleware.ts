@@ -19,7 +19,7 @@ export function endpointHandlerGuard(handler: ServerRequestHandler) {
 /** Simple request logger */
 export function requestLogger(req: Request, resp: Response, next: ServerMiddlewareNextFn) {
   resp.on("finish", () => {
-    console.log(`[REQ] \${req.method} \${req.originalUrl} \${resp.statusCode}`);
+    console.log(`[REQ] ${req.method} ${req.originalUrl} ${resp.statusCode}`);
   });
 
   next();
