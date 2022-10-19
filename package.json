@@ -17,6 +17,7 @@
     "dev:copy-static": "chokidar ./src/package.json  --debounce 100 --command \"npm run build:copy-static\"",
     "// --- test": "",
     "test": "npm run build:grammar && jest",
+    "test:watch": "npm test -- --watch",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
