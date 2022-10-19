@@ -62,3 +62,21 @@ export function getTargetModel(models: ModelDef[], refKey: string): ModelDef {
       throw new Error(`Kind ${prop.kind} not supported`);
   }
 }
+
+/**
+ * This functions maps feild types to target (Prisma) field types
+ *
+ * https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#model-field-scalar-types
+ */
+export function getFieldDbType(type: FieldDef["dbtype"]): string {
+  switch (type) {
+    case "serial":
+      return "Int";
+    case "integer":
+      return "Int";
+    case "text":
+      return "String";
+    case "boolean":
+      return "Boolean";
+  }
+}

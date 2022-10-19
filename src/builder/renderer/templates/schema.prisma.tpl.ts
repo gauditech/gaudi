@@ -1,10 +1,6 @@
 import { oneLine, source } from "common-tags";
 
-import {
-  fieldDbName,
-  modelDbName,
-  typeToDbType,
-} from "@src/builder/renderer/templates/util/definition";
+import { getFieldDbType, getRef } from "@src/common/refs";
 import { Definition } from "@src/types/definition";
 
 export type BuildDbSchemaData = {
@@ -30,7 +26,7 @@ export function render(data: BuildDbSchemaData): string {
         ${(model.fields || []).map(
           (field) => oneLine`
             ${field.dbname}
-              ${typeToDbType(field.dbtype)}${field.nullable ? "?" : ""}
+              ${ getFieldDbType(field.dbtype)}${field.nullable ? "?" : ""}
               ${field.primary ? "@id" : ""}
               ${field.unique ? "@unique" : ""}
               ${field.dbtype === "serial" ? "@default(autoincrement())" : ""}
@@ -39,14 +35,14 @@ export function render(data: BuildDbSchemaData): string {
         ${(model.relations ?? []).map(
           (relation) => oneLine`
           ${relation.name}
-            ${modelDbName(relation.fromModelRefKey, d)}${!relation.unique ? "[]" : ""}${relation.nullable ? "?" : ""}
+            ${getRef<"model">(d, relation.fromModelRefKey).value.dbname}${!relation.unique ? "[]" : ""}${relation.nullable ? "?" : ""}
         `)}
 
         ${(model.references ?? []).map(
           (reference) => oneLine`
             ${reference.name}
-              ${modelDbName(reference.toModelRefKey, d)}
-              @relation(fields: [${fieldDbName(reference.modelRefKey, reference.fieldRefKey, d)}], references: [${fieldDbName(reference.toModelRefKey, reference.toModelFieldRefKey, d)}])
+              ${getRef<"model">(d, reference.toModelRefKey).value.dbname}
+              @relation(fields: [${getRef<"field">(d, reference.fieldRefKey).value.dbname}], references: [${getRef<"field">(d, reference.toModelFieldRefKey).value.dbname}])
         `)}
         }
       `
