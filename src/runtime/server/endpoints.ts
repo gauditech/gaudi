@@ -9,6 +9,7 @@ import {
   buildEndpointTargetSql,
   selectToSelectable,
 } from "@src/builder/query";
+import { buildActionChangset } from "@src/runtime/common/changeset";
 import { buildFieldsetValidationSchema, validateRecord } from "@src/runtime/common/validation";
 import { EndpointError } from "@src/runtime/server/error";
 import { endpointHandlerGuard } from "@src/runtime/server/middleware";
@@ -154,7 +155,12 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
         const validationSchema = buildFieldsetValidationSchema(endpoint.fieldset);
         const validationResult = await validateRecord(body, validationSchema);
-        console.log("Result", validationResult);
+        console.log("Validation result", validationResult);
+
+        const actionChangeset = buildActionChangset(endpoint.contextActionChangeset, {
+          input: validationResult,
+        });
+        console.log("Changeset result", actionChangeset);
 
         resp.json(validationResult);
       } catch (err) {

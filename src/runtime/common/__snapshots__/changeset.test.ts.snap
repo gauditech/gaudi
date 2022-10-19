@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`runtime changeset build action changeset object 1`] = `
+{
+  "input_prop": "input value",
+  "input_prop_missing": undefined,
+  "value_prop": "just value",
+}
+`;
