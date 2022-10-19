@@ -95,7 +95,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         if (err instanceof EndpointError) {
           throw err;
         } else {
-          throw new EndpointError(500, "Error processing request: " + err);
+          throw new EndpointError(500, "Error processing request", err);
         }
       }
     },
@@ -132,7 +132,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         if (err instanceof EndpointError) {
           throw err;
         } else {
-          throw new EndpointError(500, "Error processing request: " + err);
+          throw new EndpointError(500, "Error processing request", err);
         }
       }
     },
@@ -161,7 +161,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         if (err instanceof EndpointError) {
           throw err;
         } else {
-          throw new EndpointError(500, "Error processing request: " + err);
+          throw new EndpointError(500, "Error processing request", err);
         }
       }
     },
