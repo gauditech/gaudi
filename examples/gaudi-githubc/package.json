@@ -1,12 +1,12 @@
 {
-  "name": "@gaudi/gaudi-poc",
+  "name": "@gaudi/example-githubc",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "// --- build": "",
     "build": "npm run build:compile && npm run build:migrate",
-    "build:compile": "GAUDI_IN=./src/poc.gaudi GAUDI_OUT=./dist node ./node_modules/@gaudi/engine/engine.js",
+    "build:compile": "GAUDI_IN=./src/githubc.gaudi GAUDI_OUT=./dist node ./node_modules/@gaudi/engine/engine.js",
     "build:migrate": "npm run build:migrate:db",
     "build:migrate:db": "npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss",
     "// --- dev": "",
