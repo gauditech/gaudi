@@ -221,9 +221,13 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
   return rel;
 }
 
-function getLeaf(paths: QueryDefPath[], namePath: string[]): QueryDefPath {
-  const node = paths.find((p) => p.value.name === namePath[1])!;
-  return namePath.length === 2 ? node : getLeaf(node.joinPaths, _.tail(namePath));
+function getLeaf(def: Definition, paths: QueryDefPath[], namePath: string[]): QueryDefPath {
+  const node = paths.find((p) => {
+    const ref = getRef(def, p.refKey);
+    return ref.value.name === namePath[1];
+  })!;
+  console.log(node);
+  return namePath.length === 2 ? node : getLeaf(def, node.joinPaths, _.tail(namePath));
 }
 
 function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
@@ -245,7 +249,7 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
   ensureEqual(direct.length, 1);
   const joinPaths = processPaths(def, getRelatedPaths(collect, direct[0]), mdef, []);
 
-  const retLeaf = getLeaf(joinPaths, fromPath);
+  const retLeaf = getLeaf(def, joinPaths, fromPath);
 
   const query: QueryDef = {
     refKey,
@@ -254,7 +258,7 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
     fromPath: fromPath,
     retType: retLeaf.retType,
     retCardinality: joinPaths.every((p) => p.retCardinality === "one") ? "one" : "many",
-    nullable: retLeaf.value.nullable,
+    nullable: getRef<QueryDefPath["kind"]>(def, retLeaf.refKey).value.nullable,
     joinPaths,
     // FIXME validate filter!!
     filter: qspec.filter && convertFilter(qspec.filter),

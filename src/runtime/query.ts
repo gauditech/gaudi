@@ -107,7 +107,7 @@ export function processPaths(
       return {
         kind: ref.kind,
         joinType: "inner",
-        value: ref.value,
+        refKey: ref.value.refKey,
         joinPaths,
         retType: getTargetModel(def.models, ref.value.refKey).name,
         retCardinality: calculateCardinality(ref, joinPaths),
