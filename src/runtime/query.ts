@@ -1,12 +1,11 @@
 import _ from "lodash";
 
-import { Ref, RefKind, getModelProp, getRef, getTargetModel } from "@src/common/refs";
+import { Ref, getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import {
   Definition,
   EndpointDef,
   FilterDef,
-  IQueryDefPath,
   ModelDef,
   QueryDef,
   QueryDefPath,
@@ -20,9 +19,25 @@ export function mergePaths(paths: NamePath[]): NamePath[] {
   return _.uniqWith(paths, _.isEqual);
 }
 
-export function mkContextQuery(def: Definition, endpoint: EndpointDef): QueryDef | null {
+export function mkTargetQuery(def: Definition, endpoint: EndpointDef): QueryDef {
+  const targets = endpoint.targets;
+  switch (endpoint.kind) {
+    case "list":
+    case "create": {
+      //  without the final filter
+      return null as unknown as QueryDef; // FIXME
+    }
+    case "get":
+    case "delete":
+    case "update": {
+      // fetch with all the filters
+      return mkContextQuery(def, targets)!;
+    }
+  }
+}
+
+export function mkContextQuery(def: Definition, targets: TargetDef[]): QueryDef | null {
   // this is context query, drop final target
-  const targets = _.initial(endpoint.targets);
   if (!targets.length) return null;
   const targetPath = targets.map((t) => t.name);
   const filterPaths = targets.flatMap((t) => getFilterPaths(targetToFilter(t)));
@@ -52,7 +67,7 @@ export function mkContextQuery(def: Definition, endpoint: EndpointDef): QueryDef
   return {
     name: direct[0],
     fromPath: targetPath,
-    ctxModelRefKey: ctx.refKey,
+    from: { kind: "model", refKey: ctx.refKey },
     refKey: "N/A",
     nullable, // fixme
     retCardinality: isOne ? "one" : "many",
@@ -128,8 +143,6 @@ function targetToFilter(target: TargetDef): FilterDef {
     rhs: { kind: "variable", name: target.identifyWith.paramName, type: target.identifyWith.type },
   };
 }
-
-// function mkTargetQuery(def: Definition, endpoint: EndpointDef): QueryDef {}
 
 // function queryToString(def: Definition, q: QueryDef): string {}
 

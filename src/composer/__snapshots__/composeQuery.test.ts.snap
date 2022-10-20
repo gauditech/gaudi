@@ -3,7 +3,6 @@
 exports[`compose model queries example with nested filters 1`] = `
 [
   {
-    "ctxModelRefKey": "Org",
     "filter": {
       "kind": "binary",
       "lhs": {
@@ -29,6 +28,10 @@ exports[`compose model queries example with nested filters 1`] = `
           "is_active",
         ],
       },
+    },
+    "from": {
+      "kind": "model",
+      "refKey": "Org",
     },
     "fromPath": [
       "Org",
@@ -65,8 +68,11 @@ exports[`compose model queries example with nested filters 1`] = `
 exports[`compose model queries nested example without filters 1`] = `
 [
   {
-    "ctxModelRefKey": "Org",
     "filter": undefined,
+    "from": {
+      "kind": "model",
+      "refKey": "Org",
+    },
     "fromPath": [
       "Org",
       "repos",

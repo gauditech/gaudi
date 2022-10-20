@@ -253,7 +253,7 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
 
   const query: QueryDef = {
     refKey,
-    ctxModelRefKey: mdef.refKey,
+    from: { kind: "model", refKey: mdef.refKey },
     name: qspec.name,
     fromPath: fromPath,
     retType: retLeaf.retType,

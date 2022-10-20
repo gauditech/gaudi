@@ -52,12 +52,14 @@ export type RelationDef = {
   unique: boolean;
 };
 
+type QueryFrom = { kind: "model"; refKey: string } | { kind: "query"; query: QueryDef };
+
 export type QueryDef = {
   refKey: string;
   name: string;
   // retType: string | "integer";
   retType: string;
-  ctxModelRefKey: string;
+  from: QueryFrom;
   retCardinality: "one" | "many";
   fromPath: string[];
   nullable: boolean;
