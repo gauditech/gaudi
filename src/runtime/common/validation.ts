@@ -5,6 +5,14 @@ import { FieldsetDef, FieldsetFieldDef, FieldsetRecordDef } from "@src/types/def
 
 // ----- validation&transformation
 
+export async function validateFieldset<R = Record<string, unknown>>(
+  fieldset: FieldsetDef,
+  data: Record<string, unknown>
+): Promise<R> {
+  const validationSchema = buildFieldsetValidationSchema(fieldset);
+  return validateRecord(data, validationSchema);
+}
+
 export async function validateRecord(record: unknown, schema: AnySchema) {
   try {
     return await schema.validate(record, {

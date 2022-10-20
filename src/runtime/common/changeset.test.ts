@@ -1,6 +1,6 @@
 import {
   ActionChangesetContext,
-  buildActionChangset,
+  buildChangset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
@@ -32,7 +32,7 @@ describe("runtime", () => {
         },
       };
 
-      expect(buildActionChangset(data, context)).toMatchSnapshot();
+      expect(buildChangset(data, context)).toMatchSnapshot();
     });
   });
 

@@ -9,7 +9,7 @@ export type ActionChangesetContext = {
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
  */
-export function buildActionChangset(
+export function buildChangset(
   actionChangset: Changeset,
   context: ActionChangesetContext
 ): Record<string, unknown> {

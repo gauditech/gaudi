@@ -10,8 +10,8 @@ import {
   selectToSelectable,
 } from "@src/builder/query";
 import { getTargetModel } from "@src/common/refs";
-import { buildActionChangset } from "@src/runtime/common/changeset";
-import { buildFieldsetValidationSchema, validateRecord } from "@src/runtime/common/validation";
+import { buildChangset } from "@src/runtime/common/changeset";
+import { validateFieldset } from "@src/runtime/common/validation";
 import { EndpointError } from "@src/runtime/server/error";
 import { endpointHandlerGuard } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -155,11 +155,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         const body = req.body;
         console.log("BODY", body);
 
-        const validationSchema = buildFieldsetValidationSchema(endpoint.fieldset);
-        const validationResult = await validateRecord(body, validationSchema);
+        const validationResult = await validateFieldset(body, endpoint.fieldset);
         console.log("Validation result", validationResult);
 
-        const actionChangeset = buildActionChangset(endpoint.contextActionChangeset, {
+        const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
           input: validationResult,
         });
         console.log("Changeset result", actionChangeset);
