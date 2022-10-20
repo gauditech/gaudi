@@ -1,0 +1,38 @@
+// database {
+//     engine pg
+//     uri 'postgresql://postgres@localhost:5342'
+// } 
+
+model Org {
+    field name { type text }
+    field slug { type text, unique }
+    field description { type text }
+    field optOut { type text, nullable }
+
+    relation repos { from Repo, through org }
+}
+
+model Repo {
+    field name { type text }
+    field slug { type text, unique }
+    field description { type text }
+    reference org { to Org }
+}
+
+entrypoint Orgs {
+    target model Org
+    identify with slug
+    response { name, slug, description }
+
+    get endpoint {}
+    list endpoint {}
+
+    entrypoint Repos {
+        target relation repos
+        response { id, slug, description, org_id }
+
+        get endpoint {}
+        list endpoint {}
+        create endpoint {}
+    }
+}

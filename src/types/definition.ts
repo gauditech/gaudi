@@ -139,7 +139,7 @@ export type GetEndpointDef = {
   actions: ActionDef[];
 };
 
-type CreateEndpointDef = {
+export type CreateEndpointDef = {
   kind: "create";
   targets: TargetDef[];
   response: SelectDef;

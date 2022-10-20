@@ -13,9 +13,9 @@
     "strict": true,
     "paths": {
       "*": ["node_modules/*"],
-      "@src/*": ["src/*"],
-      "@examples/*": ["examples/*"]
+      "@src/*": ["src/*"]
     },
     "lib": ["es2020"]
-  }
+  },
+  "include": ["src"]
 }

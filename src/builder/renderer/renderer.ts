@@ -27,6 +27,14 @@ export function storeTemplateOutput(filename: string, content: string): void {
     fs.mkdirSync(dir, { recursive: true });
   }
 
+  let contentChanged = true;
+  if (fs.existsSync(filename)) {
+    const existingContent = fs.readFileSync(filename, { encoding: "utf-8" });
+    contentChanged = content != existingContent;
+  }
+
   // write file
-  fs.writeFileSync(filename, content, { encoding: "utf-8" });
+  if (contentChanged) {
+    fs.writeFileSync(filename, content, { encoding: "utf-8" });
+  }
 }

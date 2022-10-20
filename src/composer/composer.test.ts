@@ -1,9 +1,8 @@
-import definitionInput from "@examples/git/definition.json";
-import specificationInput from "@examples/git/specification.json";
-
 import { compose } from "./composer";
 
 import { compile } from "@src/compiler/compiler";
+import definitionInput from "@src/composer/tests/data/definition.json";
+import specificationInput from "@src/composer/tests/data/specification.json";
 import { parse } from "@src/parser/parser";
 import { Specification } from "@src/types/specification";
 

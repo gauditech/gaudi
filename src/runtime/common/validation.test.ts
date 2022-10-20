@@ -1,9 +1,9 @@
-import { renderFieldsetValidationSchema } from "@src/builder/renderer/templates/server/validation.tpl";
+import { buildFieldsetValidationSchema } from "@src/runtime/common/validation";
 import { FieldsetDef } from "@src/types/definition";
 
-describe("builder", () => {
+describe("runtime", () => {
   describe("validation", () => {
-    it("renders fieldset validation schema correctly", async () => {
+    it("validation fieldset", async () => {
       const data: FieldsetDef = {
         kind: "record",
         nullable: true, // required record
@@ -38,7 +38,7 @@ describe("builder", () => {
         },
       };
 
-      expect(renderFieldsetValidationSchema(data)).toMatchSnapshot();
+      expect(buildFieldsetValidationSchema(data)).toMatchSnapshot();
     });
   });
 });
