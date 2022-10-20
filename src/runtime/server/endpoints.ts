@@ -11,7 +11,7 @@ import {
 } from "@src/builder/query";
 import { getTargetModel } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
-import { validateFieldset } from "@src/runtime/common/validation";
+import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { EndpointError } from "@src/runtime/server/error";
 import { endpointHandlerGuard } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -155,7 +155,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         const body = req.body;
         console.log("BODY", body);
 
-        const validationResult = await validateFieldset(body, endpoint.fieldset);
+        const validationResult = await validateEndpointFieldset(body, endpoint.fieldset);
         console.log("Validation result", validationResult);
 
         const actionChangeset = buildChangset(endpoint.contextActionChangeset, {

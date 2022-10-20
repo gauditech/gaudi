@@ -5,34 +5,29 @@ import { FieldsetDef, FieldsetFieldDef, FieldsetRecordDef } from "@src/types/def
 
 // ----- validation&transformation
 
-export async function validateFieldset<R = Record<string, unknown>>(
+export async function validateEndpointFieldset<R = Record<string, unknown>>(
   fieldset: FieldsetDef,
   data: Record<string, unknown>
 ): Promise<R> {
-  const validationSchema = buildFieldsetValidationSchema(fieldset);
-  return validateRecord(data, validationSchema);
-}
-
-export async function validateRecord(record: unknown, schema: AnySchema) {
   try {
-    return await schema.validate(record, {
-      abortEarly: false, // report ALL errors, not just the first one
-    });
+    const validationSchema = buildFieldsetValidationSchema(fieldset);
+    return await validateRecord(data, validationSchema);
   } catch (err: unknown) {
     if (err instanceof ValidationError) {
       // error should be an instance of Yup's ValidationError
       // https://github.com/jquense/yup#validationerrorerrors-string--arraystring-value-any-path-string
 
-      // map inner errors to more appropriate structure
-      const errors = err.inner.map((inner) => ({
-        [inner.path ?? "unknown"]: inner.errors,
-      }));
-
-      throw new EndpointError(400, { message: errors }, err);
+      throw new EndpointError(400, { message: err }, err);
     } else {
       throw err;
     }
   }
+}
+
+export async function validateRecord(record: unknown, schema: AnySchema) {
+  return schema.validate(record, {
+    abortEarly: false, // report ALL errors, not just the first one
+  });
 }
 
 // ---------- fieldset validation builder
