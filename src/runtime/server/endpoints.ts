@@ -9,6 +9,7 @@ import {
   buildEndpointTargetSql,
   selectToSelectable,
 } from "@src/builder/query";
+import { getTargetModel } from "@src/common/refs";
 import { buildActionChangset } from "@src/runtime/common/changeset";
 import { buildFieldsetValidationSchema, validateRecord } from "@src/runtime/common/validation";
 import { EndpointError } from "@src/runtime/server/error";
@@ -21,6 +22,7 @@ import {
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
+  ModelDef,
 } from "@src/types/definition";
 
 // ---------- server
@@ -162,7 +164,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         });
         console.log("Changeset result", actionChangeset);
 
-        resp.json(validationResult);
+        const queryResult = await insertData(def, endpoint, actionChangeset);
+        console.log("Query result", queryResult);
+
+        resp.json(queryResult);
       } catch (err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -194,4 +199,18 @@ function validatePathParam(param: PathParam["params"][number], val: string): str
     case "text":
       return val;
   }
+}
+
+/** Insert data to DB  */
+async function insertData(
+  definition: Definition,
+  endpoint: EndpointDef,
+  data: Record<string, unknown>
+) {
+  const target = endpoint.targets.slice(-1).shift();
+  if (target == null) throw `Endpoint insert target is empty`;
+
+  const model: ModelDef = getTargetModel(definition.models, target.refKey);
+
+  return db.insert(data).into(model.dbname);
 }
