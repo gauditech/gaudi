@@ -5,6 +5,7 @@ import { ensureEqual, ensureNot } from "@src/common/utils";
 import { SelectAST } from "@src/types/ast";
 import {
   Changeset,
+  Definition,
   EndpointDef,
   EntrypointDef,
   FieldSetter,
@@ -16,8 +17,8 @@ import {
 } from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
-export function composeEntrypoints(models: ModelDef[], input: EntrypointSpec[]): EntrypointDef[] {
-  return input.map((spec) => processEntrypoint(models, spec, []));
+export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
+  def.entrypoints = input.map((spec) => processEntrypoint(def.models, spec, []));
 }
 
 type EndpointContext = {

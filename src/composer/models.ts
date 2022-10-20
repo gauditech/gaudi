@@ -1,13 +1,23 @@
+import _ from "lodash";
+
+import { Ref, RefKind, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
+import {
+  getDirectChildren,
+  getFilterPaths,
+  getRelatedPaths,
+  mergePaths,
+  processPaths,
+} from "@src/runtime/query";
 import { LiteralValue } from "@src/types/ast";
 import {
+  Definition,
   FieldDef,
   FilterDef,
   LiteralFilterDef,
   ModelDef,
   QueryDef,
   QueryDefPath,
-  QueryDefPathSelect,
   ReferenceDef,
   RelationDef,
 } from "@src/types/definition";
@@ -20,35 +30,19 @@ import {
   RelationSpec,
 } from "@src/types/specification";
 
-enum RefType {
-  Model = "model",
-  Field = "field",
-  Reference = "reference",
-  Relation = "relation",
-  Query = "query",
-  Computed = "computed",
+function refCount(def: Definition): number {
+  return def.models.flatMap((m) => [...m.fields, ...m.references, ...m.relations, ...m.queries])
+    .length;
 }
 
-type Mapping = {
-  [RefType.Model]: ModelDef;
-  [RefType.Field]: FieldDef;
-  [RefType.Reference]: ReferenceDef;
-  [RefType.Relation]: RelationDef;
-  [RefType.Query]: QueryDef;
-  [RefType.Computed]: ModelDef;
-};
-
-type Cached<T extends RefType> = [T, Mapping[T]];
-const cache = new Map<string, Cached<RefType>>();
-
-export function composeModels(specs: ModelSpec[]): ModelDef[] {
-  cache.clear();
+export function composeModels(def: Definition, specs: ModelSpec[]): void {
+  // cache.clear();
   let needsExtraStep = true;
   function tryCall<T>(fn: () => T): T | null {
     try {
       return fn();
     } catch (e) {
-      if (Array.isArray(e) && e[0] === "cache-miss") {
+      if (Array.isArray(e) && e[0] === "unknown-refkey") {
         needsExtraStep = true;
         return null;
       } else {
@@ -56,13 +50,12 @@ export function composeModels(specs: ModelSpec[]): ModelDef[] {
       }
     }
   }
-  let defs: ModelDef[] = [];
   while (needsExtraStep) {
-    const cacheSize = cache.size;
+    const cacheSize = refCount(def);
     needsExtraStep = false;
     // ensure model uniqueness
     ensureUnique(specs.map((s) => s.name.toLowerCase()));
-    defs = specs.map((mspec) => {
+    specs.forEach((mspec) => {
       // ensure prop uniqueness
       ensureUnique([
         ...mspec.fields.map((f) => f.name.toLowerCase()),
@@ -71,53 +64,52 @@ export function composeModels(specs: ModelSpec[]): ModelDef[] {
         ...mspec.queries.map((q) => q.name.toLowerCase()),
         ...mspec.computeds.map((c) => c.name.toLowerCase()),
       ]);
-      const mdef = defineModel(mspec);
+      const mdef = defineModel(def, mspec);
       mspec.fields.forEach((fspec) => {
-        defineField(mdef, fspec);
+        defineField(def, mdef, fspec);
       });
       mspec.references.forEach((rspec) => {
-        tryCall(() => defineReference(mdef, rspec));
+        tryCall(() => defineReference(def, mdef, rspec));
       });
       mspec.relations.forEach((rspec) => {
-        tryCall(() => defineRelation(mdef, rspec));
+        tryCall(() => defineRelation(def, mdef, rspec));
       });
       mspec.queries.forEach((qspec) => {
-        tryCall(() => defineQuery(mdef, qspec));
+        tryCall(() => defineQuery(def, mdef, qspec));
       });
 
       return mdef;
     });
-    if (cache.size === cacheSize && needsExtraStep) {
+    if (refCount(def) === cacheSize && needsExtraStep) {
       // whole iteration has passed, nothing has changed, but not everything's defined
       throw "infinite-loop";
     }
   }
-  return defs;
 }
 
-function getDefinition<T extends RefType, F extends true | undefined>(
+function getDefinition<T extends RefKind, F extends true | undefined>(
+  def: Definition,
   refKey: string,
   type: T,
   fail?: F
-): F extends true ? Mapping[T] : Mapping[T] | null {
-  const definition = cache.get(refKey);
-  if (!definition) {
-    if (fail) {
-      throw ["cache-miss", refKey];
-    } else {
-      return null as F extends true ? Mapping[T] : Mapping[T] | null;
-    }
+): F extends true ? Ref<T>["value"] : Ref<T>["value"] | null {
+  let ref: Ref<T>;
+  try {
+    ref = getRef<T>(def, refKey);
+  } catch (e) {
+    if (fail) throw e;
+    return null as F extends true ? Ref<T>["value"] : Ref<T>["value"] | null;
   }
   try {
-    ensureEqual(definition[0], type);
+    ensureEqual(ref.kind, type);
   } catch (e) {
-    throw new Error(`Expecting type ${type} but found a type ${definition[0]}`);
+    throw new Error(`Expecting type ${type} but found a type ${ref.kind}`);
   }
-  return definition[1] as F extends true ? Mapping[T] : Mapping[T] | null;
+  return ref.value;
 }
 
-function defineModel(spec: ModelSpec): ModelDef {
-  const ex = getDefinition(spec.name, RefType.Model);
+function defineModel(def: Definition, spec: ModelSpec): ModelDef {
+  const ex = getDefinition(def, spec.name, "model");
   if (ex) return ex;
 
   const model: ModelDef = {
@@ -130,10 +122,8 @@ function defineModel(spec: ModelSpec): ModelDef {
     queries: [],
   };
   const idField = constructIdField(model);
-  cache.set(idField.refKey, [RefType.Field, idField]);
-
   model.fields.push(idField);
-  cache.set(model.refKey, [RefType.Model, model]);
+  def.models.push(model);
   return model;
 }
 
@@ -151,9 +141,9 @@ function constructIdField(mdef: ModelDef): FieldDef {
   };
 }
 
-function defineField(mdef: ModelDef, fspec: FieldSpec): FieldDef {
+function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDef {
   const refKey = `${mdef.refKey}.${fspec.name}`;
-  const ex = getDefinition(refKey, RefType.Field);
+  const ex = getDefinition(def, refKey, "field");
   if (ex) return ex;
 
   const f: FieldDef = {
@@ -167,19 +157,18 @@ function defineField(mdef: ModelDef, fspec: FieldSpec): FieldDef {
     unique: !!fspec.unique,
     nullable: !!fspec.nullable,
   };
-  cache.set(refKey, [RefType.Field, f]);
   mdef.fields.push(f);
   return f;
 }
 
-function defineReference(mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
+function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
   const refKey = `${mdef.refKey}.${rspec.name}`;
-  const ex = getDefinition(refKey, RefType.Reference);
+  const ex = getDefinition(def, refKey, "reference");
   if (ex) return ex;
-  getDefinition(rspec.toModel, RefType.Model, true);
+  getDefinition(def, rspec.toModel, "model", true);
 
   const fieldRefKey = `${refKey}_id`; // or `Id`?? FIXME decide casing logic
-  if (getDefinition(refKey, RefType.Field)) {
+  if (getDefinition(def, refKey, "field")) {
     throw new Error("Can't make reference field, name taken");
   }
   const f: FieldDef = {
@@ -193,7 +182,6 @@ function defineReference(mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
   };
-  cache.set(fieldRefKey, [RefType.Field, f]);
   mdef.fields.push(f);
 
   const ref: ReferenceDef = {
@@ -206,18 +194,17 @@ function defineReference(mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
   };
-  cache.set(refKey, [RefType.Reference, ref]);
   mdef.references.push(ref);
   return ref;
 }
 
-function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
+function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): RelationDef {
   const refKey = `${mdef.refKey}.${rspec.name}`;
-  const ex = getDefinition(refKey, RefType.Relation);
+  const ex = getDefinition(def, refKey, "relation");
   if (ex) return ex;
 
-  getDefinition(rspec.fromModel, RefType.Model, true);
-  const throughRef = getDefinition(`${rspec.fromModel}.${rspec.through}`, RefType.Reference, true);
+  getDefinition(def, rspec.fromModel, "model", true);
+  const throughRef = getDefinition(def, `${rspec.fromModel}.${rspec.through}`, "reference", true);
 
   const rel: RelationDef = {
     refKey,
@@ -230,49 +217,47 @@ function defineRelation(mdef: ModelDef, rspec: RelationSpec): RelationDef {
     nullable: throughRef.nullable,
     unique: throughRef.unique,
   };
-  cache.set(refKey, [RefType.Relation, rel]);
   mdef.relations.push(rel);
   return rel;
 }
 
-function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
-  const refKey = `${mdef.refKey}.${qspec.name.toLowerCase()}`;
-  const ex = getDefinition(refKey, RefType.Query);
+function getLeaf(paths: QueryDefPath[], namePath: string[]): QueryDefPath {
+  const node = paths.find((p) => p.value.name === namePath[1])!;
+  return namePath.length === 2 ? node : getLeaf(node.joinPaths, _.tail(namePath));
+}
+
+function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
+  const refKey = `${mdef.refKey}.${qspec.name}`;
+  const ex = getDefinition(def, refKey, "query");
   if (ex) return ex;
 
-  const filterPaths = qspec.filter ? getFilterPaths(qspec.filter) : [];
+  const filter = convertFilter(qspec.filter);
+  const fromPath = [mdef.name, ...qspec.fromModel];
+
+  const filterPaths = qspec.filter ? getFilterPaths(filter) : [];
   // detect default context for each filter
   for (const path of filterPaths) {
     // TODO no bpAliases support yet, so all must belong to leaf context
-    path.unshift(...qspec.fromModel);
+    path.unshift(...fromPath);
   }
-  const collect = [qspec.fromModel, ...filterPaths];
-  // flatten?
+  const collect = mergePaths([fromPath, ...filterPaths]);
+  const direct = getDirectChildren(collect);
+  ensureEqual(direct.length, 1);
+  const joinPaths = processPaths(def, getRelatedPaths(collect, direct[0]), mdef, []);
 
-  const { joinPaths } = defineQueryPathDeps(mdef, [], collect);
-  const [mainPath, leaf] = qspec.fromModel.reduce(
-    (a, from): [QueryDefPath[], QueryDefPath] => {
-      const next = a[1].joinPaths.find((p) => p.name === from)!;
-      a[0].push(next);
-      return [a[0], next];
-    },
-    [
-      [],
-      {
-        name: "",
-        joinPaths,
-      } as QueryDefPath,
-    ] as [QueryDefPath[], QueryDefPath]
-  );
+  const retLeaf = getLeaf(joinPaths, fromPath);
 
   const query: QueryDef = {
     refKey,
+    ctxModelRefKey: mdef.refKey,
     name: qspec.name,
-    retType: leaf.retType,
-    retCardinality: mainPath.every((v) => v.retCardinality === "one") ? "one" : "many",
-    nullable: leaf.nullable,
+    fromPath: fromPath,
+    retType: retLeaf.retType,
+    retCardinality: joinPaths.every((p) => p.retCardinality === "one") ? "one" : "many",
+    nullable: retLeaf.value.nullable,
     joinPaths,
-    filter: qspec.filter && convertFilter(qspec.filter, mdef.refKey),
+    // FIXME validate filter!!
+    filter: qspec.filter && convertFilter(qspec.filter),
   };
 
   // TODO validate and "correct" filters
@@ -280,7 +265,6 @@ function defineQuery(mdef: ModelDef, qspec: QuerySpec): QueryDef {
   // TODO automatic ID fields
   // TODO add computeds
 
-  cache.set(`${mdef.name}.${qspec.name.toLowerCase()}`, [RefType.Query, query]);
   mdef.queries.push(query);
   return query;
 }
@@ -293,8 +277,10 @@ function getLiteralType(literal: LiteralValue): LiteralFilterDef["type"] {
   throw new Error(`Literal ${literal} not supported`);
 }
 
-function convertFilter(filter: ExpSpec, refKey: string): FilterDef {
-  switch (filter.kind) {
+function convertFilter(filter: ExpSpec | undefined): FilterDef {
+  switch (filter?.kind) {
+    case undefined:
+      return undefined;
     case "literal": {
       return {
         kind: "literal",
@@ -306,7 +292,7 @@ function convertFilter(filter: ExpSpec, refKey: string): FilterDef {
       return {
         kind: "binary",
         operator: "is not",
-        lhs: convertFilter(filter.exp, refKey),
+        lhs: convertFilter(filter.exp),
         rhs: { kind: "literal", type: "boolean", value: true },
       };
     }
@@ -314,8 +300,8 @@ function convertFilter(filter: ExpSpec, refKey: string): FilterDef {
       return {
         kind: "binary",
         operator: filter.operator,
-        lhs: convertFilter(filter.lhs, refKey),
-        rhs: convertFilter(filter.rhs, refKey),
+        lhs: convertFilter(filter.lhs),
+        rhs: convertFilter(filter.rhs),
       };
     }
     case "identifier": {
@@ -327,122 +313,103 @@ function convertFilter(filter: ExpSpec, refKey: string): FilterDef {
   }
 }
 
-function filterCollects(path: string, collect: string[][]): string[][] {
-  return collect.filter((c) => c[0] === path && c.length > 1).map((c) => c.slice(1, c.length));
-}
+// function defineQueryPathDeps(
+//   mdef: ModelDef,
+//   prefix: string[],
+//   collect: string[][]
+// ): Pick<QueryDefPath, "select" | "joinPaths"> {
+//   const directCollect = Array.from(new Set(collect.map((c) => c[0])));
+//   const selectsAndJoins = directCollect.map(
+//     (name, _index): ["select", QueryDefPathSelect] | ["join", QueryDefPath] => {
+//       const refKey = `${mdef.refKey}.${name}`;
+//       const target = cache.get(refKey);
+//       if (!target) throw ["cache-miss", name];
 
-function defineQueryPathDeps(
-  mdef: ModelDef,
-  prefix: string[],
-  collect: string[][]
-): Pick<QueryDefPath, "select" | "joinPaths"> {
-  const directCollect = Array.from(new Set(collect.map((c) => c[0])));
-  const selectsAndJoins = directCollect.map(
-    (name, _index): ["select", QueryDefPathSelect] | ["join", QueryDefPath] => {
-      const refKey = `${mdef.refKey}.${name}`;
-      const target = cache.get(refKey);
-      if (!target) throw ["cache-miss", name];
-
-      const namePath = [...prefix, name];
-      switch (target[0]) {
-        case RefType.Model:
-          throw new Error(`${target[0]} type is not supported in queries`);
-        case RefType.Field: {
-          const field = getDefinition(refKey, RefType.Field, true);
-          return [
-            "select",
-            {
-              refKey,
-              name,
-              namePath,
-              retType: field.type,
-              nullable: field.nullable,
-            },
-          ];
-        }
-        case RefType.Computed: {
-          throw new Error("TODO");
-        }
-        case RefType.Reference: {
-          const reference = getDefinition(refKey, target[0], true);
-          const toModel = getDefinition(reference.toModelRefKey, RefType.Model, true);
-          return [
-            "join",
-            {
-              refKey,
-              name,
-              retType: toModel.name,
-              retCardinality: "one",
-              namePath,
-              bpAlias: null,
-              nullable: reference.nullable, // FIXME filters?
-              joinType: "inner", // FIXME filters?
-              ...defineQueryPathDeps(toModel, namePath, filterCollects(name, collect)),
-            },
-          ];
-        }
-        case RefType.Relation: {
-          const relation = getDefinition(refKey, target[0], true);
-          const fromModel = getDefinition(relation.fromModelRefKey, RefType.Model, true);
-          return [
-            "join",
-            {
-              refKey,
-              name,
-              retType: fromModel.name,
-              retCardinality: relation.unique ? "one" : "many",
-              namePath,
-              bpAlias: null,
-              nullable: relation.nullable,
-              joinType: "inner",
-              ...defineQueryPathDeps(fromModel, namePath, filterCollects(name, collect)),
-            },
-          ];
-        }
-        case RefType.Query: {
-          const query = getDefinition(refKey, target[0], true);
-          const model = getDefinition(query.retType, RefType.Model, true);
-          return [
-            "join",
-            {
-              refKey,
-              name,
-              retType: query.retType,
-              retCardinality: query.retCardinality,
-              namePath,
-              bpAlias: null,
-              nullable: query.nullable, // FIXME may be nullable if filters are applied
-              joinType: "inner",
-              ...defineQueryPathDeps(model, namePath, filterCollects(name, collect)),
-            },
-          ];
-        }
-      }
-    }
-  );
-  const select = selectsAndJoins
-    .filter((s) => s[0] === "select")
-    .map((s) => s[1]) as QueryDefPathSelect[];
-  const joinPaths = selectsAndJoins
-    .filter((s) => s[0] === "join")
-    .map((s) => s[1]) as QueryDefPath[];
-  return { select, joinPaths };
-}
-
-function getFilterPaths(filter: ExpSpec): string[][] {
-  switch (filter.kind) {
-    case "literal":
-      return [];
-    case "unary": {
-      return getFilterPaths(filter.exp);
-    }
-    case "identifier":
-      return [[...filter.identifier]];
-    case "binary": {
-      return [...getFilterPaths(filter.lhs), ...getFilterPaths(filter.rhs)];
-    }
-  }
-}
+//       const namePath = [...prefix, name];
+//       switch (target[0]) {
+//         case RefType.Model:
+//           throw new Error(`${target[0]} type is not supported in queries`);
+//         case RefType.Field: {
+//           const field = getDefinition(refKey, RefType.Field, true);
+//           return [
+//             "select",
+//             {
+//               refKey,
+//               name,
+//               namePath,
+//               retType: field.type,
+//               nullable: field.nullable,
+//             },
+//           ];
+//         }
+//         case RefType.Computed: {
+//           throw new Error("TODO");
+//         }
+//         case RefType.Reference: {
+//           const reference = getDefinition(refKey, target[0], true);
+//           const toModel = getDefinition(reference.toModelRefKey, RefType.Model, true);
+//           return [
+//             "join",
+//             {
+//               refKey,
+//               name,
+//               retType: toModel.name,
+//               retCardinality: "one",
+//               namePath,
+//               bpAlias: null,
+//               nullable: reference.nullable, // FIXME filters?
+//               joinType: "inner", // FIXME filters?
+//               ...defineQueryPathDeps(toModel, namePath, filterCollects(name, collect)),
+//             },
+//           ];
+//         }
+//         case RefType.Relation: {
+//           const relation = getDefinition(refKey, target[0], true);
+//           const fromModel = getDefinition(relation.fromModelRefKey, RefType.Model, true);
+//           return [
+//             "join",
+//             {
+//               refKey,
+//               name,
+//               retType: fromModel.name,
+//               retCardinality: relation.unique ? "one" : "many",
+//               namePath,
+//               bpAlias: null,
+//               nullable: relation.nullable,
+//               joinType: "inner",
+//               ...defineQueryPathDeps(fromModel, namePath, filterCollects(name, collect)),
+//             },
+//           ];
+//         }
+//         case RefType.Query: {
+//           const query = getDefinition(refKey, target[0], true);
+//           const model = getDefinition(query.retType, RefType.Model, true);
+//           return [
+//             "join",
+//             {
+//               refKey,
+//               name,
+//               retType: query.retType,
+//               retCardinality: query.retCardinality,
+//               namePath,
+//               bpAlias: null,
+//               nullable: query.nullable, // FIXME may be nullable if filters are applied
+//               joinType: "inner",
+//               ...defineQueryPathDeps(model, namePath, filterCollects(name, collect)),
+//             },
+//           ];
+//         }
+//       }
+//     }
+//   );
+//   const select = selectsAndJoins
+//     .filter((s) => s[0] === "select")
+//     .map((s) => s[1]) as QueryDefPathSelect[];
+//   const joinPaths = selectsAndJoins
+//     .filter((s) => s[0] === "join")
+//     .map((s) => s[1]) as QueryDefPath[];
+//   return { select, joinPaths };
+// }
 
 function validateType(type: string): FieldDef["type"] {
   switch (type) {
@@ -460,11 +427,3 @@ function validateType(type: string): FieldDef["type"] {
 function constructDbType(type: FieldDef["type"]): FieldDef["dbtype"] {
   return type;
 }
-
-export type Cache =
-  | { kind: "model"; model: ModelDef }
-  | { kind: "field"; field: FieldDef }
-  | { kind: "reference"; reference: ReferenceDef }
-  | { kind: "relation"; relation: RelationDef }
-  | { kind: "query"; query: QueryDef };
-// | { kind: "computed", computed: ComputedDef}
