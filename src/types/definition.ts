@@ -1,5 +1,7 @@
 import { BinaryOperator } from "./ast";
 
+import { Ref, RefKind } from "@src/common/refs";
+
 export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];
@@ -50,6 +52,22 @@ export type RelationDef = {
   unique: boolean;
 };
 
+export type QueryDef = {
+  refKey: string;
+  name: string;
+  // retType: string | "integer";
+  retType: string;
+  ctxModelRefKey: string;
+  retCardinality: "one" | "many";
+  fromPath: string[];
+  nullable: boolean;
+  // unique: boolean;
+  joinPaths: QueryDefPath[];
+  filter: FilterDef;
+  // select: QueryDefPathSelect[];
+  // count?: true;
+};
+
 export type QueryDefPathSelect = {
   refKey: string;
   name: string;
@@ -58,18 +76,19 @@ export type QueryDefPathSelect = {
   nullable: boolean;
 };
 
-export type QueryDefPath = {
+export interface IQueryDefPath<RK extends RefKind> {
+  kind: RK;
   refKey: string;
-  name: string;
-  retType: string;
-  retCardinality: "one" | "many"; // should be retCard,...
-  nullable: boolean;
-  joinType: "inner" | "left";
-  namePath: string[];
-  bpAlias: string | null;
+  joinType: "inner" | "outer";
   joinPaths: QueryDefPath[];
-  select: QueryDefPathSelect[];
-};
+  retType: string;
+  retCardinality: "one" | "many";
+}
+
+export type QueryDefPath =
+  | IQueryDefPath<"reference">
+  | IQueryDefPath<"relation">
+  | IQueryDefPath<"query">;
 
 // simple filter types, for now
 
@@ -85,17 +104,6 @@ export type LiteralFilterDef =
   | { kind: "literal"; type: "null"; value: null }
   | { kind: "literal"; type: "text"; value: string }
   | { kind: "literal"; type: "boolean"; value: boolean };
-
-export type QueryDef = {
-  refKey: string;
-  name: string;
-  retType: string;
-  retCardinality: "one" | "many";
-  nullable: boolean;
-  // unique: boolean;
-  joinPaths: QueryDefPath[];
-  filter: FilterDef;
-};
 
 /**
  * ENTRYPOINTS

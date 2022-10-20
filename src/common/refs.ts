@@ -7,7 +7,7 @@ import {
   RelationDef,
 } from "@src/types/definition";
 
-type RefKind = "model" | "field" | "reference" | "relation" | "query";
+export type RefKind = "model" | "field" | "reference" | "relation" | "query";
 export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "model"; value: ModelDef }
   : T extends "field"
@@ -39,7 +39,7 @@ export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKe
   const query = source.flatMap((m) => m.queries).find((q) => q.refKey === refKey);
   if (query) return { kind: "query", value: query } as Ref<T>;
 
-  throw new Error(`Unknown refKey ${refKey}`);
+  throw ["unknown-refkey", refKey];
 }
 
 export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {

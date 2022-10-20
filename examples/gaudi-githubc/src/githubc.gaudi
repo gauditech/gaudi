@@ -10,6 +10,7 @@ model Org {
     field optOut { type text, nullable }
 
     relation repos { from Repo, through org }
+    relation memberships { from OrgMembership, through org }
 }
 
 model Repo {
@@ -17,6 +18,11 @@ model Repo {
     field slug { type text, unique }
     field description { type text }
     reference org { to Org }
+}
+
+model OrgMembership {
+    reference org { to Org }
+    field name { type text }
 }
 
 entrypoint Orgs {
