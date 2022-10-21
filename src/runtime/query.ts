@@ -9,6 +9,8 @@ import {
   ModelDef,
   QueryDef,
   QueryDefPath,
+  SelectDef,
+  SelectableItem,
   TargetDef,
 } from "@src/types/definition";
 
@@ -17,6 +19,10 @@ type NamePath = string[];
 // FIXME add tests
 export function mergePaths(paths: NamePath[]): NamePath[] {
   return _.uniqWith(paths, _.isEqual);
+}
+
+export function selectToSelectable(select: SelectDef): SelectableItem[] {
+  return select.filter((s): s is SelectableItem => s.kind === "field" || s.kind === "constant");
 }
 
 export function mkTargetQuery(def: Definition, endpoint: EndpointDef): QueryDef {
@@ -31,12 +37,44 @@ export function mkTargetQuery(def: Definition, endpoint: EndpointDef): QueryDef 
     case "delete":
     case "update": {
       // fetch with all the filters
-      return mkContextQuery(def, targets)!;
+      return mkContextQuery(def, targets, selectToSelectable(endpoint.response ?? []))!;
     }
   }
 }
 
-export function mkContextQuery(def: Definition, targets: TargetDef[]): QueryDef | null {
+function targetToFilter(target: TargetDef): FilterDef {
+  return {
+    kind: "binary",
+    operator: "is",
+    lhs: { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
+    rhs: {
+      kind: "variable",
+      type: target.identifyWith.type,
+      name: target.identifyWith.paramName,
+    },
+  };
+}
+
+export function filterFromTargets(targets: TargetDef[]): FilterDef {
+  const [t, ...rest] = targets;
+  const f = targetToFilter(t);
+  if (rest.length === 0) {
+    return f;
+  }
+
+  return {
+    kind: "binary",
+    operator: "and",
+    lhs: f,
+    rhs: filterFromTargets(rest),
+  };
+}
+
+export function mkContextQuery(
+  def: Definition,
+  targets: TargetDef[],
+  select: SelectableItem[]
+): QueryDef | null {
   // this is context query, drop final target
   if (!targets.length) return null;
   const targetPath = targets.map((t) => t.name);
@@ -47,9 +85,9 @@ export function mkContextQuery(def: Definition, targets: TargetDef[]): QueryDef 
   const { value: ctx } = getRef<"model">(def, direct[0]);
   const joinPaths = processPaths(def, getRelatedPaths(paths, ctx.name), ctx, [ctx.name]);
   // navigate through targets to find cardinality
-  const [isOne, nullable] = targets.reduce(
+  const [isOne, nullable] = _.tail(targets).reduce(
     (a, t) => {
-      const ref = getRef<"reference" | "relation" | "query">(def, t.name);
+      const ref = getRef<"reference" | "relation" | "query">(def, `${ctx.name}.${t.name}`);
       switch (ref.kind) {
         case "reference": {
           return [a[0], a[1] || ref.value.nullable];
@@ -69,11 +107,12 @@ export function mkContextQuery(def: Definition, targets: TargetDef[]): QueryDef 
     fromPath: targetPath,
     from: { kind: "model", refKey: ctx.refKey },
     refKey: "N/A",
-    nullable, // fixme
+    nullable,
     retCardinality: isOne ? "one" : "many",
     retType: _.last(targets)!.retType,
-    filter: undefined, // fixme
+    filter: filterFromTargets(targets),
     joinPaths,
+    select,
   };
 }
 
@@ -131,18 +170,6 @@ export function processPaths(
       };
     })
   );
-}
-
-function targetToFilter(target: TargetDef): FilterDef {
-  return {
-    kind: "binary",
-    operator: "is",
-    lhs: {
-      kind: "alias",
-      namePath: [...target.namePath, target.identifyWith.name],
-    },
-    rhs: { kind: "variable", name: target.identifyWith.paramName, type: target.identifyWith.type },
-  };
 }
 
 // function queryToString(def: Definition, q: QueryDef): string {}

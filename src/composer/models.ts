@@ -262,6 +262,7 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
     joinPaths,
     // FIXME validate filter!!
     filter: qspec.filter && convertFilter(qspec.filter),
+    select: [], // FIXME ??
   };
 
   // TODO validate and "correct" filters
@@ -316,104 +317,6 @@ function convertFilter(filter: ExpSpec | undefined): FilterDef {
     }
   }
 }
-
-// function defineQueryPathDeps(
-//   mdef: ModelDef,
-//   prefix: string[],
-//   collect: string[][]
-// ): Pick<QueryDefPath, "select" | "joinPaths"> {
-//   const directCollect = Array.from(new Set(collect.map((c) => c[0])));
-//   const selectsAndJoins = directCollect.map(
-//     (name, _index): ["select", QueryDefPathSelect] | ["join", QueryDefPath] => {
-//       const refKey = `${mdef.refKey}.${name}`;
-//       const target = cache.get(refKey);
-//       if (!target) throw ["cache-miss", name];
-
-//       const namePath = [...prefix, name];
-//       switch (target[0]) {
-//         case RefType.Model:
-//           throw new Error(`${target[0]} type is not supported in queries`);
-//         case RefType.Field: {
-//           const field = getDefinition(refKey, RefType.Field, true);
-//           return [
-//             "select",
-//             {
-//               refKey,
-//               name,
-//               namePath,
-//               retType: field.type,
-//               nullable: field.nullable,
-//             },
-//           ];
-//         }
-//         case RefType.Computed: {
-//           throw new Error("TODO");
-//         }
-//         case RefType.Reference: {
-//           const reference = getDefinition(refKey, target[0], true);
-//           const toModel = getDefinition(reference.toModelRefKey, RefType.Model, true);
-//           return [
-//             "join",
-//             {
-//               refKey,
-//               name,
-//               retType: toModel.name,
-//               retCardinality: "one",
-//               namePath,
-//               bpAlias: null,
-//               nullable: reference.nullable, // FIXME filters?
-//               joinType: "inner", // FIXME filters?
-//               ...defineQueryPathDeps(toModel, namePath, filterCollects(name, collect)),
-//             },
-//           ];
-//         }
-//         case RefType.Relation: {
-//           const relation = getDefinition(refKey, target[0], true);
-//           const fromModel = getDefinition(relation.fromModelRefKey, RefType.Model, true);
-//           return [
-//             "join",
-//             {
-//               refKey,
-//               name,
-//               retType: fromModel.name,
-//               retCardinality: relation.unique ? "one" : "many",
-//               namePath,
-//               bpAlias: null,
-//               nullable: relation.nullable,
-//               joinType: "inner",
-//               ...defineQueryPathDeps(fromModel, namePath, filterCollects(name, collect)),
-//             },
-//           ];
-//         }
-//         case RefType.Query: {
-//           const query = getDefinition(refKey, target[0], true);
-//           const model = getDefinition(query.retType, RefType.Model, true);
-//           return [
-//             "join",
-//             {
-//               refKey,
-//               name,
-//               retType: query.retType,
-//               retCardinality: query.retCardinality,
-//               namePath,
-//               bpAlias: null,
-//               nullable: query.nullable, // FIXME may be nullable if filters are applied
-//               joinType: "inner",
-//               ...defineQueryPathDeps(model, namePath, filterCollects(name, collect)),
-//             },
-//           ];
-//         }
-//       }
-//     }
-//   );
-//   const select = selectsAndJoins
-//     .filter((s) => s[0] === "select")
-//     .map((s) => s[1]) as QueryDefPathSelect[];
-//   const joinPaths = selectsAndJoins
-//     .filter((s) => s[0] === "join")
-//     .map((s) => s[1]) as QueryDefPath[];
-//   return { select, joinPaths };
-// }
 
 function validateType(type: string): FieldDef["type"] {
   switch (type) {

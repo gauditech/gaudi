@@ -66,16 +66,8 @@ export type QueryDef = {
   // unique: boolean;
   joinPaths: QueryDefPath[];
   filter: FilterDef;
-  // select: QueryDefPathSelect[];
+  select: SelectableItem[];
   // count?: true;
-};
-
-export type QueryDefPathSelect = {
-  refKey: string;
-  name: string;
-  namePath: string[];
-  retType: string;
-  nullable: boolean;
 };
 
 export type QueryDefPath = {
@@ -181,13 +173,6 @@ type CustomEndpointDef = {
   };
 };
 
-// export type SelectDef = {
-//   fieldRefs: string[];
-//   references: { refKey: string; select: SelectDef }[];
-//   relations: { refKey: string; select: SelectDef }[];
-//   queries: { refKey: string; select: SelectDef }[];
-// };
-
 export type SelectableItem = SelectFieldItem | SelectConstantItem;
 
 export type SelectFieldItem = {
@@ -195,6 +180,7 @@ export type SelectFieldItem = {
   name: string;
   refKey: string;
   namePath: string[];
+  // nullable: boolean;
   alias: string;
 };
 
@@ -212,6 +198,8 @@ export type SelectItem =
       name: string;
       namePath: string[];
       alias: string;
+      // nullable: boolean;
+      // retType: string;
       select: SelectItem[];
     };
 
