@@ -41,7 +41,10 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     return Object.fromEntries(schemaEntries);
   }
 
-  function buildEndpointOperation(endpoint: EndpointDef): OpenAPIV3.OperationObject {
+  function buildEndpointOperation(
+    endpoint: EndpointDef,
+    hasParameters: boolean
+  ): OpenAPIV3.OperationObject {
     const properties = buildSchema(endpoint.response ?? []);
     const isArray = endpoint.kind === "list";
 
@@ -58,6 +61,17 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
         },
       },
     };
+
+    if (hasParameters) {
+      operation.responses[404] = {
+        description: "Resource not found",
+        content: {
+          "application/json": {
+            schema: { type: "object", properties: { message: { type: "string" } } },
+          },
+        },
+      };
+    }
 
     if (endpoint.kind === "create") {
       const schema = buildSchemaFromFieldset(endpoint.fieldset);
@@ -82,7 +96,7 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     const path = gaudiPath.path.replace(pathRegex, "{$1}");
 
     const pathItem = paths[path] ?? { parameters };
-    pathItem[method] = buildEndpointOperation(endpoint);
+    pathItem[method] = buildEndpointOperation(endpoint, parameters.length > 0);
     paths[path] = pathItem;
     paths;
 

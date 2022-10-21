@@ -120,6 +120,14 @@ describe("openAPI", () => {
                   },
                 },
               },
+              404: {
+                description: "Resource not found",
+                content: {
+                  "application/json": {
+                    schema: { properties: { message: { type: "string" } }, type: "object" },
+                  },
+                },
+              },
             },
           },
         },
