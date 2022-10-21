@@ -38,8 +38,10 @@ describe("queryables", () => {
       alias: "exists",
     };
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
-    const q = mkContextQuery(def, endpoint.targets, [constant]);
-    console.log(q);
+    const q = mkContextQuery(def, endpoint.targets, [
+      constant,
+      { kind: "field", alias: "id", name: "id", namePath: ["Org", "id"], refKey: "Org.id" },
+    ]);
     const s = q ? queryToString(def, q) : "not queryable";
     console.log(s);
   });

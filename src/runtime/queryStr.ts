@@ -91,6 +91,8 @@ function opToString(op: BinaryOperator): string {
   switch (op) {
     case "is":
       return "=";
+    case "is not":
+      return "<>";
     default:
       return op.toUpperCase();
   }
