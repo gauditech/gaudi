@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 
+import { buildOpenAPI } from "./openAPI";
+
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
   BuildDbSchemaData,
@@ -29,6 +31,10 @@ export async function build(definition: Definition, outputFolder: string): Promi
     { definition, dbProvider: DB_PROVIDER, dbConnectionUrl: DB_CONNECTION_URL },
     outputFolder
   );
+
+  const openAPI = buildOpenAPI(definition);
+  const outFile = path.join(outputFolder, "openapi.json");
+  storeTemplateOutput(outFile, JSON.stringify(openAPI, undefined, 2));
 }
 
 // -------------------- part builders
