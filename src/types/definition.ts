@@ -81,6 +81,8 @@ export type QueryDefPathSelect = {
 export interface IQueryDefPath<RK extends RefKind> {
   kind: RK;
   refKey: string;
+  name: string;
+  namePath: string[];
   joinType: "inner" | "outer";
   joinPaths: QueryDefPath[];
   retType: string;

@@ -123,11 +123,12 @@ export function processPaths(
         kind: ref.kind,
         joinType: "inner",
         refKey: ref.value.refKey,
+        name,
+        namePath: [...prefixNames, name],
         joinPaths,
         retType: getTargetModel(def.models, ref.value.refKey).name,
         retCardinality: calculateCardinality(ref, joinPaths),
-      } as QueryDefPath;
-      // FIXME typescript doesn't like this so we have to cast
+      };
     })
   );
 }
