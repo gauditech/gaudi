@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`runtime error create 'resource not found' GaudiBusinessError 1`] = `"{"name":"GaudiBusinessError","code":"ERROR_CODE_RESOURCE_NOT_FOUND","message":"Resource not found"}"`;
+
+exports[`runtime error create SERVER_ERROR EndpointHttpResponseError  with cause 1`] = `"{"name":"EndpointHttpResponseError","status":500,"response":{"code":"ERROR_CODE_SERVER_ERROR","message":"Server error"},"cause":{"error":"this is the cause"},"message":"Server error"}"`;
+
+exports[`runtime error create SERVER_ERROR EndpointHttpResponseError  with message 1`] = `"{"name":"EndpointHttpResponseError","status":500,"response":{"code":"ERROR_CODE_SERVER_ERROR","message":"response message"},"message":"response message"}"`;
+
+exports[`runtime error create SERVER_ERROR EndpointHttpResponseError  with message and cause 1`] = `"{"name":"EndpointHttpResponseError","status":500,"response":{"code":"ERROR_CODE_SERVER_ERROR","message":"some message"},"cause":{"error":"this is the cause"},"message":"some message"}"`;
+
+exports[`runtime error create generic EndpointHttpResponseError  with EndpointResponseErrorBody response 1`] = `"{"name":"EndpointHttpResponseError","status":500,"response":{"code":"CODE","message":"some message","data":{"prop":"asdf"}},"cause":{"b":1},"message":"some message"}"`;
+
+exports[`runtime error create generic EndpointHttpResponseError  with GaudiBusinessError error 1`] = `"{"name":"EndpointHttpResponseError","status":500,"response":{"code":"CODE","message":"some message","data":{"prop":"value"}},"message":"some message"}"`;
+
+exports[`runtime error create generic EndpointHttpResponseError  with string response 1`] = `"{"name":"EndpointHttpResponseError","status":500,"cause":{"b":1},"message":"response message2"}"`;
+
+exports[`runtime error create generic GaudiBusinessError 1`] = `"{"name":"GaudiBusinessError","code":"code","data":{"a":1},"cause":{"b":1},"message":"message"}"`;

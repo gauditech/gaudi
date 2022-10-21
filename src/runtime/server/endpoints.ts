@@ -12,7 +12,13 @@ import {
 import { getTargetModel } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { EndpointError } from "@src/runtime/server/error";
+import {
+  EndpointHttpResponseError,
+  GaudiBusinessError,
+  createEndpointHttpResponseError,
+  createResourceNotFoundGaudiBusinessError,
+  createServerErrorEndpointHttpResponseError,
+} from "@src/runtime/server/error";
 import { endpointHandlerGuard } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
 import {
@@ -91,15 +97,11 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         );
         const targetQueryResult = await db.raw(s, contextParams);
         if (targetQueryResult.rowCount !== 1) {
-          throw new EndpointError(404, "Resource not found");
+          throw createResourceNotFoundGaudiBusinessError();
         }
         resp.json(targetQueryResult.rows[0]);
       } catch (err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        } else {
-          throw new EndpointError(500, "Error processing request", err);
-        }
+        handleEndpointError(err);
       }
     },
   };
@@ -118,9 +120,10 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
         const ctxTpl = await buildEndpointContextSql(def, endpoint);
         if (ctxTpl) {
+          console.log("SQL", ctxTpl);
           const contextResponse = await db.raw(ctxTpl, contextParams);
           if (contextResponse.rowCount !== 1) {
-            throw new EndpointError(404, "Resource not found");
+            throw createResourceNotFoundGaudiBusinessError();
           }
         }
         const targetTpl = buildEndpointTargetSql(
@@ -132,11 +135,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         const targetQueryResult = await db.raw(targetTpl, contextParams);
         resp.json(targetQueryResult.rows);
       } catch (err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        } else {
-          throw new EndpointError(500, "Error processing request", err);
-        }
+        handleEndpointError(err);
       }
     },
   };
@@ -153,9 +152,20 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
       try {
         const contextParams = extractParams(endpointPath.params, req.params);
         const body = req.body;
+        console.log("CTX PARAMS", contextParams);
         console.log("BODY", body);
 
-        const validationResult = await validateEndpointFieldset(body, endpoint.fieldset);
+        const ctxTpl = await buildEndpointContextSql(def, endpoint);
+        if (ctxTpl) {
+          console.log("SQL", ctxTpl);
+
+          const contextResponse = await db.raw(ctxTpl, contextParams);
+          if (contextResponse.rowCount !== 1) {
+            throw createResourceNotFoundGaudiBusinessError();
+          }
+        }
+
+        const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
         console.log("Validation result", validationResult);
 
         const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
@@ -168,14 +178,36 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
         resp.json(queryResult);
       } catch (err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        } else {
-          throw new EndpointError(500, "Error processing request", err);
-        }
+        handleEndpointError(err);
       }
     },
   };
+}
+
+function handleEndpointError(err: unknown) {
+  if (err instanceof GaudiBusinessError) {
+    // TODO: maybe we could add to definition a code->reponse mapping table.
+    // This mapping would define which errors endpoint throws and it could
+    // be used here but alson in API definition (eg. swagger)
+    // Eg.
+    //  - ERROR_CODE_VALIDATION -> { 400, "Validation error" }
+    //  - ERROR_CODE_RESOURCE_NOT_FOUND -> { 404, "Not found" }
+    //  - * -> { 500, "Server error" }
+    //  - ...
+
+    if (err.code === "ERROR_CODE_VALIDATION") {
+      throw createEndpointHttpResponseError(400, err);
+    }
+    if (err.code === "ERROR_CODE_RESOURCE_NOT_FOUND") {
+      throw createEndpointHttpResponseError(404, err);
+    }
+  }
+
+  if (err instanceof EndpointHttpResponseError) {
+    throw err;
+  }
+
+  throw createServerErrorEndpointHttpResponseError(err);
 }
 
 /**

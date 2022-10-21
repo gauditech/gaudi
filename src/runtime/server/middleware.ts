@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { EndpointError } from "@src/runtime/server/error";
+import { EndpointHttpResponseError, GaudiBusinessError } from "@src/runtime/server/error";
 import { ServerMiddlewareNextFn, ServerRequestHandler } from "@src/runtime/server/types";
 
 // ----- middleware
@@ -32,7 +32,9 @@ export function errorLogger(
   res: Response,
   next: ServerMiddlewareNextFn
 ) {
+  // TODO: not all errors should be logged as "error" (eg. "resource not found" business error)
   console.error("[ERROR]", error);
+
   next(error);
 }
 
@@ -43,8 +45,14 @@ export function errorResponder(
   res: Response,
   __: ServerMiddlewareNextFn
 ) {
-  if (error instanceof EndpointError) {
-    res.status(error.status).json(error.body);
+  if (error instanceof EndpointHttpResponseError) {
+    res.status(error.status).json(error.response);
+  } else if (error instanceof GaudiBusinessError) {
+    console.warn(
+      'Business errors (GaudiBusinessError) should be caught in endpoints and wrapped in an "EndpointHttpResponseError"'
+    );
+
+    res.status(500).send(error);
   } else {
     // default error handler
     res.status(500).send(error);
