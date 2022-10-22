@@ -116,8 +116,8 @@ function joinToString(def: Definition, join: QueryDefPath): string {
   const joinFilter: FilterDef = {
     kind: "binary",
     operator: "is",
-    lhs: { kind: "alias", namePath: [..._.initial(join.namePath), joinNames.that] },
-    rhs: { kind: "alias", namePath: [...join.namePath, joinNames.this] },
+    lhs: { kind: "alias", namePath: [..._.initial(join.namePath), joinNames.from] },
+    rhs: { kind: "alias", namePath: [...join.namePath, joinNames.to] },
   };
 
   let src: string;
@@ -155,7 +155,7 @@ function joinToString(def: Definition, join: QueryDefPath): string {
   ${join.joinPaths.map((j) => joinToString(def, j))}`;
 }
 
-function getJoinNames(def: Definition, refKey: string): { this: string; that: string } {
+function getJoinNames(def: Definition, refKey: string): { from: string; to: string } {
   const prop = getRef(def, refKey);
   switch (prop.kind) {
     case "reference": {
@@ -163,7 +163,7 @@ function getJoinNames(def: Definition, refKey: string): { this: string; that: st
       const { value: field } = getRef<"field">(def, reference.fieldRefKey);
       const { value: refField } = getRef<"field">(def, reference.toModelFieldRefKey);
 
-      return { this: field.name, that: refField.name };
+      return { to: field.name, from: refField.name };
     }
     case "relation": {
       const relation = prop.value;
@@ -171,10 +171,10 @@ function getJoinNames(def: Definition, refKey: string): { this: string; that: st
       const { value: field } = getRef<"field">(def, reference.fieldRefKey);
       const { value: refField } = getRef<"field">(def, reference.toModelFieldRefKey);
 
-      return { this: field.name, that: refField.name };
+      return { to: field.name, from: refField.name };
     }
     case "query": {
-      return { this: '"__join_connection"', that: "id" };
+      return { to: '"__join_connection"', from: "id" };
     }
     default:
       throw new Error(`Kind ${prop.kind} not supported`);
