@@ -226,7 +226,6 @@ function getLeaf(def: Definition, paths: QueryDefPath[], namePath: string[]): Qu
     const ref = getRef(def, p.refKey);
     return ref.value.name === namePath[1];
   })!;
-  console.log(node);
   return namePath.length === 2 ? node : getLeaf(def, node.joinPaths, _.tail(namePath));
 }
 
@@ -235,15 +234,11 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
   const ex = getDefinition(def, refKey, "query");
   if (ex) return ex;
 
-  const filter = convertFilter(qspec.filter);
   const fromPath = [mdef.name, ...qspec.fromModel];
+  const filter = convertFilter(qspec.filter, fromPath);
 
   const filterPaths = qspec.filter ? getFilterPaths(filter) : [];
-  // detect default context for each filter
-  for (const path of filterPaths) {
-    // TODO no bpAliases support yet, so all must belong to leaf context
-    path.unshift(...fromPath);
-  }
+
   const collect = mergePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(collect);
   ensureEqual(direct.length, 1);
@@ -261,7 +256,7 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
     nullable: getRef<QueryDefPath["kind"]>(def, retLeaf.refKey).value.nullable,
     joinPaths,
     // FIXME validate filter!!
-    filter: qspec.filter && convertFilter(qspec.filter),
+    filter: qspec.filter && convertFilter(qspec.filter, fromPath),
     select: [], // FIXME ??
   };
 
@@ -282,7 +277,7 @@ function getLiteralType(literal: LiteralValue): LiteralFilterDef["type"] {
   throw new Error(`Literal ${literal} not supported`);
 }
 
-function convertFilter(filter: ExpSpec | undefined): FilterDef {
+function convertFilter(filter: ExpSpec | undefined, namePath: string[]): FilterDef {
   switch (filter?.kind) {
     case undefined:
       return undefined;
@@ -297,7 +292,7 @@ function convertFilter(filter: ExpSpec | undefined): FilterDef {
       return {
         kind: "binary",
         operator: "is not",
-        lhs: convertFilter(filter.exp),
+        lhs: convertFilter(filter.exp, namePath),
         rhs: { kind: "literal", type: "boolean", value: true },
       };
     }
@@ -305,14 +300,14 @@ function convertFilter(filter: ExpSpec | undefined): FilterDef {
       return {
         kind: "binary",
         operator: filter.operator,
-        lhs: convertFilter(filter.lhs),
-        rhs: convertFilter(filter.rhs),
+        lhs: convertFilter(filter.lhs, namePath),
+        rhs: convertFilter(filter.rhs, namePath),
       };
     }
     case "identifier": {
       return {
         kind: "alias",
-        namePath: filter.identifier,
+        namePath: [...namePath, ...filter.identifier],
       };
     }
   }
