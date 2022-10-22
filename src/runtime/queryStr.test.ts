@@ -13,16 +13,18 @@ describe("queryables", () => {
     model Org {
       field slug { type text, unique }
       relation repos { from Repo, through org }
+      query public_repos { from repos, filter { is_public is true }}
     }
     model Repo {
       reference org { to Org }
+      field is_public { type boolean }
       field name { type text }
     }
     entrypoint Orgs {
       target model Org
       identify with slug
       entrypoint Repos {
-        target relation repos
+        target relation public_repos
         response { id, name }
 
         get endpoint {}

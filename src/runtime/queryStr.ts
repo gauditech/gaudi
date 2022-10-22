@@ -7,6 +7,7 @@ import { BinaryOperator } from "@src/types/ast";
 import {
   Definition,
   FilterDef,
+  ModelDef,
   QueryDef,
   QueryDefPath,
   SelectableItem,
@@ -20,7 +21,7 @@ export function queryToString(def: Definition, q: QueryDef): string {
       SELECT ${selectToString(def, q.select)}
       FROM ${model.dbname} as ${toAlias([model.name])}
       ${q.joinPaths.map((j) => joinToString(def, j))}
-      WHERE ${filterToString(q.filter)};`;
+      WHERE ${filterToString(q.filter)}`;
     }
     case "query":
       throw "todo";
@@ -98,6 +99,16 @@ function opToString(op: BinaryOperator): string {
   }
 }
 
+function getQuerySource(def: Definition, q: QueryDef): ModelDef {
+  switch (q.from.kind) {
+    case "model":
+      return getRef<"model">(def, q.from.refKey).value;
+    case "query": {
+      return getQuerySource(def, q.from.query);
+    }
+  }
+}
+
 function joinToString(def: Definition, join: QueryDefPath): string {
   const model = getTargetModel(def.models, join.refKey);
   const joinNames = getJoinNames(def, join.refKey);
@@ -108,8 +119,38 @@ function joinToString(def: Definition, join: QueryDefPath): string {
     lhs: { kind: "alias", namePath: [..._.initial(join.namePath), joinNames.that] },
     rhs: { kind: "alias", namePath: [...join.namePath, joinNames.this] },
   };
+
+  let src: string;
+  if (join.kind === "query") {
+    const { value: query } = getRef<"query">(def, join.refKey);
+    const sourceModel = getQuerySource(def, query);
+    // extend select
+    const conn: SelectableItem = {
+      kind: "field",
+      refKey: `${sourceModel.name}.id`,
+      alias: '"__join_connection"',
+      name: "id",
+      namePath: [sourceModel.name, "id"],
+    };
+    const retModel = getRef<"model">(def, query.retType).value;
+    const fields = retModel.fields.map(
+      (f): SelectableItem => ({
+        kind: "field",
+        refKey: f.refKey,
+        alias: f.name,
+        name: f.name,
+        namePath: [...query.fromPath, f.name],
+      })
+    );
+    src = source`(
+      ${queryToString(def, { ...query, select: [...query.select, ...fields, conn] })})`;
+  } else {
+    src = model.dbname;
+  }
+
   return source`
-  ${joinMode} ${model.dbname} AS ${toAlias(join.namePath)}
+  ${joinMode}
+  ${src} AS ${toAlias(join.namePath)}
   ON ${filterToString(joinFilter)}
   ${join.joinPaths.map((j) => joinToString(def, j))}`;
 }
@@ -131,6 +172,9 @@ function getJoinNames(def: Definition, refKey: string): { this: string; that: st
       const { value: refField } = getRef<"field">(def, reference.toModelFieldRefKey);
 
       return { this: field.name, that: refField.name };
+    }
+    case "query": {
+      return { this: '"__join_connection"', that: "id" };
     }
     default:
       throw new Error(`Kind ${prop.kind} not supported`);
