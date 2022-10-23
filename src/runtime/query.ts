@@ -30,8 +30,37 @@ export function mkTargetQuery(def: Definition, endpoint: EndpointDef): QueryDef 
   switch (endpoint.kind) {
     case "list":
     case "create": {
+      const t = _.last(targets)!;
       //  without the final filter
-      return null as unknown as QueryDef; // FIXME
+      const ctxTargets = _.initial(targets);
+      const ctxRet = _.last(ctxTargets)!;
+      const ctxQ = mkContextQuery(def, ctxTargets, [
+        {
+          kind: "field",
+          alias: "id",
+          name: "id",
+          namePath: [ctxRet.retType, "id"],
+          refKey: `${ctxRet.retType}.id`,
+        },
+      ])!;
+      const retModel = getRef<"model">(def, ctxQ.retType).value;
+      console.log(ctxQ.select);
+      const from: QueryDef["from"] = ctxQ
+        ? { kind: "query", query: ctxQ }
+        : { kind: "model", refKey: targets[0].name };
+      const q: QueryDef = {
+        name: "N/A",
+        from,
+        fromPath: [ctxQ.retType, t.name],
+        joinPaths: processPaths(def, [[t.name]], retModel, ctxQ.fromPath),
+        refKey: "N/A",
+        nullable: false,
+        retCardinality: "many",
+        retType: t.retType,
+        filter: undefined,
+        select: selectToSelectable(endpoint.response),
+      };
+      return q;
     }
     case "get":
     case "delete":
@@ -147,7 +176,6 @@ export function processPaths(
   prefixNames: NamePath
 ): QueryDefPath[] {
   const direct = getDirectChildren(paths);
-
   return _.compact(
     direct.flatMap((name): QueryDefPath | null => {
       const relativeChildren = getRelatedPaths(paths, name);
