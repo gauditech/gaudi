@@ -193,8 +193,13 @@ export function extractParams(
  */
 function validatePathParam(param: PathParam["params"][number], val: string): string | number {
   switch (param.type) {
-    case "integer":
-      return parseInt(val, 10);
+    case "integer": {
+      const n = Number(val);
+      if (Number.isNaN(n)) {
+        throw new Error(`Not a valid integer`);
+      }
+      return n;
+    }
     case "text":
       return val;
   }
