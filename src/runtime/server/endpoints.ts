@@ -1,4 +1,8 @@
 import { Express, Request, Response } from "express";
+import _ from "lodash";
+
+import { CONSTANT_EXISTS, mkContextQuery, mkTargetQuery } from "../query";
+import { queryToString } from "../queryStr";
 
 import { db } from "./dbConn";
 
@@ -82,14 +86,11 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
       try {
         const contextParams = extractParams(endpointPath.params, req.params);
 
+        const q = mkTargetQuery(def, endpoint);
+        const sql = queryToString(def, q);
+        console.log(sql);
         // build target SQL
-        const s = buildEndpointTargetSql(
-          def,
-          endpoint.targets,
-          selectToSelectable(endpoint.response),
-          "single"
-        );
-        const targetQueryResult = await db.raw(s, contextParams);
+        const targetQueryResult = await db.raw(sql, contextParams);
         if (targetQueryResult.rowCount !== 1) {
           throw new EndpointError(404, "Resource not found");
         }
@@ -115,20 +116,16 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     handler: async (req: Request, resp: Response) => {
       try {
         const contextParams = extractParams(endpointPath.params, req.params);
-
-        const ctxTpl = await buildEndpointContextSql(def, endpoint);
-        if (ctxTpl) {
+        if (endpoint.targets.length > 1) {
+          const contextQ = mkContextQuery(def, _.initial(endpoint.targets), [CONSTANT_EXISTS]);
+          const ctxTpl = queryToString(def, contextQ);
           const contextResponse = await db.raw(ctxTpl, contextParams);
           if (contextResponse.rowCount !== 1) {
             throw new EndpointError(404, "Resource not found");
           }
         }
-        const targetTpl = buildEndpointTargetSql(
-          def,
-          endpoint.targets,
-          selectToSelectable(endpoint.response),
-          "multi"
-        );
+        const targetQ = mkTargetQuery(def, endpoint);
+        const targetTpl = queryToString(def, targetQ);
         const targetQueryResult = await db.raw(targetTpl, contextParams);
         resp.json(targetQueryResult.rows);
       } catch (err) {

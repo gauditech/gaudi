@@ -9,12 +9,20 @@ import {
   ModelDef,
   QueryDef,
   QueryDefPath,
+  SelectConstantItem,
   SelectDef,
   SelectableItem,
   TargetDef,
 } from "@src/types/definition";
 
 type NamePath = string[];
+
+export const CONSTANT_EXISTS: SelectConstantItem = {
+  kind: "constant",
+  type: "integer",
+  alias: "exists",
+  value: 1,
+};
 
 // FIXME add tests
 export function mergePaths(paths: NamePath[]): NamePath[] {
@@ -27,46 +35,65 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
 
 export function mkTargetQuery(def: Definition, endpoint: EndpointDef): QueryDef {
   const targets = endpoint.targets;
+  console.log(targets.length);
   switch (endpoint.kind) {
     case "list":
     case "create": {
       const t = _.last(targets)!;
-      //  without the final filter
-      const ctxTargets = _.initial(targets);
-      const ctxRet = _.last(ctxTargets)!;
-      const ctxQ = mkContextQuery(def, ctxTargets, [
-        {
-          kind: "field",
-          alias: "id",
-          name: "id",
-          namePath: [ctxRet.retType, "id"],
-          refKey: `${ctxRet.retType}.id`,
-        },
-      ])!;
-      const retModel = getRef<"model">(def, ctxQ.retType).value;
-      console.log(ctxQ.select);
-      const from: QueryDef["from"] = ctxQ
-        ? { kind: "query", query: ctxQ }
-        : { kind: "model", refKey: targets[0].name };
-      const q: QueryDef = {
-        name: "N/A",
-        from,
-        fromPath: [ctxQ.retType, t.name],
-        joinPaths: processPaths(def, [[t.name]], retModel, ctxQ.fromPath),
-        refKey: "N/A",
-        nullable: false,
-        retCardinality: "many",
-        retType: t.retType,
-        filter: undefined,
-        select: selectToSelectable(endpoint.response),
-      };
-      return q;
+      if (targets.length > 1) {
+        //  without the final filter
+        const ctxTargets = _.initial(targets);
+        const ctxRet = _.last(ctxTargets)!;
+        const ctxQ = mkContextQuery(def, ctxTargets, [
+          {
+            kind: "field",
+            alias: "id",
+            name: "id",
+            namePath: [ctxRet.retType, "id"],
+            refKey: `${ctxRet.retType}.id`,
+          },
+        ]);
+        const retModel = getRef<"model">(def, ctxQ.retType).value;
+        const from: QueryDef["from"] = ctxQ
+          ? { kind: "query", query: ctxQ }
+          : { kind: "model", refKey: targets[0].name };
+        return {
+          name: "N/A",
+          from,
+          fromPath: [ctxQ.retType, t.name],
+          joinPaths: processPaths(def, [[t.name]], retModel, ctxQ.fromPath),
+          refKey: "N/A",
+          nullable: false,
+          retCardinality: "many",
+          retType: t.retType,
+          filter: undefined,
+          select: selectToSelectable(endpoint.response),
+        };
+      } else {
+        // root list query
+        return {
+          name: "N/A",
+          refKey: "N/A",
+          from: { kind: "model", refKey: t.retType },
+          fromPath: t.namePath,
+          filter: undefined,
+          nullable: false,
+          retType: t.retType,
+          retCardinality: "many",
+          select: selectToSelectable(endpoint.response),
+          joinPaths: [],
+        };
+      }
     }
     case "get":
     case "delete":
     case "update": {
-      // fetch with all the filters
-      return mkContextQuery(def, targets, selectToSelectable(endpoint.response ?? []))!;
+      // fetch all targets
+      return mkContextQuery(
+        def,
+        targets,
+        selectToSelectable(endpoint.response ?? [CONSTANT_EXISTS])
+      )!;
     }
   }
 }
@@ -99,13 +126,17 @@ export function filterFromTargets(targets: TargetDef[]): FilterDef {
   };
 }
 
+/**
+ * For "multi" endpoints (create/list), remove final target before calling this fn.
+ */
 export function mkContextQuery(
   def: Definition,
   targets: TargetDef[],
   select: SelectableItem[]
-): QueryDef | null {
-  // this is context query, drop final target
-  if (!targets.length) return null;
+): QueryDef {
+  if (!targets.length) {
+    throw new Error(`Targets can't be empty`);
+  }
   const targetPath = targets.map((t) => t.name);
   const filterPaths = targets.flatMap((t) => getFilterPaths(targetToFilter(t)));
   const paths = mergePaths([targetPath, ...filterPaths]);
