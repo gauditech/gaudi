@@ -51,8 +51,8 @@ describe("queryables", () => {
         refKey: "Repo.name",
       },
     ]);
-    const s = q ? queryToString(def, q) : "not queryable";
-    console.log(s);
+    const s = queryToString(def, q);
+    expect(s).toMatchSnapshot();
   });
   it("target query", () => {
     const bp = `
@@ -89,8 +89,8 @@ describe("queryables", () => {
     const def = compose(compile(parse(bp)));
     const endpoint = def.entrypoints[0].entrypoints[0].entrypoints[0].endpoints[0];
     const q = mkTargetQuery(def, endpoint);
-    // console.log(q);
+    expect(q).toMatchSnapshot();
     const s = queryToString(def, q);
-    console.log(s);
+    expect(s).toMatchSnapshot();
   });
 });

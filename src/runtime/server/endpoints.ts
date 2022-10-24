@@ -82,7 +82,6 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
         const q = mkTargetQuery(def, endpoint);
         const sql = queryToString(def, q);
-        console.log(sql);
         // build target SQL
         const targetQueryResult = await db.raw(sql, contextParams);
         if (targetQueryResult.rowCount !== 1) {
