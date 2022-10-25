@@ -1,6 +1,6 @@
 import { AnySchema, ValidationError, boolean, mixed, number, object, string } from "yup";
 
-import { ERROR_CODE_VALIDATION, createGaudiBusinessError } from "@src/runtime/server/error";
+import { BusinessError } from "@src/runtime/server/error";
 import { FieldsetDef, FieldsetFieldDef, FieldsetRecordDef } from "@src/types/definition";
 
 // ----- validation&transformation
@@ -17,8 +17,8 @@ export async function validateEndpointFieldset<R = Record<string, unknown>>(
       // error should be an instance of Yup's ValidationError
       // https://github.com/jquense/yup#validationerrorerrors-string--arraystring-value-any-path-string
 
-      throw createGaudiBusinessError(
-        ERROR_CODE_VALIDATION,
+      throw new BusinessError(
+        "ERROR_CODE_VALIDATION",
         "Validation error",
         createRecordValidationError(err)
       );

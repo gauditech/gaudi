@@ -1,19 +1,35 @@
 import { Request, Response } from "express";
 
-import { EndpointHttpResponseError, GaudiBusinessError } from "@src/runtime/server/error";
+import { HttpResponseError } from "@src/runtime/server/error";
 import { ServerMiddlewareNextFn, ServerRequestHandler } from "@src/runtime/server/types";
 
 // ----- middleware
 
-/** Catch and report async endpoint errors like normal ones. This will become unnecessary in express 5.x */
-export function endpointHandlerGuard(handler: ServerRequestHandler) {
+/** Catch and handle any endpoint error. */
+export function endpointGuardHandler(handler: ServerRequestHandler) {
   return async (req: Request, resp: Response, next: (err?: unknown) => void) => {
     try {
       await handler(req, resp);
     } catch (err) {
-      next(err);
+      if (err instanceof HttpResponseError) {
+        resp.status(err.status).send(err.body);
+      } else {
+        next(err);
+      }
     }
   };
+}
+
+/** Handle unexpected errors */
+export function unexpectedErrorHandler(
+  error: unknown,
+  _req: Request,
+  res: Response,
+  _next: ServerMiddlewareNextFn
+) {
+  console.error("[ERROR]", error);
+
+  res.status(500).send("Unknown error");
 }
 
 /** Simple request logger */
@@ -23,38 +39,4 @@ export function requestLogger(req: Request, resp: Response, next: ServerMiddlewa
   });
 
   next();
-}
-
-/** Error logging middleware */
-export function errorLogger(
-  error: unknown,
-  req: Request,
-  res: Response,
-  next: ServerMiddlewareNextFn
-) {
-  // TODO: not all errors should be logged as "error" (eg. "resource not found" business error)
-  console.error("[ERROR]", error);
-
-  next(error);
-}
-
-/** Central error responder */
-export function errorResponder(
-  error: unknown,
-  _: Request,
-  res: Response,
-  __: ServerMiddlewareNextFn
-) {
-  if (error instanceof EndpointHttpResponseError) {
-    res.status(error.status).json(error.response);
-  } else if (error instanceof GaudiBusinessError) {
-    console.warn(
-      'Business errors (GaudiBusinessError) should be caught in endpoints and wrapped in an "EndpointHttpResponseError"'
-    );
-
-    res.status(500).send(error);
-  } else {
-    // default error handler
-    res.status(500).send(error);
-  }
 }

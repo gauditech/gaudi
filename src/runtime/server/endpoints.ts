@@ -12,14 +12,8 @@ import {
 import { getTargetModel } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import {
-  EndpointHttpResponseError,
-  GaudiBusinessError,
-  createEndpointHttpResponseError,
-  createResourceNotFoundGaudiBusinessError,
-  createServerErrorEndpointHttpResponseError,
-} from "@src/runtime/server/error";
-import { endpointHandlerGuard } from "@src/runtime/server/middleware";
+import { BusinessError, errorResponse } from "@src/runtime/server/error";
+import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
 import {
   CreateEndpointDef,
@@ -44,7 +38,7 @@ export function setupEndpoints(app: Express, definition: Definition) {
 
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig) {
-  app[epConfig.method](epConfig.path, endpointHandlerGuard(epConfig.handler));
+  app[epConfig.method](epConfig.path, endpointGuardHandler(epConfig.handler));
 }
 
 export function processEntrypoint(
@@ -97,11 +91,11 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         );
         const targetQueryResult = await db.raw(s, contextParams);
         if (targetQueryResult.rowCount !== 1) {
-          throw createResourceNotFoundGaudiBusinessError();
+          throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
         }
         resp.json(targetQueryResult.rows[0]);
       } catch (err) {
-        handleEndpointError(err);
+        errorResponse(err);
       }
     },
   };
@@ -123,7 +117,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           console.log("SQL", ctxTpl);
           const contextResponse = await db.raw(ctxTpl, contextParams);
           if (contextResponse.rowCount !== 1) {
-            throw createResourceNotFoundGaudiBusinessError();
+            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
           }
         }
         const targetTpl = buildEndpointTargetSql(
@@ -135,7 +129,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         const targetQueryResult = await db.raw(targetTpl, contextParams);
         resp.json(targetQueryResult.rows);
       } catch (err) {
-        handleEndpointError(err);
+        errorResponse(err);
       }
     },
   };
@@ -161,7 +155,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const contextResponse = await db.raw(ctxTpl, contextParams);
           if (contextResponse.rowCount !== 1) {
-            throw createResourceNotFoundGaudiBusinessError();
+            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
           }
         }
 
@@ -178,36 +172,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
         resp.json(queryResult);
       } catch (err) {
-        handleEndpointError(err);
+        errorResponse(err);
       }
     },
   };
-}
-
-function handleEndpointError(err: unknown) {
-  if (err instanceof GaudiBusinessError) {
-    // TODO: maybe we could add to definition a code->reponse mapping table.
-    // This mapping would define which errors endpoint throws and it could
-    // be used here but alson in API definition (eg. swagger)
-    // Eg.
-    //  - ERROR_CODE_VALIDATION -> { 400, "Validation error" }
-    //  - ERROR_CODE_RESOURCE_NOT_FOUND -> { 404, "Not found" }
-    //  - * -> { 500, "Server error" }
-    //  - ...
-
-    if (err.code === "ERROR_CODE_VALIDATION") {
-      throw createEndpointHttpResponseError(400, err);
-    }
-    if (err.code === "ERROR_CODE_RESOURCE_NOT_FOUND") {
-      throw createEndpointHttpResponseError(404, err);
-    }
-  }
-
-  if (err instanceof EndpointHttpResponseError) {
-    throw err;
-  }
-
-  throw createServerErrorEndpointHttpResponseError(err);
 }
 
 /**

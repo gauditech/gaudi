@@ -2,7 +2,7 @@ import {
   buildFieldsetValidationSchema,
   validateEndpointFieldset,
 } from "@src/runtime/common/validation";
-import { GaudiBusinessError } from "@src/runtime/server/error";
+import { BusinessError } from "@src/runtime/server/error";
 import { FieldsetDef } from "@src/types/definition";
 
 describe("runtime", () => {
@@ -94,7 +94,7 @@ describe("runtime", () => {
       try {
         await validateEndpointFieldset(fieldset, data);
       } catch (err) {
-        const endpointError = err as GaudiBusinessError;
+        const endpointError = err as BusinessError;
         thrownError = JSON.stringify({
           code: endpointError.code,
           message: endpointError.message,
