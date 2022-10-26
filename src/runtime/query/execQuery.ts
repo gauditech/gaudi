@@ -2,25 +2,35 @@ import _ from "lodash";
 
 import { db } from "../server/dbConn";
 
-import { selectToSelectable, selectableId } from "./buildQuery";
+import { queriesFromSelect, selectToSelectable, selectableId } from "./buildQuery";
 import { queryToString } from "./queryStr";
 
+import { getRef } from "@src/common/refs";
 import { Definition, QueryDef } from "@src/types/definition";
 
 export type Result = {
   rowCount: number;
-  rows: Record<string, any>[];
+  rows: Row[];
 };
 
+export interface NestedRow {
+  id: number;
+  [key: string]: string | number | NestedRow[];
+}
+
+export interface Row {
+  id: number;
+  [key: string]: string | number;
+}
+
 export type Params = Record<string, string | number>;
-type Row = Record<string, string | number>;
 
 export async function executeQuery(
   def: Definition,
   query: QueryDef,
   params: Params,
   ids: number[]
-): Promise<Result> {
+): Promise<NestedRow[]> {
   // FIXME remove id if not needed
   const select = selectToSelectable(query.select);
   const hasId = select.find((s) => s.kind === "field" && s.name === "id");
@@ -33,11 +43,29 @@ export async function executeQuery(
   );
   // ids to params
   const idMap = Object.fromEntries(ids.map((id, index) => [`context_id_${index}`, id]));
-  const result = await db.raw(sqlTpl, { ...params, ...idMap });
+  const result: Result = await db.raw(sqlTpl, { ...params, ...idMap });
+  const resultRows: NestedRow[] = result.rows;
 
+  const resultIds = resultRows.map((r) => r.id);
+  const { value: model } = getRef<"model">(def, query.retType);
   // related queries
-  const resultIds = result.rows.map((r: Row) => r.id);
-  // merge
+  const queries = queriesFromSelect(def, model, query.select);
+  const resultGroups = await Promise.all(
+    queries.map(async (q) => {
+      const res = await executeQuery(def, q, {}, resultIds);
+      const rows = res;
+      const groups = _.groupBy(rows, "__join_connection");
 
-  return result;
+      return { name: q.name, groups };
+    })
+  );
+  // merge
+  resultRows.forEach((res) => {
+    resultGroups.forEach((rg) => {
+      // remove "__join_connection" while assigning the group of related results
+      (res as any)[rg.name] = rg.groups[res.id].map((row) => _.omit(row, "__join_connection"));
+    });
+  });
+
+  return resultRows;
 }

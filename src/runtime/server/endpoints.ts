@@ -81,10 +81,14 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         const contextParams = extractParams(endpointPath.params, req.params);
         const q = endpointQueries(def, endpoint).target;
         const targetQueryResult = await executeQuery(def, q, contextParams, []);
-        if (targetQueryResult.rowCount !== 1) {
+        if (targetQueryResult.length === 0) {
           throw new EndpointError(404, "Resource not found");
+        } else if (targetQueryResult.length > 1) {
+          throw new EndpointError(500, "Error processing request", {
+            message: "findOne found multiple records",
+          });
         }
-        resp.json(targetQueryResult.rows[0]);
+        resp.json(targetQueryResult[0]);
       } catch (err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -109,16 +113,20 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         const queries = endpointQueries(def, endpoint);
         if (queries.context) {
           const contextResponse = await executeQuery(def, queries.context, contextParams, []);
-          if (contextResponse.rowCount !== 1) {
+          if (contextResponse.length === 0) {
             throw new EndpointError(404, "Resource not found");
+          } else if (contextResponse.length > 1) {
+            throw new EndpointError(500, "Error processing request", {
+              message: "findOne found multiple records",
+            });
           }
-          const ids = contextResponse.rows.map((r: any): number => r.id);
+          const ids = contextResponse.map((r: any): number => r.id);
           // apply filters
           const targetQueryResult = await executeQuery(def, queries.target, contextParams, ids);
-          resp.json(targetQueryResult.rows);
+          resp.json(targetQueryResult);
         } else {
           const targetQueryResult = await executeQuery(def, queries.target, contextParams, []);
-          resp.json(targetQueryResult.rows);
+          resp.json(targetQueryResult);
         }
       } catch (err) {
         if (err instanceof EndpointError) {

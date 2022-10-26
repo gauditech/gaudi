@@ -12,6 +12,7 @@ import {
   ModelDef,
   QueryDef,
   QueryDefPath,
+  SelectFieldItem,
   SelectableItem,
 } from "@src/types/definition";
 
@@ -132,13 +133,8 @@ function joinToString(def: Definition, join: QueryDefPath): string {
     const { value: query } = getRef<"query">(def, join.refKey);
     const sourceModel = getQuerySource(def, query);
     // extend select
-    const conn: SelectableItem = {
-      kind: "field",
-      refKey: `${sourceModel.name}.id`,
-      alias: '"__join_connection"',
-      name: "id",
-      namePath: [sourceModel.name, "id"],
-    };
+    const conn = mkJoinConnection(sourceModel);
+
     const retModel = getRef<"model">(def, query.retType).value;
     const fields = retModel.fields.map(
       (f): SelectableItem => ({
@@ -160,6 +156,16 @@ function joinToString(def: Definition, join: QueryDefPath): string {
   ${src} AS ${toAlias(join.namePath)}
   ON ${filterToString(joinFilter)}
   ${join.joinPaths.map((j) => joinToString(def, j))}`;
+}
+
+export function mkJoinConnection(model: ModelDef): SelectFieldItem {
+  return {
+    kind: "field",
+    refKey: `${model.name}.id`,
+    alias: '"__join_connection"',
+    name: "id",
+    namePath: [model.name, "id"],
+  };
 }
 
 function getJoinNames(def: Definition, refKey: string): { from: string; to: string } {

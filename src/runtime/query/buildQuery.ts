@@ -1,10 +1,11 @@
 import _ from "lodash";
 
-import { queryToString } from "./queryStr";
+import { mkJoinConnection } from "./queryStr";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import {
+  DeepSelectItem,
   Definition,
   EndpointDef,
   FilterDef,
@@ -259,4 +260,23 @@ export function getFilterPaths(filter: FilterDef): string[][] {
       return [...getFilterPaths(filter.lhs), ...getFilterPaths(filter.rhs)];
     }
   }
+}
+
+export function queriesFromSelect(def: Definition, model: ModelDef, select: SelectDef): QueryDef[] {
+  const deep: DeepSelectItem[] = select.filter(
+    (s): s is DeepSelectItem =>
+      s.kind === "reference" || s.kind === "relation" || s.kind === "query"
+  );
+  return deep.map((s) => selectToQuery(def, model, s));
+}
+
+function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem): QueryDef {
+  const namePath = [model.name, select.name];
+  return queryFromParts(
+    def,
+    select.alias,
+    namePath,
+    applyFilterIdInContext([model.name], undefined),
+    [...select.select, mkJoinConnection(model)]
+  );
 }

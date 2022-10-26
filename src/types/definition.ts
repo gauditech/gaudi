@@ -191,17 +191,17 @@ export type SelectConstantItem = {
   alias: string;
 };
 
-export type SelectItem =
-  | SelectableItem
-  | {
-      kind: "reference" | "relation" | "query";
-      name: string;
-      namePath: string[];
-      alias: string;
-      // nullable: boolean;
-      // retType: string;
-      select: SelectItem[];
-    };
+export type DeepSelectItem = {
+  kind: "reference" | "relation" | "query";
+  name: string;
+  namePath: string[];
+  alias: string;
+  // nullable: boolean;
+  // retType: string;
+  select: SelectItem[];
+};
+
+export type SelectItem = SelectableItem | DeepSelectItem;
 
 export type SelectDef = SelectItem[];
 
