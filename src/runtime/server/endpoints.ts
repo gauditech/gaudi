@@ -1,8 +1,8 @@
 import { Express, Request, Response } from "express";
 import _ from "lodash";
 
-import { CONSTANT_EXISTS, mkContextQuery, mkTargetQuery } from "../query";
-import { queryToString } from "../queryStr";
+import { endpointQueries } from "../query/buildQuery";
+import { Params, executeQuery } from "../query/execQuery";
 
 import { db } from "./dbConn";
 
@@ -79,11 +79,8 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
     handler: async (req: Request, resp: Response) => {
       try {
         const contextParams = extractParams(endpointPath.params, req.params);
-
-        const q = mkTargetQuery(def, endpoint);
-        const sql = queryToString(def, q);
-        // build target SQL
-        const targetQueryResult = await db.raw(sql, contextParams);
+        const q = endpointQueries(def, endpoint).target;
+        const targetQueryResult = await executeQuery(def, q, contextParams, []);
         if (targetQueryResult.rowCount !== 1) {
           throw new EndpointError(404, "Resource not found");
         }
@@ -109,18 +106,20 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     handler: async (req: Request, resp: Response) => {
       try {
         const contextParams = extractParams(endpointPath.params, req.params);
-        if (endpoint.targets.length > 1) {
-          const contextQ = mkContextQuery(def, _.initial(endpoint.targets), [CONSTANT_EXISTS]);
-          const ctxTpl = queryToString(def, contextQ);
-          const contextResponse = await db.raw(ctxTpl, contextParams);
+        const queries = endpointQueries(def, endpoint);
+        if (queries.context) {
+          const contextResponse = await executeQuery(def, queries.context, contextParams, []);
           if (contextResponse.rowCount !== 1) {
             throw new EndpointError(404, "Resource not found");
           }
+          const ids = contextResponse.rows.map((r: any): number => r.id);
+          // apply filters
+          const targetQueryResult = await executeQuery(def, queries.target, contextParams, ids);
+          resp.json(targetQueryResult.rows);
+        } else {
+          const targetQueryResult = await executeQuery(def, queries.target, contextParams, []);
+          resp.json(targetQueryResult.rows);
         }
-        const targetQ = mkTargetQuery(def, endpoint);
-        const targetTpl = queryToString(def, targetQ);
-        const targetQueryResult = await db.raw(targetTpl, contextParams);
-        resp.json(targetQueryResult.rows);
       } catch (err) {
         if (err instanceof EndpointError) {
           throw err;
@@ -171,10 +170,11 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
+
 export function extractParams(
   params: PathParam["params"],
   sourceMap: Record<string, string>
-): Record<string, string | number> {
+): Params {
   return Object.fromEntries(params.map((p) => [p.name, validatePathParam(p, sourceMap[p.name])]));
 }
 

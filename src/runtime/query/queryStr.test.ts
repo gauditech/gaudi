@@ -1,13 +1,11 @@
 import _ from "lodash";
 
-import { compile, compose, parse } from "../index";
-
-import { mkContextQuery, mkTargetQuery } from "./query";
+import { endpointQueries } from "./buildQuery";
 import { queryToString } from "./queryStr";
 
-import { SelectConstantItem } from "@src/types/definition";
+import { compile, compose, parse } from "@src/index";
 
-describe("queryables", () => {
+describe("queryStr", () => {
   it("context query", () => {
     const bp = `
     model Org {
@@ -33,26 +31,13 @@ describe("queryables", () => {
 
     `;
     const def = compose(compile(parse(bp)));
-    const constant: SelectConstantItem = {
-      kind: "constant",
-      type: "integer",
-      value: 1,
-      alias: "exists",
-    };
+
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
-    const q = mkContextQuery(def, endpoint.targets, [
-      constant,
-      { kind: "field", alias: "id", name: "id", namePath: ["Org", "id"], refKey: "Org.id" },
-      {
-        kind: "field",
-        alias: "name",
-        name: "name",
-        namePath: ["Org", "public_repos", "name"],
-        refKey: "Repo.name",
-      },
-    ]);
-    const s = queryToString(def, q);
-    expect(s).toMatchSnapshot();
+    const q = endpointQueries(def, endpoint);
+    expect({
+      contextSQL: q.context ? queryToString(def, q.context) : null,
+      targetSQL: queryToString(def, q.target),
+    }).toMatchSnapshot();
   });
   it("target query", () => {
     const bp = `
@@ -88,9 +73,10 @@ describe("queryables", () => {
     `;
     const def = compose(compile(parse(bp)));
     const endpoint = def.entrypoints[0].entrypoints[0].entrypoints[0].endpoints[0];
-    const q = mkTargetQuery(def, endpoint);
-    expect(q).toMatchSnapshot();
-    const s = queryToString(def, q);
-    expect(s).toMatchSnapshot();
+    const q = endpointQueries(def, endpoint);
+    expect({
+      contextSQL: q.context ? queryToString(def, q.context) : null,
+      targetSQL: queryToString(def, q.target),
+    }).toMatchSnapshot();
   });
 });

@@ -1,6 +1,8 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
+import { selectToSelectable } from "./buildQuery";
+
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import { BinaryOperator } from "@src/types/ast";
@@ -13,26 +15,27 @@ import {
   SelectableItem,
 } from "@src/types/definition";
 
+// FIXME this should accept Queryable
 export function queryToString(def: Definition, q: QueryDef): string {
   switch (q.from.kind) {
     case "model": {
       const { value: model } = getRef<"model">(def, q.from.refKey);
       return source`
-      SELECT ${selectToString(def, q.select)}
+      SELECT ${selectableToString(def, selectToSelectable(q.select))}
       FROM "${model.dbname}" AS ${toAlias([model.name])}
       ${q.joinPaths.map((j) => joinToString(def, j))}
       WHERE ${filterToString(q.filter)}`;
     }
     case "query":
       return source`
-      SELECT ${selectToString(def, q.select)}
+      SELECT ${selectableToString(def, selectToSelectable(q.select))}
       FROM (${queryToString(def, q.from.query)}) AS ${toAlias(q.from.query.fromPath)}
       ${q.joinPaths.map((j) => joinToString(def, j))}
       WHERE ${filterToString(q.filter)}`;
   }
 }
 
-function selectToString(def: Definition, select: SelectableItem[]) {
+function selectableToString(def: Definition, select: SelectableItem[]) {
   return select
     .map((item) => {
       switch (item.kind) {

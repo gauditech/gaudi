@@ -60,13 +60,13 @@ export type QueryDef = {
   // retType: string | "integer";
   retType: string;
   from: QueryFrom;
-  retCardinality: "one" | "many";
+  // retCardinality: "one" | "many";
   fromPath: string[];
   nullable: boolean;
   // unique: boolean;
   joinPaths: QueryDefPath[];
   filter: FilterDef;
-  select: SelectableItem[];
+  select: SelectDef;
   // count?: true;
 };
 
@@ -78,7 +78,7 @@ export type QueryDefPath = {
   joinType: "inner" | "outer";
   joinPaths: QueryDefPath[];
   retType: string;
-  retCardinality: "one" | "many";
+  // retCardinality: "one" | "many";
 };
 
 // simple filter types, for now
@@ -87,7 +87,7 @@ export type FilterDef =
   | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
   | { kind: "alias"; namePath: string[] }
   | LiteralFilterDef
-  | { kind: "variable"; type: "integer" | "text" | "boolean"; name: string }
+  | { kind: "variable"; type: "integer" | "list-integer" | "text" | "boolean"; name: string }
   | undefined;
 
 export type LiteralFilterDef =

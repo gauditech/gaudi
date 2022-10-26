@@ -8,7 +8,7 @@ import {
   getRelatedPaths,
   mergePaths,
   processPaths,
-} from "@src/runtime/query";
+} from "@src/runtime/query/buildQuery";
 import { LiteralValue } from "@src/types/ast";
 import {
   Definition,
@@ -252,7 +252,7 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
     name: qspec.name,
     fromPath: fromPath,
     retType: retLeaf.retType,
-    retCardinality: joinPaths.every((p) => p.retCardinality === "one") ? "one" : "many",
+    // retCardinality: joinPaths.every((p) => p.retCardinality === "one") ? "one" : "many",
     nullable: getRef<QueryDefPath["kind"]>(def, retLeaf.refKey).value.nullable,
     joinPaths,
     // FIXME validate filter!!

@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`queryables context query 1`] = `
+{
+  "contextSQL": null,
+  "targetSQL": "SELECT "Org.public_repos".id AS id, "Org.public_repos".name AS name
+      FROM "org" AS "Org"
+      JOIN
+(
+      SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+            FROM "org" AS "Org"
+            JOIN
+      "repo" AS "Org.repos"
+      ON "Org".id = "Org.repos".org_id
+            WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
+ON "Org".id = "Org.public_repos"."__join_connection"
+      WHERE "Org".slug = :org_slug AND "Org.public_repos".id = :repo_id",
+}
+`;
+
+exports[`queryables target query 1`] = `
+{
+  "contextSQL": "SELECT "Org.public_repos".id AS id
+      FROM "org" AS "Org"
+      JOIN
+(
+      SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+            FROM "org" AS "Org"
+            JOIN
+      "repo" AS "Org.repos"
+      ON "Org".id = "Org.repos".org_id
+            WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
+ON "Org".id = "Org.public_repos"."__join_connection"
+      WHERE "Org".slug = :org_slug AND "Org.public_repos".id = :repo_id",
+  "targetSQL": "SELECT "Org.public_repos.issues".id AS id, "Org.public_repos.issues".name AS name, "Org.public_repos.issues".repo_id AS repo_id
+      FROM "repo" AS "Repo"
+      JOIN
+"issue" AS "Repo.issues"
+ON "Repo".id = "Repo.issues".repo_id
+      WHERE "Repo".id IN :@context_ids",
+}
+`;
