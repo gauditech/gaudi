@@ -3,6 +3,13 @@
 //     uri 'postgresql://postgres@localhost:5342'
 // } 
 
+// models
+
+model User {
+    field name { type text }
+    relation org_memberships { from OrgMembership, through user }
+}
+
 model Org {
     field name { type text }
     field slug { type text, unique }
@@ -11,6 +18,14 @@ model Org {
 
     relation repos { from Repo, through org }
     relation memberships { from OrgMembership, through org }
+
+    query members { from memberships.user }
+}
+
+model OrgMembership {
+    reference user { to User }
+    reference org { to Org }
+    field name { type text }
 }
 
 model Repo {
@@ -20,10 +35,7 @@ model Repo {
     reference org { to Org }
 }
 
-model OrgMembership {
-    reference org { to Org }
-    field name { type text }
-}
+// entrypoints
 
 entrypoint Orgs {
     target model Org
@@ -40,5 +52,12 @@ entrypoint Orgs {
         get endpoint {}
         list endpoint {}
         create endpoint {}
+    }
+
+    entrypoint Members {
+        target relation members
+        response { id, name }
+        list endpoint {}
+        get endpoint {}
     }
 }
