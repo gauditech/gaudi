@@ -175,10 +175,10 @@ function getJoinNames(def: Definition, refKey: string): { from: string; to: stri
       const { value: field } = getRef<"field">(def, reference.fieldRefKey);
       const { value: refField } = getRef<"field">(def, reference.toModelFieldRefKey);
 
-      return { to: field.name, from: refField.name };
+      return { from: refField.name, to: field.name };
     }
     case "query": {
-      return { to: '"__join_connection"', from: "id" };
+      return { from: "id", to: '"__join_connection"' };
     }
     default:
       throw new Error(`Kind ${prop.kind} not supported`);
