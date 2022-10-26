@@ -19,7 +19,7 @@ export function queryToString(def: Definition, q: QueryDef): string {
       const { value: model } = getRef<"model">(def, q.from.refKey);
       return source`
       SELECT ${selectToString(def, q.select)}
-      FROM ${model.dbname} AS ${toAlias([model.name])}
+      FROM "${model.dbname}" AS ${toAlias([model.name])}
       ${q.joinPaths.map((j) => joinToString(def, j))}
       WHERE ${filterToString(q.filter)}`;
     }
@@ -149,7 +149,7 @@ function joinToString(def: Definition, join: QueryDefPath): string {
     src = source`(
       ${queryToString(def, { ...query, select: [...query.select, ...fields, conn] })})`; // FIXME should remove query.select?
   } else {
-    src = model.dbname;
+    src = `"${model.dbname}"`;
   }
 
   return source`
@@ -167,7 +167,7 @@ function getJoinNames(def: Definition, refKey: string): { from: string; to: stri
       const { value: field } = getRef<"field">(def, reference.fieldRefKey);
       const { value: refField } = getRef<"field">(def, reference.toModelFieldRefKey);
 
-      return { to: field.name, from: refField.name };
+      return { from: field.name, to: refField.name };
     }
     case "relation": {
       const relation = prop.value;
