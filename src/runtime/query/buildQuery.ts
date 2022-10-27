@@ -14,6 +14,7 @@ import {
   QueryDefPath,
   SelectConstantItem,
   SelectDef,
+  SelectItem,
   SelectableItem,
   TargetDef,
 } from "@src/types/definition";
@@ -271,9 +272,33 @@ export function queriesFromSelect(def: Definition, model: ModelDef, select: Sele
 }
 
 function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem): QueryDef {
-  const namePath = select.namePath;
-  return queryFromParts(def, select.alias, namePath, applyFilterIdInContext(namePath, undefined), [
-    ...select.select,
-    mkJoinConnection(model, namePath),
-  ]);
+  const namePath = [model.name, select.name];
+  console.log("------");
+  return queryFromParts(
+    def,
+    select.alias,
+    namePath,
+    applyFilterIdInContext([model.name], undefined),
+    [
+      ...select.select.map((s) => shiftSelect(model, s, select.namePath.length - 1)),
+      mkJoinConnection(model),
+    ]
+  );
+}
+
+function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
+  if (select.kind === "constant") return select;
+  const namePath = [model.name, ...select.namePath.slice(by)];
+  console.log(`Converting ${select.namePath.join(".")} to ${namePath.join(".")}`);
+  if (select.kind === "field") {
+    return {
+      ...select,
+      namePath,
+    };
+  }
+  return {
+    ...select,
+    namePath,
+    select: select.select.map((s) => shiftSelect(model, s, by)),
+  };
 }

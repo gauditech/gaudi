@@ -3,6 +3,7 @@ import _ from "lodash";
 import { db } from "../server/dbConn";
 
 import { queriesFromSelect, selectToSelectable, selectableId } from "./buildQuery";
+import { debugQuery } from "./debugQuery";
 import { queryToString } from "./queryStr";
 
 import { getRef } from "@src/common/refs";
@@ -33,11 +34,14 @@ export async function executeQuery(
 ): Promise<NestedRow[]> {
   // FIXME remove id if not needed
   const select = selectToSelectable(query.select);
-  const hasId = select.find((s) => s.kind === "field" && s.name === "id");
+  const hasId = select.find((s) => s.kind === "field" && s.alias === "id");
   if (!hasId) {
     select.push(selectableId(def, query.fromPath));
   }
-  const sqlTpl = queryToString(def, { ...query, select }).replace(
+  const exQuery = { ...query, select };
+
+  debugQuery(exQuery);
+  const sqlTpl = queryToString(def, exQuery).replace(
     ":@context_ids",
     `(${ids.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
@@ -48,11 +52,11 @@ export async function executeQuery(
     return [];
   }
   const resultRows: NestedRow[] = result.rows;
-
-  const resultIds = resultRows.map((r) => r.id);
+  const resultIds = _.uniq(resultRows.map((r) => r.id));
   const { value: model } = getRef<"model">(def, query.retType);
   // related queries
   const queries = queriesFromSelect(def, model, query.select);
+  // console.dir(queries, { depth: 10, colors: true });
   const resultGroups = await Promise.all(
     queries.map(async (q) => {
       const res = await executeQuery(def, q, {}, resultIds);

@@ -133,7 +133,7 @@ function joinToString(def: Definition, join: QueryDefPath): string {
     const { value: query } = getRef<"query">(def, join.refKey);
     const sourceModel = getQuerySource(def, query);
     // extend select
-    const conn = mkJoinConnection(sourceModel, [sourceModel.name]);
+    const conn = mkJoinConnection(sourceModel);
 
     const retModel = getRef<"model">(def, query.retType).value;
     const fields = retModel.fields.map(
@@ -158,13 +158,13 @@ function joinToString(def: Definition, join: QueryDefPath): string {
   ${join.joinPaths.map((j) => joinToString(def, j))}`;
 }
 
-export function mkJoinConnection(model: ModelDef, namePath: NamePath): SelectFieldItem {
+export function mkJoinConnection(model: ModelDef): SelectFieldItem {
   return {
     kind: "field",
     refKey: `${model.name}.id`,
     alias: '"__join_connection"',
     name: "id",
-    namePath: [...namePath, "id"],
+    namePath: [model.name, "id"],
   };
 }
 
