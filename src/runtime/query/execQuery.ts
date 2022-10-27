@@ -63,7 +63,9 @@ export async function executeQuery(
   resultRows.forEach((res) => {
     resultGroups.forEach((rg) => {
       // remove "__join_connection" while assigning the group of related results
-      (res as any)[rg.name] = rg.groups[res.id].map((row) => _.omit(row, "__join_connection"));
+      (res as any)[rg.name] = (rg.groups[res.id] ?? []).map((row) =>
+        _.omit(row, "__join_connection")
+      );
     });
   });
 
