@@ -5,8 +5,8 @@ import { queryToString } from "./queryStr";
 
 import { compile, compose, parse } from "@src/index";
 
-describe("queryStr", () => {
-  it("context query", () => {
+describe("Endpoint queries", () => {
+  it("nested query", () => {
     const bp = `
     model Org {
       field slug { type text, unique }
@@ -39,12 +39,13 @@ describe("queryStr", () => {
       targetSQL: queryToString(def, q.target),
     }).toMatchSnapshot();
   });
-  it("target query", () => {
+  it("chained nested query", () => {
     const bp = `
     model Org {
       field slug { type text, unique }
       relation repos { from Repo, through org }
       query public_repos { from repos, filter { is_public is true }}
+      query public_issues { from public_repos.issues  }
     }
     model Repo {
       reference org { to Org }
@@ -59,20 +60,16 @@ describe("queryStr", () => {
     entrypoint Orgs {
       target model Org
       identify with slug
-      entrypoint Repos {
-        target relation public_repos
+      entrypoint RepoIssues {
+        target relation public_issues
         response { id, name }
-
-        entrypoint Issues {
-          target relation issues
-          list endpoint {}
-        }
+        get endpoint {}
       }
     }
 
     `;
     const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].entrypoints[0].entrypoints[0].endpoints[0];
+    const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
     expect({
       contextSQL: q.context ? queryToString(def, q.context) : null,
