@@ -18,7 +18,7 @@ import {
   TargetDef,
 } from "@src/types/definition";
 
-type NamePath = string[];
+export type NamePath = string[];
 
 export const CONSTANT_EXISTS: SelectConstantItem = {
   kind: "constant",
@@ -271,12 +271,9 @@ export function queriesFromSelect(def: Definition, model: ModelDef, select: Sele
 }
 
 function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem): QueryDef {
-  const namePath = [model.name, select.name];
-  return queryFromParts(
-    def,
-    select.alias,
-    namePath,
-    applyFilterIdInContext([model.name], undefined),
-    [...select.select, mkJoinConnection(model)]
-  );
+  const namePath = select.namePath;
+  return queryFromParts(def, select.alias, namePath, applyFilterIdInContext(namePath, undefined), [
+    ...select.select,
+    mkJoinConnection(model, namePath),
+  ]);
 }

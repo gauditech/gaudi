@@ -20,19 +20,30 @@ model Org {
     relation memberships { from OrgMembership, through org }
 
     query members { from memberships.user }
+    query public_repos { from repos, filter { is_public is true } }
+    query public_issues { from public_repos.issues }
 }
 
 model OrgMembership {
     reference user { to User }
     reference org { to Org }
-    field name { type text }
 }
 
 model Repo {
+    reference org { to Org }
+
     field name { type text }
     field slug { type text, unique }
     field description { type text }
-    reference org { to Org }
+    field is_public { type boolean, default true }
+
+    relation issues { from Issue, through repo }
+}
+
+model Issue {
+    field title { type text }
+    field body { type text }
+    reference repo { to Repo }
 }
 
 // entrypoints
@@ -40,18 +51,33 @@ model Repo {
 entrypoint Orgs {
     target model Org
     identify with slug
-    response { name, slug, description, repos, members }
+    response { name, slug, description, repos, members, public_repos, public_issues }
 
     get endpoint {}
     list endpoint {}
 
     entrypoint Repos {
         target relation repos
+        response { id, slug, description, issues }
+
+        get endpoint {}
+        list endpoint {}
+        create endpoint {}
+    }
+
+    entrypoint PublicRepos {
+        target relation public_repos
         response { id, slug, description, org_id }
 
         get endpoint {}
         list endpoint {}
         create endpoint {}
+    }
+
+    entrypoint AllIssues {
+        target relation public_issues
+        response { id, title, body }
+        list endpoint {}
     }
 
     entrypoint Members {

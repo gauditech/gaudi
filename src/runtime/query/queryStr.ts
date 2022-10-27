@@ -1,7 +1,7 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { selectToSelectable } from "./buildQuery";
+import { NamePath, selectToSelectable } from "./buildQuery";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
@@ -133,7 +133,7 @@ function joinToString(def: Definition, join: QueryDefPath): string {
     const { value: query } = getRef<"query">(def, join.refKey);
     const sourceModel = getQuerySource(def, query);
     // extend select
-    const conn = mkJoinConnection(sourceModel);
+    const conn = mkJoinConnection(sourceModel, [sourceModel.name]);
 
     const retModel = getRef<"model">(def, query.retType).value;
     const fields = retModel.fields.map(
@@ -158,13 +158,13 @@ function joinToString(def: Definition, join: QueryDefPath): string {
   ${join.joinPaths.map((j) => joinToString(def, j))}`;
 }
 
-export function mkJoinConnection(model: ModelDef): SelectFieldItem {
+export function mkJoinConnection(model: ModelDef, namePath: NamePath): SelectFieldItem {
   return {
     kind: "field",
     refKey: `${model.name}.id`,
     alias: '"__join_connection"',
     name: "id",
-    namePath: [model.name, "id"],
+    namePath: [...namePath, "id"],
   };
 }
 
