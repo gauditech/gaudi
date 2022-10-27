@@ -44,6 +44,9 @@ export async function executeQuery(
   // ids to params
   const idMap = Object.fromEntries(ids.map((id, index) => [`context_id_${index}`, id]));
   const result: Result = await db.raw(sqlTpl, { ...params, ...idMap });
+  if (result.rowCount === 0) {
+    return [];
+  }
   const resultRows: NestedRow[] = result.rows;
 
   const resultIds = resultRows.map((r) => r.id);
