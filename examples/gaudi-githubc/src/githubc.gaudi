@@ -51,7 +51,7 @@ model Issue {
 entrypoint Orgs {
     target model Org
     identify with slug
-    response { name, slug, description, repos { org }, members, public_repos, public_issues }
+    response { name, slug, description, repos { issues { repo { org } } }, members, public_repos, public_issues }
 
     get endpoint {}
     list endpoint {}

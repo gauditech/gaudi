@@ -258,3 +258,8 @@ export type FieldSetter =
       fieldsetAccess: string[];
       throughField: { name: string; refKey: string };
     };
+
+export type QueryTree = {
+  query: QueryDef;
+  related: Record<string, QueryTree>;
+};
