@@ -12,6 +12,7 @@ import {
 import { getTargetModel } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
+import { authenticationHandler, buildEndpoints } from "@src/runtime/server/authentication";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -34,11 +35,18 @@ export function setupEndpoints(app: Express, definition: Definition) {
     .forEach((epc) => {
       registerServerEndpoint(app, epc);
     });
+  // other endpoints
+  buildEndpoints().forEach((epc) => {
+    registerServerEndpoint(app, epc);
+  });
 }
 
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig) {
-  app[epConfig.method](epConfig.path, endpointGuardHandler(epConfig.handler));
+  app[epConfig.method](
+    epConfig.path,
+    ...epConfig.handlers.map((handler) => endpointGuardHandler(handler))
+  );
 }
 
 export function processEntrypoint(
@@ -75,29 +83,38 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
 export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
+  const requiresAuthentication = true; // TODO: read from endpoint
+
   return {
     path: endpointPath.path,
     method: "get",
-    handler: async (req: Request, resp: Response) => {
-      try {
-        const contextParams = extractParams(endpointPath.params, req.params);
+    handlers: [
+      // prehandlers
+      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
 
-        // build target SQL
-        const s = buildEndpointTargetSql(
-          def,
-          endpoint.targets,
-          selectToSelectable(endpoint.response),
-          "single"
-        );
-        const targetQueryResult = await db.raw(s, contextParams);
-        if (targetQueryResult.rowCount !== 1) {
-          throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+          const contextParams = extractParams(endpointPath.params, req.params);
+
+          // build target SQL
+          const s = buildEndpointTargetSql(
+            def,
+            endpoint.targets,
+            selectToSelectable(endpoint.response),
+            "single"
+          );
+          const targetQueryResult = await db.raw(s, contextParams);
+          if (targetQueryResult.rowCount !== 1) {
+            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+          }
+          resp.json(targetQueryResult.rows[0]);
+        } catch (err) {
+          errorResponse(err);
         }
-        resp.json(targetQueryResult.rows[0]);
-      } catch (err) {
-        errorResponse(err);
-      }
-    },
+      },
+    ].filter(emptyFilter),
   };
 }
 
@@ -105,33 +122,42 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
+  const requiresAuthentication = true; // TODO: read from endpoint
+
   return {
     path: endpointPath.path,
     method: "get",
-    handler: async (req: Request, resp: Response) => {
-      try {
-        const contextParams = extractParams(endpointPath.params, req.params);
+    handlers: [
+      // prehandlers
+      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
 
-        const ctxTpl = await buildEndpointContextSql(def, endpoint);
-        if (ctxTpl) {
-          console.log("SQL", ctxTpl);
-          const contextResponse = await db.raw(ctxTpl, contextParams);
-          if (contextResponse.rowCount !== 1) {
-            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+          const contextParams = extractParams(endpointPath.params, req.params);
+
+          const ctxTpl = await buildEndpointContextSql(def, endpoint);
+          if (ctxTpl) {
+            console.log("SQL", ctxTpl);
+            const contextResponse = await db.raw(ctxTpl, contextParams);
+            if (contextResponse.rowCount !== 1) {
+              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+            }
           }
+          const targetTpl = buildEndpointTargetSql(
+            def,
+            endpoint.targets,
+            selectToSelectable(endpoint.response),
+            "multi"
+          );
+          const targetQueryResult = await db.raw(targetTpl, contextParams);
+          resp.json(targetQueryResult.rows);
+        } catch (err) {
+          errorResponse(err);
         }
-        const targetTpl = buildEndpointTargetSql(
-          def,
-          endpoint.targets,
-          selectToSelectable(endpoint.response),
-          "multi"
-        );
-        const targetQueryResult = await db.raw(targetTpl, contextParams);
-        resp.json(targetQueryResult.rows);
-      } catch (err) {
-        errorResponse(err);
-      }
-    },
+      },
+    ].filter(emptyFilter),
   };
 }
 
@@ -139,42 +165,51 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
+  const requiresAuthentication = true; // TODO: read from endpoint
+
   return {
     path: endpointPath.path,
     method: "post",
-    handler: async (req: Request, resp: Response) => {
-      try {
-        const contextParams = extractParams(endpointPath.params, req.params);
-        const body = req.body;
-        console.log("CTX PARAMS", contextParams);
-        console.log("BODY", body);
+    handlers: [
+      // prehandlers
+      requiresAuthentication ? authenticationHandler() : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
 
-        const ctxTpl = await buildEndpointContextSql(def, endpoint);
-        if (ctxTpl) {
-          console.log("SQL", ctxTpl);
+          const contextParams = extractParams(endpointPath.params, req.params);
+          const body = req.body;
+          console.log("CTX PARAMS", contextParams);
+          console.log("BODY", body);
 
-          const contextResponse = await db.raw(ctxTpl, contextParams);
-          if (contextResponse.rowCount !== 1) {
-            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+          const ctxTpl = await buildEndpointContextSql(def, endpoint);
+          if (ctxTpl) {
+            console.log("SQL", ctxTpl);
+
+            const contextResponse = await db.raw(ctxTpl, contextParams);
+            if (contextResponse.rowCount !== 1) {
+              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+            }
           }
+
+          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          console.log("Validation result", validationResult);
+
+          const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
+            input: validationResult,
+          });
+          console.log("Changeset result", actionChangeset);
+
+          const queryResult = await insertData(def, endpoint, actionChangeset);
+          console.log("Query result", queryResult);
+
+          resp.json(queryResult);
+        } catch (err) {
+          errorResponse(err);
         }
-
-        const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
-        console.log("Validation result", validationResult);
-
-        const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
-          input: validationResult,
-        });
-        console.log("Changeset result", actionChangeset);
-
-        const queryResult = await insertData(def, endpoint, actionChangeset);
-        console.log("Query result", queryResult);
-
-        resp.json(queryResult);
-      } catch (err) {
-        errorResponse(err);
-      }
-    },
+      },
+    ].filter(emptyFilter),
   };
 }
 
@@ -212,4 +247,8 @@ async function insertData(
   const model: ModelDef = getTargetModel(definition.models, target.refKey);
 
   return db.insert(data).into(model.dbname);
+}
+
+function emptyFilter<T>(value: T): value is NonNullable<T> {
+  return value != null;
 }

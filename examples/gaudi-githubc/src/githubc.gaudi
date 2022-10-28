@@ -25,6 +25,25 @@ model OrgMembership {
     field name { type text }
 }
 
+// ----- start auth model
+model User {
+    field firstName { type text }
+    field lastName { type text }
+    relation authLocal { from UserAuthLocal, through user }
+    relation accessToken { from UserAccessToken, through user }
+}
+model UserAuthLocal {
+    reference user { to User }
+    field username { type text, unique }
+    field password { type text }
+}
+model UserAccessToken {
+    reference user { to User }
+    field token { type text, unique }
+    field expiryDate { type text }
+}
+// ----- end auth model
+
 entrypoint Orgs {
     target model Org
     identify with slug
