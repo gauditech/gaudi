@@ -12,6 +12,7 @@ import {
   ModelDef,
   QueryDef,
   QueryDefPath,
+  QueryTree,
   SelectConstantItem,
   SelectDef,
   SelectItem,
@@ -39,7 +40,7 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
 
 type EndpointQueries = {
   context?: QueryDef;
-  target: QueryDef;
+  target: QueryTree;
 };
 export function endpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
   // do we query context separately?
@@ -58,7 +59,7 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
       filter,
       endpoint.response ?? [selectableId(def, fromPath)]
     );
-    return { target: query };
+    return { target: buildQueryTree(def, query) };
   } else if (endpoint.targets.length === 1) {
     // "many" root level, no context query
     const targets = endpoint.targets;
@@ -71,7 +72,7 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
       filter,
       endpoint.response ?? [selectableId(def, fromPath)]
     );
-    return { target: query };
+    return { target: buildQueryTree(def, query) };
   } else {
     // many but nested
     const targets = _.initial(endpoint.targets);
@@ -88,7 +89,7 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
       applyFilterIdInContext([ctxQuery.retType], undefined),
       endpoint.response ?? [selectableId(def, fromPath)]
     );
-    return { context: ctxQuery, target: q };
+    return { context: ctxQuery, target: buildQueryTree(def, q) };
   }
 }
 
@@ -273,7 +274,6 @@ export function queriesFromSelect(def: Definition, model: ModelDef, select: Sele
 
 function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem): QueryDef {
   const namePath = [model.name, select.name];
-  console.log("------");
   return queryFromParts(
     def,
     select.alias,
@@ -300,5 +300,17 @@ function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectIte
     ...select,
     namePath,
     select: select.select.map((s) => shiftSelect(model, s, by)),
+  };
+}
+
+export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
+  const query = { ...q, select: selectToSelectable(q.select) };
+  const { value: model } = getRef<"model">(def.models, query.retType);
+
+  return {
+    name: query.name,
+    alias: query.name,
+    query,
+    related: queriesFromSelect(def, model, q.select).map((q) => buildQueryTree(def, q)),
   };
 }

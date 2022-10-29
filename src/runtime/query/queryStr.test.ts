@@ -34,10 +34,7 @@ describe("Endpoint queries", () => {
 
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
-    expect({
-      contextSQL: q.context ? queryToString(def, q.context) : null,
-      targetSQL: queryToString(def, q.target),
-    }).toMatchSnapshot();
+    expect(q).toMatchSnapshot();
   });
   it("chained nested query", () => {
     const bp = `
@@ -71,9 +68,6 @@ describe("Endpoint queries", () => {
     const def = compose(compile(parse(bp)));
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
-    expect({
-      contextSQL: q.context ? queryToString(def, q.context) : null,
-      targetSQL: queryToString(def, q.target),
-    }).toMatchSnapshot();
+    expect(q).toMatchSnapshot();
   });
 });

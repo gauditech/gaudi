@@ -1,13 +1,11 @@
+import { Knex } from "knex";
 import _ from "lodash";
 
-import { db } from "../server/dbConn";
-
-import { queriesFromSelect, selectToSelectable, selectableId } from "./buildQuery";
+import { selectableId } from "./buildQuery";
 import { debugQuery } from "./debugQuery";
 import { queryToString } from "./queryStr";
 
-import { getRef } from "@src/common/refs";
-import { Definition, QueryDef } from "@src/types/definition";
+import { Definition, QueryDef, QueryTree } from "@src/types/definition";
 
 export type Result = {
   rowCount: number;
@@ -27,54 +25,48 @@ export interface Row {
 export type Params = Record<string, string | number>;
 
 export async function executeQuery(
+  conn: Knex | Knex.Transaction,
   def: Definition,
-  query: QueryDef,
+  q: QueryDef,
   params: Params,
-  ids: number[]
+  contextIds: number[]
 ): Promise<NestedRow[]> {
-  // FIXME remove id if not needed
-  const select = selectToSelectable(query.select);
-  const hasId = select.find((s) => s.kind === "field" && s.alias === "id");
+  const hasId = q.select.find((s) => s.kind === "field" && s.alias === "id");
+  let query = q;
   if (!hasId) {
-    select.push(selectableId(def, query.fromPath));
+    query = { ...q, select: [...q.select, selectableId(def, query.fromPath)] };
   }
-  const exQuery = { ...query, select };
-
-  debugQuery(exQuery);
-  const sqlTpl = queryToString(def, exQuery).replace(
+  debugQuery(query);
+  const sqlTpl = queryToString(def, query).replace(
     ":@context_ids",
-    `(${ids.map((_, index) => `:context_id_${index}`).join(", ")})`
+    `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
-  // ids to params
-  const idMap = Object.fromEntries(ids.map((id, index) => [`context_id_${index}`, id]));
-  const result: Result = await db.raw(sqlTpl, { ...params, ...idMap });
-  if (result.rowCount === 0) {
-    return [];
-  }
-  const resultRows: NestedRow[] = result.rows;
-  const resultIds = _.uniq(resultRows.map((r) => r.id));
-  const { value: model } = getRef<"model">(def, query.retType);
-  // related queries
-  const queries = queriesFromSelect(def, model, query.select);
-  // console.dir(queries, { depth: 10, colors: true });
-  const resultGroups = await Promise.all(
-    queries.map(async (q) => {
-      const res = await executeQuery(def, q, {}, resultIds);
-      const rows = res;
-      const groups = _.groupBy(rows, "__join_connection");
+  const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
+  const result: Result = await conn.raw(sqlTpl, { ...params, ...idMap });
+  return result.rows;
+}
 
-      return { name: q.name, groups };
-    })
-  );
-  // merge
-  resultRows.forEach((res) => {
-    resultGroups.forEach((rg) => {
-      // remove "__join_connection" while assigning the group of related results
-      (res as any)[rg.name] = (rg.groups[res.id] ?? []).map((row) =>
-        _.omit(row, "__join_connection")
+export async function executeQueryTree(
+  conn: Knex | Knex.Transaction,
+  def: Definition,
+  qt: QueryTree,
+  params: Params,
+  contextIds: number[]
+): Promise<NestedRow[]> {
+  const results = await executeQuery(conn, def, qt.query, params, contextIds);
+  if (results.length === 0) return [];
+  const resultIds = _.uniq(results.map((r) => r.id));
+
+  // tree
+  for (const rel of qt.related) {
+    const relResults = await executeQueryTree(conn, def, rel, params, resultIds);
+    const groupedById = _.groupBy(relResults, "__join_connection");
+    results.forEach((r) => {
+      const relResultsForId = (groupedById[r.id] ?? []).map((relR) =>
+        _.omit(relR, "__join_connection")
       );
+      Object.assign(r, { [rel.name]: relResultsForId });
     });
-  });
-
-  return resultRows;
+  }
+  return results;
 }

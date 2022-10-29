@@ -2,7 +2,7 @@ import { Express, Request, Response } from "express";
 import _ from "lodash";
 
 import { endpointQueries } from "../query/buildQuery";
-import { Params, executeQuery } from "../query/execQuery";
+import { Params, executeQuery, executeQueryTree } from "../query/execQuery";
 
 import { db } from "./dbConn";
 
@@ -80,7 +80,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
       try {
         const contextParams = extractParams(endpointPath.params, req.params);
         const q = endpointQueries(def, endpoint).target;
-        const targetQueryResult = await executeQuery(def, q, contextParams, []);
+        const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
         if (targetQueryResult.length === 0) {
           throw new EndpointError(404, "Resource not found");
         } else if (targetQueryResult.length > 1) {
@@ -112,7 +112,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         const contextParams = extractParams(endpointPath.params, req.params);
         const queries = endpointQueries(def, endpoint);
         if (queries.context) {
-          const contextResponse = await executeQuery(def, queries.context, contextParams, []);
+          const contextResponse = await executeQuery(db, def, queries.context, contextParams, []);
           if (contextResponse.length === 0) {
             throw new EndpointError(404, "Resource not found");
           } else if (contextResponse.length > 1) {
@@ -122,10 +122,22 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           }
           const ids = contextResponse.map((r: any): number => r.id);
           // apply filters
-          const targetQueryResult = await executeQuery(def, queries.target, contextParams, ids);
+          const targetQueryResult = await executeQueryTree(
+            db,
+            def,
+            queries.target,
+            contextParams,
+            ids
+          );
           resp.json(targetQueryResult);
         } else {
-          const targetQueryResult = await executeQuery(def, queries.target, contextParams, []);
+          const targetQueryResult = await executeQueryTree(
+            db,
+            def,
+            queries.target,
+            contextParams,
+            []
+          );
           resp.json(targetQueryResult);
         }
       } catch (err) {
