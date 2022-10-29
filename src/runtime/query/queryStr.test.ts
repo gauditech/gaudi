@@ -4,6 +4,7 @@ import { endpointQueries } from "./buildQuery";
 import { queryToString } from "./queryStr";
 
 import { compile, compose, parse } from "@src/index";
+import { QueryDef, QueryTree } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
   it("nested query", () => {
@@ -35,6 +36,7 @@ describe("Endpoint queries", () => {
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
+    expect(extractQueries(q.target).map((q) => queryToString(def, q))).toMatchSnapshot();
   });
   it("chained nested query", () => {
     const bp = `
@@ -59,7 +61,7 @@ describe("Endpoint queries", () => {
       identify with slug
       entrypoint RepoIssues {
         target relation public_issues
-        response { id, name }
+        response { id, name, repo { org, name, is_public } }
         get endpoint {}
       }
     }
@@ -69,5 +71,12 @@ describe("Endpoint queries", () => {
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
+    expect(extractQueries(q.target)).toHaveLength(3);
+    expect(extractQueries(q.target).map((q) => queryToString(def, q))).toMatchSnapshot();
+    q;
   });
 });
+
+function extractQueries(qt: QueryTree): QueryDef[] {
+  return [qt.query, ...qt.related.flatMap(extractQueries)];
+}

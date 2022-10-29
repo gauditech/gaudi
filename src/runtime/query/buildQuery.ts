@@ -289,7 +289,6 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
 function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
   if (select.kind === "constant") return select;
   const namePath = [model.name, ...select.namePath.slice(by)];
-  console.log(`Converting ${select.namePath.join(".")} to ${namePath.join(".")}`);
   if (select.kind === "field") {
     return {
       ...select,
