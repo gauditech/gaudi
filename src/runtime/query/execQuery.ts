@@ -1,11 +1,11 @@
 import { Knex } from "knex";
 import _ from "lodash";
 
-import { selectableId } from "./buildQuery";
+import { QueryTree, selectableId } from "./buildQuery";
 import { debugQuery } from "./debugQuery";
 import { queryToString } from "./queryStr";
 
-import { Definition, QueryDef, QueryTree } from "@src/types/definition";
+import { Definition, QueryDef } from "@src/types/definition";
 
 export type Result = {
   rowCount: number;

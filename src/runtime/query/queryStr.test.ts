@@ -1,10 +1,10 @@
 import _ from "lodash";
 
-import { endpointQueries } from "./buildQuery";
+import { QueryTree, endpointQueries } from "./buildQuery";
 import { queryToString } from "./queryStr";
 
 import { compile, compose, parse } from "@src/index";
-import { QueryDef, QueryTree } from "@src/types/definition";
+import { QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
   it("nested query", () => {

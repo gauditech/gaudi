@@ -258,11 +258,3 @@ export type FieldSetter =
       fieldsetAccess: string[];
       throughField: { name: string; refKey: string };
     };
-
-// FIXME introduce Queryable with SelectableItem[]?
-export type QueryTree = {
-  name: string;
-  alias: string;
-  query: QueryDef;
-  related: QueryTree[];
-};

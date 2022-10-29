@@ -12,13 +12,20 @@ import {
   ModelDef,
   QueryDef,
   QueryDefPath,
-  QueryTree,
   SelectConstantItem,
   SelectDef,
   SelectItem,
   SelectableItem,
   TargetDef,
 } from "@src/types/definition";
+
+// FIXME introduce Queryable with SelectableItem[]?
+export type QueryTree = {
+  name: string;
+  alias: string;
+  query: QueryDef;
+  related: QueryTree[];
+};
 
 export type NamePath = string[];
 
