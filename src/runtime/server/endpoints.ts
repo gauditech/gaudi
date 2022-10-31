@@ -155,7 +155,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         const body = req.body;
         console.log("BODY", body);
 
-        const validationResult = await validateEndpointFieldset(body, endpoint.fieldset);
+        const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
         console.log("Validation result", validationResult);
 
         const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
