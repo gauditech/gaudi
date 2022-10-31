@@ -6,7 +6,6 @@ import { Definition } from "@src/types/definition";
 export type BuildDbSchemaData = {
   definition: Definition;
   dbProvider: string;
-  dbConnectionUrl: string;
 };
 
 export function render(data: BuildDbSchemaData): string {
@@ -17,7 +16,7 @@ export function render(data: BuildDbSchemaData): string {
     ${ /* TODO: datasource should come from definition instead of being hardcoded */'' }
     datasource db {
       provider = "${data.dbProvider}"
-      url      = "${data.dbConnectionUrl}"
+      url      = env("GAUDI_DATABASE_URL")
     }
 
     ${d.models.map(

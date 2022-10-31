@@ -6,9 +6,9 @@
   "scripts": {
     "// --- build": "",
     "build": "npm run build:compile && npm run build:migrate",
-    "build:compile": "GAUDI_IN=./src/githubc.gaudi GAUDI_OUT=./dist node ./node_modules/@gaudi/engine/engine.js",
+    "build:compile": "dotenv -e ./gaudi.env -- node ./node_modules/@gaudi/engine/engine.js",
     "build:migrate": "npm run build:migrate:db",
-    "build:migrate:db": "npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss",
+    "build:migrate:db": "dotenv -e ./gaudi.env -- npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss",
     "// --- dev": "",
     "dev": "npm run dev:prepare; concurrently --names BUILD,MIGR,RUN --prefix-colors blue,magenta,yellow \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
     "// - prepare - precreate output folder(s) so watchers work as expected": "",
@@ -18,7 +18,7 @@
     "// - if definition.json exists then start server and let nedemon take over, otherwise, wait for definition.json to be created before starting server": "",
     "dev:start": "if [ -f './dist/definition.json' ]; then npm start; else chokidar ./dist/definition.json --command \"if [[ '{event}' == 'add' ]]; then npm start; fi;\"; fi;",
     "// --- server": "",
-    "start": "GAUDI_IN=./dist/definition.json nodemon --watch ./node_modules/@gaudi/engine/runtime --watch ./dist/definition.json ./node_modules/@gaudi/engine/runtime/runtime.js",
+    "start": "dotenv -e ./gaudi.env -- nodemon --watch ./node_modules/@gaudi/engine/runtime --watch ./dist ./node_modules/@gaudi/engine/runtime/runtime.js",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "chokidar-cli": "^3.0.0",
+    "dotenv-cli": "^6.0.0",
     "make-dir-cli": "^3.0.0",
     "nodemon": "^2.0.20",
     "rimraf": "^3.0.2"
