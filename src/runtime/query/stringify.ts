@@ -1,10 +1,9 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { NamePath, selectToSelectable } from "./build";
+import { selectToSelectable } from "./build";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
 import { BinaryOperator } from "@src/types/ast";
 import {
   Definition,
@@ -39,17 +38,8 @@ export function queryToString(def: Definition, q: QueryDef): string {
 function selectableToString(def: Definition, select: SelectableItem[]) {
   return select
     .map((item) => {
-      switch (item.kind) {
-        case "field": {
-          const { value: field } = getRef<"field">(def, item.refKey);
-          return `${toAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
-        }
-        case "constant": {
-          // FIXME security issue, this is not an escaped value!!
-          ensureEqual(item.type, "integer");
-          return `${item.value} AS "${item.alias}"`;
-        }
-      }
+      const { value: field } = getRef<"field">(def, item.refKey);
+      return `${toAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
     })
     .join(", ");
 }

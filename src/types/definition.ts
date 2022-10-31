@@ -173,7 +173,7 @@ type CustomEndpointDef = {
   };
 };
 
-export type SelectableItem = SelectFieldItem | SelectConstantItem;
+export type SelectableItem = SelectFieldItem;
 
 export type SelectFieldItem = {
   kind: "field";
@@ -181,13 +181,6 @@ export type SelectFieldItem = {
   refKey: string;
   namePath: string[];
   // nullable: boolean;
-  alias: string;
-};
-
-export type SelectConstantItem = {
-  kind: "constant";
-  type: "integer";
-  value: number;
   alias: string;
 };
 

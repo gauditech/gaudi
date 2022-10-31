@@ -12,7 +12,6 @@ import {
   ModelDef,
   QueryDef,
   QueryDefPath,
-  SelectConstantItem,
   SelectDef,
   SelectItem,
   SelectableItem,
@@ -35,7 +34,7 @@ export function mergePaths(paths: NamePath[]): NamePath[] {
 }
 
 export function selectToSelectable(select: SelectDef): SelectableItem[] {
-  return select.filter((s): s is SelectableItem => s.kind === "field" || s.kind === "constant");
+  return select.filter((s): s is SelectableItem => s.kind === "field");
 }
 
 type EndpointQueries = {
@@ -287,7 +286,6 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
 }
 
 function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
-  if (select.kind === "constant") return select;
   const namePath = [model.name, ...select.namePath.slice(by)];
   if (select.kind === "field") {
     return {

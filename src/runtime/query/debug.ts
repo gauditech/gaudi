@@ -2,10 +2,11 @@ import { QueryDef, SelectFieldItem } from "@src/types/definition";
 
 export function debugQuery(q: QueryDef): void {
   const from = q.fromPath.join(".");
-  const fields = q.select.map((s) => {
-    if (s.kind === "constant") return `constant ${s.value}`;
-    if (s.kind === "field") return debugField(s);
-  });
+  const fields = q.select
+    .filter((s): s is SelectFieldItem => s.kind === "field")
+    .map((s) => {
+      return debugField(s);
+    });
   console.debug(`Querying ${from}: selecting ${fields.join(", ")}`);
 }
 
