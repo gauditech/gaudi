@@ -1,7 +1,7 @@
 import _ from "lodash";
 
-import { QueryTree, endpointQueries } from "./buildQuery";
-import { queryToString } from "./queryStr";
+import { QueryTree, endpointQueries } from "./build";
+import { queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
 import { QueryDef } from "@src/types/definition";

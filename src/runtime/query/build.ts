@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { mkJoinConnection } from "./queryStr";
+import { mkJoinConnection } from "./stringify";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
@@ -28,13 +28,6 @@ export type QueryTree = {
 };
 
 export type NamePath = string[];
-
-export const CONSTANT_EXISTS: SelectConstantItem = {
-  kind: "constant",
-  type: "integer",
-  alias: "exists",
-  value: 1,
-};
 
 // FIXME add tests
 export function mergePaths(paths: NamePath[]): NamePath[] {
@@ -146,7 +139,7 @@ export function queryFromParts(
   select: SelectDef
 ): QueryDef {
   if (select.length === 0) {
-    return queryFromParts(def, name, fromPath, filter, [CONSTANT_EXISTS]);
+    return queryFromParts(def, name, fromPath, filter, [selectableId(def, fromPath)]);
   }
   const filterPaths = getFilterPaths(filter);
   const paths = mergePaths([fromPath, ...filterPaths]);

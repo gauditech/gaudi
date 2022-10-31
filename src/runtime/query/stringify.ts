@@ -1,7 +1,7 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { NamePath, selectToSelectable } from "./buildQuery";
+import { NamePath, selectToSelectable } from "./build";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";

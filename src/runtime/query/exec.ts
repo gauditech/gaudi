@@ -1,9 +1,9 @@
 import { Knex } from "knex";
 import _ from "lodash";
 
-import { QueryTree, selectableId } from "./buildQuery";
-import { debugQuery } from "./debugQuery";
-import { queryToString } from "./queryStr";
+import { QueryTree, selectableId } from "./build";
+import { debugQuery } from "./debug";
+import { queryToString } from "./stringify";
 
 import { Definition, QueryDef } from "@src/types/definition";
 
@@ -36,7 +36,6 @@ export async function executeQuery(
   if (!hasId) {
     query = { ...q, select: [...q.select, selectableId(def, query.fromPath)] };
   }
-  debugQuery(query);
   const sqlTpl = queryToString(def, query).replace(
     ":@context_ids",
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`

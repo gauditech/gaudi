@@ -1,8 +1,8 @@
 import { Express, Request, Response } from "express";
 import _ from "lodash";
 
-import { endpointQueries } from "../query/buildQuery";
-import { Params, executeQuery, executeQueryTree } from "../query/execQuery";
+import { endpointQueries } from "../query/build";
+import { Params, executeQuery, executeQueryTree } from "../query/exec";
 
 import { db } from "./dbConn";
 

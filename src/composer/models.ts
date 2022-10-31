@@ -8,7 +8,7 @@ import {
   getRelatedPaths,
   mergePaths,
   processPaths,
-} from "@src/runtime/query/buildQuery";
+} from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
   Definition,
