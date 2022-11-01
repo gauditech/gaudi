@@ -28,7 +28,10 @@ export type QueryTree = {
 
 export type NamePath = string[];
 
-// FIXME add tests
+/**
+ * Utils
+ */
+
 export function mergePaths(paths: NamePath[]): NamePath[] {
   return _.uniqWith(paths, _.isEqual);
 }
@@ -36,6 +39,10 @@ export function mergePaths(paths: NamePath[]): NamePath[] {
 export function selectToSelectable(select: SelectDef): SelectableItem[] {
   return select.filter((s): s is SelectableItem => s.kind === "field");
 }
+
+/**
+ * Endpoint query builder
+ */
 
 type EndpointQueries = {
   context?: QueryDef;
@@ -109,7 +116,7 @@ function applyFilterIdInContext(namePath: NamePath, filter: FilterDef): FilterDe
       };
 }
 
-function getRetType(def: Definition, path: NamePath): ModelDef {
+function getPathRetType(def: Definition, path: NamePath): ModelDef {
   // assume it starts with model
   const { value: model } = getRef<"model">(def, path[0]);
   const ret = _.tail(path).reduce(
@@ -120,7 +127,7 @@ function getRetType(def: Definition, path: NamePath): ModelDef {
 }
 
 export function selectableId(def: Definition, namePath: NamePath): SelectableItem {
-  const model = getRetType(def, namePath);
+  const model = getPathRetType(def, namePath);
   return {
     kind: "field",
     alias: "id",
@@ -129,6 +136,10 @@ export function selectableId(def: Definition, namePath: NamePath): SelectableIte
     refKey: `${model.refKey}.id`,
   };
 }
+
+/**
+ * Query builder
+ */
 
 export function queryFromParts(
   def: Definition,
@@ -155,7 +166,7 @@ export function queryFromParts(
     name,
     nullable: false,
     // retCardinality: "many", // FIXME,
-    retType: getRetType(def, fromPath).refKey,
+    retType: getPathRetType(def, fromPath).refKey,
     select,
     joinPaths,
   };
@@ -263,7 +274,23 @@ export function getFilterPaths(filter: FilterDef): string[][] {
   }
 }
 
-export function queriesFromSelect(def: Definition, model: ModelDef, select: SelectDef): QueryDef[] {
+/**
+ * QueryTree builder
+ */
+
+export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
+  const query = { ...q, select: selectToSelectable(q.select) };
+  const { value: model } = getRef<"model">(def.models, query.retType);
+
+  return {
+    name: query.name,
+    alias: query.name,
+    query,
+    related: queriesFromSelect(def, model, q.select).map((q) => buildQueryTree(def, q)),
+  };
+}
+
+function queriesFromSelect(def: Definition, model: ModelDef, select: SelectDef): QueryDef[] {
   const deep: DeepSelectItem[] = select.filter(
     (s): s is DeepSelectItem =>
       s.kind === "reference" || s.kind === "relation" || s.kind === "query"
@@ -297,17 +324,5 @@ function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectIte
     ...select,
     namePath,
     select: select.select.map((s) => shiftSelect(model, s, by)),
-  };
-}
-
-export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
-  const query = { ...q, select: selectToSelectable(q.select) };
-  const { value: model } = getRef<"model">(def.models, query.retType);
-
-  return {
-    name: query.name,
-    alias: query.name,
-    query,
-    related: queriesFromSelect(def, model, q.select).map((q) => buildQueryTree(def, q)),
   };
 }

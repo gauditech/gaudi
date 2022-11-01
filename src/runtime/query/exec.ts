@@ -2,22 +2,21 @@ import { Knex } from "knex";
 import _ from "lodash";
 
 import { QueryTree, selectableId } from "./build";
-import { debugQuery } from "./debug";
 import { queryToString } from "./stringify";
 
 import { Definition, QueryDef } from "@src/types/definition";
 
-export type Result = {
+type Result = {
   rowCount: number;
   rows: Row[];
 };
 
-export interface NestedRow {
+interface NestedRow {
   id: number;
   [key: string]: string | number | NestedRow[];
 }
 
-export interface Row {
+interface Row {
   id: number;
   [key: string]: string | number;
 }
