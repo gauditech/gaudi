@@ -1,7 +1,7 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { selectToSelectable } from "./build";
+import { NamePath, selectToSelectable } from "./build";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { BinaryOperator } from "@src/types/ast";
@@ -22,14 +22,14 @@ export function queryToString(def: Definition, q: QueryDef): string {
       const { value: model } = getRef<"model">(def, q.from.refKey);
       return source`
       SELECT ${selectableToString(def, selectToSelectable(q.select))}
-      FROM "${model.dbname}" AS ${toAlias([model.name])}
+      FROM "${model.dbname}" AS ${namePathToAlias([model.name])}
       ${q.joinPaths.map((j) => joinToString(def, j))}
       WHERE ${filterToString(q.filter)}`;
     }
     case "query":
       return source`
       SELECT ${selectableToString(def, selectToSelectable(q.select))}
-      FROM (${queryToString(def, q.from.query)}) AS ${toAlias(q.from.query.fromPath)}
+      FROM (${queryToString(def, q.from.query)}) AS ${namePathToAlias(q.from.query.fromPath)}
       ${q.joinPaths.map((j) => joinToString(def, j))}
       WHERE ${filterToString(q.filter)}`;
   }
@@ -39,13 +39,13 @@ function selectableToString(def: Definition, select: SelectableItem[]) {
   return select
     .map((item) => {
       const { value: field } = getRef<"field">(def, item.refKey);
-      return `${toAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
+      return `${namePathToAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
     })
     .join(", ");
 }
 
-function toAlias(np: string[]): string {
-  return `"${np.join(".")}"`;
+function namePathToAlias(namePath: NamePath): string {
+  return `"${namePath.join(".")}"`;
 }
 
 function filterToString(filter: FilterDef): string {
@@ -69,7 +69,7 @@ function filterToString(filter: FilterDef): string {
     case "alias": {
       const np = filter.namePath.slice(0, filter.namePath.length - 1);
       const f = filter.namePath.at(filter.namePath.length - 1);
-      return `${toAlias(np)}.${f}`;
+      return `${namePathToAlias(np)}.${f}`;
     }
     case "binary": {
       const fstr = `${filterToString(filter.lhs)} ${opToString(filter.operator)} ${filterToString(
@@ -143,7 +143,7 @@ function joinToString(def: Definition, join: QueryDefPath): string {
 
   return source`
   ${joinMode}
-  ${src} AS ${toAlias(join.namePath)}
+  ${src} AS ${namePathToAlias(join.namePath)}
   ON ${filterToString(joinFilter)}
   ${join.joinPaths.map((j) => joinToString(def, j))}`;
 }
