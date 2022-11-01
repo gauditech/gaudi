@@ -1,5 +1,7 @@
 // ---------- Endpoint responses
 
+import { assertUnreachable } from "@src/common/utils";
+
 //** Error reponse codes  */
 export type ErrorCode =
   | "ERROR_CODE_SERVER_ERROR"
@@ -81,9 +83,4 @@ export function errorResponse(cause: unknown) {
 
     throw new HttpResponseError(500, "Server error");
   }
-}
-
-/** Function that ensures exhaustivness of conditional statements. */
-function assertUnreachable(_: never): never {
-  throw new Error("Unreachable code detected");
 }

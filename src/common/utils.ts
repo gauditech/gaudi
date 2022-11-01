@@ -64,3 +64,8 @@ export function nameInitials(input: string): string {
   );
   return acc.join("").toLowerCase();
 }
+
+/** Function that ensures exhaustivness of conditional statements. */
+export function assertUnreachable(_: never): never {
+  throw new Error("Unreachable code detected");
+}
