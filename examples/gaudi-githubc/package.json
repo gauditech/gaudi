@@ -18,7 +18,7 @@
     "// - if definition.json exists then start server and let nedemon take over, otherwise, wait for definition.json to be created before starting server": "",
     "dev:start": "if [ -f './dist/definition.json' ]; then npm start; else chokidar ./dist/definition.json --command \"if [[ '{event}' == 'add' ]]; then npm start; fi;\"; fi;",
     "// --- server": "",
-    "start": "dotenv -e ./gaudi.env -- nodemon --watch ./node_modules/@gaudi/engine/runtime --watch --enable-source-maps ./dist ./node_modules/@gaudi/engine/runtime/runtime.js",
+    "start": "dotenv -e ./gaudi.env -- nodemon --watch ./node_modules/@gaudi/engine/runtime --watch ./dist --enable-source-maps ./node_modules/@gaudi/engine/runtime/runtime.js",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
