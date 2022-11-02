@@ -9,7 +9,6 @@ import {
 import { Definition } from "@src/types/definition";
 
 const DB_PROVIDER = "postgresql";
-const DB_CONNECTION_URL = "postgresql://gaudi:gaudip@localhost:5432/gaudi";
 
 export async function build(definition: Definition, outputFolder: string): Promise<void> {
   /* TODO
@@ -25,10 +24,7 @@ export async function build(definition: Definition, outputFolder: string): Promi
 
   setupOutputFolder(outputFolder);
   await buildDefinition({ definition }, outputFolder);
-  await buildDb(
-    { definition, dbProvider: DB_PROVIDER, dbConnectionUrl: DB_CONNECTION_URL },
-    outputFolder
-  );
+  await buildDb({ definition, dbProvider: DB_PROVIDER }, outputFolder);
 }
 
 // -------------------- part builders

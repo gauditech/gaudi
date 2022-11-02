@@ -3,7 +3,7 @@
 exports[`builder build DB schema renders DB schema template correctly 1`] = `
 "datasource db {
       provider = "DB_PROVIDER"
-      url      = "DB_CONNECTION_URL"
+      url      = env("GAUDI_DATABASE_URL")
     }
 
     model org {
