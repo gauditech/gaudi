@@ -177,7 +177,7 @@ async function authenticateUser(
   if (result.length === 1) {
     const row = result[0];
 
-    const passwordsMatching = await compareWithEncryptedString(password, row.password);
+    const passwordsMatching = await verifyPassword(password, row.password);
 
     if (passwordsMatching) {
       return {
@@ -237,21 +237,12 @@ export function generateAccessToken(size = TOKEN_SIZE): string {
   return crypto.randomBytes(size).toString("base64url");
 }
 
-export function encryptString(value: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    hash(value, BCRYPT_SALT_ROUNDS, (err, hash) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(hash);
-      }
-    });
-  });
+/** Hash clear text password so it can be safely stored (eg. DB). */
+export function hashPassword(password: string): Promise<string> {
+  return hash(password, BCRYPT_SALT_ROUNDS);
 }
 
-export function compareWithEncryptedString(
-  unecnrypted: string,
-  encrypted: string
-): Promise<boolean> {
-  return compare(unecnrypted, encrypted);
+/** Verify that clear text password matches the hashed one. */
+export function verifyPassword(clearPassword: string, hashedPassword: string): Promise<boolean> {
+  return compare(clearPassword, hashedPassword);
 }
