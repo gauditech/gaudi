@@ -5,11 +5,6 @@
 
 // ----- models
 
-model User {
-    field name { type text }
-    relation org_memberships { from OrgMembership, through user }
-}
-
 model Org {
     field name { type text }
     field slug { type text, unique }
@@ -48,10 +43,10 @@ model Issue {
 
 // ----- start auth model
 model User {
-    field firstName { type text }
-    field lastName { type text }
+    field name { type text }
     relation authLocal { from UserAuthLocal, through user }
     relation accessToken { from UserAccessToken, through user }
+    relation org_memberships { from OrgMembership, through user }
 }
 model UserAuthLocal {
     reference user { to User }
