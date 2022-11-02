@@ -6,7 +6,8 @@ import { assertUnreachable } from "@src/common/utils";
 export type ErrorCode =
   | "ERROR_CODE_SERVER_ERROR"
   | "ERROR_CODE_RESOURCE_NOT_FOUND"
-  | "ERROR_CODE_VALIDATION";
+  | "ERROR_CODE_VALIDATION"
+  | "ERROR_CODE_UNAUTHORIZED";
 
 //** Response error body */
 export type ResponseErrorBody = {
@@ -66,6 +67,8 @@ export function errorResponse(cause: unknown) {
       throw new HttpResponseError(400, body);
     } else if (cause.code === "ERROR_CODE_RESOURCE_NOT_FOUND") {
       throw new HttpResponseError(404, body);
+    } else if (cause.code === "ERROR_CODE_UNAUTHORIZED") {
+      throw new HttpResponseError(401, body);
     } else if (cause.code === "ERROR_CODE_SERVER_ERROR") {
       throw new HttpResponseError(500, body);
     } else {
