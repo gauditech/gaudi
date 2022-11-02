@@ -93,17 +93,21 @@ export function authenticationHandler(options?: AuthenticationOptions) {
 
   return (req: Request, resp: Response, next: NextFunction) => {
     passportIntance.authenticate("bearer", { session: false }, (err, user) => {
-      if (err) {
-        return next(err);
-      }
+      try {
+        if (err) {
+          return next(err);
+        }
 
-      // allow anonymous access
-      if (!user && !(options?.allowAnonymous ?? false)) {
-        throw new HttpResponseError(401, "Incorrect token credentials");
-      }
+        // allow anonymous access
+        if (!user && !(options?.allowAnonymous ?? false)) {
+          throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
+        }
 
-      req.user = user;
-      next();
+        req.user = user;
+        next();
+      } catch (err: unknown) {
+        errorResponse(err);
+      }
     })(req, resp, next);
   };
 }
