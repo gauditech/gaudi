@@ -7,7 +7,7 @@ import { Params, executeQuery, executeQueryTree } from "../query/exec";
 import { db } from "./dbConn";
 
 import { PathParam, buildEndpointPath } from "@src/builder/query";
-import { getTargetModel } from "@src/common/refs";
+import { getRef } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { authenticationHandler, buildEndpoints } from "@src/runtime/server/authentication";
@@ -177,7 +177,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
-  const requiresAuthentication = true; // TODO: read from endpoint
+  const requiresAuthentication = false; // TODO: read from endpoint
 
   return {
     path: endpointPath.path,
@@ -221,10 +221,14 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           });
           console.log("Changeset result", actionChangeset);
 
-          const queryResult = await insertData(def, endpoint, actionChangeset);
-          console.log("Query result", queryResult);
+          const id = await insertData(def, endpoint, actionChangeset);
+          if (id === null) {
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
+          }
+          console.log("Query result", id);
+          // TODO: return `endpoint.response` instead of `id` here
 
-          resp.json(queryResult);
+          resp.json({ id });
         } catch (err) {
           errorResponse(err);
         }
@@ -266,11 +270,26 @@ async function insertData(
   definition: Definition,
   endpoint: EndpointDef,
   data: Record<string, unknown>
-) {
+): Promise<number | null> {
   const target = endpoint.targets.slice(-1).shift();
   if (target == null) throw `Endpoint insert target is empty`;
 
-  const model: ModelDef = getTargetModel(definition.models, target.refKey);
+  const { value: model } = getRef<"model">(definition, target.retType);
 
-  return db.insert(data).into(model.dbname);
+  const ret = await db.insert(dataToDbnames(model, data)).into(model.dbname).returning("id");
+  if (!ret.length) return null;
+  return ret[0].id;
+}
+
+function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<string, unknown> {
+  return _.chain(data)
+    .toPairs()
+    .map(([name, value]) => [nameToDbname(model, name), value])
+    .fromPairs()
+    .value();
+}
+
+function nameToDbname(model: ModelDef, name: string): string {
+  const field = model.fields.find((f) => f.name === name);
+  return field!.dbname;
 }
