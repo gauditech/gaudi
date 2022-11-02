@@ -1,4 +1,5 @@
 import { Express, Request, Response } from "express";
+import { compact } from "lodash";
 
 import { db } from "./dbConn";
 
@@ -88,7 +89,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
   return {
     path: endpointPath.path,
     method: "get",
-    handlers: [
+    handlers: compact([
       // prehandlers
       requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
       // handler
@@ -114,7 +115,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
           errorResponse(err);
         }
       },
-    ].filter(emptyFilter),
+    ]),
   };
 }
 
@@ -127,7 +128,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
   return {
     path: endpointPath.path,
     method: "get",
-    handlers: [
+    handlers: compact([
       // prehandlers
       requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
       // handler
@@ -157,7 +158,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           errorResponse(err);
         }
       },
-    ].filter(emptyFilter),
+    ]),
   };
 }
 
@@ -170,7 +171,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
   return {
     path: endpointPath.path,
     method: "post",
-    handlers: [
+    handlers: compact([
       // prehandlers
       requiresAuthentication ? authenticationHandler() : undefined,
       // handler
@@ -209,7 +210,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           errorResponse(err);
         }
       },
-    ].filter(emptyFilter),
+    ]),
   };
 }
 
@@ -247,8 +248,4 @@ async function insertData(
   const model: ModelDef = getTargetModel(definition.models, target.refKey);
 
   return db.insert(data).into(model.dbname);
-}
-
-function emptyFilter<T>(value: T): value is NonNullable<T> {
-  return value != null;
 }
