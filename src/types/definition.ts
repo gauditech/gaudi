@@ -60,22 +60,14 @@ export type QueryDef = {
   // retType: string | "integer";
   retType: string;
   from: QueryFrom;
-  retCardinality: "one" | "many";
+  // retCardinality: "one" | "many";
   fromPath: string[];
   nullable: boolean;
   // unique: boolean;
   joinPaths: QueryDefPath[];
   filter: FilterDef;
-  // select: QueryDefPathSelect[];
+  select: SelectDef;
   // count?: true;
-};
-
-export type QueryDefPathSelect = {
-  refKey: string;
-  name: string;
-  namePath: string[];
-  retType: string;
-  nullable: boolean;
 };
 
 export type QueryDefPath = {
@@ -86,7 +78,7 @@ export type QueryDefPath = {
   joinType: "inner" | "outer";
   joinPaths: QueryDefPath[];
   retType: string;
-  retCardinality: "one" | "many";
+  // retCardinality: "one" | "many";
 };
 
 // simple filter types, for now
@@ -95,7 +87,7 @@ export type FilterDef =
   | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
   | { kind: "alias"; namePath: string[] }
   | LiteralFilterDef
-  | { kind: "variable"; type: "integer" | "text" | "boolean"; name: string }
+  | { kind: "variable"; type: "integer" | "list-integer" | "text" | "boolean"; name: string }
   | undefined;
 
 export type LiteralFilterDef =
@@ -181,39 +173,28 @@ type CustomEndpointDef = {
   };
 };
 
-// export type SelectDef = {
-//   fieldRefs: string[];
-//   references: { refKey: string; select: SelectDef }[];
-//   relations: { refKey: string; select: SelectDef }[];
-//   queries: { refKey: string; select: SelectDef }[];
-// };
-
-export type SelectableItem = SelectFieldItem | SelectConstantItem;
+export type SelectableItem = SelectFieldItem;
 
 export type SelectFieldItem = {
   kind: "field";
   name: string;
   refKey: string;
   namePath: string[];
+  // nullable: boolean;
   alias: string;
 };
 
-export type SelectConstantItem = {
-  kind: "constant";
-  type: "integer";
-  value: number;
+export type DeepSelectItem = {
+  kind: "reference" | "relation" | "query";
+  name: string;
+  namePath: string[];
   alias: string;
+  // nullable: boolean;
+  // retType: string;
+  select: SelectItem[];
 };
 
-export type SelectItem =
-  | SelectableItem
-  | {
-      kind: "reference" | "relation" | "query";
-      name: string;
-      namePath: string[];
-      alias: string;
-      select: SelectItem[];
-    };
+export type SelectItem = SelectableItem | DeepSelectItem;
 
 export type SelectDef = SelectItem[];
 

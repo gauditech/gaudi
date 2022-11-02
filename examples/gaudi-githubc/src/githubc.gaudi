@@ -3,6 +3,8 @@
 //     uri 'postgresql://postgres@localhost:5342'
 // } 
 
+// ----- models
+
 model Org {
     field name { type text }
     field slug { type text, unique }
@@ -11,26 +13,40 @@ model Org {
 
     relation repos { from Repo, through org }
     relation memberships { from OrgMembership, through org }
-}
 
-model Repo {
-    field name { type text }
-    field slug { type text, unique }
-    field description { type text }
-    reference org { to Org }
+    query members { from memberships.user }
+    query public_repos { from repos, filter { is_public is true } }
+    query public_issues { from public_repos.issues }
 }
 
 model OrgMembership {
+    reference user { to User }
     reference org { to Org }
+}
+
+model Repo {
+    reference org { to Org }
+
     field name { type text }
+    field slug { type text, unique }
+    field description { type text }
+    field is_public { type boolean, default true }
+
+    relation issues { from Issue, through repo }
+}
+
+model Issue {
+    field title { type text }
+    field body { type text }
+    reference repo { to Repo }
 }
 
 // ----- start auth model
 model User {
-    field firstName { type text }
-    field lastName { type text }
+    field name { type text }
     relation authLocal { from UserAuthLocal, through user }
     relation accessToken { from UserAccessToken, through user }
+    relation org_memberships { from OrgMembership, through user }
 }
 model UserAuthLocal {
     reference user { to User }
@@ -44,20 +60,44 @@ model UserAccessToken {
 }
 // ----- end auth model
 
+// ----- entrypoints
+
 entrypoint Orgs {
     target model Org
     identify with slug
-    response { name, slug, description }
+    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues }
 
     get endpoint {}
     list endpoint {}
 
     entrypoint Repos {
         target relation repos
+        response { id, slug, description, org_id, issues { repo } }
+
+        get endpoint {}
+        list endpoint {}
+        create endpoint {}
+    }
+
+    entrypoint PublicRepos {
+        target relation public_repos
         response { id, slug, description, org_id }
 
         get endpoint {}
         list endpoint {}
         create endpoint {}
+    }
+
+    entrypoint AllIssues {
+        target relation public_issues
+        response { id, title, body }
+        list endpoint {}
+    }
+
+    entrypoint Members {
+        target relation members
+        response { id, name }
+        list endpoint {}
+        get endpoint {}
     }
 }

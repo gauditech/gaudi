@@ -10,6 +10,8 @@ exports[`compose model queries example with nested filters 1`] = `
         "lhs": {
           "kind": "alias",
           "namePath": [
+            "Org",
+            "repos",
             "org",
             "id",
           ],
@@ -25,6 +27,8 @@ exports[`compose model queries example with nested filters 1`] = `
       "rhs": {
         "kind": "alias",
         "namePath": [
+          "Org",
+          "repos",
           "is_active",
         ],
       },
@@ -51,7 +55,6 @@ exports[`compose model queries example with nested filters 1`] = `
               "org",
             ],
             "refKey": "Repo.org",
-            "retCardinality": "one",
             "retType": "Org",
           },
         ],
@@ -63,15 +66,14 @@ exports[`compose model queries example with nested filters 1`] = `
           "repos",
         ],
         "refKey": "Org.repos",
-        "retCardinality": "many",
         "retType": "Repo",
       },
     ],
     "name": "repos_if_one",
     "nullable": false,
     "refKey": "Org.repos_if_one",
-    "retCardinality": "many",
     "retType": "Repo",
+    "select": [],
   },
 ]
 `;
@@ -103,7 +105,6 @@ exports[`compose model queries nested example without filters 1`] = `
               "org",
             ],
             "refKey": "Repo.org",
-            "retCardinality": "one",
             "retType": "Org",
           },
         ],
@@ -115,15 +116,14 @@ exports[`compose model queries nested example without filters 1`] = `
           "repos",
         ],
         "refKey": "Org.repos",
-        "retCardinality": "many",
         "retType": "Repo",
       },
     ],
     "name": "back_to_org",
     "nullable": false,
     "refKey": "Org.back_to_org",
-    "retCardinality": "many",
     "retType": "Org",
+    "select": [],
   },
 ]
 `;

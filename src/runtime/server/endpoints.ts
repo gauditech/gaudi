@@ -1,15 +1,12 @@
 import { Express, Request, Response } from "express";
-import { compact } from "lodash";
+import _, { compact } from "lodash";
+
+import { endpointQueries } from "../query/build";
+import { Params, executeQuery, executeQueryTree } from "../query/exec";
 
 import { db } from "./dbConn";
 
-import {
-  PathParam,
-  buildEndpointContextSql,
-  buildEndpointPath,
-  buildEndpointTargetSql,
-  selectToSelectable,
-} from "@src/builder/query";
+import { PathParam, buildEndpointPath } from "@src/builder/query";
 import { getTargetModel } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
@@ -99,18 +96,15 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
-          // build target SQL
-          const s = buildEndpointTargetSql(
-            def,
-            endpoint.targets,
-            selectToSelectable(endpoint.response),
-            "single"
-          );
-          const targetQueryResult = await db.raw(s, contextParams);
-          if (targetQueryResult.rowCount !== 1) {
+          const q = endpointQueries(def, endpoint).target;
+          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
+          if (targetQueryResult.length === 0) {
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+          }
+          if (targetQueryResult.length > 1) {
             throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
           }
-          resp.json(targetQueryResult.rows[0]);
+          resp.json(targetQueryResult[0]);
         } catch (err) {
           errorResponse(err);
         }
@@ -137,23 +131,40 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           console.log("AUTH USER", req.user);
 
           const contextParams = extractParams(endpointPath.params, req.params);
-
-          const ctxTpl = await buildEndpointContextSql(def, endpoint);
-          if (ctxTpl) {
-            console.log("SQL", ctxTpl);
-            const contextResponse = await db.raw(ctxTpl, contextParams);
-            if (contextResponse.rowCount !== 1) {
+          const queries = endpointQueries(def, endpoint);
+          if (queries.context) {
+            const contextQueryResult = await executeQuery(
+              db,
+              def,
+              queries.context,
+              contextParams,
+              []
+            );
+            if (contextQueryResult.length === 0) {
+              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+            }
+            if (contextQueryResult.length > 1) {
               throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
             }
+            const ids = contextQueryResult.map((r: any): number => r.id);
+            const targetQueryResult = await executeQueryTree(
+              db,
+              def,
+              queries.target,
+              contextParams,
+              ids
+            );
+            resp.json(targetQueryResult);
+          } else {
+            const targetQueryResult = await executeQueryTree(
+              db,
+              def,
+              queries.target,
+              contextParams,
+              []
+            );
+            resp.json(targetQueryResult);
           }
-          const targetTpl = buildEndpointTargetSql(
-            def,
-            endpoint.targets,
-            selectToSelectable(endpoint.response),
-            "multi"
-          );
-          const targetQueryResult = await db.raw(targetTpl, contextParams);
-          resp.json(targetQueryResult.rows);
         } catch (err) {
           errorResponse(err);
         }
@@ -180,16 +191,24 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           console.log("AUTH USER", req.user);
 
           const contextParams = extractParams(endpointPath.params, req.params);
+
           const body = req.body;
           console.log("CTX PARAMS", contextParams);
           console.log("BODY", body);
 
-          const ctxTpl = await buildEndpointContextSql(def, endpoint);
-          if (ctxTpl) {
-            console.log("SQL", ctxTpl);
-
-            const contextResponse = await db.raw(ctxTpl, contextParams);
-            if (contextResponse.rowCount !== 1) {
+          const queries = endpointQueries(def, endpoint);
+          if (queries.context) {
+            const contextQueryResult = await executeQuery(
+              db,
+              def,
+              queries.context,
+              contextParams,
+              []
+            );
+            if (contextQueryResult.length === 0) {
+              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+            }
+            if (contextQueryResult.length > 1) {
               throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
             }
           }
@@ -217,10 +236,11 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
+
 export function extractParams(
   params: PathParam["params"],
   sourceMap: Record<string, string>
-): Record<string, string | number> {
+): Params {
   return Object.fromEntries(params.map((p) => [p.name, validatePathParam(p, sourceMap[p.name])]));
 }
 
@@ -229,8 +249,13 @@ export function extractParams(
  */
 function validatePathParam(param: PathParam["params"][number], val: string): string | number {
   switch (param.type) {
-    case "integer":
-      return parseInt(val, 10);
+    case "integer": {
+      const n = Number(val);
+      if (Number.isNaN(n)) {
+        throw new Error(`Not a valid integer`);
+      }
+      return n;
+    }
     case "text":
       return val;
   }
