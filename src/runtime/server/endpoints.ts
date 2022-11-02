@@ -1,5 +1,5 @@
 import { Express, Request, Response } from "express";
-import _ from "lodash";
+import _, { compact } from "lodash";
 
 import { endpointQueries } from "../query/build";
 import { Params, executeQuery, executeQueryTree } from "../query/exec";
@@ -10,8 +10,9 @@ import { PathParam, buildEndpointPath } from "@src/builder/query";
 import { getTargetModel } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { EndpointError } from "@src/runtime/server/error";
-import { endpointHandlerGuard } from "@src/runtime/server/middleware";
+import { authenticationHandler, buildEndpoints } from "@src/runtime/server/authentication";
+import { BusinessError, errorResponse } from "@src/runtime/server/error";
+import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
 import {
   CreateEndpointDef,
@@ -32,11 +33,18 @@ export function setupEndpoints(app: Express, definition: Definition) {
     .forEach((epc) => {
       registerServerEndpoint(app, epc);
     });
+  // other endpoints
+  buildEndpoints().forEach((epc) => {
+    registerServerEndpoint(app, epc);
+  });
 }
 
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig) {
-  app[epConfig.method](epConfig.path, endpointHandlerGuard(epConfig.handler));
+  app[epConfig.method](
+    epConfig.path,
+    ...epConfig.handlers.map((handler) => endpointGuardHandler(handler))
+  );
 }
 
 export function processEntrypoint(
@@ -73,30 +81,35 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
 export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
+  const requiresAuthentication = true; // TODO: read from endpoint
+
   return {
     path: endpointPath.path,
     method: "get",
-    handler: async (req: Request, resp: Response) => {
-      try {
-        const contextParams = extractParams(endpointPath.params, req.params);
-        const q = endpointQueries(def, endpoint).target;
-        const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
-        if (targetQueryResult.length === 0) {
-          throw new EndpointError(404, "Resource not found");
-        } else if (targetQueryResult.length > 1) {
-          throw new EndpointError(500, "Error processing request", {
-            message: "findOne found multiple records",
-          });
+    handlers: compact([
+      // prehandlers
+      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
+
+          const contextParams = extractParams(endpointPath.params, req.params);
+
+          const q = endpointQueries(def, endpoint).target;
+          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
+          if (targetQueryResult.length === 0) {
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+          }
+          if (targetQueryResult.length > 1) {
+            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+          }
+          resp.json(targetQueryResult[0]);
+        } catch (err) {
+          errorResponse(err);
         }
-        resp.json(targetQueryResult[0]);
-      } catch (err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        } else {
-          throw new EndpointError(500, "Error processing request", err);
-        }
-      }
-    },
+      },
+    ]),
   };
 }
 
@@ -104,50 +117,59 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
+  const requiresAuthentication = true; // TODO: read from endpoint
+
   return {
     path: endpointPath.path,
     method: "get",
-    handler: async (req: Request, resp: Response) => {
-      try {
-        const contextParams = extractParams(endpointPath.params, req.params);
-        const queries = endpointQueries(def, endpoint);
-        if (queries.context) {
-          const contextResponse = await executeQuery(db, def, queries.context, contextParams, []);
-          if (contextResponse.length === 0) {
-            throw new EndpointError(404, "Resource not found");
-          } else if (contextResponse.length > 1) {
-            throw new EndpointError(500, "Error processing request", {
-              message: "findOne found multiple records",
-            });
+    handlers: compact([
+      // prehandlers
+      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
+
+          const contextParams = extractParams(endpointPath.params, req.params);
+          const queries = endpointQueries(def, endpoint);
+          if (queries.context) {
+            const contextQueryResult = await executeQuery(
+              db,
+              def,
+              queries.context,
+              contextParams,
+              []
+            );
+            if (contextQueryResult.length === 0) {
+              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+            }
+            if (contextQueryResult.length > 1) {
+              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+            }
+            const ids = contextQueryResult.map((r: any): number => r.id);
+            const targetQueryResult = await executeQueryTree(
+              db,
+              def,
+              queries.target,
+              contextParams,
+              ids
+            );
+            resp.json(targetQueryResult);
+          } else {
+            const targetQueryResult = await executeQueryTree(
+              db,
+              def,
+              queries.target,
+              contextParams,
+              []
+            );
+            resp.json(targetQueryResult);
           }
-          const ids = contextResponse.map((r: any): number => r.id);
-          // apply filters
-          const targetQueryResult = await executeQueryTree(
-            db,
-            def,
-            queries.target,
-            contextParams,
-            ids
-          );
-          resp.json(targetQueryResult);
-        } else {
-          const targetQueryResult = await executeQueryTree(
-            db,
-            def,
-            queries.target,
-            contextParams,
-            []
-          );
-          resp.json(targetQueryResult);
+        } catch (err) {
+          errorResponse(err);
         }
-      } catch (err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        } else {
-          throw new EndpointError(500, "Error processing request", err);
-        }
-      }
-    },
+      },
+    ]),
   };
 }
 
@@ -155,35 +177,59 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
 
+  const requiresAuthentication = true; // TODO: read from endpoint
+
   return {
     path: endpointPath.path,
     method: "post",
-    handler: async (req: Request, resp: Response) => {
-      try {
-        const contextParams = extractParams(endpointPath.params, req.params);
-        const body = req.body;
-        console.log("BODY", body);
+    handlers: compact([
+      // prehandlers
+      requiresAuthentication ? authenticationHandler() : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
 
-        const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
-        console.log("Validation result", validationResult);
+          const contextParams = extractParams(endpointPath.params, req.params);
 
-        const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
-          input: validationResult,
-        });
-        console.log("Changeset result", actionChangeset);
+          const body = req.body;
+          console.log("CTX PARAMS", contextParams);
+          console.log("BODY", body);
 
-        const queryResult = await insertData(def, endpoint, actionChangeset);
-        console.log("Query result", queryResult);
+          const queries = endpointQueries(def, endpoint);
+          if (queries.context) {
+            const contextQueryResult = await executeQuery(
+              db,
+              def,
+              queries.context,
+              contextParams,
+              []
+            );
+            if (contextQueryResult.length === 0) {
+              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+            }
+            if (contextQueryResult.length > 1) {
+              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+            }
+          }
 
-        resp.json(queryResult);
-      } catch (err) {
-        if (err instanceof EndpointError) {
-          throw err;
-        } else {
-          throw new EndpointError(500, "Error processing request", err);
+          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          console.log("Validation result", validationResult);
+
+          const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
+            input: validationResult,
+          });
+          console.log("Changeset result", actionChangeset);
+
+          const queryResult = await insertData(def, endpoint, actionChangeset);
+          console.log("Query result", queryResult);
+
+          resp.json(queryResult);
+        } catch (err) {
+          errorResponse(err);
         }
-      }
-    },
+      },
+    ]),
   };
 }
 

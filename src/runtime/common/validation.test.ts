@@ -2,7 +2,7 @@ import {
   buildFieldsetValidationSchema,
   validateEndpointFieldset,
 } from "@src/runtime/common/validation";
-import { EndpointError } from "@src/runtime/server/error";
+import { BusinessError } from "@src/runtime/server/error";
 import { FieldsetDef } from "@src/types/definition";
 
 describe("runtime", () => {
@@ -94,7 +94,12 @@ describe("runtime", () => {
       try {
         await validateEndpointFieldset(fieldset, data);
       } catch (err) {
-        thrownError = JSON.stringify((err as EndpointError).body);
+        const endpointError = err as BusinessError;
+        thrownError = JSON.stringify({
+          code: endpointError.code,
+          message: endpointError.message,
+          data: endpointError.data,
+        });
       }
       expect(thrownError).toMatchSnapshot();
     });

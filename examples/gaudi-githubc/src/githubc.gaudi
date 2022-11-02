@@ -3,7 +3,7 @@
 //     uri 'postgresql://postgres@localhost:5342'
 // } 
 
-// models
+// ----- models
 
 model User {
     field name { type text }
@@ -46,7 +46,26 @@ model Issue {
     reference repo { to Repo }
 }
 
-// entrypoints
+// ----- start auth model
+model User {
+    field firstName { type text }
+    field lastName { type text }
+    relation authLocal { from UserAuthLocal, through user }
+    relation accessToken { from UserAccessToken, through user }
+}
+model UserAuthLocal {
+    reference user { to User }
+    field username { type text, unique }
+    field password { type text }
+}
+model UserAccessToken {
+    reference user { to User }
+    field token { type text, unique }
+    field expiryDate { type text }
+}
+// ----- end auth model
+
+// ----- entrypoints
 
 entrypoint Orgs {
     target model Org
