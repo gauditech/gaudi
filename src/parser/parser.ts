@@ -53,6 +53,16 @@ semantics.addOperation("parse()", {
   FieldBody_tag(this, tag): FieldBodyAST {
     return { kind: "tag", tag: tag.sourceString as FieldTag, interval: this.source };
   },
+  FieldBody_validate(this, _validate, _parenL, body, _parenR): FieldBodyAST {
+    return { kind: "validate", validators: body.parse(), interval: this.source };
+  },
+  Validator(this, name, args) {
+    return {
+      name: name.parse(),
+      args: args.children.map((c) => c.parse()),
+      interval: this.source,
+    };
+  },
   Reference(this, _reference, identifier, _parenL, body, _parenR): ReferenceAST {
     return {
       kind: "reference",

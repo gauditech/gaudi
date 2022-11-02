@@ -1,5 +1,5 @@
 model Vehicle {
   field type { type text, default "car" }
   field active { type boolean, default true }
-  field make { type text, nullable, default null}
+  field make { type text, nullable, default null }
 }
