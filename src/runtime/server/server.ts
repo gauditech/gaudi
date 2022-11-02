@@ -1,7 +1,7 @@
 import express, { json } from "express";
 
 import { setupEndpoints } from "@src/runtime/server/endpoints";
-import { errorLogger, errorResponder, requestLogger } from "@src/runtime/server/middleware";
+import { requestLogger, errorHandler } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
 export type CreateServerConfig = {
@@ -21,8 +21,7 @@ export function createServer(config: CreateServerConfig) {
 
   setupEndpoints(app, config.definition);
 
-  app.use(errorLogger);
-  app.use(errorResponder);
+  app.use(errorHandler);
 
   app.listen(config.port, config.host, () => {
     console.log(`App is started on ${host}:${port}`);

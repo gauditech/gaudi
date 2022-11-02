@@ -1,52 +1,37 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
-import { EndpointError } from "@src/runtime/server/error";
-import { ServerMiddlewareNextFn, ServerRequestHandler } from "@src/runtime/server/types";
+import { HttpResponseError } from "@src/runtime/server/error";
+import { ServerRequestHandler } from "@src/runtime/server/types";
 
 // ----- middleware
 
-/** Catch and report async endpoint errors like normal ones. This will become unnecessary in express 5.x */
-export function endpointHandlerGuard(handler: ServerRequestHandler) {
-  return async (req: Request, resp: Response, next: (err?: unknown) => void) => {
+/** Catch and handle any endpoint error. */
+export function endpointGuardHandler(handler: ServerRequestHandler) {
+  return async (req: Request, resp: Response, next: NextFunction) => {
     try {
-      await handler(req, resp);
+      await handler(req, resp, next);
     } catch (err) {
       next(err);
     }
   };
 }
 
+/** Handle errors */
+export function errorHandler(error: unknown, _req: Request, resp: Response, _next: NextFunction) {
+  if (error instanceof HttpResponseError) {
+    resp.status(error.status).send(error.body);
+  } else {
+    console.error("[ERROR]", error);
+
+    resp.status(500).send("Unknown error");
+  }
+}
+
 /** Simple request logger */
-export function requestLogger(req: Request, resp: Response, next: ServerMiddlewareNextFn) {
+export function requestLogger(req: Request, resp: Response, next: NextFunction) {
   resp.on("finish", () => {
     console.log(`[REQ] ${req.method} ${req.originalUrl} ${resp.statusCode}`);
   });
 
   next();
-}
-
-/** Error logging middleware */
-export function errorLogger(
-  error: unknown,
-  req: Request,
-  res: Response,
-  next: ServerMiddlewareNextFn
-) {
-  console.error("[ERROR]", error);
-  next(error);
-}
-
-/** Central error responder */
-export function errorResponder(
-  error: unknown,
-  _: Request,
-  res: Response,
-  __: ServerMiddlewareNextFn
-) {
-  if (error instanceof EndpointError) {
-    res.status(error.status).json(error.body);
-  } else {
-    // default error handler
-    res.status(500).send(error);
-  }
 }
