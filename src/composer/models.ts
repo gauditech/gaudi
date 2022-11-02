@@ -247,13 +247,13 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
   const collect = mergePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(collect);
   ensureEqual(direct.length, 1);
-  const joinPaths = processPaths(def, getRelatedPaths(collect, direct[0]), mdef, []);
+  const joinPaths = processPaths(def, getRelatedPaths(collect, direct[0]), mdef, [mdef.name]);
 
   const retLeaf = getLeaf(def, joinPaths, fromPath);
 
   const query: QueryDef = {
     refKey,
-    ctxModelRefKey: mdef.refKey,
+    from: { kind: "model", refKey: mdef.refKey },
     name: qspec.name,
     fromPath: fromPath,
     retType: retLeaf.retType,

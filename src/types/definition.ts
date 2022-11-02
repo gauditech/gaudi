@@ -1,6 +1,6 @@
 import { BinaryOperator } from "./ast";
 
-import { Ref, RefKind } from "@src/common/refs";
+import { RefKind } from "@src/common/refs";
 
 export type Definition = {
   models: ModelDef[];
@@ -52,12 +52,14 @@ export type RelationDef = {
   unique: boolean;
 };
 
+type QueryFrom = { kind: "model"; refKey: string } | { kind: "query"; query: QueryDef };
+
 export type QueryDef = {
   refKey: string;
   name: string;
   // retType: string | "integer";
   retType: string;
-  ctxModelRefKey: string;
+  from: QueryFrom;
   retCardinality: "one" | "many";
   fromPath: string[];
   nullable: boolean;
@@ -76,19 +78,16 @@ export type QueryDefPathSelect = {
   nullable: boolean;
 };
 
-export interface IQueryDefPath<RK extends RefKind> {
-  kind: RK;
+export type QueryDefPath = {
+  kind: Extract<RefKind, "reference" | "relation" | "query">;
   refKey: string;
+  name: string;
+  namePath: string[];
   joinType: "inner" | "outer";
   joinPaths: QueryDefPath[];
   retType: string;
   retCardinality: "one" | "many";
-}
-
-export type QueryDefPath =
-  | IQueryDefPath<"reference">
-  | IQueryDefPath<"relation">
-  | IQueryDefPath<"query">;
+};
 
 // simple filter types, for now
 

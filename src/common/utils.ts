@@ -21,7 +21,6 @@ export function ensureExists<I>(item: I | null | undefined): asserts item is I {
 
 export function ensureEqual<T, Tx extends T>(a: T, b: Tx): asserts a is Tx {
   if (a === b) return;
-  console.log(a, b);
   throw new Error("Not equal");
 }
 
@@ -64,4 +63,9 @@ export function nameInitials(input: string): string {
     [true, []] as [boolean, string[]]
   );
   return acc.join("").toLowerCase();
+}
+
+/** Function that ensures exhaustivness of conditional statements. */
+export function assertUnreachable(_: never): never {
+  throw new Error("Unreachable code detected");
 }

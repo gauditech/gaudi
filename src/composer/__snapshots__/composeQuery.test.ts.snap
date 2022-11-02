@@ -3,7 +3,6 @@
 exports[`compose model queries example with nested filters 1`] = `
 [
   {
-    "ctxModelRefKey": "Org",
     "filter": {
       "kind": "binary",
       "lhs": {
@@ -30,6 +29,10 @@ exports[`compose model queries example with nested filters 1`] = `
         ],
       },
     },
+    "from": {
+      "kind": "model",
+      "refKey": "Org",
+    },
     "fromPath": [
       "Org",
       "repos",
@@ -41,6 +44,12 @@ exports[`compose model queries example with nested filters 1`] = `
             "joinPaths": [],
             "joinType": "inner",
             "kind": "reference",
+            "name": "org",
+            "namePath": [
+              "Org",
+              "repos",
+              "org",
+            ],
             "refKey": "Repo.org",
             "retCardinality": "one",
             "retType": "Org",
@@ -48,6 +57,11 @@ exports[`compose model queries example with nested filters 1`] = `
         ],
         "joinType": "inner",
         "kind": "relation",
+        "name": "repos",
+        "namePath": [
+          "Org",
+          "repos",
+        ],
         "refKey": "Org.repos",
         "retCardinality": "many",
         "retType": "Repo",
@@ -65,8 +79,11 @@ exports[`compose model queries example with nested filters 1`] = `
 exports[`compose model queries nested example without filters 1`] = `
 [
   {
-    "ctxModelRefKey": "Org",
     "filter": undefined,
+    "from": {
+      "kind": "model",
+      "refKey": "Org",
+    },
     "fromPath": [
       "Org",
       "repos",
@@ -79,6 +96,12 @@ exports[`compose model queries nested example without filters 1`] = `
             "joinPaths": [],
             "joinType": "inner",
             "kind": "reference",
+            "name": "org",
+            "namePath": [
+              "Org",
+              "repos",
+              "org",
+            ],
             "refKey": "Repo.org",
             "retCardinality": "one",
             "retType": "Org",
@@ -86,6 +109,11 @@ exports[`compose model queries nested example without filters 1`] = `
         ],
         "joinType": "inner",
         "kind": "relation",
+        "name": "repos",
+        "namePath": [
+          "Org",
+          "repos",
+        ],
         "refKey": "Org.repos",
         "retCardinality": "many",
         "retType": "Repo",
