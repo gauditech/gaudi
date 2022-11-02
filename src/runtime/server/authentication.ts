@@ -39,7 +39,7 @@ export function buildLocalAuthLoginHandler(): EndpointConfig {
           const result = await authenticateUser(username, password);
 
           if (result) {
-            const token = await createUserAccessToken(result.userId);
+            const token = await createUserAccessToken(result.id);
 
             // return created token
             resp.status(200).send({ token });
@@ -119,7 +119,6 @@ function configurePassport(): passport.Authenticator {
   PASSPORT.use(
     new BearerStrategy<VerifyFunction>(async (token, done) => {
       try {
-        // eslint-disable-next-line prefer-rest-params
         console.log(`Verifying user access token: ${token}`);
 
         if (token) {
@@ -167,7 +166,7 @@ async function resolveUserFromToken(token: string): Promise<{ id: string } | und
 async function authenticateUser(
   username: string,
   password: string
-): Promise<{ userId: number } | undefined> {
+): Promise<{ id: number } | undefined> {
   const result = await db.select("*").from("userauthlocal").where({ username });
   // console.log("RESULTS", result);
 
@@ -178,7 +177,7 @@ async function authenticateUser(
 
     if (passwordsMatching) {
       return {
-        userId: row.user_id,
+        id: row.user_id,
       };
     } else {
       console.log("Passwords do not match");
