@@ -134,6 +134,6 @@ describe("openAPI", () => {
       },
     };
 
-    expect(buildOpenAPI(def)).toEqual(openAPI);
+    expect(buildOpenAPI(def)).toMatchSnapshot();
   });
 });
