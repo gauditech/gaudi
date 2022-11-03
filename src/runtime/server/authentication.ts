@@ -6,7 +6,7 @@ import passport from "passport";
 import { Strategy as BearerStrategy, VerifyFunction } from "passport-http-bearer";
 
 import { db } from "@src/runtime/server/dbConn";
-import { BusinessError, HttpResponseError, errorResponse } from "@src/runtime/server/error";
+import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { EndpointConfig } from "@src/runtime/server/types";
 
 const TOKEN_SIZE = 32;

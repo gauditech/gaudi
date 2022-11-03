@@ -6,7 +6,7 @@
   "scripts": {
     "// --- build": "",
     "build": "npm run build:compile && npm run build:migrate",
-    "build:compile": "dotenv -e ./gaudi.env -- node ./node_modules/@gaudi/engine/engine.js",
+    "build:compile": "dotenv -e ./gaudi.env -- node --enable-source-maps ./node_modules/@gaudi/engine/engine.js",
     "build:migrate": "npm run build:migrate:db",
     "build:migrate:db": "dotenv -e ./gaudi.env -- npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss",
     "// --- dev": "",

@@ -260,7 +260,7 @@ function processSelect(
   }
 }
 
-function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
+export function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
   const fields = model.fields
     .filter((f) => !f.primary)
     .map((f): [string, FieldsetDef] => [
@@ -270,7 +270,7 @@ function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
 }
 
-function calculateCreateChangesetForModel(model: ModelDef): Changeset {
+export function calculateCreateChangesetForModel(model: ModelDef): Changeset {
   const fields = model.fields
     .filter((f) => !f.primary)
     .map((f): [string, FieldSetter] => [

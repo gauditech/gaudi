@@ -8,7 +8,7 @@ import {
   getRelatedPaths,
   mergePaths,
   processPaths,
-} from "@src/runtime/query";
+} from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
   Definition,
@@ -226,7 +226,6 @@ function getLeaf(def: Definition, paths: QueryDefPath[], namePath: string[]): Qu
     const ref = getRef(def, p.refKey);
     return ref.value.name === namePath[1];
   })!;
-  console.log(node);
   return namePath.length === 2 ? node : getLeaf(def, node.joinPaths, _.tail(namePath));
 }
 
@@ -235,15 +234,11 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
   const ex = getDefinition(def, refKey, "query");
   if (ex) return ex;
 
-  const filter = convertFilter(qspec.filter);
   const fromPath = [mdef.name, ...qspec.fromModel];
+  const filter = convertFilter(qspec.filter, fromPath);
 
   const filterPaths = qspec.filter ? getFilterPaths(filter) : [];
-  // detect default context for each filter
-  for (const path of filterPaths) {
-    // TODO no bpAliases support yet, so all must belong to leaf context
-    path.unshift(...fromPath);
-  }
+
   const collect = mergePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(collect);
   ensureEqual(direct.length, 1);
@@ -257,11 +252,12 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
     name: qspec.name,
     fromPath: fromPath,
     retType: retLeaf.retType,
-    retCardinality: joinPaths.every((p) => p.retCardinality === "one") ? "one" : "many",
+    // retCardinality: joinPaths.every((p) => p.retCardinality === "one") ? "one" : "many",
     nullable: getRef<QueryDefPath["kind"]>(def, retLeaf.refKey).value.nullable,
     joinPaths,
     // FIXME validate filter!!
-    filter: qspec.filter && convertFilter(qspec.filter),
+    filter: qspec.filter && convertFilter(qspec.filter, fromPath),
+    select: [], // FIXME ??
   };
 
   // TODO validate and "correct" filters
@@ -281,7 +277,7 @@ function getLiteralType(literal: LiteralValue): LiteralFilterDef["type"] {
   throw new Error(`Literal ${literal} not supported`);
 }
 
-function convertFilter(filter: ExpSpec | undefined): FilterDef {
+function convertFilter(filter: ExpSpec | undefined, namePath: string[]): FilterDef {
   switch (filter?.kind) {
     case undefined:
       return undefined;
@@ -296,7 +292,7 @@ function convertFilter(filter: ExpSpec | undefined): FilterDef {
       return {
         kind: "binary",
         operator: "is not",
-        lhs: convertFilter(filter.exp),
+        lhs: convertFilter(filter.exp, namePath),
         rhs: { kind: "literal", type: "boolean", value: true },
       };
     }
@@ -304,116 +300,18 @@ function convertFilter(filter: ExpSpec | undefined): FilterDef {
       return {
         kind: "binary",
         operator: filter.operator,
-        lhs: convertFilter(filter.lhs),
-        rhs: convertFilter(filter.rhs),
+        lhs: convertFilter(filter.lhs, namePath),
+        rhs: convertFilter(filter.rhs, namePath),
       };
     }
     case "identifier": {
       return {
         kind: "alias",
-        namePath: filter.identifier,
+        namePath: [...namePath, ...filter.identifier],
       };
     }
   }
 }
-
-// function defineQueryPathDeps(
-//   mdef: ModelDef,
-//   prefix: string[],
-//   collect: string[][]
-// ): Pick<QueryDefPath, "select" | "joinPaths"> {
-//   const directCollect = Array.from(new Set(collect.map((c) => c[0])));
-//   const selectsAndJoins = directCollect.map(
-//     (name, _index): ["select", QueryDefPathSelect] | ["join", QueryDefPath] => {
-//       const refKey = `${mdef.refKey}.${name}`;
-//       const target = cache.get(refKey);
-//       if (!target) throw ["cache-miss", name];
-
-//       const namePath = [...prefix, name];
-//       switch (target[0]) {
-//         case RefType.Model:
-//           throw new Error(`${target[0]} type is not supported in queries`);
-//         case RefType.Field: {
-//           const field = getDefinition(refKey, RefType.Field, true);
-//           return [
-//             "select",
-//             {
-//               refKey,
-//               name,
-//               namePath,
-//               retType: field.type,
-//               nullable: field.nullable,
-//             },
-//           ];
-//         }
-//         case RefType.Computed: {
-//           throw new Error("TODO");
-//         }
-//         case RefType.Reference: {
-//           const reference = getDefinition(refKey, target[0], true);
-//           const toModel = getDefinition(reference.toModelRefKey, RefType.Model, true);
-//           return [
-//             "join",
-//             {
-//               refKey,
-//               name,
-//               retType: toModel.name,
-//               retCardinality: "one",
-//               namePath,
-//               bpAlias: null,
-//               nullable: reference.nullable, // FIXME filters?
-//               joinType: "inner", // FIXME filters?
-//               ...defineQueryPathDeps(toModel, namePath, filterCollects(name, collect)),
-//             },
-//           ];
-//         }
-//         case RefType.Relation: {
-//           const relation = getDefinition(refKey, target[0], true);
-//           const fromModel = getDefinition(relation.fromModelRefKey, RefType.Model, true);
-//           return [
-//             "join",
-//             {
-//               refKey,
-//               name,
-//               retType: fromModel.name,
-//               retCardinality: relation.unique ? "one" : "many",
-//               namePath,
-//               bpAlias: null,
-//               nullable: relation.nullable,
-//               joinType: "inner",
-//               ...defineQueryPathDeps(fromModel, namePath, filterCollects(name, collect)),
-//             },
-//           ];
-//         }
-//         case RefType.Query: {
-//           const query = getDefinition(refKey, target[0], true);
-//           const model = getDefinition(query.retType, RefType.Model, true);
-//           return [
-//             "join",
-//             {
-//               refKey,
-//               name,
-//               retType: query.retType,
-//               retCardinality: query.retCardinality,
-//               namePath,
-//               bpAlias: null,
-//               nullable: query.nullable, // FIXME may be nullable if filters are applied
-//               joinType: "inner",
-//               ...defineQueryPathDeps(model, namePath, filterCollects(name, collect)),
-//             },
-//           ];
-//         }
-//       }
-//     }
-//   );
-//   const select = selectsAndJoins
-//     .filter((s) => s[0] === "select")
-//     .map((s) => s[1]) as QueryDefPathSelect[];
-//   const joinPaths = selectsAndJoins
-//     .filter((s) => s[0] === "join")
-//     .map((s) => s[1]) as QueryDefPath[];
-//   return { select, joinPaths };
-// }
 
 function validateType(type: string): FieldDef["type"] {
   switch (type) {

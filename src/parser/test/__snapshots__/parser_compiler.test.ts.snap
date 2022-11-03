@@ -77,6 +77,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
           "nullable": true,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
       ],
       "interval": {
@@ -112,7 +113,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
             "sourceString": "model Vehicle {
   field type { type text, default "car" }
   field active { type boolean, default true }
-  field make { type text, nullable, default null}
+  field make { type text, nullable, default null }
 }
 ",
             "startIdx": 18,
@@ -121,6 +122,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "nullable": undefined,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": true,
@@ -129,7 +131,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
             "sourceString": "model Vehicle {
   field type { type text, default "car" }
   field active { type boolean, default true }
-  field make { type text, nullable, default null}
+  field make { type text, nullable, default null }
 }
 ",
             "startIdx": 60,
@@ -138,15 +140,16 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "nullable": undefined,
           "type": "boolean",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": null,
           "interval": {
-            "endIdx": 153,
+            "endIdx": 154,
             "sourceString": "model Vehicle {
   field type { type text, default "car" }
   field active { type boolean, default true }
-  field make { type text, nullable, default null}
+  field make { type text, nullable, default null }
 }
 ",
             "startIdx": 106,
@@ -155,14 +158,15 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "nullable": true,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
       ],
       "interval": {
-        "endIdx": 155,
+        "endIdx": 156,
         "sourceString": "model Vehicle {
   field type { type text, default "car" }
   field active { type boolean, default true }
-  field make { type text, nullable, default null}
+  field make { type text, nullable, default null }
 }
 ",
         "startIdx": 0,
@@ -737,6 +741,7 @@ model Repo {
           "nullable": undefined,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -769,6 +774,7 @@ model Repo {
           "nullable": undefined,
           "type": "text",
           "unique": true,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -801,6 +807,7 @@ model Repo {
           "nullable": undefined,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -833,6 +840,7 @@ model Repo {
           "nullable": true,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
       ],
       "interval": {
@@ -931,6 +939,7 @@ model Repo {
           "nullable": undefined,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -963,6 +972,7 @@ model Repo {
           "nullable": undefined,
           "type": "text",
           "unique": true,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -995,6 +1005,7 @@ model Repo {
           "nullable": undefined,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
       ],
       "interval": {
@@ -1126,6 +1137,7 @@ model Make {
           "nullable": undefined,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
       ],
       "interval": {
@@ -1194,6 +1206,7 @@ model Student {
           "nullable": undefined,
           "type": "integer",
           "unique": undefined,
+          "validators": undefined,
         },
       ],
       "interval": {
@@ -2211,6 +2224,7 @@ model Student {
           "nullable": undefined,
           "type": "boolean",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -2250,6 +2264,7 @@ model Student {
           "nullable": undefined,
           "type": "boolean",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -2289,6 +2304,7 @@ model Student {
           "nullable": undefined,
           "type": "integer",
           "unique": undefined,
+          "validators": undefined,
         },
         {
           "default": undefined,
@@ -2328,6 +2344,7 @@ model Student {
           "nullable": undefined,
           "type": "text",
           "unique": undefined,
+          "validators": undefined,
         },
       ],
       "interval": {
@@ -2404,6 +2421,132 @@ model Student {
           "unique": undefined,
         },
       ],
+      "relations": [],
+    },
+  ],
+}
+`;
+
+exports[`parser blueprint test/validators.gaudi 1`] = `
+{
+  "entrypoints": [],
+  "models": [
+    {
+      "alias": undefined,
+      "computeds": [],
+      "fields": [
+        {
+          "default": undefined,
+          "interval": {
+            "endIdx": 84,
+            "sourceString": "model User {
+  field fullName {
+    type text
+    validate { min 4, max 20 }
+  }
+  field size { type integer, validate { min 0 } }
+}
+",
+            "startIdx": 16,
+          },
+          "name": "fullName",
+          "nullable": undefined,
+          "type": "text",
+          "unique": undefined,
+          "validators": [
+            {
+              "args": [
+                4,
+              ],
+              "interval": {
+                "endIdx": 69,
+                "sourceString": "model User {
+  field fullName {
+    type text
+    validate { min 4, max 20 }
+  }
+  field size { type integer, validate { min 0 } }
+}
+",
+                "startIdx": 64,
+              },
+              "name": "min",
+            },
+            {
+              "args": [
+                20,
+              ],
+              "interval": {
+                "endIdx": 77,
+                "sourceString": "model User {
+  field fullName {
+    type text
+    validate { min 4, max 20 }
+  }
+  field size { type integer, validate { min 0 } }
+}
+",
+                "startIdx": 71,
+              },
+              "name": "max",
+            },
+          ],
+        },
+        {
+          "default": undefined,
+          "interval": {
+            "endIdx": 135,
+            "sourceString": "model User {
+  field fullName {
+    type text
+    validate { min 4, max 20 }
+  }
+  field size { type integer, validate { min 0 } }
+}
+",
+            "startIdx": 88,
+          },
+          "name": "size",
+          "nullable": undefined,
+          "type": "integer",
+          "unique": undefined,
+          "validators": [
+            {
+              "args": [
+                0,
+              ],
+              "interval": {
+                "endIdx": 131,
+                "sourceString": "model User {
+  field fullName {
+    type text
+    validate { min 4, max 20 }
+  }
+  field size { type integer, validate { min 0 } }
+}
+",
+                "startIdx": 126,
+              },
+              "name": "min",
+            },
+          ],
+        },
+      ],
+      "interval": {
+        "endIdx": 138,
+        "sourceString": "model User {
+  field fullName {
+    type text
+    validate { min 4, max 20 }
+  }
+  field size { type integer, validate { min 0 } }
+}
+",
+        "startIdx": 0,
+      },
+      "name": "User",
+      "queries": [],
+      "references": [],
       "relations": [],
     },
   ],

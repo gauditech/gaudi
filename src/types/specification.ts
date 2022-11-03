@@ -23,8 +23,10 @@ export type FieldSpec = WithContext<{
   default?: LiteralValue;
   unique?: boolean;
   nullable?: boolean;
+  validators?: Validator[];
 }>;
 
+export type Validator = WithContext<{ name: string; args: LiteralValue[] }>;
 export type ReferenceSpec = WithContext<{
   name: string;
   toModel: string;
