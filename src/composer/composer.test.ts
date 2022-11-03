@@ -81,4 +81,22 @@ describe("compose models", () => {
     `;
     expect(() => compose(compile(parse(bp)))).toThrowError("infinite-loop");
   });
+  it("parses validators", () => {
+    const bp = `
+    model Org {
+      field adminEmail { type text, validate { min 4, max 100, isEmail } }
+      field num_employees { type integer, validate { min 0, max 9999 } }
+    }`;
+    const def = compose(compile(parse(bp)));
+    expect(def).toMatchSnapshot();
+  });
+  it("fails on invalid validator", () => {
+    const bp = `
+    model Org {
+      field adminEmail { type text }
+      field num_employees { type integer, validate { isEmail } }
+    }`;
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Unknown validator!"`);
+  });
 });

@@ -14,7 +14,8 @@
           "dbtype": "serial",
           "primary": true,
           "unique": true,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Org.name",
@@ -25,7 +26,8 @@
           "dbtype": "text",
           "primary": false,
           "unique": false,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Org.slug",
@@ -36,7 +38,8 @@
           "dbtype": "text",
           "primary": false,
           "unique": true,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Org.description",
@@ -47,7 +50,8 @@
           "dbtype": "text",
           "primary": false,
           "unique": false,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Org.optOut",
@@ -58,7 +62,8 @@
           "dbtype": "text",
           "primary": false,
           "unique": false,
-          "nullable": true
+          "nullable": true,
+          "validators": []
         }
       ],
       "references": [],
@@ -91,7 +96,8 @@
           "dbtype": "serial",
           "primary": true,
           "unique": true,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Repo.name",
@@ -102,7 +108,8 @@
           "dbtype": "text",
           "primary": false,
           "unique": false,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Repo.slug",
@@ -113,7 +120,8 @@
           "dbtype": "text",
           "primary": false,
           "unique": true,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Repo.description",
@@ -124,7 +132,8 @@
           "dbtype": "text",
           "primary": false,
           "unique": false,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         },
         {
           "refKey": "Repo.org_id",
@@ -135,7 +144,8 @@
           "dbtype": "integer",
           "primary": false,
           "unique": false,
-          "nullable": false
+          "nullable": false,
+          "validators": []
         }
       ],
       "references": [

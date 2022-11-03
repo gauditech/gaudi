@@ -27,6 +27,7 @@ export type FieldDef = {
   primary: boolean;
   unique: boolean;
   nullable: boolean;
+  validators: ValidatorDef[];
 };
 
 export type ReferenceDef = {
@@ -205,6 +206,63 @@ export type FieldsetRecordDef = {
   record: Record<string, FieldsetDef>;
   nullable: boolean;
 };
+
+export type IValidatorDef = {
+  name: string;
+  inputType: ConstantDef["type"];
+  args: ConstantDef[];
+};
+
+export type ValidatorDef =
+  | MinLengthTextValidator
+  | MaxLengthTextValidator
+  | EmailTextValidator
+  | MinIntValidator
+  | MaxIntValidator;
+
+export const ValidatorDefinition = [
+  ["text", "min", "minLength", ["integer"]],
+  ["text", "max", "maxLength", ["integer"]],
+  ["text", "isEmail", "isEmail", []],
+  ["integer", "min", "min", ["integer"]],
+  ["integer", "max", "max", ["integer"]],
+] as const;
+
+export interface MinLengthTextValidator extends IValidatorDef {
+  name: "minLength";
+  inputType: "text";
+  args: [IntConst];
+}
+
+export interface MaxLengthTextValidator extends IValidatorDef {
+  name: "maxLength";
+  inputType: "text";
+  args: [IntConst];
+}
+
+export interface EmailTextValidator extends IValidatorDef {
+  name: "isEmail";
+  inputType: "text";
+  args: [];
+}
+
+export interface MinIntValidator extends IValidatorDef {
+  name: "min";
+  inputType: "integer";
+  args: [IntConst];
+}
+
+export interface MaxIntValidator extends IValidatorDef {
+  name: "max";
+  inputType: "integer";
+  args: [IntConst];
+}
+
+export type ConstantDef = StrConst | IntConst | BoolConst | NullConst;
+type BoolConst = { type: "boolean"; value: boolean };
+type IntConst = { type: "integer"; value: number };
+type StrConst = { type: "text"; value: string };
+type NullConst = { type: "null"; value: null };
 
 export type FieldsetFieldDef = {
   kind: "field";
