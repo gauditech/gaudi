@@ -16,16 +16,19 @@ describe("runtime", () => {
             kind: "field",
             nullable: true, // optional field
             type: "integer", // integer field
+            validators: [],
           },
           required: {
             kind: "field",
             nullable: false, // required field
             type: "text", // text field
+            validators: [],
           },
           something: {
             kind: "field",
             nullable: false,
             type: "boolean", // boolean field
+            validators: [],
           },
           subrecord: {
             // subrecord
@@ -36,6 +39,7 @@ describe("runtime", () => {
                 kind: "field",
                 nullable: false,
                 type: "text",
+                validators: [],
               },
             },
           },
@@ -56,12 +60,14 @@ describe("runtime", () => {
             kind: "field",
             nullable: false,
             type: "text",
+            validators: [],
           },
           // integer field - invalid
           prop2: {
             kind: "field",
             nullable: false,
             type: "integer",
+            validators: [],
           },
           // subrecord
           subrecord: {
@@ -73,6 +79,7 @@ describe("runtime", () => {
                 kind: "field",
                 nullable: false,
                 type: "text",
+                validators: [],
               },
             },
           },

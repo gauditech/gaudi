@@ -209,8 +209,15 @@ export type FieldsetRecordDef = {
 
 export type IValidatorDef = {
   name: string;
-  inputTypes: ConstantDef["type"][];
+  inputType: "integer" | "text" | "boolean";
   args: ConstantDef[];
+};
+
+export type FieldsetFieldDef = {
+  kind: "field";
+  type: FieldDef["type"];
+  nullable: boolean;
+  validators: ValidatorDef[];
 };
 
 export type ValidatorDef =
@@ -218,57 +225,73 @@ export type ValidatorDef =
   | MaxLengthTextValidator
   | EmailTextValidator
   | MinIntValidator
-  | MaxIntValidator;
+  | MaxIntValidator
+  | IsBooleanEqual
+  | IsIntEqual
+  | IsTextEqual;
 
 export const ValidatorDefinition = [
-  [["text"], "min", "minLength", ["integer"]],
-  [["text"], "max", "maxLength", ["integer"]],
-  [["text"], "isEmail", "isEmail", []],
-  [["integer"], "min", "min", ["integer"]],
-  [["integer"], "max", "max", ["integer"]],
+  ["text", "max", "maxLength", ["integer"]],
+  ["text", "min", "minLength", ["integer"]],
+  ["text", "isEmail", "isEmail", []],
+  ["integer", "min", "min", ["integer"]],
+  ["integer", "max", "max", ["integer"]],
+  ["boolean", "isEqual", "isBoolEqual", ["boolean"]],
+  ["integer", "isEqual", "isIntEqual", ["integer"]],
+  ["text", "isEqual", "isTextEqual", ["text"]],
 ] as const;
 
 export interface MinLengthTextValidator extends IValidatorDef {
   name: "minLength";
-  inputTypes: ["text"];
+  inputType: "text";
   args: [IntConst];
 }
 
 export interface MaxLengthTextValidator extends IValidatorDef {
   name: "maxLength";
-  inputTypes: ["text"];
+  inputType: "text";
   args: [IntConst];
 }
 
 export interface EmailTextValidator extends IValidatorDef {
   name: "isEmail";
-  inputTypes: ["text"];
+  inputType: "text";
   args: [];
 }
 
 export interface MinIntValidator extends IValidatorDef {
   name: "min";
-  inputTypes: ["integer"];
+  inputType: "integer";
   args: [IntConst];
 }
 
 export interface MaxIntValidator extends IValidatorDef {
   name: "max";
-  inputTypes: ["integer"];
+  inputType: "integer";
   args: [IntConst];
 }
 
-export type ConstantDef = StrConst | IntConst | BoolConst | NullConst;
+export interface IsBooleanEqual extends IValidatorDef {
+  name: "isBoolEqual";
+  inputType: "boolean";
+  args: [BoolConst];
+}
+export interface IsIntEqual extends IValidatorDef {
+  name: "isIntEqual";
+  inputType: "integer";
+  args: [IntConst];
+}
+export interface IsTextEqual extends IValidatorDef {
+  name: "isTextEqual";
+  inputType: "text";
+  args: [TextConst];
+}
+
+export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;
 type BoolConst = { type: "boolean"; value: boolean };
 type IntConst = { type: "integer"; value: number };
-type StrConst = { type: "text"; value: string };
+type TextConst = { type: "text"; value: string };
 type NullConst = { type: "null"; value: null };
-
-export type FieldsetFieldDef = {
-  kind: "field";
-  type: FieldDef["type"];
-  nullable: boolean;
-};
 
 export type ActionDef = CreateOneAction | UpdateOneAction | DeleteManyAction;
 

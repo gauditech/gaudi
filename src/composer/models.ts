@@ -181,11 +181,11 @@ function validatorSpecsToDefs(
     const argt = args.map((a) => a.type);
 
     for (const v of ValidatorDefinition) {
-      const [vTypes, vBpName, vName, vArgs] = v;
-      if (_.isEqual(vTypes, [fieldType]) && vBpName === name && _.isEqual(vArgs, argt)) {
+      const [vType, vBpName, vName, vArgs] = v;
+      if (_.isEqual(vType, fieldType) && vBpName === name && _.isEqual(vArgs, argt)) {
         const d: IValidatorDef = {
           name: vName,
-          inputTypes: [...vTypes],
+          inputType: fieldType,
           args: args,
         };
         return d as ValidatorDef;

@@ -265,7 +265,7 @@ export function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
     .filter((f) => !f.primary)
     .map((f): [string, FieldsetDef] => [
       f.name,
-      { kind: "field", nullable: f.nullable, type: f.type },
+      { kind: "field", nullable: f.nullable, type: f.type, validators: f.validators },
     ]);
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
 }
