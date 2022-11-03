@@ -1,5 +1,16 @@
-import { AnySchema, ValidationError, boolean, mixed, number, object, string } from "yup";
+import {
+  AnySchema,
+  BooleanSchema,
+  NumberSchema,
+  StringSchema,
+  ValidationError,
+  boolean,
+  number,
+  object,
+  string,
+} from "yup";
 
+import { assertUnreachable } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
 import { FieldsetDef, FieldsetFieldDef, FieldsetRecordDef } from "@src/types/definition";
 
@@ -55,18 +66,18 @@ export async function validateRecord(record: unknown, schema: AnySchema) {
 export function buildFieldsetValidationSchema(fieldset: FieldsetDef): AnySchema {
   if (fieldset.kind !== "record") throw new Error('Root fieldset must be of kind "record".');
 
-  return buildObjectValidator(fieldset);
+  return buildObjectValidationSchema(fieldset);
 }
 
 function processFields(field: FieldsetDef): AnySchema {
   if (field.kind === "field") {
-    return buildFieldValidator(field);
+    return buildFieldValidationSchema(field);
   } else {
-    return buildObjectValidator(field);
+    return buildObjectValidationSchema(field);
   }
 }
 
-function buildObjectValidator(field: FieldsetRecordDef): AnySchema {
+function buildObjectValidationSchema(field: FieldsetRecordDef): AnySchema {
   const fieldSchemas = Object.fromEntries(
     Object.entries(field.record).map(([name, value]) => [name, processFields(value)])
   );
@@ -76,22 +87,54 @@ function buildObjectValidator(field: FieldsetRecordDef): AnySchema {
   return object(fieldSchemas).optional();
 }
 
-function buildFieldValidator(field: FieldsetFieldDef): AnySchema {
+function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
   if (field.type === "text") {
     let s = string();
     if (!field.nullable) s = s.required();
+
+    field.validators.forEach((v) => {
+      if (v.name === "minLength") {
+        s = s.min(v.args[0].value);
+      } else if (v.name === "maxLength") {
+        s = s.max(v.args[0].value);
+      } else if (v.name === "isEmail") {
+        s = s.email();
+      } else if (v.name === "isTextEqual") {
+        // TODO: s.equals returns BaseSchema and it doesn't fit StringSchema
+        s = s.equals<string>([v.args[0].value]) as StringSchema;
+      }
+    });
+
     return s;
   } else if (field.type === "integer") {
     let s = number();
     if (!field.nullable) s = s.required();
+
+    field.validators.forEach((v) => {
+      if (v.name === "min") {
+        s = s.min(v.args[0].value);
+      } else if (v.name === "max") {
+        s = s.max(v.args[0].value);
+      } else if (v.name === "isIntEqual") {
+        // TODO: s.equals returns BaseSchema and it doesn't fit NumberSchema
+        s = s.equals([v.args[0].value]) as NumberSchema;
+      }
+    });
+
     return s;
   } else if (field.type === "boolean") {
     let s = boolean();
     if (!field.nullable) s = s.required();
+
+    field.validators.forEach((v) => {
+      if (v.name === "isBoolEqual") {
+        // TODO: s.equals returns BaseSchema and it doesn't fit BooleanSchema
+        s = s.equals([v.args[0].value]) as BooleanSchema;
+      }
+    });
+
     return s;
   } else {
-    let s = mixed();
-    if (!field.nullable) s = s.required();
-    return s;
+    assertUnreachable(field.type);
   }
 }

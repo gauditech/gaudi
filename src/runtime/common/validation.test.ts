@@ -7,7 +7,7 @@ import { FieldsetDef } from "@src/types/definition";
 
 describe("runtime", () => {
   describe("validation", () => {
-    it("validation fieldset", async () => {
+    it("build fieldset validation schema", async () => {
       const fieldset: FieldsetDef = {
         kind: "record",
         nullable: true, // required record
@@ -43,6 +43,105 @@ describe("runtime", () => {
               },
             },
           },
+
+          // validators
+
+          integerProp: {
+            kind: "field",
+            nullable: false,
+            type: "integer",
+            validators: [
+              {
+                args: [
+                  {
+                    type: "integer",
+                    value: 0,
+                  },
+                ],
+                inputType: "integer",
+                name: "min",
+              },
+              {
+                args: [
+                  {
+                    type: "integer",
+                    value: 9999,
+                  },
+                ],
+                inputType: "integer",
+                name: "max",
+              },
+              {
+                args: [
+                  {
+                    type: "integer",
+                    value: 123,
+                  },
+                ],
+                inputType: "integer",
+                name: "isIntEqual",
+              },
+            ],
+          },
+          textProp: {
+            kind: "field",
+            nullable: false,
+            type: "text",
+            validators: [
+              {
+                args: [
+                  {
+                    type: "integer",
+                    value: 4,
+                  },
+                ],
+                inputType: "text",
+                name: "minLength",
+              },
+              {
+                args: [
+                  {
+                    type: "integer",
+                    value: 100,
+                  },
+                ],
+                inputType: "text",
+                name: "maxLength",
+              },
+              {
+                args: [],
+                inputType: "text",
+                name: "isEmail",
+              },
+              {
+                args: [
+                  {
+                    type: "text",
+                    value: "asdf",
+                  },
+                ],
+                inputType: "text",
+                name: "isTextEqual",
+              },
+            ],
+          },
+          booleanProp: {
+            kind: "field",
+            nullable: false,
+            type: "boolean",
+            validators: [
+              {
+                args: [
+                  {
+                    type: "boolean",
+                    value: true,
+                  },
+                ],
+                inputType: "boolean",
+                name: "isBoolEqual",
+              },
+            ],
+          },
         },
       };
 
@@ -50,6 +149,7 @@ describe("runtime", () => {
     });
 
     // TODO: test validation exceptions (flat, nested?), (input params)
+
     it("throws validation exception with validation error messages", async () => {
       const fieldset: FieldsetDef = {
         kind: "record",
@@ -83,6 +183,58 @@ describe("runtime", () => {
               },
             },
           },
+          //validators
+          textProp: {
+            kind: "field",
+            nullable: false,
+            type: "text",
+            validators: [
+              {
+                args: [
+                  {
+                    type: "integer",
+                    value: 4,
+                  },
+                ],
+                inputType: "text",
+                name: "maxLength",
+              },
+            ],
+          },
+          integerProp: {
+            kind: "field",
+            nullable: false,
+            type: "integer",
+            validators: [
+              {
+                args: [
+                  {
+                    type: "integer",
+                    value: 100,
+                  },
+                ],
+                inputType: "integer",
+                name: "max",
+              },
+            ],
+          },
+          booleanProp: {
+            kind: "field",
+            nullable: false,
+            type: "boolean",
+            validators: [
+              {
+                args: [
+                  {
+                    type: "boolean",
+                    value: true,
+                  },
+                ],
+                inputType: "boolean",
+                name: "isBoolEqual",
+              },
+            ],
+          },
         },
       };
 
@@ -93,8 +245,13 @@ describe("runtime", () => {
         // invalid value for integer field
         prop2: "a",
 
-        // missing reuqired nested field
-        // prop2: { subprop1: '' }
+        // missing required nested field
+        // subrecord: { subprop1: '' }
+
+        // failing validators
+        textProp: "too long string",
+        integerProp: 10001,
+        booleanProp: false,
       };
 
       let thrownError;
