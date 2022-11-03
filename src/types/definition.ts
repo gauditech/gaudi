@@ -209,7 +209,7 @@ export type FieldsetRecordDef = {
 
 export type IValidatorDef = {
   name: string;
-  inputType: ConstantDef["type"];
+  inputTypes: ConstantDef["type"][];
   args: ConstantDef[];
 };
 
@@ -221,40 +221,40 @@ export type ValidatorDef =
   | MaxIntValidator;
 
 export const ValidatorDefinition = [
-  ["text", "min", "minLength", ["integer"]],
-  ["text", "max", "maxLength", ["integer"]],
-  ["text", "isEmail", "isEmail", []],
-  ["integer", "min", "min", ["integer"]],
-  ["integer", "max", "max", ["integer"]],
+  [["text"], "min", "minLength", ["integer"]],
+  [["text"], "max", "maxLength", ["integer"]],
+  [["text"], "isEmail", "isEmail", []],
+  [["integer"], "min", "min", ["integer"]],
+  [["integer"], "max", "max", ["integer"]],
 ] as const;
 
 export interface MinLengthTextValidator extends IValidatorDef {
   name: "minLength";
-  inputType: "text";
+  inputTypes: ["text"];
   args: [IntConst];
 }
 
 export interface MaxLengthTextValidator extends IValidatorDef {
   name: "maxLength";
-  inputType: "text";
+  inputTypes: ["text"];
   args: [IntConst];
 }
 
 export interface EmailTextValidator extends IValidatorDef {
   name: "isEmail";
-  inputType: "text";
+  inputTypes: ["text"];
   args: [];
 }
 
 export interface MinIntValidator extends IValidatorDef {
   name: "min";
-  inputType: "integer";
+  inputTypes: ["integer"];
   args: [IntConst];
 }
 
 export interface MaxIntValidator extends IValidatorDef {
   name: "max";
-  inputType: "integer";
+  inputTypes: ["integer"];
   args: [IntConst];
 }
 
