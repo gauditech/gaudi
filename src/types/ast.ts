@@ -23,7 +23,10 @@ export type FieldBodyAST = WithContext<
   | { kind: "type"; type: string }
   | { kind: "default"; default: LiteralValue }
   | { kind: "tag"; tag: FieldTag }
+  | { kind: "validate"; validators: Validator[] }
 >;
+
+export type Validator = WithContext<{ name: string; args: LiteralValue[] }>;
 
 export type FieldTag = "nullable" | "unique";
 

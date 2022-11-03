@@ -21,6 +21,10 @@ Gaudi {
     = "type" identifier -- type
     | "default" literal -- default // we allow only literals for now
     | ("nullable" | "unique") -- tag
+    | "validate" "{" NonemptyNewlineBody<Validator, ","> "}" -- validate
+
+  Validator
+    = identifier literal*
 
   Reference
     = "reference" identifier "{" NonemptyNewlineBody<ReferenceBody, ","> "}"

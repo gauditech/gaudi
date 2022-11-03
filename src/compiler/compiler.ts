@@ -25,6 +25,7 @@ import {
   ReferenceSpec,
   RelationSpec,
   Specification,
+  Validator,
 } from "@src/types/specification";
 
 function compileField(field: FieldAST): FieldSpec {
@@ -32,6 +33,7 @@ function compileField(field: FieldAST): FieldSpec {
   let default_: LiteralValue | undefined;
   let nullable: boolean | undefined;
   let unique: boolean | undefined;
+  let validators: Validator[] | undefined;
 
   field.body.forEach((b) => {
     if (b.kind === "tag") {
@@ -44,6 +46,8 @@ function compileField(field: FieldAST): FieldSpec {
       type = b.type;
     } else if (b.kind === "default") {
       default_ = b.default;
+    } else if (b.kind === "validate") {
+      validators = b.validators;
     }
   });
 
@@ -51,7 +55,15 @@ function compileField(field: FieldAST): FieldSpec {
     throw new CompilerError("'field' has no 'type'", field);
   }
 
-  return { name: field.name, type, default: default_, nullable, unique, interval: field.interval };
+  return {
+    name: field.name,
+    type,
+    default: default_,
+    nullable,
+    unique,
+    validators,
+    interval: field.interval,
+  };
 }
 
 function compileReference(reference: ReferenceAST): ReferenceSpec {
