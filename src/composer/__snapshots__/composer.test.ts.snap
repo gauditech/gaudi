@@ -37,9 +37,7 @@ exports[`compose models parses validators 1`] = `
                   "value": 4,
                 },
               ],
-              "inputTypes": [
-                "text",
-              ],
+              "inputType": "text",
               "name": "minLength",
             },
             {
@@ -49,16 +47,12 @@ exports[`compose models parses validators 1`] = `
                   "value": 100,
                 },
               ],
-              "inputTypes": [
-                "text",
-              ],
+              "inputType": "text",
               "name": "maxLength",
             },
             {
               "args": [],
-              "inputTypes": [
-                "text",
-              ],
+              "inputType": "text",
               "name": "isEmail",
             },
           ],
@@ -81,9 +75,7 @@ exports[`compose models parses validators 1`] = `
                   "value": 0,
                 },
               ],
-              "inputTypes": [
-                "integer",
-              ],
+              "inputType": "integer",
               "name": "min",
             },
             {
@@ -93,9 +85,7 @@ exports[`compose models parses validators 1`] = `
                   "value": 9999,
                 },
               ],
-              "inputTypes": [
-                "integer",
-              ],
+              "inputType": "integer",
               "name": "max",
             },
           ],
