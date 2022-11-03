@@ -226,7 +226,6 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
           console.log("Query result", id);
-          // TODO: return `endpoint.response` instead of `id` here
 
           resp.json({ id });
         } catch (err) {
@@ -276,6 +275,7 @@ async function insertData(
 
   const { value: model } = getRef<"model">(definition, target.retType);
 
+  // TODO: return `endpoint.response` instead of `id` here
   const ret = await db.insert(dataToDbnames(model, data)).into(model.dbname).returning("id");
   if (!ret.length) return null;
   return ret[0].id;
@@ -291,5 +291,8 @@ function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<s
 
 function nameToDbname(model: ModelDef, name: string): string {
   const field = model.fields.find((f) => f.name === name);
-  return field!.dbname;
+  if (!field) {
+    throw new Error(`Field ${model.name}.${name} doesn't exist`);
+  }
+  return field.dbname;
 }
