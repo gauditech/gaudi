@@ -67,6 +67,7 @@ entrypoint Orgs {
     identify with slug
     response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues }
 
+    create endpoint {}
     get endpoint {}
     list endpoint {}
 
