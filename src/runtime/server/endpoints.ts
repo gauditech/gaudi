@@ -4,6 +4,7 @@ import _, { compact } from "lodash";
 import { endpointQueries } from "../query/build";
 import { Params, executeQuery, executeQueryTree } from "../query/exec";
 
+import { buildAdminEntrypoints } from "./admin";
 import { db } from "./dbConn";
 
 import { PathParam, buildEndpointPath } from "@src/builder/query";
@@ -30,19 +31,21 @@ import {
 export function setupEndpoints(app: Express, definition: Definition) {
   definition.entrypoints
     .flatMap((entrypoint) => processEntrypoint(definition, entrypoint, []))
-    .forEach((epc) => {
-      registerServerEndpoint(app, epc);
-    });
-  // other endpoints
+    .forEach((epc) => registerServerEndpoint(app, epc, "/api"));
+  // authentication endpoints
   buildEndpoints().forEach((epc) => {
-    registerServerEndpoint(app, epc);
+    registerServerEndpoint(app, epc, "/api");
   });
+  // admin entpoints
+  buildAdminEntrypoints(definition)
+    .flatMap((entrypoint) => processEntrypoint(definition, entrypoint, []))
+    .forEach((epc) => registerServerEndpoint(app, epc, "/admin/api"));
 }
 
 /** Register endpoint on server instance */
-export function registerServerEndpoint(app: Express, epConfig: EndpointConfig) {
+export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
   app[epConfig.method](
-    epConfig.path,
+    pathPrefix + epConfig.path,
     ...epConfig.handlers.map((handler) => endpointGuardHandler(handler))
   );
 }
