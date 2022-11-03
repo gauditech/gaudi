@@ -22,8 +22,9 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
           const field = getRef<"field">(definition, select.refKey);
           return [select.alias, { type: convertToOpenAPIType(field.value.type) }];
         }
-        case "constant":
-          return [select.alias, { type: convertToOpenAPIType(select.type) }];
+        // NOTE: not yet implemented
+        // case "constant":
+        //   return [select.alias, { type: convertToOpenAPIType(select.type) }];
         case "reference":
         case "relation":
         case "query": {
