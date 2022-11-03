@@ -303,6 +303,7 @@ ObjectSchema {
         [Function],
         [Function],
         [Function],
+        [Function],
       ],
       "transforms": [
         [Function],

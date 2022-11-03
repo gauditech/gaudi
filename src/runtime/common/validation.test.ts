@@ -123,6 +123,11 @@ describe("runtime", () => {
                 inputType: "text",
                 name: "isTextEqual",
               },
+              {
+                args: [],
+                inputType: "text",
+                name: "isEmail",
+              },
             ],
           },
           booleanProp: {
@@ -183,7 +188,8 @@ describe("runtime", () => {
               },
             },
           },
-          //validators
+
+          // validators - only test that at least one validator triggers error
           textProp: {
             kind: "field",
             nullable: false,
