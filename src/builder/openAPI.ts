@@ -57,7 +57,7 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     const operation: OpenAPIV3.OperationObject = {
       responses: {
         200: {
-          description: "Successfull response",
+          description: "Successful response",
           content: { "application/json": { schema } },
         },
       },
@@ -93,6 +93,7 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
         schema: { type: convertToOpenAPIType(type) },
       })
     );
+    // FIXME provide path components in definition
     const pathRegex = /:([\w]*)/g;
     const path = gaudiPath.path.replace(pathRegex, "{$1}");
 
