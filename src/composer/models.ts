@@ -250,6 +250,11 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
 
   getDefinition(def, rspec.fromModel, "model", true);
   const throughRef = getDefinition(def, `${rspec.fromModel}.${rspec.through}`, "reference", true);
+  if (throughRef.toModelRefKey !== mdef.name) {
+    throw new Error(
+      `Relation ${mdef.name}.${rspec.name} is pointing to a reference referencing a model ${throughRef.toModelRefKey}`
+    );
+  }
 
   const rel: RelationDef = {
     refKey,

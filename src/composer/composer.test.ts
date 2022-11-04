@@ -43,6 +43,20 @@ describe("compose models", () => {
       "Expecting type reference but found a type field"
     );
   });
+  it("fails when relation points to a reference for another model", () => {
+    const bp = `
+    model Foo {
+      reference parent { to Foo }
+      reference baz { to Baz }
+    }
+    model Baz {
+      relation foos { from Foo, through parent }
+    }
+    `;
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Relation Baz.foos is pointing to a reference referencing a model Foo"`
+    );
+  });
   it("detect infinite loop when resolving", () => {
     const bp = `
     model Org { reference no { to Unknown } }
