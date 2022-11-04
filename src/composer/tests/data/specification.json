@@ -26,5 +26,6 @@
       "computeds": []
     }
   ],
-  "entrypoints": []
+  "entrypoints": [],
+  "hooks": []
 }

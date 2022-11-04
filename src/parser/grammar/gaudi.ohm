@@ -1,9 +1,14 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint), ";">
+    = NewlineBody<(Model | Entrypoint | Hook), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
+
+
+  // ********************
+  // Model grammar
+  // ********************
 
   Model = "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
 
@@ -87,6 +92,12 @@ Gaudi {
     | literal -- literal
     | IdentifierPath -- identifier
 
+
+
+  // ********************
+  // Entrypoint grammar
+  // ********************
+
   Entrypoint = "entrypoint" identifier "{" NewlineBody<EntrypointBody, ";"> "}"
 
   EntrypointBody
@@ -120,6 +131,20 @@ Gaudi {
     = "set" identifier literal -- set_value
     | "set" identifier identifier -- set_reference
     | "reference" identifier "through" identifier -- reference
+
+
+
+  // ********************
+  // Hook grammar
+  // ********************
+
+  Hook
+  = "hook" identifier "{" NonemptyNewlineBody<HookBody, ","> "}"
+
+  HookBody
+  = "arg" identifier identifier   -- argument
+  | "returns" identifier          -- return_type
+  | "inline" multiLineString      -- inline_body
 
   IdentifierPath = identifier ("." identifier)*
 
@@ -172,4 +197,6 @@ Gaudi {
 
   multiLineComment = "/*" (~"*/" any)* "*/"
   singleLineComment = "//" (~lineTerminator any)*
+
+  multiLineString = "`" (~"`" any)* "`"
 }
