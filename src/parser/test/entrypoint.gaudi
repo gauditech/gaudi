@@ -17,7 +17,7 @@ entrypoint ItemEntry {
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }

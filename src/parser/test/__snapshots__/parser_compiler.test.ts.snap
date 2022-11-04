@@ -208,7 +208,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -240,7 +240,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -272,7 +272,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -307,7 +307,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -349,7 +349,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -385,7 +385,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -422,7 +422,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -438,7 +438,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "action": undefined,
               "interval": {
-                "endIdx": 425,
+                "endIdx": 416,
                 "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -458,12 +458,12 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
 ",
-                "startIdx": 407,
+                "startIdx": 398,
               },
               "type": "create",
             },
@@ -471,7 +471,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 429,
+            "endIdx": 420,
             "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -491,7 +491,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -503,13 +503,13 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "target": {
             "alias": undefined,
             "identifier": "reviews",
-            "kind": "relation",
+            "kind": "",
           },
         },
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 431,
+        "endIdx": 422,
         "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -529,7 +529,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -559,7 +559,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -589,7 +589,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -619,7 +619,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -651,7 +651,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
@@ -681,7 +681,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     }
   }
   entrypoint Review {
-    target relation reviews
+    target reviews
     create endpoint {}
   }
 }
