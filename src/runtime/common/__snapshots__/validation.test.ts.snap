@@ -1,8 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`runtime validation throws validation exception with validation error messages 1`] = `"{"code":"ERROR_CODE_VALIDATION","message":"Validation error","data":{"value":{"subrecord":{},"prop2":null},"errors":["prop1 is a required field","prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`).","subrecord.subprop1 is a required field"],"inner":[{"path":"prop1","type":"required","errors":["prop1 is a required field"],"params":{"path":"prop1"},"inner":[],"name":"ValidationError","message":"prop1 is a required field"},{"value":null,"path":"prop2","type":"typeError","errors":["prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."],"params":{"value":null,"originalValue":"a","path":"prop2","type":"number"},"inner":[],"name":"ValidationError","message":"prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."},{"path":"subrecord.subprop1","type":"required","errors":["subrecord.subprop1 is a required field"],"params":{"path":"subrecord.subprop1"},"inner":[],"name":"ValidationError","message":"subrecord.subprop1 is a required field"}]}}"`;
-
-exports[`runtime validation validation fieldset 1`] = `
+exports[`runtime validation build fieldset validation schema 1`] = `
 ObjectSchema {
   "_blacklist": ReferenceSet {
     "list": Set {},
@@ -11,6 +9,9 @@ ObjectSchema {
   "_blacklistError": undefined,
   "_excludedEdges": [],
   "_nodes": [
+    "booleanProp",
+    "textProp",
+    "integerProp",
     "subrecord",
     "something",
     "required",
@@ -27,6 +28,80 @@ ObjectSchema {
   "deps": [],
   "exclusiveTests": {},
   "fields": {
+    "booleanProp": BooleanSchema {
+      "_blacklist": ReferenceSet {
+        "list": Set {},
+        "refs": Map {},
+      },
+      "_blacklistError": undefined,
+      "_typeError": [Function],
+      "_whitelist": ReferenceSet {
+        "list": Set {
+          true,
+        },
+        "refs": Map {},
+      },
+      "_whitelistError": [Function],
+      "conditions": [],
+      "deps": [],
+      "exclusiveTests": {
+        "required": true,
+      },
+      "spec": {
+        "abortEarly": true,
+        "nullable": false,
+        "presence": "required",
+        "recursive": true,
+        "strict": false,
+        "strip": false,
+      },
+      "tests": [
+        [Function],
+      ],
+      "transforms": [
+        [Function],
+      ],
+      "type": "boolean",
+    },
+    "integerProp": NumberSchema {
+      "_blacklist": ReferenceSet {
+        "list": Set {},
+        "refs": Map {},
+      },
+      "_blacklistError": undefined,
+      "_typeError": [Function],
+      "_whitelist": ReferenceSet {
+        "list": Set {
+          123,
+        },
+        "refs": Map {},
+      },
+      "_whitelistError": [Function],
+      "conditions": [],
+      "deps": [],
+      "exclusiveTests": {
+        "max": true,
+        "min": true,
+        "required": true,
+      },
+      "spec": {
+        "abortEarly": true,
+        "nullable": false,
+        "presence": "required",
+        "recursive": true,
+        "strict": false,
+        "strip": false,
+      },
+      "tests": [
+        [Function],
+        [Function],
+        [Function],
+      ],
+      "transforms": [
+        [Function],
+      ],
+      "type": "number",
+    },
     "optional": NumberSchema {
       "_blacklist": ReferenceSet {
         "list": Set {},
@@ -193,6 +268,48 @@ ObjectSchema {
       ],
       "type": "object",
     },
+    "textProp": StringSchema {
+      "_blacklist": ReferenceSet {
+        "list": Set {},
+        "refs": Map {},
+      },
+      "_blacklistError": undefined,
+      "_typeError": [Function],
+      "_whitelist": ReferenceSet {
+        "list": Set {
+          "asdf",
+        },
+        "refs": Map {},
+      },
+      "_whitelistError": [Function],
+      "conditions": [],
+      "deps": [],
+      "exclusiveTests": {
+        "email": false,
+        "max": true,
+        "min": true,
+        "required": true,
+      },
+      "spec": {
+        "abortEarly": true,
+        "nullable": false,
+        "presence": "required",
+        "recursive": true,
+        "strict": false,
+        "strip": false,
+      },
+      "tests": [
+        [Function],
+        [Function],
+        [Function],
+        [Function],
+        [Function],
+      ],
+      "transforms": [
+        [Function],
+      ],
+      "type": "string",
+    },
   },
   "spec": {
     "abortEarly": true,
@@ -209,3 +326,5 @@ ObjectSchema {
   "type": "object",
 }
 `;
+
+exports[`runtime validation throws validation exception with validation error messages 1`] = `"{"code":"ERROR_CODE_VALIDATION","message":"Validation error","data":{"value":{"booleanProp":false,"integerProp":10001,"textProp":"too long string","subrecord":{},"prop2":null},"errors":["prop1 is a required field","prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`).","subrecord.subprop1 is a required field","textProp must be at most 4 characters","integerProp must be less than or equal to 100","booleanProp must be one of the following values: true"],"inner":[{"path":"prop1","type":"required","errors":["prop1 is a required field"],"params":{"path":"prop1"},"inner":[],"name":"ValidationError","message":"prop1 is a required field"},{"value":null,"path":"prop2","type":"typeError","errors":["prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."],"params":{"value":null,"originalValue":"a","path":"prop2","type":"number"},"inner":[],"name":"ValidationError","message":"prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."},{"path":"subrecord.subprop1","type":"required","errors":["subrecord.subprop1 is a required field"],"params":{"path":"subrecord.subprop1"},"inner":[],"name":"ValidationError","message":"subrecord.subprop1 is a required field"},{"value":"too long string","path":"textProp","type":"max","errors":["textProp must be at most 4 characters"],"params":{"value":"too long string","originalValue":"too long string","path":"textProp","max":4},"inner":[],"name":"ValidationError","message":"textProp must be at most 4 characters"},{"value":10001,"path":"integerProp","type":"max","errors":["integerProp must be less than or equal to 100"],"params":{"value":10001,"originalValue":10001,"path":"integerProp","max":100},"inner":[],"name":"ValidationError","message":"integerProp must be less than or equal to 100"},{"value":false,"path":"booleanProp","type":"oneOf","errors":["booleanProp must be one of the following values: true"],"params":{"value":false,"originalValue":false,"path":"booleanProp","values":"true","resolved":[true]},"inner":[],"name":"ValidationError","message":"booleanProp must be one of the following values: true"}]}}"`;

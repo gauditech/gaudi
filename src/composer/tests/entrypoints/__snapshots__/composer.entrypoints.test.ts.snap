@@ -1,5 +1,41 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`entrypoint adds validators into fieldsets 1`] = `
+{
+  "kind": "record",
+  "nullable": false,
+  "record": {
+    "name": {
+      "kind": "field",
+      "nullable": false,
+      "type": "text",
+      "validators": [
+        {
+          "args": [
+            {
+              "type": "integer",
+              "value": 4,
+            },
+          ],
+          "inputType": "text",
+          "name": "minLength",
+        },
+        {
+          "args": [
+            {
+              "type": "integer",
+              "value": 100,
+            },
+          ],
+          "inputType": "text",
+          "name": "maxLength",
+        },
+      ],
+    },
+  },
+}
+`;
+
 exports[`entrypoint composes basic example 1`] = `
 [
   {
@@ -342,11 +378,13 @@ exports[`entrypoint composes basic example 1`] = `
                   "kind": "field",
                   "nullable": false,
                   "type": "integer",
+                  "validators": [],
                 },
                 "title": {
                   "kind": "field",
                   "nullable": false,
                   "type": "text",
+                  "validators": [],
                 },
               },
             },

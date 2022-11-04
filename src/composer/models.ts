@@ -11,15 +11,19 @@ import {
 } from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
+  ConstantDef,
   Definition,
   FieldDef,
   FilterDef,
+  IValidatorDef,
   LiteralFilterDef,
   ModelDef,
   QueryDef,
   QueryDefPath,
   ReferenceDef,
   RelationDef,
+  ValidatorDef,
+  ValidatorDefinition,
 } from "@src/types/definition";
 import {
   ExpSpec,
@@ -138,6 +142,7 @@ function constructIdField(mdef: ModelDef): FieldDef {
     primary: true,
     unique: true,
     nullable: false,
+    validators: [],
   };
 }
 
@@ -146,19 +151,58 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
   const ex = getDefinition(def, refKey, "field");
   if (ex) return ex;
 
+  const type = validateType(fspec.type);
+
   const f: FieldDef = {
     refKey,
     modelRefKey: mdef.refKey,
     name: fspec.name,
     dbname: fspec.name.toLowerCase(),
-    type: validateType(fspec.type),
-    dbtype: constructDbType(validateType(fspec.type)),
+    type,
+    dbtype: constructDbType(type),
     primary: false,
     unique: !!fspec.unique,
     nullable: !!fspec.nullable,
+    validators: validatorSpecsToDefs(type, fspec.validators),
   };
   mdef.fields.push(f);
   return f;
+}
+
+function validatorSpecsToDefs(
+  fieldType: FieldDef["type"],
+  vspecs: FieldSpec["validators"]
+): ValidatorDef[] {
+  if (vspecs === undefined) return [];
+
+  return vspecs.map((vspec): ValidatorDef => {
+    const name = vspec.name;
+    const args = vspec.args.map(literalToConstantDef);
+    const argt = args.map((a) => a.type);
+
+    for (const v of ValidatorDefinition) {
+      const [vType, vBpName, vName, vArgs] = v;
+      if (_.isEqual(vType, fieldType) && vBpName === name && _.isEqual(vArgs, argt)) {
+        const d: IValidatorDef = {
+          name: vName,
+          inputType: fieldType,
+          args: args,
+        };
+        return d as ValidatorDef;
+      }
+    }
+
+    throw new Error(`Unknown validator!`);
+  });
+}
+
+function literalToConstantDef(literal: LiteralValue): ConstantDef {
+  if (typeof literal === "number" && Number.isSafeInteger(literal))
+    return { type: "integer", value: literal };
+  if (!!literal === literal) return { type: "boolean", value: literal };
+  if (literal === null) return { type: "null", value: null };
+  if (typeof literal === "string") return { type: "text", value: literal };
+  throw new Error(`Can't detect literal type from ${literal} : ${typeof literal}`);
 }
 
 function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
@@ -181,6 +225,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     primary: false,
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
+    validators: [],
   };
   mdef.fields.push(f);
 
