@@ -9,8 +9,8 @@ describe("runtime", () => {
         host: "127.0.0.1",
         port: 3001,
         definitionPath: "definition.json",
-        outputPath: ".",
-      });
+        outputFolder: ".",
+      } as RuntimeConfig);
     });
 
     it("provide custom configuration from environment", () => {
@@ -25,8 +25,8 @@ describe("runtime", () => {
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
-        outputPath: "test/output/path",
-      });
+        outputFolder: "test/output/path",
+      } as RuntimeConfig);
     });
   });
 });

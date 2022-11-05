@@ -12,7 +12,7 @@ import {
   SelectItem,
 } from "@src/types/definition";
 
-export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
+export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAPIV3.Document {
   const endpoints = definition.entrypoints.map(extractEndpoints).flat();
 
   function buildSchema(select: SelectItem[]) {
@@ -95,12 +95,11 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     );
     // FIXME provide path components in definition
     const pathRegex = /:([\w]*)/g;
-    const path = gaudiPath.path.replace(pathRegex, "{$1}");
+    const path = pathPrefix + gaudiPath.path.replace(pathRegex, "{$1}");
 
     const pathItem = paths[path] ?? { parameters };
     pathItem[method] = buildEndpointOperation(endpoint, parameters.length > 0);
     paths[path] = pathItem;
-    paths;
 
     return paths;
   }, {} as OpenAPIV3.PathsObject);

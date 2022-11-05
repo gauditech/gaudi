@@ -33,6 +33,6 @@ describe("openAPI", () => {
 
     const def = compose(compile(parse(bp)));
 
-    expect(buildOpenAPI(def)).toMatchSnapshot();
+    expect(buildOpenAPI(def, "/api-test")).toMatchSnapshot();
   });
 });

@@ -8,7 +8,7 @@ exports[`openAPI build spec 1`] = `
   },
   "openapi": "3.0.3",
   "paths": {
-    "/org": {
+    "/api-test/org": {
       "get": {
         "responses": {
           "200": {
@@ -75,7 +75,7 @@ exports[`openAPI build spec 1`] = `
         },
       },
     },
-    "/org/{org_slug}": {
+    "/api-test/org/{org_slug}": {
       "get": {
         "responses": {
           "200": {

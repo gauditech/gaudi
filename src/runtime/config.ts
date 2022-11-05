@@ -6,7 +6,7 @@ export type RuntimeConfig = {
   /** Path to generated definition.json file. */
   definitionPath: string;
   /** Folder where runtime should output generated files */
-  outputPath: string;
+  outputFolder: string;
 };
 
 /** Read runtime config from environment or provide default values. */
@@ -17,7 +17,7 @@ export function readConfig(): RuntimeConfig {
       ? parseInt(process.env.GAUDI_RUNTIME_SERVER_PORT, 10)
       : 3001;
   const definitionPath = process.env.GAUDI_RUNTIME_DEFINITION_PATH || "definition.json";
-  const outputPath = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
+  const outputFolder = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
 
-  return { host, port, definitionPath, outputPath };
+  return { host, port, definitionPath, outputFolder };
 }
