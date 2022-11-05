@@ -1095,7 +1095,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       ],
       "inlineBody": "
     return first.toLowerCase() === second.toLowerCase();
- ",
+  ",
       "interval": {
         "endIdx": 143,
         "sourceString": "hook compareLower {
@@ -1105,7 +1105,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
   inline \`
     return first.toLowerCase() === second.toLowerCase();
   \`
-}",
+}
+",
         "startIdx": 0,
       },
       "name": "compareLower",

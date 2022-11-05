@@ -6,6 +6,7 @@ Gaudi {
   space += comment
 
 
+
   // ********************
   // Model grammar
   // ********************
@@ -139,7 +140,7 @@ Gaudi {
   // ********************
 
   Hook
-  = "hook" identifier "{" NonemptyNewlineBody<HookBody, ","> "}"
+  = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
 
   HookBody
   = "arg" identifier identifier   -- argument
@@ -156,7 +157,7 @@ Gaudi {
     = IdentifierPath "as" IdentifierPath -- identifier_as
     | IdentifierPath -- identifier
 
-  literal (an literal) = null | boolean | integer | float | string
+  literal (a literal) = null | boolean | integer | float | string
 
   boolean = true | false
   integer = digit+
