@@ -5,6 +5,7 @@ import { WithContext } from "@src/common/error";
 export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
+  hooks: HookSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -95,3 +96,10 @@ export type ActionAtomSpec = WithContext<
     }
   | { kind: "reference"; target: string; through: string }
 >;
+
+export type HookSpec = WithContext<{
+  name: string;
+  args: { name: string; type: string }[];
+  returnType: string;
+  inlineBody: string;
+}>;

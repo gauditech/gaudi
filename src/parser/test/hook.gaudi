@@ -1,0 +1,8 @@
+hook compareLower {
+  arg first text
+  arg second text
+  returns text
+  inline `
+    return first.toLowerCase() === second.toLowerCase();
+  `
+}

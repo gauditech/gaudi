@@ -7,6 +7,7 @@ import {
   EntrypointAST,
   ExpAST,
   FieldAST,
+  HookAST,
   LiteralValue,
   ModelAST,
   QueryAST,
@@ -20,6 +21,7 @@ import {
   EntrypointSpec,
   ExpSpec,
   FieldSpec,
+  HookSpec,
   ModelSpec,
   QuerySpec,
   ReferenceSpec,
@@ -262,17 +264,50 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
     interval: entrypoint.interval,
   };
 }
+
+function compileHook(hook: HookAST): HookSpec {
+  const name = hook.name;
+  let returnType: string | undefined;
+  const args: { name: string; type: string }[] = [];
+  let inlineBody: string | undefined;
+
+  hook.body.forEach((b) => {
+    if (b.kind === "arg") {
+      args.push({ name: b.name, type: b.type });
+    } else if (b.kind === "inlineBody") {
+      inlineBody = b.inlineBody;
+    } else if (b.kind === "returnType") {
+      returnType = b.type;
+    }
+  });
+
+  if (name && returnType && args.length && inlineBody) {
+    return {
+      name,
+      args,
+      inlineBody,
+      returnType,
+      interval: hook.interval,
+    };
+  } else {
+    throw new CompilerError(`Hook is missing required properties`, hook);
+  }
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
+  const hooks: HookSpec[] = [];
 
   input.map((definition) => {
     if (definition.kind === "model") {
       models.push(compileModel(definition));
-    } else {
+    } else if (definition.kind === "entrypoint") {
       entrypoints.push(compileEntrypoint(definition));
+    } else if (definition.kind === "hook") {
+      hooks.push(compileHook(definition));
     }
   });
 
-  return { models, entrypoints };
+  return { models, entrypoints, hooks };
 }

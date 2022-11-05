@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST;
+export type DefinitionAST = ModelAST | EntrypointAST | HookAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -122,6 +122,18 @@ export type ActionAtomBodyAST = WithContext<
       set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
     }
   | { kind: "reference"; target: string; through: string }
+>;
+
+export type HookAST = WithContext<{
+  kind: "hook";
+  name: string;
+  body: HookBodyAST[];
+}>;
+
+export type HookBodyAST = WithContext<
+  | { kind: "arg"; name: string; type: string }
+  | { kind: "returnType"; type: string }
+  | { kind: "inlineBody"; inlineBody: string }
 >;
 
 export type LiteralValue = null | boolean | number | string;

@@ -14,6 +14,8 @@ import {
   FieldAST,
   FieldBodyAST,
   FieldTag,
+  HookAST,
+  HookBodyAST,
   ModelAST,
   QueryAST,
   QueryBodyAST,
@@ -231,7 +233,7 @@ semantics.addOperation("parse()", {
   PrimaryExp_literal(this, literal): ExpAST {
     return { kind: "literal", literal: literal.parse(), interval: this.source };
   },
-  Entrypoint(this, _enrtypoint, identifier, _braceL, body, _braceR): EntrypointAST {
+  Entrypoint(this, _entrypoint, identifier, _braceL, body, _braceR): EntrypointAST {
     return {
       kind: "entrypoint",
       name: identifier.parse(),
@@ -280,6 +282,28 @@ semantics.addOperation("parse()", {
   },
   EndpointBody_action(this, _action, _braceL, body, _braceR): EndpointBodyAST {
     return { kind: "action", body: body.parse(), interval: this.source };
+  },
+  Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
+    return {
+      kind: "hook",
+      name: identifier.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  HookBody_argument(this, _arg, nameIdentifier, typeIdentifier): HookBodyAST {
+    return {
+      kind: "arg",
+      name: nameIdentifier.parse(),
+      type: typeIdentifier.parse(),
+      interval: this.source,
+    };
+  },
+  HookBody_return_type(this, _returns, identifier): HookBodyAST {
+    return { kind: "returnType", type: identifier.parse(), interval: this.source };
+  },
+  HookBody_inline_body(this, _inline, bodystr): HookBodyAST {
+    return { kind: "inlineBody", inlineBody: bodystr.parse() };
   },
   ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
     return {
@@ -342,6 +366,9 @@ semantics.addOperation("parse()", {
   },
   string(_openQuote, string, _closeQuote) {
     return string.sourceString;
+  },
+  multiLineString(this, _tickL, body, _tickR): string {
+    return body.sourceString;
   },
   identifier(this, _letter, _alnum) {
     return this.sourceString;
