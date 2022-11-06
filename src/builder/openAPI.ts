@@ -138,8 +138,7 @@ function convertToOpenAPIType(
 
 function extractEndpoints(entrypoint: EntrypointDef): EndpointDef[] {
   const nestedEndpoints = entrypoint.entrypoints.reduce((agg, entrypoint) => {
-    agg.concat(extractEndpoints(entrypoint));
-    return agg;
+    return agg.concat(entrypoint.endpoints, extractEndpoints(entrypoint));
   }, [] as EndpointDef[]);
   return [...entrypoint.endpoints, ...nestedEndpoints];
 }
