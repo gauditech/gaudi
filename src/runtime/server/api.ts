@@ -1,6 +1,8 @@
 import path from "path";
 
-import { Express, static as staticHandler } from "express";
+import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
+import { OpenAPIV3 } from "openapi-types";
+import { serve, setup } from "swagger-ui-express";
 
 import { buildOpenAPI } from "@src/builder/openAPI";
 import { saveOutputFile } from "@src/common/utils";
@@ -63,19 +65,34 @@ function setupEntrypointApi(
 
   endpointConfigs.forEach((epc) => registerServerEndpoint(app, epc, basePath));
 
-  setupEntrypointApiSpec(definition, entrypoints, basePath, specFile);
+  setupEntrypointApiSpec(definition, entrypoints, app, basePath, specFile);
 }
 
 /** Create API OpenAPI spec from entrpyoints */
 function setupEntrypointApiSpec(
   definition: Definition,
   entrypoints: EntrypointDef[],
+  app: Express,
   basePath: string,
   outputFile: string
 ) {
   const openApi = buildOpenAPI({ models: definition.models, entrypoints }, basePath);
 
   saveOutputFile(outputFile, JSON.stringify(openApi, undefined, 2));
+
+  setupEntrypointApiSwagger(openApi, app, basePath);
+}
+
+function setupEntrypointApiSwagger(
+  openApiDocument: OpenAPIV3.Document,
+  app: Express,
+  apiPath: string
+) {
+  const swaggerPath = `${apiPath}-docs`;
+
+  app.use(swaggerPath, serve, (_req: Request, _resp: Response, _next: NextFunction) =>
+    setup(openApiDocument)(_req, _resp, _next)
+  );
 }
 
 /** Setup API endpoints from endpoint configs */
