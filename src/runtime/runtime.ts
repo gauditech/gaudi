@@ -7,7 +7,7 @@ import { readConfig } from "@src/runtime/config";
 import { createServer as setupServer } from "@src/runtime/server/server";
 
 // read environment
-const { host, port, definitionPath } = readConfig();
+const { host, port, definitionPath, outputFolder } = readConfig();
 
 // --- read input file
 if (!fs.existsSync(definitionPath)) {
@@ -17,4 +17,4 @@ const definitionStr = fs.readFileSync(definitionPath).toString("utf-8");
 const definition = JSON.parse(definitionStr);
 
 // start server
-setupServer({ host, port, definition });
+setupServer({ host, port, definition, outputFolder });

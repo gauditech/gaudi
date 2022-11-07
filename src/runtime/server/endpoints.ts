@@ -1,17 +1,14 @@
 import { Express, Request, Response } from "express";
-import _, { compact } from "lodash";
-
-import { endpointQueries } from "../query/build";
-import { Params, executeQuery, executeQueryTree } from "../query/exec";
-
-import { buildAdminEntrypoints } from "./admin";
-import { db } from "./dbConn";
+import { chain, compact } from "lodash";
 
 import { PathParam, buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { authenticationHandler, buildEndpoints } from "@src/runtime/server/authentication";
+import { endpointQueries } from "@src/runtime/query/build";
+import { Params, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
+import { authenticationHandler } from "@src/runtime/server/authentication";
+import { db } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -25,21 +22,9 @@ import {
   ModelDef,
 } from "@src/types/definition";
 
-// ---------- server
-
-/** Create endpoint handlers from definition and attach them on server instance */
-export function setupEndpoints(app: Express, definition: Definition) {
-  definition.entrypoints
-    .flatMap((entrypoint) => processEntrypoint(definition, entrypoint, []))
-    .forEach((epc) => registerServerEndpoint(app, epc, "/api"));
-  // authentication endpoints
-  buildEndpoints().forEach((epc) => {
-    registerServerEndpoint(app, epc, "/api");
-  });
-  // admin entpoints
-  buildAdminEntrypoints(definition)
-    .flatMap((entrypoint) => processEntrypoint(definition, entrypoint, []))
-    .forEach((epc) => registerServerEndpoint(app, epc, "/admin/api"));
+/** Create endpoint configs from entrypoints */
+export function buildEndpointConfig(definition: Definition, entrypoints: EntrypointDef[]) {
+  return entrypoints.flatMap((entrypoint) => processEntrypoint(definition, entrypoint, []));
 }
 
 /** Register endpoint on server instance */
@@ -285,7 +270,7 @@ async function insertData(
 }
 
 function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<string, unknown> {
-  return _.chain(data)
+  return chain(data)
     .toPairs()
     .map(([name, value]) => [nameToDbname(model, name), value])
     .fromPairs()

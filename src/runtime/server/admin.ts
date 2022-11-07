@@ -14,7 +14,13 @@ import {
   TargetDef,
 } from "@src/types/definition";
 
-export function buildAdminEntrypoints(def: Definition): EntrypointDef[] {
+/**
+ * Build and return list of admin entrpoints.
+ *
+ * Admin entrypoints do no exist in blueprints but are
+ * built from model on the fly.
+ */
+export function buildEntrypoints(def: Definition): EntrypointDef[] {
   return def.models.map(entrypointForModel);
 }
 
