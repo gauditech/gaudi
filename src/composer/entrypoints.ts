@@ -189,17 +189,39 @@ function processEndpoints(
           fieldset,
           contextActionChangeset: changeset,
           actions: [],
+          targets,
           response: processSelect(
             models,
             context.model,
             entrySpec.response,
             context.target.namePath
           ),
-          targets,
         };
       }
-      default: {
-        throw "TODO";
+      case "update": {
+        const fieldset = calculateUpdateFieldsetForModel(context.model);
+        const changeset = calculateUpdateChangesetForModel(context.model);
+        return {
+          kind: "update",
+          fieldset,
+          contextActionChangeset: changeset,
+          actions: [],
+          targets,
+          response: processSelect(
+            models,
+            context.model,
+            entrySpec.response,
+            context.target.namePath
+          ),
+        };
+      }
+      case "delete": {
+        return {
+          kind: "delete",
+          actions: [],
+          targets,
+          response: undefined,
+        };
       }
     }
   });
@@ -270,6 +292,11 @@ export function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
 }
 
+export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
+  // FIXME Update may have partial/optional fields
+  return calculateCreateFieldsetForModel(model);
+}
+
 export function calculateCreateChangesetForModel(model: ModelDef): Changeset {
   const fields = model.fields
     .filter((f) => !f.primary)
@@ -278,6 +305,11 @@ export function calculateCreateChangesetForModel(model: ModelDef): Changeset {
       { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name] },
     ]);
   return Object.fromEntries(fields);
+}
+
+export function calculateUpdateChangesetForModel(model: ModelDef): Changeset {
+  // FIXME Update may have partial/optional fields
+  return calculateCreateChangesetForModel(model);
 }
 
 function findModel(models: ModelDef[], name: string): ModelDef {
