@@ -295,7 +295,7 @@ semantics.addOperation("parse()", {
   Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
     return {
       kind: "hook",
-      name: identifier.parse(),
+      name: identifier.numChildren > 0 ? identifier.parse() : undefined,
       body: body.parse(),
       interval: this.source,
     };

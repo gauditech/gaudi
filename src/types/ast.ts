@@ -128,7 +128,7 @@ export type ActionAtomBodyAST = WithContext<
 
 export type HookAST = WithContext<{
   kind: "hook";
-  name: string;
+  name?: string;
   body: HookBodyAST[];
 }>;
 

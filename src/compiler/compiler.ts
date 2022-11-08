@@ -294,16 +294,8 @@ function compileHook(hook: HookAST): HookSpec {
     }
   });
 
-  if (!name) {
-    throw new CompilerError("'hook' has no 'name'");
-  }
-
-  if (!returnType) {
-    throw new CompilerError("'hook' has no 'returns'");
-  }
-
   if (!source && !inlineBody) {
-    throw new CompilerError("'hook' needs to have at at least 'source' or 'inline'", hook);
+    throw new CompilerError("'hook' needs to have 'source' or 'inline'", hook);
   }
 
   return {

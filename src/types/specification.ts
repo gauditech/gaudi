@@ -99,9 +99,9 @@ export type ActionAtomSpec = WithContext<
 >;
 
 export type HookSpec = WithContext<{
-  name: string;
+  name?: string;
   args: { name: string }[];
-  returnType: string;
+  returnType?: string;
   inlineBody: string | undefined;
   source: string | undefined;
 }>;

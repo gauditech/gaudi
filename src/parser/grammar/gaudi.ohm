@@ -141,7 +141,7 @@ Gaudi {
   // ********************
 
   Hook
-  = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
+  = "hook" identifier? "{" NonemptyNewlineBody<HookBody, ";"> "}"
 
   HookBody
   = "arg" identifier -- argument
