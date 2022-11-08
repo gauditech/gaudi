@@ -1,13 +1,14 @@
 import express, { json } from "express";
 
-import { setupEndpoints } from "@src/runtime/server/endpoints";
-import { requestLogger, errorHandler } from "@src/runtime/server/middleware";
+import { setupServerApis } from "@src/runtime/server/api";
+import { errorHandler, requestLogger } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
 export type CreateServerConfig = {
   port: number;
   host: string;
   definition: Definition;
+  outputFolder: string;
 };
 
 export function createServer(config: CreateServerConfig) {
@@ -19,7 +20,7 @@ export function createServer(config: CreateServerConfig) {
   app.use(json()); // middleware for parsing application/json body
   app.use(requestLogger);
 
-  setupEndpoints(app, config.definition);
+  setupServerApis(config.definition, app, { outputFolder: config.outputFolder });
 
   app.use(errorHandler);
 

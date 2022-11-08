@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 export function ensureFind<T>(
   arr: T[],
   predicate: (value: T, index: number, obj: T[]) => unknown
@@ -68,4 +71,30 @@ export function nameInitials(input: string): string {
 /** Function that ensures exhaustivness of conditional statements. */
 export function assertUnreachable(_: never): never {
   throw new Error("Unreachable code detected");
+}
+
+/**
+ * Save file to target path.
+ *
+ * If any of directories on the path are missing, create them.
+ *
+ * Check existing file's content and avoid saving if content has not changed. This avoids triggering any possible watches.
+ */
+export function saveOutputFile(destination: string, content: string): void {
+  // create folder(s) if they don't exist
+  const dir = path.dirname(destination);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  let contentChanged = true;
+  if (fs.existsSync(destination)) {
+    const existingContent = fs.readFileSync(destination, { encoding: "utf-8" });
+    contentChanged = content != existingContent;
+  }
+
+  // write file
+  if (contentChanged) {
+    fs.writeFileSync(destination, content, { encoding: "utf-8" });
+  }
 }
