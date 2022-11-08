@@ -148,7 +148,7 @@ export type CreateEndpointDef = {
   actions: ActionDef[];
 };
 
-type UpdateEndpointDef = {
+export type UpdateEndpointDef = {
   kind: "update";
   targets: TargetDef[];
   response: SelectDef;
@@ -157,7 +157,7 @@ type UpdateEndpointDef = {
   actions: ActionDef[];
 };
 
-type DeleteEndpointDef = {
+export type DeleteEndpointDef = {
   kind: "delete";
   targets: TargetDef[];
   actions: ActionDef[];
@@ -217,6 +217,7 @@ export type FieldsetFieldDef = {
   kind: "field";
   type: FieldDef["type"];
   nullable: boolean;
+  required: boolean;
   validators: ValidatorDef[];
 };
 
@@ -325,7 +326,7 @@ export type FieldSetter =
   | { kind: "value"; type: "text"; value: string }
   | { kind: "value"; type: "boolean"; value: boolean }
   | { kind: "value"; type: "integer"; value: number }
-  | { kind: "fieldset-input"; type: FieldDef["type"]; fieldsetAccess: string[] }
+  | { kind: "fieldset-input"; type: FieldDef["type"]; fieldsetAccess: string[]; required: boolean }
   | { kind: "reference-value"; type: FieldDef["type"]; target: { alias: string; access: string[] } }
   | {
       kind: "fieldset-reference-input";

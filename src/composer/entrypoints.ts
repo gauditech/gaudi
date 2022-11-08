@@ -189,17 +189,39 @@ function processEndpoints(
           fieldset,
           contextActionChangeset: changeset,
           actions: [],
+          targets,
           response: processSelect(
             models,
             context.model,
             entrySpec.response,
             context.target.namePath
           ),
-          targets,
         };
       }
-      default: {
-        throw "TODO";
+      case "update": {
+        const fieldset = calculateUpdateFieldsetForModel(context.model);
+        const changeset = calculateUpdateChangesetForModel(context.model);
+        return {
+          kind: "update",
+          fieldset,
+          contextActionChangeset: changeset,
+          actions: [],
+          targets,
+          response: processSelect(
+            models,
+            context.model,
+            entrySpec.response,
+            context.target.namePath
+          ),
+        };
+      }
+      case "delete": {
+        return {
+          kind: "delete",
+          actions: [],
+          targets,
+          response: undefined,
+        };
       }
     }
   });
@@ -265,7 +287,29 @@ export function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
     .filter((f) => !f.primary)
     .map((f): [string, FieldsetDef] => [
       f.name,
-      { kind: "field", nullable: f.nullable, type: f.type, validators: f.validators },
+      {
+        kind: "field",
+        nullable: f.nullable,
+        type: f.type,
+        required: true,
+        validators: f.validators,
+      },
+    ]);
+  return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
+}
+
+export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
+  const fields = model.fields
+    .filter((f) => !f.primary)
+    .map((f): [string, FieldsetDef] => [
+      f.name,
+      {
+        kind: "field",
+        nullable: f.nullable,
+        type: f.type,
+        required: false,
+        validators: f.validators,
+      },
     ]);
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
 }
@@ -275,7 +319,17 @@ export function calculateCreateChangesetForModel(model: ModelDef): Changeset {
     .filter((f) => !f.primary)
     .map((f): [string, FieldSetter] => [
       f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name] },
+      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required: true },
+    ]);
+  return Object.fromEntries(fields);
+}
+
+export function calculateUpdateChangesetForModel(model: ModelDef): Changeset {
+  const fields = model.fields
+    .filter((f) => !f.primary)
+    .map((f): [string, FieldSetter] => [
+      f.name,
+      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required: false },
     ]);
   return Object.fromEntries(fields);
 }
