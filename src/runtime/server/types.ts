@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
-export type ServerHttpMethods = "all" | "get" | "post" | "put" | "patch";
+export type ServerHttpMethods = "all" | "get" | "post" | "put" | "patch" | "delete";
 
 export type ServerRequestHandler =
   | ((request: Request, response: Response) => void | Promise<void>)

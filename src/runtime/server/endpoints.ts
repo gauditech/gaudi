@@ -15,11 +15,13 @@ import { EndpointConfig } from "@src/runtime/server/types";
 import {
   CreateEndpointDef,
   Definition,
+  DeleteEndpointDef,
   EndpointDef,
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
   ModelDef,
+  UpdateEndpointDef,
 } from "@src/types/definition";
 
 /** Create endpoint configs from entrypoints */
@@ -41,9 +43,7 @@ export function processEntrypoint(
   parentEntrypoints: EntrypointDef[]
 ): EndpointConfig[] {
   const entrypoints = [...parentEntrypoints, entrypoint];
-  const endpointOuts = entrypoint.endpoints
-    .map((ep) => processEndpoint(def, ep))
-    .filter((epc): epc is NonNullable<EndpointConfig> => epc != null);
+  const endpointOuts = entrypoint.endpoints.map((ep) => processEndpoint(def, ep));
 
   return [
     ...endpointOuts,
@@ -51,7 +51,7 @@ export function processEntrypoint(
   ];
 }
 
-function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig | null {
+function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig {
   switch (endpoint.kind) {
     case "get":
       return buildGetEndpoint(def, endpoint);
@@ -59,9 +59,10 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
       return buildListEndpoint(def, endpoint);
     case "create":
       return buildCreateEndpoint(def, endpoint);
-    default:
-      console.warn(`Endpoint kind "${endpoint.kind}" not yet implemented`);
-      return null;
+    case "update":
+      return buildUpdateEndpoint(def, endpoint);
+    case "delete":
+      return buildDeleteEndpoint(def, endpoint);
   }
 }
 
@@ -224,6 +225,101 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
   };
 }
 
+/** Build "update" endpoint handler from definition */
+export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef): EndpointConfig {
+  const endpointPath = buildEndpointPath(endpoint);
+
+  const requiresAuthentication = false; // TODO: read from endpoint
+
+  return {
+    path: endpointPath.path,
+    method: "patch",
+    handlers: compact([
+      // prehandlers
+      requiresAuthentication ? authenticationHandler() : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
+
+          const contextParams = extractParams(endpointPath.params, req.params);
+
+          const body = req.body;
+          console.log("CTX PARAMS", contextParams);
+          console.log("BODY", body);
+
+          const q = endpointQueries(def, endpoint).target;
+          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
+          if (targetQueryResult.length === 0) {
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+          }
+          if (targetQueryResult.length > 1) {
+            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+          }
+          console.log("targetQueryResult", targetQueryResult);
+
+          console.log("FIELDSET", endpoint.fieldset);
+
+          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          console.log("Validation result", validationResult);
+
+          const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
+            input: validationResult,
+          });
+
+          const id = await updateData(def, endpoint, targetQueryResult[0].id, actionChangeset);
+          if (id === null) {
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
+          }
+          console.log("Query result", id);
+
+          resp.json({ id });
+        } catch (err) {
+          errorResponse(err);
+        }
+      },
+    ]),
+  };
+}
+
+/** Create "delete" endpoint handler from definition */
+export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef): EndpointConfig {
+  const endpointPath = buildEndpointPath(endpoint);
+
+  const requiresAuthentication = true; // TODO: read from endpoint
+
+  return {
+    path: endpointPath.path,
+    method: "delete",
+    handlers: compact([
+      // prehandlers
+      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
+
+          const contextParams = extractParams(endpointPath.params, req.params);
+
+          const q = endpointQueries(def, endpoint).target;
+          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
+          if (targetQueryResult.length === 0) {
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+          }
+          if (targetQueryResult.length > 1) {
+            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+          }
+
+          await deleteData(def, endpoint, targetQueryResult[0].id);
+          resp.sendStatus(200);
+        } catch (err) {
+          errorResponse(err);
+        }
+      },
+    ]),
+  };
+}
+
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
@@ -243,7 +339,7 @@ function validatePathParam(param: PathParam["params"][number], val: string): str
     case "integer": {
       const n = Number(val);
       if (Number.isNaN(n)) {
-        throw new Error(`Not a valid integer`);
+        throw new Error(`Not a valid integer: ${val}`);
       }
       return n;
     }
@@ -267,6 +363,42 @@ async function insertData(
   const ret = await db.insert(dataToDbnames(model, data)).into(model.dbname).returning("id");
   if (!ret.length) return null;
   return ret[0].id;
+}
+
+/** Update record in DB  */
+async function updateData(
+  definition: Definition,
+  endpoint: EndpointDef,
+  dataId: number,
+  data: Record<string, unknown>
+): Promise<number | null> {
+  const target = endpoint.targets.slice(-1).shift();
+  if (target == null) throw `Endpoint update target is empty`;
+
+  const { value: model } = getRef<"model">(definition, target.retType);
+
+  // TODO: return `endpoint.response` instead of `id` here
+  const ret = await db(model.dbname)
+    .where({ id: dataId })
+    .update(dataToDbnames(model, data))
+    .returning("id");
+
+  if (!ret.length) return null;
+  return ret[0].id;
+}
+
+/** Delete record in DB  */
+async function deleteData(
+  definition: Definition,
+  endpoint: EndpointDef,
+  dataId: number
+): Promise<void> {
+  const target = endpoint.targets.slice(-1).shift();
+  if (target == null) throw `Endpoint update target is empty`;
+
+  const { value: model } = getRef<"model">(definition, target.retType);
+
+  await db(model.dbname).where({ id: dataId }).delete();
 }
 
 function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<string, unknown> {
