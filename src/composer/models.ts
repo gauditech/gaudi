@@ -176,6 +176,10 @@ function validatorSpecsToDefs(
   if (vspecs === undefined) return [];
 
   return vspecs.map((vspec): ValidatorDef => {
+    if (vspec.kind === "custom") {
+      throw new Error("Validator hooks not yet implemented");
+    }
+
     const name = vspec.name;
     const args = vspec.args.map(literalToConstantDef);
     const argt = args.map((a) => a.type);

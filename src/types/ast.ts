@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | HookAST;
+export type DefinitionAST = ModelAST | EntrypointAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -23,10 +23,12 @@ export type FieldBodyAST = WithContext<
   | { kind: "type"; type: string }
   | { kind: "default"; default: LiteralValue }
   | { kind: "tag"; tag: FieldTag }
-  | { kind: "validate"; validators: Validator[] }
+  | { kind: "validate"; validators: ValidatorAST[] }
 >;
 
-export type Validator = WithContext<{ name: string; args: LiteralValue[] }>;
+export type ValidatorAST = WithContext<
+  { kind: "custom"; hook: HookAST } | { kind: "builtin"; name: string; args: LiteralValue[] }
+>;
 
 export type FieldTag = "nullable" | "unique";
 
@@ -131,8 +133,9 @@ export type HookAST = WithContext<{
 }>;
 
 export type HookBodyAST = WithContext<
-  | { kind: "arg"; name: string; type: string }
+  | { kind: "arg"; reference: string }
   | { kind: "returnType"; type: string }
+  | { kind: "source"; source: string }
   | { kind: "inlineBody"; inlineBody: string }
 >;
 

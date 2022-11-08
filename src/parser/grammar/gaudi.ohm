@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Hook), ";">
+    = NewlineBody<(Model | Entrypoint), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -30,7 +30,8 @@ Gaudi {
     | "validate" "{" NonemptyNewlineBody<Validator, ","> "}" -- validate
 
   Validator
-    = identifier literal*
+    = "custom" Hook -- custom
+    | identifier literal* -- builtin
 
   Reference
     = "reference" identifier "{" NonemptyNewlineBody<ReferenceBody, ","> "}"
@@ -143,9 +144,10 @@ Gaudi {
   = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
 
   HookBody
-  = "arg" identifier identifier   -- argument
-  | "returns" identifier          -- return_type
-  | "inline" multiLineString      -- inline_body
+  = "arg" identifier -- argument
+  | "returns" identifier -- return_type
+  | "source" string -- source
+  | "inline" multiLineString -- inline_body
 
   IdentifierPath = identifier ("." identifier)*
 

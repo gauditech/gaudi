@@ -5,7 +5,6 @@ import { WithContext } from "@src/common/error";
 export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
-  hooks: HookSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -24,10 +23,12 @@ export type FieldSpec = WithContext<{
   default?: LiteralValue;
   unique?: boolean;
   nullable?: boolean;
-  validators?: Validator[];
+  validators?: ValidatorSpec[];
 }>;
 
-export type Validator = WithContext<{ name: string; args: LiteralValue[] }>;
+export type ValidatorSpec = WithContext<
+  { kind: "custom"; hook: HookSpec } | { kind: "builtin"; name: string; args: LiteralValue[] }
+>;
 export type ReferenceSpec = WithContext<{
   name: string;
   toModel: string;
@@ -99,7 +100,8 @@ export type ActionAtomSpec = WithContext<
 
 export type HookSpec = WithContext<{
   name: string;
-  args: { name: string; type: string }[];
+  args: { name: string }[];
   returnType: string;
-  inlineBody: string;
+  inlineBody: string | undefined;
+  source: string | undefined;
 }>;

@@ -26,6 +26,7 @@ import {
   RelationAST,
   RelationBodyAST,
   SelectAST,
+  ValidatorAST,
 } from "@src/types/ast";
 
 const semantics = grammar.createSemantics();
@@ -58,8 +59,16 @@ semantics.addOperation("parse()", {
   FieldBody_validate(this, _validate, _parenL, body, _parenR): FieldBodyAST {
     return { kind: "validate", validators: body.parse(), interval: this.source };
   },
-  Validator(this, name, args) {
+  Validator_custom(this, _custom, hook): ValidatorAST {
     return {
+      kind: "custom",
+      hook: hook.parse(),
+      interval: this.source,
+    };
+  },
+  Validator_builtin(this, name, args): ValidatorAST {
+    return {
+      kind: "builtin",
       name: name.parse(),
       args: args.children.map((c) => c.parse()),
       interval: this.source,
@@ -291,19 +300,21 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  HookBody_argument(this, _arg, nameIdentifier, typeIdentifier): HookBodyAST {
+  HookBody_argument(this, _arg, identifier): HookBodyAST {
     return {
       kind: "arg",
-      name: nameIdentifier.parse(),
-      type: typeIdentifier.parse(),
+      reference: identifier.prase(),
       interval: this.source,
     };
   },
   HookBody_return_type(this, _returns, identifier): HookBodyAST {
     return { kind: "returnType", type: identifier.parse(), interval: this.source };
   },
+  HookBody_source(this, _source, sourceString): HookBodyAST {
+    return { kind: "source", source: sourceString.parse(), interval: this.source };
+  },
   HookBody_inline_body(this, _inline, bodystr): HookBodyAST {
-    return { kind: "inlineBody", inlineBody: bodystr.parse() };
+    return { kind: "inlineBody", inlineBody: bodystr.parse(), interval: this.source };
   },
   ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
     return {

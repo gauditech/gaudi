@@ -13,6 +13,7 @@ import {
   QueryAST,
   ReferenceAST,
   RelationAST,
+  ValidatorAST,
 } from "@src/types/ast";
 import {
   ActionSpec,
@@ -27,7 +28,7 @@ import {
   ReferenceSpec,
   RelationSpec,
   Specification,
-  Validator,
+  ValidatorSpec,
 } from "@src/types/specification";
 
 function compileField(field: FieldAST): FieldSpec {
@@ -35,7 +36,7 @@ function compileField(field: FieldAST): FieldSpec {
   let default_: LiteralValue | undefined;
   let nullable: boolean | undefined;
   let unique: boolean | undefined;
-  let validators: Validator[] | undefined;
+  let validators: ValidatorSpec[] | undefined;
 
   field.body.forEach((b) => {
     if (b.kind === "tag") {
@@ -49,7 +50,7 @@ function compileField(field: FieldAST): FieldSpec {
     } else if (b.kind === "default") {
       default_ = b.default;
     } else if (b.kind === "validate") {
-      validators = b.validators;
+      validators = b.validators.map(compileValidator);
     }
   });
 
@@ -66,6 +67,15 @@ function compileField(field: FieldAST): FieldSpec {
     validators,
     interval: field.interval,
   };
+}
+
+function compileValidator(validator: ValidatorAST): ValidatorSpec {
+  switch (validator.kind) {
+    case "builtin":
+      return validator;
+    case "custom":
+      return { ...validator, hook: compileHook(validator.hook) };
+  }
 }
 
 function compileReference(reference: ReferenceAST): ReferenceSpec {
@@ -268,46 +278,55 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
 function compileHook(hook: HookAST): HookSpec {
   const name = hook.name;
   let returnType: string | undefined;
-  const args: { name: string; type: string }[] = [];
+  const args: HookSpec["args"] = [];
   let inlineBody: string | undefined;
+  let source: string | undefined;
 
   hook.body.forEach((b) => {
     if (b.kind === "arg") {
-      args.push({ name: b.name, type: b.type });
+      args.push({ name: b.reference });
     } else if (b.kind === "inlineBody") {
       inlineBody = b.inlineBody;
+    } else if (b.kind === "source") {
+      source = b.source;
     } else if (b.kind === "returnType") {
       returnType = b.type;
     }
   });
 
-  if (name && returnType && args.length && inlineBody) {
-    return {
-      name,
-      args,
-      inlineBody,
-      returnType,
-      interval: hook.interval,
-    };
-  } else {
-    throw new CompilerError(`Hook is missing required properties`, hook);
+  if (!name) {
+    throw new CompilerError("'hook' has no 'name'");
   }
+
+  if (!returnType) {
+    throw new CompilerError("'hook' has no 'returns'");
+  }
+
+  if (!source && !inlineBody) {
+    throw new CompilerError("'hook' needs to have at at least 'source' or 'inline'", hook);
+  }
+
+  return {
+    name,
+    args,
+    inlineBody,
+    source,
+    returnType,
+    interval: hook.interval,
+  };
 }
 
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
-  const hooks: HookSpec[] = [];
 
   input.map((definition) => {
     if (definition.kind === "model") {
       models.push(compileModel(definition));
     } else if (definition.kind === "entrypoint") {
       entrypoints.push(compileEntrypoint(definition));
-    } else if (definition.kind === "hook") {
-      hooks.push(compileHook(definition));
     }
   });
 
-  return { models, entrypoints, hooks };
+  return { models, entrypoints };
 }
