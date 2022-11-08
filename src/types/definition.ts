@@ -148,7 +148,7 @@ export type CreateEndpointDef = {
   actions: ActionDef[];
 };
 
-type UpdateEndpointDef = {
+export type UpdateEndpointDef = {
   kind: "update";
   targets: TargetDef[];
   response: SelectDef;
@@ -157,7 +157,7 @@ type UpdateEndpointDef = {
   actions: ActionDef[];
 };
 
-type DeleteEndpointDef = {
+export type DeleteEndpointDef = {
   kind: "delete";
   targets: TargetDef[];
   actions: ActionDef[];

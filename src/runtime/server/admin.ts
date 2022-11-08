@@ -1,10 +1,13 @@
 import {
   calculateCreateChangesetForModel,
   calculateCreateFieldsetForModel,
+  calculateUpdateChangesetForModel,
+  calculateUpdateFieldsetForModel,
 } from "@src/composer/entrypoints";
 import {
   CreateEndpointDef,
   Definition,
+  DeleteEndpointDef,
   EndpointDef,
   EntrypointDef,
   GetEndpointDef,
@@ -12,6 +15,7 @@ import {
   ModelDef,
   SelectDef,
   TargetDef,
+  UpdateEndpointDef,
 } from "@src/types/definition";
 
 /**
@@ -53,6 +57,8 @@ function endpointsForModel(model: ModelDef, target: TargetDef): EndpointDef[] {
     getEndpointForModel(model, target),
     listEnpointForModel(model, target),
     createEndpointForModel(model, target),
+    updateEndpointForModel(model, target),
+    deleteEndpointForModel(model, target),
   ];
 }
 
@@ -82,6 +88,26 @@ function createEndpointForModel(model: ModelDef, target: TargetDef): CreateEndpo
     response: modelToSelect(model),
     fieldset: calculateCreateFieldsetForModel(model),
     contextActionChangeset: calculateCreateChangesetForModel(model),
+  };
+}
+
+function updateEndpointForModel(model: ModelDef, target: TargetDef): UpdateEndpointDef {
+  return {
+    kind: "update",
+    targets: [target],
+    actions: [],
+    response: modelToSelect(model),
+    fieldset: calculateUpdateFieldsetForModel(model),
+    contextActionChangeset: calculateUpdateChangesetForModel(model),
+  };
+}
+
+function deleteEndpointForModel(model: ModelDef, target: TargetDef): DeleteEndpointDef {
+  return {
+    kind: "delete",
+    targets: [target],
+    actions: [],
+    response: undefined,
   };
 }
 
