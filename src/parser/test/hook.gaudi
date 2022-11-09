@@ -2,7 +2,8 @@ model User {
   field fieldOne {
     type text
     validate {
-      custom hook {
+      hook {
+        arg fieldOne
         source "customValidateHook"
       }
     }
@@ -10,9 +11,10 @@ model User {
   field fieldTwo {
     type text
     validate {
-      custom hook {
+      hook {
+        arg fieldTwo
         inline `
-          return first.toLowerCase() === second.toLowerCase();
+          return fieldTwo.toLowerCase() === "something";
         `
       }
     }

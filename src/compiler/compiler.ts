@@ -73,7 +73,7 @@ function compileValidator(validator: ValidatorAST): ValidatorSpec {
   switch (validator.kind) {
     case "builtin":
       return validator;
-    case "custom":
+    case "hook":
       return { ...validator, hook: compileHook(validator.hook) };
   }
 }

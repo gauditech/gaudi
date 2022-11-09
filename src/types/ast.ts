@@ -27,7 +27,7 @@ export type FieldBodyAST = WithContext<
 >;
 
 export type ValidatorAST = WithContext<
-  { kind: "custom"; hook: HookAST } | { kind: "builtin"; name: string; args: LiteralValue[] }
+  { kind: "hook"; hook: HookAST } | { kind: "builtin"; name: string; args: LiteralValue[] }
 >;
 
 export type FieldTag = "nullable" | "unique";

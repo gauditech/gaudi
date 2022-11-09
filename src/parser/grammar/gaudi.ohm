@@ -30,7 +30,7 @@ Gaudi {
     | "validate" "{" NonemptyNewlineBody<Validator, ","> "}" -- validate
 
   Validator
-    = "custom" Hook -- custom
+    = Hook -- hook
     | identifier literal* -- builtin
 
   Reference

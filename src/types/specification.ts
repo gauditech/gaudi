@@ -27,7 +27,7 @@ export type FieldSpec = WithContext<{
 }>;
 
 export type ValidatorSpec = WithContext<
-  { kind: "custom"; hook: HookSpec } | { kind: "builtin"; name: string; args: LiteralValue[] }
+  { kind: "hook"; hook: HookSpec } | { kind: "builtin"; name: string; args: LiteralValue[] }
 >;
 export type ReferenceSpec = WithContext<{
   name: string;

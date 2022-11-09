@@ -59,9 +59,9 @@ semantics.addOperation("parse()", {
   FieldBody_validate(this, _validate, _parenL, body, _parenR): FieldBodyAST {
     return { kind: "validate", validators: body.parse(), interval: this.source };
   },
-  Validator_custom(this, _custom, hook): ValidatorAST {
+  Validator_hook(this, hook): ValidatorAST {
     return {
-      kind: "custom",
+      kind: "hook",
       hook: hook.parse(),
       interval: this.source,
     };
@@ -303,7 +303,7 @@ semantics.addOperation("parse()", {
   HookBody_argument(this, _arg, identifier): HookBodyAST {
     return {
       kind: "arg",
-      reference: identifier.prase(),
+      reference: identifier.parse(),
       interval: this.source,
     };
   },
