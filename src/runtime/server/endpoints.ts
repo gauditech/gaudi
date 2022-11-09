@@ -5,7 +5,7 @@ import { PathParam, buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { endpointQueries } from "@src/runtime/query/build";
+import { EndpointQueries, endpointQueries } from "@src/runtime/query/build";
 import { Params, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
 import { db } from "@src/runtime/server/dbConn";
@@ -85,15 +85,10 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
-          const q = endpointQueries(def, endpoint).target;
-          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
-          if (targetQueryResult.length === 0) {
-            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-          }
-          if (targetQueryResult.length > 1) {
-            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-          }
-          resp.json(targetQueryResult[0]);
+          const queries = endpointQueries(def, endpoint);
+          const queryResult = await findOne(def, queries, contextParams);
+
+          resp.json(queryResult);
         } catch (err) {
           errorResponse(err);
         }
@@ -121,39 +116,23 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           const contextParams = extractParams(endpointPath.params, req.params);
           const queries = endpointQueries(def, endpoint);
+
+          const ids = [];
           if (queries.context) {
-            const contextQueryResult = await executeQuery(
-              db,
-              def,
-              queries.context,
-              contextParams,
-              []
-            );
-            if (contextQueryResult.length === 0) {
-              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-            }
-            if (contextQueryResult.length > 1) {
-              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-            }
-            const ids = contextQueryResult.map((r: any): number => r.id);
-            const targetQueryResult = await executeQueryTree(
-              db,
-              def,
-              queries.target,
-              contextParams,
-              ids
-            );
-            resp.json(targetQueryResult);
-          } else {
-            const targetQueryResult = await executeQueryTree(
-              db,
-              def,
-              queries.target,
-              contextParams,
-              []
-            );
-            resp.json(targetQueryResult);
+            const queryResult = await findOne(def, queries, contextParams);
+
+            ids.push(queryResult.id);
           }
+
+          const targetQueryResult = await executeQueryTree(
+            db,
+            def,
+            queries.target,
+            contextParams,
+            ids
+          );
+
+          resp.json(targetQueryResult);
         } catch (err) {
           errorResponse(err);
         }
@@ -187,19 +166,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const queries = endpointQueries(def, endpoint);
           if (queries.context) {
-            const contextQueryResult = await executeQuery(
-              db,
-              def,
-              queries.context,
-              contextParams,
-              []
-            );
-            if (contextQueryResult.length === 0) {
-              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-            }
-            if (contextQueryResult.length > 1) {
-              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-            }
+            findOne(def, queries, contextParams);
           }
 
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
@@ -248,15 +215,11 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           console.log("CTX PARAMS", contextParams);
           console.log("BODY", body);
 
-          const q = endpointQueries(def, endpoint).target;
-          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
-          if (targetQueryResult.length === 0) {
-            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-          }
-          if (targetQueryResult.length > 1) {
-            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-          }
-          console.log("targetQueryResult", targetQueryResult);
+          const q = endpointQueries(def, endpoint);
+
+          // FIXME implement "SELECT FOR UPDATE"
+          // FIXME don't need to fetch the whole queryTree before update
+          const queryResult = await findOne(def, q, contextParams);
 
           console.log("FIELDSET", endpoint.fieldset);
 
@@ -267,7 +230,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             input: validationResult,
           });
 
-          const id = await updateData(def, endpoint, targetQueryResult[0].id, actionChangeset);
+          const id = await updateData(def, endpoint, queryResult.id, actionChangeset);
           if (id === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
@@ -301,16 +264,11 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
-          const q = endpointQueries(def, endpoint).target;
-          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
-          if (targetQueryResult.length === 0) {
-            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-          }
-          if (targetQueryResult.length > 1) {
-            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-          }
+          const q = endpointQueries(def, endpoint);
+          const queryResult = await findOne(def, q, contextParams);
 
-          await deleteData(def, endpoint, targetQueryResult[0].id);
+          await deleteData(def, endpoint, queryResult.id);
+
           resp.sendStatus(200);
         } catch (err) {
           errorResponse(err);
@@ -415,4 +373,23 @@ function nameToDbname(model: ModelDef, name: string): string {
     throw new Error(`Field ${model.name}.${name} doesn't exist`);
   }
   return field.dbname;
+}
+
+/** Return only one resulting row. If query returns 0 or more than 1 row, throw error. */
+async function findOne(def: Definition, q: EndpointQueries, contextParams: Params) {
+  let queryResult;
+  if (q.context) {
+    queryResult = await executeQuery(db, def, q.context, contextParams, []);
+  } else {
+    queryResult = await executeQueryTree(db, def, q.target, contextParams, []);
+  }
+
+  if (queryResult.length === 0) {
+    throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+  }
+  if (queryResult.length > 1) {
+    throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+  }
+
+  return queryResult[0];
 }
