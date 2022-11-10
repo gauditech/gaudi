@@ -76,6 +76,36 @@ exports[`openAPI build spec 1`] = `
       },
     },
     "/api-test/org/{org_slug}": {
+      "delete": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {},
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
+        },
+      },
       "get": {
         "responses": {
           "200": {
@@ -123,6 +153,315 @@ exports[`openAPI build spec 1`] = `
           },
         },
       ],
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "slug",
+                ],
+                "type": "object",
+              },
+            },
+          },
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                    },
+                    "slug": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
+        },
+      },
+    },
+    "/api-test/org/{org_slug}/repos": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                      },
+                      "name": {
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "type": "array",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
+        },
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "org_slug",
+          "required": true,
+          "schema": {
+            "type": "string",
+          },
+        },
+      ],
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "type": "string",
+                  },
+                  "org_id": {
+                    "type": "integer",
+                  },
+                },
+                "required": [
+                  "name",
+                  "org_id",
+                ],
+                "type": "object",
+              },
+            },
+          },
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
+        },
+      },
+    },
+    "/api-test/org/{org_slug}/repos/{repo_id}": {
+      "delete": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {},
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
+        },
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
+        },
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "org_slug",
+          "required": true,
+          "schema": {
+            "type": "string",
+          },
+        },
+        {
+          "in": "path",
+          "name": "repo_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+          },
+        },
+      ],
+      "patch": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "type": "string",
+                  },
+                  "org_id": {
+                    "type": "integer",
+                  },
+                },
+                "required": [
+                  "name",
+                  "org_id",
+                ],
+                "type": "object",
+              },
+            },
+          },
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
+        },
+      },
     },
   },
 }

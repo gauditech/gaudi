@@ -15,6 +15,7 @@ ObjectSchema {
     "subrecord",
     "something",
     "required",
+    "nullable",
     "optional",
   ],
   "_sortErrors": [Function],
@@ -45,12 +46,12 @@ ObjectSchema {
       "conditions": [],
       "deps": [],
       "exclusiveTests": {
-        "required": true,
+        "defined": true,
       },
       "spec": {
         "abortEarly": true,
         "nullable": false,
-        "presence": "required",
+        "presence": "optional",
         "recursive": true,
         "strict": false,
         "strip": false,
@@ -80,14 +81,14 @@ ObjectSchema {
       "conditions": [],
       "deps": [],
       "exclusiveTests": {
+        "defined": true,
         "max": true,
         "min": true,
-        "required": true,
       },
       "spec": {
         "abortEarly": true,
         "nullable": false,
-        "presence": "required",
+        "presence": "optional",
         "recursive": true,
         "strict": false,
         "strip": false,
@@ -101,6 +102,39 @@ ObjectSchema {
         [Function],
       ],
       "type": "number",
+    },
+    "nullable": StringSchema {
+      "_blacklist": ReferenceSet {
+        "list": Set {},
+        "refs": Map {},
+      },
+      "_blacklistError": undefined,
+      "_typeError": [Function],
+      "_whitelist": ReferenceSet {
+        "list": Set {},
+        "refs": Map {},
+      },
+      "_whitelistError": undefined,
+      "conditions": [],
+      "deps": [],
+      "exclusiveTests": {
+        "defined": true,
+      },
+      "spec": {
+        "abortEarly": true,
+        "nullable": true,
+        "presence": "optional",
+        "recursive": true,
+        "strict": false,
+        "strip": false,
+      },
+      "tests": [
+        [Function],
+      ],
+      "transforms": [
+        [Function],
+      ],
+      "type": "string",
     },
     "optional": NumberSchema {
       "_blacklist": ReferenceSet {
@@ -136,7 +170,6 @@ ObjectSchema {
         "refs": Map {},
       },
       "_blacklistError": undefined,
-      "_mutate": undefined,
       "_typeError": [Function],
       "_whitelist": ReferenceSet {
         "list": Set {},
@@ -146,12 +179,12 @@ ObjectSchema {
       "conditions": [],
       "deps": [],
       "exclusiveTests": {
-        "required": true,
+        "defined": true,
       },
       "spec": {
         "abortEarly": true,
         "nullable": false,
-        "presence": "required",
+        "presence": "optional",
         "recursive": true,
         "strict": false,
         "strip": false,
@@ -170,7 +203,6 @@ ObjectSchema {
         "refs": Map {},
       },
       "_blacklistError": undefined,
-      "_mutate": undefined,
       "_typeError": [Function],
       "_whitelist": ReferenceSet {
         "list": Set {},
@@ -180,12 +212,12 @@ ObjectSchema {
       "conditions": [],
       "deps": [],
       "exclusiveTests": {
-        "required": true,
+        "defined": true,
       },
       "spec": {
         "abortEarly": true,
         "nullable": false,
-        "presence": "required",
+        "presence": "optional",
         "recursive": true,
         "strict": false,
         "strip": false,
@@ -225,7 +257,6 @@ ObjectSchema {
             "refs": Map {},
           },
           "_blacklistError": undefined,
-          "_mutate": undefined,
           "_typeError": [Function],
           "_whitelist": ReferenceSet {
             "list": Set {},
@@ -235,12 +266,12 @@ ObjectSchema {
           "conditions": [],
           "deps": [],
           "exclusiveTests": {
-            "required": true,
+            "defined": true,
           },
           "spec": {
             "abortEarly": true,
             "nullable": false,
-            "presence": "required",
+            "presence": "optional",
             "recursive": true,
             "strict": false,
             "strip": false,
@@ -285,15 +316,15 @@ ObjectSchema {
       "conditions": [],
       "deps": [],
       "exclusiveTests": {
+        "defined": true,
         "email": false,
         "max": true,
         "min": true,
-        "required": true,
       },
       "spec": {
         "abortEarly": true,
         "nullable": false,
-        "presence": "required",
+        "presence": "optional",
         "recursive": true,
         "strict": false,
         "strip": false,
@@ -327,4 +358,4 @@ ObjectSchema {
 }
 `;
 
-exports[`runtime validation throws validation exception with validation error messages 1`] = `"{"code":"ERROR_CODE_VALIDATION","message":"Validation error","data":{"value":{"booleanProp":false,"integerProp":10001,"textProp":"too long string","subrecord":{},"prop2":null},"errors":["prop1 is a required field","prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`).","subrecord.subprop1 is a required field","textProp must be at most 4 characters","integerProp must be less than or equal to 100","booleanProp must be one of the following values: true"],"inner":[{"path":"prop1","type":"required","errors":["prop1 is a required field"],"params":{"path":"prop1"},"inner":[],"name":"ValidationError","message":"prop1 is a required field"},{"value":null,"path":"prop2","type":"typeError","errors":["prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."],"params":{"value":null,"originalValue":"a","path":"prop2","type":"number"},"inner":[],"name":"ValidationError","message":"prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."},{"path":"subrecord.subprop1","type":"required","errors":["subrecord.subprop1 is a required field"],"params":{"path":"subrecord.subprop1"},"inner":[],"name":"ValidationError","message":"subrecord.subprop1 is a required field"},{"value":"too long string","path":"textProp","type":"max","errors":["textProp must be at most 4 characters"],"params":{"value":"too long string","originalValue":"too long string","path":"textProp","max":4},"inner":[],"name":"ValidationError","message":"textProp must be at most 4 characters"},{"value":10001,"path":"integerProp","type":"max","errors":["integerProp must be less than or equal to 100"],"params":{"value":10001,"originalValue":10001,"path":"integerProp","max":100},"inner":[],"name":"ValidationError","message":"integerProp must be less than or equal to 100"},{"value":false,"path":"booleanProp","type":"oneOf","errors":["booleanProp must be one of the following values: true"],"params":{"value":false,"originalValue":false,"path":"booleanProp","values":"true","resolved":[true]},"inner":[],"name":"ValidationError","message":"booleanProp must be one of the following values: true"}]}}"`;
+exports[`runtime validation throws validation exception with validation error messages 1`] = `"{"code":"ERROR_CODE_VALIDATION","message":"Validation error","data":{"value":{"booleanProp":false,"integerProp":10001,"textProp":"too long string","nonNullable":null,"nullable":null,"subrecord":{},"prop2":null},"errors":["prop1 must be defined","prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`).","subrecord.subprop1 must be defined","nonNullable must be a \`string\` type, but the final value was: \`null\`.\\n If \\"null\\" is intended as an empty value be sure to mark the schema as \`.nullable()\`","textProp must be at most 4 characters","integerProp must be less than or equal to 100","booleanProp must be one of the following values: true"],"inner":[{"path":"prop1","type":"defined","errors":["prop1 must be defined"],"params":{"path":"prop1"},"inner":[],"name":"ValidationError","message":"prop1 must be defined"},{"value":null,"path":"prop2","type":"typeError","errors":["prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."],"params":{"value":null,"originalValue":"a","path":"prop2","type":"number"},"inner":[],"name":"ValidationError","message":"prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."},{"path":"subrecord.subprop1","type":"defined","errors":["subrecord.subprop1 must be defined"],"params":{"path":"subrecord.subprop1"},"inner":[],"name":"ValidationError","message":"subrecord.subprop1 must be defined"},{"value":null,"path":"nonNullable","type":"typeError","errors":["nonNullable must be a \`string\` type, but the final value was: \`null\`.\\n If \\"null\\" is intended as an empty value be sure to mark the schema as \`.nullable()\`"],"params":{"value":null,"originalValue":null,"path":"nonNullable","type":"string"},"inner":[],"name":"ValidationError","message":"nonNullable must be a \`string\` type, but the final value was: \`null\`.\\n If \\"null\\" is intended as an empty value be sure to mark the schema as \`.nullable()\`"},{"value":"too long string","path":"textProp","type":"max","errors":["textProp must be at most 4 characters"],"params":{"value":"too long string","originalValue":"too long string","path":"textProp","max":4},"inner":[],"name":"ValidationError","message":"textProp must be at most 4 characters"},{"value":10001,"path":"integerProp","type":"max","errors":["integerProp must be less than or equal to 100"],"params":{"value":10001,"originalValue":10001,"path":"integerProp","max":100},"inner":[],"name":"ValidationError","message":"integerProp must be less than or equal to 100"},{"value":false,"path":"booleanProp","type":"oneOf","errors":["booleanProp must be one of the following values: true"],"params":{"value":false,"originalValue":false,"path":"booleanProp","values":"true","resolved":[true]},"inner":[],"name":"ValidationError","message":"booleanProp must be one of the following values: true"}]}}"`;

@@ -74,7 +74,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
       };
     }
 
-    if (endpoint.kind === "create") {
+    if (endpoint.kind === "create" || endpoint.kind === "update") {
       const schema = buildSchemaFromFieldset(endpoint.fieldset);
       operation.requestBody = { content: { "application/json": { schema } } };
     }
