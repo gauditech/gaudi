@@ -102,6 +102,10 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       } else if (v.name === "isTextEqual") {
         // TODO: s.equals returns BaseSchema and it doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
+      } else if (v.name === "hook") {
+        s.test((_a) => {
+          return v.inline ? eval(v.inline) : eval(v.source ?? "false");
+        });
       }
     });
 

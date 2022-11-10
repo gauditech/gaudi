@@ -177,7 +177,7 @@ function validatorSpecsToDefs(
 
   return vspecs.map((vspec): ValidatorDef => {
     if (vspec.kind === "hook") {
-      throw new Error("Validator hooks not yet implemented");
+      return { name: "hook", source: vspec.hook.source, inline: vspec.hook.inlineBody };
     }
 
     const name = vspec.name;
