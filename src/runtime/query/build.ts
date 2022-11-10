@@ -44,7 +44,7 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
  * Endpoint query builder
  */
 
-type EndpointQueries = {
+export type EndpointQueries = {
   context?: QueryDef;
   target: QueryTree;
 };

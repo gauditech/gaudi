@@ -89,8 +89,17 @@ function buildObjectValidationSchema(field: FieldsetRecordDef): AnySchema {
 
 function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
   if (field.type === "text") {
+    // start with nullable because it's the only way to
     let s = string();
-    if (!field.nullable) s = s.required();
+
+    if (field.nullable) {
+      // TODO: yup's types don't allow expanding return type to `string | undefined | null`
+      s = s.nullable() as StringSchema;
+    }
+    if (field.required) {
+      // everything except `undefined`
+      s = s.defined();
+    }
 
     field.validators.forEach((v) => {
       if (v.name === "minLength") {
@@ -100,7 +109,7 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       } else if (v.name === "isEmail") {
         s = s.email();
       } else if (v.name === "isTextEqual") {
-        // TODO: s.equals returns BaseSchema and it doesn't fit StringSchema
+        // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
         s.test((_a) => {
@@ -112,7 +121,15 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
     return s;
   } else if (field.type === "integer") {
     let s = number();
-    if (!field.nullable) s = s.required();
+
+    if (field.nullable) {
+      // TODO: yup's types don't allow expanding return type to `number | undefined | null`
+      s = s.nullable() as NumberSchema;
+    }
+    if (field.required) {
+      // everything except `undefined`
+      s = s.defined();
+    }
 
     field.validators.forEach((v) => {
       if (v.name === "min") {
@@ -120,7 +137,7 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       } else if (v.name === "max") {
         s = s.max(v.args[0].value);
       } else if (v.name === "isIntEqual") {
-        // TODO: s.equals returns BaseSchema and it doesn't fit NumberSchema
+        // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
         s = s.equals([v.args[0].value]) as NumberSchema;
       }
     });
@@ -128,11 +145,17 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
     return s;
   } else if (field.type === "boolean") {
     let s = boolean();
-    if (!field.nullable) s = s.required();
+
+    // NOTE: boolean schema cannot be "nullable"
+
+    if (field.required) {
+      // everything except `undefined`
+      s = s.defined();
+    }
 
     field.validators.forEach((v) => {
       if (v.name === "isBoolEqual") {
-        // TODO: s.equals returns BaseSchema and it doesn't fit BooleanSchema
+        // TODO: s.equals returns BaseSchema which doesn't fit BooleanSchema
         s = s.equals([v.args[0].value]) as BooleanSchema;
       }
     });

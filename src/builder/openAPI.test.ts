@@ -17,16 +17,21 @@ describe("openAPI", () => {
       target model Org
       identify with slug
 
-      list endpoint {}
       get endpoint {}
+      list endpoint {}
       create endpoint {}
+      update endpoint {}
+      delete endpoint {}
 
       entrypoint Repos {
         target relation repos
         response { id, name }
 
         get endpoint {}
+        list endpoint {}
         create endpoint {}
+        update endpoint {}
+        delete endpoint {}
       }
     }
     `;

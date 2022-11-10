@@ -5,7 +5,7 @@ import { PathParam, buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { endpointQueries } from "@src/runtime/query/build";
+import { EndpointQueries, endpointQueries } from "@src/runtime/query/build";
 import { Params, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
 import { db } from "@src/runtime/server/dbConn";
@@ -15,11 +15,13 @@ import { EndpointConfig } from "@src/runtime/server/types";
 import {
   CreateEndpointDef,
   Definition,
+  DeleteEndpointDef,
   EndpointDef,
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
   ModelDef,
+  UpdateEndpointDef,
 } from "@src/types/definition";
 
 /** Create endpoint configs from entrypoints */
@@ -41,9 +43,7 @@ export function processEntrypoint(
   parentEntrypoints: EntrypointDef[]
 ): EndpointConfig[] {
   const entrypoints = [...parentEntrypoints, entrypoint];
-  const endpointOuts = entrypoint.endpoints
-    .map((ep) => processEndpoint(def, ep))
-    .filter((epc): epc is NonNullable<EndpointConfig> => epc != null);
+  const endpointOuts = entrypoint.endpoints.map((ep) => processEndpoint(def, ep));
 
   return [
     ...endpointOuts,
@@ -51,7 +51,7 @@ export function processEntrypoint(
   ];
 }
 
-function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig | null {
+function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig {
   switch (endpoint.kind) {
     case "get":
       return buildGetEndpoint(def, endpoint);
@@ -59,9 +59,10 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
       return buildListEndpoint(def, endpoint);
     case "create":
       return buildCreateEndpoint(def, endpoint);
-    default:
-      console.warn(`Endpoint kind "${endpoint.kind}" not yet implemented`);
-      return null;
+    case "update":
+      return buildUpdateEndpoint(def, endpoint);
+    case "delete":
+      return buildDeleteEndpoint(def, endpoint);
   }
 }
 
@@ -84,15 +85,10 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
-          const q = endpointQueries(def, endpoint).target;
-          const targetQueryResult = await executeQueryTree(db, def, q, contextParams, []);
-          if (targetQueryResult.length === 0) {
-            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-          }
-          if (targetQueryResult.length > 1) {
-            throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-          }
-          resp.json(targetQueryResult[0]);
+          const queries = endpointQueries(def, endpoint);
+          const queryResult = await findOne(def, queries, contextParams);
+
+          resp.json(queryResult);
         } catch (err) {
           errorResponse(err);
         }
@@ -120,39 +116,23 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           const contextParams = extractParams(endpointPath.params, req.params);
           const queries = endpointQueries(def, endpoint);
+
+          const ids = [];
           if (queries.context) {
-            const contextQueryResult = await executeQuery(
-              db,
-              def,
-              queries.context,
-              contextParams,
-              []
-            );
-            if (contextQueryResult.length === 0) {
-              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-            }
-            if (contextQueryResult.length > 1) {
-              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-            }
-            const ids = contextQueryResult.map((r: any): number => r.id);
-            const targetQueryResult = await executeQueryTree(
-              db,
-              def,
-              queries.target,
-              contextParams,
-              ids
-            );
-            resp.json(targetQueryResult);
-          } else {
-            const targetQueryResult = await executeQueryTree(
-              db,
-              def,
-              queries.target,
-              contextParams,
-              []
-            );
-            resp.json(targetQueryResult);
+            const queryResult = await findOne(def, queries, contextParams);
+
+            ids.push(queryResult.id);
           }
+
+          const targetQueryResult = await executeQueryTree(
+            db,
+            def,
+            queries.target,
+            contextParams,
+            ids
+          );
+
+          resp.json(targetQueryResult);
         } catch (err) {
           errorResponse(err);
         }
@@ -186,19 +166,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const queries = endpointQueries(def, endpoint);
           if (queries.context) {
-            const contextQueryResult = await executeQuery(
-              db,
-              def,
-              queries.context,
-              contextParams,
-              []
-            );
-            if (contextQueryResult.length === 0) {
-              throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
-            }
-            if (contextQueryResult.length > 1) {
-              throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
-            }
+            findOne(def, queries, contextParams);
           }
 
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
@@ -216,6 +184,92 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           console.log("Query result", id);
 
           resp.json({ id });
+        } catch (err) {
+          errorResponse(err);
+        }
+      },
+    ]),
+  };
+}
+
+/** Build "update" endpoint handler from definition */
+export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef): EndpointConfig {
+  const endpointPath = buildEndpointPath(endpoint);
+
+  const requiresAuthentication = false; // TODO: read from endpoint
+
+  return {
+    path: endpointPath.path,
+    method: "patch",
+    handlers: compact([
+      // prehandlers
+      requiresAuthentication ? authenticationHandler() : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
+
+          const contextParams = extractParams(endpointPath.params, req.params);
+
+          const body = req.body;
+          console.log("CTX PARAMS", contextParams);
+          console.log("BODY", body);
+
+          const q = endpointQueries(def, endpoint);
+
+          // FIXME implement "SELECT FOR UPDATE"
+          // FIXME don't need to fetch the whole queryTree before update
+          const queryResult = await findOne(def, q, contextParams);
+
+          console.log("FIELDSET", endpoint.fieldset);
+
+          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          console.log("Validation result", validationResult);
+
+          const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
+            input: validationResult,
+          });
+
+          const id = await updateData(def, endpoint, queryResult.id, actionChangeset);
+          if (id === null) {
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
+          }
+          console.log("Query result", id);
+
+          resp.json({ id });
+        } catch (err) {
+          errorResponse(err);
+        }
+      },
+    ]),
+  };
+}
+
+/** Create "delete" endpoint handler from definition */
+export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef): EndpointConfig {
+  const endpointPath = buildEndpointPath(endpoint);
+
+  const requiresAuthentication = true; // TODO: read from endpoint
+
+  return {
+    path: endpointPath.path,
+    method: "delete",
+    handlers: compact([
+      // prehandlers
+      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      // handler
+      async (req: Request, resp: Response) => {
+        try {
+          console.log("AUTH USER", req.user);
+
+          const contextParams = extractParams(endpointPath.params, req.params);
+
+          const q = endpointQueries(def, endpoint);
+          const queryResult = await findOne(def, q, contextParams);
+
+          await deleteData(def, endpoint, queryResult.id);
+
+          resp.sendStatus(200);
         } catch (err) {
           errorResponse(err);
         }
@@ -243,7 +297,7 @@ function validatePathParam(param: PathParam["params"][number], val: string): str
     case "integer": {
       const n = Number(val);
       if (Number.isNaN(n)) {
-        throw new Error(`Not a valid integer`);
+        throw new Error(`Not a valid integer: ${val}`);
       }
       return n;
     }
@@ -269,6 +323,42 @@ async function insertData(
   return ret[0].id;
 }
 
+/** Update record in DB  */
+async function updateData(
+  definition: Definition,
+  endpoint: EndpointDef,
+  dataId: number,
+  data: Record<string, unknown>
+): Promise<number | null> {
+  const target = endpoint.targets.slice(-1).shift();
+  if (target == null) throw `Endpoint update target is empty`;
+
+  const { value: model } = getRef<"model">(definition, target.retType);
+
+  // TODO: return `endpoint.response` instead of `id` here
+  const ret = await db(model.dbname)
+    .where({ id: dataId })
+    .update(dataToDbnames(model, data))
+    .returning("id");
+
+  if (!ret.length) return null;
+  return ret[0].id;
+}
+
+/** Delete record in DB  */
+async function deleteData(
+  definition: Definition,
+  endpoint: EndpointDef,
+  dataId: number
+): Promise<void> {
+  const target = endpoint.targets.slice(-1).shift();
+  if (target == null) throw `Endpoint update target is empty`;
+
+  const { value: model } = getRef<"model">(definition, target.retType);
+
+  await db(model.dbname).where({ id: dataId }).delete();
+}
+
 function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<string, unknown> {
   return chain(data)
     .toPairs()
@@ -283,4 +373,23 @@ function nameToDbname(model: ModelDef, name: string): string {
     throw new Error(`Field ${model.name}.${name} doesn't exist`);
   }
   return field.dbname;
+}
+
+/** Return only one resulting row. If query returns 0 or more than 1 row, throw error. */
+async function findOne(def: Definition, q: EndpointQueries, contextParams: Params) {
+  let queryResult;
+  if (q.context) {
+    queryResult = await executeQuery(db, def, q.context, contextParams, []);
+  } else {
+    queryResult = await executeQueryTree(db, def, q.target, contextParams, []);
+  }
+
+  if (queryResult.length === 0) {
+    throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+  }
+  if (queryResult.length > 1) {
+    throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+  }
+
+  return queryResult[0];
 }

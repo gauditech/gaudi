@@ -8,6 +8,7 @@ exports[`entrypoint adds validators into fieldsets 1`] = `
     "name": {
       "kind": "field",
       "nullable": false,
+      "required": true,
       "type": "text",
       "validators": [
         {
@@ -360,6 +361,7 @@ exports[`entrypoint composes basic example 1`] = `
                   "org_id",
                 ],
                 "kind": "fieldset-input",
+                "required": true,
                 "type": "integer",
               },
               "title": {
@@ -367,6 +369,7 @@ exports[`entrypoint composes basic example 1`] = `
                   "title",
                 ],
                 "kind": "fieldset-input",
+                "required": true,
                 "type": "text",
               },
             },
@@ -377,12 +380,14 @@ exports[`entrypoint composes basic example 1`] = `
                 "org_id": {
                   "kind": "field",
                   "nullable": false,
+                  "required": true,
                   "type": "integer",
                   "validators": [],
                 },
                 "title": {
                   "kind": "field",
                   "nullable": false,
+                  "required": true,
                   "type": "text",
                   "validators": [],
                 },

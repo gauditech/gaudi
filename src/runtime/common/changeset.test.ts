@@ -18,11 +18,13 @@ describe("runtime", () => {
           fieldsetAccess: ["input_prop"],
           kind: "fieldset-input",
           type: "text",
+          required: true,
         },
         input_prop_missing: {
           fieldsetAccess: ["__missing__"],
           kind: "fieldset-input",
           type: "text",
+          required: false,
         },
       };
 
@@ -61,7 +63,7 @@ describe("runtime", () => {
   describe("formatting", () => {
     it("ignores undefined/null vlaue", () => {
       expect(formatFieldValue(undefined, "text")).toStrictEqual(undefined);
-      expect(formatFieldValue(null, "text")).toStrictEqual(undefined);
+      expect(formatFieldValue(null, "text")).toStrictEqual(null);
     });
 
     it("formats text field values", () => {
