@@ -1,9 +1,13 @@
 import _ from "lodash";
 
-import { getModelProp, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot } from "@src/common/utils";
+import { getTypedLiteralValue, getTypedPath } from "./utils";
+
+import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
+import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
+import { NamePath } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
+  ActionDef,
   Changeset,
   Definition,
   EndpointDef,
@@ -15,7 +19,7 @@ import {
   SelectItem,
   TargetDef,
 } from "@src/types/definition";
-import { EntrypointSpec } from "@src/types/specification";
+import { ActionAtomSpec, ActionSpec, EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def.models, spec, []));
@@ -225,6 +229,95 @@ function processEndpoints(
       }
     }
   });
+}
+
+function composeAction(def: Definition, action: ActionSpec): ActionDef {
+  const setters = action.actionAtoms.map((act): [string, FieldSetter] => {
+    switch (act.kind) {
+      case "set": {
+        return [act.target, { kind: "value" }] as any; // FIXME
+      }
+      case "reference": {
+        return [act.target, { kind: "reference-value" }] as any; // FIXME
+      }
+    }
+  });
+  const changeset: Changeset = Object.fromEntries(setters);
+
+  if (action.kind === "create") {
+    return {
+      kind: "create-one",
+      targetPath: action.targetPath,
+      changeset,
+    };
+  } else if (action.kind === "update") {
+    return {
+      kind: "update-one",
+      targetPath: action.targetPath,
+      changeset,
+    };
+  } else {
+    assertUnreachable(action.kind);
+  }
+}
+
+function actionAtomToFieldSetter(
+  def: Definition,
+  ctx: ModelDef, // context record that's CRD-ed
+  contextVars: Record<string, ModelDef>, // all defined variables
+  atom: ActionAtomSpec
+): FieldSetter {
+  switch (atom.kind) {
+    case "set": {
+      const set = atom.set;
+      switch (set.kind) {
+        case "value": {
+          return {
+            kind: "value",
+            value: set.value,
+            type: getTypedLiteralValue(set.value),
+          } as FieldSetter;
+        }
+        case "reference": {
+          const path = set.reference;
+          const identityPath = getTypedPath(def, [ctx.name, ...path]);
+          const leaf = _.last(identityPath)!;
+          if (leaf.kind === "field") {
+            const { value: field } = getRef<"field">(def, leaf.refKey);
+            return {
+              kind: "reference-value",
+              type: field.type,
+              target: {
+                alias: "",
+                access: path,
+              },
+            };
+          } else {
+            const targetModel = getTargetModel(def.models, leaf.refKey);
+            const { value: field } = getRef<"field">(def, `${targetModel.refKey}.id`);
+            return {
+              kind: "reference-value",
+              type: field.type,
+              target: {
+                alias: "",
+                access: path,
+              },
+            };
+          }
+        }
+      }
+    }
+    // Due to bug in eslint/prettier, linter complains that `break` is expected in the case "set"
+    // Since inner switch is exaustive, break is unreachable so prettier deletes it
+    // eslint-disable-next-line no-fallthrough
+    case "reference": {
+      return {
+        kind: "fieldset-reference-input",
+        fieldsetAccess: [atom.target, atom.through],
+        throughField: { name: atom.through, refKey: "" },
+      };
+    }
+  }
 }
 
 function processSelect(

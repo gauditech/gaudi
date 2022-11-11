@@ -126,11 +126,11 @@ Gaudi {
     = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
 
   ActionBody
-    = ("create" | "update") identifier "{" NewlineBody<ActionAtomBody, ";"> "}"
+    = ("create" | "update") IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"
 
   ActionAtomBody
     = "set" identifier literal -- set_value
-    | "set" identifier identifier -- set_reference
+    | "set" identifier IdentifierPath -- set_reference
     | "reference" identifier "through" identifier -- reference
 
 
@@ -175,7 +175,7 @@ Gaudi {
   in = "in" ~identifierPart
 
   identifier (an identifier) = identifierStart identifierPart*
-  identifierStart = letter | "_"
+  identifierStart = letter | "_" | "@"
   identifierPart = identifierStart | alnum
 
   OptionalBraces<Exp>

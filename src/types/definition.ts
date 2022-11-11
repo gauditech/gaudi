@@ -17,12 +17,14 @@ export type ModelDef = {
   queries: QueryDef[];
 };
 
+export type FieldType = "integer" | "text" | "boolean";
+
 export type FieldDef = {
   refKey: string;
   modelRefKey: string;
   name: string;
   dbname: string;
-  type: "integer" | "text" | "boolean";
+  type: FieldType;
   dbtype: "serial" | "integer" | "text" | "boolean";
   primary: boolean;
   unique: boolean;
@@ -294,35 +296,30 @@ type IntConst = { type: "integer"; value: number };
 type TextConst = { type: "text"; value: string };
 type NullConst = { type: "null"; value: null };
 
-export type ActionDef = CreateOneAction | UpdateOneAction | DeleteManyAction;
+export type ActionDef = CreateOneAction | UpdateOneAction;
 
 type CreateOneAction = {
   kind: "create-one";
-  model: string;
+  targetPath: string[];
   changeset: Changeset;
 };
 
 type UpdateOneAction = {
   kind: "update-one";
-  model: string;
-  target: {
-    alias: string;
-    access: string[];
-  };
-  filter: FilterDef;
+  targetPath: string[];
   changeset: Changeset;
 };
 
 type DeleteManyAction = {
   kind: "delete-many";
-  model: string;
+  targetPath: string[];
   filter: FilterDef;
 };
 
 export type Changeset = Record<string, FieldSetter>;
 
 export type FieldSetter =
-  // TODO add algebra
+  // TODO add composite expression setter
   | { kind: "value"; type: "text"; value: string }
   | { kind: "value"; type: "boolean"; value: boolean }
   | { kind: "value"; type: "integer"; value: number }
@@ -333,3 +330,8 @@ export type FieldSetter =
       fieldsetAccess: string[];
       throughField: { name: string; refKey: string };
     };
+
+export type IdentifierDef = {
+  kind: "model" | "query" | "relation" | "reference" | "field";
+  refKey: string;
+};

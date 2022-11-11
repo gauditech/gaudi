@@ -214,7 +214,7 @@ function compileModel(model: ModelAST): ModelSpec {
 }
 
 function compileAction(action: ActionBodyAST): ActionSpec {
-  return { kind: action.kind, target: action.target, actionAtoms: action.body };
+  return { kind: action.kind, targetPath: action.target, actionAtoms: action.body };
 }
 
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {

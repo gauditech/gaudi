@@ -111,7 +111,7 @@ export type EndpointBodyAST = WithContext<{ kind: "action"; body: ActionBodyAST[
 
 export type ActionBodyAST = WithContext<{
   kind: "create" | "update";
-  target: string;
+  target: string[];
   body: ActionAtomBodyAST[];
 }>;
 
@@ -119,7 +119,7 @@ export type ActionAtomBodyAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
+      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
     }
   | { kind: "reference"; target: string; through: string }
 >;

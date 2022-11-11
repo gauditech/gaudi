@@ -46,6 +46,7 @@ export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
   return getRef<T>([model], `${model.name}.${name}`);
 }
 
+// FIXME first arg should be Definition, not ModelDef[]
 export function getTargetModel(models: ModelDef[], refKey: string): ModelDef {
   const prop = getRef(models, refKey);
   switch (prop.kind) {
