@@ -3,6 +3,8 @@ import fs from "fs";
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
 import "../common/setupAliases";
 
+import { importHooks } from "./hooks";
+
 import { readConfig } from "@src/runtime/config";
 import { createServer as setupServer } from "@src/runtime/server/server";
 
@@ -15,6 +17,8 @@ if (!fs.existsSync(definitionPath)) {
 }
 const definitionStr = fs.readFileSync(definitionPath).toString("utf-8");
 const definition = JSON.parse(definitionStr);
+
+importHooks();
 
 // start server
 setupServer({ host, port, definition, outputFolder });

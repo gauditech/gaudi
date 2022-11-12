@@ -1,12 +1,19 @@
 // database {
 //     engine pg
 //     uri 'postgresql://postgres@localhost:5342'
-// } 
+// }
 
 // ----- models
 
 model Org {
-    field name { type text }
+    field name {
+        type text
+        validate {
+            hook {
+                source "foo"
+            }
+        }
+    }
     field slug { type text, unique }
     field description { type text }
     field optOut { type text, nullable }

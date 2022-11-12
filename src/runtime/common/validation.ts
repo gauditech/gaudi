@@ -10,6 +10,8 @@ import {
   string,
 } from "yup";
 
+import { getHook } from "../hooks";
+
 import { assertUnreachable } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
 import { FieldsetDef, FieldsetFieldDef, FieldsetRecordDef } from "@src/types/definition";
@@ -112,9 +114,17 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
-        s.test((_a) => {
-          return v.inline ? eval(v.inline) : eval(v.source ?? "false");
-        });
+        let testFn: () => boolean;
+        const inline = v.inline;
+        const source = v.source;
+        if (inline) {
+          testFn = () => eval(inline);
+        } else if (source) {
+          testFn = () => getHook(source)();
+        } else {
+          throw new Error("Unexpected hook state");
+        }
+        s = s.test(testFn);
       }
     });
 

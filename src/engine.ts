@@ -1,7 +1,8 @@
-import fs from "fs";
-
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
 import "./common/setupAliases";
+
+import fs from "fs";
+import path from "path";
 
 import { build, compile, compose, parse } from "./index";
 
@@ -18,3 +19,5 @@ const ast = parse(input);
 const specification = compile(ast);
 const definition = compose(specification);
 build(definition, outputPath);
+
+fs.copyFileSync("./hook.js", path.join(outputPath, "hook.js"));
