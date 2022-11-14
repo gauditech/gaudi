@@ -277,32 +277,30 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
 
 function compileHook(hook: HookAST): HookSpec {
   const name = hook.name;
-  let returnType: string | undefined;
   const args: HookSpec["args"] = [];
-  let inlineBody: string | undefined;
-  let source: string | undefined;
+  let code: HookSpec["code"] | undefined;
+  let returnType: string | undefined;
 
   hook.body.forEach((b) => {
     if (b.kind === "arg") {
       args.push({ name: b.reference });
-    } else if (b.kind === "inlineBody") {
-      inlineBody = b.inlineBody;
+    } else if (b.kind === "inline") {
+      code = { kind: "inline", inline: b.inline };
     } else if (b.kind === "source") {
-      source = b.source;
+      code = { kind: "source", target: b.target, file: b.file };
     } else if (b.kind === "returnType") {
       returnType = b.type;
     }
   });
 
-  if (!source && !inlineBody) {
+  if (!code) {
     throw new CompilerError("'hook' needs to have 'source' or 'inline'", hook);
   }
 
   return {
     name,
     args,
-    inlineBody,
-    source,
+    code,
     returnType,
     interval: hook.interval,
   };

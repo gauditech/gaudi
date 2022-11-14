@@ -115,14 +115,11 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
         let testFn: () => boolean;
-        const inline = v.inline;
-        const source = v.source;
-        if (inline) {
-          testFn = () => eval(inline);
-        } else if (source) {
-          testFn = () => getHook(source)();
+        const code = v.code;
+        if (code.kind === "inline") {
+          testFn = () => eval(code.inline);
         } else {
-          throw new Error("Unexpected hook state");
+          testFn = () => getHook(code.file, code.target)();
         }
         s = s.test(testFn);
       }

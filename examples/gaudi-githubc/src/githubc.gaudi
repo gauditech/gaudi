@@ -10,7 +10,7 @@ model Org {
         type text
         validate {
             hook {
-                source "foo"
+                source foo from "bar.js"
             }
         }
     }

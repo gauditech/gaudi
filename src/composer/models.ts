@@ -177,7 +177,7 @@ function validatorSpecsToDefs(
 
   return vspecs.map((vspec): ValidatorDef => {
     if (vspec.kind === "hook") {
-      return { name: "hook", source: vspec.hook.source, inline: vspec.hook.inlineBody };
+      return { name: "hook", code: vspec.hook.code };
     }
 
     const name = vspec.name;

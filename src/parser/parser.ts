@@ -310,11 +310,11 @@ semantics.addOperation("parse()", {
   HookBody_return_type(this, _returns, identifier): HookBodyAST {
     return { kind: "returnType", type: identifier.parse(), interval: this.source };
   },
-  HookBody_source(this, _source, sourceString): HookBodyAST {
-    return { kind: "source", source: sourceString.parse(), interval: this.source };
+  HookBody_source(this, _source, target, _from, file): HookBodyAST {
+    return { kind: "source", target: target.parse(), file: file.parse(), interval: this.source };
   },
-  HookBody_inline_body(this, _inline, bodystr): HookBodyAST {
-    return { kind: "inlineBody", inlineBody: bodystr.parse(), interval: this.source };
+  HookBody_inline(this, _inline, inlineString): HookBodyAST {
+    return { kind: "inline", inline: inlineString.parse(), interval: this.source };
   },
   ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
     return {

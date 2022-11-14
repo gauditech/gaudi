@@ -18,7 +18,7 @@ if (!fs.existsSync(definitionPath)) {
 const definitionStr = fs.readFileSync(definitionPath).toString("utf-8");
 const definition = JSON.parse(definitionStr);
 
-importHooks();
+importHooks(outputFolder);
 
 // start server
 setupServer({ host, port, definition, outputFolder });

@@ -135,8 +135,8 @@ export type HookAST = WithContext<{
 export type HookBodyAST = WithContext<
   | { kind: "arg"; reference: string }
   | { kind: "returnType"; type: string }
-  | { kind: "source"; source: string }
-  | { kind: "inlineBody"; inlineBody: string }
+  | { kind: "source"; target: string; file: string }
+  | { kind: "inline"; inline: string }
 >;
 
 export type LiteralValue = null | boolean | number | string;

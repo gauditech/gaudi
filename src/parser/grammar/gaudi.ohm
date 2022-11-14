@@ -146,8 +146,8 @@ Gaudi {
   HookBody
   = "arg" identifier -- argument
   | "returns" identifier -- return_type
-  | "source" string -- source
-  | "inline" multiLineString -- inline_body
+  | "source" identifier "from" string -- source
+  | "inline" multiLineString -- inline
 
   IdentifierPath = identifier ("." identifier)*
 
