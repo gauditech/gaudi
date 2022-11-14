@@ -14,7 +14,15 @@ model Org {
             }
         }
     }
-    field slug { type text, unique }
+    field slug {
+        type text,
+        unique,
+        validate {
+            hook {
+                inline `console.log('Inline Hook?!'); true`
+            }
+        }
+    }
     field description { type text }
     field optOut { type text, nullable }
 

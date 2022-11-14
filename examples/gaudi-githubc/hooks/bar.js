@@ -1,4 +1,4 @@
 export function foo() {
-  console.log("Inside hook!");
+  console.log("External Hook!!");
   return true;
 }
