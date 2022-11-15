@@ -8,7 +8,7 @@ import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { EndpointQueries, endpointQueries } from "@src/runtime/query/build";
 import { Params, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
-import { db } from "@src/runtime/server/dbConn";
+import { getContext } from "@src/runtime/server/context";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -125,7 +125,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           }
 
           const targetQueryResult = await executeQueryTree(
-            db,
+            getContext().dbConn,
             def,
             queries.target,
             contextParams,
@@ -318,7 +318,10 @@ async function insertData(
   const { value: model } = getRef<"model">(definition, target.retType);
 
   // TODO: return `endpoint.response` instead of `id` here
-  const ret = await db.insert(dataToDbnames(model, data)).into(model.dbname).returning("id");
+  const ret = await getContext()
+    .dbConn.insert(dataToDbnames(model, data))
+    .into(model.dbname)
+    .returning("id");
   if (!ret.length) return null;
   return ret[0].id;
 }
@@ -336,7 +339,8 @@ async function updateData(
   const { value: model } = getRef<"model">(definition, target.retType);
 
   // TODO: return `endpoint.response` instead of `id` here
-  const ret = await db(model.dbname)
+  const ret = await getContext()
+    .dbConn(model.dbname)
     .where({ id: dataId })
     .update(dataToDbnames(model, data))
     .returning("id");
@@ -356,7 +360,7 @@ async function deleteData(
 
   const { value: model } = getRef<"model">(definition, target.retType);
 
-  await db(model.dbname).where({ id: dataId }).delete();
+  await getContext().dbConn(model.dbname).where({ id: dataId }).delete();
 }
 
 function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<string, unknown> {
@@ -379,9 +383,9 @@ function nameToDbname(model: ModelDef, name: string): string {
 async function findOne(def: Definition, q: EndpointQueries, contextParams: Params) {
   let queryResult;
   if (q.context) {
-    queryResult = await executeQuery(db, def, q.context, contextParams, []);
+    queryResult = await executeQuery(getContext().dbConn, def, q.context, contextParams, []);
   } else {
-    queryResult = await executeQueryTree(db, def, q.target, contextParams, []);
+    queryResult = await executeQueryTree(getContext().dbConn, def, q.target, contextParams, []);
   }
 
   if (queryResult.length === 0) {

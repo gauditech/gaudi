@@ -1,6 +1,7 @@
 import express, { json } from "express";
 
 import { setupServerApis } from "@src/runtime/server/api";
+import { getContext } from "@src/runtime/server/context";
 import { errorHandler, requestLogger } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
@@ -11,7 +12,9 @@ export type CreateServerConfig = {
   outputFolder: string;
 };
 
-export function createServer(config: CreateServerConfig) {
+export function createServer(definition: Definition) {
+  const config = getContext().config;
+
   const app = express();
 
   const port = config.port || 3000;
@@ -20,7 +23,7 @@ export function createServer(config: CreateServerConfig) {
   app.use(json()); // middleware for parsing application/json body
   app.use(requestLogger);
 
-  setupServerApis(config.definition, app, { outputFolder: config.outputFolder });
+  setupServerApis(definition, app);
 
   app.use(errorHandler);
 

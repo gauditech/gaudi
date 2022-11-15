@@ -5,7 +5,7 @@ import { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import { Strategy as BearerStrategy, VerifyFunction } from "passport-http-bearer";
 
-import { db } from "@src/runtime/server/dbConn";
+import { getContext } from "@src/runtime/server/context";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { EndpointConfig } from "@src/runtime/server/types";
 
@@ -149,7 +149,7 @@ function configurePassport(): passport.Authenticator {
 // ---------- DB queries
 
 async function resolveUserFromToken(token: string): Promise<{ id: string } | undefined> {
-  const result = await db.from("useraccesstoken").where({ token });
+  const result = await getContext().dbConn.from("useraccesstoken").where({ token });
   // console.log("RESULTS", result);
 
   if (result.length == 1) {
@@ -171,7 +171,7 @@ async function authenticateUser(
   username: string,
   password: string
 ): Promise<{ id: number } | undefined> {
-  const result = await db.select("*").from("userauthlocal").where({ username });
+  const result = await getContext().dbConn.select("*").from("userauthlocal").where({ username });
   // console.log("RESULTS", result);
 
   if (result.length === 1) {
@@ -199,8 +199,8 @@ async function createUserAccessToken(userId: number): Promise<string> {
   const newExpiryDate = new Date(Date.now() + TOKEN_EXPIRY_TIME).toISOString();
 
   // insert fresh token
-  await db
-    .insert({ user_id: userId, token: newToken, expirydate: newExpiryDate })
+  await getContext()
+    .dbConn.insert({ user_id: userId, token: newToken, expirydate: newExpiryDate })
     .into("useraccesstoken");
 
   return newToken;
