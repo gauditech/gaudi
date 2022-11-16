@@ -1,0 +1,19 @@
+
+model Org {
+  field name { type text }
+  field slug { type text, unique }
+  field description { type text }
+}
+
+// ----- entrypoints
+
+entrypoint Orgs {
+  target model Org
+  identify with slug
+  response { name, slug, description }
+
+  get endpoint {}
+  list endpoint {}
+  create endpoint {}
+  update endpoint {}
+}

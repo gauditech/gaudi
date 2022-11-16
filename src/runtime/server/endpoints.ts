@@ -1,8 +1,8 @@
 import { Express, Request, Response } from "express";
-import { chain, compact } from "lodash";
+import { compact } from "lodash";
 
 import { PathParam, buildEndpointPath } from "@src/builder/query";
-import { getRef } from "@src/common/refs";
+import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { EndpointQueries, endpointQueries } from "@src/runtime/query/build";
@@ -20,13 +20,22 @@ import {
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
-  ModelDef,
   UpdateEndpointDef,
 } from "@src/types/definition";
 
 /** Create endpoint configs from entrypoints */
 export function buildEndpointConfig(definition: Definition, entrypoints: EntrypointDef[]) {
-  return entrypoints.flatMap((entrypoint) => processEntrypoint(definition, entrypoint, []));
+  return flattenEndpoints(entrypoints).map((ep) => processEndpoint(definition, ep));
+}
+
+/** Extract endpoints from entrypoint hierarchy into a flattened map. */
+export function flattenEndpoints(entrypoints: EntrypointDef[]): EndpointDef[] {
+  return entrypoints.reduce((accum, entrypoint) => {
+    const nestedEndpoints: EndpointDef[] = entrypoint.entrypoints.reduce((agg, entrypoint) => {
+      return [...agg, ...flattenEndpoints([entrypoint])];
+    }, [] as EndpointDef[]);
+    return [...accum, ...entrypoint.endpoints, ...nestedEndpoints];
+  }, [] as EndpointDef[]);
 }
 
 /** Register endpoint on server instance */
@@ -35,20 +44,6 @@ export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, p
     pathPrefix + epConfig.path,
     ...epConfig.handlers.map((handler) => endpointGuardHandler(handler))
   );
-}
-
-export function processEntrypoint(
-  def: Definition,
-  entrypoint: EntrypointDef,
-  parentEntrypoints: EntrypointDef[]
-): EndpointConfig[] {
-  const entrypoints = [...parentEntrypoints, entrypoint];
-  const endpointOuts = entrypoint.endpoints.map((ep) => processEndpoint(def, ep));
-
-  return [
-    ...endpointOuts,
-    ...(entrypoint.entrypoints?.flatMap((ep) => processEntrypoint(def, ep, entrypoints)) ?? []),
-  ];
 }
 
 function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig {
@@ -319,7 +314,7 @@ async function insertData(
 
   // TODO: return `endpoint.response` instead of `id` here
   const ret = await getContext()
-    .dbConn.insert(dataToDbnames(model, data))
+    .dbConn.insert(dataToFieldDbnames(model, data))
     .into(model.dbname)
     .returning("id");
   if (!ret.length) return null;
@@ -342,7 +337,7 @@ async function updateData(
   const ret = await getContext()
     .dbConn(model.dbname)
     .where({ id: dataId })
-    .update(dataToDbnames(model, data))
+    .update(dataToFieldDbnames(model, data))
     .returning("id");
 
   if (!ret.length) return null;
@@ -361,22 +356,6 @@ async function deleteData(
   const { value: model } = getRef<"model">(definition, target.retType);
 
   await getContext().dbConn(model.dbname).where({ id: dataId }).delete();
-}
-
-function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<string, unknown> {
-  return chain(data)
-    .toPairs()
-    .map(([name, value]) => [nameToDbname(model, name), value])
-    .fromPairs()
-    .value();
-}
-
-function nameToDbname(model: ModelDef, name: string): string {
-  const field = model.fields.find((f) => f.name === name);
-  if (!field) {
-    throw new Error(`Field ${model.name}.${name} doesn't exist`);
-  }
-  return field.dbname;
 }
 
 /** Return only one resulting row. If query returns 0 or more than 1 row, throw error. */
