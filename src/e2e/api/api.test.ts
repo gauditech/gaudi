@@ -42,15 +42,15 @@ describe("API endpoints", () => {
 
     it("create", async () => {
       const data = {
-        name: "Org 3",
-        slug: "org3",
-        description: "Org 3 description",
+        name: "Org NEW",
+        slug: "orgNEW",
+        description: "Org NEW description",
       };
       const postResp = await request(getServer()).post("/org").send(data);
 
       expect(postResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/org/org3");
+      const getResp = await request(getServer()).get("/org/orgNEW");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
     });
@@ -64,6 +64,14 @@ describe("API endpoints", () => {
       const getResp = await request(getServer()).get("/org/org2");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
+    });
+
+    it("delete", async () => {
+      const patchResp = await request(getServer()).delete("/org/org3");
+      expect(patchResp.statusCode).toBe(200);
+
+      const getResp = await request(getServer()).get("/org/org3");
+      expect(getResp.statusCode).toBe(404);
     });
   });
 
@@ -114,6 +122,14 @@ describe("API endpoints", () => {
       const getResp = await request(getServer()).get("/org/org1/repos/2");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
+    });
+
+    it("delete", async () => {
+      const patchResp = await request(getServer()).delete("/org/org1/repos/1");
+      expect(patchResp.statusCode).toBe(200);
+
+      const getResp = await request(getServer()).get("/org/org1/repos/1");
+      expect(getResp.statusCode).toBe(404);
     });
   });
 });

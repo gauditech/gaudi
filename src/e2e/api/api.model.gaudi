@@ -28,6 +28,7 @@ entrypoint Orgs {
   list endpoint {}
   create endpoint {}
   update endpoint {}
+  delete endpoint {}
 
   entrypoint Repos {
     target relation repos

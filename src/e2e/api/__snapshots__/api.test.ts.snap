@@ -2,10 +2,10 @@
 
 exports[`API endpoints Org create 1`] = `
 {
-  "description": "Org 3 description",
-  "id": 3,
-  "name": "Org 3",
-  "slug": "org3",
+  "description": "Org NEW description",
+  "id": 4,
+  "name": "Org NEW",
+  "slug": "orgNEW",
 }
 `;
 
@@ -31,6 +31,12 @@ exports[`API endpoints Org list 1`] = `
     "id": 2,
     "name": "Org 2",
     "slug": "org2",
+  },
+  {
+    "description": "Org 3 description",
+    "id": 3,
+    "name": "Org 3",
+    "slug": "org3",
   },
 ]
 `;

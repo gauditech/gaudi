@@ -177,9 +177,7 @@ async function populateDb(def: Definition, dbConn: DbConn, data: PopulatorData[]
   await chain(data)
     .flatMap(({ model, data }) => {
       return data.map((row) => {
-        return insertQuery(def, dbConn, model, row).then(() => {
-          console.log("POPUATOR", JSON.stringify(row));
-        });
+        return insertQuery(def, dbConn, model, row);
       });
     })
     .reduce((prev, next) => prev.then(() => next), Promise.resolve())
