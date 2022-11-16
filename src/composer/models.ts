@@ -321,11 +321,7 @@ function convertFilter(filter: ExpSpec | undefined, namePath: string[]): FilterD
     case undefined:
       return undefined;
     case "literal": {
-      return {
-        kind: "literal",
-        type: getTypedLiteralValue(filter.literal),
-        value: filter.literal,
-      } as FilterDef;
+      return getTypedLiteralValue(filter.literal);
     }
     case "unary": {
       return {

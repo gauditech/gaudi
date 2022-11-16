@@ -323,6 +323,7 @@ export type FieldSetter =
   | { kind: "value"; type: "text"; value: string }
   | { kind: "value"; type: "boolean"; value: boolean }
   | { kind: "value"; type: "integer"; value: number }
+  | { kind: "value"; type: "null"; value: null }
   | { kind: "fieldset-input"; type: FieldDef["type"]; fieldsetAccess: string[]; required: boolean }
   | { kind: "reference-value"; type: FieldDef["type"]; target: { alias: string; access: string[] } }
   | {

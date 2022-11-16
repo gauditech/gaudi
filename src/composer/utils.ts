@@ -4,11 +4,19 @@ import { getRef, getTargetModel } from "@src/common/refs";
 import { LiteralValue } from "@src/types/ast";
 import { Definition, IdentifierDef, LiteralFilterDef, ModelDef } from "@src/types/definition";
 
-export function getTypedLiteralValue(literal: LiteralValue): LiteralFilterDef["type"] {
-  if (typeof literal === "string") return "text";
-  if (typeof literal === "number" && Number.isSafeInteger(literal)) return "integer";
-  if (typeof literal === "boolean") return "boolean";
-  if (literal === null) return "null";
+export function getTypedLiteralValue(literal: LiteralValue): LiteralFilterDef {
+  if (typeof literal === "string") {
+    return { type: "text", value: literal, kind: "literal" };
+  }
+  if (typeof literal === "number" && Number.isSafeInteger(literal)) {
+    return { kind: "literal", type: "integer", value: literal };
+  }
+  if (typeof literal === "boolean") {
+    return { kind: "literal", type: "boolean", value: literal };
+  }
+  if (literal === null) {
+    return { kind: "literal", type: "null", value: literal };
+  }
   throw new Error(`Literal ${literal} not supported`);
 }
 
