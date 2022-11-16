@@ -78,7 +78,7 @@ exports[`entrypoint composes basic example 1`] = `
         ],
         "targets": [
           {
-            "alias": null,
+            "alias": "$target_0",
             "identifyWith": {
               "name": "slug",
               "paramName": "org_slug",
@@ -132,7 +132,7 @@ exports[`entrypoint composes basic example 1`] = `
         ],
         "targets": [
           {
-            "alias": null,
+            "alias": "$target_0",
             "identifyWith": {
               "name": "slug",
               "paramName": "org_slug",
@@ -219,7 +219,7 @@ exports[`entrypoint composes basic example 1`] = `
             ],
             "targets": [
               {
-                "alias": null,
+                "alias": "$target_0",
                 "identifyWith": {
                   "name": "slug",
                   "paramName": "org_slug",
@@ -235,7 +235,7 @@ exports[`entrypoint composes basic example 1`] = `
                 "retType": "Org",
               },
               {
-                "alias": null,
+                "alias": "$target_1",
                 "identifyWith": {
                   "name": "id",
                   "paramName": "repo_id",
@@ -319,7 +319,7 @@ exports[`entrypoint composes basic example 1`] = `
             ],
             "targets": [
               {
-                "alias": null,
+                "alias": "$target_0",
                 "identifyWith": {
                   "name": "slug",
                   "paramName": "org_slug",
@@ -335,7 +335,7 @@ exports[`entrypoint composes basic example 1`] = `
                 "retType": "Org",
               },
               {
-                "alias": null,
+                "alias": "$target_1",
                 "identifyWith": {
                   "name": "id",
                   "paramName": "repo_id",
@@ -457,7 +457,7 @@ exports[`entrypoint composes basic example 1`] = `
             ],
             "targets": [
               {
-                "alias": null,
+                "alias": "$target_0",
                 "identifyWith": {
                   "name": "slug",
                   "paramName": "org_slug",
@@ -473,7 +473,7 @@ exports[`entrypoint composes basic example 1`] = `
                 "retType": "Org",
               },
               {
-                "alias": null,
+                "alias": "$target_1",
                 "identifyWith": {
                   "name": "id",
                   "paramName": "repo_id",
@@ -495,7 +495,7 @@ exports[`entrypoint composes basic example 1`] = `
         "entrypoints": [],
         "name": "Repositories",
         "target": {
-          "alias": null,
+          "alias": "$target_1",
           "identifyWith": {
             "name": "id",
             "paramName": "repo_id",
@@ -515,7 +515,7 @@ exports[`entrypoint composes basic example 1`] = `
     ],
     "name": "Orgs",
     "target": {
-      "alias": null,
+      "alias": "$target_0",
       "identifyWith": {
         "name": "slug",
         "paramName": "org_slug",
