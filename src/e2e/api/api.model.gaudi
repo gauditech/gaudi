@@ -3,6 +3,18 @@ model Org {
   field name { type text }
   field slug { type text, unique }
   field description { type text }
+
+  relation repos { from Repo, through org }
+}
+
+
+model Repo {
+  field name { type text }
+  field slug { type text, unique }
+  field description { type text }
+  field is_public { type boolean, default true }
+
+  reference org { to Org }
 }
 
 // ----- entrypoints
@@ -16,4 +28,15 @@ entrypoint Orgs {
   list endpoint {}
   create endpoint {}
   update endpoint {}
+
+  entrypoint Repos {
+    target relation repos
+    response { id, slug, description, org_id }
+
+    get endpoint {}
+    list endpoint {}
+    create endpoint {}
+    update endpoint {}
+    delete endpoint {}
+  }
 }

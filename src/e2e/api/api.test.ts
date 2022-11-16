@@ -30,27 +30,18 @@ describe("API endpoints", () => {
       const response = await request(getServer()).get("/org/org1");
 
       expect(response.statusCode).toBe(200);
-      expect(response.body).toEqual({
-        id: 1,
-        name: "Org 1",
-        slug: "org1",
-        description: "Org 1 description",
-      });
+      expect(response.body).toMatchSnapshot();
     });
 
     it("list", async () => {
       const response = await request(getServer()).get("/org");
 
       expect(response.statusCode).toBe(200);
-      expect(response.body).toEqual([
-        { id: 1, name: "Org 1", slug: "org1", description: "Org 1 description" },
-        { id: 2, name: "Org 2", slug: "org2", description: "Org 2 description" },
-      ]);
+      expect(response.body).toMatchSnapshot();
     });
 
     it("create", async () => {
       const data = {
-        id: 3,
         name: "Org 3",
         slug: "org3",
         description: "Org 3 description",
@@ -61,18 +52,68 @@ describe("API endpoints", () => {
 
       const getResp = await request(getServer()).get("/org/org3");
       expect(getResp.statusCode).toBe(200);
-      expect(getResp.body).toEqual(data);
+      expect(getResp.body).toMatchSnapshot();
     });
 
     it("update", async () => {
-      const data = { id: 2, slug: "org2", name: "Org 2A", description: "Org 2A description" };
+      const data = { slug: "org2", name: "Org 2A", description: "Org 2A description" };
 
       const patchResp = await request(getServer()).patch("/org/org2").send(data);
       expect(patchResp.statusCode).toBe(200);
 
       const getResp = await request(getServer()).get("/org/org2");
       expect(getResp.statusCode).toBe(200);
-      expect(getResp.body).toEqual(data);
+      expect(getResp.body).toMatchSnapshot();
+    });
+  });
+
+  describe("Repo", () => {
+    beforeAll(async () => {
+      await setup();
+    });
+    afterAll(async () => {
+      await destroy();
+    });
+
+    it("get", async () => {
+      const response = await request(getServer()).get("/org/org1/repos/1");
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toMatchSnapshot();
+    });
+
+    it("list", async () => {
+      const response = await request(getServer()).get("/org/org1/repos");
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toMatchSnapshot();
+    });
+
+    it("create", async () => {
+      const data = {
+        name: "Repo 6",
+        slug: "repo6",
+        description: "Repo 6 description",
+        is_public: true,
+        org_id: 1,
+      };
+      const postResp = await request(getServer()).post("/org/org1/repos").send(data);
+      expect(postResp.statusCode).toBe(200);
+
+      const getResp = await request(getServer()).get("/org/org1/repos/6");
+      expect(getResp.statusCode).toBe(200);
+      expect(getResp.body).toMatchSnapshot();
+    });
+
+    it("update", async () => {
+      const data = { slug: "repo2", name: "Repo 2A", description: "Repo 2A description" };
+
+      const patchResp = await request(getServer()).patch("/org/org1/repos/2").send(data);
+      expect(patchResp.statusCode).toBe(200);
+
+      const getResp = await request(getServer()).get("/org/org1/repos/2");
+      expect(getResp.statusCode).toBe(200);
+      expect(getResp.body).toMatchSnapshot();
     });
   });
 });
