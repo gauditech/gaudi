@@ -22,7 +22,7 @@ import {
 import { ActionAtomSpec, ActionSpec, EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
-  def.entrypoints = input.map((spec) => processEntrypoint(def.models, spec, []));
+  def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
 }
 
 type EndpointContext = {
@@ -31,10 +31,11 @@ type EndpointContext = {
 };
 
 function processEntrypoint(
-  models: ModelDef[],
+  def: Definition,
   spec: EntrypointSpec,
   parents: EndpointContext[]
 ): EntrypointDef {
+  const models = def.models;
   const target = calculateTarget(
     models,
     parents,
@@ -51,8 +52,8 @@ function processEntrypoint(
   return {
     name,
     target,
-    endpoints: processEndpoints(models, targetParents, spec),
-    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(models, ispec, targetParents)),
+    endpoints: processEndpoints(def, targetParents, spec),
+    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(def, ispec, targetParents)),
   };
 }
 
@@ -150,10 +151,11 @@ function calculateIdentifyWith(
 }
 
 function processEndpoints(
-  models: ModelDef[],
+  def: Definition,
   parents: EndpointContext[],
   entrySpec: EntrypointSpec
 ): EndpointDef[] {
+  const models = def.models;
   const context = _.last(parents)!;
   const targets = parents.map((p) => p.target);
 
