@@ -3,9 +3,10 @@ import crypto from "crypto";
 import { compare, hash } from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import passport from "passport";
-import { Strategy as BearerStrategy, VerifyFunction } from "passport-http-bearer";
+import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-http-bearer";
 
-import { getContext } from "@src/runtime/server/context";
+import { getAppContext } from "@src/runtime/server/context";
+import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { EndpointConfig } from "@src/runtime/server/types";
 
@@ -30,16 +31,18 @@ export function buildLocalAuthLoginHandler(): EndpointConfig {
     handlers: [
       async (req: Request, resp: Response) => {
         try {
+          const dbConn = getAppContext(req).dbConn;
+
           const body = req.body;
 
           const username = body.username;
           const password = body.password;
           // console.log(`Creds: ${username}:${password}`);
 
-          const result = await authenticateUser(username, password);
+          const result = await authenticateUser(dbConn, username, password);
 
           if (result) {
-            const token = await createUserAccessToken(result.id);
+            const token = await createUserAccessToken(dbConn, result.id);
 
             // return created token
             resp.status(200).send({ token });
@@ -121,26 +124,30 @@ function configurePassport(): passport.Authenticator {
   }
 
   PASSPORT.use(
-    new BearerStrategy<VerifyFunction>(async (token, done) => {
-      try {
-        console.log(`Verifying user access token: ${token}`);
+    new BearerStrategy<VerifyFunctionWithRequest>(
+      { passReqToCallback: true },
+      async (req, token, done) => {
+        try {
+          console.log(`Verifying user access token: ${token}`);
+          const dbConn = getAppContext(req).dbConn;
 
-        if (token) {
-          const result = await resolveUserFromToken(token);
+          if (token) {
+            const result = await resolveUserFromToken(dbConn, token);
 
-          if (result) {
-            // this result will appear on "request" object as "user" property
-            done(null, result);
+            if (result) {
+              // this result will appear on "request" object as "user" property
+              done(null, result);
+            } else {
+              done(null, false);
+            }
           } else {
             done(null, false);
           }
-        } else {
-          done(null, false);
+        } catch (err: unknown) {
+          done(err);
         }
-      } catch (err: unknown) {
-        done(err);
       }
-    })
+    )
   );
 
   return PASSPORT;
@@ -148,8 +155,11 @@ function configurePassport(): passport.Authenticator {
 
 // ---------- DB queries
 
-async function resolveUserFromToken(token: string): Promise<{ id: string } | undefined> {
-  const result = await getContext().dbConn.from("useraccesstoken").where({ token });
+async function resolveUserFromToken(
+  dbConn: DbConn,
+  token: string
+): Promise<{ id: string } | undefined> {
+  const result = await dbConn.from("useraccesstoken").where({ token });
   // console.log("RESULTS", result);
 
   if (result.length == 1) {
@@ -168,10 +178,11 @@ async function resolveUserFromToken(token: string): Promise<{ id: string } | und
 }
 
 async function authenticateUser(
+  dbConn: DbConn,
   username: string,
   password: string
 ): Promise<{ id: number } | undefined> {
-  const result = await getContext().dbConn.select("*").from("userauthlocal").where({ username });
+  const result = await dbConn.select("*").from("userauthlocal").where({ username });
   // console.log("RESULTS", result);
 
   if (result.length === 1) {
@@ -194,13 +205,13 @@ async function authenticateUser(
 }
 
 /** Create user's access token. */
-async function createUserAccessToken(userId: number): Promise<string> {
+async function createUserAccessToken(dbConn: DbConn, userId: number): Promise<string> {
   const newToken = generateAccessToken();
   const newExpiryDate = new Date(Date.now() + TOKEN_EXPIRY_TIME).toISOString();
 
   // insert fresh token
-  await getContext()
-    .dbConn.insert({ user_id: userId, token: newToken, expirydate: newExpiryDate })
+  await dbConn
+    .insert({ user_id: userId, token: newToken, expirydate: newExpiryDate })
     .into("useraccesstoken");
 
   return newToken;

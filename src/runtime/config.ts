@@ -1,7 +1,5 @@
 import fs from "fs";
 
-import { initializeContext } from "@src/runtime/server/context";
-import { createDbConn } from "@src/runtime/server/dbConn";
 import { Definition } from "@src/types/definition";
 
 export type RuntimeConfig = {
@@ -43,13 +41,4 @@ export function loadDefinition(definitionPath: string): Definition {
   }
   const definitionStr = fs.readFileSync(definitionPath).toString("utf-8");
   return JSON.parse(definitionStr);
-}
-
-export function createAppContext(config: RuntimeConfig) {
-  initializeContext({
-    dbConn: createDbConn(config.dbConnUrl, {
-      schema: config.dbSchema,
-    }),
-    config: config,
-  });
 }

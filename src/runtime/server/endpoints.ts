@@ -8,7 +8,8 @@ import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { EndpointQueries, endpointQueries } from "@src/runtime/query/build";
 import { Params, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
-import { getContext } from "@src/runtime/server/context";
+import { getAppContext } from "@src/runtime/server/context";
+import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -77,11 +78,12 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
           const queries = endpointQueries(def, endpoint);
-          const queryResult = await findOne(def, queries, contextParams);
+          const queryResult = await findOne(def, dbConn, queries, contextParams);
 
           resp.json(queryResult);
         } catch (err) {
@@ -108,19 +110,20 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractParams(endpointPath.params, req.params);
           const queries = endpointQueries(def, endpoint);
 
           const ids = [];
           if (queries.context) {
-            const queryResult = await findOne(def, queries, contextParams);
+            const queryResult = await findOne(def, dbConn, queries, contextParams);
 
             ids.push(queryResult.id);
           }
 
           const targetQueryResult = await executeQueryTree(
-            getContext().dbConn,
+            getAppContext(req).dbConn,
             def,
             queries.target,
             contextParams,
@@ -152,6 +155,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
@@ -161,7 +165,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const queries = endpointQueries(def, endpoint);
           if (queries.context) {
-            findOne(def, queries, contextParams);
+            findOne(def, dbConn, queries, contextParams);
           }
 
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
@@ -172,7 +176,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           });
           console.log("Changeset result", actionChangeset);
 
-          const id = await insertData(def, endpoint, actionChangeset);
+          const id = await insertData(def, dbConn, endpoint, actionChangeset);
           if (id === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
@@ -203,6 +207,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
@@ -214,7 +219,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           // FIXME implement "SELECT FOR UPDATE"
           // FIXME don't need to fetch the whole queryTree before update
-          const queryResult = await findOne(def, q, contextParams);
+          const queryResult = await findOne(def, dbConn, q, contextParams);
 
           console.log("FIELDSET", endpoint.fieldset);
 
@@ -225,7 +230,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             input: validationResult,
           });
 
-          const id = await updateData(def, endpoint, queryResult.id, actionChangeset);
+          const id = await updateData(def, dbConn, endpoint, queryResult.id, actionChangeset);
           if (id === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
@@ -256,13 +261,14 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractParams(endpointPath.params, req.params);
 
           const q = endpointQueries(def, endpoint);
-          const queryResult = await findOne(def, q, contextParams);
+          const queryResult = await findOne(def, dbConn, q, contextParams);
 
-          await deleteData(def, endpoint, queryResult.id);
+          await deleteData(def, dbConn, endpoint, queryResult.id);
 
           resp.sendStatus(200);
         } catch (err) {
@@ -304,6 +310,7 @@ function validatePathParam(param: PathParam["params"][number], val: string): str
 /** Insert data to DB  */
 async function insertData(
   definition: Definition,
+  dbConn: DbConn,
   endpoint: EndpointDef,
   data: Record<string, unknown>
 ): Promise<number | null> {
@@ -313,8 +320,8 @@ async function insertData(
   const { value: model } = getRef<"model">(definition, target.retType);
 
   // TODO: return `endpoint.response` instead of `id` here
-  const ret = await getContext()
-    .dbConn.insert(dataToFieldDbnames(model, data))
+  const ret = await dbConn
+    .insert(dataToFieldDbnames(model, data))
     .into(model.dbname)
     .returning("id");
   if (!ret.length) return null;
@@ -324,6 +331,7 @@ async function insertData(
 /** Update record in DB  */
 async function updateData(
   definition: Definition,
+  dbConn: DbConn,
   endpoint: EndpointDef,
   dataId: number,
   data: Record<string, unknown>
@@ -334,8 +342,7 @@ async function updateData(
   const { value: model } = getRef<"model">(definition, target.retType);
 
   // TODO: return `endpoint.response` instead of `id` here
-  const ret = await getContext()
-    .dbConn(model.dbname)
+  const ret = await dbConn(model.dbname)
     .where({ id: dataId })
     .update(dataToFieldDbnames(model, data))
     .returning("id");
@@ -347,6 +354,7 @@ async function updateData(
 /** Delete record in DB  */
 async function deleteData(
   definition: Definition,
+  dbConn: DbConn,
   endpoint: EndpointDef,
   dataId: number
 ): Promise<void> {
@@ -355,16 +363,16 @@ async function deleteData(
 
   const { value: model } = getRef<"model">(definition, target.retType);
 
-  await getContext().dbConn(model.dbname).where({ id: dataId }).delete();
+  await dbConn(model.dbname).where({ id: dataId }).delete();
 }
 
 /** Return only one resulting row. If query returns 0 or more than 1 row, throw error. */
-async function findOne(def: Definition, q: EndpointQueries, contextParams: Params) {
+async function findOne(def: Definition, dbConn: DbConn, q: EndpointQueries, contextParams: Params) {
   let queryResult;
   if (q.context) {
-    queryResult = await executeQuery(getContext().dbConn, def, q.context, contextParams, []);
+    queryResult = await executeQuery(dbConn, def, q.context, contextParams, []);
   } else {
-    queryResult = await executeQueryTree(getContext().dbConn, def, q.target, contextParams, []);
+    queryResult = await executeQueryTree(dbConn, def, q.target, contextParams, []);
   }
 
   if (queryResult.length === 0) {

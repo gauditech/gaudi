@@ -8,14 +8,14 @@ import { buildOpenAPI } from "@src/builder/openAPI";
 import { saveOutputFile } from "@src/common/utils";
 import { buildEntrypoints } from "@src/runtime/server/admin";
 import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authentication";
-import { getContext } from "@src/runtime/server/context";
+import { getAppContext } from "@src/runtime/server/context";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
 import { EndpointConfig } from "@src/runtime/server/types";
 import { Definition, EntrypointDef } from "@src/types/definition";
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {
-  const config = getContext().config;
+  const config = getAppContext(app).config;
 
   // --- static folder (eg. for API specs)
   const specOutputFolder = path.join(config.outputFolder, "api-spec");

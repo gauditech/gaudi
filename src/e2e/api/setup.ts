@@ -13,10 +13,10 @@ import { compile } from "@src/compiler/compiler";
 import { compose } from "@src/composer/composer";
 import { parse } from "@src/parser/parser";
 import { RuntimeConfig } from "@src/runtime/config";
-import { initializeContext } from "@src/runtime/server/context";
+import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
-import { errorHandler } from "@src/runtime/server/middleware";
+import { bindAppContextHandler, errorHandler } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
@@ -28,15 +28,19 @@ export function createApiTestSetup(
 ) {
   let server: Server | undefined;
 
-  // setup app context
-  const schema = generateSchemaName();
-  const context = initializeContext({
-    config,
-    dbConn: createDbConn(config.dbConnUrl, { schema }),
-  });
+  // test context
+  let schema: string;
+  let context: AppContext;
 
   /** Setup test env for execution. Call before running tests. */
   async function setupApiTest() {
+    // setup app context
+    schema = generateSchemaName();
+    context = {
+      config,
+      dbConn: createDbConn(config.dbConnUrl, { schema }),
+    };
+
     console.info(`Setup API tests ("${schema}")`);
 
     // setup folders
@@ -58,7 +62,9 @@ export function createApiTestSetup(
     console.info(`  populated DB`);
 
     // setup server
-    server = await createAppServer((app) => {
+    server = await createAppServer(context, (app) => {
+      bindAppContext(app, context);
+
       buildEndpointConfig(def, def.entrypoints).forEach((epc) =>
         registerServerEndpoint(app, epc, "")
       );
@@ -96,7 +102,7 @@ export function createApiTestSetup(
 // ----- schema name
 
 function generateSchemaName() {
-  return "test"; //`test-${Date.now()}`; // TODO: use UUID or sequence
+  return `test-${Date.now()}`; // TODO: use UUID or sequence
 }
 
 // ----- folders
@@ -192,9 +198,14 @@ async function insertQuery(
 
 // ----- app server
 
-async function createAppServer(configure: (express: Express) => void): Promise<Server> {
+async function createAppServer(
+  ctx: AppContext,
+  configure: (express: Express) => void
+): Promise<Server> {
   // setup server
   const app = express();
+
+  app.use(bindAppContextHandler(app, ctx));
 
   app.use(json());
 

@@ -1,8 +1,9 @@
 import express, { json } from "express";
 
+import { RuntimeConfig } from "@src/runtime/config";
 import { setupServerApis } from "@src/runtime/server/api";
-import { getContext } from "@src/runtime/server/context";
-import { errorHandler, requestLogger } from "@src/runtime/server/middleware";
+import { createDbConn } from "@src/runtime/server/dbConn";
+import { bindAppContextHandler, errorHandler, requestLogger } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
 export type CreateServerConfig = {
@@ -12,13 +13,14 @@ export type CreateServerConfig = {
   outputFolder: string;
 };
 
-export function createServer(definition: Definition) {
-  const config = getContext().config;
-
+export function createServer(definition: Definition, config: RuntimeConfig) {
   const app = express();
 
   const port = config.port || 3000;
   const host = config.host || "0.0.0.0";
+
+  const ctx = createAppContext(config);
+  app.use(bindAppContextHandler(app, ctx));
 
   app.use(json()); // middleware for parsing application/json body
   app.use(requestLogger);
@@ -32,4 +34,13 @@ export function createServer(definition: Definition) {
   });
 
   return app;
+}
+
+function createAppContext(config: RuntimeConfig) {
+  return {
+    dbConn: createDbConn(config.dbConnUrl, {
+      schema: config.dbSchema,
+    }),
+    config: config,
+  };
 }

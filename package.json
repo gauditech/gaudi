@@ -19,6 +19,7 @@
     "test": "npm run build:grammar && jest",
     "test:watch": "npm test -- --watch",
     "test:api": "dotenv -e ./src/e2e/api/test.env -- jest ./src/e2e/api",
+    "test:api:watch": "npm run test:api -- --watch",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
