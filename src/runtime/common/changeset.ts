@@ -18,7 +18,10 @@ export function buildChangset(
       .map(([name, setter]) => {
         // TODO: format values by type
         if (setter.kind === "value") {
-          return [name, formatFieldValue(setter.value, setter.type)];
+          return [
+            name,
+            setter.type === "null" ? null : formatFieldValue(setter.value, setter.type),
+          ];
         } else if (setter.kind === "fieldset-input") {
           return [
             name,
