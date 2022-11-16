@@ -10,6 +10,7 @@ model Org {
         type text
         validate {
             hook {
+                arg name
                 source foo from "bar.js"
             }
         }
@@ -19,7 +20,8 @@ model Org {
         unique,
         validate {
             hook {
-                inline `console.log('Inline Hook?!'); true`
+                arg slug
+                inline `console.log('Inline Hook?!', slug); slug !== 'bad'`
             }
         }
     }

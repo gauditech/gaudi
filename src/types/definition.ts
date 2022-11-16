@@ -290,6 +290,7 @@ export interface IsTextEqual extends IValidatorDef {
 }
 export interface HookValidator {
   name: "hook";
+  args: { name: string }[];
   code: { kind: "inline"; inline: string } | { kind: "source"; target: string; file: string };
 }
 

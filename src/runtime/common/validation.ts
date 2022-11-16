@@ -1,5 +1,6 @@
 import {
   AnySchema,
+  BaseSchema,
   BooleanSchema,
   NumberSchema,
   StringSchema,
@@ -14,7 +15,12 @@ import { getHook } from "../hooks";
 
 import { assertUnreachable } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
-import { FieldsetDef, FieldsetFieldDef, FieldsetRecordDef } from "@src/types/definition";
+import {
+  FieldsetDef,
+  FieldsetFieldDef,
+  FieldsetRecordDef,
+  HookValidator,
+} from "@src/types/definition";
 
 // ----- validation&transformation
 
@@ -71,9 +77,9 @@ export function buildFieldsetValidationSchema(fieldset: FieldsetDef): AnySchema 
   return buildObjectValidationSchema(fieldset);
 }
 
-function processFields(field: FieldsetDef): AnySchema {
+function processFields(name: string, field: FieldsetDef): AnySchema {
   if (field.kind === "field") {
-    return buildFieldValidationSchema(field);
+    return buildFieldValidationSchema(name, field);
   } else {
     return buildObjectValidationSchema(field);
   }
@@ -81,7 +87,7 @@ function processFields(field: FieldsetDef): AnySchema {
 
 function buildObjectValidationSchema(field: FieldsetRecordDef): AnySchema {
   const fieldSchemas = Object.fromEntries(
-    Object.entries(field.record).map(([name, value]) => [name, processFields(value)])
+    Object.entries(field.record).map(([name, value]) => [name, processFields(name, value)])
   );
 
   if (!field.nullable) object(fieldSchemas).required();
@@ -89,7 +95,7 @@ function buildObjectValidationSchema(field: FieldsetRecordDef): AnySchema {
   return object(fieldSchemas).optional();
 }
 
-function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
+function buildFieldValidationSchema(name: string, field: FieldsetFieldDef): AnySchema {
   if (field.type === "text") {
     // start with nullable because it's the only way to
     let s = string();
@@ -114,14 +120,7 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
-        let testFn: () => boolean;
-        const code = v.code;
-        if (code.kind === "inline") {
-          testFn = () => eval(code.inline);
-        } else {
-          testFn = () => getHook(code.file, code.target)();
-        }
-        s = s.test(testFn);
+        s = buildHookSchema(name, v, s);
       }
     });
 
@@ -146,6 +145,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       } else if (v.name === "isIntEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
         s = s.equals([v.args[0].value]) as NumberSchema;
+      } else if (v.name === "hook") {
+        s = buildHookSchema(name, v, s);
       }
     });
 
@@ -164,6 +165,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       if (v.name === "isBoolEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit BooleanSchema
         s = s.equals([v.args[0].value]) as BooleanSchema;
+      } else if (v.name === "hook") {
+        s = buildHookSchema(name, v, s);
       }
     });
 
@@ -171,4 +174,32 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
   } else {
     assertUnreachable(field.type);
   }
+}
+
+function buildHookSchema<S extends BaseSchema>(
+  name: string,
+  validator: HookValidator,
+  schema: S
+): S {
+  let testFn: (value: unknown) => boolean;
+  const code = validator.code;
+  const args = validator.args;
+  const hasArg = args.find((arg) => arg.name === name) != null;
+
+  if (code.kind === "inline") {
+    testFn = (value) => {
+      return eval(hasArg ? `const ${name} = ${JSON.stringify(value)};${code.inline}` : code.inline);
+    };
+  } else {
+    testFn = (value) => {
+      const hook = getHook(code.file, code.target);
+      if (hasArg) {
+        return hook(value);
+      } else {
+        return hook();
+      }
+    };
+  }
+
+  return schema.test(testFn);
 }
