@@ -78,7 +78,7 @@ function calculateTarget(
           retType: reference.toModelRefKey,
           refKey: reference.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
-          alias,
+          alias: alias || `$target_${parents.length}`,
         };
       }
       case "relation": {
@@ -91,7 +91,7 @@ function calculateTarget(
           retType: relation.fromModel,
           refKey: relation.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
-          alias,
+          alias: alias || `$target_${parents.length}`,
         };
       }
       case "query": {
@@ -104,7 +104,7 @@ function calculateTarget(
           retType: query.retType,
           refKey: query.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
-          alias,
+          alias: alias || `$target_${parents.length}`,
         };
       }
       default: {
@@ -120,7 +120,7 @@ function calculateTarget(
       refKey: model.refKey,
       retType: model.name,
       identifyWith: calculateIdentifyWith(model, identify),
-      alias,
+      alias: alias || `$target_${parents.length}`,
     };
   }
 }

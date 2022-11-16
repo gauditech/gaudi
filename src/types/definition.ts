@@ -115,7 +115,7 @@ export type TargetDef = {
   namePath: string[];
   refKey: string;
   retType: string;
-  alias: string | null;
+  alias: string;
   identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
 };
 
