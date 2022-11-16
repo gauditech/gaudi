@@ -10,23 +10,33 @@ describe("runtime", () => {
     it("build fieldset validation schema", async () => {
       const fieldset: FieldsetDef = {
         kind: "record",
-        nullable: true, // required record
+        nullable: false, // required record
         record: {
           optional: {
             kind: "field",
-            nullable: true, // optional field
+            nullable: false,
+            required: false, // optional field
             type: "integer", // integer field
+            validators: [],
+          },
+          nullable: {
+            kind: "field",
+            nullable: true, // nullable field
+            required: true,
+            type: "text",
             validators: [],
           },
           required: {
             kind: "field",
             nullable: false, // required field
+            required: true,
             type: "text", // text field
             validators: [],
           },
           something: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "boolean", // boolean field
             validators: [],
           },
@@ -38,6 +48,7 @@ describe("runtime", () => {
               prop: {
                 kind: "field",
                 nullable: false,
+                required: true,
                 type: "text",
                 validators: [],
               },
@@ -49,6 +60,7 @@ describe("runtime", () => {
           integerProp: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "integer",
             validators: [
               {
@@ -86,6 +98,7 @@ describe("runtime", () => {
           textProp: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "text",
             validators: [
               {
@@ -133,6 +146,7 @@ describe("runtime", () => {
           booleanProp: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "boolean",
             validators: [
               {
@@ -158,12 +172,13 @@ describe("runtime", () => {
     it("throws validation exception with validation error messages", async () => {
       const fieldset: FieldsetDef = {
         kind: "record",
-        nullable: true,
+        nullable: false,
         record: {
           // required field - missing
           prop1: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "text",
             validators: [],
           },
@@ -171,6 +186,7 @@ describe("runtime", () => {
           prop2: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "integer",
             validators: [],
           },
@@ -183,16 +199,34 @@ describe("runtime", () => {
               subprop1: {
                 kind: "field",
                 nullable: false,
+                required: true,
                 type: "text",
                 validators: [],
               },
             },
           },
 
+          nullable: {
+            kind: "field",
+            nullable: true, // nullable field
+            required: true,
+            type: "text",
+            validators: [],
+          },
+
+          nonNullable: {
+            kind: "field",
+            nullable: false, // non-nullable field
+            required: true,
+            type: "text",
+            validators: [],
+          },
+
           // validators - only test that at least one validator triggers error
           textProp: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "text",
             validators: [
               {
@@ -210,6 +244,7 @@ describe("runtime", () => {
           integerProp: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "integer",
             validators: [
               {
@@ -227,6 +262,7 @@ describe("runtime", () => {
           booleanProp: {
             kind: "field",
             nullable: false,
+            required: true,
             type: "boolean",
             validators: [
               {
@@ -253,6 +289,11 @@ describe("runtime", () => {
 
         // missing required nested field
         // subrecord: { subprop1: '' }
+
+        // accept null
+        nullable: null,
+        // fail for null
+        nonNullable: null,
 
         // failing validators
         textProp: "too long string",

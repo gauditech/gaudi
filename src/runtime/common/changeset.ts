@@ -59,8 +59,8 @@ export function buildChangset(
 export function formatFieldValue(
   value: unknown,
   type: FieldDef["type"]
-): string | number | boolean | undefined {
-  if (value == null) return;
+): string | number | boolean | undefined | null {
+  if (value == null) return value;
 
   if (type === "boolean") {
     if (isString(value)) {
