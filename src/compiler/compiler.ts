@@ -15,6 +15,7 @@ import {
   RelationAST,
 } from "@src/types/ast";
 import {
+  ActionAtomSpec,
   ActionSpec,
   ComputedSpec,
   EndpointSpec,
@@ -214,7 +215,19 @@ function compileModel(model: ModelAST): ModelSpec {
 }
 
 function compileAction(action: ActionBodyAST): ActionSpec {
-  return { kind: action.kind, targetPath: action.target, actionAtoms: action.body };
+  const atoms = action.body.map((a): ActionAtomSpec => {
+    switch (a.kind) {
+      case "action": {
+        return { kind: "action", body: compileAction(a.body) };
+      }
+      case "reference":
+      case "set": {
+        // action AST and Spec are currently the same
+        return a;
+      }
+    }
+  });
+  return { kind: action.kind, targetPath: action.target, actionAtoms: atoms, alias: action.alias };
 }
 
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {

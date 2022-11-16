@@ -125,15 +125,19 @@ Gaudi {
   EndpointBody
     = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
 
+
+  ActionKind = "create" | "update" | "delete"
   ActionBody
-    = ("create" | "update") IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"
+    = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                     -- default
+    | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                      -- named
+    | ActionKind IdentifierPath "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"      -- aliased
+
 
   ActionAtomBody
     = "set" identifier literal -- set_value
     | "set" identifier IdentifierPath -- set_reference
     | "reference" identifier "through" identifier -- reference
-
-
+    | ActionBody  -- nested_action
 
   // ********************
   // Hook grammar

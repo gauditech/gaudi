@@ -4,6 +4,7 @@ import {
   AST,
   ActionAtomBodyAST,
   ActionBodyAST,
+  ActionKindAST,
   ComputedAST,
   EndpointAST,
   EndpointBodyAST,
@@ -305,10 +306,26 @@ semantics.addOperation("parse()", {
   HookBody_inline_body(this, _inline, bodystr): HookBodyAST {
     return { kind: "inlineBody", inlineBody: bodystr.parse() };
   },
-  ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
+  ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
     return {
-      kind: kind.sourceString as ActionBodyAST["kind"],
-      target: identifier.parse(),
+      kind: kind.sourceString as ActionKindAST,
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionBody_named(this, kind, name, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      target: name.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionBody_aliased(this, kind, name, _as, alias, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      target: name.parse(),
+      alias: alias.parse(),
       body: body.parse(),
       interval: this.source,
     };
@@ -335,6 +352,12 @@ semantics.addOperation("parse()", {
       target: identifier.parse(),
       through: through.parse(),
       interval: this.source,
+    };
+  },
+  ActionAtomBody_nested_action(this, action): ActionAtomBodyAST {
+    return {
+      kind: "action",
+      body: action.parse(),
     };
   },
   IdentifierPath(this, head, _dot, tail): string[] {

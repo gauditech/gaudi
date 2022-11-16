@@ -200,12 +200,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -232,12 +242,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -264,12 +284,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -289,7 +319,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
               "actionAtoms": [
                 {
                   "interval": {
-                    "endIdx": 245,
+                    "endIdx": 257,
                     "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -299,12 +329,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -314,24 +354,71 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-                    "startIdx": 234,
+                    "startIdx": 230,
                   },
-                  "kind": "set",
-                  "set": {
-                    "kind": "reference",
-                    "reference": "bar",
-                  },
-                  "target": "foo",
+                  "kind": "reference",
+                  "target": "plan",
+                  "through": "name",
                 },
               ],
+              "alias": undefined,
               "kind": "create",
-              "target": "Item",
+              "targetPath": undefined,
+            },
+            {
+              "actionAtoms": [],
+              "alias": undefined,
+              "kind": "create",
+              "targetPath": [
+                "item",
+              ],
+            },
+            {
+              "actionAtoms": [],
+              "alias": "item",
+              "kind": "create",
+              "targetPath": [
+                "Item",
+              ],
+            },
+            {
+              "actionAtoms": [
+                {
+                  "body": {
+                    "actionAtoms": [],
+                    "alias": undefined,
+                    "kind": "delete",
+                    "targetPath": [
+                      "item",
+                      "parent",
+                    ],
+                  },
+                  "kind": "action",
+                },
+                {
+                  "body": {
+                    "actionAtoms": [],
+                    "alias": undefined,
+                    "kind": "update",
+                    "targetPath": [
+                      "item",
+                      "parent",
+                    ],
+                  },
+                  "kind": "action",
+                },
+              ],
+              "alias": undefined,
+              "kind": "delete",
+              "targetPath": [
+                "item",
+              ],
             },
             {
               "actionAtoms": [
                 {
                   "interval": {
-                    "endIdx": 292,
+                    "endIdx": 464,
                     "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -341,12 +428,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -356,7 +453,59 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-                    "startIdx": 282,
+                    "startIdx": 440,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "kind": "reference",
+                    "reference": [
+                      "item",
+                      "bar",
+                      "baz",
+                      "x",
+                      "y",
+                    ],
+                  },
+                  "target": "bar",
+                },
+                {
+                  "interval": {
+                    "endIdx": 483,
+                    "sourceString": "entrypoint ItemEntry {
+  target model Item as item
+  identify with slug
+  response { name, price, brand { name } }
+  list endpoint {}
+  get endpoint {}
+  update endpoint {}
+  create endpoint {
+    action {
+
+      create {
+        reference plan through name
+      }
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
+        set foo 10
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
+      }
+    }
+  }
+  entrypoint Review {
+    target relation reviews
+    create endpoint {}
+  }
+}
+",
+                    "startIdx": 473,
                   },
                   "kind": "set",
                   "set": {
@@ -367,7 +516,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                 },
                 {
                   "interval": {
-                    "endIdx": 334,
+                    "endIdx": 504,
                     "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -377,12 +526,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -392,19 +551,27 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-                    "startIdx": 301,
+                    "startIdx": 492,
                   },
-                  "kind": "reference",
-                  "target": "factory",
-                  "through": "factory",
+                  "kind": "set",
+                  "set": {
+                    "kind": "value",
+                    "value": null,
+                  },
+                  "target": "baz",
                 },
               ],
+              "alias": undefined,
               "kind": "update",
-              "target": "Item",
+              "targetPath": [
+                "item",
+                "bar",
+                "baz",
+              ],
             },
           ],
           "interval": {
-            "endIdx": 352,
+            "endIdx": 590,
             "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -414,12 +581,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -440,7 +617,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "action": undefined,
               "interval": {
-                "endIdx": 425,
+                "endIdx": 663,
                 "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -450,12 +627,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -465,7 +652,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-                "startIdx": 407,
+                "startIdx": 645,
               },
               "type": "create",
             },
@@ -473,7 +660,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 429,
+            "endIdx": 667,
             "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -483,12 +670,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -498,7 +695,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-            "startIdx": 355,
+            "startIdx": 593,
           },
           "name": "Review",
           "response": undefined,
@@ -511,7 +708,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 431,
+        "endIdx": 669,
         "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -521,12 +718,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -551,12 +758,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -581,12 +798,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -611,12 +838,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -643,12 +880,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
@@ -673,12 +920,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   update endpoint {}
   create endpoint {
     action {
-      create Item {
-        set foo bar
+
+      create {
+        reference plan through name
       }
-      update Item {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
-        reference factory through factory
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }

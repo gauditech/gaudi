@@ -7,12 +7,22 @@ entrypoint ItemEntry {
   update endpoint {}
   create endpoint {
     action {
-      create item {
-        set foo bar
-        reference factory through factory
+
+      create {
+        reference plan through name
       }
-      update item.parent {
+      create item {}
+      create Item as item {}
+      delete item {
+        delete item.parent {}
+        update item.parent {}
+      }
+      update item.bar.baz {
+        set bar item.bar.baz.x.y
         set foo 10
+        set baz null
+        // deny *
+        // input z, x { optional, default 10 }, y
       }
     }
   }
