@@ -109,9 +109,12 @@ export type EndpointType = "list" | "get" | "create" | "update" | "delete";
 
 export type EndpointBodyAST = WithContext<{ kind: "action"; body: ActionBodyAST[] }>;
 
+export type ActionKindAST = "create" | "update" | "delete";
+
 export type ActionBodyAST = WithContext<{
-  kind: "create" | "update";
-  target: string[];
+  kind: ActionKindAST;
+  target?: string[];
+  alias?: string;
   body: ActionAtomBodyAST[];
 }>;
 
@@ -122,6 +125,7 @@ export type ActionAtomBodyAST = WithContext<
       set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
     }
   | { kind: "reference"; target: string; through: string }
+  | { kind: "action"; body: ActionBodyAST }
 >;
 
 export type HookAST = WithContext<{

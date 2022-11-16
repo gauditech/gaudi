@@ -33,7 +33,7 @@ export function getPathRetType(def: Definition, path: string[]): ModelDef {
 export function getTypedPath(def: Definition, path: string[]): IdentifierDef[] {
   // assume it starts with model
   const { value: model } = getRef<"model">(def, path[0]);
-  const modelIdDef: IdentifierDef = { kind: "model", refKey: model.refKey };
+  const modelIdDef: IdentifierDef = { kind: "model", name: model.name, refKey: model.refKey };
 
   const ret = _.tail(path).reduce(
     (acc, name) => {
@@ -49,10 +49,29 @@ export function getTypedPath(def: Definition, path: string[]): IdentifierDef[] {
       } else {
         targetCtx = getTargetModel(def.models, refKey);
       }
-      const idDef: IdentifierDef = { kind: ref.kind, refKey };
+      const idDef: IdentifierDef = { kind: ref.kind, name, refKey };
       return { path: [...acc.path, idDef], ctx: targetCtx };
     },
     { path: [modelIdDef], ctx: model } as { path: IdentifierDef[]; ctx: ModelDef | null }
   );
   return ret.path;
+}
+
+export function getPrimitiveTypedPath(def: Definition, path: string[]): IdentifierDef[] {
+  const typedPath = getTypedPath(def, path);
+  const leaf = _.last(typedPath);
+  switch (leaf?.kind) {
+    case "field": {
+      return typedPath;
+    }
+    case "model":
+    case "query":
+    case "reference":
+    case "relation": {
+      return getTypedPath(def, [...path, "id"]);
+    }
+    case undefined: {
+      throw new Error("Path is empty!");
+    }
+  }
 }

@@ -83,19 +83,23 @@ export type EndpointSpec = WithContext<{
 }>;
 
 export type ActionSpec = WithContext<{
-  kind: "create" | "update";
-  targetPath: string[];
+  kind: "create" | "update" | "delete";
+  targetPath: string[] | undefined;
+  alias: string | undefined;
   actionAtoms: ActionAtomSpec[];
 }>;
 
 export type ActionAtomSpec = WithContext<
-  | {
-      kind: "set";
-      target: string;
-      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
-    }
-  | { kind: "reference"; target: string; through: string }
+  ActionAtomSpecSet | ActionAtomSpecRefThrough | ActionAtomSpecAction
 >;
+
+export type ActionAtomSpecSet = {
+  kind: "set";
+  target: string;
+  set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+};
+export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
+export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 
 export type HookSpec = WithContext<{
   name: string;

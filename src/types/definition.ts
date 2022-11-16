@@ -300,8 +300,10 @@ export type ActionDef = CreateOneAction | UpdateOneAction;
 
 type CreateOneAction = {
   kind: "create-one";
-  targetPath: string[];
+  model: string;
   changeset: Changeset;
+  alias: string;
+  response: SelectDef;
 };
 
 type UpdateOneAction = {
@@ -334,5 +336,6 @@ export type FieldSetter =
 
 export type IdentifierDef = {
   kind: "model" | "query" | "relation" | "reference" | "field";
+  name: string;
   refKey: string;
 };
