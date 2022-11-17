@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`custom actions progress 1`] = `
+[
+  {
+    "alias": "e",
+    "changeset": {},
+    "kind": "create-one",
+    "model": "OrgExtra",
+    "response": [],
+  },
+  {
+    "alias": "org",
+    "changeset": {
+      "extras": {
+        "kind": "reference-value",
+        "target": {
+          "access": [
+            "id",
+          ],
+          "alias": "e",
+        },
+        "type": "integer",
+      },
+      "is_new": {
+        "kind": "value",
+        "type": "boolean",
+        "value": true,
+      },
+    },
+    "kind": "create-one",
+    "model": "Org",
+    "response": [],
+  },
+]
+`;
