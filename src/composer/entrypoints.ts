@@ -3,8 +3,7 @@ import _ from "lodash";
 import { getTypedLiteralValue, getTypedPath, getTypedPathEnding } from "./utils";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
-import { NamePath } from "@src/runtime/query/build";
+import { ensureEqual, ensureNot } from "@src/common/utils";
 import { EndpointType, SelectAST } from "@src/types/ast";
 import {
   ActionDef,
@@ -417,12 +416,7 @@ function processEndpoints(
 
 type ActionScope = "model" | "context";
 
-function getTargetKind(
-  def: Definition,
-  spec: ActionSpec,
-  ctx: Context,
-  targetAlias: string
-): ActionScope {
+function getTargetKind(def: Definition, spec: ActionSpec, targetAlias: string): ActionScope {
   const path = spec.targetPath;
   if (!path) {
     return "context";
@@ -474,6 +468,101 @@ function findChangesetModel(def: Definition, ctx: Context, path: string[]): Mode
   }
 }
 
+function getParentContextCreateSetter(def: Definition, targets: TargetDef[]): Changeset {
+  const contextTarget = _.last(_.initial(targets));
+  const target = _.last(targets)!;
+  // set parent target reference
+  if (target.kind === "model" || !contextTarget) {
+    return {};
+  } else if (target.kind === "relation") {
+    const { value: relation } = getRef<"relation">(def, target.refKey);
+    const { value: field } = getRef<"field">(def, relation.throughRefKey);
+    const setter: Changeset = {
+      [field.name]: {
+        kind: "reference-value",
+        type: "integer",
+        target: { alias: contextTarget.alias, access: ["id"] },
+      },
+    };
+    return setter;
+  } else {
+    throw new Error(`Can't create an action when targeting ${target.kind}`);
+  }
+}
+
+function getActionSetters(def: Definition, spec: ActionSpec, ctx: Context): Changeset {
+  const pairs = spec.actionAtoms
+    .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
+    .map((atom): [string, FieldSetter] => {
+      switch (atom.set.kind) {
+        case "value": {
+          const typedVal = getTypedLiteralValue(atom.set.value);
+          return [atom.target, { ...typedVal, kind: "value" }];
+        }
+        case "reference": {
+          const path = atom.set.reference;
+          const ctxTypedPath = getTypedPathFromContext(def, ctx, path);
+          const typedPathEnding = getTypedPathEnding(def, _.map(ctxTypedPath, "name"));
+          const access = _.tail(_.map(typedPathEnding, "name"));
+          const { value: field } = getRef<"field">(def, _.last(typedPathEnding)!.refKey);
+          return [
+            atom.target,
+            { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
+          ];
+        }
+        default: {
+          throw new Error("should be unreachable");
+        }
+      }
+    });
+  return Object.fromEntries(pairs);
+}
+
+function ensureCorrectContextAction(
+  spec: ActionSpec,
+  target: TargetDef,
+  endpointKind: EndpointType
+) {
+  if (spec.kind !== endpointKind) {
+    throw new Error(
+      `Mismatching context action: overriding ${endpointKind} endpoint with a ${spec.kind} action`
+    );
+  }
+  if (spec.kind === "create") {
+    if (spec.alias && spec.alias !== target.alias) {
+      throw new Error(
+        `Default create action cannot be re-aliased: expected ${target.alias}, got ${spec.alias}`
+      );
+    }
+  }
+  if (spec.kind === "delete" && spec.alias) {
+    throw new Error(`Delete action cannot make an alias; remove "as ${spec.alias}"`);
+  }
+}
+
+function mkActionFromParts(
+  spec: ActionSpec,
+  targetKind: ActionScope,
+  target: TargetDef,
+  model: ModelDef,
+  changeset: Changeset
+): ActionDef {
+  const alias = targetKind === "context" && spec.kind === "create" ? target.alias : spec.alias!; // FIXME come up with an alias in case of nested actions
+
+  switch (spec.kind) {
+    case "create": {
+      return { kind: "create-one", alias, changeset, model: model.name, response: [] };
+    }
+    case "update": {
+      // FIXME update-many when targetKind is model
+      return { kind: "update-one", changeset, alias, model: model.name, response: [] };
+    }
+    case "delete": {
+      throw new Error("Delete is not supported");
+    }
+  }
+}
+
 function composeSingleAction(
   def: Definition,
   spec: ActionSpec,
@@ -482,104 +571,24 @@ function composeSingleAction(
   endpointKind: EndpointType
 ): ActionDef {
   const target = _.last(targets)!;
-  const contextTarget = _.last(_.initial(targets));
-  const targetKind = getTargetKind(def, spec, ctx, target.alias);
-  if (targetKind === "context") {
-    if (spec.kind !== endpointKind) {
-      throw new Error(
-        `Mismatching context action kind: ${spec.kind} in endpoint kind: ${endpointKind}`
-      );
-    }
-    if (spec.alias && spec.alias !== target.alias) {
-      throw new Error(
-        `Default action cannot be re-aliased: expected ${target.alias}, got ${spec.alias}`
-      );
-    }
-  }
   const model = findChangesetModel(def, ctx, spec.targetPath ?? [target.alias]);
 
   const changeset: Changeset = {};
-  switch (spec.kind) {
-    case "create": {
-      if (targetKind === "model") {
-        // noop
-      } else if (targetKind === "context") {
-        if (target.kind === "model" || !contextTarget) {
-          // noop, root query
-        } else if (target.kind === "reference") {
-          throw new Error("TODO create a reference reverted");
-        } else if (target.kind === "query") {
-          throw new Error("TODO create a query reverted");
-        } else if (target.kind === "relation") {
-          // ok, set a reference field
-          // find a relation; find the reference field
-          const { value: relation } = getRef<"relation">(def, target.refKey);
-          const { value: field } = getRef<"field">(def, relation.throughRefKey);
-          const setter: Changeset = {
-            [field.name]: {
-              kind: "reference-value",
-              type: "integer",
-              target: { alias: contextTarget.alias, access: ["id"] },
-            },
-          };
-          _.assign(changeset, setter);
-        } else {
-          assertUnreachable(target.kind);
-        }
-      } else {
-        assertUnreachable(targetKind);
-      }
-      // step: parse changeset body SETs; FIXME move to separate function
-      spec.actionAtoms
-        .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
-        .forEach((atom) => {
-          switch (atom.set.kind) {
-            case "value": {
-              const typedVal = getTypedLiteralValue(atom.set.value);
-              const setter: Changeset = { [atom.target]: { ...typedVal, kind: "value" } };
-              _.assign(changeset, setter);
-              break;
-            }
-            case "reference": {
-              const path = atom.set.reference;
-              const ctxTypedPath = getTypedPathFromContext(def, ctx, path);
-              const typedPathEnding = getTypedPathEnding(def, _.map(ctxTypedPath, "name"));
-              const access = _.tail(_.map(typedPathEnding, "name"));
-              const { value: field } = getRef<"field">(def, _.last(typedPathEnding)!.refKey);
-              const setter: Changeset = {
-                [atom.target]: {
-                  kind: "reference-value",
-                  type: field.type,
-                  target: { alias: path[0], access },
-                },
-              };
-              _.assign(changeset, setter);
-              break;
-            }
-            default: {
-              throw new Error("should be unreachable");
-            }
-          }
-          // FIXME maybe don't mutate changeset?
-        });
-      // step: fill missing fields as fieldset inputs
-      return {
-        kind: "create-one",
-        model: model.name,
-        alias: targetKind === "context" ? target.alias : spec.alias!, // FIXME if alias is missing, make one! only needed for nested inputs though
-        response: [],
-        changeset, // FIXME parse body for setters, inputs etc
-      };
-    }
-    case "update": {
-      // update can't have nested stuff for now
-      throw new Error();
-    }
-    case "delete": {
-      // delete can only have nested deletes!
-      throw new Error();
+
+  const targetKind = getTargetKind(def, spec, target.alias);
+  // Overwriting a context action
+  if (targetKind === "context") {
+    ensureCorrectContextAction(spec, target, endpointKind);
+    if (spec.kind === "create") {
+      _.assign(changeset, getParentContextCreateSetter(def, targets));
     }
   }
+
+  // Parsing an action specification
+  _.assign(changeset, getActionSetters(def, spec, ctx));
+
+  // Define action
+  return mkActionFromParts(spec, targetKind, target, model, changeset);
 }
 
 type Context = Record<string, ContextRecord>;

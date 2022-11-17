@@ -300,21 +300,22 @@ export type ActionDef = CreateOneAction | UpdateOneAction;
 
 type CreateOneAction = {
   kind: "create-one";
+  alias: string;
   model: string;
   changeset: Changeset;
-  alias: string;
   response: SelectDef;
 };
 
 type UpdateOneAction = {
   kind: "update-one";
-  targetPath: string[];
+  alias: string;
+  model: string;
   changeset: Changeset;
+  response: SelectDef;
 };
 
 type DeleteManyAction = {
   kind: "delete-many";
-  targetPath: string[];
   filter: FilterDef;
 };
 

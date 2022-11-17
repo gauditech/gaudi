@@ -34,3 +34,21 @@ exports[`custom actions succeeds for basic composite create 1`] = `
   },
 ]
 `;
+
+exports[`custom actions succeeds for basic update 1`] = `
+[
+  {
+    "alias": "ox",
+    "changeset": {
+      "name": {
+        "kind": "value",
+        "type": "text",
+        "value": "new name",
+      },
+    },
+    "kind": "update-one",
+    "model": "Org",
+    "response": [],
+  },
+]
+`;
