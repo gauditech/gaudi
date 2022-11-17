@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getPrimitiveTypedPath, getTypedLiteralValue, getTypedPath } from "./utils";
+import { getTypedLiteralValue, getTypedPath, getTypedPathEnding } from "./utils";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
@@ -439,6 +439,41 @@ function getTargetKind(
   throw new Error("TODO");
 }
 
+function getTypedPathFromContext(def: Definition, ctx: Context, path: string[]) {
+  if (_.isEmpty(path)) {
+    throw new Error("Path is empty");
+  }
+  const [start, ...rest] = path;
+  if (!(start in ctx)) {
+    throw new Error(`${start} is not in the context`);
+  }
+  const startModel = ctx[start].type;
+  return getTypedPath(def, [startModel, ...rest]);
+}
+
+function findChangesetModel(def: Definition, ctx: Context, path: string[]): ModelDef {
+  if (path.length === 1) {
+    // check if model
+    try {
+      return findModel(def.models, path[0]);
+      // eslint-disable-next-line no-empty
+    } catch (e) {}
+  }
+  const typedPath = getTypedPathFromContext(def, ctx, path);
+  const leaf = _.last(typedPath)!;
+  switch (leaf.kind) {
+    case "field": {
+      throw new Error(`Path ${path.join(".")} doesn't resolve into a model`);
+    }
+    case "model": {
+      return findModel(def.models, leaf.name);
+    }
+    default: {
+      return getTargetModel(def.models, leaf.refKey);
+    }
+  }
+}
+
 function composeSingleAction(
   def: Definition,
   spec: ActionSpec,
@@ -461,19 +496,16 @@ function composeSingleAction(
       );
     }
   }
+  const model = findChangesetModel(def, ctx, spec.targetPath ?? [target.alias]);
 
   const changeset: Changeset = {};
   switch (spec.kind) {
     case "create": {
-      let model: ModelDef;
-
       if (targetKind === "model") {
-        model = getRef<"model">(def, spec.targetPath![0]).value;
         // noop
       } else if (targetKind === "context") {
         if (target.kind === "model" || !contextTarget) {
           // noop, root query
-          model = getRef<"model">(def, target.refKey).value;
         } else if (target.kind === "reference") {
           throw new Error("TODO create a reference reverted");
         } else if (target.kind === "query") {
@@ -491,7 +523,6 @@ function composeSingleAction(
             },
           };
           _.assign(changeset, setter);
-          model = getRef<"model">(def, relation.fromModelRefKey).value;
         } else {
           assertUnreachable(target.kind);
         }
@@ -511,14 +542,10 @@ function composeSingleAction(
             }
             case "reference": {
               const path = atom.set.reference;
-              if (!(path[0] in ctx)) {
-                throw new Error(`Unknown resource ${path.join(".")}`);
-              }
-              const [start, ...rest] = path;
-              const startModel = ctx[start].type;
-              const typedPath = getPrimitiveTypedPath(def, [startModel, ...rest]);
-              const access = _.tail(typedPath.map((p) => p.name));
-              const { value: field } = getRef<"field">(def, _.last(typedPath)!.refKey);
+              const ctxTypedPath = getTypedPathFromContext(def, ctx, path);
+              const typedPathEnding = getTypedPathEnding(def, _.map(ctxTypedPath, "name"));
+              const access = _.tail(_.map(typedPathEnding, "name"));
+              const { value: field } = getRef<"field">(def, _.last(typedPathEnding)!.refKey);
               const setter: Changeset = {
                 [atom.target]: {
                   kind: "reference-value",

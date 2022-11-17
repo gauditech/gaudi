@@ -57,7 +57,7 @@ export function getTypedPath(def: Definition, path: string[]): IdentifierDef[] {
   return ret.path;
 }
 
-export function getPrimitiveTypedPath(def: Definition, path: string[]): IdentifierDef[] {
+export function getTypedPathEnding(def: Definition, path: string[]): IdentifierDef[] {
   const typedPath = getTypedPath(def, path);
   const leaf = _.last(typedPath);
   switch (leaf?.kind) {
