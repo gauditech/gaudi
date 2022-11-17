@@ -32,6 +32,11 @@ describe("custom actions", () => {
     const bp = `
     model Org {
       field name { type text }
+      field description { type text }
+      reference extras { to OrgExtra, unique }
+    }
+    model OrgExtra {
+      relation org { from Org, through extras }
     }
     entrypoint Orgs {
       target model Org as org
@@ -48,6 +53,29 @@ describe("custom actions", () => {
     expect(endpoint.actions).toMatchSnapshot();
   });
 
+  it.skip("progress", () => {
+    const bp = `
+    model User {
+      reference profile { to Profile, unique }
+      field name { type text }
+    }
+    model Profile {
+      field address { type text }
+      relation user { from User, through profile }
+    }
+    entrypoint Users {
+      target model User as user
+      update endpoint {
+        action {
+          update user {}
+          update user.profile {}
+        }
+      }
+    }`;
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0];
+    expect(endpoint.actions).toMatchInlineSnapshot();
+  });
   it("fails when default action override is invalid type", () => {
     const bp = `
     model Org {
@@ -66,5 +94,6 @@ describe("custom actions", () => {
       `"Mismatching context action: overriding update endpoint with a create action"`
     );
   });
+  it.todo("succeeds to update through unique relation");
   it.todo("sets default action if not given");
 });

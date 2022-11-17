@@ -12,7 +12,7 @@ exports[`custom actions succeeds for basic composite create 1`] = `
   {
     "alias": "org",
     "changeset": {
-      "extras": {
+      "extras_id": {
         "kind": "reference-value",
         "target": {
           "access": [
@@ -27,6 +27,14 @@ exports[`custom actions succeeds for basic composite create 1`] = `
         "type": "boolean",
         "value": true,
       },
+      "name": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
     },
     "kind": "create-one",
     "model": "Org",
@@ -40,6 +48,22 @@ exports[`custom actions succeeds for basic update 1`] = `
   {
     "alias": "ox",
     "changeset": {
+      "description": {
+        "fieldsetAccess": [
+          "description",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+      "extras_id": {
+        "fieldsetAccess": [
+          "extras_id",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "integer",
+      },
       "name": {
         "kind": "value",
         "type": "text",

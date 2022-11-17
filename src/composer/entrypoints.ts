@@ -490,7 +490,12 @@ function getParentContextCreateSetter(def: Definition, targets: TargetDef[]): Ch
   }
 }
 
-function getActionSetters(def: Definition, spec: ActionSpec, ctx: Context): Changeset {
+function getActionSetters(
+  def: Definition,
+  spec: ActionSpec,
+  model: ModelDef,
+  ctx: Context
+): Changeset {
   const pairs = spec.actionAtoms
     .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
     .map((atom): [string, FieldSetter] => {
@@ -502,11 +507,14 @@ function getActionSetters(def: Definition, spec: ActionSpec, ctx: Context): Chan
         case "reference": {
           const path = atom.set.reference;
           const ctxTypedPath = getTypedPathFromContext(def, ctx, path);
+          const referenceRefKey = `${model.name}.${atom.target}`;
+          const { value: reference } = getRef<"reference">(def, referenceRefKey);
+          const { value: referenceField } = getRef<"field">(def, reference.fieldRefKey);
           const typedPathEnding = getTypedPathEnding(def, _.map(ctxTypedPath, "name"));
           const access = _.tail(_.map(typedPathEnding, "name"));
           const { value: field } = getRef<"field">(def, _.last(typedPathEnding)!.refKey);
           return [
-            atom.target,
+            referenceField.name,
             { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
           ];
         }
@@ -539,6 +547,8 @@ function ensureCorrectContextAction(
     throw new Error(`Delete action cannot make an alias; remove "as ${spec.alias}"`);
   }
 }
+
+// type Without<T, K extends keyof T> = T extends T ? Omit<T, K> : never;
 
 function mkActionFromParts(
   spec: ActionSpec,
@@ -573,7 +583,7 @@ function composeSingleAction(
   const target = _.last(targets)!;
   const model = findChangesetModel(def, ctx, spec.targetPath ?? [target.alias]);
 
-  const changeset: Changeset = {};
+  let changeset: Changeset = {};
 
   const targetKind = getTargetKind(def, spec, target.alias);
   // Overwriting a context action
@@ -585,7 +595,15 @@ function composeSingleAction(
   }
 
   // Parsing an action specification
-  _.assign(changeset, getActionSetters(def, spec, ctx));
+  _.assign(changeset, getActionSetters(def, spec, model, ctx));
+
+  // calculate implicit inputs
+  const implicitInputs = createInputsChangesetForModel(model, spec.kind === "create");
+  // apply deny rules
+  // overwrite with custom inputs
+  // assign inputs
+  const inputs = implicitInputs;
+  changeset = _.assign({}, inputs, changeset);
 
   // Define action
   return mkActionFromParts(spec, targetKind, target, model, changeset);
@@ -720,6 +738,16 @@ export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
       },
     ]);
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
+}
+
+function createInputsChangesetForModel(model: ModelDef, required: boolean): Changeset {
+  const fields = model.fields
+    .filter((f) => !f.primary)
+    .map((f): [string, FieldSetter] => [
+      f.name,
+      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required },
+    ]);
+  return Object.fromEntries(fields);
 }
 
 export function calculateCreateChangesetForModel(model: ModelDef): Changeset {
