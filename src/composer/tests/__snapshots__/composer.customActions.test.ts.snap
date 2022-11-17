@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`custom actions progress 1`] = `
+exports[`custom actions succeeds for basic composite create 1`] = `
 [
   {
     "alias": "e",

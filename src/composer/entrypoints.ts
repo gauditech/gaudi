@@ -452,7 +452,7 @@ function composeSingleAction(
   if (targetKind === "context") {
     if (spec.kind !== endpointKind) {
       throw new Error(
-        `Mismatching context action kind: ${targetKind} in endpoint kind: ${endpointKind}`
+        `Mismatching context action kind: ${spec.kind} in endpoint kind: ${endpointKind}`
       );
     }
     if (spec.alias && spec.alias !== target.alias) {
