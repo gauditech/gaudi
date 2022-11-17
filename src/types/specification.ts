@@ -69,9 +69,8 @@ export type ExpSpec = WithContext<
 
 export type EntrypointSpec = WithContext<{
   name: string;
-  target: { kind: "model" | "relation"; identifier: string };
+  target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
-  alias?: string;
   response?: SelectAST;
   endpoints: EndpointSpec[];
   entrypoints: EntrypointSpec[];

@@ -12,11 +12,11 @@ describe("custom actions", () => {
       relation org { from Org, through extras }
     }
     entrypoint Orgs {
-      target model Org
+      target model Org as org
       create endpoint {
         action {
           create OrgExtra as e {}
-          create {
+          create org {
             set is_new true
             set extras e
           }
@@ -36,7 +36,7 @@ describe("custom actions", () => {
           "response": [],
         },
         {
-          "alias": undefined,
+          "alias": "org",
           "changeset": {
             "extras": {
               "kind": "reference-value",

@@ -49,7 +49,7 @@ function processEntrypoint(
     models,
     parents,
     spec.target.identifier,
-    spec.alias ?? null,
+    spec.target.alias ?? null,
     spec.identify || "id"
   );
   const name = spec.name;
@@ -449,11 +449,19 @@ function composeSingleAction(
   const target = _.last(targets)!;
   const contextTarget = _.last(_.initial(targets));
   const targetKind = getTargetKind(def, spec, ctx, target.alias);
-  if (targetKind === "context" && spec.kind !== endpointKind) {
-    throw new Error(
-      `Mismatching context action kind: ${targetKind} in endpoint kind: ${endpointKind}`
-    );
+  if (targetKind === "context") {
+    if (spec.kind !== endpointKind) {
+      throw new Error(
+        `Mismatching context action kind: ${targetKind} in endpoint kind: ${endpointKind}`
+      );
+    }
+    if (spec.alias && spec.alias !== target.alias) {
+      throw new Error(
+        `Default action cannot be re-aliased: expected ${target.alias}, got ${spec.alias}`
+      );
+    }
   }
+
   const changeset: Changeset = {};
   switch (spec.kind) {
     case "create": {
@@ -531,7 +539,7 @@ function composeSingleAction(
       return {
         kind: "create-one",
         model: model.name,
-        alias: spec.alias!, // FIXME if alias is missing, make one! only needed for nested inputs though
+        alias: targetKind === "context" ? target.alias : spec.alias!, // FIXME if alias is missing, make one! only needed for nested inputs though
         response: [],
         changeset, // FIXME parse body for setters, inputs etc
       };
