@@ -33,6 +33,7 @@ describe("custom actions", () => {
     model Org {
       field name { type text }
       field description { type text }
+      field uuid { type text }
       reference extras { to OrgExtra, unique }
     }
     model OrgExtra {
@@ -44,6 +45,7 @@ describe("custom actions", () => {
         action {
           update org as ox {
             set name "new name"
+            deny { uuid }
           }
         }
       }
@@ -67,7 +69,8 @@ describe("custom actions", () => {
       target model User as user
       update endpoint {
         action {
-          update user {}
+          update user {
+          }
           update user.profile {}
         }
       }

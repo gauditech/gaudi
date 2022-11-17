@@ -23,6 +23,7 @@ import {
 import {
   ActionAtomSpec,
   ActionAtomSpecAction,
+  ActionAtomSpecDeny,
   ActionAtomSpecSet,
   ActionSpec,
   EndpointSpec,
@@ -598,7 +599,11 @@ function composeSingleAction(
   _.assign(changeset, getActionSetters(def, spec, model, ctx));
 
   // calculate implicit inputs
-  const implicitInputs = createInputsChangesetForModel(model, spec.kind === "create");
+  const denyRules = spec.actionAtoms.filter((a): a is ActionAtomSpecDeny => a.kind === "deny");
+  if (denyRules.length > 1) {
+    throw new Error(`Multiple deny rules not allowed`);
+  }
+  const implicitInputs = createInputsChangesetForModel(model, spec.kind === "create", denyRules[0]);
   // apply deny rules
   // overwrite with custom inputs
   // assign inputs
@@ -740,13 +745,24 @@ export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
 }
 
-function createInputsChangesetForModel(model: ModelDef, required: boolean): Changeset {
+function createInputsChangesetForModel(
+  model: ModelDef,
+  required: boolean,
+  deny?: ActionAtomSpecDeny
+): Changeset {
+  if (deny?.fields === "*") {
+    return {};
+  }
   const fields = model.fields
     .filter((f) => !f.primary)
+    .filter((f) => {
+      return (deny?.fields ?? []).indexOf(f.name) === -1;
+    })
     .map((f): [string, FieldSetter] => [
       f.name,
       { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required },
     ]);
+
   return Object.fromEntries(fields);
 }
 
