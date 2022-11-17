@@ -214,7 +214,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -256,7 +257,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -298,7 +300,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -343,7 +346,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -442,7 +446,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -494,7 +499,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -540,7 +546,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -560,6 +567,17 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   },
                   "target": "baz",
                 },
+                {
+                  "fields": "*",
+                  "kind": "deny",
+                },
+                {
+                  "fields": [
+                    "foo",
+                    "bar",
+                  ],
+                  "kind": "deny",
+                },
               ],
               "alias": undefined,
               "kind": "update",
@@ -571,7 +589,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             },
           ],
           "interval": {
-            "endIdx": 590,
+            "endIdx": 613,
             "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -595,7 +613,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -617,7 +636,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "action": undefined,
               "interval": {
-                "endIdx": 663,
+                "endIdx": 686,
                 "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -641,7 +660,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -652,7 +672,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-                "startIdx": 645,
+                "startIdx": 668,
               },
               "type": "create",
             },
@@ -660,7 +680,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 667,
+            "endIdx": 690,
             "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -684,7 +704,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -695,7 +716,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-            "startIdx": 593,
+            "startIdx": 616,
           },
           "name": "Review",
           "response": undefined,
@@ -708,7 +729,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 669,
+        "endIdx": 692,
         "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -732,7 +753,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -772,7 +794,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -812,7 +835,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -852,7 +876,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -894,7 +919,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }
@@ -934,7 +960,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
-        // deny *
+        deny *
+        deny { foo, bar }
         // input z, x { optional, default 10 }, y
       }
     }

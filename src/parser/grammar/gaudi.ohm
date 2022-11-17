@@ -134,10 +134,15 @@ Gaudi {
 
 
   ActionAtomBody
-    = "set" identifier literal -- set_value
-    | "set" identifier IdentifierPath -- set_reference
+    = "set" identifier literal                    -- set_value
+    | "set" identifier IdentifierPath             -- set_reference
     | "reference" identifier "through" identifier -- reference
-    | ActionBody  -- nested_action
+    | "deny" DenyPath                             -- deny
+    | ActionBody                                  -- nested_action
+
+  DenyPath
+  = "*"                                         -- all
+  | "{" NewlineBody<identifier, ","> "}"        -- some
 
   // ********************
   // Hook grammar

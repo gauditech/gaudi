@@ -220,6 +220,7 @@ function compileAction(action: ActionBodyAST): ActionSpec {
       case "action": {
         return { kind: "action", body: compileAction(a.body) };
       }
+      case "deny":
       case "reference":
       case "set": {
         // action AST and Spec are currently the same

@@ -354,11 +354,23 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
+  ActionAtomBody_deny(this, _deny, body) {
+    return {
+      kind: "deny",
+      fields: body.parse(),
+    };
+  },
   ActionAtomBody_nested_action(this, action): ActionAtomBodyAST {
     return {
       kind: "action",
       body: action.parse(),
     };
+  },
+  DenyPath_all(this, _asteriks) {
+    return "*";
+  },
+  DenyPath_some(this, _braceL, fields, _braceR) {
+    return fields.parse();
   },
   IdentifierPath(this, head, _dot, tail): string[] {
     return [head.parse(), ...tail.children.map((child) => child.parse())];

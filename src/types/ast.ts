@@ -126,6 +126,7 @@ export type ActionAtomBodyAST = WithContext<
     }
   | { kind: "reference"; target: string; through: string }
   | { kind: "action"; body: ActionBodyAST }
+  | { kind: "deny"; fields: "*" | string[] }
 >;
 
 export type HookAST = WithContext<{
