@@ -1,4 +1,4 @@
-export function foo(field) {
-  console.log("External Hook!!", field);
-  return field !== "bad";
+export function foo({ name }) {
+  console.log("External Hook!!", name);
+  return name !== "bad";
 }
