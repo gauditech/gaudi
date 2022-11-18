@@ -22,9 +22,9 @@ export function ensureExists<I>(item: I | null | undefined): asserts item is I {
   }
 }
 
-export function ensureEqual<T, Tx extends T>(a: T, b: Tx): asserts a is Tx {
+export function ensureEqual<T, Tx extends T>(a: T, b: Tx, message?: string): asserts a is Tx {
   if (a === b) return;
-  throw new Error("Not equal");
+  throw new Error(message ?? "Not equal");
 }
 
 export function ensureNot<T, Tx extends T>(a: T, b: Tx): asserts a is Exclude<T, Tx> {
