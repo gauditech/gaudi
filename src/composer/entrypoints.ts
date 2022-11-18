@@ -24,6 +24,7 @@ import {
   ActionAtomSpec,
   ActionAtomSpecAction,
   ActionAtomSpecDeny,
+  ActionAtomSpecInput,
   ActionAtomSpecSet,
   ActionSpec,
   EndpointSpec,
@@ -527,6 +528,40 @@ function getActionSetters(
   return Object.fromEntries(pairs);
 }
 
+function getInputSetters(
+  def: Definition,
+  model: ModelDef,
+  spec: ActionSpec,
+  deny?: ActionAtomSpecDeny
+): Changeset {
+  const setters: Changeset = Object.fromEntries(
+    spec.actionAtoms
+      .filter((a): a is ActionAtomSpecInput => a.kind === "input")
+      .flatMap((a) => a.fields)
+      .map((input): [string, FieldSetter] => {
+        const { value: field } = getRef<"field">(def, `${model.refKey}.${input.name}`);
+        const setter: FieldSetter = {
+          kind: "fieldset-input",
+          type: field.type,
+          required: !input.optional,
+          fieldsetAccess: [input.name],
+          // TODO add default
+        };
+        return [input.name, setter];
+      })
+  );
+  if (deny && deny.fields !== "*") {
+    if (_.some(deny.fields, (f) => f in setters)) {
+      throw new Error(
+        `Overlapping inputs and deny rules! Inputs: [${Object.keys(setters).join(
+          ", "
+        )}]. Denies: [${deny.fields.join(", ")}]`
+      );
+    }
+  }
+  return setters;
+}
+
 function ensureCorrectContextAction(
   spec: ActionSpec,
   target: TargetDef,
@@ -606,9 +641,9 @@ function composeSingleAction(
   }
   const implicitInputs = createInputsChangesetForModel(model, spec.kind === "create", denyRules[0]);
   // overwrite with custom inputs
+  const inputs = getInputSetters(def, model, spec, denyRules[0]);
   // assign inputs
-  const inputs = implicitInputs;
-  changeset = _.assign({}, inputs, changeset);
+  changeset = _.assign({}, implicitInputs, inputs, changeset);
 
   // Define action
   return mkActionFromParts(spec, targetKind, target, model, changeset);

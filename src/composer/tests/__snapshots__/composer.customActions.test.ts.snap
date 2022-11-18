@@ -76,3 +76,37 @@ exports[`custom actions succeeds for basic update 1`] = `
   },
 ]
 `;
+
+exports[`custom actions succeeds with custom inputs 1`] = `
+[
+  {
+    "alias": "ox",
+    "changeset": {
+      "description": {
+        "fieldsetAccess": [
+          "description",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+      "name": {
+        "kind": "value",
+        "type": "text",
+        "value": "new name",
+      },
+      "uuid": {
+        "fieldsetAccess": [
+          "uuid",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+    },
+    "kind": "update-one",
+    "model": "Org",
+    "response": [],
+  },
+]
+`;

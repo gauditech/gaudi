@@ -321,14 +321,29 @@ type DeleteManyAction = {
 
 export type Changeset = Record<string, FieldSetter>;
 
-export type FieldSetter =
-  // TODO add composite expression setter
+export type FieldSetterValue =
   | { kind: "value"; type: "text"; value: string }
   | { kind: "value"; type: "boolean"; value: boolean }
   | { kind: "value"; type: "integer"; value: number }
-  | { kind: "value"; type: "null"; value: null }
-  | { kind: "fieldset-input"; type: FieldDef["type"]; fieldsetAccess: string[]; required: boolean }
-  | { kind: "reference-value"; type: FieldDef["type"]; target: { alias: string; access: string[] } }
+  | { kind: "value"; type: "null"; value: null };
+
+export type FieldSetterReferenceValue = {
+  kind: "reference-value";
+  type: FieldDef["type"];
+  target: { alias: string; access: string[] };
+};
+
+export type FieldSetter =
+  // TODO add composite expression setter
+  | FieldSetterValue
+  | FieldSetterReferenceValue
+  | {
+      kind: "fieldset-input";
+      type: FieldDef["type"];
+      fieldsetAccess: string[];
+      required: boolean;
+      default?: FieldSetterValue | FieldSetterReferenceValue;
+    }
   | {
       kind: "fieldset-reference-input";
       fieldsetAccess: string[];

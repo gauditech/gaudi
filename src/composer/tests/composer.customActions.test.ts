@@ -97,6 +97,33 @@ describe("custom actions", () => {
       `"Mismatching context action: overriding update endpoint with a create action"`
     );
   });
+  it("succeeds with custom inputs", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      field description { type text }
+      field uuid { type text }
+      reference extras { to OrgExtra, unique }
+    }
+    model OrgExtra {
+      relation org { from Org, through extras }
+    }
+    entrypoint Orgs {
+      target model Org as org
+      update endpoint {
+        action {
+          update org as ox {
+            set name "new name"
+            input { description { optional } }
+            deny { extras_id }
+          }
+        }
+      }
+    }`;
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0];
+    expect(endpoint.actions).toMatchSnapshot();
+  });
   it.todo("succeeds to update through unique relation");
   it.todo("sets default action if not given");
 
