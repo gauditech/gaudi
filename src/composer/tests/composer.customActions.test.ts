@@ -25,8 +25,8 @@ describe("custom actions", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].endpoints[0];
-    expect(endpoint.actions).toMatchSnapshot();
+    const actions = def.entrypoints[0].endpoints[0].actions;
+    expect(actions).toMatchSnapshot();
   });
   it("succeeds for basic update", () => {
     const bp = `
@@ -51,8 +51,8 @@ describe("custom actions", () => {
       }
     }`;
     const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].endpoints[0];
-    expect(endpoint.actions).toMatchSnapshot();
+    const actions = def.entrypoints[0].endpoints[0].actions;
+    expect(actions).toMatchSnapshot();
   });
   it("correctly sets parent context", () => {
     const bp = `
@@ -97,8 +97,8 @@ describe("custom actions", () => {
       }
     }`;
     const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].endpoints[0];
-    expect(endpoint.actions).toMatchInlineSnapshot();
+    const actions = def.entrypoints[0].endpoints[0].actions;
+    expect(actions).toMatchInlineSnapshot();
   });
   it("fails when default action override is invalid type", () => {
     const bp = `
@@ -144,8 +144,8 @@ describe("custom actions", () => {
       }
     }`;
     const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].endpoints[0];
-    expect(endpoint.actions).toMatchSnapshot();
+    const actions = def.entrypoints[0].endpoints[0].actions;
+    expect(actions).toMatchSnapshot();
   });
   it("fails when input and reference are on the same field", () => {
     const bp = `
@@ -205,8 +205,8 @@ describe("custom actions", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].endpoints[0];
-    expect(endpoint.actions).toMatchSnapshot();
+    const actions = def.entrypoints[0].endpoints[0].actions;
+    expect(actions).toMatchSnapshot();
   });
 
   it.todo("gives proper error when nested cycle is detected");
