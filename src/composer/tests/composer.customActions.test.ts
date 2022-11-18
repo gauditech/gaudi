@@ -208,7 +208,26 @@ describe("custom actions", () => {
     const actions = def.entrypoints[0].endpoints[0].actions;
     expect(actions).toMatchSnapshot();
   });
-
+  it("fails when action alias is not given", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+    }
+    entrypoint Orgs {
+      target model Org as org
+      update endpoint {
+        action {
+          update org {}
+          create Org {}
+        }
+      }
+    }
+    `;
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      `"We currently require every custom action to have an explicit alias"`
+    );
+  });
   it.todo("gives proper error when nested cycle is detected");
   // create user { create profile { create user {} } }
 });

@@ -474,6 +474,25 @@ function composeSingleAction(
     if (spec.kind === "create") {
       _.assign(changeset, getParentContextCreateSetter(def, targets));
     }
+  } else {
+    /*
+    FIXME this check is not needed, but we currently require aliases in order to construct the fieldsets.
+    This should be improved in the future.
+
+    We don't need an alias when:
+    - related action (eg. `update org.owner.profile`)
+    - model action without fieldsets (eg. `create AuditLog`)
+
+    We should also check for conflicts between non-aliased context action ("root path") fields and any action aliases.
+
+    The rules for constructing the fieldset:
+    - non-named context action fields are in the root record (eg. `create {}`)
+    - aliased actions are nested within alias path (named context counts as alias if explicit alias not given)
+    - ensure no conflicts between aliases AND ensure no conflicts between aliases and context action fields if non-named
+  */
+    if (!spec.alias) {
+      throw new Error(`We currently require every custom action to have an explicit alias`);
+    }
   }
 
   // Parsing an action specification
