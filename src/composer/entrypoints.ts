@@ -205,7 +205,7 @@ function processEndpoints(
       }
       case "create": {
         const fieldset = calculateCreateFieldsetForModel(context.model);
-        const changeset = calculateCreateChangesetForModel(context.model);
+        const changeset = createInputsChangesetForModel(context.model, true, []);
         return {
           kind: "create",
           fieldset,
@@ -222,7 +222,7 @@ function processEndpoints(
       }
       case "update": {
         const fieldset = calculateUpdateFieldsetForModel(context.model);
-        const changeset = calculateUpdateChangesetForModel(context.model);
+        const changeset = createInputsChangesetForModel(context.model, false, []);
         return {
           kind: "update",
           fieldset,
@@ -646,7 +646,7 @@ export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
 }
 
-function createInputsChangesetForModel(
+export function createInputsChangesetForModel(
   model: ModelDef,
   required: boolean,
   skipFields: string[]
@@ -661,26 +661,6 @@ function createInputsChangesetForModel(
       { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required },
     ]);
 
-  return Object.fromEntries(fields);
-}
-
-export function calculateCreateChangesetForModel(model: ModelDef): Changeset {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldSetter] => [
-      f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required: true },
-    ]);
-  return Object.fromEntries(fields);
-}
-
-export function calculateUpdateChangesetForModel(model: ModelDef): Changeset {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldSetter] => [
-      f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required: false },
-    ]);
   return Object.fromEntries(fields);
 }
 

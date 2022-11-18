@@ -1,8 +1,7 @@
 import {
-  calculateCreateChangesetForModel,
   calculateCreateFieldsetForModel,
-  calculateUpdateChangesetForModel,
   calculateUpdateFieldsetForModel,
+  createInputsChangesetForModel,
 } from "@src/composer/entrypoints";
 import {
   CreateEndpointDef,
@@ -87,7 +86,7 @@ function createEndpointForModel(model: ModelDef, target: TargetDef): CreateEndpo
     actions: [],
     response: modelToSelect(model),
     fieldset: calculateCreateFieldsetForModel(model),
-    contextActionChangeset: calculateCreateChangesetForModel(model),
+    contextActionChangeset: createInputsChangesetForModel(model, true, []),
   };
 }
 
@@ -98,7 +97,7 @@ function updateEndpointForModel(model: ModelDef, target: TargetDef): UpdateEndpo
     actions: [],
     response: modelToSelect(model),
     fieldset: calculateUpdateFieldsetForModel(model),
-    contextActionChangeset: calculateUpdateChangesetForModel(model),
+    contextActionChangeset: createInputsChangesetForModel(model, false, []),
   };
 }
 
