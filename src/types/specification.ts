@@ -89,7 +89,11 @@ export type ActionSpec = WithContext<{
 }>;
 
 export type ActionAtomSpec = WithContext<
-  ActionAtomSpecSet | ActionAtomSpecRefThrough | ActionAtomSpecAction | ActionAtomSpecDeny
+  | ActionAtomSpecSet
+  | ActionAtomSpecRefThrough
+  | ActionAtomSpecAction
+  | ActionAtomSpecDeny
+  | ActionAtomSpecInput
 >;
 
 export type ActionAtomSpecSet = {
@@ -100,6 +104,12 @@ export type ActionAtomSpecSet = {
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
+export type ActionAtomSpecInput = { kind: "input"; fields: InputFieldSpec[] };
+export type InputFieldSpec = {
+  name: string;
+  optional: boolean;
+  default?: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+};
 
 export type HookSpec = WithContext<{
   name: string;

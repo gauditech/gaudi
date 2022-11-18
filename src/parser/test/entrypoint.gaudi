@@ -23,7 +23,7 @@ entrypoint ItemEntry {
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }

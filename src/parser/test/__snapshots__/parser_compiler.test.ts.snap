@@ -216,7 +216,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -259,7 +259,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -302,7 +302,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -348,7 +348,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -448,7 +448,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -501,7 +501,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -548,7 +548,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -578,6 +578,41 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   ],
                   "kind": "deny",
                 },
+                {
+                  "fields": [
+                    {
+                      "default": undefined,
+                      "name": "z",
+                      "optional": false,
+                    },
+                    {
+                      "default": {
+                        "kind": "value",
+                        "value": 10,
+                      },
+                      "name": "x",
+                      "optional": true,
+                    },
+                    {
+                      "default": undefined,
+                      "name": "y",
+                      "optional": false,
+                    },
+                    {
+                      "default": {
+                        "kind": "reference",
+                        "reference": [
+                          "item",
+                          "bar",
+                          "id",
+                        ],
+                      },
+                      "name": "foo",
+                      "optional": false,
+                    },
+                  ],
+                  "kind": "input",
+                },
               ],
               "alias": undefined,
               "kind": "update",
@@ -589,7 +624,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             },
           ],
           "interval": {
-            "endIdx": 613,
+            "endIdx": 643,
             "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -615,7 +650,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -636,7 +671,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "action": undefined,
               "interval": {
-                "endIdx": 686,
+                "endIdx": 716,
                 "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -662,7 +697,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -672,7 +707,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-                "startIdx": 668,
+                "startIdx": 698,
               },
               "type": "create",
             },
@@ -680,7 +715,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 690,
+            "endIdx": 720,
             "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -706,7 +741,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -716,7 +751,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   }
 }
 ",
-            "startIdx": 616,
+            "startIdx": 646,
           },
           "name": "Review",
           "response": undefined,
@@ -729,7 +764,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 692,
+        "endIdx": 722,
         "sourceString": "entrypoint ItemEntry {
   target model Item as item
   identify with slug
@@ -755,7 +790,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -796,7 +831,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -837,7 +872,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -878,7 +913,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -921,7 +956,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }
@@ -962,7 +997,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         set baz null
         deny *
         deny { foo, bar }
-        // input z, x { optional, default 10 }, y
+        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
       }
     }
   }

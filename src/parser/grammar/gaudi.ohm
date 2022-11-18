@@ -134,27 +134,37 @@ Gaudi {
 
 
   ActionAtomBody
-    = "set" identifier literal                    -- set_value
-    | "set" identifier IdentifierPath             -- set_reference
-    | "reference" identifier "through" identifier -- reference
-    | "deny" DenyPath                             -- deny
-    | ActionBody                                  -- nested_action
+    = "set" identifier literal                            -- set_value
+    | "set" identifier IdentifierPath                     -- set_reference
+    | "reference" identifier "through" identifier         -- reference
+    | "input" "{" NewlineBody<ActionInputAtom, ","> "}"   -- input
+    | "deny" DenyList                                     -- deny
+    | ActionBody                                          -- nested_action
 
-  DenyPath
-  = "*"                                         -- all
-  | "{" NewlineBody<identifier, ","> "}"        -- some
+  ActionInputAtom
+    = identifier "{" NewlineBody<ActionInputOpt, ","> "}" -- field_with_opts
+    | identifier                                          -- field
+
+  ActionInputOpt
+    = "optional"                  -- optional
+    | "default" literal           -- default_value
+    | "default" IdentifierPath    -- default_reference
+
+  DenyList
+    = "*"                                         -- all
+    | "{" NewlineBody<identifier, ","> "}"        -- some
 
   // ********************
   // Hook grammar
   // ********************
 
   Hook
-  = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
+    = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
 
   HookBody
-  = "arg" identifier identifier   -- argument
-  | "returns" identifier          -- return_type
-  | "inline" multiLineString      -- inline_body
+    = "arg" identifier identifier   -- argument
+    | "returns" identifier          -- return_type
+    | "inline" multiLineString      -- inline_body
 
   IdentifierPath = identifier ("." identifier)*
 

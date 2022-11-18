@@ -125,8 +125,20 @@ export type ActionAtomBodyAST = WithContext<
       set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
     }
   | { kind: "reference"; target: string; through: string }
+  | { kind: "input"; fields: InputFieldAST[] }
   | { kind: "action"; body: ActionBodyAST }
   | { kind: "deny"; fields: "*" | string[] }
+>;
+
+export type InputFieldAST = WithContext<{
+  name: string;
+  opts: InputFieldOptAST[];
+}>;
+
+export type InputFieldOptAST = WithContext<
+  | { kind: "optional" }
+  | { kind: "default-value"; value: LiteralValue }
+  | { kind: "default-reference"; path: string[] }
 >;
 
 export type HookAST = WithContext<{

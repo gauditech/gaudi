@@ -17,6 +17,8 @@ import {
   FieldTag,
   HookAST,
   HookBodyAST,
+  InputFieldAST,
+  InputFieldOptAST,
   ModelAST,
   QueryAST,
   QueryBodyAST,
@@ -354,6 +356,12 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
+  ActionAtomBody_input(this, _input, _braceL, atoms, _braceR): ActionAtomBodyAST {
+    return {
+      kind: "input",
+      fields: atoms.parse(),
+    };
+  },
   ActionAtomBody_deny(this, _deny, body) {
     return {
       kind: "deny",
@@ -366,10 +374,25 @@ semantics.addOperation("parse()", {
       body: action.parse(),
     };
   },
-  DenyPath_all(this, _asteriks) {
+  ActionInputAtom_field(this, name): InputFieldAST {
+    return { name: name.parse(), opts: [] };
+  },
+  ActionInputAtom_field_with_opts(this, name, _braceL, opts, _braceR): InputFieldAST {
+    return { name: name.parse(), opts: opts.parse() };
+  },
+  ActionInputOpt_optional(this, _opt): InputFieldOptAST {
+    return { kind: "optional" };
+  },
+  ActionInputOpt_default_value(this, _default, identifierPath): InputFieldOptAST {
+    return { kind: "default-value", value: identifierPath.parse() };
+  },
+  ActionInputOpt_default_reference(this, _default, path): InputFieldOptAST {
+    return { kind: "default-reference", path: path.parse() };
+  },
+  DenyList_all(this, _asteriks) {
     return "*";
   },
-  DenyPath_some(this, _braceL, fields, _braceR) {
+  DenyList_some(this, _braceL, fields, _braceR) {
     return fields.parse();
   },
   IdentifierPath(this, head, _dot, tail): string[] {
