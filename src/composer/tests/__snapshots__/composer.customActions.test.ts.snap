@@ -1,5 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`custom actions correctly sets parent context 1`] = `
+[
+  {
+    "alias": "myrepo",
+    "changeset": {
+      "name": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
+      "org_id": {
+        "kind": "reference-value",
+        "target": {
+          "access": [
+            "id",
+          ],
+          "alias": "myorg",
+        },
+        "type": "integer",
+      },
+    },
+    "kind": "create-one",
+    "model": "Repo",
+    "response": [],
+  },
+]
+`;
+
 exports[`custom actions sets default action if not given 1`] = `
 [
   {

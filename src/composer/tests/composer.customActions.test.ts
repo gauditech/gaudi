@@ -54,6 +54,27 @@ describe("custom actions", () => {
     const endpoint = def.entrypoints[0].endpoints[0];
     expect(endpoint.actions).toMatchSnapshot();
   });
+  it("correctly sets parent context", () => {
+    const bp = `
+    model Org {
+      relation repos { from Repo, through org }
+    }
+    model Repo {
+      reference org { to Org }
+      field name { type text }
+    }
+    entrypoint Orgs {
+      target model Org as myorg
+      entrypoint Repos {
+        target relation repos as myrepo
+        create endpoint {}
+      }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const actions = def.entrypoints[0].entrypoints[0].endpoints[0].actions;
+    expect(actions).toMatchSnapshot();
+  });
 
   it.skip("progress", () => {
     const bp = `

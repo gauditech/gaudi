@@ -311,7 +311,8 @@ function getParentContextCreateSetter(def: Definition, targets: TargetDef[]): Ch
     return {};
   } else if (target.kind === "relation") {
     const { value: relation } = getRef<"relation">(def, target.refKey);
-    const { value: field } = getRef<"field">(def, relation.throughRefKey);
+    const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
+    const { value: field } = getRef<"field">(def, reference.fieldRefKey);
     const setter: Changeset = {
       [field.name]: {
         kind: "reference-value",
