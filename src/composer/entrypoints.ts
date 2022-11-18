@@ -534,9 +534,6 @@ function composeActionBlock(
   targets: TargetDef[],
   endpointKind: EndpointType
 ): ActionDef[] {
-  /**
-   * FIXME Create a default context action if not specified in blueprint
-   */
   const [_ctx, actions] = specs.reduce(
     (acc, atom) => {
       const [ctx, actions] = acc;
@@ -548,16 +545,41 @@ function composeActionBlock(
     },
     [ctx, []] as [Context, ActionDef[]]
   );
-  return actions;
+  // FIXME Create a default context action if not specified in blueprint
+  // find default action
+  const target = _.last(targets)!;
+  const defaultActions = specs.filter((spc) => getTargetKind(def, spc, target.alias) === "context");
+  if (defaultActions.length === 1) {
+    return actions;
+  } else if (defaultActions.length > 1) {
+    throw new Error(`Multiple default action definitions`);
+  } else {
+    ensureEqual(defaultActions.length, 0);
+    switch (endpointKind) {
+      case "get":
+      case "list": {
+        // no custom action here
+        return actions;
+      }
+      default: {
+        // make custom default action and insert at the beginning
+        const action: ActionDef = composeSingleAction(
+          def,
+          {
+            kind: endpointKind,
+            alias: target.alias,
+            targetPath: [target.alias],
+            actionAtoms: [],
+          },
+          ctx,
+          targets,
+          endpointKind
+        );
+        return [action, ...actions];
+      }
+    }
+  }
 }
-
-/*
-Nested actions:
-NE PODRZAVAMO NESTED ACTIONE ZA SADA!!
-- each action can:
-  - show up in context (if root)
-  - become a setter (if nested)
-*/
 
 function processSelect(
   models: ModelDef[],

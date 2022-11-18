@@ -173,7 +173,20 @@ describe("custom actions", () => {
     );
   });
   it.todo("succeeds to update through unique relation");
-  it.todo("sets default action if not given");
+  it("sets default action if not given", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+    }
+    entrypoint Orgs {
+      target model Org as org
+      update endpoint {}
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0];
+    expect(endpoint.actions).toMatchSnapshot();
+  });
 
   it.todo("gives proper error when nested cycle is detected");
   // create user { create profile { create user {} } }

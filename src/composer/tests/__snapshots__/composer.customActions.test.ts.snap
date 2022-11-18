@@ -1,5 +1,26 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`custom actions sets default action if not given 1`] = `
+[
+  {
+    "alias": "org",
+    "changeset": {
+      "name": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+    },
+    "kind": "update-one",
+    "model": "Org",
+    "response": [],
+  },
+]
+`;
+
 exports[`custom actions succeeds for basic composite create 1`] = `
 [
   {
