@@ -13,7 +13,7 @@
     "dev": "npm run dev:prepare; concurrently --names BUILD,MIGR,RUN --prefix-colors blue,magenta,yellow \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
     "// - prepare - precreate output folder(s) so watchers work as expected": "",
     "dev:prepare": "make-dir ./dist/db;",
-    "dev:compile": "chokidar ./src \"./node_modules/@gaudi/engine/\" --debounce --initial --command \"npm run build:compile\"",
+    "dev:compile": "chokidar ./src ./hooks \"./node_modules/@gaudi/engine/\" --debounce --initial --command \"npm run build:compile\"",
     "dev:migrate": "chokidar ./dist/db/ --debounce --initial --command \"npm run build:migrate\"",
     "// - if definition.json exists then start server and let nedemon take over, otherwise, wait for definition.json to be created before starting server": "",
     "dev:start": "if [ -f './dist/definition.json' ]; then npm start; else chokidar ./dist/definition.json --command \"if [[ '{event}' == 'add' ]]; then npm start; fi;\"; fi;",
