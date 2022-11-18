@@ -99,4 +99,7 @@ describe("custom actions", () => {
   });
   it.todo("succeeds to update through unique relation");
   it.todo("sets default action if not given");
+
+  it.todo("gives proper error when nested cycle is detected");
+  // create user { create profile { create user {} } }
 });

@@ -601,10 +601,10 @@ function composeSingleAction(
   // calculate implicit inputs
   const denyRules = spec.actionAtoms.filter((a): a is ActionAtomSpecDeny => a.kind === "deny");
   if (denyRules.length > 1) {
+    // FIXME should be aggregated instead?
     throw new Error(`Multiple deny rules not allowed`);
   }
   const implicitInputs = createInputsChangesetForModel(model, spec.kind === "create", denyRules[0]);
-  // apply deny rules
   // overwrite with custom inputs
   // assign inputs
   const inputs = implicitInputs;
@@ -625,8 +625,7 @@ function composeActionBlock(
   endpointKind: EndpointType
 ): ActionDef[] {
   /**
-   * Ako nema defaultnog actiona, treba ga postaviti, osim u `custom` endpointima
-   *
+   * FIXME Create a default context action if not specified in blueprint
    */
   const [_ctx, actions] = specs.reduce(
     (acc, atom) => {
@@ -648,14 +647,6 @@ NE PODRZAVAMO NESTED ACTIONE ZA SADA!!
 - each action can:
   - show up in context (if root)
   - become a setter (if nested)
-
-
-Ordering:
-- custom input
-- setter
-- deny rule:
-  - explicit deny: "skip" // deny id, slug
-  - implicit deny: "placeholder-default-input" // deny *
 */
 
 function processSelect(
