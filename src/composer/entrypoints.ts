@@ -11,26 +11,21 @@ import {
   Definition,
   EndpointDef,
   EntrypointDef,
-  FieldDef,
   FieldSetter,
   FieldSetterInput,
   FieldSetterReferenceInput,
   FieldsetDef,
-  IdentifierDef,
   ModelDef,
   SelectDef,
   SelectItem,
   TargetDef,
 } from "@src/types/definition";
 import {
-  ActionAtomSpec,
-  ActionAtomSpecAction,
   ActionAtomSpecDeny,
   ActionAtomSpecInput,
   ActionAtomSpecRefThrough,
   ActionAtomSpecSet,
   ActionSpec,
-  EndpointSpec,
   EntrypointSpec,
 } from "@src/types/specification";
 
@@ -253,171 +248,6 @@ function processEndpoints(
     }
   });
 }
-
-// function getReferenceValueSetter(
-//   def: Definition,
-//   name: string,
-//   path: string[]
-//   // ctxModel: ModelDef,
-//   // ctx: ActionContextMap
-// ): [string, FieldSetter, ActionDef[]] {
-//   const typedPath = getTypedPath(def, path);
-//   const leaf = _.last(typedPath)!;
-//   switch (leaf.kind) {
-//     case "model":
-//     case "query":
-//     case "relation":
-//       throw new Error(`Can't reference a ${leaf.kind}`);
-//     case "reference": {
-//       const { value: reference } = getRef<"reference">(def, leaf.refKey);
-//       const { value: field } = getRef<"field">(def, reference.fieldRefKey);
-//       return [
-//         field.name,
-//         {
-//           kind: "reference-value",
-//           type: field.type,
-//           target: { alias: "TODO", access: [...path, "id"] },
-//         },
-//         [],
-//       ];
-//     }
-//     case "field": {
-//       const { value: field } = getRef<"field">(def, leaf.refKey);
-//       return [
-//         name,
-//         { kind: "reference-value", type: field.type, target: { alias: "TODO", access: path } },
-//         [],
-//       ];
-//     }
-//   }
-// }
-
-// function composeAction(
-//   def: Definition,
-//   action: ActionSpec,
-//   context: ActionContextMap
-// ): ActionDef[] {
-//   const setters = action.actionAtoms.map((act): [string, FieldSetter, ActionDef[]] => {
-//     switch (act.kind) {
-//       case "set": {
-//         // this may set a literal or a reference value
-//         if (act.set.kind === "value") {
-//           return [act.target, { ...getTypedLiteralValue(act.set.value), kind: "value" }, []];
-//         } else {
-//           return getReferenceValueSetter(def, act.target, act.set.reference);
-//         }
-//       }
-//       case "reference": {
-//         return [
-//           act.target,
-//           {
-//             kind: "fieldset-reference-input",
-//             throughField: { name: act.through, refKey: "TODO" },
-//             fieldsetAccess: [act.target],
-//           },
-//           [],
-//         ];
-//       }
-//       case "action": {
-//         throw new Error("TODO nested actions");
-//         // compose inner action
-//         // const inner = composeAction(def, act.body, context);
-//         // return [
-//         //   {
-//         //     kind: "reference-value",
-//         //     target: { alias: "", access: act.body.targetPath },
-//         //     type: "text", // FIXME
-//         //   },
-//         //   inner,
-//         // ];
-//       }
-//     }
-//   });
-//   const changeset: Changeset = Object.fromEntries(setters);
-
-//   if (action.kind === "create") {
-//     return [
-//       {
-//         kind: "create-one",
-//         targetPath: action.targetPath!, // FIXME !
-//         changeset,
-//         alias: "FIXME",
-//         response: [],
-//       },
-//     ];
-//   } else if (action.kind === "update") {
-//     return [
-//       {
-//         kind: "update-one",
-//         targetPath: action.targetPath!, // FIXME !
-//         changeset,
-//       },
-//     ];
-//   } else if (action.kind === "delete") {
-//     throw new Error(`Delete actions not supported yet`);
-//   } else {
-//     assertUnreachable(action.kind);
-//   }
-// }
-
-// function actionAtomToFieldSetter(
-//   def: Definition,
-//   ctx: ModelDef, // context record that's CRD-ed
-//   contextVars: Record<string, ModelDef>, // all defined variables
-//   atom: ActionAtomSpec
-// ): FieldSetter {
-//   switch (atom.kind) {
-//     case "set": {
-//       const set = atom.set;
-//       switch (set.kind) {
-//         case "value": {
-//           return {
-//             kind: "value",
-//             value: set.value,
-//             type: getTypedLiteralValue(set.value),
-//           } as FieldSetter;
-//         }
-//         case "reference": {
-//           const path = set.reference;
-//           const identityPath = getTypedPath(def, [ctx.name, ...path]);
-//           const leaf = _.last(identityPath)!;
-//           if (leaf.kind === "field") {
-//             const { value: field } = getRef<"field">(def, leaf.refKey);
-//             return {
-//               kind: "reference-value",
-//               type: field.type,
-//               target: {
-//                 alias: "",
-//                 access: path,
-//               },
-//             };
-//           } else {
-//             const targetModel = getTargetModel(def.models, leaf.refKey);
-//             const { value: field } = getRef<"field">(def, `${targetModel.refKey}.id`);
-//             return {
-//               kind: "reference-value",
-//               type: field.type,
-//               target: {
-//                 alias: "",
-//                 access: path,
-//               },
-//             };
-//           }
-//         }
-//       }
-//     }
-//     // Due to bug in eslint/prettier, linter complains that `break` is expected in the case "set"
-//     // Since inner switch is exaustive, break is unreachable so prettier deletes it
-//     // eslint-disable-next-line no-fallthrough
-//     case "reference": {
-//       return {
-//         kind: "fieldset-reference-input",
-//         fieldsetAccess: [atom.target, atom.through],
-//         throughField: { name: atom.through, refKey: "" },
-//       };
-//     }
-//   }
-// }
 
 type ActionScope = "model" | "context";
 
