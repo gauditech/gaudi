@@ -90,6 +90,16 @@ exports[`custom actions succeeds with custom inputs 1`] = `
         "required": false,
         "type": "text",
       },
+      "extras": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-reference-input",
+        "throughField": {
+          "name": "name",
+          "refKey": "OrgExtra.name",
+        },
+      },
       "name": {
         "kind": "value",
         "type": "text",

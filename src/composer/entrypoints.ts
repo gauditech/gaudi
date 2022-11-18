@@ -13,6 +13,8 @@ import {
   EntrypointDef,
   FieldDef,
   FieldSetter,
+  FieldSetterInput,
+  FieldSetterReferenceInput,
   FieldsetDef,
   IdentifierDef,
   ModelDef,
@@ -25,6 +27,7 @@ import {
   ActionAtomSpecAction,
   ActionAtomSpecDeny,
   ActionAtomSpecInput,
+  ActionAtomSpecRefThrough,
   ActionAtomSpecSet,
   ActionSpec,
   EndpointSpec,
@@ -528,18 +531,14 @@ function getActionSetters(
   return Object.fromEntries(pairs);
 }
 
-function getInputSetters(
-  def: Definition,
-  model: ModelDef,
-  spec: ActionSpec,
-  deny?: ActionAtomSpecDeny
-): Changeset {
+function getInputSetters(def: Definition, model: ModelDef, spec: ActionSpec): Changeset {
   const setters: Changeset = Object.fromEntries(
     spec.actionAtoms
       .filter((a): a is ActionAtomSpecInput => a.kind === "input")
       .flatMap((a) => a.fields)
-      .map((input): [string, FieldSetter] => {
-        const { value: field } = getRef<"field">(def, `${model.refKey}.${input.name}`);
+      .map((input): [string, FieldSetterInput] => {
+        const { kind, value: field } = getRef<"field">(def, `${model.refKey}.${input.name}`);
+        ensureEqual(kind, "field");
         const setter: FieldSetter = {
           kind: "fieldset-input",
           type: field.type,
@@ -550,16 +549,32 @@ function getInputSetters(
         return [input.name, setter];
       })
   );
-  if (deny && deny.fields !== "*") {
-    if (_.some(deny.fields, (f) => f in setters)) {
-      throw new Error(
-        `Overlapping inputs and deny rules! Inputs: [${Object.keys(setters).join(
-          ", "
-        )}]. Denies: [${deny.fields.join(", ")}]`
-      );
-    }
-  }
   return setters;
+}
+
+function getReferenceInputs(def: Definition, model: ModelDef, spec: ActionSpec): Changeset {
+  return Object.fromEntries(
+    spec.actionAtoms
+      .filter((a): a is ActionAtomSpecRefThrough => a.kind === "reference")
+      .map((r): [string, FieldSetterReferenceInput] => {
+        const ref = getRef<"reference">(def, `${model.name}.${r.target}`);
+        ensureEqual(ref.kind, "reference");
+        const reference = ref.value;
+        const { value: refModel } = getRef<"model">(def, reference.toModelRefKey);
+        const { value: throughField } = getRef<"field">(def, `${refModel.refKey}.${r.through}`);
+        return [
+          reference.name,
+          {
+            kind: "fieldset-reference-input",
+            throughField: {
+              name: throughField.name,
+              refKey: throughField.refKey,
+            },
+            fieldsetAccess: [r.through],
+          },
+        ];
+      })
+  );
 }
 
 function ensureCorrectContextAction(
@@ -633,17 +648,47 @@ function composeSingleAction(
   // Parsing an action specification
   _.assign(changeset, getActionSetters(def, spec, model, ctx));
 
-  // calculate implicit inputs
   const denyRules = spec.actionAtoms.filter((a): a is ActionAtomSpecDeny => a.kind === "deny");
   if (denyRules.length > 1) {
     // FIXME should be aggregated instead?
     throw new Error(`Multiple deny rules not allowed`);
   }
-  const implicitInputs = createInputsChangesetForModel(model, spec.kind === "create", denyRules[0]);
-  // overwrite with custom inputs
-  const inputs = getInputSetters(def, model, spec, denyRules[0]);
+  // reference inputs
+  const referenceInputs = getReferenceInputs(def, model, spec);
+  // field inputs
+  const inputs = getInputSetters(def, model, spec);
+  // ensure no overlap between input and explicit denies
+  const explicitDenyFields = denyRules[0]?.fields === "*" ? [] : denyRules[0]?.fields ?? [];
+  ensureEqual(
+    _.intersection(Object.keys(inputs), explicitDenyFields).length,
+    0,
+    "Overlapping inputs and deny rule"
+  );
+
+  // ensure no overlap between inputs and reference inputs
+  ensureEqual(
+    _.intersection(Object.keys(inputs), Object.keys(referenceInputs)).length,
+    0,
+    "Overlap between reference inputs and field inputs"
+  );
+  // ensure no field inputs for reference inputs FIXME ref to field translation is lazy :)
+  const fieldsFromReferences = Object.keys(referenceInputs).map((name) => `${name}_id`);
+  ensureEqual(
+    _.intersection(fieldsFromReferences, Object.keys(inputs)).length,
+    0,
+    "Cannot reference and input the same field"
+  );
+  // calculate implicit inputs
+  const implicitInputs =
+    denyRules[0]?.fields === "*"
+      ? {}
+      : createInputsChangesetForModel(
+          model,
+          spec.kind === "create",
+          _.union(denyRules[0]?.fields, fieldsFromReferences) // ensure reference fields are skipped
+        );
   // assign inputs
-  changeset = _.assign({}, implicitInputs, inputs, changeset);
+  changeset = _.assign({}, implicitInputs, inputs, referenceInputs, changeset);
 
   // Define action
   return mkActionFromParts(spec, targetKind, target, model, changeset);
@@ -774,15 +819,12 @@ export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
 function createInputsChangesetForModel(
   model: ModelDef,
   required: boolean,
-  deny?: ActionAtomSpecDeny
+  skipFields: string[]
 ): Changeset {
-  if (deny?.fields === "*") {
-    return {};
-  }
   const fields = model.fields
     .filter((f) => !f.primary)
     .filter((f) => {
-      return (deny?.fields ?? []).indexOf(f.name) === -1;
+      return skipFields.indexOf(f.name) === -1;
     })
     .map((f): [string, FieldSetter] => [
       f.name,

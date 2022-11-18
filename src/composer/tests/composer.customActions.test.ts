@@ -106,6 +106,7 @@ describe("custom actions", () => {
       reference extras { to OrgExtra, unique }
     }
     model OrgExtra {
+      field name { type text }
       relation org { from Org, through extras }
     }
     entrypoint Orgs {
@@ -115,6 +116,7 @@ describe("custom actions", () => {
           update org as ox {
             set name "new name"
             input { description { optional } }
+            reference extras through name
             deny { extras_id }
           }
         }
@@ -123,6 +125,52 @@ describe("custom actions", () => {
     const def = compose(compile(parse(bp)));
     const endpoint = def.entrypoints[0].endpoints[0];
     expect(endpoint.actions).toMatchSnapshot();
+  });
+  it("fails when input and reference are on the same field", () => {
+    const bp = `
+    model Org {
+      reference extras { to OrgExtra, unique }
+    }
+    model OrgExtra {
+      relation org { from Org, through extras }
+    }
+    entrypoint Orgs {
+      target model Org as org
+      update endpoint {
+        action {
+          update org as ox {
+            input { extras_id }
+            reference extras through id
+          }
+        }
+      }
+    }`;
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      `"Cannot reference and input the same field"`
+    );
+  });
+  it("fails when there's an input and deny for the same field", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+    }
+    entrypoint Orgs {
+      target model Org as org
+      update endpoint {
+        action {
+          update org as ox {
+            input { name }
+            deny { name }
+          }
+        }
+      }
+    }
+    `;
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      `"Overlapping inputs and deny rule"`
+    );
   });
   it.todo("succeeds to update through unique relation");
   it.todo("sets default action if not given");

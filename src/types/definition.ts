@@ -333,22 +333,23 @@ export type FieldSetterReferenceValue = {
   target: { alias: string; access: string[] };
 };
 
+export type FieldSetterInput = {
+  kind: "fieldset-input";
+  type: FieldDef["type"];
+  fieldsetAccess: string[];
+  required: boolean;
+  default?: FieldSetterValue | FieldSetterReferenceValue;
+};
+
+export type FieldSetterReferenceInput = {
+  kind: "fieldset-reference-input";
+  fieldsetAccess: string[];
+  throughField: { name: string; refKey: string };
+};
+
 export type FieldSetter =
   // TODO add composite expression setter
-  | FieldSetterValue
-  | FieldSetterReferenceValue
-  | {
-      kind: "fieldset-input";
-      type: FieldDef["type"];
-      fieldsetAccess: string[];
-      required: boolean;
-      default?: FieldSetterValue | FieldSetterReferenceValue;
-    }
-  | {
-      kind: "fieldset-reference-input";
-      fieldsetAccess: string[];
-      throughField: { name: string; refKey: string };
-    };
+  FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
 
 export type IdentifierDef = {
   kind: "model" | "query" | "relation" | "reference" | "field";
