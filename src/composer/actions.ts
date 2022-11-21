@@ -23,16 +23,16 @@ import {
   ActionSpec,
 } from "@src/types/specification";
 
-type ActionScope = "model" | "context";
+type ActionScope = "model" | "target";
 
 function getTargetKind(def: Definition, spec: ActionSpec, targetAlias: string): ActionScope {
   const path = spec.targetPath;
   if (!path) {
-    return "context";
+    return "target";
   }
   if (path.length === 1) {
     if (path[0] === targetAlias) {
-      return "context";
+      return "target";
     }
     const model = def.models.find((m) => m.name === path[0]);
     if (model) {
@@ -213,7 +213,7 @@ function mkActionFromParts(
   model: ModelDef,
   changeset: Changeset
 ): ActionDef {
-  const alias = targetKind === "context" && spec.kind === "create" ? target.alias : spec.alias!; // FIXME come up with an alias in case of nested actions
+  const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias!; // FIXME come up with an alias in case of nested actions
 
   switch (spec.kind) {
     case "create": {
@@ -242,8 +242,8 @@ function composeSingleAction(
   let changeset: Changeset = {};
 
   const targetKind = getTargetKind(def, spec, target.alias);
-  // Overwriting a context action
-  if (targetKind === "context") {
+  // Overwriting a default action
+  if (targetKind === "target") {
     ensureCorrectContextAction(spec, target, endpointKind);
     if (spec.kind === "create") {
       _.assign(changeset, getParentContextCreateSetter(def, targets));
@@ -342,7 +342,7 @@ export function composeActionBlock(
   // FIXME Create a default context action if not specified in blueprint
   // find default action
   const target = _.last(targets)!;
-  const defaultActions = specs.filter((spc) => getTargetKind(def, spc, target.alias) === "context");
+  const defaultActions = specs.filter((spc) => getTargetKind(def, spc, target.alias) === "target");
   if (defaultActions.length === 1) {
     return actions;
   } else if (defaultActions.length > 1) {
