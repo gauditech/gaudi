@@ -76,29 +76,25 @@ describe("custom actions", () => {
     expect(actions).toMatchSnapshot();
   });
 
-  it.skip("progress", () => {
+  it("can create nested relations through transient references", () => {
     const bp = `
-    model User {
-      reference profile { to Profile, unique }
-      field name { type text }
-    }
-    model Profile {
-      field address { type text }
-      relation user { from User, through profile }
-    }
-    entrypoint Users {
-      target model User as user
-      update endpoint {
+    model Org { relation repos { from Repo, through org }; relation logs { from OrgLog, through org } }
+    model Repo { reference org { to Org }; field name { type text } }
+    model OrgLog { reference org { to Org } }
+
+    entrypoint R {
+      target model Repo as repo
+      create endpoint {
         action {
-          update user {
-          }
-          update user.profile {}
+          create repo {}
+          create repo.org.logs as log {}
         }
       }
-    }`;
+    }
+    `;
     const def = compose(compile(parse(bp)));
     const actions = def.entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchInlineSnapshot();
+    expect(actions).toMatchSnapshot();
   });
   it("fails when default action override is invalid type", () => {
     const bp = `

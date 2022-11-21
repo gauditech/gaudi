@@ -12,6 +12,8 @@ import {
   FieldSetter,
   FieldSetterInput,
   FieldSetterReferenceInput,
+  IdentifierDef,
+  IdentifierDefModel,
   ModelDef,
   TargetDef,
 } from "@src/types/definition";
@@ -23,9 +25,14 @@ import {
   ActionSpec,
 } from "@src/types/specification";
 
-type ActionScope = "model" | "target";
+type ActionScope = "model" | "target" | "context-path";
 
-function getTargetKind(def: Definition, spec: ActionSpec, targetAlias: string): ActionScope {
+function getTargetKind(
+  def: Definition,
+  spec: ActionSpec,
+  targetAlias: string,
+  ctx: Context
+): ActionScope {
   const path = spec.targetPath;
   if (!path) {
     return "target";
@@ -39,10 +46,20 @@ function getTargetKind(def: Definition, spec: ActionSpec, targetAlias: string): 
       return "model";
     }
   }
-  throw new Error("TODO");
+  // just ensure it doesn't crash
+  getTypedPathFromContext(def, ctx, path);
+  return "context-path";
 }
 
-function getTypedPathFromContext(def: Definition, ctx: Context, path: string[]) {
+type TypedContextPath =
+  | IdentifierDef
+  | { kind: "context"; model: IdentifierDefModel; name: string };
+
+function getTypedPathFromContext(
+  def: Definition,
+  ctx: Context,
+  path: string[]
+): TypedContextPath[] {
   if (_.isEmpty(path)) {
     throw new Error("Path is empty");
   }
@@ -51,7 +68,11 @@ function getTypedPathFromContext(def: Definition, ctx: Context, path: string[]) 
     throw new Error(`${start} is not in the context`);
   }
   const startModel = ctx[start].type;
-  return getTypedPath(def, [startModel, ...rest]);
+  const tpath = getTypedPath(def, [startModel, ...rest]);
+  return [
+    { kind: "context", model: tpath[0] as IdentifierDefModel, name: start },
+    ..._.tail(tpath),
+  ];
 }
 
 function findChangesetModel(def: Definition, ctx: Context, path: string[]): ModelDef {
@@ -71,33 +92,67 @@ function findChangesetModel(def: Definition, ctx: Context, path: string[]): Mode
     case "model": {
       return getRef<"model">(def.models, leaf.name).value;
     }
+    case "context": {
+      return getRef<"model">(def.models, leaf.model.refKey).value;
+    }
     default: {
       return getTargetModel(def.models, leaf.refKey);
     }
   }
 }
 
-function getParentContextCreateSetter(def: Definition, targets: TargetDef[]): Changeset {
-  const contextTarget = _.last(_.initial(targets));
-  const target = _.last(targets)!;
-  // set parent target reference
-  if (target.kind === "model" || !contextTarget) {
+// from target:
+// Org, repos ==> from Org.repos // set org.id to repo on create
+// from related context:
+// create repo.issue ==> relation
+// create repo.author ==> reference
+// so we can only support:
+// - on create : relation
+// - on update : reference
+function getParentContextCreateSetter(def: Definition, ctx: Context, path: string[]): Changeset {
+  const typedPath = getTypedPathFromContext(def, ctx, path);
+  // no parent context if path is absolute (starting with model)
+  if (typedPath[0]!.kind === "model") {
     return {};
-  } else if (target.kind === "relation") {
-    const { value: relation } = getRef<"relation">(def, target.refKey);
-    const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
-    const { value: field } = getRef<"field">(def, reference.fieldRefKey);
-    const setter: Changeset = {
-      [field.name]: {
-        kind: "reference-value",
-        type: "integer",
-        target: { alias: contextTarget.alias, access: ["id"] },
-      },
-    };
-    return setter;
-  } else {
-    throw new Error(`Can't create an action when targeting ${target.kind}`);
   }
+  /**
+   * FIXME replace these checks with cardinality
+   */
+  const [start, ...rest] = typedPath;
+  const transient = _.initial(rest);
+  const leaf = _.last(rest)!;
+  ensureEqual(start.kind, "context");
+  // last leaf must be a relation
+  if (leaf.kind !== "relation") {
+    throw new Error(
+      `Path ${path.join(".")} must end with a relation, ending with ${
+        _.last(typedPath)!.kind
+      } instead`
+    );
+  }
+  // everything in between must be a (non-nullable) reference!!!
+  _.tail(transient).forEach((tp, i) =>
+    ensureEqual(
+      tp.kind,
+      "reference",
+      `Transient elements in path ${path.join(".")} must be references; element[${i}] (${
+        tp.name
+      }) is a ${tp.kind}`
+    )
+  );
+  // set parent target reference
+
+  const { value: relation } = getRef<"relation">(def, leaf.refKey);
+  const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
+  const { value: field } = getRef<"field">(def, reference.fieldRefKey);
+  const setter: Changeset = {
+    [field.name]: {
+      kind: "reference-value",
+      type: "integer",
+      target: { alias: start.name, access: [..._.map(transient, "name"), "id"] },
+    },
+  };
+  return setter;
 }
 
 function getActionSetters(
@@ -247,13 +302,10 @@ function composeSingleAction(
 
   let changeset: Changeset = {};
 
-  const targetKind = getTargetKind(def, spec, target.alias);
+  const targetKind = getTargetKind(def, spec, target.alias, ctx);
   // Overwriting a default action
   if (targetKind === "target") {
     ensureCorrectContextAction(spec, target, endpointKind);
-    if (spec.kind === "create") {
-      _.assign(changeset, getParentContextCreateSetter(def, targets));
-    }
   } else {
     /*
     FIXME this check is not needed, but we currently require aliases in order to construct the fieldsets.
@@ -272,6 +324,29 @@ function composeSingleAction(
   */
     if (!spec.alias) {
       throw new Error(`We currently require every custom action to have an explicit alias`);
+    }
+  }
+
+  // set parent context, if any
+  switch (targetKind) {
+    case "model":
+      break;
+    case "target": {
+      if (target.kind !== "model") {
+        if (spec.kind === "create") {
+          const [context, _target] = _.takeRight(targets, 2);
+          const parentPath = [context.alias, target.name];
+          const parent = getParentContextCreateSetter(def, ctx, parentPath);
+          _.assign(changeset, parent);
+        } // else: delete filter
+      }
+      break;
+    }
+    case "context-path": {
+      if (spec.kind === "create") {
+        const parent = getParentContextCreateSetter(def, ctx, spec.targetPath!);
+        _.assign(changeset, parent);
+      } // else: delete filter
     }
   }
 
@@ -348,7 +423,9 @@ export function composeActionBlock(
   // FIXME Create a default context action if not specified in blueprint
   // find default action
   const target = _.last(targets)!;
-  const defaultActions = specs.filter((spc) => getTargetKind(def, spc, target.alias) === "target");
+  const defaultActions = specs.filter(
+    (spec) => getTargetKind(def, spec, target.alias, ctx) === "target"
+  );
   if (defaultActions.length === 1) {
     return actions;
   } else if (defaultActions.length > 1) {

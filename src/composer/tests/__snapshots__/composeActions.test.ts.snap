@@ -1,5 +1,53 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`custom actions can create nested relations through transient references 1`] = `
+[
+  {
+    "alias": "repo",
+    "changeset": {
+      "name": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
+      "org_id": {
+        "fieldsetAccess": [
+          "org_id",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "integer",
+      },
+    },
+    "kind": "create-one",
+    "model": "Repo",
+    "response": [],
+  },
+  {
+    "alias": "log",
+    "changeset": {
+      "org_id": {
+        "kind": "reference-value",
+        "target": {
+          "access": [
+            "org",
+            "id",
+          ],
+          "alias": "repo",
+        },
+        "type": "integer",
+      },
+    },
+    "kind": "create-one",
+    "model": "OrgLog",
+    "response": [],
+  },
+]
+`;
+
 exports[`custom actions correctly sets parent context 1`] = `
 [
   {

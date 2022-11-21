@@ -351,8 +351,12 @@ export type FieldSetter =
   // TODO add composite expression setter
   FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
 
-export type IdentifierDef = {
-  kind: "model" | "query" | "relation" | "reference" | "field";
-  name: string;
-  refKey: string;
-};
+// need this exported for TypedContextPath;
+export type IdentifierDefModel = { kind: "model"; name: string; refKey: string };
+export type IdentifierDef =
+  | {
+      kind: "query" | "relation" | "reference" | "field";
+      name: string;
+      refKey: string;
+    }
+  | IdentifierDefModel;
