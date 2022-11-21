@@ -1,33 +1,21 @@
 import _ from "lodash";
 
-import { getTypedLiteralValue, getTypedPath, getTypedPathEnding } from "./utils";
+import { composeActionBlock, createInputsChangesetForModel } from "./actions";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
-import { EndpointType, SelectAST } from "@src/types/ast";
+import { SelectAST } from "@src/types/ast";
 import {
-  ActionDef,
-  Changeset,
   Definition,
   EndpointDef,
   EntrypointDef,
-  FieldSetter,
-  FieldSetterInput,
-  FieldSetterReferenceInput,
   FieldsetDef,
   ModelDef,
   SelectDef,
   SelectItem,
   TargetDef,
 } from "@src/types/definition";
-import {
-  ActionAtomSpecDeny,
-  ActionAtomSpecInput,
-  ActionAtomSpecRefThrough,
-  ActionAtomSpecSet,
-  ActionSpec,
-  EntrypointSpec,
-} from "@src/types/specification";
+import { EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
@@ -52,7 +40,7 @@ function processEntrypoint(
     spec.identify || "id"
   );
   const name = spec.name;
-  const targetModel = findModel(models, target.retType);
+  const { value: targetModel } = getRef<"model">(models, target.retType);
 
   const thisContext: EndpointContext = { model: targetModel, target };
   const targetParents = [...parents, thisContext];
@@ -79,7 +67,7 @@ function calculateTarget(
     switch (prop.kind) {
       case "reference": {
         const reference = prop.value;
-        const model = findModel(models, reference.toModelRefKey);
+        const { value: model } = getRef<"model">(models, reference.toModelRefKey);
         return {
           kind: "reference",
           name,
@@ -92,7 +80,7 @@ function calculateTarget(
       }
       case "relation": {
         const relation = prop.value;
-        const model = findModel(models, relation.fromModelRefKey);
+        const { value: model } = getRef<"model">(models, relation.fromModelRefKey);
         return {
           kind: "relation",
           name,
@@ -105,7 +93,7 @@ function calculateTarget(
       }
       case "query": {
         const query = prop.value;
-        const model = findModel(models, query.retType);
+        const { value: model } = getRef<"model">(models, query.retType);
         return {
           kind: "query",
           name,
@@ -121,7 +109,7 @@ function calculateTarget(
       }
     }
   } else {
-    const model = findModel(models, name);
+    const { value: model } = getRef<"model">(models, name);
     return {
       kind: "model",
       name,
@@ -249,358 +237,6 @@ function processEndpoints(
   });
 }
 
-type ActionScope = "model" | "context";
-
-function getTargetKind(def: Definition, spec: ActionSpec, targetAlias: string): ActionScope {
-  const path = spec.targetPath;
-  if (!path) {
-    return "context";
-  }
-  if (path.length === 1) {
-    if (path[0] === targetAlias) {
-      return "context";
-    }
-    const model = def.models.find((m) => m.name === path[0]);
-    if (model) {
-      return "model";
-    }
-  }
-  throw new Error("TODO");
-}
-
-function getTypedPathFromContext(def: Definition, ctx: Context, path: string[]) {
-  if (_.isEmpty(path)) {
-    throw new Error("Path is empty");
-  }
-  const [start, ...rest] = path;
-  if (!(start in ctx)) {
-    throw new Error(`${start} is not in the context`);
-  }
-  const startModel = ctx[start].type;
-  return getTypedPath(def, [startModel, ...rest]);
-}
-
-function findChangesetModel(def: Definition, ctx: Context, path: string[]): ModelDef {
-  if (path.length === 1) {
-    // check if model
-    try {
-      return findModel(def.models, path[0]);
-      // eslint-disable-next-line no-empty
-    } catch (e) {}
-  }
-  const typedPath = getTypedPathFromContext(def, ctx, path);
-  const leaf = _.last(typedPath)!;
-  switch (leaf.kind) {
-    case "field": {
-      throw new Error(`Path ${path.join(".")} doesn't resolve into a model`);
-    }
-    case "model": {
-      return findModel(def.models, leaf.name);
-    }
-    default: {
-      return getTargetModel(def.models, leaf.refKey);
-    }
-  }
-}
-
-function getParentContextCreateSetter(def: Definition, targets: TargetDef[]): Changeset {
-  const contextTarget = _.last(_.initial(targets));
-  const target = _.last(targets)!;
-  // set parent target reference
-  if (target.kind === "model" || !contextTarget) {
-    return {};
-  } else if (target.kind === "relation") {
-    const { value: relation } = getRef<"relation">(def, target.refKey);
-    const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
-    const { value: field } = getRef<"field">(def, reference.fieldRefKey);
-    const setter: Changeset = {
-      [field.name]: {
-        kind: "reference-value",
-        type: "integer",
-        target: { alias: contextTarget.alias, access: ["id"] },
-      },
-    };
-    return setter;
-  } else {
-    throw new Error(`Can't create an action when targeting ${target.kind}`);
-  }
-}
-
-function getActionSetters(
-  def: Definition,
-  spec: ActionSpec,
-  model: ModelDef,
-  ctx: Context
-): Changeset {
-  const pairs = spec.actionAtoms
-    .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
-    .map((atom): [string, FieldSetter] => {
-      switch (atom.set.kind) {
-        case "value": {
-          const typedVal = getTypedLiteralValue(atom.set.value);
-          return [atom.target, { ...typedVal, kind: "value" }];
-        }
-        case "reference": {
-          const path = atom.set.reference;
-          const ctxTypedPath = getTypedPathFromContext(def, ctx, path);
-          const referenceRefKey = `${model.name}.${atom.target}`;
-          const { value: reference } = getRef<"reference">(def, referenceRefKey);
-          const { value: referenceField } = getRef<"field">(def, reference.fieldRefKey);
-          const typedPathEnding = getTypedPathEnding(def, _.map(ctxTypedPath, "name"));
-          const access = _.tail(_.map(typedPathEnding, "name"));
-          const { value: field } = getRef<"field">(def, _.last(typedPathEnding)!.refKey);
-          return [
-            referenceField.name,
-            { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
-          ];
-        }
-        default: {
-          throw new Error("should be unreachable");
-        }
-      }
-    });
-  return Object.fromEntries(pairs);
-}
-
-function getInputSetters(def: Definition, model: ModelDef, spec: ActionSpec): Changeset {
-  const setters: Changeset = Object.fromEntries(
-    spec.actionAtoms
-      .filter((a): a is ActionAtomSpecInput => a.kind === "input")
-      .flatMap((a) => a.fields)
-      .map((input): [string, FieldSetterInput] => {
-        const { kind, value: field } = getRef<"field">(def, `${model.refKey}.${input.name}`);
-        ensureEqual(kind, "field");
-        const setter: FieldSetter = {
-          kind: "fieldset-input",
-          type: field.type,
-          required: !input.optional,
-          fieldsetAccess: [input.name],
-          // TODO add default
-        };
-        return [input.name, setter];
-      })
-  );
-  return setters;
-}
-
-function getReferenceInputs(def: Definition, model: ModelDef, spec: ActionSpec): Changeset {
-  return Object.fromEntries(
-    spec.actionAtoms
-      .filter((a): a is ActionAtomSpecRefThrough => a.kind === "reference")
-      .map((r): [string, FieldSetterReferenceInput] => {
-        const ref = getRef<"reference">(def, `${model.name}.${r.target}`);
-        ensureEqual(ref.kind, "reference");
-        const reference = ref.value;
-        const { value: refModel } = getRef<"model">(def, reference.toModelRefKey);
-        const { value: throughField } = getRef<"field">(def, `${refModel.refKey}.${r.through}`);
-        return [
-          reference.name,
-          {
-            kind: "fieldset-reference-input",
-            throughField: {
-              name: throughField.name,
-              refKey: throughField.refKey,
-            },
-            fieldsetAccess: [r.through],
-          },
-        ];
-      })
-  );
-}
-
-function ensureCorrectContextAction(
-  spec: ActionSpec,
-  target: TargetDef,
-  endpointKind: EndpointType
-) {
-  if (spec.kind !== endpointKind) {
-    throw new Error(
-      `Mismatching context action: overriding ${endpointKind} endpoint with a ${spec.kind} action`
-    );
-  }
-  if (spec.kind === "create") {
-    if (spec.alias && spec.alias !== target.alias) {
-      throw new Error(
-        `Default create action cannot be re-aliased: expected ${target.alias}, got ${spec.alias}`
-      );
-    }
-  }
-  if (spec.kind === "delete" && spec.alias) {
-    throw new Error(`Delete action cannot make an alias; remove "as ${spec.alias}"`);
-  }
-}
-
-// type Without<T, K extends keyof T> = T extends T ? Omit<T, K> : never;
-
-function mkActionFromParts(
-  spec: ActionSpec,
-  targetKind: ActionScope,
-  target: TargetDef,
-  model: ModelDef,
-  changeset: Changeset
-): ActionDef {
-  const alias = targetKind === "context" && spec.kind === "create" ? target.alias : spec.alias!; // FIXME come up with an alias in case of nested actions
-
-  switch (spec.kind) {
-    case "create": {
-      return { kind: "create-one", alias, changeset, model: model.name, response: [] };
-    }
-    case "update": {
-      // FIXME update-many when targetKind is model
-      return { kind: "update-one", changeset, alias, model: model.name, response: [] };
-    }
-    case "delete": {
-      throw new Error("Delete is not supported");
-    }
-  }
-}
-
-function composeSingleAction(
-  def: Definition,
-  spec: ActionSpec,
-  ctx: Context,
-  targets: TargetDef[],
-  endpointKind: EndpointType
-): ActionDef {
-  const target = _.last(targets)!;
-  const model = findChangesetModel(def, ctx, spec.targetPath ?? [target.alias]);
-
-  let changeset: Changeset = {};
-
-  const targetKind = getTargetKind(def, spec, target.alias);
-  // Overwriting a context action
-  if (targetKind === "context") {
-    ensureCorrectContextAction(spec, target, endpointKind);
-    if (spec.kind === "create") {
-      _.assign(changeset, getParentContextCreateSetter(def, targets));
-    }
-  } else {
-    /*
-    FIXME this check is not needed, but we currently require aliases in order to construct the fieldsets.
-    This should be improved in the future.
-
-    We don't need an alias when:
-    - related action (eg. `update org.owner.profile`)
-    - model action without fieldsets (eg. `create AuditLog`)
-
-    We should also check for conflicts between non-aliased context action ("root path") fields and any action aliases.
-
-    The rules for constructing the fieldset:
-    - non-named context action fields are in the root record (eg. `create {}`)
-    - aliased actions are nested within alias path (named context counts as alias if explicit alias not given)
-    - ensure no conflicts between aliases AND ensure no conflicts between aliases and context action fields if non-named
-  */
-    if (!spec.alias) {
-      throw new Error(`We currently require every custom action to have an explicit alias`);
-    }
-  }
-
-  // Parsing an action specification
-  _.assign(changeset, getActionSetters(def, spec, model, ctx));
-
-  const denyRules = spec.actionAtoms.filter((a): a is ActionAtomSpecDeny => a.kind === "deny");
-  if (denyRules.length > 1) {
-    // FIXME should be aggregated instead?
-    throw new Error(`Multiple deny rules not allowed`);
-  }
-  // reference inputs
-  const referenceInputs = getReferenceInputs(def, model, spec);
-  // field inputs
-  const inputs = getInputSetters(def, model, spec);
-  // ensure no overlap between input and explicit denies
-  const explicitDenyFields = denyRules[0]?.fields === "*" ? [] : denyRules[0]?.fields ?? [];
-  ensureEqual(
-    _.intersection(Object.keys(inputs), explicitDenyFields).length,
-    0,
-    "Overlapping inputs and deny rule"
-  );
-
-  // ensure no overlap between inputs and reference inputs
-  ensureEqual(
-    _.intersection(Object.keys(inputs), Object.keys(referenceInputs)).length,
-    0,
-    "Overlap between reference inputs and field inputs"
-  );
-  // ensure no field inputs for reference inputs FIXME ref to field translation is lazy :)
-  const fieldsFromReferences = Object.keys(referenceInputs).map((name) => `${name}_id`);
-  ensureEqual(
-    _.intersection(fieldsFromReferences, Object.keys(inputs)).length,
-    0,
-    "Cannot reference and input the same field"
-  );
-  // calculate implicit inputs
-  const implicitInputs =
-    denyRules[0]?.fields === "*"
-      ? {}
-      : createInputsChangesetForModel(
-          model,
-          spec.kind === "create",
-          _.union(denyRules[0]?.fields, fieldsFromReferences) // ensure reference fields are skipped
-        );
-  // assign inputs
-  changeset = _.assign({}, implicitInputs, inputs, referenceInputs, changeset);
-
-  // Define action
-  return mkActionFromParts(spec, targetKind, target, model, changeset);
-}
-
-type Context = Record<string, ContextRecord>;
-type ContextRecord = { type: string };
-
-function composeActionBlock(
-  def: Definition,
-  specs: ActionSpec[],
-  ctx: Context,
-  targets: TargetDef[],
-  endpointKind: EndpointType
-): ActionDef[] {
-  const [_ctx, actions] = specs.reduce(
-    (acc, atom) => {
-      const [ctx, actions] = acc;
-      const action = composeSingleAction(def, atom, ctx, targets, endpointKind);
-      if (action.kind === "create-one") {
-        ctx[action.alias] = { type: action.model };
-      }
-      return [ctx, [...actions, action]];
-    },
-    [ctx, []] as [Context, ActionDef[]]
-  );
-  // FIXME Create a default context action if not specified in blueprint
-  // find default action
-  const target = _.last(targets)!;
-  const defaultActions = specs.filter((spc) => getTargetKind(def, spc, target.alias) === "context");
-  if (defaultActions.length === 1) {
-    return actions;
-  } else if (defaultActions.length > 1) {
-    throw new Error(`Multiple default action definitions`);
-  } else {
-    ensureEqual(defaultActions.length, 0);
-    switch (endpointKind) {
-      case "get":
-      case "list": {
-        // no custom action here
-        return actions;
-      }
-      default: {
-        // make custom default action and insert at the beginning
-        const action: ActionDef = composeSingleAction(
-          def,
-          {
-            kind: endpointKind,
-            alias: target.alias,
-            targetPath: [target.alias],
-            actionAtoms: [],
-          },
-          ctx,
-          targets,
-          endpointKind
-        );
-        return [action, ...actions];
-      }
-    }
-  }
-}
-
 function processSelect(
   models: ModelDef[],
   model: ModelDef,
@@ -686,30 +322,4 @@ export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
       },
     ]);
   return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
-}
-
-export function createInputsChangesetForModel(
-  model: ModelDef,
-  required: boolean,
-  skipFields: string[]
-): Changeset {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .filter((f) => {
-      return skipFields.indexOf(f.name) === -1;
-    })
-    .map((f): [string, FieldSetter] => [
-      f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required },
-    ]);
-
-  return Object.fromEntries(fields);
-}
-
-function findModel(models: ModelDef[], name: string): ModelDef {
-  const model = models.find((m) => m.name === name);
-  if (!model) {
-    throw ["model-not-defined", name];
-  }
-  return model;
 }
