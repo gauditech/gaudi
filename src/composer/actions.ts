@@ -75,6 +75,9 @@ function getTypedPathFromContext(
   ];
 }
 
+/**
+ * Returns a model the changeset operates on. Taken from the leaf of the resolved path.
+ */
 function findChangesetModel(def: Definition, ctx: Context, path: string[]): ModelDef {
   if (path.length === 1) {
     // check if model
@@ -101,26 +104,21 @@ function findChangesetModel(def: Definition, ctx: Context, path: string[]): Mode
   }
 }
 
-// from target:
-// Org, repos ==> from Org.repos // set org.id to repo on create
-// from related context:
-// create repo.issue ==> relation
-// create repo.author ==> reference
-// so we can only support:
-// - on create : relation
-// - on update : reference
 function getParentContextCreateSetter(def: Definition, ctx: Context, path: string[]): Changeset {
   const typedPath = getTypedPathFromContext(def, ctx, path);
   // no parent context if path is absolute (starting with model)
   if (typedPath[0]!.kind === "model") {
     return {};
   }
-  /**
-   * FIXME replace these checks with cardinality
-   */
+
   const [start, ...rest] = typedPath;
   const transient = _.initial(rest);
   const leaf = _.last(rest)!;
+
+  /**
+   * FIXME replace these checks with cardinality
+   */
+
   ensureEqual(start.kind, "context");
   // last leaf must be a relation
   if (leaf.kind !== "relation") {
@@ -276,7 +274,15 @@ function mkActionFromParts(
     }
     case "update": {
       // FIXME update-many when targetKind is model
-      return { kind: "update-one", changeset, alias, model: model.name, response: [] };
+      return {
+        kind: "update-one",
+        changeset,
+        alias,
+        model: model.name,
+        targetPath: spec.targetPath ?? [target.alias],
+        filter: undefined,
+        response: [],
+      };
     }
     case "delete": {
       throw new Error("Delete is not supported");

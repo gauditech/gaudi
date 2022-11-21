@@ -309,6 +309,8 @@ type CreateOneAction = {
 type UpdateOneAction = {
   kind: "update-one";
   alias: string;
+  targetPath: string[];
+  filter: FilterDef;
   model: string;
   changeset: Changeset;
   response: SelectDef;

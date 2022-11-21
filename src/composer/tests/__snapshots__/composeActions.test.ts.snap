@@ -48,6 +48,53 @@ exports[`custom actions can create nested relations through transient references
 ]
 `;
 
+exports[`custom actions can update deeply nested references 1`] = `
+[
+  {
+    "alias": undefined,
+    "changeset": {
+      "repo_id": {
+        "fieldsetAccess": [
+          "repo_id",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "integer",
+      },
+    },
+    "filter": undefined,
+    "kind": "update-one",
+    "model": "Issue",
+    "response": [],
+    "targetPath": [
+      "issue",
+    ],
+  },
+  {
+    "alias": "org",
+    "changeset": {
+      "name": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+    },
+    "filter": undefined,
+    "kind": "update-one",
+    "model": "Org",
+    "response": [],
+    "targetPath": [
+      "issue",
+      "repo",
+      "org",
+    ],
+  },
+]
+`;
+
 exports[`custom actions correctly sets parent context 1`] = `
 [
   {

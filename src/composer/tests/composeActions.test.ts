@@ -96,6 +96,29 @@ describe("custom actions", () => {
     const actions = def.entrypoints[0].endpoints[0].actions;
     expect(actions).toMatchSnapshot();
   });
+  it("can update deeply nested references", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      relation repos { from Repo, through org }
+    }
+    model Repo { reference org { to Org }; relation issues { from Issue, through repo } }
+    model Issue { reference repo { to Repo } }
+
+    entrypoint I {
+      target model Issue as issue
+      update endpoint {
+        action {
+          update issue {}
+          update issue.repo.org as org {}
+        }
+      }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const actions = def.entrypoints[0].endpoints[0].actions;
+    expect(actions).toMatchSnapshot();
+  });
   it("fails when default action override is invalid type", () => {
     const bp = `
     model Org {
