@@ -31,6 +31,15 @@ export function ensureNot<T, Tx extends T>(a: T, b: Tx): asserts a is Exclude<T,
   if (a === b) throw new Error("Must not be equal!");
 }
 
+export function ensureThrow(cb: any, message?: string): void {
+  try {
+    cb();
+  } catch (e) {
+    return;
+  }
+  throw new Error(message ?? `Expected a callback to throw`);
+}
+
 /** Concat all keys who's value is `true` using `delimiter` */
 export function concatKeys(map: Record<string, boolean>, delimiter = " "): string {
   return Object.entries(map)

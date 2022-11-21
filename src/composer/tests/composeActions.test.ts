@@ -228,6 +228,31 @@ describe("custom actions", () => {
       `"We currently require every custom action to have an explicit alias"`
     );
   });
+  test.each(["Repo", "repo", "org"])(
+    "fails when action alias uses existing model or context name",
+    (name) => {
+      const bp = `
+      model Org { relation repos { from Repo, through org }}
+      model Repo { reference org { to Org }}
+      entrypoint O {
+        target model Org as org
+        entrypoint R {
+          target relation repos as repo
+          create endpoint {
+            action {
+              create repo {}
+              create Repo as ${name} {}
+            }
+          }
+        }
+      }
+    `;
+      const spec = compile(parse(bp));
+      expect(() => compose(spec)).toThrowError(
+        `Cannot name an action with ${name}, name already exists in the context`
+      );
+    }
+  );
   it.todo("gives proper error when nested cycle is detected");
   // create user { create profile { create user {} } }
 });

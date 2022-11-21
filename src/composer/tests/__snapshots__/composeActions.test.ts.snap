@@ -34,7 +34,7 @@ exports[`custom actions correctly sets parent context 1`] = `
 exports[`custom actions sets default action if not given 1`] = `
 [
   {
-    "alias": "org",
+    "alias": "$target:updated",
     "changeset": {
       "name": {
         "fieldsetAccess": [

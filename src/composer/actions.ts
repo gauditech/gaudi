@@ -3,7 +3,7 @@ import _ from "lodash";
 import { getTypedLiteralValue, getTypedPath, getTypedPathEnding } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { ensureEqual, ensureExists, ensureThrow } from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -236,6 +236,12 @@ function composeSingleAction(
   targets: TargetDef[],
   endpointKind: EndpointType
 ): ActionDef {
+  // ensure alias doesn't reuse an existing name
+  if (spec.alias) {
+    const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
+    ensureThrow(() => getRef(def, spec.alias!), message);
+    ensureEqual(spec.alias! in ctx, false, message);
+  }
   const target = _.last(targets)!;
   const model = findChangesetModel(def, ctx, spec.targetPath ?? [target.alias]);
 
@@ -361,7 +367,7 @@ export function composeActionBlock(
           def,
           {
             kind: endpointKind,
-            alias: target.alias,
+            alias: endpointKind === "update" ? "$target:updated" : undefined,
             targetPath: [target.alias],
             actionAtoms: [],
           },

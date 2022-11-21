@@ -156,11 +156,9 @@ function processEndpoints(
   const targets = parents.map((p) => p.target);
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    const target = _.last(targets)!;
-
     // FIXME add @auth
     // FIXME what to do with @data?
-    const ctx = { [target.alias]: { type: target.retType } };
+    const ctx = Object.fromEntries(targets.map((t) => [t.alias, { type: t.retType }]));
 
     const actions = composeActionBlock(def, endSpec.action ?? [], ctx, targets, endSpec.type);
 
