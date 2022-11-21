@@ -9,9 +9,7 @@ import { chain } from "lodash";
 
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { compile } from "@src/compiler/compiler";
-import { compose } from "@src/composer/composer";
-import { parse } from "@src/parser/parser";
+import { compile, compose, parse } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
@@ -101,8 +99,9 @@ export function createApiTestSetup(
 
 // ----- schema name
 
+let schemeCounter = 0; // simple schema sequence
 function generateSchemaName() {
-  return `test-${Date.now()}`; // TODO: use UUID or sequence
+  return `test-${schemeCounter++}`;
 }
 
 // ----- folders
