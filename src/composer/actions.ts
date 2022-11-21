@@ -3,7 +3,7 @@ import _ from "lodash";
 import { getTypedLiteralValue, getTypedPath, getTypedPathEnding } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureExists, ensureThrow } from "@src/common/utils";
+import { ensureEqual, ensureThrow } from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -13,6 +13,7 @@ import {
   FieldSetterInput,
   FieldSetterReferenceInput,
   IdentifierDef,
+  IdentifierDefField,
   IdentifierDefModel,
   ModelDef,
   TargetDef,
@@ -51,28 +52,64 @@ function getTargetKind(
   return "context-path";
 }
 
-type TypedContextPath =
-  | IdentifierDef
-  | { kind: "context"; model: IdentifierDefModel; name: string };
+type IdentifierDefContext = { kind: "context"; model: IdentifierDefModel; name: string };
+type TypedContextPath = {
+  source: IdentifierDefModel | IdentifierDefContext;
+  path: IdentifierDef[];
+  leaf: IdentifierDefField | null;
+};
+interface TypedContextPathEnding extends TypedContextPath {
+  leaf: IdentifierDefField;
+}
 
-function getTypedPathFromContext(
-  def: Definition,
-  ctx: Context,
-  path: string[]
-): TypedContextPath[] {
+function getTypedPathFromContext(def: Definition, ctx: Context, path: string[]): TypedContextPath {
   if (_.isEmpty(path)) {
     throw new Error("Path is empty");
   }
   const [start, ...rest] = path;
-  if (!(start in ctx)) {
-    throw new Error(`${start} is not in the context`);
+  const isCtx = start in ctx;
+
+  let startModel: string;
+
+  if (isCtx) {
+    startModel = ctx[start].type;
+  } else {
+    startModel = getRef<"model">(def, start).value.name;
   }
-  const startModel = ctx[start].type;
   const tpath = getTypedPath(def, [startModel, ...rest]);
-  return [
-    { kind: "context", model: tpath[0] as IdentifierDefModel, name: start },
-    ..._.tail(tpath),
-  ];
+
+  let source: IdentifierDefContext | IdentifierDefModel;
+  if (isCtx) {
+    source = {
+      kind: "context",
+      model: tpath[0] as IdentifierDefModel,
+      name: start,
+    };
+  } else {
+    source = tpath[0] as IdentifierDefModel;
+  }
+  if (_.last(tpath)!.kind === "field") {
+    return { source, path: _.initial(_.tail(tpath)), leaf: _.last(tpath) as IdentifierDefField };
+  } else {
+    return { source, path: _.tail(tpath), leaf: null };
+  }
+}
+
+function getTypedPathFromContextEnding(
+  def: Definition,
+  ctx: Context,
+  path: string[]
+): TypedContextPathEnding {
+  if (_.isEmpty(path)) {
+    throw new Error("Path is empty");
+  }
+
+  const tpath = getTypedPathFromContext(def, ctx, path);
+  if (tpath.leaf) {
+    return tpath as TypedContextPathEnding;
+  } else {
+    return getTypedPathFromContext(def, ctx, [...path, "id"]) as TypedContextPathEnding;
+  }
 }
 
 /**
@@ -87,49 +124,49 @@ function findChangesetModel(def: Definition, ctx: Context, path: string[]): Mode
     } catch (e) {}
   }
   const typedPath = getTypedPathFromContext(def, ctx, path);
-  const leaf = _.last(typedPath)!;
-  switch (leaf.kind) {
-    case "field": {
-      throw new Error(`Path ${path.join(".")} doesn't resolve into a model`);
+  if (typedPath.leaf) {
+    throw new Error(`Path ${path.join(".")} doesn't resolve into a model`);
+  }
+  if (typedPath.path.length === 0) {
+    // only source
+    switch (typedPath.source.kind) {
+      case "context": {
+        return getRef<"model">(def, typedPath.source.model.refKey).value;
+      }
+      case "model": {
+        return getRef<"model">(def, typedPath.source.refKey).value;
+      }
     }
-    case "model": {
-      return getRef<"model">(def.models, leaf.name).value;
-    }
-    case "context": {
-      return getRef<"model">(def.models, leaf.model.refKey).value;
-    }
-    default: {
-      return getTargetModel(def.models, leaf.refKey);
-    }
+  } else {
+    return getTargetModel(def.models, _.last(typedPath.path)!.refKey);
   }
 }
 
 function getParentContextCreateSetter(def: Definition, ctx: Context, path: string[]): Changeset {
   const typedPath = getTypedPathFromContext(def, ctx, path);
   // no parent context if path is absolute (starting with model)
-  if (typedPath[0]!.kind === "model") {
+  if (typedPath.source.kind === "model") {
     return {};
   }
-
-  const [start, ...rest] = typedPath;
-  const transient = _.initial(rest);
-  const leaf = _.last(rest)!;
+  ensureEqual(typedPath.source.kind, "context");
+  ensureEqual(
+    typedPath.leaf,
+    null,
+    `Path ${path.join(".")} must end with a relation, ending with ${typedPath.leaf!.kind}`
+  );
 
   /**
    * FIXME replace these checks with cardinality
    */
+  const last = _.last(typedPath.path)!;
+  ensureEqual(
+    last.kind,
+    "relation",
+    `Path ${path.join(".")} must end with a relation, ending with ${last.kind}`
+  );
 
-  ensureEqual(start.kind, "context");
-  // last leaf must be a relation
-  if (leaf.kind !== "relation") {
-    throw new Error(
-      `Path ${path.join(".")} must end with a relation, ending with ${
-        _.last(typedPath)!.kind
-      } instead`
-    );
-  }
   // everything in between must be a (non-nullable) reference!!!
-  _.tail(transient).forEach((tp, i) =>
+  _.initial(typedPath.path).forEach((tp, i) =>
     ensureEqual(
       tp.kind,
       "reference",
@@ -140,14 +177,14 @@ function getParentContextCreateSetter(def: Definition, ctx: Context, path: strin
   );
   // set parent target reference
 
-  const { value: relation } = getRef<"relation">(def, leaf.refKey);
+  const { value: relation } = getRef<"relation">(def, last.refKey);
   const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
   const { value: field } = getRef<"field">(def, reference.fieldRefKey);
   const setter: Changeset = {
     [field.name]: {
       kind: "reference-value",
       type: "integer",
-      target: { alias: start.name, access: [..._.map(transient, "name"), "id"] },
+      target: { alias: typedPath.source.name, access: [..._.map(typedPath.path, "name"), "id"] },
     },
   };
   return setter;
@@ -169,13 +206,12 @@ function getActionSetters(
         }
         case "reference": {
           const path = atom.set.reference;
-          const ctxTypedPath = getTypedPathFromContext(def, ctx, path);
+          const typedPath = getTypedPathFromContextEnding(def, ctx, path);
           const referenceRefKey = `${model.name}.${atom.target}`;
           const { value: reference } = getRef<"reference">(def, referenceRefKey);
           const { value: referenceField } = getRef<"field">(def, reference.fieldRefKey);
-          const typedPathEnding = getTypedPathEnding(def, _.map(ctxTypedPath, "name"));
-          const access = _.tail(_.map(typedPathEnding, "name"));
-          const { value: field } = getRef<"field">(def, _.last(typedPathEnding)!.refKey);
+          const access = [..._.map(typedPath.path, "name"), typedPath.leaf.name];
+          const { value: field } = getRef<"field">(def, typedPath.leaf.refKey);
           return [
             referenceField.name,
             { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
@@ -305,7 +341,6 @@ function composeSingleAction(
   }
   const target = _.last(targets)!;
   const model = findChangesetModel(def, ctx, spec.targetPath ?? [target.alias]);
-
   let changeset: Changeset = {};
 
   const targetKind = getTargetKind(def, spec, target.alias, ctx);
@@ -355,7 +390,6 @@ function composeSingleAction(
       } // else: delete filter
     }
   }
-
   // Parsing an action specification
   _.assign(changeset, getActionSetters(def, spec, model, ctx));
 
@@ -396,6 +430,7 @@ function composeSingleAction(
       : createInputsChangesetForModel(
           model,
           spec.kind === "create",
+          _.compact([spec.alias!]),
           _.union(denyRules[0]?.fields, fieldsFromReferences) // ensure reference fields are skipped
         );
   // assign inputs
@@ -467,6 +502,7 @@ export function composeActionBlock(
 export function createInputsChangesetForModel(
   model: ModelDef,
   required: boolean,
+  namePath: string[],
   skipFields: string[]
 ): Changeset {
   const fields = model.fields

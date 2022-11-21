@@ -354,11 +354,10 @@ export type FieldSetter =
   FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
 
 // need this exported for TypedContextPath;
-export type IdentifierDefModel = { kind: "model"; name: string; refKey: string };
+type IdentifierDefGen<K> = { kind: K; name: string; refKey: string };
+export type IdentifierDefModel = IdentifierDefGen<"model">;
+export type IdentifierDefField = IdentifierDefGen<"field">;
 export type IdentifierDef =
-  | {
-      kind: "query" | "relation" | "reference" | "field";
-      name: string;
-      refKey: string;
-    }
+  | IdentifierDefGen<"query" | "relation" | "reference">
+  | IdentifierDefField
   | IdentifierDefModel;

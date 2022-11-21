@@ -191,7 +191,7 @@ function processEndpoints(
       }
       case "create": {
         const fieldset = calculateCreateFieldsetForModel(context.model);
-        const changeset = createInputsChangesetForModel(context.model, true, []);
+        const changeset = createInputsChangesetForModel(context.model, true, [], []);
         return {
           kind: "create",
           fieldset,
@@ -208,7 +208,7 @@ function processEndpoints(
       }
       case "update": {
         const fieldset = calculateUpdateFieldsetForModel(context.model);
-        const changeset = createInputsChangesetForModel(context.model, false, []);
+        const changeset = createInputsChangesetForModel(context.model, false, [], []);
         return {
           kind: "update",
           fieldset,
