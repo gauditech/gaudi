@@ -1,11 +1,13 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+import { RuntimeConfig } from "@src/runtime/config";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const modules: Record<string, any> = {};
 
-export async function importHooks(outputFolder: string) {
-  const hooksOutput = path.join(outputFolder, "hooks");
+export async function importHooks(config: RuntimeConfig) {
+  const hooksOutput = path.join(config.outputFolder, "hooks");
 
   async function loadHooksFromDir(dir: string) {
     const entities = await fs.readdir(path.join(hooksOutput, dir));

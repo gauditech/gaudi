@@ -1,9 +1,24 @@
-import { NextFunction, Request, Response } from "express";
+import { Express, NextFunction, Request, Response } from "express";
 
+import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { HttpResponseError } from "@src/runtime/server/error";
 import { ServerRequestHandler } from "@src/runtime/server/types";
 
 // ----- middleware
+
+/**
+ * Binds AppContext instance to express and request instances so it's
+ * accessible to server's internals (eg. req handlers).
+ */
+export function bindAppContextHandler(app: Express, ctx: AppContext) {
+  bindAppContext(app, ctx);
+
+  return (req: Request, resp: Response, next: NextFunction) => {
+    bindAppContext(req, ctx);
+
+    next();
+  };
+}
 
 /** Catch and handle any endpoint error. */
 export function endpointGuardHandler(handler: ServerRequestHandler) {
