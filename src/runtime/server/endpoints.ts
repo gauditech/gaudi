@@ -1,8 +1,8 @@
 import { Express, Request, Response } from "express";
-import { chain, compact } from "lodash";
+import _, { chain, compact } from "lodash";
 
 import { PathParam, buildEndpointPath } from "@src/builder/query";
-import { getRef } from "@src/common/refs";
+import { getRef, getTargetModel } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { EndpointQueries, endpointQueries } from "@src/runtime/query/build";
@@ -172,7 +172,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
+          // FIXME this is only temporary
+          // find default changeset
+          const act = endpoint.actions.find((a) => a.alias === _.last(endpoint.targets)!.alias)!;
+          const actionChangeset = buildChangset(act.changeset, {
             input: validationResult,
           });
           console.log("Changeset result", actionChangeset);
@@ -226,7 +229,11 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          const actionChangeset = buildChangset(endpoint.contextActionChangeset, {
+          // FIXME this is only temporary
+          // find default changeset
+          const act = endpoint.actions.find((a) => a.alias === _.last(endpoint.targets)!.alias)!;
+
+          const actionChangeset = buildChangset(act.changeset, {
             input: validationResult,
           });
 
