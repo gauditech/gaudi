@@ -42,6 +42,27 @@ export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKe
   throw ["unknown-refkey", refKey];
 }
 
+export function getRef2<T extends RefKind>(
+  def: Definition,
+  modelName: string,
+  relName?: string,
+  kinds: T[] = ["model", "reference", "relation", "query", "field"] as T[]
+): Ref<T> {
+  const ref = getRef<typeof kinds[number]>(def, relName ? `${modelName}.${relName}` : modelName);
+  if (kinds.indexOf(ref.kind as T) < 0) {
+    throw new Error(`Expected one of: [${kinds.join(", ")}], got ${ref.kind}`);
+  }
+  return ref;
+}
+
+getRef2.model = function getRefModel(def: Definition, modelName: string): ModelDef {
+  const ref = getRef2(def, modelName);
+  if (ref.kind === "model") {
+    return ref.value;
+  }
+  throw new Error(`Expected model, got ${ref.kind}`);
+};
+
 export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
   return getRef<T>([model], `${model.name}.${name}`);
 }
