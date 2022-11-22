@@ -31,7 +31,7 @@ export function ensureNot<T, Tx extends T>(a: T, b: Tx): asserts a is Exclude<T,
   if (a === b) throw new Error("Must not be equal!");
 }
 
-export function ensureThrow(cb: any, message?: string): void {
+export function ensureThrow(cb: () => unknown, message?: string): void {
   try {
     cb();
   } catch (e) {
