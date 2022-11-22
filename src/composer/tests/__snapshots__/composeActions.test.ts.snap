@@ -103,7 +103,6 @@ exports[`custom actions correctly sets parent context 1`] = `
     "changeset": {
       "name": {
         "fieldsetAccess": [
-          "myrepo",
           "name",
         ],
         "kind": "fieldset-input",
@@ -131,11 +130,10 @@ exports[`custom actions correctly sets parent context 1`] = `
 exports[`custom actions sets default action if not given 1`] = `
 [
   {
-    "alias": "org",
+    "alias": undefined,
     "changeset": {
       "name": {
         "fieldsetAccess": [
-          "org",
           "name",
         ],
         "kind": "fieldset-input",

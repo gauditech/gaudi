@@ -146,7 +146,6 @@ export type CreateEndpointDef = {
   targets: TargetDef[];
   response: SelectDef;
   fieldset: FieldsetDef;
-  contextActionChangeset: Changeset;
   actions: ActionDef[];
 };
 
@@ -155,7 +154,6 @@ export type UpdateEndpointDef = {
   targets: TargetDef[];
   response: SelectDef;
   fieldset: FieldsetDef;
-  contextActionChangeset: Changeset;
   actions: ActionDef[];
 };
 
@@ -347,6 +345,7 @@ export type FieldSetterReferenceInput = {
   kind: "fieldset-reference-input";
   fieldsetAccess: string[];
   throughField: { name: string; refKey: string };
+  // required: boolean;
 };
 
 export type FieldSetter =

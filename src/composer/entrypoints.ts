@@ -1,15 +1,17 @@
 import _ from "lodash";
 
-import { composeActionBlock, createInputsChangesetForModel } from "./actions";
+import { composeActionBlock } from "./actions";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
 import { SelectAST } from "@src/types/ast";
 import {
+  ActionDef,
   Definition,
   EndpointDef,
   EntrypointDef,
   FieldsetDef,
+  FieldsetFieldDef,
   ModelDef,
   SelectDef,
   SelectItem,
@@ -156,11 +158,7 @@ function processEndpoints(
   const targets = parents.map((p) => p.target);
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    // FIXME add @auth
-    // FIXME what to do with @data?
-    const ctx = Object.fromEntries(targets.map((t) => [t.alias, { type: t.retType }]));
-
-    const actions = composeActionBlock(def, endSpec.action ?? [], ctx, targets, endSpec.type);
+    const actions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
 
     switch (endSpec.type) {
       case "get": {
@@ -190,12 +188,10 @@ function processEndpoints(
         };
       }
       case "create": {
-        const fieldset = calculateCreateFieldsetForModel(context.model);
-        const changeset = createInputsChangesetForModel(context.model, true, [], []);
+        const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "create",
           fieldset,
-          contextActionChangeset: changeset,
           actions,
           targets,
           response: processSelect(
@@ -207,12 +203,10 @@ function processEndpoints(
         };
       }
       case "update": {
-        const fieldset = calculateUpdateFieldsetForModel(context.model);
-        const changeset = createInputsChangesetForModel(context.model, false, [], []);
+        const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "update",
           fieldset,
-          contextActionChangeset: changeset,
           actions,
           targets,
           response: processSelect(
@@ -290,34 +284,69 @@ function processSelect(
   }
 }
 
-export function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldsetDef] => [
-      f.name,
-      {
-        kind: "field",
-        nullable: f.nullable,
-        type: f.type,
-        required: true,
-        validators: f.validators,
-      },
-    ]);
-  return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
+export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
+  const fieldsetWithPaths = actions.flatMap((action) => {
+    return _.chain(action.changeset)
+      .toPairs()
+      .map(([name, setter]): null | [string[], FieldsetFieldDef] => {
+        switch (setter.kind) {
+          case "fieldset-input": {
+            const { value: field } = getRef<"field">(def, `${action.model}.${name}`);
+            return [
+              setter.fieldsetAccess,
+              {
+                kind: "field",
+                required: setter.required,
+                type: setter.type,
+                nullable: field.nullable,
+                validators: field.validators,
+              },
+            ];
+          }
+          case "fieldset-reference-input": {
+            const { value: field } = getRef<"field">(def, setter.throughField.refKey);
+            return [
+              setter.fieldsetAccess,
+              {
+                kind: "field",
+                required: true, // fixme
+                nullable: field.nullable,
+                type: field.type,
+                validators: field.validators,
+              },
+            ];
+          }
+          default:
+            return null;
+        }
+      })
+      .compact()
+      .value();
+  });
+
+  return collectFieldsetPaths(fieldsetWithPaths);
 }
 
-export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldsetDef] => [
-      f.name,
-      {
-        kind: "field",
-        nullable: f.nullable,
-        type: f.type,
-        required: false,
-        validators: f.validators,
-      },
-    ]);
-  return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
+function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDef {
+  const record = _.chain(paths)
+    .map((p) => p[0][0])
+    .uniq()
+    .map((name) => {
+      const relatedPaths = paths
+        .filter((p) => p[0][0] === name)
+        .map((p) => [_.tail(p[0]), p[1]] as [string[], FieldsetFieldDef]);
+      if (relatedPaths.length === 1 && relatedPaths[0][0].length === 0) {
+        // only a leaf node, return fieldset field
+        return [name, relatedPaths[0][1]];
+      } else if (relatedPaths.every((p) => p[0].length > 0)) {
+        // OK, record without faulty leaf nodes
+        return [name, collectFieldsetPaths(relatedPaths)];
+      } else {
+        // leaf node + non-empty node, this is not correct
+        throw new Error(`Error in paths: ${paths.map((p) => p[0].join(".")).sort()}`);
+      }
+    })
+    .fromPairs()
+    .value();
+  return { kind: "record", nullable: false, record };
 }

@@ -235,7 +235,7 @@ exports[`entrypoint composes basic example 1`] = `
                 "retType": "Org",
               },
               {
-                "alias": "$target_1",
+                "alias": "repo",
                 "identifyWith": {
                   "name": "id",
                   "paramName": "repo_id",
@@ -335,7 +335,7 @@ exports[`entrypoint composes basic example 1`] = `
                 "retType": "Org",
               },
               {
-                "alias": "$target_1",
+                "alias": "repo",
                 "identifyWith": {
                   "name": "id",
                   "paramName": "repo_id",
@@ -354,36 +354,38 @@ exports[`entrypoint composes basic example 1`] = `
             ],
           },
           {
-            "actions": [],
-            "contextActionChangeset": {
-              "org_id": {
-                "fieldsetAccess": [
-                  "org_id",
-                ],
-                "kind": "fieldset-input",
-                "required": true,
-                "type": "integer",
+            "actions": [
+              {
+                "alias": "repo",
+                "changeset": {
+                  "org_id": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "id",
+                      ],
+                      "alias": "$target_0",
+                    },
+                    "type": "integer",
+                  },
+                  "title": {
+                    "fieldsetAccess": [
+                      "title",
+                    ],
+                    "kind": "fieldset-input",
+                    "required": true,
+                    "type": "text",
+                  },
+                },
+                "kind": "create-one",
+                "model": "Repo",
+                "response": [],
               },
-              "title": {
-                "fieldsetAccess": [
-                  "title",
-                ],
-                "kind": "fieldset-input",
-                "required": true,
-                "type": "text",
-              },
-            },
+            ],
             "fieldset": {
               "kind": "record",
               "nullable": false,
               "record": {
-                "org_id": {
-                  "kind": "field",
-                  "nullable": false,
-                  "required": true,
-                  "type": "integer",
-                  "validators": [],
-                },
                 "title": {
                   "kind": "field",
                   "nullable": false,
@@ -473,7 +475,7 @@ exports[`entrypoint composes basic example 1`] = `
                 "retType": "Org",
               },
               {
-                "alias": "$target_1",
+                "alias": "repo",
                 "identifyWith": {
                   "name": "id",
                   "paramName": "repo_id",
@@ -495,7 +497,7 @@ exports[`entrypoint composes basic example 1`] = `
         "entrypoints": [],
         "name": "Repositories",
         "target": {
-          "alias": "$target_1",
+          "alias": "repo",
           "identifyWith": {
             "name": "id",
             "paramName": "repo_id",

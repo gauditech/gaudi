@@ -448,10 +448,10 @@ type ContextRecord = { type: string };
 export function composeActionBlock(
   def: Definition,
   specs: ActionSpec[],
-  ctx: Context,
   targets: TargetDef[],
   endpointKind: EndpointType
 ): ActionDef[] {
+  const ctx = Object.fromEntries(targets.map((t) => [t.alias, { type: t.retType }]));
   const [_ctx, actions] = specs.reduce(
     (acc, atom) => {
       const [ctx, actions] = acc;
@@ -487,7 +487,7 @@ export function composeActionBlock(
           def,
           {
             kind: endpointKind,
-            alias: target.alias,
+            alias: undefined,
             targetPath: [target.alias],
             actionAtoms: [],
           },
@@ -501,7 +501,7 @@ export function composeActionBlock(
   }
 }
 
-export function createInputsChangesetForModel(
+function createInputsChangesetForModel(
   model: ModelDef,
   required: boolean,
   namePath: string[],

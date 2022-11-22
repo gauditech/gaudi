@@ -1,8 +1,5 @@
-import {
-  calculateCreateFieldsetForModel,
-  calculateUpdateFieldsetForModel,
-  createInputsChangesetForModel,
-} from "@src/composer/entrypoints";
+import { composeActionBlock } from "@src/composer/actions";
+import { fieldsetFromActions } from "@src/composer/entrypoints";
 import {
   CreateEndpointDef,
   Definition,
@@ -24,10 +21,10 @@ import {
  * built from model on the fly.
  */
 export function buildEntrypoints(def: Definition): EntrypointDef[] {
-  return def.models.map(entrypointForModel);
+  return def.models.map((m) => entrypointForModel(def, m));
 }
 
-function entrypointForModel(model: ModelDef): EntrypointDef {
+function entrypointForModel(def: Definition, model: ModelDef): EntrypointDef {
   const name = `admin:${model.name}Entrypoint`;
   const target: TargetDef = {
     refKey: "N/A",
@@ -46,17 +43,17 @@ function entrypointForModel(model: ModelDef): EntrypointDef {
   return {
     name,
     entrypoints: [],
-    endpoints: endpointsForModel(model, target),
+    endpoints: endpointsForModel(def, model, target),
     target,
   };
 }
 
-function endpointsForModel(model: ModelDef, target: TargetDef): EndpointDef[] {
+function endpointsForModel(def: Definition, model: ModelDef, target: TargetDef): EndpointDef[] {
   return [
     getEndpointForModel(model, target),
     listEnpointForModel(model, target),
-    createEndpointForModel(model, target),
-    updateEndpointForModel(model, target),
+    createEndpointForModel(def, model, target),
+    updateEndpointForModel(def, model, target),
     deleteEndpointForModel(model, target),
   ];
 }
@@ -79,25 +76,35 @@ function listEnpointForModel(model: ModelDef, target: TargetDef): ListEndpointDe
   };
 }
 
-function createEndpointForModel(model: ModelDef, target: TargetDef): CreateEndpointDef {
+function createEndpointForModel(
+  def: Definition,
+  model: ModelDef,
+  target: TargetDef
+): CreateEndpointDef {
+  const actions = composeActionBlock(def, [], [target], "create");
+
   return {
     kind: "create",
     targets: [target],
-    actions: [],
+    actions,
+    fieldset: fieldsetFromActions(def, actions),
     response: modelToSelect(model),
-    fieldset: calculateCreateFieldsetForModel(model),
-    contextActionChangeset: createInputsChangesetForModel(model, true, []),
   };
 }
 
-function updateEndpointForModel(model: ModelDef, target: TargetDef): UpdateEndpointDef {
+function updateEndpointForModel(
+  def: Definition,
+  model: ModelDef,
+  target: TargetDef
+): UpdateEndpointDef {
+  const actions = composeActionBlock(def, [], [target], "update");
+
   return {
     kind: "update",
     targets: [target],
-    actions: [],
+    actions,
+    fieldset: fieldsetFromActions(def, actions),
     response: modelToSelect(model),
-    fieldset: calculateUpdateFieldsetForModel(model),
-    contextActionChangeset: createInputsChangesetForModel(model, false, []),
   };
 }
 
