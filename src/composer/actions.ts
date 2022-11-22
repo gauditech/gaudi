@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getTypedLiteralValue, getTypedPath, getTypedPathEnding } from "./utils";
+import { getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureThrow } from "@src/common/utils";
@@ -152,7 +152,7 @@ function getParentContextCreateSetter(def: Definition, ctx: Context, path: strin
   ensureEqual(
     typedPath.leaf,
     null,
-    `Path ${path.join(".")} must end with a relation, ending with ${typedPath.leaf!.kind}`
+    `Path ${path.join(".")} must end with a relation, ending with ${typedPath.leaf?.kind}`
   );
 
   /**
@@ -180,11 +180,12 @@ function getParentContextCreateSetter(def: Definition, ctx: Context, path: strin
   const { value: relation } = getRef<"relation">(def, last.refKey);
   const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
   const { value: field } = getRef<"field">(def, reference.fieldRefKey);
+  const namePath = _.initial(typedPath.path.map((p) => p.name));
   const setter: Changeset = {
     [field.name]: {
       kind: "reference-value",
       type: "integer",
-      target: { alias: typedPath.source.name, access: [..._.map(typedPath.path, "name"), "id"] },
+      target: { alias: typedPath.source.name, access: [...namePath, "id"] },
     },
   };
   return setter;
@@ -210,7 +211,8 @@ function getActionSetters(
           const referenceRefKey = `${model.name}.${atom.target}`;
           const { value: reference } = getRef<"reference">(def, referenceRefKey);
           const { value: referenceField } = getRef<"field">(def, reference.fieldRefKey);
-          const access = [..._.map(typedPath.path, "name"), typedPath.leaf.name];
+          const namePath = typedPath.path.map((p) => p.name);
+          const access = [...namePath, typedPath.leaf.name];
           const { value: field } = getRef<"field">(def, typedPath.leaf.refKey);
           return [
             referenceField.name,
@@ -333,12 +335,6 @@ function composeSingleAction(
   targets: TargetDef[],
   endpointKind: EndpointType
 ): ActionDef {
-  // ensure alias doesn't reuse an existing name
-  if (spec.alias) {
-    const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
-    ensureThrow(() => getRef(def, spec.alias!), message);
-    ensureEqual(spec.alias! in ctx, false, message);
-  }
   const target = _.last(targets)!;
   const model = findChangesetModel(def, ctx, spec.targetPath ?? [target.alias]);
   let changeset: Changeset = {};
@@ -348,6 +344,12 @@ function composeSingleAction(
   if (targetKind === "target") {
     ensureCorrectContextAction(spec, target, endpointKind);
   } else {
+    // ensure alias doesn't reuse an existing name
+    if (spec.alias) {
+      const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
+      ensureThrow(() => getRef(def, spec.alias!), message);
+      ensureEqual(spec.alias! in ctx, false, message);
+    }
     /*
     FIXME this check is not needed, but we currently require aliases in order to construct the fieldsets.
     This should be improved in the future.
@@ -485,7 +487,7 @@ export function composeActionBlock(
           def,
           {
             kind: endpointKind,
-            alias: endpointKind === "update" ? "$target:updated" : undefined,
+            alias: target.alias,
             targetPath: [target.alias],
             actionAtoms: [],
           },
@@ -512,7 +514,7 @@ export function createInputsChangesetForModel(
     })
     .map((f): [string, FieldSetter] => [
       f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required },
+      { kind: "fieldset-input", type: f.type, fieldsetAccess: [...namePath, f.name], required },
     ]);
 
   return Object.fromEntries(fields);
