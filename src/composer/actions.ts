@@ -308,7 +308,7 @@ function mkActionFromParts(
 
   switch (spec.kind) {
     case "create": {
-      return { kind: "create-one", alias, changeset, model: model.name, response: [] };
+      return { kind: "create-one", alias, changeset, model: model.name, select: [] };
     }
     case "update": {
       // FIXME update-many when targetKind is model
@@ -319,7 +319,7 @@ function mkActionFromParts(
         model: model.name,
         targetPath: spec.targetPath ?? [target.alias],
         filter: undefined,
-        response: [],
+        select: [],
       };
     }
     case "delete": {

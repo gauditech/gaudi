@@ -2,8 +2,9 @@ import _ from "lodash";
 
 import { composeActionBlock } from "./actions";
 
-import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
+import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
+import { mergePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
   ActionDef,
@@ -158,7 +159,8 @@ function processEndpoints(
   const targets = parents.map((p) => p.target);
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    const actions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
+    const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
+    const actions = actionsWithSelect(def, rawActions);
 
     switch (endSpec.type) {
       case "get": {
@@ -349,4 +351,74 @@ function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDe
     .fromPairs()
     .value();
   return { kind: "record", nullable: false, record };
+}
+
+function actionsWithSelect(def: Definition, actions: ActionDef[]): ActionDef[] {
+  // collect all targets
+  const targets = actions.flatMap((a) => {
+    return _.compact(
+      Object.values(a.changeset).map((setter) => {
+        switch (setter.kind) {
+          case "reference-value": {
+            return setter.target;
+          }
+          default: {
+            return null;
+          }
+        }
+      })
+    );
+  });
+  return actions.map((a): ActionDef => {
+    // normalize paths related to this action alias
+    const paths = mergePaths(targets.filter((t) => t.alias === a.alias).map((a) => a.access));
+    const model = getRef2.model(def, a.model);
+    const response = pathsToSelectDef(def, model, paths, []);
+    return { ...a, select: response };
+  });
+}
+
+function pathsToSelectDef(
+  def: Definition,
+  model: ModelDef,
+  paths: string[][],
+  namespace: string[]
+): SelectDef {
+  const direct = _.chain(paths)
+    .map((p) => p[0])
+    .uniq()
+    .value();
+  return direct.map((name): SelectItem => {
+    // what is name?
+    const ref = getRef2(def, model.name, name, ["query", "reference", "relation", "field"]);
+    const relatedPaths = paths
+      .filter((p) => p[0] === name)
+      .map(_.tail)
+      .filter((p) => p.length > 0);
+    switch (ref.kind) {
+      case "field": {
+        // ensure leaf
+        if (relatedPaths.length) {
+          throw new Error(`Field path is not root!`);
+        }
+        return {
+          kind: "field",
+          alias: name,
+          name,
+          refKey: ref.value.refKey,
+          namePath: [...namespace, name],
+        };
+      }
+      default: {
+        const newModel = getTargetModel(def.models, ref.value.refKey);
+        return {
+          kind: ref.kind,
+          alias: name,
+          name,
+          namePath: [...namespace, name],
+          select: pathsToSelectDef(def, newModel, relatedPaths, [...namespace, name]),
+        };
+      }
+    }
+  });
 }

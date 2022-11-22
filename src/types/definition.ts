@@ -301,7 +301,7 @@ type CreateOneAction = {
   alias: string;
   model: string;
   changeset: Changeset;
-  response: SelectDef;
+  select: SelectDef;
 };
 
 type UpdateOneAction = {
@@ -311,7 +311,7 @@ type UpdateOneAction = {
   filter: FilterDef;
   model: string;
   changeset: Changeset;
-  response: SelectDef;
+  select: SelectDef;
 };
 
 type DeleteManyAction = {
