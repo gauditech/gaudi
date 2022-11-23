@@ -299,6 +299,7 @@ export type ActionDef = CreateOneAction | UpdateOneAction;
 type CreateOneAction = {
   kind: "create-one";
   alias: string;
+  targetPath: string[];
   model: string;
   changeset: Changeset;
   select: SelectDef;

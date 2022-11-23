@@ -1,9 +1,11 @@
+import path from "path";
+
 import _ from "lodash";
 
 import { composeActionBlock } from "./actions";
 
 import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot } from "@src/common/utils";
+import { ensureEqual, ensureNot, ensureThrow } from "@src/common/utils";
 import { mergePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -354,8 +356,31 @@ function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDe
 }
 
 function actionsWithSelect(def: Definition, actions: ActionDef[]): ActionDef[] {
+  // collect all update paths
+  const targetPaths = _.chain(actions)
+    .flatMap((a) => {
+      switch (a.kind) {
+        case "create-one": {
+          // there's already a parent setter resolving this path, so we can skip it
+          return null;
+        }
+        case "update-one": {
+          try {
+            // make sure we're not updating a model directly
+            getRef2.model(def, _.first(a.targetPath)!);
+            return null;
+          } catch (e) {
+            // last item is what's being updated, we need to collect the id
+            const [alias, ...access] = [...a.targetPath, "id"];
+            return { alias, access };
+          }
+        }
+      }
+    })
+    .compact()
+    .value();
   // collect all targets
-  const targets = actions.flatMap((a) => {
+  const setterTargets = actions.flatMap((a) => {
     return _.compact(
       Object.values(a.changeset).map((setter) => {
         switch (setter.kind) {
@@ -369,9 +394,10 @@ function actionsWithSelect(def: Definition, actions: ActionDef[]): ActionDef[] {
       })
     );
   });
+  const allPaths = [...setterTargets, ...targetPaths];
   return actions.map((a): ActionDef => {
     // normalize paths related to this action alias
-    const paths = mergePaths(targets.filter((t) => t.alias === a.alias).map((a) => a.access));
+    const paths = mergePaths(allPaths.filter((t) => t.alias === a.alias).map((a) => a.access));
     const model = getRef2.model(def, a.model);
     const response = pathsToSelectDef(def, model, paths, []);
     return { ...a, select: response };

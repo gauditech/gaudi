@@ -380,6 +380,9 @@ exports[`entrypoint composes basic example 1`] = `
                 "kind": "create-one",
                 "model": "Repo",
                 "select": [],
+                "targetPath": [
+                  "repo",
+                ],
               },
             ],
             "fieldset": {

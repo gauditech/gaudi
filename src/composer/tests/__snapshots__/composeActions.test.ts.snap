@@ -46,6 +46,9 @@ exports[`custom actions can create nested relations through transient references
         ],
       },
     ],
+    "targetPath": [
+      "repo",
+    ],
   },
   {
     "alias": "log",
@@ -65,6 +68,11 @@ exports[`custom actions can create nested relations through transient references
     "kind": "create-one",
     "model": "OrgLog",
     "select": [],
+    "targetPath": [
+      "repo",
+      "org",
+      "logs",
+    ],
   },
 ]
 `;
@@ -144,6 +152,9 @@ exports[`custom actions correctly sets parent context 1`] = `
     "kind": "create-one",
     "model": "Repo",
     "select": [],
+    "targetPath": [
+      "myrepo",
+    ],
   },
 ]
 `;
@@ -191,6 +202,9 @@ exports[`custom actions succeeds for basic composite create 1`] = `
         "refKey": "OrgExtra.id",
       },
     ],
+    "targetPath": [
+      "OrgExtra",
+    ],
   },
   {
     "alias": "org",
@@ -222,6 +236,9 @@ exports[`custom actions succeeds for basic composite create 1`] = `
     "kind": "create-one",
     "model": "Org",
     "select": [],
+    "targetPath": [
+      "org",
+    ],
   },
 ]
 `;

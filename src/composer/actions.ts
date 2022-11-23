@@ -308,7 +308,14 @@ function mkActionFromParts(
 
   switch (spec.kind) {
     case "create": {
-      return { kind: "create-one", alias, changeset, model: model.name, select: [] };
+      return {
+        kind: "create-one",
+        alias,
+        changeset,
+        targetPath: spec.targetPath ?? [target.alias],
+        model: model.name,
+        select: [],
+      };
     }
     case "update": {
       // FIXME update-many when targetKind is model
@@ -316,8 +323,8 @@ function mkActionFromParts(
         kind: "update-one",
         changeset,
         alias,
-        model: model.name,
         targetPath: spec.targetPath ?? [target.alias],
+        model: model.name,
         filter: undefined,
         select: [],
       };
@@ -351,6 +358,9 @@ function composeSingleAction(
       ensureEqual(spec.alias! in ctx, false, message);
     }
     /*
+    FIXME with updates, we currently require re-aliasing in order to refresh the data to match updated values.
+    In other words, referencing a target path that was previously updated would reference stale values. 
+
     FIXME this check is not needed, but we currently require aliases in order to construct the fieldsets.
     This should be improved in the future.
 
@@ -488,7 +498,7 @@ export function composeActionBlock(
           {
             kind: endpointKind,
             alias: undefined,
-            targetPath: [target.alias],
+            targetPath: undefined,
             actionAtoms: [],
           },
           ctx,
