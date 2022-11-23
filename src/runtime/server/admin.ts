@@ -62,7 +62,6 @@ function getEndpointForModel(model: ModelDef, target: TargetDef): GetEndpointDef
   return {
     kind: "get",
     targets: [target],
-    actions: [],
     response: modelToSelect(model),
   };
 }
@@ -71,7 +70,6 @@ function listEnpointForModel(model: ModelDef, target: TargetDef): ListEndpointDe
   return {
     kind: "list",
     targets: [target],
-    actions: [],
     response: modelToSelect(model),
   };
 }

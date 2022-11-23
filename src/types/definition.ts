@@ -131,14 +131,14 @@ export type ListEndpointDef = {
   kind: "list";
   targets: TargetDef[];
   response: SelectDef;
-  actions: ActionDef[];
+  // actions: ActionDef[];
 };
 
 export type GetEndpointDef = {
   kind: "get";
   targets: TargetDef[];
   response: SelectDef;
-  actions: ActionDef[];
+  // actions: ActionDef[];
 };
 
 export type CreateEndpointDef = {

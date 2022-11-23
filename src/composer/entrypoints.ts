@@ -174,7 +174,7 @@ function processEndpoints(
             entrySpec.response,
             context.target.namePath
           ),
-          actions,
+          // actions,
           targets,
         };
       }
@@ -187,7 +187,7 @@ function processEndpoints(
             entrySpec.response,
             context.target.namePath
           ),
-          actions,
+          // actions,
           targets,
         };
       }

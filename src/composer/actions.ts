@@ -461,6 +461,11 @@ export function composeActionBlock(
   targets: TargetDef[],
   endpointKind: EndpointType
 ): ActionDef[] {
+  // we currently only allow create and update
+  if (["create", "update"].indexOf(endpointKind) < 0) {
+    ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
+  }
+
   const ctx = Object.fromEntries(targets.map((t) => [t.alias, { type: t.retType }]));
   const [_ctx, actions] = specs.reduce(
     (acc, atom) => {

@@ -1,4 +1,5 @@
 import { compile, compose, parse } from "@src/index";
+import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
 
 describe("custom actions", () => {
   it("succeeds for basic composite create", () => {
@@ -25,8 +26,8 @@ describe("custom actions", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const actions = def.entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchSnapshot();
+    const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
   it("succeeds for basic update with a deny rule", () => {
     const bp = `
@@ -51,8 +52,8 @@ describe("custom actions", () => {
       }
     }`;
     const def = compose(compile(parse(bp)));
-    const actions = def.entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchSnapshot();
+    const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
   it("correctly sets parent context", () => {
     const bp = `
@@ -72,8 +73,8 @@ describe("custom actions", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const actions = def.entrypoints[0].entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchSnapshot();
+    const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
 
   it("can create nested relations through transient references", () => {
@@ -93,8 +94,8 @@ describe("custom actions", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const actions = def.entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchSnapshot();
+    const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
   it("can update deeply nested references", () => {
     const bp = `
@@ -116,8 +117,8 @@ describe("custom actions", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const actions = def.entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchSnapshot();
+    const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
   it("fails when default action override is invalid type", () => {
     const bp = `
@@ -163,8 +164,8 @@ describe("custom actions", () => {
       }
     }`;
     const def = compose(compile(parse(bp)));
-    const actions = def.entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchSnapshot();
+    const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
   it("fails when input and reference are on the same field", () => {
     const bp = `
@@ -224,8 +225,8 @@ describe("custom actions", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const actions = def.entrypoints[0].endpoints[0].actions;
-    expect(actions).toMatchSnapshot();
+    const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
   it("fails when action alias is not given", () => {
     const bp = `
