@@ -28,7 +28,7 @@ describe("custom actions", () => {
     const actions = def.entrypoints[0].endpoints[0].actions;
     expect(actions).toMatchSnapshot();
   });
-  it("succeeds for basic update", () => {
+  it("succeeds for basic update with a deny rule", () => {
     const bp = `
     model Org {
       field name { type text }

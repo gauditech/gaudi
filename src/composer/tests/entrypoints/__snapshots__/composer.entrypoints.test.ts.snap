@@ -379,7 +379,7 @@ exports[`entrypoint composes basic example 1`] = `
                 },
                 "kind": "create-one",
                 "model": "Repo",
-                "response": [],
+                "select": [],
               },
             ],
             "fieldset": {
