@@ -36,6 +36,21 @@ async function loadFileAsModule(path: string) {
   return await eval("import(_encodedContent)");
 }
 
-export function getHook(file: string, target: string) {
-  return modules[file][target];
+export type HookCode =
+  | { kind: "inline"; inline: string }
+  | { kind: "source"; target: string; file: string };
+
+export function executeHook(code: HookCode, args: Record<string, unknown>) {
+  switch (code.kind) {
+    case "inline": {
+      const argString = Object.entries(args)
+        .map((name, value) => `const ${name} = ${JSON.stringify(value)};`)
+        .join();
+      return eval(`${argString}${code.inline}`);
+    }
+    case "source": {
+      const hook = modules[code.file][code.target];
+      return hook(args);
+    }
+  }
 }

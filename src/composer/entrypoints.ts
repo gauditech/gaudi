@@ -267,6 +267,8 @@ function processSelect(
           namePath: [...namePath, name],
           refKey: ref.value.refKey,
         };
+      } else if (ref.kind === "hook") {
+        return { kind: ref.kind, name, namePath: [...namePath, name], code: ref.value.code };
       } else {
         ensureNot(ref.kind, "model" as const);
         const targetModel = getTargetModel(models, ref.value.refKey);

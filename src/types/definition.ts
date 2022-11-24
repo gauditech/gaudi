@@ -1,6 +1,7 @@
 import { BinaryOperator } from "./ast";
 
 import { RefKind } from "@src/common/refs";
+import { HookCode } from "@src/runtime/hooks";
 
 export type Definition = {
   models: ModelDef[];
@@ -15,6 +16,7 @@ export type ModelDef = {
   references: ReferenceDef[];
   relations: RelationDef[];
   queries: QueryDef[];
+  hooks: HookDef[];
 };
 
 export type FieldDef = {
@@ -69,6 +71,13 @@ export type QueryDef = {
   filter: FilterDef;
   select: SelectDef;
   // count?: true;
+};
+
+export type HookDef = {
+  refKey: string;
+  name: string;
+  args: { name: string }[];
+  code: HookCode;
 };
 
 export type QueryDefPath = {
@@ -185,6 +194,13 @@ export type SelectFieldItem = {
   alias: string;
 };
 
+export type SelectHookItem = {
+  kind: "hook";
+  name: string;
+  namePath: string[];
+  code: HookCode;
+};
+
 export type DeepSelectItem = {
   kind: "reference" | "relation" | "query";
   name: string;
@@ -195,7 +211,7 @@ export type DeepSelectItem = {
   select: SelectItem[];
 };
 
-export type SelectItem = SelectableItem | DeepSelectItem;
+export type SelectItem = SelectableItem | DeepSelectItem | SelectHookItem;
 
 export type SelectDef = SelectItem[];
 
@@ -291,7 +307,7 @@ export interface IsTextEqual extends IValidatorDef {
 export interface HookValidator {
   name: "hook";
   args: { name: string }[];
-  code: { kind: "inline"; inline: string } | { kind: "source"; target: string; file: string };
+  code: HookCode;
 }
 
 export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;

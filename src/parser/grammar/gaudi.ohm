@@ -19,6 +19,7 @@ Gaudi {
     | Relation
     | Query
     | Computed
+    | Hook
 
   Field
     = "field" identifier "{" NonemptyNewlineBody<FieldBody, ","> "}"

@@ -13,6 +13,7 @@ import {
   QueryDef,
   QueryDefPath,
   SelectDef,
+  SelectHookItem,
   SelectItem,
   SelectableItem,
   TargetDef,
@@ -23,6 +24,7 @@ export type QueryTree = {
   name: string;
   alias: string;
   query: QueryDef;
+  hooks: SelectHookItem[];
   related: QueryTree[];
 };
 
@@ -38,6 +40,10 @@ export function mergePaths(paths: NamePath[]): NamePath[] {
 
 export function selectToSelectable(select: SelectDef): SelectableItem[] {
   return select.filter((s): s is SelectableItem => s.kind === "field");
+}
+
+export function selectToHooks(select: SelectDef): SelectHookItem[] {
+  return select.filter((s): s is SelectHookItem => s.kind === "hook");
 }
 
 /**
@@ -280,12 +286,14 @@ export function getFilterPaths(filter: FilterDef): string[][] {
 
 export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
+  const hooks = selectToHooks(q.select);
   const { value: model } = getRef<"model">(def.models, query.retType);
 
   return {
     name: query.name,
     alias: query.name,
     query,
+    hooks,
     related: queriesFromSelect(def, model, q.select).map((q) => buildQueryTree(def, q)),
   };
 }
@@ -314,7 +322,7 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
 
 function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
   const namePath = [model.name, ...select.namePath.slice(by)];
-  if (select.kind === "field") {
+  if (select.kind === "field" || select.kind === "hook") {
     return {
       ...select,
       namePath,

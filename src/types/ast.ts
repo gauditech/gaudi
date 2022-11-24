@@ -11,7 +11,7 @@ export type ModelAST = WithContext<{
   body: ModelBodyAST[];
 }>;
 
-export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST;
+export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST | HookAST;
 
 export type FieldAST = WithContext<{
   kind: "field";

@@ -15,6 +15,7 @@ import {
   Definition,
   FieldDef,
   FilterDef,
+  HookDef,
   IValidatorDef,
   LiteralFilterDef,
   ModelDef,
@@ -28,6 +29,7 @@ import {
 import {
   ExpSpec,
   FieldSpec,
+  HookSpec,
   ModelSpec,
   QuerySpec,
   ReferenceSpec,
@@ -69,8 +71,8 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
         ...mspec.computeds.map((c) => c.name.toLowerCase()),
       ]);
       const mdef = defineModel(def, mspec);
-      mspec.fields.forEach((fspec) => {
-        defineField(def, mdef, fspec);
+      mspec.fields.forEach((hspec) => {
+        defineField(def, mdef, hspec);
       });
       mspec.references.forEach((rspec) => {
         tryCall(() => defineReference(def, mdef, rspec));
@@ -80,6 +82,9 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
       });
       mspec.queries.forEach((qspec) => {
         tryCall(() => defineQuery(def, mdef, qspec));
+      });
+      mspec.hooks.forEach((hspec) => {
+        tryCall(() => defineHook(def, mdef, hspec));
       });
 
       return mdef;
@@ -124,6 +129,7 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
     references: [],
     relations: [],
     queries: [],
+    hooks: [],
   };
   const idField = constructIdField(model);
   model.fields.push(idField);
@@ -146,24 +152,24 @@ function constructIdField(mdef: ModelDef): FieldDef {
   };
 }
 
-function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDef {
-  const refKey = `${mdef.refKey}.${fspec.name}`;
+function defineField(def: Definition, mdef: ModelDef, hspec: FieldSpec): FieldDef {
+  const refKey = `${mdef.refKey}.${hspec.name}`;
   const ex = getDefinition(def, refKey, "field");
   if (ex) return ex;
 
-  const type = validateType(fspec.type);
+  const type = validateType(hspec.type);
 
   const f: FieldDef = {
     refKey,
     modelRefKey: mdef.refKey,
-    name: fspec.name,
-    dbname: fspec.name.toLowerCase(),
+    name: hspec.name,
+    dbname: hspec.name.toLowerCase(),
     type,
     dbtype: constructDbType(type),
     primary: false,
-    unique: !!fspec.unique,
-    nullable: !!fspec.nullable,
-    validators: validatorSpecsToDefs(type, fspec.validators),
+    unique: !!hspec.unique,
+    nullable: !!hspec.nullable,
+    validators: validatorSpecsToDefs(type, hspec.validators),
   };
   mdef.fields.push(f);
   return f;
@@ -316,6 +322,24 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
 
   mdef.queries.push(query);
   return query;
+}
+
+function defineHook(def: Definition, mdef: ModelDef, hspec: HookSpec): HookDef {
+  const refKey = `${mdef.refKey}.${hspec.name}`;
+  const ex = getDefinition(def, refKey, "hook");
+  if (ex) return ex;
+
+  const name = hspec.name;
+  if (!name) throw Error("Model hooks must be named");
+
+  const h: HookDef = {
+    refKey,
+    name: name,
+    args: hspec.args,
+    code: hspec.code,
+  };
+  mdef.hooks.push(h);
+  return h;
 }
 
 function getLiteralType(literal: LiteralValue): LiteralFilterDef["type"] {

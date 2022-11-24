@@ -11,7 +11,7 @@ import {
   string,
 } from "yup";
 
-import { getHook } from "../hooks";
+import { executeHook } from "../hooks";
 
 import { assertUnreachable } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
@@ -177,27 +177,9 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
 }
 
 function buildHookSchema<S extends BaseSchema>(validator: HookValidator, schema: S): S {
-  let testFn: (value: unknown) => boolean;
-  const code = validator.code;
-  const args = validator.args;
-  const hookName = args[0]?.name;
-
-  if (code.kind === "inline") {
-    testFn = (value) => {
-      return eval(
-        hookName ? `const ${hookName} = ${JSON.stringify(value)};${code.inline}` : code.inline
-      );
-    };
-  } else {
-    testFn = (value) => {
-      const hook = getHook(code.file, code.target);
-      if (hookName) {
-        return hook({ [hookName]: value });
-      } else {
-        return hook();
-      }
-    };
-  }
-
+  const argName = validator.args[0]?.name;
+  const testFn = (value: unknown) => {
+    return executeHook(validator.code, argName ? { [argName]: value } : {});
+  };
   return schema.test(testFn);
 }

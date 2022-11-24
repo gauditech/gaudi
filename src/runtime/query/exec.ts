@@ -1,6 +1,8 @@
 import { Knex } from "knex";
 import _ from "lodash";
 
+import { executeHook } from "../hooks";
+
 import { QueryTree, selectableId } from "./build";
 import { queryToString } from "./stringify";
 
@@ -66,5 +68,12 @@ export async function executeQueryTree(
       Object.assign(r, { [rel.name]: relResultsForId });
     });
   }
+
+  results.forEach((result) => {
+    qt.hooks.forEach((h) => {
+      result[h.name] = executeHook(h.code, {});
+    });
+  });
+
   return results;
 }

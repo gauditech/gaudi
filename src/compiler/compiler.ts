@@ -196,6 +196,7 @@ function compileModel(model: ModelAST): ModelSpec {
   const relations: RelationSpec[] = [];
   const queries: QuerySpec[] = [];
   const computeds: ComputedSpec[] = [];
+  const hooks: HookSpec[] = [];
 
   model.body.forEach((b) => {
     if (b.kind === "field") {
@@ -208,6 +209,8 @@ function compileModel(model: ModelAST): ModelSpec {
       queries.push(compileQuery(b));
     } else if (b.kind === "computed") {
       computeds.push(compileComputed(b));
+    } else if (b.kind === "hook") {
+      hooks.push(compileHook(b));
     }
   });
 
@@ -219,6 +222,7 @@ function compileModel(model: ModelAST): ModelSpec {
     relations,
     queries,
     computeds,
+    hooks,
     interval: model.interval,
   };
 }

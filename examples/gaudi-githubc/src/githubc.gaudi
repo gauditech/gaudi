@@ -34,6 +34,8 @@ model Org {
     query members { from memberships.user }
     query public_repos { from repos, filter { is_public is true } }
     query public_issues { from public_repos.issues }
+
+    hook extra_data { inline `console.log('inside hook'); "hook result"` }
 }
 
 model OrgMembership {
@@ -82,7 +84,7 @@ model UserAccessToken {
 entrypoint Orgs {
     target model Org
     identify with slug
-    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues }
+    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, extra_data }
 
     get endpoint {}
     list endpoint {}

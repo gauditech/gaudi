@@ -36,6 +36,9 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
             return [select.alias, { type: "array", items: { type: "object", properties } }];
           }
         }
+        case "hook": {
+          return [select.name, {}];
+        }
       }
     });
 
