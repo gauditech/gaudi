@@ -13,12 +13,14 @@ import {
   Definition,
   EndpointDef,
   EntrypointDef,
+  FieldSetterReferenceValue,
   FieldsetDef,
   FieldsetFieldDef,
   ModelDef,
   SelectDef,
   SelectItem,
   TargetDef,
+  TargetWithSelectDef,
 } from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
@@ -162,7 +164,11 @@ function processEndpoints(
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
-    const actions = actionsWithSelect(def, rawActions);
+    const selectDeps = collectActionDeps(def, rawActions);
+    const actions = wrapActionsWithSelect(def, rawActions, selectDeps);
+    const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
+    const parentContext = _.initial(targetsWithSelect);
+    const target = _.last(targetsWithSelect)!;
 
     switch (endSpec.type) {
       case "get": {
@@ -175,7 +181,8 @@ function processEndpoints(
             context.target.namePath
           ),
           // actions,
-          targets,
+          parentContext,
+          target,
         };
       }
       case "list": {
@@ -188,7 +195,8 @@ function processEndpoints(
             context.target.namePath
           ),
           // actions,
-          targets,
+          parentContext,
+          target: _.omit(target, "identifyWith"),
         };
       }
       case "create": {
@@ -197,7 +205,8 @@ function processEndpoints(
           kind: "create",
           fieldset,
           actions,
-          targets,
+          parentContext,
+          target: _.omit(target, "identifyWith"),
           response: processSelect(
             models,
             context.model,
@@ -212,7 +221,8 @@ function processEndpoints(
           kind: "update",
           fieldset,
           actions,
-          targets,
+          parentContext,
+          target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
           response: processSelect(
             models,
             context.model,
@@ -225,7 +235,8 @@ function processEndpoints(
         return {
           kind: "delete",
           actions,
-          targets,
+          parentContext,
+          target,
           response: undefined,
         };
       }
@@ -355,7 +366,37 @@ function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDe
   return { kind: "record", nullable: false, record };
 }
 
-function actionsWithSelect(def: Definition, actions: ActionDef[]): ActionDef[] {
+type SelectDep = FieldSetterReferenceValue["target"];
+
+function wrapTargetsWithSelect(
+  def: Definition,
+  targets: TargetDef[],
+  deps: SelectDep[]
+): TargetWithSelectDef[] {
+  return targets.map((target) => {
+    const paths = mergePaths(
+      deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
+    );
+    const model = getRef2.model(def, target.retType);
+    const select = pathsToSelectDef(def, model, paths, []);
+    return { ...target, select };
+  });
+}
+function wrapActionsWithSelect(
+  def: Definition,
+  actions: ActionDef[],
+  deps: SelectDep[]
+): ActionDef[] {
+  return actions.map((a): ActionDef => {
+    // normalize paths related to this action alias
+    const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
+    const model = getRef2.model(def, a.model);
+    const select = pathsToSelectDef(def, model, paths, []);
+    return { ...a, select };
+  });
+}
+
+function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
   const targetPaths = _.chain(actions)
     .flatMap((a) => {
@@ -394,14 +435,7 @@ function actionsWithSelect(def: Definition, actions: ActionDef[]): ActionDef[] {
       })
     );
   });
-  const allPaths = [...setterTargets, ...targetPaths];
-  return actions.map((a): ActionDef => {
-    // normalize paths related to this action alias
-    const paths = mergePaths(allPaths.filter((t) => t.alias === a.alias).map((a) => a.access));
-    const model = getRef2.model(def, a.model);
-    const response = pathsToSelectDef(def, model, paths, []);
-    return { ...a, select: response };
-  });
+  return [...setterTargets, ...targetPaths];
 }
 
 function pathsToSelectDef(

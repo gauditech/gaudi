@@ -45,58 +45,37 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
  */
 
 export type EndpointQueries = {
-  context?: QueryDef;
-  target: QueryTree;
+  parentContextQueryTrees: QueryTree[];
+  targetQueryTree: QueryTree;
 };
+
 export function endpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
-  // do we query context separately?
-  const card = endpoint.kind === "create" || endpoint.kind === "list" ? "many" : "one";
-  if (endpoint.targets.length === 0) {
-    throw new Error("Targets can't be empty");
-  } else if (card === "one") {
-    // context is target
-    const targets = endpoint.targets;
-    const fromPath = _.last(targets)!.namePath;
-    const filter = filterFromTargets(targets);
-    const query = queryFromParts(
-      def,
-      "target",
-      fromPath,
-      filter,
-      endpoint.response ?? [selectableId(def, fromPath)]
-    );
-    return { target: buildQueryTree(def, query) };
-  } else if (endpoint.targets.length === 1) {
-    // "many" root level, no context query
-    const targets = endpoint.targets;
-    const fromPath = _.last(targets)!.namePath;
-    const filter = filterFromTargets(_.initial(targets));
-    const query = queryFromParts(
-      def,
-      "target",
-      fromPath,
-      filter,
-      endpoint.response ?? [selectableId(def, fromPath)]
-    );
-    return { target: buildQueryTree(def, query) };
-  } else {
-    // many but nested
-    const targets = _.initial(endpoint.targets);
-    const fromPath = _.last(targets)!.namePath;
-    const filter = filterFromTargets(targets);
-    const ctxQuery = queryFromParts(def, "context", fromPath, filter, [
-      selectableId(def, fromPath),
-    ]);
-    const t = _.last(endpoint.targets)!;
-    const q = queryFromParts(
-      def,
-      "target",
-      [ctxQuery.retType, t.name],
-      applyFilterIdInContext([ctxQuery.retType], undefined),
-      endpoint.response ?? [selectableId(def, fromPath)]
-    );
-    return { context: ctxQuery, target: buildQueryTree(def, q) };
-  }
+  const parentContextQueryTrees = endpoint.parentContext.map((target, index) => {
+    const parentTarget = index === 0 ? null : endpoint.parentContext[index - 1];
+    const namePath = parentTarget ? [parentTarget.retType, target.name] : [target.retType];
+    // apply identifyWith filter
+    const targetFilter = targetToFilter({ ...target, namePath });
+    // apply filter from it's parent
+    const filter = parentTarget ? applyFilterIdInContext(namePath, targetFilter) : targetFilter;
+    const query = queryFromParts(def, target.alias, namePath, filter, target.select);
+    return buildQueryTree(def, query);
+  });
+
+  // repeat the same for target
+  const e = endpoint; // just a better code formatting this way
+  const parentTarget = _.last(e.parentContext);
+  const namePath = parentTarget ? [parentTarget.retType, e.target.name] : [e.target.retType];
+
+  const targetFilter =
+    e.kind === "create" || e.kind === "list"
+      ? undefined
+      : targetToFilter({ ...e.target, namePath });
+
+  const filter = parentTarget ? applyFilterIdInContext(namePath, targetFilter) : targetFilter;
+  const query = queryFromParts(def, e.target.alias, namePath, filter, e.target.select);
+  const targetQueryTree = buildQueryTree(def, query);
+
+  return { parentContextQueryTrees, targetQueryTree };
 }
 
 function applyFilterIdInContext(namePath: NamePath, filter: FilterDef): FilterDef {

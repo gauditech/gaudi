@@ -36,7 +36,7 @@ describe("Endpoint queries", () => {
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
-    expect(extractQueries(q.target).map((q) => queryToString(def, q))).toMatchSnapshot();
+    expect(extractQueries(q.targetQueryTree).map((q) => queryToString(def, q))).toMatchSnapshot();
   });
   it("chained nested query", () => {
     const bp = `
@@ -71,8 +71,8 @@ describe("Endpoint queries", () => {
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
-    expect(extractQueries(q.target)).toHaveLength(3);
-    expect(extractQueries(q.target).map((q) => queryToString(def, q))).toMatchSnapshot();
+    expect(extractQueries(q.targetQueryTree)).toHaveLength(3);
+    expect(extractQueries(q.targetQueryTree).map((q) => queryToString(def, q))).toMatchSnapshot();
     q;
   });
 });

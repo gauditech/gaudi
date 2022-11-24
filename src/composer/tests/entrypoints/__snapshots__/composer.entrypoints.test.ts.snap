@@ -42,8 +42,8 @@ exports[`entrypoint composes basic example 1`] = `
   {
     "endpoints": [
       {
-        "actions": [],
         "kind": "list",
+        "parentContext": [],
         "response": [
           {
             "alias": "id",
@@ -76,28 +76,21 @@ exports[`entrypoint composes basic example 1`] = `
             "refKey": "Org.name",
           },
         ],
-        "targets": [
-          {
-            "alias": "$target_0",
-            "identifyWith": {
-              "name": "slug",
-              "paramName": "org_slug",
-              "refKey": "Org.slug",
-              "type": "text",
-            },
-            "kind": "model",
-            "name": "Org",
-            "namePath": [
-              "Org",
-            ],
-            "refKey": "Org",
-            "retType": "Org",
-          },
-        ],
+        "target": {
+          "alias": "$target_0",
+          "kind": "model",
+          "name": "Org",
+          "namePath": [
+            "Org",
+          ],
+          "refKey": "Org",
+          "retType": "Org",
+          "select": [],
+        },
       },
       {
-        "actions": [],
         "kind": "get",
+        "parentContext": [],
         "response": [
           {
             "alias": "id",
@@ -130,32 +123,49 @@ exports[`entrypoint composes basic example 1`] = `
             "refKey": "Org.name",
           },
         ],
-        "targets": [
-          {
-            "alias": "$target_0",
-            "identifyWith": {
-              "name": "slug",
-              "paramName": "org_slug",
-              "refKey": "Org.slug",
-              "type": "text",
-            },
-            "kind": "model",
-            "name": "Org",
-            "namePath": [
-              "Org",
-            ],
-            "refKey": "Org",
-            "retType": "Org",
+        "target": {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "slug",
+            "paramName": "org_slug",
+            "refKey": "Org.slug",
+            "type": "text",
           },
-        ],
+          "kind": "model",
+          "name": "Org",
+          "namePath": [
+            "Org",
+          ],
+          "refKey": "Org",
+          "retType": "Org",
+          "select": [],
+        },
       },
     ],
     "entrypoints": [
       {
         "endpoints": [
           {
-            "actions": [],
             "kind": "list",
+            "parentContext": [
+              {
+                "alias": "$target_0",
+                "identifyWith": {
+                  "name": "slug",
+                  "paramName": "org_slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "refKey": "Org",
+                "retType": "Org",
+                "select": [],
+              },
+            ],
             "response": [
               {
                 "alias": "id",
@@ -217,45 +227,40 @@ exports[`entrypoint composes basic example 1`] = `
                 ],
               },
             ],
-            "targets": [
-              {
-                "alias": "$target_0",
-                "identifyWith": {
-                  "name": "slug",
-                  "paramName": "org_slug",
-                  "refKey": "Org.slug",
-                  "type": "text",
-                },
-                "kind": "model",
-                "name": "Org",
-                "namePath": [
-                  "Org",
-                ],
-                "refKey": "Org",
-                "retType": "Org",
-              },
-              {
-                "alias": "repo",
-                "identifyWith": {
-                  "name": "id",
-                  "paramName": "repo_id",
-                  "refKey": "Repo.id",
-                  "type": "integer",
-                },
-                "kind": "relation",
-                "name": "repos",
-                "namePath": [
-                  "Org",
-                  "repos",
-                ],
-                "refKey": "Org.repos",
-                "retType": "Repo",
-              },
-            ],
+            "target": {
+              "alias": "repo",
+              "kind": "relation",
+              "name": "repos",
+              "namePath": [
+                "Org",
+                "repos",
+              ],
+              "refKey": "Org.repos",
+              "retType": "Repo",
+              "select": [],
+            },
           },
           {
-            "actions": [],
             "kind": "get",
+            "parentContext": [
+              {
+                "alias": "$target_0",
+                "identifyWith": {
+                  "name": "slug",
+                  "paramName": "org_slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "refKey": "Org",
+                "retType": "Org",
+                "select": [],
+              },
+            ],
             "response": [
               {
                 "alias": "id",
@@ -317,41 +322,24 @@ exports[`entrypoint composes basic example 1`] = `
                 ],
               },
             ],
-            "targets": [
-              {
-                "alias": "$target_0",
-                "identifyWith": {
-                  "name": "slug",
-                  "paramName": "org_slug",
-                  "refKey": "Org.slug",
-                  "type": "text",
-                },
-                "kind": "model",
-                "name": "Org",
-                "namePath": [
-                  "Org",
-                ],
-                "refKey": "Org",
-                "retType": "Org",
+            "target": {
+              "alias": "repo",
+              "identifyWith": {
+                "name": "id",
+                "paramName": "repo_id",
+                "refKey": "Repo.id",
+                "type": "integer",
               },
-              {
-                "alias": "repo",
-                "identifyWith": {
-                  "name": "id",
-                  "paramName": "repo_id",
-                  "refKey": "Repo.id",
-                  "type": "integer",
-                },
-                "kind": "relation",
-                "name": "repos",
-                "namePath": [
-                  "Org",
-                  "repos",
-                ],
-                "refKey": "Org.repos",
-                "retType": "Repo",
-              },
-            ],
+              "kind": "relation",
+              "name": "repos",
+              "namePath": [
+                "Org",
+                "repos",
+              ],
+              "refKey": "Org.repos",
+              "retType": "Repo",
+              "select": [],
+            },
           },
           {
             "actions": [
@@ -399,6 +387,35 @@ exports[`entrypoint composes basic example 1`] = `
               },
             },
             "kind": "create",
+            "parentContext": [
+              {
+                "alias": "$target_0",
+                "identifyWith": {
+                  "name": "slug",
+                  "paramName": "org_slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "refKey": "Org",
+                "retType": "Org",
+                "select": [
+                  {
+                    "alias": "id",
+                    "kind": "field",
+                    "name": "id",
+                    "namePath": [
+                      "id",
+                    ],
+                    "refKey": "Org.id",
+                  },
+                ],
+              },
+            ],
             "response": [
               {
                 "alias": "id",
@@ -460,41 +477,18 @@ exports[`entrypoint composes basic example 1`] = `
                 ],
               },
             ],
-            "targets": [
-              {
-                "alias": "$target_0",
-                "identifyWith": {
-                  "name": "slug",
-                  "paramName": "org_slug",
-                  "refKey": "Org.slug",
-                  "type": "text",
-                },
-                "kind": "model",
-                "name": "Org",
-                "namePath": [
-                  "Org",
-                ],
-                "refKey": "Org",
-                "retType": "Org",
-              },
-              {
-                "alias": "repo",
-                "identifyWith": {
-                  "name": "id",
-                  "paramName": "repo_id",
-                  "refKey": "Repo.id",
-                  "type": "integer",
-                },
-                "kind": "relation",
-                "name": "repos",
-                "namePath": [
-                  "Org",
-                  "repos",
-                ],
-                "refKey": "Org.repos",
-                "retType": "Repo",
-              },
-            ],
+            "target": {
+              "alias": "repo",
+              "kind": "relation",
+              "name": "repos",
+              "namePath": [
+                "Org",
+                "repos",
+              ],
+              "refKey": "Org.repos",
+              "retType": "Repo",
+              "select": [],
+            },
           },
         ],
         "entrypoints": [],

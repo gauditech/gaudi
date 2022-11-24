@@ -1,12 +1,12 @@
 import { Express, Request, Response } from "express";
 import _, { chain, compact } from "lodash";
 
-import { PathParam, buildEndpointPath } from "@src/builder/query";
-import { getRef, getTargetModel } from "@src/common/refs";
+import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
+import { getRef } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { EndpointQueries, endpointQueries } from "@src/runtime/query/build";
-import { Params, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
+import { endpointQueries } from "@src/runtime/query/build";
+import { Params, executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
 import { db } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
@@ -69,11 +69,12 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
 /** Create "get" endpoint handler from definition */
 export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
+  const queries = endpointQueries(def, endpoint);
 
   const requiresAuthentication = true; // TODO: read from endpoint
 
   return {
-    path: endpointPath.path,
+    path: endpointPath.fullPath,
     method: "get",
     handlers: compact([
       // prehandlers
@@ -83,12 +84,23 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         try {
           console.log("AUTH USER", req.user);
 
-          const contextParams = extractParams(endpointPath.params, req.params);
+          const contextParams = extractPathParams(endpointPath, req.params);
+          const context = new Map<string, any>(Object.entries(contextParams));
 
-          const queries = endpointQueries(def, endpoint);
-          const queryResult = await findOne(def, queries, contextParams);
+          // group context and target queries since all are findOne
+          const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
+          let pids: number[] = [];
+          for (const qt of allQueries) {
+            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const result = findOne(results);
+            context.set(qt.alias, result);
+            pids = [result.id];
+          }
 
-          resp.json(queryResult);
+          // FIXME run custom actions
+
+          // FIXME refetch using the response query
+          resp.json(context.get(queries.targetQueryTree.alias));
         } catch (err) {
           errorResponse(err);
         }
@@ -100,11 +112,12 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 /** Create "list" endpoint handler from definition */
 export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
+  const queries = endpointQueries(def, endpoint);
 
   const requiresAuthentication = true; // TODO: read from endpoint
 
   return {
-    path: endpointPath.path,
+    path: endpointPath.fullPath,
     method: "get",
     handlers: compact([
       // prehandlers
@@ -114,25 +127,26 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         try {
           console.log("AUTH USER", req.user);
 
-          const contextParams = extractParams(endpointPath.params, req.params);
-          const queries = endpointQueries(def, endpoint);
+          const contextParams = extractPathParams(endpointPath, req.params);
+          const context = new Map<string, any>(Object.entries(contextParams));
 
-          const ids = [];
-          if (queries.context) {
-            const queryResult = await findOne(def, queries, contextParams);
-
-            ids.push(queryResult.id);
+          let pids: number[] = [];
+          for (const qt of queries.parentContextQueryTrees) {
+            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const result = findOne(results);
+            context.set(qt.alias, result);
+            pids = [result.id];
           }
 
-          const targetQueryResult = await executeQueryTree(
-            db,
-            def,
-            queries.target,
-            contextParams,
-            ids
-          );
+          // fetch target query (list, so no findOne here)
+          const tQt = queries.targetQueryTree;
+          const results = await executeQueryTree(db, def, tQt, contextParams, pids);
+          context.set(tQt.alias, results);
 
-          resp.json(targetQueryResult);
+          // FIXME run custom actions
+
+          // FIXME refetch using the response query
+          resp.json(context.get(tQt.alias));
         } catch (err) {
           errorResponse(err);
         }
@@ -144,11 +158,12 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 /** Build "create" endpoint handler from definition */
 export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
+  const queries = endpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
   return {
-    path: endpointPath.path,
+    path: endpointPath.fullPath,
     method: "post",
     handlers: compact([
       // prehandlers
@@ -158,27 +173,33 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         try {
           console.log("AUTH USER", req.user);
 
-          const contextParams = extractParams(endpointPath.params, req.params);
+          const contextParams = extractPathParams(endpointPath, req.params);
+          const context = new Map<string, any>(Object.entries(contextParams));
+
+          let pids: number[] = [];
+          for (const qt of queries.parentContextQueryTrees) {
+            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const result = findOne(results);
+            context.set(qt.alias, result);
+            pids = [result.id];
+          }
 
           const body = req.body;
           console.log("CTX PARAMS", contextParams);
           console.log("BODY", body);
-
-          const queries = endpointQueries(def, endpoint);
-          if (queries.context) {
-            findOne(def, queries, contextParams);
-          }
 
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           // FIXME this is only temporary
           // find default changeset
-          const act = endpoint.actions.find((a) => a.alias === _.last(endpoint.targets)!.alias)!;
+          const act = endpoint.actions.find((a) => a.alias === endpoint.target.alias)!;
           const actionChangeset = buildChangset(act.changeset, {
             input: validationResult,
           });
           console.log("Changeset result", actionChangeset);
+
+          // FIXME run custom actions
 
           const id = await insertData(def, endpoint, actionChangeset);
           if (id === null) {
@@ -186,6 +207,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           }
           console.log("Query result", id);
 
+          // FIXME refetch using the response query
           resp.json({ id });
         } catch (err) {
           errorResponse(err);
@@ -198,11 +220,12 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 /** Build "update" endpoint handler from definition */
 export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
+  const queries = endpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
   return {
-    path: endpointPath.path,
+    path: endpointPath.fullPath,
     method: "patch",
     handlers: compact([
       // prehandlers
@@ -212,17 +235,23 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
         try {
           console.log("AUTH USER", req.user);
 
-          const contextParams = extractParams(endpointPath.params, req.params);
+          const contextParams = extractPathParams(endpointPath, req.params);
+          const context = new Map<string, any>(Object.entries(contextParams));
+
+          let pids: number[] = [];
+          // group context and target queries since all are findOne
+          // FIXME implement "SELECT FOR UPDATE"
+          const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
+          for (const qt of allQueries) {
+            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const result = findOne(results);
+            context.set(qt.alias, result);
+            pids = [result.id];
+          }
 
           const body = req.body;
           console.log("CTX PARAMS", contextParams);
           console.log("BODY", body);
-
-          const q = endpointQueries(def, endpoint);
-
-          // FIXME implement "SELECT FOR UPDATE"
-          // FIXME don't need to fetch the whole queryTree before update
-          const queryResult = await findOne(def, q, contextParams);
 
           console.log("FIELDSET", endpoint.fieldset);
 
@@ -231,15 +260,16 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           // FIXME this is only temporary
           // find default changeset
-          const act = endpoint.actions.find((a) => a.alias === _.last(endpoint.targets)!.alias)!;
+          const act = endpoint.actions.find((a) => a.alias === endpoint.target.alias)!;
 
           const actionChangeset = buildChangset(act.changeset, {
             input: validationResult,
           });
 
-          const id = await updateData(def, endpoint, queryResult.id, actionChangeset);
+          const target = context.get(endpoint.target.alias);
+          const id = await updateData(def, endpoint, target.id, actionChangeset);
           if (id === null) {
-            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
+            throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
           }
           console.log("Query result", id);
 
@@ -255,11 +285,12 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 /** Create "delete" endpoint handler from definition */
 export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
+  const queries = endpointQueries(def, endpoint);
 
   const requiresAuthentication = true; // TODO: read from endpoint
 
   return {
-    path: endpointPath.path,
+    path: endpointPath.fullPath,
     method: "delete",
     handlers: compact([
       // prehandlers
@@ -269,12 +300,22 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
         try {
           console.log("AUTH USER", req.user);
 
-          const contextParams = extractParams(endpointPath.params, req.params);
+          const contextParams = extractPathParams(endpointPath, req.params);
+          const context = new Map<string, any>(Object.entries(contextParams));
 
-          const q = endpointQueries(def, endpoint);
-          const queryResult = await findOne(def, q, contextParams);
+          let pids: number[] = [];
+          // group context and target queries since all are findOne
+          // FIXME implement "SELECT FOR UPDATE"
+          const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
+          for (const qt of allQueries) {
+            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const result = findOne(results);
+            context.set(qt.alias, result);
+            pids = [result.id];
+          }
 
-          await deleteData(def, endpoint, queryResult.id);
+          const target = context.get(endpoint.target.alias);
+          await deleteData(def, endpoint, target.id);
 
           resp.sendStatus(200);
         } catch (err) {
@@ -288,19 +329,22 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
+export function extractPathParams(path: EndpointPath, sourceMap: Record<string, string>): Params {
+  const paramPairs = path.fragments
+    .filter((frag): frag is PathFragmentIdentifier => frag.kind === "identifier")
+    .map((frag): [string, string | number] => [
+      frag.alias,
+      validatePathIdentifier(frag, sourceMap[frag.alias]),
+    ]);
 
-export function extractParams(
-  params: PathParam["params"],
-  sourceMap: Record<string, string>
-): Params {
-  return Object.fromEntries(params.map((p) => [p.name, validatePathParam(p, sourceMap[p.name])]));
+  return Object.fromEntries(paramPairs);
 }
 
 /**
- * Cast an input based on PathParam.param definition.
+ * Validate and convert an input to a proper type based on definition.
  */
-function validatePathParam(param: PathParam["params"][number], val: string): string | number {
-  switch (param.type) {
+function validatePathIdentifier(fragment: PathFragmentIdentifier, val: string): string | number {
+  switch (fragment.type) {
     case "integer": {
       const n = Number(val);
       if (Number.isNaN(n)) {
@@ -308,8 +352,9 @@ function validatePathParam(param: PathParam["params"][number], val: string): str
       }
       return n;
     }
-    case "text":
+    case "text": {
       return val;
+    }
   }
 }
 
@@ -319,13 +364,14 @@ async function insertData(
   endpoint: EndpointDef,
   data: Record<string, unknown>
 ): Promise<number | null> {
-  const target = endpoint.targets.slice(-1).shift();
-  if (target == null) throw `Endpoint insert target is empty`;
+  const target = endpoint.target;
 
   const { value: model } = getRef<"model">(definition, target.retType);
 
-  // TODO: return `endpoint.response` instead of `id` here
+  // TODO: return action's `select` here
   const ret = await db.insert(dataToDbnames(model, data)).into(model.dbname).returning("id");
+
+  // FIXME findOne? handle unexpected result
   if (!ret.length) return null;
   return ret[0].id;
 }
@@ -337,17 +383,18 @@ async function updateData(
   dataId: number,
   data: Record<string, unknown>
 ): Promise<number | null> {
-  const target = endpoint.targets.slice(-1).shift();
+  const target = endpoint.target;
   if (target == null) throw `Endpoint update target is empty`;
 
   const { value: model } = getRef<"model">(definition, target.retType);
 
-  // TODO: return `endpoint.response` instead of `id` here
+  // TODO: return action's `select` here
   const ret = await db(model.dbname)
     .where({ id: dataId })
     .update(dataToDbnames(model, data))
     .returning("id");
 
+  // FIXME findOne? handle unexpected result
   if (!ret.length) return null;
   return ret[0].id;
 }
@@ -358,7 +405,7 @@ async function deleteData(
   endpoint: EndpointDef,
   dataId: number
 ): Promise<void> {
-  const target = endpoint.targets.slice(-1).shift();
+  const target = endpoint.target;
   if (target == null) throw `Endpoint update target is empty`;
 
   const { value: model } = getRef<"model">(definition, target.retType);
@@ -382,21 +429,14 @@ function nameToDbname(model: ModelDef, name: string): string {
   return field.dbname;
 }
 
-/** Return only one resulting row. If query returns 0 or more than 1 row, throw error. */
-async function findOne(def: Definition, q: EndpointQueries, contextParams: Params) {
-  let queryResult;
-  if (q.context) {
-    queryResult = await executeQuery(db, def, q.context, contextParams, []);
-  } else {
-    queryResult = await executeQueryTree(db, def, q.target, contextParams, []);
-  }
-
-  if (queryResult.length === 0) {
+/** Return only one resulting row. If result contains 0 or more than 1 row, throw error. */
+function findOne<T>(result: T[]): T {
+  if (result.length === 0) {
     throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
   }
-  if (queryResult.length > 1) {
+  if (result.length > 1) {
     throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
   }
 
-  return queryResult[0];
+  return result[0];
 }

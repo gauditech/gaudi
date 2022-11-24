@@ -55,12 +55,24 @@ export function getRef2<T extends RefKind>(
   return ref;
 }
 
-getRef2.model = function getRefModel(def: Definition, modelName: string): ModelDef {
-  const ref = getRef2(def, modelName);
-  if (ref.kind === "model") {
+function getSpecificRef(def: Definition, type: RefKind, modelName: string, relName?: string): any {
+  const ref = getRef2(def, modelName, relName);
+  if (ref.kind === type) {
     return ref.value;
   }
-  throw new Error(`Expected model, got ${ref.kind}`);
+  throw new Error(`Expected ${type}, got ${ref.kind}`);
+}
+
+getRef2.model = function getRefModel(def: Definition, modelName: string): ModelDef {
+  return getSpecificRef(def, "model", modelName);
+};
+
+getRef2.field = function getRefField(
+  def: Definition,
+  modelName: string,
+  fieldName: string
+): FieldDef {
+  return getSpecificRef(def, "field", modelName, fieldName);
 };
 
 export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {

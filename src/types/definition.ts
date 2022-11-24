@@ -119,6 +119,8 @@ export type TargetDef = {
   identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
 };
 
+export type TargetWithSelectDef = TargetDef & { select: SelectDef };
+
 export type EndpointDef =
   | CreateEndpointDef
   | ListEndpointDef
@@ -129,21 +131,24 @@ export type EndpointDef =
 
 export type ListEndpointDef = {
   kind: "list";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: Omit<TargetWithSelectDef, "identifyWith">;
   response: SelectDef;
   // actions: ActionDef[];
 };
 
 export type GetEndpointDef = {
   kind: "get";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: TargetWithSelectDef;
   response: SelectDef;
   // actions: ActionDef[];
 };
 
 export type CreateEndpointDef = {
   kind: "create";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: Omit<TargetWithSelectDef, "identifyWith">;
   response: SelectDef;
   fieldset: FieldsetDef;
   actions: ActionDef[];
@@ -151,7 +156,8 @@ export type CreateEndpointDef = {
 
 export type UpdateEndpointDef = {
   kind: "update";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: TargetWithSelectDef;
   response: SelectDef;
   fieldset: FieldsetDef;
   actions: ActionDef[];
@@ -159,14 +165,16 @@ export type UpdateEndpointDef = {
 
 export type DeleteEndpointDef = {
   kind: "delete";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: TargetWithSelectDef;
   actions: ActionDef[];
   response: undefined;
 };
 
 type CustomEndpointDef = {
   kind: "custom";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: null;
   method: "post" | "get" | "put" | "delete";
   actions: ActionDef[];
   respondWith: {
