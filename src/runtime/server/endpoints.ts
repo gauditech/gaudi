@@ -1,14 +1,15 @@
 import { Express, Request, Response } from "express";
-import _, { chain, compact } from "lodash";
+import _, { compact } from "lodash";
 
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
-import { getRef } from "@src/common/refs";
+import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { buildChangset } from "@src/runtime/common/changeset";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { endpointQueries } from "@src/runtime/query/build";
 import { Params, executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
-import { db } from "@src/runtime/server/dbConn";
+import { getAppContext } from "@src/runtime/server/context";
+import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -20,13 +21,22 @@ import {
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
-  ModelDef,
   UpdateEndpointDef,
 } from "@src/types/definition";
 
 /** Create endpoint configs from entrypoints */
 export function buildEndpointConfig(definition: Definition, entrypoints: EntrypointDef[]) {
-  return entrypoints.flatMap((entrypoint) => processEntrypoint(definition, entrypoint, []));
+  return flattenEndpoints(entrypoints).map((ep) => processEndpoint(definition, ep));
+}
+
+/** Extract endpoints from entrypoint hierarchy into a flattened map. */
+export function flattenEndpoints(entrypoints: EntrypointDef[]): EndpointDef[] {
+  return entrypoints.reduce((accum, entrypoint) => {
+    const nestedEndpoints: EndpointDef[] = entrypoint.entrypoints.reduce((agg, entrypoint) => {
+      return [...agg, ...flattenEndpoints([entrypoint])];
+    }, [] as EndpointDef[]);
+    return [...accum, ...entrypoint.endpoints, ...nestedEndpoints];
+  }, [] as EndpointDef[]);
 }
 
 /** Register endpoint on server instance */
@@ -35,20 +45,6 @@ export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, p
     pathPrefix + epConfig.path,
     ...epConfig.handlers.map((handler) => endpointGuardHandler(handler))
   );
-}
-
-export function processEntrypoint(
-  def: Definition,
-  entrypoint: EntrypointDef,
-  parentEntrypoints: EntrypointDef[]
-): EndpointConfig[] {
-  const entrypoints = [...parentEntrypoints, entrypoint];
-  const endpointOuts = entrypoint.endpoints.map((ep) => processEndpoint(def, ep));
-
-  return [
-    ...endpointOuts,
-    ...(entrypoint.entrypoints?.flatMap((ep) => processEntrypoint(def, ep, entrypoints)) ?? []),
-  ];
 }
 
 function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig {
@@ -83,6 +79,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractPathParams(endpointPath, req.params);
           const context = new Map<string, any>(Object.entries(contextParams));
@@ -91,7 +88,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           let pids: number[] = [];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const results = await executeQueryTree(dbConn, def, qt, contextParams, pids);
             const result = findOne(results);
             context.set(qt.alias, result);
             pids = [result.id];
@@ -126,13 +123,14 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractPathParams(endpointPath, req.params);
           const context = new Map<string, any>(Object.entries(contextParams));
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const results = await executeQueryTree(dbConn, def, qt, contextParams, pids);
             const result = findOne(results);
             context.set(qt.alias, result);
             pids = [result.id];
@@ -140,7 +138,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           // fetch target query (list, so no findOne here)
           const tQt = queries.targetQueryTree;
-          const results = await executeQueryTree(db, def, tQt, contextParams, pids);
+          const results = await executeQueryTree(dbConn, def, tQt, contextParams, pids);
           context.set(tQt.alias, results);
 
           // FIXME run custom actions
@@ -172,13 +170,14 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractPathParams(endpointPath, req.params);
           const context = new Map<string, any>(Object.entries(contextParams));
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const results = await executeQueryTree(dbConn, def, qt, contextParams, pids);
             const result = findOne(results);
             context.set(qt.alias, result);
             pids = [result.id];
@@ -201,7 +200,8 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           // FIXME run custom actions
 
-          const id = await insertData(def, endpoint, actionChangeset);
+          const id = await insertData(def, dbConn, endpoint, actionChangeset);
+
           if (id === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
@@ -234,6 +234,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractPathParams(endpointPath, req.params);
           const context = new Map<string, any>(Object.entries(contextParams));
@@ -243,7 +244,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           // FIXME implement "SELECT FOR UPDATE"
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const results = await executeQueryTree(dbConn, def, qt, contextParams, pids);
             const result = findOne(results);
             context.set(qt.alias, result);
             pids = [result.id];
@@ -267,7 +268,8 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           });
 
           const target = context.get(endpoint.target.alias);
-          const id = await updateData(def, endpoint, target.id, actionChangeset);
+          const id = await updateData(def, dbConn, endpoint, target.id, actionChangeset);
+
           if (id === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
           }
@@ -299,6 +301,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
       async (req: Request, resp: Response) => {
         try {
           console.log("AUTH USER", req.user);
+          const dbConn = getAppContext(req).dbConn;
 
           const contextParams = extractPathParams(endpointPath, req.params);
           const context = new Map<string, any>(Object.entries(contextParams));
@@ -308,14 +311,14 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
           // FIXME implement "SELECT FOR UPDATE"
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(db, def, qt, contextParams, pids);
+            const results = await executeQueryTree(dbConn, def, qt, contextParams, pids);
             const result = findOne(results);
             context.set(qt.alias, result);
             pids = [result.id];
           }
 
           const target = context.get(endpoint.target.alias);
-          await deleteData(def, endpoint, target.id);
+          await deleteData(def, dbConn, endpoint, target.id);
 
           resp.sendStatus(200);
         } catch (err) {
@@ -361,6 +364,7 @@ function validatePathIdentifier(fragment: PathFragmentIdentifier, val: string): 
 /** Insert data to DB  */
 async function insertData(
   definition: Definition,
+  dbConn: DbConn,
   endpoint: EndpointDef,
   data: Record<string, unknown>
 ): Promise<number | null> {
@@ -369,7 +373,10 @@ async function insertData(
   const { value: model } = getRef<"model">(definition, target.retType);
 
   // TODO: return action's `select` here
-  const ret = await db.insert(dataToDbnames(model, data)).into(model.dbname).returning("id");
+  const ret = await dbConn
+    .insert(dataToFieldDbnames(model, data))
+    .into(model.dbname)
+    .returning("id");
 
   // FIXME findOne? handle unexpected result
   if (!ret.length) return null;
@@ -379,6 +386,7 @@ async function insertData(
 /** Update record in DB  */
 async function updateData(
   definition: Definition,
+  dbConn: DbConn,
   endpoint: EndpointDef,
   dataId: number,
   data: Record<string, unknown>
@@ -389,9 +397,9 @@ async function updateData(
   const { value: model } = getRef<"model">(definition, target.retType);
 
   // TODO: return action's `select` here
-  const ret = await db(model.dbname)
+  const ret = await dbConn(model.dbname)
     .where({ id: dataId })
-    .update(dataToDbnames(model, data))
+    .update(dataToFieldDbnames(model, data))
     .returning("id");
 
   // FIXME findOne? handle unexpected result
@@ -402,6 +410,7 @@ async function updateData(
 /** Delete record in DB  */
 async function deleteData(
   definition: Definition,
+  dbConn: DbConn,
   endpoint: EndpointDef,
   dataId: number
 ): Promise<void> {
@@ -410,23 +419,7 @@ async function deleteData(
 
   const { value: model } = getRef<"model">(definition, target.retType);
 
-  await db(model.dbname).where({ id: dataId }).delete();
-}
-
-function dataToDbnames(model: ModelDef, data: Record<string, unknown>): Record<string, unknown> {
-  return chain(data)
-    .toPairs()
-    .map(([name, value]) => [nameToDbname(model, name), value])
-    .fromPairs()
-    .value();
-}
-
-function nameToDbname(model: ModelDef, name: string): string {
-  const field = model.fields.find((f) => f.name === name);
-  if (!field) {
-    throw new Error(`Field ${model.name}.${name} doesn't exist`);
-  }
-  return field.dbname;
+  await dbConn(model.dbname).where({ id: dataId }).delete();
 }
 
 /** Return only one resulting row. If result contains 0 or more than 1 row, throw error. */

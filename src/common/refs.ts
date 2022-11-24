@@ -1,3 +1,5 @@
+import { chain } from "lodash";
+
 import {
   Definition,
   FieldDef,
@@ -113,4 +115,24 @@ export function getFieldDbType(type: FieldDef["dbtype"]): string {
     case "boolean":
       return "Boolean";
   }
+}
+
+/** Map data record's model field names to dbnames */
+export function dataToFieldDbnames(
+  model: ModelDef,
+  data: Record<string, unknown>
+): Record<string, unknown> {
+  return chain(data)
+    .toPairs()
+    .map(([name, value]) => [nameToFieldDbname(model, name), value])
+    .fromPairs()
+    .value();
+}
+
+function nameToFieldDbname(model: ModelDef, name: string): string {
+  const field = model.fields.find((f) => f.name === name);
+  if (!field) {
+    throw new Error(`Field ${model.name}.${name} doesn't exist`);
+  }
+  return field.dbname;
 }
