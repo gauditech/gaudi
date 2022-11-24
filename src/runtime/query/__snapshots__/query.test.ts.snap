@@ -2,13 +2,12 @@
 
 exports[`Endpoint queries chained nested query 1`] = `
 {
-  "target": {
-    "alias": "target",
-    "name": "target",
-    "query": {
-      "filter": {
-        "kind": "binary",
-        "lhs": {
+  "parentContextQueryTrees": [
+    {
+      "alias": "$target_0",
+      "name": "$target_0",
+      "query": {
+        "filter": {
           "kind": "binary",
           "lhs": {
             "kind": "alias",
@@ -24,8 +23,41 @@ exports[`Endpoint queries chained nested query 1`] = `
             "type": "text",
           },
         },
-        "operator": "and",
-        "rhs": {
+        "from": {
+          "kind": "model",
+          "refKey": "Org",
+        },
+        "fromPath": [
+          "Org",
+        ],
+        "joinPaths": [],
+        "name": "$target_0",
+        "nullable": false,
+        "refKey": "N/A",
+        "retType": "Org",
+        "select": [
+          {
+            "alias": "id",
+            "kind": "field",
+            "name": "id",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+            "refKey": "Org.id",
+          },
+        ],
+      },
+      "related": [],
+    },
+  ],
+  "responseQueryTree": {
+    "alias": "$target_1",
+    "name": "$target_1",
+    "query": {
+      "filter": {
+        "kind": "binary",
+        "lhs": {
           "kind": "binary",
           "lhs": {
             "kind": "alias",
@@ -40,6 +72,23 @@ exports[`Endpoint queries chained nested query 1`] = `
             "kind": "variable",
             "name": "issue_id",
             "type": "integer",
+          },
+        },
+        "operator": "and",
+        "rhs": {
+          "kind": "binary",
+          "lhs": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "operator": "in",
+          "rhs": {
+            "kind": "variable",
+            "name": "@context_ids",
+            "type": "list-integer",
           },
         },
       },
@@ -65,7 +114,7 @@ exports[`Endpoint queries chained nested query 1`] = `
           "retType": "Issue",
         },
       ],
-      "name": "target",
+      "name": "$target_1",
       "nullable": false,
       "refKey": "N/A",
       "retType": "Issue",
@@ -264,11 +313,119 @@ exports[`Endpoint queries chained nested query 1`] = `
       },
     ],
   },
+  "targetQueryTree": {
+    "alias": "$target_1",
+    "name": "$target_1",
+    "query": {
+      "filter": {
+        "kind": "binary",
+        "lhs": {
+          "kind": "binary",
+          "lhs": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "public_issues",
+              "id",
+            ],
+          },
+          "operator": "is",
+          "rhs": {
+            "kind": "variable",
+            "name": "issue_id",
+            "type": "integer",
+          },
+        },
+        "operator": "and",
+        "rhs": {
+          "kind": "binary",
+          "lhs": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "operator": "in",
+          "rhs": {
+            "kind": "variable",
+            "name": "@context_ids",
+            "type": "list-integer",
+          },
+        },
+      },
+      "from": {
+        "kind": "model",
+        "refKey": "Org",
+      },
+      "fromPath": [
+        "Org",
+        "public_issues",
+      ],
+      "joinPaths": [
+        {
+          "joinPaths": [],
+          "joinType": "inner",
+          "kind": "query",
+          "name": "public_issues",
+          "namePath": [
+            "Org",
+            "public_issues",
+          ],
+          "refKey": "Org.public_issues",
+          "retType": "Issue",
+        },
+      ],
+      "name": "$target_1",
+      "nullable": false,
+      "refKey": "N/A",
+      "retType": "Issue",
+      "select": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "Org",
+            "public_issues",
+            "id",
+          ],
+          "refKey": "Issue.id",
+        },
+      ],
+    },
+    "related": [],
+  },
 }
 `;
 
 exports[`Endpoint queries chained nested query 2`] = `
 [
+  "SELECT "Org".id AS id
+FROM "org" AS "Org"
+
+WHERE "Org".slug = :org_slug",
+  "SELECT "Org.public_issues".id AS id
+      FROM "org" AS "Org"
+      JOIN
+(
+      SELECT "Org.public_repos.issues".id AS id, "Org.public_repos.issues".name AS name, "Org.public_repos.issues".repo_id AS repo_id, "Org".id AS "__join_connection"
+            FROM "org" AS "Org"
+            JOIN
+        (
+              SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+                    FROM "org" AS "Org"
+                    JOIN
+              "repo" AS "Org.repos"
+              ON "Org".id = "Org.repos".org_id
+                    WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
+        ON "Org".id = "Org.public_repos"."__join_connection"
+        JOIN
+      "issue" AS "Org.public_repos.issues"
+      ON "Org.public_repos".id = "Org.public_repos.issues".repo_id
+            WHERE TRUE = TRUE) AS "Org.public_issues"
+ON "Org".id = "Org.public_issues"."__join_connection"
+      WHERE "Org.public_issues".id = :issue_id AND "Org".id IN :@context_ids",
   "SELECT "Org.public_issues".id AS id, "Org.public_issues".name AS name
       FROM "org" AS "Org"
       JOIN
@@ -289,7 +446,7 @@ exports[`Endpoint queries chained nested query 2`] = `
       ON "Org.public_repos".id = "Org.public_repos.issues".repo_id
             WHERE TRUE = TRUE) AS "Org.public_issues"
 ON "Org".id = "Org.public_issues"."__join_connection"
-      WHERE "Org".slug = :org_slug AND "Org.public_issues".id = :issue_id",
+      WHERE "Org.public_issues".id = :issue_id AND "Org".id IN :@context_ids",
   "SELECT "Issue.repo".name AS name, "Issue.repo".is_public AS is_public, "Issue".id AS "__join_connection"
       FROM "issue" AS "Issue"
       JOIN
@@ -307,13 +464,12 @@ ON "Repo".org_id = "Repo.org".id
 
 exports[`Endpoint queries nested query 1`] = `
 {
-  "target": {
-    "alias": "target",
-    "name": "target",
-    "query": {
-      "filter": {
-        "kind": "binary",
-        "lhs": {
+  "parentContextQueryTrees": [
+    {
+      "alias": "$target_0",
+      "name": "$target_0",
+      "query": {
+        "filter": {
           "kind": "binary",
           "lhs": {
             "kind": "alias",
@@ -329,8 +485,41 @@ exports[`Endpoint queries nested query 1`] = `
             "type": "text",
           },
         },
-        "operator": "and",
-        "rhs": {
+        "from": {
+          "kind": "model",
+          "refKey": "Org",
+        },
+        "fromPath": [
+          "Org",
+        ],
+        "joinPaths": [],
+        "name": "$target_0",
+        "nullable": false,
+        "refKey": "N/A",
+        "retType": "Org",
+        "select": [
+          {
+            "alias": "id",
+            "kind": "field",
+            "name": "id",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+            "refKey": "Org.id",
+          },
+        ],
+      },
+      "related": [],
+    },
+  ],
+  "responseQueryTree": {
+    "alias": "$target_1",
+    "name": "$target_1",
+    "query": {
+      "filter": {
+        "kind": "binary",
+        "lhs": {
           "kind": "binary",
           "lhs": {
             "kind": "alias",
@@ -345,6 +534,23 @@ exports[`Endpoint queries nested query 1`] = `
             "kind": "variable",
             "name": "repo_id",
             "type": "integer",
+          },
+        },
+        "operator": "and",
+        "rhs": {
+          "kind": "binary",
+          "lhs": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "operator": "in",
+          "rhs": {
+            "kind": "variable",
+            "name": "@context_ids",
+            "type": "list-integer",
           },
         },
       },
@@ -370,7 +576,7 @@ exports[`Endpoint queries nested query 1`] = `
           "retType": "Repo",
         },
       ],
-      "name": "target",
+      "name": "$target_1",
       "nullable": false,
       "refKey": "N/A",
       "retType": "Repo",
@@ -401,11 +607,110 @@ exports[`Endpoint queries nested query 1`] = `
     },
     "related": [],
   },
+  "targetQueryTree": {
+    "alias": "$target_1",
+    "name": "$target_1",
+    "query": {
+      "filter": {
+        "kind": "binary",
+        "lhs": {
+          "kind": "binary",
+          "lhs": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "public_repos",
+              "id",
+            ],
+          },
+          "operator": "is",
+          "rhs": {
+            "kind": "variable",
+            "name": "repo_id",
+            "type": "integer",
+          },
+        },
+        "operator": "and",
+        "rhs": {
+          "kind": "binary",
+          "lhs": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "operator": "in",
+          "rhs": {
+            "kind": "variable",
+            "name": "@context_ids",
+            "type": "list-integer",
+          },
+        },
+      },
+      "from": {
+        "kind": "model",
+        "refKey": "Org",
+      },
+      "fromPath": [
+        "Org",
+        "public_repos",
+      ],
+      "joinPaths": [
+        {
+          "joinPaths": [],
+          "joinType": "inner",
+          "kind": "query",
+          "name": "public_repos",
+          "namePath": [
+            "Org",
+            "public_repos",
+          ],
+          "refKey": "Org.public_repos",
+          "retType": "Repo",
+        },
+      ],
+      "name": "$target_1",
+      "nullable": false,
+      "refKey": "N/A",
+      "retType": "Repo",
+      "select": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "Org",
+            "public_repos",
+            "id",
+          ],
+          "refKey": "Repo.id",
+        },
+      ],
+    },
+    "related": [],
+  },
 }
 `;
 
 exports[`Endpoint queries nested query 2`] = `
 [
+  "SELECT "Org".id AS id
+FROM "org" AS "Org"
+
+WHERE "Org".slug = :org_slug",
+  "SELECT "Org.public_repos".id AS id
+      FROM "org" AS "Org"
+      JOIN
+(
+      SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+            FROM "org" AS "Org"
+            JOIN
+      "repo" AS "Org.repos"
+      ON "Org".id = "Org.repos".org_id
+            WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
+ON "Org".id = "Org.public_repos"."__join_connection"
+      WHERE "Org.public_repos".id = :repo_id AND "Org".id IN :@context_ids",
   "SELECT "Org.public_repos".id AS id, "Org.public_repos".name AS name
       FROM "org" AS "Org"
       JOIN
@@ -417,6 +722,6 @@ exports[`Endpoint queries nested query 2`] = `
       ON "Org".id = "Org.repos".org_id
             WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
 ON "Org".id = "Org.public_repos"."__join_connection"
-      WHERE "Org".slug = :org_slug AND "Org.public_repos".id = :repo_id",
+      WHERE "Org.public_repos".id = :repo_id AND "Org".id IN :@context_ids",
 ]
 `;

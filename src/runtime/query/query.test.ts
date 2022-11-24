@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { QueryTree, endpointQueries } from "./build";
+import { EndpointQueries, QueryTree, endpointQueries } from "./build";
 import { queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
@@ -36,7 +36,8 @@ describe("Endpoint queries", () => {
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
-    expect(extractQueries(q.targetQueryTree).map((q) => queryToString(def, q))).toMatchSnapshot();
+    expect(extractEndpointQueries(q)).toHaveLength(3);
+    expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
   });
   it("chained nested query", () => {
     const bp = `
@@ -71,12 +72,17 @@ describe("Endpoint queries", () => {
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
     const q = endpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
-    expect(extractQueries(q.targetQueryTree)).toHaveLength(3);
-    expect(extractQueries(q.targetQueryTree).map((q) => queryToString(def, q))).toMatchSnapshot();
+    expect(extractEndpointQueries(q)).toHaveLength(5);
+    expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
     q;
   });
 });
 
-function extractQueries(qt: QueryTree): QueryDef[] {
-  return [qt.query, ...qt.related.flatMap(extractQueries)];
+function extractEndpointQueries(q: EndpointQueries): QueryDef[] {
+  const allTrees = [...q.parentContextQueryTrees, q.targetQueryTree, q.responseQueryTree];
+  return allTrees.flatMap(extractQueryTree);
+}
+
+function extractQueryTree(qt: QueryTree): QueryDef[] {
+  return [qt.query, ...qt.related.flatMap(extractQueryTree)];
 }

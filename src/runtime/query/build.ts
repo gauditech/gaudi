@@ -47,6 +47,7 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
 export type EndpointQueries = {
   parentContextQueryTrees: QueryTree[];
   targetQueryTree: QueryTree;
+  responseQueryTree: QueryTree;
 };
 
 export function endpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
@@ -56,7 +57,9 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     // apply identifyWith filter
     const targetFilter = targetToFilter({ ...target, namePath });
     // apply filter from it's parent
-    const filter = parentTarget ? applyFilterIdInContext(namePath, targetFilter) : targetFilter;
+    const filter = parentTarget
+      ? applyFilterIdInContext([parentTarget.retType], targetFilter)
+      : targetFilter;
     const query = queryFromParts(def, target.alias, namePath, filter, target.select);
     return buildQueryTree(def, query);
   });
@@ -71,11 +74,15 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
       ? undefined
       : targetToFilter({ ...e.target, namePath });
 
-  const filter = parentTarget ? applyFilterIdInContext(namePath, targetFilter) : targetFilter;
-  const query = queryFromParts(def, e.target.alias, namePath, filter, e.target.select);
-  const targetQueryTree = buildQueryTree(def, query);
+  const filter = parentTarget
+    ? applyFilterIdInContext([parentTarget.retType], targetFilter)
+    : targetFilter;
+  const targetQuery = queryFromParts(def, e.target.alias, namePath, filter, e.target.select);
+  const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  return { parentContextQueryTrees, targetQueryTree };
+  const responseQuery = queryFromParts(def, e.target.alias, namePath, filter, e.response ?? []);
+  const responseQueryTree = buildQueryTree(def, responseQuery);
+  return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 
 function applyFilterIdInContext(namePath: NamePath, filter: FilterDef): FilterDef {
