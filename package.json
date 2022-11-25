@@ -16,7 +16,7 @@
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "dev:copy-static": "chokidar ./src/package.json  --debounce 100 --command \"npm run build:copy-static\"",
     "// --- test": "",
-    "test": "npm run build:grammar && jest",
+    "test": "npm run build:grammar && jest --testPathIgnorePatterns='<rootDir>/src/e2e/'",
     "test:watch": "npm test -- --watch",
     "test:api": "dotenv -e ./src/e2e/api/test.env -- jest ./src/e2e/api",
     "test:api:watch": "npm run test:api -- --watch",
