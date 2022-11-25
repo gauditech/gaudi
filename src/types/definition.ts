@@ -302,28 +302,34 @@ type IntConst = { type: "integer"; value: number };
 type TextConst = { type: "text"; value: string };
 type NullConst = { type: "null"; value: null };
 
-export type ActionDef = CreateOneAction | UpdateOneAction;
+export type ActionDef = CreateOneAction | UpdateOneAction | DeleteOneAction;
 
-type CreateOneAction = {
+export type CreateOneAction = {
   kind: "create-one";
   alias: string;
-  targetPath: string[];
   model: string;
+  targetPath: string[];
   changeset: Changeset;
   select: SelectDef;
 };
 
-type UpdateOneAction = {
+export type UpdateOneAction = {
   kind: "update-one";
   alias: string;
+  model: string;
   targetPath: string[];
   filter: FilterDef;
-  model: string;
   changeset: Changeset;
   select: SelectDef;
 };
 
-type DeleteManyAction = {
+export type DeleteOneAction = {
+  kind: "delete-one";
+  model: string;
+  targetPath: string[];
+};
+
+export type DeleteManyAction = {
   kind: "delete-many";
   filter: FilterDef;
 };

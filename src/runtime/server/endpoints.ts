@@ -17,6 +17,7 @@ import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
 import {
   CreateEndpointDef,
+  CreateOneAction,
   Definition,
   DeleteEndpointDef,
   EndpointDef,
@@ -24,6 +25,7 @@ import {
   GetEndpointDef,
   ListEndpointDef,
   UpdateEndpointDef,
+  UpdateOneAction,
 } from "@src/types/definition";
 
 /** Create endpoint configs from entrypoints */
@@ -193,7 +195,9 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           // FIXME this is only temporary
           // find default changeset
-          const act = endpoint.actions.find((a) => a.alias === endpoint.target.alias)!;
+          const act = endpoint.actions
+            .filter((a): a is CreateOneAction => a.kind === "create-one")
+            .find((a) => a.alias === endpoint.target.alias)!;
           const actionChangeset = buildChangset(act.changeset, {
             input: validationResult,
           });
@@ -261,7 +265,9 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           // FIXME this is only temporary
           // find default changeset
-          const act = endpoint.actions.find((a) => a.alias === endpoint.target.alias)!;
+          const act = endpoint.actions
+            .filter((a): a is UpdateOneAction => a.kind === "update-one")
+            .find((a) => a.alias === endpoint.target.alias)!;
 
           const actionChangeset = buildChangset(act.changeset, {
             input: validationResult,

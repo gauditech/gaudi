@@ -330,7 +330,12 @@ function mkActionFromParts(
       };
     }
     case "delete": {
-      throw new Error("Delete is not supported");
+      // FIXME delete-many
+      return {
+        kind: "delete-one",
+        model: model.name,
+        targetPath: spec.targetPath ?? [target.alias],
+      };
     }
   }
 }
@@ -471,7 +476,7 @@ export function composeActionBlock(
     (acc, atom) => {
       const [ctx, actions] = acc;
       const action = composeSingleAction(def, atom, ctx, targets, endpointKind);
-      if (action.alias) {
+      if (action.kind !== "delete-one" && action.alias) {
         ctx[action.alias] = { type: action.model };
       }
       return [ctx, [...actions, action]];

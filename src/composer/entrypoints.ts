@@ -11,6 +11,7 @@ import { SelectAST } from "@src/types/ast";
 import {
   ActionDef,
   Definition,
+  DeleteOneAction,
   EndpointDef,
   EntrypointDef,
   FieldSetterReferenceValue,
@@ -300,44 +301,46 @@ function processSelect(
 }
 
 export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
-  const fieldsetWithPaths = actions.flatMap((action) => {
-    return _.chain(action.changeset)
-      .toPairs()
-      .map(([name, setter]): null | [string[], FieldsetFieldDef] => {
-        switch (setter.kind) {
-          case "fieldset-input": {
-            const { value: field } = getRef<"field">(def, `${action.model}.${name}`);
-            return [
-              setter.fieldsetAccess,
-              {
-                kind: "field",
-                required: setter.required,
-                type: setter.type,
-                nullable: field.nullable,
-                validators: field.validators,
-              },
-            ];
+  const fieldsetWithPaths = actions
+    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+    .flatMap((action) => {
+      return _.chain(action.changeset)
+        .toPairs()
+        .map(([name, setter]): null | [string[], FieldsetFieldDef] => {
+          switch (setter.kind) {
+            case "fieldset-input": {
+              const { value: field } = getRef<"field">(def, `${action.model}.${name}`);
+              return [
+                setter.fieldsetAccess,
+                {
+                  kind: "field",
+                  required: setter.required,
+                  type: setter.type,
+                  nullable: field.nullable,
+                  validators: field.validators,
+                },
+              ];
+            }
+            case "fieldset-reference-input": {
+              const { value: field } = getRef<"field">(def, setter.throughField.refKey);
+              return [
+                setter.fieldsetAccess,
+                {
+                  kind: "field",
+                  required: true, // fixme
+                  nullable: field.nullable,
+                  type: field.type,
+                  validators: field.validators,
+                },
+              ];
+            }
+            default:
+              return null;
           }
-          case "fieldset-reference-input": {
-            const { value: field } = getRef<"field">(def, setter.throughField.refKey);
-            return [
-              setter.fieldsetAccess,
-              {
-                kind: "field",
-                required: true, // fixme
-                nullable: field.nullable,
-                type: field.type,
-                validators: field.validators,
-              },
-            ];
-          }
-          default:
-            return null;
-        }
-      })
-      .compact()
-      .value();
-  });
+        })
+        .compact()
+        .value();
+    });
 
   return collectFieldsetPaths(fieldsetWithPaths);
 }
@@ -387,18 +390,23 @@ function wrapActionsWithSelect(
   actions: ActionDef[],
   deps: SelectDep[]
 ): ActionDef[] {
-  return actions.map((a): ActionDef => {
-    // normalize paths related to this action alias
-    const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
-    const model = getRef2.model(def, a.model);
-    const select = pathsToSelectDef(def, model, paths, []);
-    return { ...a, select };
-  });
+  return actions
+    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+    .map((a): ActionDef => {
+      // normalize paths related to this action alias
+      const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
+      const model = getRef2.model(def, a.model);
+      const select = pathsToSelectDef(def, model, paths, []);
+      return { ...a, select };
+    });
 }
 
 function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
-  const targetPaths = _.chain(actions)
+  const nonDeleteActions = actions.filter(
+    (a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one"
+  );
+  const targetPaths = _.chain(nonDeleteActions)
     .flatMap((a) => {
       switch (a.kind) {
         case "create-one": {
@@ -421,7 +429,7 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
     .compact()
     .value();
   // collect all targets
-  const setterTargets = actions.flatMap((a) => {
+  const setterTargets = nonDeleteActions.flatMap((a) => {
     return _.compact(
       Object.values(a.changeset).map((setter) => {
         switch (setter.kind) {
