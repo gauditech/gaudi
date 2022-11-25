@@ -60,8 +60,9 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     const filter = parentTarget
       ? applyFilterIdInContext([parentTarget.retType], targetFilter)
       : targetFilter;
-    const model = getRef2.model(def, namePath[0]);
-    const select = target.select.map((selItem) => shiftSelect(model, selItem, 1));
+    // transform select;
+    // FIXME see the comment about the transformation issue below
+    const select = transformSelectPath(target.select, [target.alias], namePath);
     const query = queryFromParts(def, target.alias, namePath, filter, select);
     return buildQueryTree(def, query);
   });
@@ -80,14 +81,30 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     ? applyFilterIdInContext([parentTarget.retType], targetFilter)
     : targetFilter;
 
-  const model = getRef2.model(def, namePath[0]);
-  const contextLen = e.parentContext.length;
-  const select = e.target.select.map((selItem) => shiftSelect(model, selItem, contextLen || 1));
+  /*
+    FIXME e.target.namePath and e.target.select have mismatching namePaths!!
+          e.target.select is prefixed with target.alias, while
+          e.target.namePath is nested `target.name` from root entrypoint
+    
+    This transformation makes it irrelevant, however we should make sure it doesn't
+    happen.
+    For example, target.namePath is ["Org", "repos", "issues"], target.alias is "issue",
+    e.target.select namePaths would be ["issue", *]
+
+    Nevertheless, this is just a difference between absolute and relative (context) path,
+    it is not a "wrong" path and perhaps we can keep using both, in that case
+    `transformSelectPath` would accept multiple `from`s.
+  */
+  const select = transformSelectPath(e.target.select, [e.target.alias], namePath);
 
   const targetQuery = queryFromParts(def, e.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  const responseQuery = queryFromParts(def, e.target.alias, namePath, filter, e.response ?? []);
+  // NOTE Here, we don't transform [e.target.alias] like we do above
+  // because the `response` doesn't come from action composer
+  // so paths are absolute
+  const response = transformSelectPath(e.response ?? [], e.target.namePath, namePath);
+  const responseQuery = queryFromParts(def, e.target.alias, namePath, filter, response);
   const responseQueryTree = buildQueryTree(def, responseQuery);
   return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
@@ -144,6 +161,22 @@ export function queryFromParts(
   if (select.length === 0) {
     return queryFromParts(def, name, fromPath, filter, [selectableId(def, fromPath)]);
   }
+  select.forEach((selItem) => {
+    if (selItem.alias === '"__join_connection"') {
+      /* We currently make exception for `"__join_connection"` field as it's the only selectable
+        not being in `fromPath`.
+        Otherwise, we ensure that only the leaf of the `fromPath` can be selected,
+        since we expect `retType` to match leaf model, we can't select from other (non-leaf) models.
+       */
+      return;
+    }
+    ensureEqual(
+      _.isEqual(fromPath, _.initial(selItem.namePath)),
+      true,
+      `Path ${fromPath.join(".")} selects ${selItem.namePath.join(".")} as ${selItem.alias}`
+    );
+  });
+
   const filterPaths = getFilterPaths(filter);
   const paths = mergePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
@@ -305,6 +338,9 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
   );
 }
 
+/**
+ * Deprecated, use `transformSelectPath` instead!
+ */
 function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
   const namePath = [model.name, ...select.namePath.slice(by)];
   if (select.kind === "field") {
@@ -318,4 +354,29 @@ function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectIte
     namePath,
     select: select.select.map((s) => shiftSelect(model, s, by)),
   };
+}
+
+function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
+  return select.map((selItem: SelectItem) => {
+    ensureEqual(
+      _.isEqual(from, _.take(selItem.namePath, from.length)),
+      true,
+      `Cannot transform select: ${selItem.namePath.join(".")} doesn't start with ${from.join(".")}`
+    );
+    const newPath = [...to, ..._.drop(selItem.namePath, from.length)];
+    switch (selItem.kind) {
+      case "field": {
+        return { ...selItem, namePath: newPath };
+      }
+      case "query":
+      case "reference":
+      case "relation": {
+        return {
+          ...selItem,
+          namePath: newPath,
+          select: transformSelectPath(selItem.select, from, to),
+        };
+      }
+    }
+  });
 }

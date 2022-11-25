@@ -4,7 +4,7 @@ import { EndpointQueries, QueryTree, endpointQueries } from "./build";
 import { queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
-import { CreateEndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
+import { CreateEndpointDef, EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
   it("nested query", () => {
@@ -77,7 +77,7 @@ describe("Endpoint queries", () => {
     q;
   });
 
-  it("Deeply nested entrypoints", () => {
+  describe("Deeply nested entrypoints", () => {
     const bp = `
     model Org {
       field name { type text }
@@ -136,15 +136,17 @@ describe("Endpoint queries", () => {
     }
     `;
     const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].entrypoints[0].entrypoints[0]
-      .endpoints[1] as ListEndpointDef;
-    expect(endpoint.kind).toEqual("list");
-    const q = endpointQueries(def, endpoint);
-
-    expect(extractEndpointQueries(q)).toMatchSnapshot();
-    expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
-    expect(endpoint.target).toMatchSnapshot();
-    expect(endpoint.parentContext).toMatchSnapshot();
+    const entrypoint = def.entrypoints[0].entrypoints[0].entrypoints[0];
+    const range = entrypoint.endpoints.map((ep) => [ep.kind, ep] as [string, EndpointDef]);
+    it.each(range)("test %s endpoint", (_kind, endpoint) => {
+      const q = endpointQueries(def, endpoint);
+      expect(extractEndpointQueries(q)).toMatchSnapshot();
+      expect(
+        extractEndpointQueries(q).map((q) => queryToString(def, q) + "\n\n\n")
+      ).toMatchSnapshot();
+      expect(endpoint.target).toMatchSnapshot();
+      expect(endpoint.parentContext).toMatchSnapshot();
+    });
   });
 });
 
