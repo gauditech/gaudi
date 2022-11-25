@@ -9,13 +9,13 @@ export class Vars {
     Object.assign(this._vars, { [name]: value });
   }
   get(name: string, path?: string[]): any {
-    _.get(this._vars, [name, ...(path ?? [])]);
+    return _.get(this._vars, [name, ...(path ?? [])]);
   }
   all(): any {
     return this._vars;
   }
   collect(path: string[]): any {
-    collect(this._vars, path);
+    return collect(this._vars, path);
   }
   copy() {
     return new Vars(_.cloneDeep(this._vars));
