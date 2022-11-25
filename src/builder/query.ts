@@ -25,14 +25,14 @@ export function buildEndpointPath(endpoint: EndpointDef): EndpointPath {
 
 function buildFragments(endpoint: EndpointDef): PathFragment[] {
   const contextFragments = endpoint.parentContext.flatMap((target): PathFragment[] => [
-    { kind: "namespace", name: target.name },
+    { kind: "namespace", name: _.snakeCase(target.name) },
     {
       kind: "identifier",
       type: target.identifyWith.type,
       alias: target.identifyWith.paramName,
     },
   ]);
-  const targetNs: PathFragment = { kind: "namespace", name: endpoint.target.name };
+  const targetNs: PathFragment = { kind: "namespace", name: _.snakeCase(endpoint.target.name) };
   switch (endpoint.kind) {
     case "get":
     case "update":
