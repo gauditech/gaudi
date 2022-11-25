@@ -89,7 +89,7 @@ entrypoint Orgs {
 
         get endpoint {}
         list endpoint {}
-        create endpoint {}
+        // create endpoint {}
     }
 
     entrypoint AllIssues {
