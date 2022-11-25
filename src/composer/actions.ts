@@ -3,7 +3,7 @@ import _ from "lodash";
 import { getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureThrow } from "@src/common/utils";
+import { assertUnreachable, ensureEqual, ensureThrow } from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -220,7 +220,7 @@ function getActionSetters(
           ];
         }
         default: {
-          throw new Error("should be unreachable");
+          assertUnreachable(atom.set);
         }
       }
     });
