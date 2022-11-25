@@ -30,6 +30,7 @@ exports[`custom actions can create nested relations through transient references
         "kind": "reference",
         "name": "org",
         "namePath": [
+          "repo",
           "org",
         ],
         "select": [
@@ -38,6 +39,7 @@ exports[`custom actions can create nested relations through transient references
             "kind": "field",
             "name": "id",
             "namePath": [
+              "repo",
               "org",
               "id",
             ],
@@ -197,6 +199,7 @@ exports[`custom actions succeeds for basic composite create 1`] = `
         "kind": "field",
         "name": "id",
         "namePath": [
+          "e",
           "id",
         ],
         "refKey": "OrgExtra.id",

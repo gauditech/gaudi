@@ -1,11 +1,9 @@
-import path from "path";
-
 import _ from "lodash";
 
 import { composeActionBlock } from "./actions";
 
 import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot, ensureThrow } from "@src/common/utils";
+import { ensureEqual, ensureNot } from "@src/common/utils";
 import { mergePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -381,7 +379,7 @@ function wrapTargetsWithSelect(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
     const model = getRef2.model(def, target.retType);
-    const select = pathsToSelectDef(def, model, paths, []);
+    const select = pathsToSelectDef(def, model, paths, [target.alias]);
     return { ...target, select };
   });
 }
@@ -396,7 +394,7 @@ function wrapActionsWithSelect(
       // normalize paths related to this action alias
       const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
       const model = getRef2.model(def, a.model);
-      const select = pathsToSelectDef(def, model, paths, []);
+      const select = pathsToSelectDef(def, model, paths, [a.alias]);
       return { ...a, select };
     });
 }

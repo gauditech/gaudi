@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
+import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
@@ -60,7 +60,9 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     const filter = parentTarget
       ? applyFilterIdInContext([parentTarget.retType], targetFilter)
       : targetFilter;
-    const query = queryFromParts(def, target.alias, namePath, filter, target.select);
+    const model = getRef2.model(def, namePath[0]);
+    const select = target.select.map((selItem) => shiftSelect(model, selItem, 1));
+    const query = queryFromParts(def, target.alias, namePath, filter, select);
     return buildQueryTree(def, query);
   });
 
@@ -77,7 +79,11 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
   const filter = parentTarget
     ? applyFilterIdInContext([parentTarget.retType], targetFilter)
     : targetFilter;
-  const targetQuery = queryFromParts(def, e.target.alias, namePath, filter, e.target.select);
+
+  const model = getRef2.model(def, namePath[0]);
+  const select = e.target.select.map((selItem) => shiftSelect(model, selItem, 1));
+
+  const targetQuery = queryFromParts(def, e.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
   const responseQuery = queryFromParts(def, e.target.alias, namePath, filter, e.response ?? []);
