@@ -69,7 +69,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
   const endpointPath = buildEndpointPath(endpoint);
   const queries = endpointQueries(def, endpoint);
 
-  const requiresAuthentication = true; // TODO: read from endpoint
+  const requiresAuthentication = false; // TODO: read from endpoint
 
   return {
     path: endpointPath.fullPath,
@@ -112,7 +112,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
   const endpointPath = buildEndpointPath(endpoint);
   const queries = endpointQueries(def, endpoint);
 
-  const requiresAuthentication = true; // TODO: read from endpoint
+  const requiresAuthentication = false; // TODO: read from endpoint
 
   return {
     path: endpointPath.fullPath,
@@ -289,7 +289,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
   const endpointPath = buildEndpointPath(endpoint);
   const queries = endpointQueries(def, endpoint);
 
-  const requiresAuthentication = true; // TODO: read from endpoint
+  const requiresAuthentication = false; // TODO: read from endpoint
 
   return {
     path: endpointPath.fullPath,
