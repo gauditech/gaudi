@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 
+import _ from "lodash";
 import request from "supertest";
 
 import { PopulatorData, createApiTestSetup } from "@src/e2e/api/setup";
@@ -94,7 +95,7 @@ describe("API endpoints", () => {
       const response = await request(getServer()).get("/org/org1/repos");
 
       expect(response.statusCode).toBe(200);
-      expect(response.body).toMatchSnapshot();
+      expect(_.sortBy(response.body, "id")).toMatchSnapshot();
     });
 
     it("create", async () => {
