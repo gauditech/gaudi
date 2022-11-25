@@ -1,5 +1,352 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Endpoint queries Deeply nested entrypoints 1`] = `
+[
+  {
+    "filter": {
+      "kind": "binary",
+      "lhs": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "slug",
+        ],
+      },
+      "operator": "is",
+      "rhs": {
+        "kind": "variable",
+        "name": "org_slug",
+        "type": "text",
+      },
+    },
+    "from": {
+      "kind": "model",
+      "refKey": "Org",
+    },
+    "fromPath": [
+      "Org",
+    ],
+    "joinPaths": [],
+    "name": "$target_0",
+    "nullable": false,
+    "refKey": "N/A",
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+    ],
+  },
+  {
+    "filter": {
+      "kind": "binary",
+      "lhs": {
+        "kind": "binary",
+        "lhs": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "operator": "is",
+        "rhs": {
+          "kind": "variable",
+          "name": "repo_id",
+          "type": "integer",
+        },
+      },
+      "operator": "and",
+      "rhs": {
+        "kind": "binary",
+        "lhs": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "operator": "in",
+        "rhs": {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": "list-integer",
+        },
+      },
+    },
+    "from": {
+      "kind": "model",
+      "refKey": "Org",
+    },
+    "fromPath": [
+      "Org",
+      "repos",
+    ],
+    "joinPaths": [
+      {
+        "joinPaths": [],
+        "joinType": "inner",
+        "kind": "relation",
+        "name": "repos",
+        "namePath": [
+          "Org",
+          "repos",
+        ],
+        "refKey": "Org.repos",
+        "retType": "Repo",
+      },
+    ],
+    "name": "$target_1",
+    "nullable": false,
+    "refKey": "N/A",
+    "retType": "Repo",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "repos",
+          "id",
+        ],
+        "refKey": "Repo.id",
+      },
+    ],
+  },
+  {
+    "filter": {
+      "kind": "binary",
+      "lhs": {
+        "kind": "alias",
+        "namePath": [
+          "Repo",
+          "id",
+        ],
+      },
+      "operator": "in",
+      "rhs": {
+        "kind": "variable",
+        "name": "@context_ids",
+        "type": "list-integer",
+      },
+    },
+    "from": {
+      "kind": "model",
+      "refKey": "Repo",
+    },
+    "fromPath": [
+      "Repo",
+      "issues",
+    ],
+    "joinPaths": [
+      {
+        "joinPaths": [],
+        "joinType": "inner",
+        "kind": "relation",
+        "name": "issues",
+        "namePath": [
+          "Repo",
+          "issues",
+        ],
+        "refKey": "Repo.issues",
+        "retType": "Issue",
+      },
+    ],
+    "name": "$target_2",
+    "nullable": false,
+    "refKey": "N/A",
+    "retType": "Issue",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Repo",
+          "issues",
+          "id",
+        ],
+        "refKey": "Issue.id",
+      },
+    ],
+  },
+  {
+    "filter": {
+      "kind": "binary",
+      "lhs": {
+        "kind": "alias",
+        "namePath": [
+          "Repo",
+          "id",
+        ],
+      },
+      "operator": "in",
+      "rhs": {
+        "kind": "variable",
+        "name": "@context_ids",
+        "type": "list-integer",
+      },
+    },
+    "from": {
+      "kind": "model",
+      "refKey": "Repo",
+    },
+    "fromPath": [
+      "Repo",
+      "issues",
+    ],
+    "joinPaths": [
+      {
+        "joinPaths": [],
+        "joinType": "inner",
+        "kind": "relation",
+        "name": "issues",
+        "namePath": [
+          "Repo",
+          "issues",
+        ],
+        "refKey": "Repo.issues",
+        "retType": "Issue",
+      },
+    ],
+    "name": "$target_2",
+    "nullable": false,
+    "refKey": "N/A",
+    "retType": "Issue",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+        "refKey": "Issue.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "name",
+        ],
+        "refKey": "Issue.name",
+      },
+      {
+        "alias": "repo_id",
+        "kind": "field",
+        "name": "repo_id",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "repo_id",
+        ],
+        "refKey": "Issue.repo_id",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries Deeply nested entrypoints 2`] = `
+[
+  "SELECT "Org".id AS id
+FROM "org" AS "Org"
+
+WHERE "Org".slug = :org_slug",
+  "SELECT "Org.repos".id AS id
+      FROM "org" AS "Org"
+      JOIN
+"repo" AS "Org.repos"
+ON "Org".id = "Org.repos".org_id
+      WHERE "Org.repos".id = :repo_id AND "Org".id IN :@context_ids",
+  "SELECT "Repo.issues".id AS id
+      FROM "repo" AS "Repo"
+      JOIN
+"issue" AS "Repo.issues"
+ON "Repo".id = "Repo.issues".repo_id
+      WHERE "Repo".id IN :@context_ids",
+  "SELECT "Org.repos.issues".id AS id, "Org.repos.issues".name AS name, "Org.repos.issues".repo_id AS repo_id
+      FROM "repo" AS "Repo"
+      JOIN
+"issue" AS "Repo.issues"
+ON "Repo".id = "Repo.issues".repo_id
+      WHERE "Repo".id IN :@context_ids",
+]
+`;
+
+exports[`Endpoint queries Deeply nested entrypoints 3`] = `
+{
+  "alias": "$target_2",
+  "kind": "relation",
+  "name": "issues",
+  "namePath": [
+    "Org",
+    "repos",
+    "issues",
+  ],
+  "refKey": "Repo.issues",
+  "retType": "Issue",
+  "select": [],
+}
+`;
+
+exports[`Endpoint queries Deeply nested entrypoints 4`] = `
+[
+  {
+    "alias": "$target_0",
+    "identifyWith": {
+      "name": "slug",
+      "paramName": "org_slug",
+      "refKey": "Org.slug",
+      "type": "text",
+    },
+    "kind": "model",
+    "name": "Org",
+    "namePath": [
+      "Org",
+    ],
+    "refKey": "Org",
+    "retType": "Org",
+    "select": [],
+  },
+  {
+    "alias": "$target_1",
+    "identifyWith": {
+      "name": "id",
+      "paramName": "repo_id",
+      "refKey": "Repo.id",
+      "type": "integer",
+    },
+    "kind": "relation",
+    "name": "repos",
+    "namePath": [
+      "Org",
+      "repos",
+    ],
+    "refKey": "Org.repos",
+    "retType": "Repo",
+    "select": [],
+  },
+]
+`;
+
 exports[`Endpoint queries chained nested query 1`] = `
 {
   "parentContextQueryTrees": [

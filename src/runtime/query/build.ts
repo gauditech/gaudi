@@ -81,7 +81,8 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     : targetFilter;
 
   const model = getRef2.model(def, namePath[0]);
-  const select = e.target.select.map((selItem) => shiftSelect(model, selItem, 1));
+  const contextLen = e.parentContext.length;
+  const select = e.target.select.map((selItem) => shiftSelect(model, selItem, contextLen || 1));
 
   const targetQuery = queryFromParts(def, e.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);

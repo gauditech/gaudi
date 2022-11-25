@@ -4,7 +4,7 @@ import { EndpointQueries, QueryTree, endpointQueries } from "./build";
 import { queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
-import { QueryDef } from "@src/types/definition";
+import { CreateEndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
   it("nested query", () => {
@@ -75,6 +75,76 @@ describe("Endpoint queries", () => {
     expect(extractEndpointQueries(q)).toHaveLength(5);
     expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
     q;
+  });
+
+  it("Deeply nested entrypoints", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      field slug { type text, unique }
+      relation repos { from Repo, through org }
+    }
+
+
+    model Repo {
+      reference org { to Org }
+      field name { type text }
+      field slug { type text, unique }
+      relation issues { from Issue, through repo }
+    }
+
+    model Issue {
+      reference repo { to Repo }
+      field name { type text }
+      field description { type text }
+    }
+
+    // ----- entrypoints
+
+    entrypoint Orgs {
+      target model Org
+      identify with slug
+      response { name, slug }
+
+      get endpoint {}
+      list endpoint {}
+      create endpoint {}
+      update endpoint {}
+      delete endpoint {}
+
+      entrypoint Repos {
+        target relation repos
+        response { id, slug, org_id }
+
+        get endpoint {}
+        list endpoint {}
+        create endpoint {}
+        update endpoint {}
+        delete endpoint {}
+
+        entrypoint Issues {
+          target relation issues
+          response { id, name, repo_id }
+
+          get endpoint {}
+          list endpoint {}
+          create endpoint {}
+          update endpoint {}
+          delete endpoint {}
+        }
+      }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].entrypoints[0].entrypoints[0]
+      .endpoints[1] as ListEndpointDef;
+    expect(endpoint.kind).toEqual("list");
+    const q = endpointQueries(def, endpoint);
+
+    expect(extractEndpointQueries(q)).toMatchSnapshot();
+    expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
+    expect(endpoint.target).toMatchSnapshot();
+    expect(endpoint.parentContext).toMatchSnapshot();
   });
 });
 
