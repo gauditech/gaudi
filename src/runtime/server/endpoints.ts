@@ -100,7 +100,23 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
           // FIXME run custom actions
 
-          resp.json(contextVars.get(queries.targetQueryTree.alias));
+          // After all actions are done, fetch the list of records again. Ignore contextVars
+          // cache as custom actions may have modified the records.
+
+          let parentIds: number[] = [];
+          const parentTarget = _.last(endpoint.parentContext);
+          if (parentTarget) {
+            parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
+          }
+          const responseResults = await executeQueryTree(
+            dbConn,
+            def,
+            queries.responseQueryTree,
+            pathParamVars,
+            parentIds
+          );
+
+          resp.json(findOne(responseResults));
         } catch (err) {
           errorResponse(err);
         }
@@ -146,8 +162,23 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           // FIXME run custom actions
 
-          // FIXME refetch using the response query
-          resp.json(contextVars.get(tQt.alias));
+          // After all actions are done, fetch the list of records again. Ignore contextVars
+          // cache as custom actions may have modified the records.
+
+          let parentIds: number[] = [];
+          const parentTarget = _.last(endpoint.parentContext);
+          if (parentTarget) {
+            parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
+          }
+          const responseResults = await executeQueryTree(
+            dbConn,
+            def,
+            queries.responseQueryTree,
+            pathParamVars,
+            parentIds
+          );
+
+          resp.json(responseResults);
         } catch (err) {
           errorResponse(err);
         }
