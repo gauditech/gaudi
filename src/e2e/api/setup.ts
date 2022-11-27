@@ -5,7 +5,7 @@ import os from "os";
 import path from "path";
 
 import express, { Express, json } from "express";
-import { chain } from "lodash";
+import _ from "lodash";
 
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
@@ -63,9 +63,9 @@ export function createApiTestSetup(
     server = await createAppServer(context, (app) => {
       bindAppContext(app, context);
 
-      buildEndpointConfig(def, def.entrypoints).forEach((epc) =>
-        registerServerEndpoint(app, epc, "")
-      );
+      buildEndpointConfig(def, def.entrypoints).forEach((epc) => {
+        registerServerEndpoint(app, epc, "");
+      });
     });
     console.info(`  created app server`);
 
@@ -173,7 +173,7 @@ async function initializeDb(dbConnUrl: string, schema: string, definitionPath: s
 }
 
 async function populateDb(def: Definition, dbConn: DbConn, data: PopulatorData[]) {
-  await chain(data)
+  await _.chain(data)
     .flatMap(({ model, data }) => {
       return data.map((row) => {
         return insertQuery(def, dbConn, model, row);
@@ -213,7 +213,15 @@ async function createAppServer(
   return new Promise((resolve, reject) => {
     try {
       const server = app.listen(() => {
-        console.info("  closed app server");
+        const serverAddress = server.address();
+        console.log(
+          `  server started on ${
+            serverAddress == null || _.isString(serverAddress)
+              ? serverAddress
+              : `${serverAddress.address}:${serverAddress.port}`
+          }`
+        );
+
         resolve(server);
       });
     } catch (err) {

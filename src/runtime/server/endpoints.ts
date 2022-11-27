@@ -5,7 +5,7 @@ import { Vars } from "./vars";
 
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { buildChangset } from "@src/runtime/common/changeset";
+import { executeActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { endpointQueries } from "@src/runtime/query/build";
 import { executeQueryTree } from "@src/runtime/query/exec";
@@ -17,7 +17,6 @@ import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
 import {
   CreateEndpointDef,
-  CreateOneAction,
   Definition,
   DeleteEndpointDef,
   EndpointDef,
@@ -25,7 +24,6 @@ import {
   GetEndpointDef,
   ListEndpointDef,
   UpdateEndpointDef,
-  UpdateOneAction,
 } from "@src/types/definition";
 
 /** Create endpoint configs from entrypoints */
@@ -224,27 +222,22 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          // FIXME this is only temporary
-          // find default changeset
-          const act = endpoint.actions
-            .filter((a): a is CreateOneAction => a.kind === "create-one")
-            .find((a) => a.alias === endpoint.target.alias)!;
-          const actionChangeset = buildChangset(act.changeset, {
-            input: validationResult,
-          });
-          console.log("Changeset result", actionChangeset);
+          executeActions(
+            def,
+            dbConn,
+            { input: validationResult, vars: contextVars },
+            endpoint.actions
+          );
 
-          // FIXME run custom actions
+          const targetId = contextVars.get(endpoint.target.alias)?.id;
 
-          const id = await insertData(def, dbConn, endpoint, actionChangeset);
-
-          if (id === null) {
+          if (targetId === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
-          console.log("Query result", id);
+          console.log("Query result", targetId);
 
           // FIXME refetch using the response query
-          resp.json({ id });
+          resp.json({ id: targetId });
         } catch (err) {
           errorResponse(err);
         }
@@ -294,25 +287,21 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          // FIXME this is only temporary
-          // find default changeset
-          const act = endpoint.actions
-            .filter((a): a is UpdateOneAction => a.kind === "update-one")
-            .find((a) => a.alias === endpoint.target.alias)!;
+          executeActions(
+            def,
+            dbConn,
+            { input: validationResult, vars: contextVars },
+            endpoint.actions
+          );
 
-          const actionChangeset = buildChangset(act.changeset, {
-            input: validationResult,
-          });
+          const targetId = contextVars.get(endpoint.target.alias)?.id;
 
-          const target = contextVars.get(endpoint.target.alias);
-          const id = await updateData(def, dbConn, endpoint, target.id, actionChangeset);
-
-          if (id === null) {
+          if (targetId === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
           }
-          console.log("Query result", id);
+          console.log("Query result", targetId);
 
-          resp.json({ id });
+          resp.json({ id: targetId });
         } catch (err) {
           errorResponse(err);
         }
@@ -398,53 +387,11 @@ function validatePathIdentifier(fragment: PathFragmentIdentifier, val: string): 
   }
 }
 
-/** Insert data to DB  */
-async function insertData(
-  definition: Definition,
-  dbConn: DbConn,
-  endpoint: EndpointDef,
-  data: Record<string, unknown>
-): Promise<number | null> {
-  const target = endpoint.target;
-
-  const { value: model } = getRef<"model">(definition, target.retType);
-
-  // TODO: return action's `select` here
-  const ret = await dbConn
-    .insert(dataToFieldDbnames(model, data))
-    .into(model.dbname)
-    .returning("id");
-
-  // FIXME findOne? handle unexpected result
-  if (!ret.length) return null;
-  return ret[0].id;
-}
-
-/** Update record in DB  */
-async function updateData(
-  definition: Definition,
-  dbConn: DbConn,
-  endpoint: EndpointDef,
-  dataId: number,
-  data: Record<string, unknown>
-): Promise<number | null> {
-  const target = endpoint.target;
-  if (target == null) throw `Endpoint update target is empty`;
-
-  const { value: model } = getRef<"model">(definition, target.retType);
-
-  // TODO: return action's `select` here
-  const ret = await dbConn(model.dbname)
-    .where({ id: dataId })
-    .update(dataToFieldDbnames(model, data))
-    .returning("id");
-
-  // FIXME findOne? handle unexpected result
-  if (!ret.length) return null;
-  return ret[0].id;
-}
-
-/** Delete record in DB  */
+/**
+ * Delete record in DB
+ *
+ * Move this together with other DB functions once "delete" actions are added
+ */
 async function deleteData(
   definition: Definition,
   dbConn: DbConn,

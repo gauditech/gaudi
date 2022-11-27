@@ -20,24 +20,40 @@ model Repo {
 // ----- entrypoints
 
 entrypoint Orgs {
-  target model Org
+  target model Org as org
   identify with slug
   response { name, slug, description }
 
   get endpoint {}
   list endpoint {}
-  create endpoint {}
-  update endpoint {}
+  create endpoint {
+    action {
+      create org {}
+    }
+  }
+  update endpoint {
+    action {
+      update org {}
+    }
+  }
   delete endpoint {}
 
   entrypoint Repos {
-    target relation repos
+    target relation repos as repo
     response { id, slug, description, org_id }
 
     get endpoint {}
     list endpoint {}
-    create endpoint {}
-    update endpoint {}
+    create endpoint {
+      action {
+        create repo {}
+      }
+    }
+    update endpoint {
+      action {
+        update repo {}
+      }
+    }
     delete endpoint {}
   }
 }
