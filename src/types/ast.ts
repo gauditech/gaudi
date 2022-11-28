@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | HookAST;
+export type DefinitionAST = ModelAST | EntrypointAST | HookAST | PopulatorAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -168,3 +168,36 @@ export type BinaryOperator =
   | ">=";
 
 export type UnaryOperator = "not";
+
+export type PopulatorAST = WithContext<{
+  kind: "populator";
+  name: string;
+  body: PopulateAST[];
+}>;
+
+export type PopulateAST = WithContext<{
+  kind: "populate";
+  name: string;
+  body: PopulateBodyAST[];
+}>;
+export type PopulateBodyAST = WithContext<
+  | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
+  | { kind: "identify"; identifier: string }
+  | { kind: "repeat"; repeat: PopulateRepeatAST }
+  | { kind: "set"; target: string; set: PopulateSetterValueAST }
+  | { kind: "populate"; populate: PopulateAST }
+  // TODO: hooks
+  // TODO: hints
+>;
+
+export type PopulateSetterValueAST = WithContext<
+  { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string }
+>;
+
+export type PopulateRepeatAST = WithContext<
+  { kind: "fixed"; value: number } | { kind: "range"; range: PopulateRepeatRangeAST[] }
+>;
+
+export type PopulateRepeatRangeAST = WithContext<
+  { kind: "min"; value: number } | { kind: "max"; value: number }
+>;

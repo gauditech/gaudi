@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Hook), ";">
+    = NewlineBody<(Model | Entrypoint | Hook | Populator), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -219,4 +219,36 @@ Gaudi {
   singleLineComment = "//" (~lineTerminator any)*
 
   multiLineString = "`" (~"`" any)* "`"
+
+
+  // ********************
+  // Populator grammar
+  // ********************
+
+  Populator
+    = "populator" identifier "{" NonemptyNewlineBody<Populate, ";"> "}"
+
+  Populate
+    = "populate" identifier "{" NonemptyNewlineBody<PopulateBody, ";"> "}"
+
+  PopulateBody
+    = "target" ("model" | "relation") IdentifierWithAs -- target
+    | "identify" "with" identifier -- identify
+    | "repeat" PopulateRepeat -- repeat
+    | "set" identifier PopulateSetterValue -- setter
+    | Populate -- populate
+
+  PopulateSetterValue
+    = literal -- literal
+    | identifier -- reference
+    // TODO: hints
+    // TODO: hooks
+
+  PopulateRepeat
+    = integer -- fixed
+    | "{" NonemptyNewlineBody<PopulateRepeatRange, ","> "}" -- range
+  
+  PopulateRepeatRange
+    = "min" integer -- min
+    | "max" integer -- max
 }

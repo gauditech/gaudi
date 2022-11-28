@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { CompilerError } from "@src/common/error";
+import { assertUnreachable } from "@src/common/utils";
 import {
   AST,
   ActionBodyAST,
@@ -13,6 +14,8 @@ import {
   InputFieldOptAST,
   LiteralValue,
   ModelAST,
+  PopulateAST,
+  PopulatorAST,
   QueryAST,
   ReferenceAST,
   RelationAST,
@@ -28,6 +31,10 @@ import {
   HookSpec,
   InputFieldSpec,
   ModelSpec,
+  PopulateRepeatSpec,
+  PopulateSetterSpec,
+  PopulateSpec,
+  PopulatorSpec,
   QuerySpec,
   ReferenceSpec,
   RelationSpec,
@@ -339,20 +346,82 @@ function compileHook(hook: HookAST): HookSpec {
   }
 }
 
+function compilePopulator(populator: PopulatorAST): PopulatorSpec {
+  const name = populator.name;
+  const populates = populator.body.map(compilePopulate);
+
+  return { name, populates };
+}
+
+function compilePopulate(populate: PopulateAST): PopulateSpec {
+  const name = populate.name;
+  let target: PopulateSpec["target"] | undefined;
+  let identify: string | undefined;
+  let repeat: PopulateRepeatSpec | undefined;
+  const setters: PopulateSetterSpec[] = [];
+  const populates: PopulateSpec[] = [];
+
+  populate.body.forEach((p) => {
+    const kind = p.kind;
+    if (kind === "target") {
+      target = p.target;
+    } else if (kind === "identify") {
+      identify = p.identifier;
+    } else if (kind === "repeat") {
+      if (p.repeat.kind === "fixed") {
+        repeat = p.repeat;
+      } else {
+        repeat = {
+          kind: "range",
+          range: _.chain(p.repeat.range)
+            .map((r) => [r.kind, r.value])
+            .fromPairs()
+            .value(),
+        };
+      }
+    } else if (kind === "set") {
+      setters.push(p);
+    } else if (kind === "populate") {
+      populates.push(compilePopulate(p.populate));
+    } else {
+      assertUnreachable(kind);
+    }
+  });
+
+  if (target === undefined) {
+    throw new CompilerError("'populate' has no 'target'", populate);
+  }
+
+  return {
+    name,
+    target,
+    identify,
+    repeat,
+    setters,
+    populates,
+  };
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
   const hooks: HookSpec[] = [];
+  const populators: PopulatorSpec[] = [];
 
   input.map((definition) => {
-    if (definition.kind === "model") {
+    const kind = definition.kind;
+    if (kind === "model") {
       models.push(compileModel(definition));
-    } else if (definition.kind === "entrypoint") {
+    } else if (kind === "entrypoint") {
       entrypoints.push(compileEntrypoint(definition));
-    } else if (definition.kind === "hook") {
+    } else if (kind === "hook") {
       hooks.push(compileHook(definition));
+    } else if (kind === "populator") {
+      populators.push(compilePopulator(definition));
+    } else {
+      assertUnreachable(kind);
     }
   });
 
-  return { models, entrypoints, hooks };
+  return { models, entrypoints, hooks, populators };
 }

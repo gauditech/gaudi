@@ -6,6 +6,7 @@ export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   hooks: HookSpec[];
+  populators: PopulatorSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -116,4 +117,28 @@ export type HookSpec = WithContext<{
   args: { name: string; type: string }[];
   returnType: string;
   inlineBody: string;
+}>;
+
+export type PopulatorSpec = WithContext<{
+  name: string;
+  populates: PopulateSpec[];
+}>;
+
+export type PopulateSpec = WithContext<{
+  name: string;
+  target: { kind: "model" | "relation"; identifier: string };
+  identify?: string;
+  repeat?: PopulateRepeatSpec;
+  setters: PopulateSetterSpec[];
+  populates: PopulateSpec[];
+}>;
+
+export type PopulateRepeatSpec = WithContext<
+  { kind: "fixed"; value: number } | { kind: "range"; range: { min?: number; max?: number } }
+>;
+
+export type PopulateSetterSpec = WithContext<{
+  kind: "set";
+  target: string;
+  set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
 }>;

@@ -1,0 +1,34 @@
+populator TestPopulator {
+  populate Item1 {
+    target model Item
+
+    repeat 2
+
+    // fields
+    set numberProp 1
+    set stringProp "asdf"
+    set boolProp true
+    set nullProp null
+
+    populate SubItem2 {
+      target relation repos as repo
+
+      repeat { min 0, max 100 }
+
+      // fields
+      set numberProp 2
+      set stringProp "fred"
+      set boolProp false
+      set nullProp null
+    }
+  
+    // user
+    populate SubItem3 {
+      target model User as user
+
+      // fields
+      set numberProp 3
+      set stringProp "foo"
+    }
+  }
+}

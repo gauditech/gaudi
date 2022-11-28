@@ -96,6 +96,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -179,6 +180,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -1021,6 +1023,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   ],
   "hooks": [],
   "models": [],
+  "populators": [],
 }
 `;
 
@@ -1394,6 +1397,7 @@ model Repo {
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -1433,6 +1437,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
     },
   ],
   "models": [],
+  "populators": [],
 }
 `;
 
@@ -1518,6 +1523,151 @@ model Make {
       "queries": [],
       "references": [],
       "relations": [],
+    },
+  ],
+  "populators": [],
+}
+`;
+
+exports[`parser blueprint test/populator.gaudi 1`] = `
+{
+  "entrypoints": [],
+  "hooks": [],
+  "models": [],
+  "populators": [
+    {
+      "name": "TestPopulator",
+      "populates": [
+        {
+          "identify": undefined,
+          "name": "Item1",
+          "populates": [
+            {
+              "identify": undefined,
+              "name": "SubItem2",
+              "populates": [],
+              "repeat": {
+                "kind": "range",
+                "range": {
+                  "max": 100,
+                  "min": 0,
+                },
+              },
+              "setters": [
+                {
+                  "kind": "set",
+                  "set": {
+                    "kind": "value",
+                    "value": 2,
+                  },
+                  "target": "numberProp",
+                },
+                {
+                  "kind": "set",
+                  "set": {
+                    "kind": "value",
+                    "value": "fred",
+                  },
+                  "target": "stringProp",
+                },
+                {
+                  "kind": "set",
+                  "set": {
+                    "kind": "value",
+                    "value": false,
+                  },
+                  "target": "boolProp",
+                },
+                {
+                  "kind": "set",
+                  "set": {
+                    "kind": "value",
+                    "value": null,
+                  },
+                  "target": "nullProp",
+                },
+              ],
+              "target": {
+                "alias": "repo",
+                "identifier": "repos",
+                "kind": "relation",
+              },
+            },
+            {
+              "identify": undefined,
+              "name": "SubItem3",
+              "populates": [],
+              "repeat": undefined,
+              "setters": [
+                {
+                  "kind": "set",
+                  "set": {
+                    "kind": "value",
+                    "value": 3,
+                  },
+                  "target": "numberProp",
+                },
+                {
+                  "kind": "set",
+                  "set": {
+                    "kind": "value",
+                    "value": "foo",
+                  },
+                  "target": "stringProp",
+                },
+              ],
+              "target": {
+                "alias": "user",
+                "identifier": "User",
+                "kind": "model",
+              },
+            },
+          ],
+          "repeat": {
+            "kind": "fixed",
+            "value": 2,
+          },
+          "setters": [
+            {
+              "kind": "set",
+              "set": {
+                "kind": "value",
+                "value": 1,
+              },
+              "target": "numberProp",
+            },
+            {
+              "kind": "set",
+              "set": {
+                "kind": "value",
+                "value": "asdf",
+              },
+              "target": "stringProp",
+            },
+            {
+              "kind": "set",
+              "set": {
+                "kind": "value",
+                "value": true,
+              },
+              "target": "boolProp",
+            },
+            {
+              "kind": "set",
+              "set": {
+                "kind": "value",
+                "value": null,
+              },
+              "target": "nullProp",
+            },
+          ],
+          "target": {
+            "alias": undefined,
+            "identifier": "Item",
+            "kind": "model",
+          },
+        },
+      ],
     },
   ],
 }
@@ -2788,6 +2938,7 @@ model Student {
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -2915,5 +3066,6 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
