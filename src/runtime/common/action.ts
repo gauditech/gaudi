@@ -16,7 +16,7 @@ export async function executeActions(
   ctx: ActionContext,
   actions: ActionDef[]
 ) {
-  actions.forEach(async (action) => {
+  for (const action of actions) {
     const model = getRef2.model(def, action.model);
     const dbModel = model.dbname;
 
@@ -36,14 +36,11 @@ export async function executeActions(
     } else if (actionKind === "delete-one") {
       const targetId = resolveTargetId(ctx, action.targetPath);
 
-      console.log("PRE DEL");
-
       await deleteData(dbConn, dbModel, targetId);
-      console.log("POST DEL");
     } else {
       assertUnreachable(actionKind);
     }
-  });
+  }
 }
 
 function resolveTargetId(ctx: ActionContext, targetPath: string[]): number {

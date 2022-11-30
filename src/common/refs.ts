@@ -82,17 +82,17 @@ export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
 }
 
 // FIXME first arg should be Definition, not ModelDef[]
-export function getTargetModel(models: ModelDef[], refKey: string): ModelDef {
-  const prop = getRef(models, refKey);
+export function getTargetModel(source: Definition | ModelDef[], refKey: string): ModelDef {
+  const prop = getRef(source, refKey);
   switch (prop.kind) {
     case "reference": {
-      return getRef<"model">(models, prop.value.toModelRefKey).value;
+      return getRef<"model">(source, prop.value.toModelRefKey).value;
     }
     case "relation": {
-      return getRef<"model">(models, prop.value.fromModelRefKey).value;
+      return getRef<"model">(source, prop.value.fromModelRefKey).value;
     }
     case "query": {
-      return getRef<"model">(models, prop.value.retType).value;
+      return getRef<"model">(source, prop.value.retType).value;
     }
     default:
       throw new Error(`Kind ${prop.kind} not supported`);

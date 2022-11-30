@@ -1547,6 +1547,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "name": "SubItem2",
               "populates": [],
               "repeat": {
+                "alias": undefined,
                 "kind": "range",
                 "range": {
                   "max": 100,
@@ -1624,6 +1625,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
             },
           ],
           "repeat": {
+            "alias": undefined,
             "kind": "fixed",
             "value": 2,
           },

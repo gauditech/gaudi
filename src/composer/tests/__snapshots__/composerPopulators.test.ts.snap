@@ -1,0 +1,341 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`populator succeeds for fixed iteration 1`] = `
+{
+  "name": "DevData",
+  "populates": [
+    {
+      "changeset": {
+        "is_new": {
+          "kind": "value",
+          "type": "boolean",
+          "value": true,
+        },
+        "name": {
+          "kind": "value",
+          "type": "text",
+          "value": "test name",
+        },
+      },
+      "name": "Orgs",
+      "populates": [],
+      "repeat": {
+        "max": 5,
+        "min": 5,
+      },
+      "target": {
+        "alias": "org",
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;
+
+exports[`populator succeeds for nested iterations 1`] = `
+{
+  "name": "DevData",
+  "populates": [
+    {
+      "changeset": {
+        "is_new": {
+          "kind": "value",
+          "type": "boolean",
+          "value": true,
+        },
+        "name": {
+          "kind": "value",
+          "type": "text",
+          "value": "test name",
+        },
+      },
+      "name": "Orgs",
+      "populates": [
+        {
+          "changeset": {
+            "name": {
+              "kind": "value",
+              "type": "text",
+              "value": "test name",
+            },
+            "org_id": {
+              "kind": "reference-value",
+              "target": {
+                "access": [
+                  "id",
+                ],
+                "alias": "org",
+              },
+              "type": "integer",
+            },
+          },
+          "name": "repos",
+          "populates": [],
+          "repeat": {
+            "max": 2000,
+            "min": 20,
+          },
+          "target": {
+            "alias": "repo",
+            "kind": "relation",
+            "name": "repos",
+            "namePath": [
+              "Org",
+              "repos",
+            ],
+            "refKey": "Org.repos",
+            "retType": "Repo",
+          },
+        },
+      ],
+      "repeat": {
+        "max": 4,
+        "min": 4,
+      },
+      "target": {
+        "alias": "org",
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;
+
+exports[`populator succeeds for nested populators 1`] = `
+{
+  "name": "DevData",
+  "populates": [
+    {
+      "changeset": {
+        "is_new": {
+          "kind": "value",
+          "type": "boolean",
+          "value": true,
+        },
+        "name": {
+          "kind": "value",
+          "type": "text",
+          "value": "test name",
+        },
+      },
+      "name": "Orgs",
+      "populates": [
+        {
+          "changeset": {
+            "name": {
+              "kind": "value",
+              "type": "text",
+              "value": "test name",
+            },
+            "org_id": {
+              "kind": "reference-value",
+              "target": {
+                "access": [
+                  "id",
+                ],
+                "alias": "org",
+              },
+              "type": "integer",
+            },
+          },
+          "name": "Repos",
+          "populates": [
+            {
+              "changeset": {
+                "repo_id": {
+                  "kind": "reference-value",
+                  "target": {
+                    "access": [
+                      "id",
+                    ],
+                    "alias": "repo",
+                  },
+                  "type": "integer",
+                },
+                "title": {
+                  "kind": "value",
+                  "type": "text",
+                  "value": "test title",
+                },
+              },
+              "name": "Issues",
+              "populates": [],
+              "repeat": {
+                "max": 1,
+                "min": 1,
+              },
+              "target": {
+                "alias": "issue",
+                "kind": "relation",
+                "name": "issues",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "issues",
+                ],
+                "refKey": "Repo.issues",
+                "retType": "Issue",
+              },
+            },
+          ],
+          "repeat": {
+            "max": 1,
+            "min": 1,
+          },
+          "target": {
+            "alias": "repo",
+            "kind": "relation",
+            "name": "repos",
+            "namePath": [
+              "Org",
+              "repos",
+            ],
+            "refKey": "Org.repos",
+            "retType": "Repo",
+          },
+        },
+      ],
+      "repeat": {
+        "max": 1,
+        "min": 1,
+      },
+      "target": {
+        "alias": "org",
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;
+
+exports[`populator succeeds for range iteration (only max) 1`] = `
+{
+  "name": "DevData",
+  "populates": [
+    {
+      "changeset": {
+        "is_new": {
+          "kind": "value",
+          "type": "boolean",
+          "value": true,
+        },
+        "name": {
+          "kind": "value",
+          "type": "text",
+          "value": "test name",
+        },
+      },
+      "name": "Orgs",
+      "populates": [],
+      "repeat": {
+        "max": 3,
+        "min": 3,
+      },
+      "target": {
+        "alias": "org",
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;
+
+exports[`populator succeeds for range iteration 1`] = `
+{
+  "name": "DevData",
+  "populates": [
+    {
+      "changeset": {
+        "is_new": {
+          "kind": "value",
+          "type": "boolean",
+          "value": true,
+        },
+        "name": {
+          "kind": "value",
+          "type": "text",
+          "value": "test name",
+        },
+      },
+      "name": "Orgs",
+      "populates": [],
+      "repeat": {
+        "max": 3,
+        "min": 1,
+      },
+      "target": {
+        "alias": "org",
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;
+
+exports[`populator succeeds for simple populator 1`] = `
+{
+  "name": "DevData",
+  "populates": [
+    {
+      "changeset": {
+        "is_new": {
+          "kind": "value",
+          "type": "boolean",
+          "value": true,
+        },
+        "name": {
+          "kind": "value",
+          "type": "text",
+          "value": "test name",
+        },
+      },
+      "name": "Orgs",
+      "populates": [],
+      "repeat": {
+        "max": 1,
+        "min": 1,
+      },
+      "target": {
+        "alias": "org",
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;

@@ -126,7 +126,7 @@ export type PopulatorSpec = WithContext<{
 
 export type PopulateSpec = WithContext<{
   name: string;
-  target: { kind: "model" | "relation"; identifier: string };
+  target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
   repeat?: PopulateRepeatSpec;
   setters: PopulateSetterSpec[];
@@ -134,7 +134,8 @@ export type PopulateSpec = WithContext<{
 }>;
 
 export type PopulateRepeatSpec = WithContext<
-  { kind: "fixed"; value: number } | { kind: "range"; range: { min?: number; max?: number } }
+  | { kind: "fixed"; alias?: string; value: number }
+  | { kind: "range"; alias?: string; range: { min?: number; max?: number } }
 >;
 
 export type PopulateSetterSpec = WithContext<{

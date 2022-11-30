@@ -5,6 +5,7 @@ import { RefKind } from "@src/common/refs";
 export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];
+  populators: PopulatorDef[];
 };
 
 export type ModelDef = {
@@ -335,6 +336,18 @@ export type DeleteManyAction = {
 };
 
 export type Changeset = Record<string, FieldSetter>;
+export type FieldSetter =
+  // TODO add composite expression setter
+  FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
+
+// need this exported for TypedContextPath;
+type IdentifierDefGen<K> = { kind: K; name: string; refKey: string };
+export type IdentifierDefModel = IdentifierDefGen<"model">;
+export type IdentifierDefField = IdentifierDefGen<"field">;
+export type IdentifierDef =
+  | IdentifierDefGen<"query" | "relation" | "reference">
+  | IdentifierDefField
+  | IdentifierDefModel;
 
 export type FieldSetterValue =
   | { kind: "value"; type: "text"; value: string }
@@ -363,15 +376,33 @@ export type FieldSetterReferenceInput = {
   // required: boolean;
 };
 
-export type FieldSetter =
-  // TODO add composite expression setter
-  FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
+export type PopulatorDef = {
+  name: string;
+  populates: PopulateDef[];
+};
 
-// need this exported for TypedContextPath;
-type IdentifierDefGen<K> = { kind: K; name: string; refKey: string };
-export type IdentifierDefModel = IdentifierDefGen<"model">;
-export type IdentifierDefField = IdentifierDefGen<"field">;
-export type IdentifierDef =
-  | IdentifierDefGen<"query" | "relation" | "reference">
-  | IdentifierDefField
-  | IdentifierDefModel;
+export type PopulateDef = {
+  name: string;
+  target: PopulateTargetDef;
+  repeat: PopulateRepeatDef;
+  changeset: PopulateChangeset;
+  populates: PopulateDef[];
+};
+
+export type PopulateTargetDef = {
+  kind: "model" | "reference" | "relation"; // TODO: can we add "query" here?
+  name: string;
+  namePath: string[];
+  refKey: string;
+  retType: string;
+  alias: string;
+};
+
+export type PopulateRepeatDef = { alias?: string; min: number; max: number };
+
+export type PopulateChangeset = Record<string, PopulateSetter>;
+
+// TODO: this is very much alike to `FieldSetter` def
+export type PopulateSetter = FieldSetterValue | FieldSetterReferenceValue;
+// TODO: add hints
+// TODO: add hooks

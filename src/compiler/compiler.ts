@@ -369,10 +369,15 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
       identify = p.identifier;
     } else if (kind === "repeat") {
       if (p.repeat.kind === "fixed") {
-        repeat = p.repeat;
+        repeat = {
+          kind: "fixed",
+          alias: p.repeat.alias,
+          value: p.repeat.value,
+        };
       } else {
         repeat = {
           kind: "range",
+          alias: p.repeat.alias,
           range: _.chain(p.repeat.range)
             .map((r) => [r.kind, r.value])
             .fromPairs()

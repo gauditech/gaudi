@@ -10,7 +10,7 @@ import { Changeset, FieldDef } from "@src/types/definition";
 export function buildChangset(
   actionChangset: Changeset,
   actionContext: ActionContext
-): Record<string, unknown> {
+): Record<string, any> {
   return Object.fromEntries(
     Object.entries(actionChangset)
       .map(([name, setter]) => {

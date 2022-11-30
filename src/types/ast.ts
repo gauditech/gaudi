@@ -195,7 +195,8 @@ export type PopulateSetterValueAST = WithContext<
 >;
 
 export type PopulateRepeatAST = WithContext<
-  { kind: "fixed"; value: number } | { kind: "range"; range: PopulateRepeatRangeAST[] }
+  | { kind: "fixed"; alias?: string; value: number }
+  | { kind: "range"; alias?: string; range: PopulateRepeatRangeAST[] }
 >;
 
 export type PopulateRepeatRangeAST = WithContext<

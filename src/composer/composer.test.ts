@@ -31,6 +31,7 @@ describe("compose models", () => {
       ],
       entrypoints: [],
       hooks: [],
+      populators: []
     };
     expect(() => compose(specification)).toThrowError("Items not unique!");
   });
@@ -48,6 +49,7 @@ describe("compose models", () => {
       ],
       entrypoints: [],
       hooks: [],
+      populators: []
     };
     expect(() => compose(specification)).toThrowError("Items not unique!");
   });
@@ -73,6 +75,7 @@ describe("compose models", () => {
       ],
       entrypoints: [],
       hooks: [],
+      populators: []
     };
     expect(() => compose(specification)).toThrowError(
       "Expecting type reference but found a type field"

@@ -98,5 +98,6 @@ exports[`compose models parses validators 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
