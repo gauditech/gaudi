@@ -105,3 +105,39 @@ entrypoint Orgs {
         get endpoint {}
     }
 }
+
+// ----- populators
+
+populator Dev {
+  // org without repos and users
+  populate EmptyOrg {
+    target model Org as org
+
+    // org
+    set name "Organization 1"
+    set slug "org-1"
+    set description "Description of Organization 1"
+    set optOut "Opt out from org Organization 1"
+  }
+
+  // org without repos and users
+  populate OrgWith1RepoAnd1Member {
+    target model Org as org
+
+    // org
+    set name "Organization 2"
+    set slug "org-2"
+    set description "Description of Organization 2"
+    set optOut "Opt out from org Organization 2"
+
+    populate Repos {
+        target relation repos as repo
+
+        // fields
+        set name "Repo 1 for org-2"
+        set slug "repo-org-2"
+        set description "Description of repo-1-org-2"
+        set is_public true
+    }
+  }
+}

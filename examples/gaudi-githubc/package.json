@@ -9,6 +9,7 @@
     "build:compile": "dotenv -e ./gaudi.env -- node --enable-source-maps ./node_modules/@gaudi/engine/engine.js",
     "build:migrate": "npm run build:migrate:db",
     "build:migrate:db": "dotenv -e ./gaudi.env -- npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss",
+    "build:migrate:reset": "dotenv -e ./gaudi.env -- npx prisma db push --force-reset --schema=./dist/db/schema.prisma",
     "// --- dev": "",
     "dev": "npm run dev:prepare; concurrently --names BUILD,MIGR,RUN --prefix-colors blue,magenta,yellow \"npm run dev:compile\" \"npm run dev:migrate\" \"npm run dev:start\"",
     "// - prepare - precreate output folder(s) so watchers work as expected": "",
@@ -19,8 +20,11 @@
     "dev:start": "if [ -f './dist/definition.json' ]; then npm start; else chokidar ./dist/definition.json --command \"if [[ '{event}' == 'add' ]]; then npm start; fi;\"; fi;",
     "// --- server": "",
     "start": "dotenv -e ./gaudi.env -- nodemon --watch ./node_modules/@gaudi/engine/runtime --watch ./dist --enable-source-maps ./node_modules/@gaudi/engine/runtime/runtime.js",
+    "// --- populate": "",
+    "populate": "dotenv -e ./gaudi.env -- node ./node_modules/@gaudi/engine/runtime/populator/populator.js -p Dev",
     "// --- other": "",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist",
+    "setenv": "dotenv -e ./gaudi.env -- "
   },
   "author": "",
   "license": "ISC",
