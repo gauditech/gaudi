@@ -11,36 +11,32 @@ export function buildChangset(
   actionChangset: Changeset,
   actionContext: ActionContext
 ): Record<string, any> {
-  return Object.fromEntries(
-    Object.entries(actionChangset)
-      .map(([name, setter]) => {
-        // TODO: format values by type
-        const setterKind = setter.kind;
-        if (setterKind === "value") {
-          return [
-            name,
-            setter.type === "null" ? null : formatFieldValue(setter.value, setter.type),
-          ];
-        } else if (setterKind === "fieldset-input") {
-          return [
-            name,
-            formatFieldValue(
-              getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
-              setter.type
-            ),
-          ];
-        } else if (setterKind === "reference-value") {
-          return [name, actionContext.vars.get(setter.target.alias, setter.target.access)];
-        } else if (setterKind === "fieldset-reference-input") {
-          // TODO: implement "fieldset-reference-input" setters
-          throw `Unsupported changeset setter kind "${setterKind}"`;
-        } else {
-          assertUnreachable(setterKind);
-        }
-      })
-      // skip empty entries
-      .filter((entry) => entry.length > 0)
-  );
+  return _.chain(actionChangset)
+    .toPairs()
+    .map(([name, setter]) => {
+      // TODO: format values by type
+      const setterKind = setter.kind;
+      if (setterKind === "value") {
+        return [name, setter.type === "null" ? null : formatFieldValue(setter.value, setter.type)];
+      } else if (setterKind === "fieldset-input") {
+        return [
+          name,
+          formatFieldValue(
+            getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
+            setter.type
+          ),
+        ];
+      } else if (setterKind === "reference-value") {
+        return [name, actionContext.vars.get(setter.target.alias, setter.target.access)];
+      } else if (setterKind === "fieldset-reference-input") {
+        // TODO: implement "fieldset-reference-input" setters
+        throw `Unsupported changeset setter kind "${setterKind}"`;
+      } else {
+        assertUnreachable(setterKind);
+      }
+    })
+    .fromPairs()
+    .value();
 }
 
 /**
