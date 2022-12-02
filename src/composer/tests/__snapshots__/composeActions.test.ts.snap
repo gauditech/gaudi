@@ -238,9 +238,41 @@ exports[`custom actions succeeds for basic composite create 1`] = `
     },
     "kind": "create-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+    ],
     "targetPath": [
       "org",
+    ],
+  },
+  {
+    "alias": "oo",
+    "changeset": {
+      "org_id": {
+        "kind": "reference-value",
+        "target": {
+          "access": [
+            "id",
+          ],
+          "alias": "org",
+        },
+        "type": "integer",
+      },
+    },
+    "kind": "create-one",
+    "model": "OrgOwner",
+    "select": [],
+    "targetPath": [
+      "OrgOwner",
     ],
   },
 ]

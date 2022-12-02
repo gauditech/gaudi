@@ -12,6 +12,8 @@ describe("custom actions", () => {
     model OrgExtra {
       relation org { from Org, through extras }
     }
+    model OrgOwner { reference org { to Org } }
+
     entrypoint Orgs {
       target model Org as org
       create endpoint {
@@ -20,6 +22,9 @@ describe("custom actions", () => {
           create org {
             set is_new true
             set extras e
+          }
+          create OrgOwner as oo {
+            set org_id org.id
           }
         }
       }

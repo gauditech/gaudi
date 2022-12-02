@@ -473,7 +473,6 @@ function getActionSetters(
           // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
           let targetField: FieldDef;
           switch (ref.kind) {
-            // FIXME add a test for this case
             case "field": {
               targetField = ref.value;
               break;
