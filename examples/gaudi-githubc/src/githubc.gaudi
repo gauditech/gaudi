@@ -35,7 +35,12 @@ model Org {
     query public_repos { from repos, filter { is_public is true } }
     query public_issues { from public_repos.issues }
 
-    hook extra_data { inline `console.log('inside hook'); "hook result"` }
+    hook extra_data {
+        arg test query {
+            select { name, description }
+        }
+        inline `console.log('inside hook'); test`
+    }
 }
 
 model OrgMembership {

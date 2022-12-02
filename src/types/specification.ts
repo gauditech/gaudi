@@ -16,7 +16,7 @@ export type ModelSpec = WithContext<{
   relations: RelationSpec[];
   queries: QuerySpec[];
   computeds: ComputedSpec[];
-  hooks: HookSpec[];
+  hooks: ModelHookSpec[];
 }>;
 
 export type FieldSpec = WithContext<{
@@ -29,7 +29,8 @@ export type FieldSpec = WithContext<{
 }>;
 
 export type ValidatorSpec = WithContext<
-  { kind: "hook"; hook: HookSpec } | { kind: "builtin"; name: string; args: LiteralValue[] }
+  | { kind: "hook"; hook: FieldValidatorHookSpec }
+  | { kind: "builtin"; name: string; args: LiteralValue[] }
 >;
 export type ReferenceSpec = WithContext<{
   name: string;
@@ -51,6 +52,7 @@ export type QuerySpec = WithContext<{
   filter?: ExpSpec;
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;
+  select?: SelectAST;
 }>;
 
 export type ComputedSpec = WithContext<{
@@ -100,9 +102,16 @@ export type ActionAtomSpec = WithContext<
   | { kind: "reference"; target: string; through: string }
 >;
 
-export type HookSpec = WithContext<{
+export type BaseHookSpec = WithContext<{
   name?: string;
-  args: { name: string }[];
   code: HookCode;
-  returnType?: string;
 }>;
+
+export type FieldValidatorHookSpec = BaseHookSpec & {
+  arg?: string;
+};
+
+export type ModelHookSpec = BaseHookSpec & {
+  name: string;
+  args: { name: string; query: QuerySpec }[];
+};

@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+import { HookCode } from "../hooks";
+
 import { mkJoinConnection } from "./stringify";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
@@ -24,7 +26,11 @@ export type QueryTree = {
   name: string;
   alias: string;
   query: QueryDef;
-  hooks: SelectHookItem[];
+  hooks: {
+    name: string;
+    args: { name: string; query: QueryTree }[];
+    code: HookCode;
+  }[];
   related: QueryTree[];
 };
 
@@ -166,11 +172,11 @@ export function queryFromParts(
 
   return {
     refKey: "N/A",
-    from: { kind: "model", refKey: fromPath[0] },
+    from: { kind: "model", refKey: ctx.refKey },
     filter,
     fromPath,
     name,
-    nullable: false,
+    nullable: false, // FIXME
     // retCardinality: "many", // FIXME,
     retType: getPathRetType(def, fromPath).refKey,
     select,
@@ -286,7 +292,11 @@ export function getFilterPaths(filter: FilterDef): string[][] {
 
 export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
-  const hooks = selectToHooks(q.select);
+  const hooks = selectToHooks(q.select).map(({ name, args, code }) => ({
+    name,
+    args: args.map(({ name, query }) => ({ name, query: buildQueryTree(def, query) })),
+    code,
+  }));
   const { value: model } = getRef<"model">(def.models, query.retType);
 
   return {

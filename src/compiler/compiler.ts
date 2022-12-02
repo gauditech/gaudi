@@ -1,4 +1,5 @@
 import { CompilerError } from "@src/common/error";
+import { HookCode } from "@src/runtime/hooks";
 import {
   AST,
   ActionBodyAST,
@@ -17,12 +18,14 @@ import {
 } from "@src/types/ast";
 import {
   ActionSpec,
+  BaseHookSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
   ExpSpec,
   FieldSpec,
-  HookSpec,
+  FieldValidatorHookSpec,
+  ModelHookSpec,
   ModelSpec,
   QuerySpec,
   ReferenceSpec,
@@ -74,7 +77,7 @@ function compileValidator(validator: ValidatorAST): ValidatorSpec {
     case "builtin":
       return validator;
     case "hook":
-      return { ...validator, hook: compileHook(validator.hook) };
+      return { ...validator, hook: compileFieldValidatorHook(validator.hook) };
   }
 }
 
@@ -124,12 +127,13 @@ function compileRelation(relation: RelationAST): RelationSpec {
   return { name: relation.name, fromModel, through, interval: relation.interval };
 }
 
-function compileQuery(query: QueryAST): QuerySpec {
-  let fromModel: string[] | undefined;
+function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
+  let fromModel: string[] | undefined = defaultFromModel;
   let fromAlias: string[] | undefined;
   let filter: ExpSpec | undefined;
   let orderBy: QuerySpec["orderBy"];
   let limit: number | undefined;
+  let select: QuerySpec["select"];
 
   query.body.forEach((b) => {
     if (b.kind === "from") {
@@ -141,6 +145,8 @@ function compileQuery(query: QueryAST): QuerySpec {
       orderBy = b.orderings;
     } else if (b.kind === "limit") {
       limit = b.limit;
+    } else if (b.kind === "select") {
+      select = b.select;
     }
   });
 
@@ -156,6 +162,7 @@ function compileQuery(query: QueryAST): QuerySpec {
     interval: query.interval,
     orderBy,
     limit,
+    select,
   };
 }
 
@@ -196,7 +203,7 @@ function compileModel(model: ModelAST): ModelSpec {
   const relations: RelationSpec[] = [];
   const queries: QuerySpec[] = [];
   const computeds: ComputedSpec[] = [];
-  const hooks: HookSpec[] = [];
+  const hooks: ModelHookSpec[] = [];
 
   model.body.forEach((b) => {
     if (b.kind === "field") {
@@ -210,7 +217,7 @@ function compileModel(model: ModelAST): ModelSpec {
     } else if (b.kind === "computed") {
       computeds.push(compileComputed(b));
     } else if (b.kind === "hook") {
-      hooks.push(compileHook(b));
+      hooks.push(compileModelHook(b));
     }
   });
 
@@ -279,21 +286,15 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   };
 }
 
-function compileHook(hook: HookAST): HookSpec {
+function compileBaseHook(hook: HookAST): BaseHookSpec {
   const name = hook.name;
-  const args: HookSpec["args"] = [];
-  let code: HookSpec["code"] | undefined;
-  let returnType: string | undefined;
+  let code: HookCode | undefined;
 
   hook.body.forEach((b) => {
-    if (b.kind === "arg") {
-      args.push({ name: b.reference });
-    } else if (b.kind === "inline") {
+    if (b.kind === "inline") {
       code = { kind: "inline", inline: b.inline };
     } else if (b.kind === "source") {
       code = { kind: "source", target: b.target, file: b.file };
-    } else if (b.kind === "returnType") {
-      returnType = b.type;
     }
   });
 
@@ -303,11 +304,57 @@ function compileHook(hook: HookAST): HookSpec {
 
   return {
     name,
-    args,
     code,
-    returnType,
     interval: hook.interval,
   };
+}
+
+function compileFieldValidatorHook(hook: HookAST): FieldValidatorHookSpec {
+  let arg: string | undefined;
+  const baseHook = compileBaseHook(hook);
+
+  hook.body.forEach((b) => {
+    if (b.kind === "arg") {
+      if (arg !== undefined) {
+        throw new CompilerError("'hook' inside field validation can only have one arg", b);
+      }
+      if (b.query) {
+        throw new CompilerError(
+          "'hook' inside field validation must have 'arg' without 'query'",
+          b
+        );
+      }
+      arg = b.reference;
+    }
+  });
+
+  return { ...baseHook, arg };
+}
+
+function compileModelHook(hook: HookAST): ModelHookSpec {
+  const args: ModelHookSpec["args"] = [];
+
+  const baseHook = compileBaseHook(hook);
+  const name = baseHook.name;
+
+  if (!name) {
+    throw new CompilerError("'hook' inside model must be named", hook);
+  }
+
+  hook.body.forEach((b) => {
+    if (b.kind === "arg") {
+      if (!b.query) {
+        throw new CompilerError("'hook' inside model must have 'arg' with 'query'", b);
+      }
+      // hook query has a generated name with pattern -> HOOK_NAME:ARG_NAME
+      // placeholder name, not actually used FIXME
+      const queryName = `${name}:${b.reference}`;
+      const query = compileQuery({ ...b.query, name: queryName }, []);
+      args.push({ name: b.reference, query });
+    }
+  });
+
+  return { ...baseHook, name, args };
 }
 
 export function compile(input: AST): Specification {

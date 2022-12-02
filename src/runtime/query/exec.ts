@@ -69,9 +69,22 @@ export async function executeQueryTree(
     });
   }
 
-  results.forEach((result) => {
-    qt.hooks.forEach((h) => {
-      result[h.name] = executeHook(h.code, {});
+  const hooks = await Promise.all(
+    qt.hooks.map(async (h) => ({
+      ...h,
+      args: await Promise.all(
+        h.args.map(async ({ name, query }) => ({
+          name,
+          results: await executeQueryTree(conn, def, query, params, resultIds),
+        }))
+      ),
+    }))
+  );
+
+  results.forEach((result, i) => {
+    hooks.forEach((h) => {
+      const args = Object.fromEntries(h.args.map(({ name, results }) => [name, results[i]]));
+      result[h.name] = executeHook(h.code, args);
     });
   });
 

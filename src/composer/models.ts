@@ -1,13 +1,14 @@
 import _ from "lodash";
 
+import { processSelect } from "./entrypoints";
+
 import { Ref, RefKind, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
 import {
   getDirectChildren,
   getFilterPaths,
-  getRelatedPaths,
   mergePaths,
-  processPaths,
+  queryFromParts,
 } from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
@@ -15,12 +16,11 @@ import {
   Definition,
   FieldDef,
   FilterDef,
-  HookDef,
   IValidatorDef,
   LiteralFilterDef,
   ModelDef,
+  ModelHookDef,
   QueryDef,
-  QueryDefPath,
   ReferenceDef,
   RelationDef,
   ValidatorDef,
@@ -29,7 +29,7 @@ import {
 import {
   ExpSpec,
   FieldSpec,
-  HookSpec,
+  ModelHookSpec,
   ModelSpec,
   QuerySpec,
   ReferenceSpec,
@@ -84,7 +84,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
         tryCall(() => defineQuery(def, mdef, qspec));
       });
       mspec.hooks.forEach((hspec) => {
-        tryCall(() => defineHook(def, mdef, hspec));
+        tryCall(() => defineModelHook(def, mdef, hspec));
       });
 
       return mdef;
@@ -183,7 +183,7 @@ function validatorSpecsToDefs(
 
   return vspecs.map((vspec): ValidatorDef => {
     if (vspec.kind === "hook") {
-      return { name: "hook", code: vspec.hook.code, args: vspec.hook.args };
+      return { name: "hook", code: vspec.hook.code, arg: vspec.hook.arg };
     }
 
     const name = vspec.name;
@@ -276,70 +276,51 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
   return rel;
 }
 
-function getLeaf(def: Definition, paths: QueryDefPath[], namePath: string[]): QueryDefPath {
-  const node = paths.find((p) => {
-    const ref = getRef(def, p.refKey);
-    return ref.value.name === namePath[1];
-  })!;
-  return namePath.length === 2 ? node : getLeaf(def, node.joinPaths, _.tail(namePath));
-}
-
 function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
   const refKey = `${mdef.refKey}.${qspec.name}`;
   const ex = getDefinition(def, refKey, "query");
   if (ex) return ex;
 
-  const fromPath = [mdef.name, ...qspec.fromModel];
-  const filter = convertFilter(qspec.filter, fromPath);
-
-  const filterPaths = qspec.filter ? getFilterPaths(filter) : [];
-
-  const collect = mergePaths([fromPath, ...filterPaths]);
-  const direct = getDirectChildren(collect);
-  ensureEqual(direct.length, 1);
-  const joinPaths = processPaths(def, getRelatedPaths(collect, direct[0]), mdef, [mdef.name]);
-
-  const retLeaf = getLeaf(def, joinPaths, fromPath);
-
-  const query: QueryDef = {
-    refKey,
-    from: { kind: "model", refKey: mdef.refKey },
-    name: qspec.name,
-    fromPath: fromPath,
-    retType: retLeaf.retType,
-    // retCardinality: joinPaths.every((p) => p.retCardinality === "one") ? "one" : "many",
-    nullable: getRef<QueryDefPath["kind"]>(def, retLeaf.refKey).value.nullable,
-    joinPaths,
-    // FIXME validate filter!!
-    filter: qspec.filter && convertFilter(qspec.filter, fromPath),
-    select: [], // FIXME ??
-  };
-
-  // TODO validate and "correct" filters
-  // TODO left joins and null checks
-  // TODO automatic ID fields
-  // TODO add computeds
+  const query = queryFromSpec(def, mdef, qspec);
+  query.refKey = refKey;
+  query.select = []; // FIXME ??
 
   mdef.queries.push(query);
   return query;
 }
 
-function defineHook(def: Definition, mdef: ModelDef, hspec: HookSpec): HookDef {
+function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec): ModelHookDef {
   const refKey = `${mdef.refKey}.${hspec.name}`;
   const ex = getDefinition(def, refKey, "hook");
   if (ex) return ex;
 
-  const name = hspec.name;
-  if (!name) throw Error("Model hooks must be named");
+  const args = hspec.args.map(({ name, query }) => ({
+    name,
+    query: queryFromSpec(def, mdef, query),
+  }));
 
-  const h: HookDef = {
+  const h: ModelHookDef = {
     refKey,
-    name: name,
-    args: hspec.args,
+    name: hspec.name,
+    args,
     code: hspec.code,
   };
   mdef.hooks.push(h);
   return h;
+}
+
+function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
+  const fromPath = [mdef.name, ...qspec.fromModel];
+  const filter = convertFilter(qspec.filter, fromPath);
+
+  const filterPaths = getFilterPaths(filter);
+  const paths = mergePaths([fromPath, ...filterPaths]);
+  const direct = getDirectChildren(paths);
+  ensureEqual(direct.length, 1);
+  const { value: targetModel } = getRef<"model">(def, direct[0]);
+  const select = processSelect(def.models, targetModel, qspec.select, fromPath);
+
+  return queryFromParts(def, qspec.name, fromPath, filter, select);
 }
 
 function getLiteralType(literal: LiteralValue): LiteralFilterDef["type"] {

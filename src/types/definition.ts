@@ -16,7 +16,7 @@ export type ModelDef = {
   references: ReferenceDef[];
   relations: RelationDef[];
   queries: QueryDef[];
-  hooks: HookDef[];
+  hooks: ModelHookDef[];
 };
 
 export type FieldDef = {
@@ -73,10 +73,10 @@ export type QueryDef = {
   // count?: true;
 };
 
-export type HookDef = {
+export type ModelHookDef = {
   refKey: string;
   name: string;
-  args: { name: string }[];
+  args: { name: string; query: QueryDef }[];
   code: HookCode;
 };
 
@@ -198,6 +198,7 @@ export type SelectHookItem = {
   kind: "hook";
   name: string;
   namePath: string[];
+  args: { name: string; query: QueryDef }[];
   code: HookCode;
 };
 
@@ -306,7 +307,7 @@ export interface IsTextEqual extends IValidatorDef {
 }
 export interface HookValidator {
   name: "hook";
-  args: { name: string }[];
+  arg?: string;
   code: HookCode;
 }
 

@@ -3,7 +3,7 @@ import { chain } from "lodash";
 import {
   Definition,
   FieldDef,
-  HookDef,
+  ModelHookDef,
   ModelDef,
   QueryDef,
   ReferenceDef,
@@ -22,7 +22,7 @@ export type Ref<T extends RefKind> = T extends "model"
   : T extends "query"
   ? { kind: "query"; value: QueryDef }
   : T extends "hook"
-  ? { kind: "hook"; value: HookDef }
+  ? { kind: "hook"; value: ModelHookDef }
   : never;
 
 export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKey: string): Ref<T> {

@@ -227,7 +227,7 @@ function processEndpoints(
   });
 }
 
-function processSelect(
+export function processSelect(
   models: ModelDef[],
   model: ModelDef,
   selectAST: SelectAST | undefined,
@@ -268,7 +268,13 @@ function processSelect(
           refKey: ref.value.refKey,
         };
       } else if (ref.kind === "hook") {
-        return { kind: ref.kind, name, namePath: [...namePath, name], code: ref.value.code };
+        return {
+          kind: ref.kind,
+          name,
+          namePath: [...namePath, name],
+          args: ref.value.args,
+          code: ref.value.code,
+        };
       } else {
         ensureNot(ref.kind, "model" as const);
         const targetModel = getTargetModel(models, ref.value.refKey);

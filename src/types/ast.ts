@@ -65,6 +65,7 @@ export type QueryBodyAST = WithContext<
   | { kind: "filter"; filter: ExpAST }
   | { kind: "orderBy"; orderings: QueryOrderAST[] }
   | { kind: "limit"; limit: number }
+  | { kind: "select"; select: SelectAST }
 >;
 
 export type QueryOrderAST = WithContext<{ field: string[]; order?: "asc" | "desc" }>;
@@ -133,11 +134,16 @@ export type HookAST = WithContext<{
 }>;
 
 export type HookBodyAST = WithContext<
-  | { kind: "arg"; reference: string }
+  | { kind: "arg"; reference: string; query?: HookQueryAST }
   | { kind: "returnType"; type: string }
   | { kind: "source"; target: string; file: string }
   | { kind: "inline"; inline: string }
 >;
+
+export type HookQueryAST = WithContext<{
+  kind: "query";
+  body: QueryBodyAST[];
+}>;
 
 export type LiteralValue = null | boolean | number | string;
 

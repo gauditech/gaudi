@@ -16,6 +16,7 @@ import {
   FieldTag,
   HookAST,
   HookBodyAST,
+  HookQueryAST,
   ModelAST,
   QueryAST,
   QueryBodyAST,
@@ -122,6 +123,9 @@ semantics.addOperation("parse()", {
   },
   QueryBody_limit(this, _limit, limit): QueryBodyAST {
     return { kind: "limit", limit: limit.parse(), interval: this.source };
+  },
+  QueryBody_select(this, _select, select): QueryBodyAST {
+    return { kind: "select", select: select.parse(), interval: this.source };
   },
   QueryOrder(this, field, orderNode): QueryOrderAST {
     const order =
@@ -300,6 +304,14 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
+  HookBody_argument_query(this, _arg, identifier, query): HookBodyAST {
+    return {
+      kind: "arg",
+      reference: identifier.parse(),
+      query: query.parse(),
+      interval: this.source,
+    };
+  },
   HookBody_argument(this, _arg, identifier): HookBodyAST {
     return {
       kind: "arg",
@@ -315,6 +327,13 @@ semantics.addOperation("parse()", {
   },
   HookBody_inline(this, _inline, inlineString): HookBodyAST {
     return { kind: "inline", inline: inlineString.parse(), interval: this.source };
+  },
+  HookQuery(this, _query, _parenL, body, _parenR): HookQueryAST {
+    return {
+      kind: "query",
+      body: body.parse(),
+      interval: this.source,
+    };
   },
   ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
     return {
