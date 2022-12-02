@@ -4,6 +4,12 @@
   "version": "0.0.1",
   "main": "engine.js",
   "scripts": {},
+  "bin": {
+    "gaudi-engine": "./engine.js",
+    "gaudi-runtime": "./runtime/runtime.js",
+    "gaudi-populator": "./runtime/populator/populator.js",
+    "gaudi-cli": "./cli/gaudi-cli.js"
+  },
   "engines": {
     "node": ">=16.15.0"
   },
@@ -14,6 +20,7 @@
     "module-alias": "^2.2.2",
     "ohm-js": "^16.4.0",
     "prisma": "^4.4.0",
+    "yargs": "^17.6.2",
     "yup": "^0.32.11"
   }
 }

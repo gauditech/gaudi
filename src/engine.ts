@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fs from "fs";
 
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
