@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getRef, getTargetModel } from "@src/common/refs";
+import { getRef2, getTargetModel } from "@src/common/refs";
 import { LiteralValue } from "@src/types/ast";
 import { Definition, LiteralFilterDef, ModelDef } from "@src/types/definition";
 
@@ -25,7 +25,7 @@ export type TypedPathItemField = { kind: "field"; name: string; refKey: string }
 export type TypedPathItemReference = { kind: "reference"; name: string; refKey: string };
 export type TypedPathItemRelation = { kind: "relation"; name: string; refKey: string };
 export type TypedPathItemQuery = { kind: "query"; name: string; refKey: string };
-type TypedPathItemContext = { kind: "context"; model: TypedPathItemModel; name: string };
+export type TypedPathItemContext = { kind: "context"; model: TypedPathItemModel; name: string };
 
 export type TypedPathItem =
   | TypedPathItemContext
@@ -48,10 +48,27 @@ export type TypedPath = {
   leaf: TypedPathItemField | null;
 };
 
-function getTypedPath(def: Definition, path: string[]): TypedPathItem[] {
-  // assume it starts with model
-  const { value: model } = getRef<"model">(def, path[0]);
-  const modelIdDef: TypedPathItem = { kind: "model", name: model.name, refKey: model.refKey };
+export type VarContext = Record<string, ContextRecord>;
+type ContextRecord = { modelName: string };
+
+export function getTypedPath(def: Definition, path: string[], ctx: VarContext): TypedPath {
+  if (_.isEmpty(path)) {
+    throw new Error("Path is empty");
+  }
+  const start = _.first(path)!;
+  const isCtx = start in ctx;
+  const startModel = getRef2.model(def, isCtx ? ctx[start].modelName : start);
+
+  let source: TypedPathItemContext | TypedPathItemModel;
+  if (isCtx) {
+    source = {
+      kind: "context",
+      model: { kind: "model", name: startModel.name, refKey: startModel.refKey },
+      name: start,
+    };
+  } else {
+    source = { kind: "model", name: startModel.name, refKey: startModel.refKey };
+  }
 
   const ret = _.tail(path).reduce(
     (acc, name) => {
@@ -60,7 +77,7 @@ function getTypedPath(def: Definition, path: string[]): TypedPathItem[] {
       }
       // what is this?
       const refKey = `${acc.ctx.refKey}.${name}`;
-      const ref = getRef<"field" | "reference" | "relation" | "query">(def, refKey);
+      const ref = getRef2(def, acc.ctx.refKey, name, ["field", "reference", "relation", "query"]);
       let targetCtx: ModelDef | null;
       if (ref.kind === "field") {
         targetCtx = null;
@@ -70,52 +87,18 @@ function getTypedPath(def: Definition, path: string[]): TypedPathItem[] {
       const idDef: TypedPathItem = { kind: ref.kind, name, refKey };
       return { path: [...acc.path, idDef], ctx: targetCtx };
     },
-    { path: [modelIdDef], ctx: model } as { path: TypedPathItem[]; ctx: ModelDef | null }
+    { path: [], ctx: startModel } as { path: TypedPathItem[]; ctx: ModelDef | null }
   );
-  return ret.path;
-}
+  const tpath = ret.path;
 
-export type VarContext = Record<string, ContextRecord>;
-type ContextRecord = { modelName: string };
-
-export function getTypedPathFromContext(
-  def: Definition,
-  ctx: VarContext,
-  path: string[]
-): TypedPath {
-  if (_.isEmpty(path)) {
-    throw new Error("Path is empty");
-  }
-  const [start, ...rest] = path;
-  const isCtx = start in ctx;
-
-  let startModel: string;
-
-  if (isCtx) {
-    startModel = ctx[start].modelName;
-  } else {
-    startModel = getRef<"model">(def, start).value.name;
-  }
-  const tpath = getTypedPath(def, [startModel, ...rest]);
-
-  let source: TypedPathItemContext | TypedPathItemModel;
-  if (isCtx) {
-    source = {
-      kind: "context",
-      model: tpath[0] as TypedPathItemModel,
-      name: start,
-    };
-  } else {
-    source = tpath[0] as TypedPathItemModel;
-  }
-  if (_.last(tpath)!.kind === "field") {
+  if (_.last(tpath)?.kind === "field") {
     return {
       source,
-      nodes: _.initial(_.tail(tpath)) as TypedPath["nodes"],
+      nodes: _.initial(tpath) as TypedPath["nodes"],
       leaf: _.last(tpath) as TypedPathItemField,
     };
   } else {
-    return { source, nodes: _.tail(tpath) as TypedPath["nodes"], leaf: null };
+    return { source, nodes: tpath as TypedPath["nodes"], leaf: null };
   }
 }
 /**
@@ -129,15 +112,15 @@ interface TypedContextPathWithLeaf extends TypedPath {
  * ensures that path ends with a `leaf`. If original path doesn't end
  * with a `leaf`, this function appends `id` field at the end.
  */
-export function getTypedPathFromContextWithLeaf(
+export function getTypedPathWithLeaf(
   def: Definition,
-  ctx: VarContext,
-  path: string[]
+  path: string[],
+  ctx: VarContext
 ): TypedContextPathWithLeaf {
-  const tpath = getTypedPathFromContext(def, ctx, path);
+  const tpath = getTypedPath(def, path, ctx);
   if (tpath.leaf) {
     return tpath as TypedContextPathWithLeaf;
   } else {
-    return getTypedPathFromContext(def, ctx, [...path, "id"]) as TypedContextPathWithLeaf;
+    return getTypedPath(def, [...path, "id"], ctx) as TypedContextPathWithLeaf;
   }
 }

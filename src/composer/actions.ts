@@ -1,11 +1,6 @@
 import _ from "lodash";
 
-import {
-  VarContext,
-  getTypedLiteralValue,
-  getTypedPathFromContext,
-  getTypedPathFromContextWithLeaf,
-} from "./utils";
+import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual, ensureThrow } from "@src/common/utils";
@@ -326,7 +321,7 @@ function getActionTargetScope(
     }
   }
   // we don't need the typed path, but let's ensure that path names resolve correctly
-  getTypedPathFromContext(def, ctx, path);
+  getTypedPath(def, path, ctx);
   return "context-path";
 }
 
@@ -362,7 +357,7 @@ function findChangesetModel(
   }
 
   // Ensure path is valid
-  const typedPath = getTypedPathFromContext(def, ctx, path);
+  const typedPath = getTypedPath(def, path, ctx);
   if (typedPath.leaf) {
     throw new Error(`Path ${path.join(".")} doesn't resolve into a model`);
   }
@@ -398,7 +393,7 @@ function findChangesetModel(
  * that sets `repo_id` on an `Issue` instance we're operating on.
  */
 function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: string[]): Changeset {
-  const typedPath = getTypedPathFromContext(def, ctx, path);
+  const typedPath = getTypedPath(def, path, ctx);
 
   // no parent context if path is absolute (starting with model)
   if (typedPath.source.kind === "model") {
@@ -413,7 +408,7 @@ function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: st
   );
 
   // Replace this check with a cardinality=many check instead.
-  const last = _.last(typedPath.nodes)!;
+  const last = _.last(typedPath.nodes)!; // this fn shoudln't be called when no nodes
   ensureEqual(
     last.kind,
     "relation",
@@ -473,7 +468,7 @@ function getActionSetters(
           const path = atom.set.reference;
           // support both `set item item` and `set item_id item.id`
 
-          const typedPath = getTypedPathFromContextWithLeaf(def, ctx, path);
+          const typedPath = getTypedPathWithLeaf(def, path, ctx);
           const ref = getRef2(def, model.name, atom.target);
           // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
           let targetField: FieldDef;
