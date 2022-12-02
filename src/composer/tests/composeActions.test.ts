@@ -249,7 +249,7 @@ describe("custom actions", () => {
     );
   });
   test.each(["Repo", "repo", "org"])(
-    "fails when action alias uses existing model or context name",
+    "fails when action alias uses existing model or context name %s",
     (name) => {
       const bp = `
       model Org { relation repos { from Repo, through org }}
