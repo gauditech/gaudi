@@ -52,29 +52,26 @@ export function getRef2<T extends RefKind>(
 ): Ref<T> {
   const ref = getRef<typeof kinds[number]>(def, relName ? `${modelName}.${relName}` : modelName);
   if (kinds.indexOf(ref.kind as T) < 0) {
-    throw new Error(`Expected one of: [${kinds.join(", ")}], got ${ref.kind}`);
+    if (kinds.length === 1) {
+      // slightly better error message if a single specific kind was requested
+      throw new Error(`Expected ${kinds[0]}, got ${ref.kind}`);
+    } else {
+      throw new Error(`Expected one of: [${kinds.join(", ")}], got ${ref.kind}`);
+    }
   }
   return ref;
 }
 
-function getSpecificRef(def: Definition, type: RefKind, modelName: string, relName?: string): any {
-  const ref = getRef2(def, modelName, relName);
-  if (ref.kind === type) {
-    return ref.value;
-  }
-  throw new Error(`Expected ${type}, got ${ref.kind}`);
-}
-
 getRef2.model = function getRefModel(def: Definition, modelName: string): ModelDef {
-  return getSpecificRef(def, "model", modelName);
+  return getRef2(def, modelName, undefined, ["model"]).value;
 };
 
 getRef2.field = function getRefField(
   def: Definition,
   modelName: string,
-  fieldName: string
+  fieldName?: string
 ): FieldDef {
-  return getSpecificRef(def, "field", modelName, fieldName);
+  return getRef2(def, modelName, fieldName, ["field"]).value;
 };
 
 export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
