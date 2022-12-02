@@ -1,3 +1,4 @@
+import { ensureEqual } from "@src/common/utils";
 import { compile, compose, parse } from "@src/index";
 import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
 
@@ -59,6 +60,30 @@ describe("custom actions", () => {
     const def = compose(compile(parse(bp)));
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
+  });
+  it("fails when reference and its field are being set at the same time", () => {
+    const bp = `
+    model Org { relation repos { from Repo, through org }}
+    model Repo { reference org { to Org }}
+    entrypoint Org {
+      target model Org as org
+      entrypoint Repos {
+        target relation repos as repo
+        create endpoint {
+          action {
+            create repo {
+              set org_id 1
+              set org org
+            }
+          }
+        }
+      }
+    }
+    `;
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      `"Duplicate setters for fields: [org_id]"`
+    );
   });
   it("correctly sets parent context", () => {
     const bp = `

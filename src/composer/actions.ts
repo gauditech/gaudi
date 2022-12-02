@@ -499,6 +499,15 @@ function getActionSetters(
         }
       }
     });
+  const duplicates = _.chain(pairs)
+    .countBy(_.first)
+    .toPairs()
+    .filter((pair) => pair[1] > 1)
+    .map((pair) => pair[0])
+    .value();
+  if (duplicates.length) {
+    throw new Error(`Duplicate setters for fields: [${duplicates.join(", ")}]`);
+  }
   return Object.fromEntries(pairs);
 }
 
