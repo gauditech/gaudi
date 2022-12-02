@@ -1,6 +1,11 @@
 import _ from "lodash";
 
-import { getTypedLiteralValue, getTypedPath } from "./utils";
+import {
+  VarContext,
+  getTypedLiteralValue,
+  getTypedPathFromContext,
+  getTypedPathFromContextWithLeaf,
+} from "./utils";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual, ensureThrow } from "@src/common/utils";
@@ -13,11 +18,6 @@ import {
   FieldSetter,
   FieldSetterInput,
   FieldSetterReferenceInput,
-  IdentifierDefField,
-  IdentifierDefModel,
-  IdentifierDefQuery,
-  IdentifierDefReference,
-  IdentifierDefRelation,
   ModelDef,
   TargetDef,
 } from "@src/types/definition";
@@ -28,9 +28,6 @@ import {
   ActionAtomSpecSet,
   ActionSpec,
 } from "@src/types/specification";
-
-type Context = Record<string, ContextRecord>;
-type ContextRecord = { modelName: string };
 
 /**
  * Composes the custom actions block for an endpoint. Adds a default action
@@ -59,7 +56,7 @@ export function composeActionBlock(
       }
       return [currentCtx, [...actions, action]];
     },
-    [initialContext, []] as [Context, ActionDef[]]
+    [initialContext, []] as [VarContext, ActionDef[]]
   );
 
   // Create a default context action if not specified in blueprint.
@@ -116,9 +113,9 @@ export function composeActionBlock(
  * until it's created by an action, while `update` sees is immediately, as it already exists
  * in the database.
  */
-function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): Context {
-  const parentContext: Context = _.fromPairs(
-    _.initial(targets).map((t): [string, ContextRecord] => [t.alias, { modelName: t.retType }])
+function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
+  const parentContext: VarContext = _.fromPairs(
+    _.initial(targets).map((t): [string, VarContext[string]] => [t.alias, { modelName: t.retType }])
   );
   switch (endpointKind) {
     case "create":
@@ -140,7 +137,7 @@ function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): Co
 function composeSingleAction(
   def: Definition,
   spec: ActionSpec,
-  ctx: Context,
+  ctx: VarContext,
   targets: TargetDef[],
   endpointKind: EndpointType
 ): ActionDef {
@@ -313,7 +310,7 @@ function getActionTargetScope(
   def: Definition,
   spec: ActionSpec,
   targetAlias: string,
-  ctx: Context
+  ctx: VarContext
 ): ActionTargetScope {
   const path = spec.targetPath;
   if (!path) {
@@ -342,7 +339,7 @@ function getActionTargetScope(
  */
 function findChangesetModel(
   def: Definition,
-  ctx: Context,
+  ctx: VarContext,
   specTargetPath: string[] | undefined,
   target: TargetDef
 ): ModelDef {
@@ -374,7 +371,7 @@ function findChangesetModel(
    * FIXME this block of code can be removed when we add `retType` property
    *       in the root of a typed path.
    */
-  if (typedPath.path.length === 0) {
+  if (typedPath.nodes.length === 0) {
     // only source
     switch (typedPath.source.kind) {
       case "context": {
@@ -388,91 +385,11 @@ function findChangesetModel(
       }
     }
   } else {
-    return getTargetModel(def.models, _.last(typedPath.path)!.refKey);
+    return getTargetModel(def.models, _.last(typedPath.nodes)!.refKey);
   }
 }
 
 /**
- * Extending the `IdentifierDef` and `getTypedPath` to work with contexts, also modifying the
- * type to be explicit about the source and a leaf of the path.
- * Source may be a `model`, eg. in `Item.object` or a `context`, eg. in `myitem.object`.
- * Leaf is a nullable property implying that path is, or isn't, ending with a field.
- * The `path` can neither be a field, model or context, and is everything in between:
- * reference, relation or a query.
- * Moving forward, this is likely to replace `getTypedPath` completely because context
- * will appear in other places as well.
- *
- * FIXME Consider `nullable`, `cardinality` and `retType` properties to every element,
- *       and to the structure root as well.
- * FIXME Consider adding `namePath` for ease of access when passing the data around.
- *       That property would also be useful for `getTypedPathFromContextEnding` which
- *       modifies the input path.
- */
-type TypedPathItem = { kind: "context"; model: IdentifierDefModel; name: string };
-type TypedContextPath = {
-  source: IdentifierDefModel | TypedPathItem;
-  path: (IdentifierDefReference | IdentifierDefRelation | IdentifierDefQuery)[];
-  leaf: IdentifierDefField | null;
-};
-function getTypedPathFromContext(def: Definition, ctx: Context, path: string[]): TypedContextPath {
-  if (_.isEmpty(path)) {
-    throw new Error("Path is empty");
-  }
-  const [start, ...rest] = path;
-  const isCtx = start in ctx;
-
-  let startModel: string;
-
-  if (isCtx) {
-    startModel = ctx[start].modelName;
-  } else {
-    startModel = getRef<"model">(def, start).value.name;
-  }
-  const tpath = getTypedPath(def, [startModel, ...rest]);
-
-  let source: TypedPathItem | IdentifierDefModel;
-  if (isCtx) {
-    source = {
-      kind: "context",
-      model: tpath[0] as IdentifierDefModel,
-      name: start,
-    };
-  } else {
-    source = tpath[0] as IdentifierDefModel;
-  }
-  if (_.last(tpath)!.kind === "field") {
-    return {
-      source,
-      path: _.initial(_.tail(tpath)) as TypedContextPath["path"],
-      leaf: _.last(tpath) as IdentifierDefField,
-    };
-  } else {
-    return { source, path: _.tail(tpath) as TypedContextPath["path"], leaf: null };
-  }
-}
-/**
- * `TypedContextPath` where `leaf` is not nullable.
- */
-interface TypedContextPathWithLeaf extends TypedContextPath {
-  leaf: IdentifierDefField;
-}
-/**
- * Constructs typed path from context (`getTypedPathFromContext`), but
- * ensures that path ends with a `leaf`. If original path doesn't end
- * with a `leaf`, this function appends `id` field at the end.
- */
-function getTypedPathFromContextWithLeaf(
-  def: Definition,
-  ctx: Context,
-  path: string[]
-): TypedContextPathWithLeaf {
-  const tpath = getTypedPathFromContext(def, ctx, path);
-  if (tpath.leaf) {
-    return tpath as TypedContextPathWithLeaf;
-  } else {
-    return getTypedPathFromContext(def, ctx, [...path, "id"]) as TypedContextPathWithLeaf;
-  }
-}
 
 /**
  * Create a `Changeset` containing `reference-value` FieldSetter definition
@@ -480,7 +397,7 @@ function getTypedPathFromContextWithLeaf(
  * Eg. in entrypoint chain Org->Repo->Issue, it constructs a setter
  * that sets `repo_id` on an `Issue` instance we're operating on.
  */
-function getParentContextCreateSetter(def: Definition, ctx: Context, path: string[]): Changeset {
+function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: string[]): Changeset {
   const typedPath = getTypedPathFromContext(def, ctx, path);
 
   // no parent context if path is absolute (starting with model)
@@ -495,8 +412,8 @@ function getParentContextCreateSetter(def: Definition, ctx: Context, path: strin
     `Path ${path.join(".")} must end with a relation, ending with ${typedPath.leaf?.kind}`
   );
 
-  // replace this check with a cardinality=many check instead.
-  const last = _.last(typedPath.path)!;
+  // Replace this check with a cardinality=many check instead.
+  const last = _.last(typedPath.nodes)!;
   ensureEqual(
     last.kind,
     "relation",
@@ -504,7 +421,7 @@ function getParentContextCreateSetter(def: Definition, ctx: Context, path: strin
   );
 
   // everything in between must be a (TODO: non-nullable??) reference
-  _.initial(typedPath.path).forEach((tp, i) =>
+  _.initial(typedPath.nodes).forEach((tp, i) =>
     ensureEqual(
       tp.kind,
       "reference",
@@ -520,7 +437,7 @@ function getParentContextCreateSetter(def: Definition, ctx: Context, path: strin
   const { value: referenceField } = getRef<"field">(def, reference.fieldRefKey);
 
   // using _.initial to strip current context and only keep the parent context path
-  const parentNamePath = _.initial(typedPath.path.map((p) => p.name));
+  const parentNamePath = _.initial(typedPath.nodes.map((p) => p.name));
   const setter: Changeset = {
     [referenceField.name]: {
       kind: "reference-value",
@@ -542,7 +459,7 @@ function getActionSetters(
   def: Definition,
   spec: ActionSpec,
   model: ModelDef,
-  ctx: Context
+  ctx: VarContext
 ): Changeset {
   const pairs = spec.actionAtoms
     .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
@@ -575,7 +492,7 @@ function getActionSetters(
             }
           }
 
-          const namePath = typedPath.path.map((p) => p.name);
+          const namePath = typedPath.nodes.map((p) => p.name);
           const access = [...namePath, typedPath.leaf.name];
           const { value: field } = getRef<"field">(def, typedPath.leaf.refKey);
           return [
