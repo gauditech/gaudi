@@ -1,3 +1,11 @@
+import {
+  applyFilterIdInContext,
+  queryFromParts,
+  queryTreeFromParts,
+  transformSelectPath,
+} from "../query/build";
+import { executeQueryTree } from "../query/exec";
+
 import { dataToFieldDbnames, getRef2 } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { buildChangset as buildChangesetData } from "@src/runtime/common/changeset";
@@ -16,7 +24,7 @@ export async function executeActions(
   ctx: ActionContext,
   actions: ActionDef[]
 ) {
-  actions.forEach(async (action) => {
+  for (const action of actions) {
     const model = getRef2.model(def, action.model);
     const dbModel = model.dbname;
 
@@ -25,7 +33,19 @@ export async function executeActions(
       const changesetData = buildChangesetData(action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, changesetData);
 
-      await insertData(dbConn, dbModel, dbData);
+      const id = await insertData(dbConn, dbModel, dbData);
+      if (!id) {
+        throw new Error(`Failed to insert into ${dbModel}`);
+      }
+      const qt = queryTreeFromParts(
+        def,
+        action.alias,
+        [action.model],
+        applyFilterIdInContext([action.model]),
+        transformSelectPath(action.select, [action.alias], [action.model])
+      );
+      const results = await executeQueryTree(dbConn, def, qt, ctx.vars, [id]);
+      ctx.vars.set(action.alias, results[0]);
     } else if (actionKind === "update-one") {
       const changesetData = buildChangesetData(action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, changesetData);
@@ -43,7 +63,7 @@ export async function executeActions(
     } else {
       assertUnreachable(actionKind);
     }
-  });
+  }
 }
 
 function resolveTargetId(ctx: ActionContext, targetPath: string[]): number {

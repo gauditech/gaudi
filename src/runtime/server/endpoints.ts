@@ -222,7 +222,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          executeActions(
+          await executeActions(
             def,
             dbConn,
             { input: validationResult, vars: contextVars },
@@ -231,7 +231,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const targetId = contextVars.get(endpoint.target.alias)?.id;
 
-          if (targetId === null) {
+          if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
           console.log("Query result", targetId);

@@ -1,5 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`API endpoints Issue create 1`] = `
+{
+  "comments": [
+    {
+      "body": "Comment body",
+      "id": 1,
+      "issue_id": 1,
+    },
+  ],
+  "id": 1,
+  "repo": [
+    {
+      "description": "Repo 1 description",
+      "id": 1,
+      "is_public": true,
+      "latest_num": 1,
+      "name": "Repo 1",
+      "org_id": 1,
+      "slug": "repo1",
+    },
+  ],
+  "title": "Issue 1",
+}
+`;
+
 exports[`API endpoints Org create 1`] = `
 {
   "description": "Org NEW description",

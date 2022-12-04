@@ -101,7 +101,7 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
   return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 
-function applyFilterIdInContext(namePath: NamePath, filter: FilterDef): FilterDef {
+export function applyFilterIdInContext(namePath: NamePath, filter?: FilterDef): FilterDef {
   const inFilter: FilterDef = {
     kind: "binary",
     operator: "in",
@@ -142,6 +142,18 @@ export function selectableId(def: Definition, namePath: NamePath): SelectableIte
 /**
  * Query builder
  */
+
+export function queryTreeFromParts(
+  def: Definition,
+  name: string,
+  fromPath: NamePath,
+  filter: FilterDef,
+  select: SelectDef
+): QueryTree {
+  const query = queryFromParts(def, name, fromPath, filter, select);
+  const qTree = buildQueryTree(def, query);
+  return qTree;
+}
 
 export function queryFromParts(
   def: Definition,
@@ -348,7 +360,7 @@ function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectIte
   };
 }
 
-function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
+export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
   return select.map((selItem: SelectItem) => {
     ensureEqual(
       _.isEqual(from, _.take(selItem.namePath, from.length)),

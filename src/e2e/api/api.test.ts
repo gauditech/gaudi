@@ -132,6 +132,33 @@ describe("API endpoints", () => {
       expect(getResp.statusCode).toBe(404);
     });
   });
+
+  describe("Issue", () => {
+    beforeAll(async () => {
+      await setup();
+    });
+    afterAll(async () => {
+      await destroy();
+    });
+
+    it("create", async () => {
+      const data = {
+        issue: {
+          title: "Issue 1",
+        },
+        c: {
+          body: "Comment body",
+        },
+      };
+      const postResp = await request(getServer()).post("/org/org1/repos/1/issues").send(data);
+      console.dir(postResp.body);
+      expect(postResp.statusCode).toBe(200);
+
+      const getResp = await request(getServer()).get("/org/org1/repos/1/issues/1");
+      expect(getResp.statusCode).toBe(200);
+      expect(getResp.body).toMatchSnapshot();
+    });
+  });
 });
 
 /** Load definition file and return it's content */
