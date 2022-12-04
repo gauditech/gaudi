@@ -104,7 +104,6 @@ describe("API endpoints", () => {
         slug: "repo6",
         description: "Repo 6 description",
         is_public: true,
-        org_id: 1,
       };
       const postResp = await request(getServer()).post("/org/org1/repos").send(data);
       expect(postResp.statusCode).toBe(200);
