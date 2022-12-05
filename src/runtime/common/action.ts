@@ -1,9 +1,4 @@
-import {
-  applyFilterIdInContext,
-  queryFromParts,
-  queryTreeFromParts,
-  transformSelectPath,
-} from "../query/build";
+import { applyFilterIdInContext, queryTreeFromParts, transformSelectPath } from "../query/build";
 import { executeQueryTree } from "../query/exec";
 
 import { dataToFieldDbnames, getRef2 } from "@src/common/refs";
@@ -11,7 +6,7 @@ import { assertUnreachable } from "@src/common/utils";
 import { buildChangset as buildChangesetData } from "@src/runtime/common/changeset";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { Vars } from "@src/runtime/server/vars";
-import { ActionDef, Definition } from "@src/types/definition";
+import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition";
 
 export type ActionContext = {
   input: Record<string, unknown>;
@@ -34,25 +29,17 @@ export async function executeActions(
       const dbData = dataToFieldDbnames(model, changesetData);
 
       const id = await insertData(dbConn, dbModel, dbData);
-      if (!id) {
-        throw new Error(`Failed to insert into ${dbModel}`);
-      }
-      const qt = queryTreeFromParts(
-        def,
-        action.alias,
-        [action.model],
-        applyFilterIdInContext([action.model]),
-        transformSelectPath(action.select, [action.alias], [action.model])
-      );
-      const results = await executeQueryTree(dbConn, def, qt, ctx.vars, [id]);
-      ctx.vars.set(action.alias, results[0]);
+      const deps = await fetchActionDeps(def, dbConn, action, id);
+      deps && ctx.vars.set(action.alias, deps[0]);
     } else if (actionKind === "update-one") {
       const changesetData = buildChangesetData(action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, changesetData);
 
       const targetId = resolveTargetId(ctx, action.targetPath);
 
-      await updateData(dbConn, dbModel, dbData, targetId);
+      const id = await updateData(dbConn, dbModel, dbData, targetId);
+      const deps = await fetchActionDeps(def, dbConn, action, id);
+      deps && ctx.vars.set(action.alias, deps[0]);
     } else if (actionKind === "delete-one") {
       const targetId = resolveTargetId(ctx, action.targetPath);
 
@@ -64,6 +51,33 @@ export async function executeActions(
       assertUnreachable(actionKind);
     }
   }
+}
+
+/**
+ * Fetches the record targeted by action based on the actions `select` deps.
+ */
+async function fetchActionDeps(
+  def: Definition,
+  dbConn: DbConn,
+  action: CreateOneAction | UpdateOneAction,
+  id: number | null
+): Promise<Record<string, unknown>[] | undefined> {
+  if (!id) {
+    throw new Error(`Failed to insert into ${action.model}`);
+  }
+  if (!action.alias) return;
+  // no need to fetch if only ID is requested
+  if (action.select.findIndex((item) => item.alias !== "id") < 0) {
+    return [{ id }];
+  }
+  const qt = queryTreeFromParts(
+    def,
+    action.alias,
+    [action.model],
+    applyFilterIdInContext([action.model]),
+    transformSelectPath(action.select, [action.alias], [action.model])
+  );
+  return executeQueryTree(dbConn, def, qt, new Vars(), [id]);
 }
 
 function resolveTargetId(ctx: ActionContext, targetPath: string[]): number {
