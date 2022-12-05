@@ -2,10 +2,10 @@ import { readConfig } from "@src/config";
 
 describe("engine", () => {
   describe("config", () => {
-    it("provide defualt configuration", () => {
+    it("provide default configuration", () => {
       const config = readConfig();
 
-      expect(config).toEqual({ inputPath: "", outputPath: "." });
+      expect(config).toEqual({ inputPath: "", outputFolder: ".", gaudiFolder: "./gaudi" });
     });
 
     it("provide custom configuration from environment", () => {
@@ -14,7 +14,11 @@ describe("engine", () => {
 
       const config = readConfig();
 
-      expect(config).toEqual({ inputPath: "INPUT", outputPath: "OUTPUT" });
+      expect(config).toEqual({
+        inputPath: "INPUT",
+        outputFolder: "OUTPUT",
+        gaudiFolder: "./gaudi",
+      });
     });
   });
 });

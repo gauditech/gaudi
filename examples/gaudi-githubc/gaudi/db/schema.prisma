@@ -1,0 +1,79 @@
+datasource db {
+      provider = "postgresql"
+      url      = env("GAUDI_DATABASE_URL")
+    }
+
+    model org {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+optout String?
+
+repos repo[]
+memberships orgmembership[]
+
+
+}
+    model orgmembership {
+id Int @id @unique @default(autoincrement())
+org_id Int
+user_id Int
+
+
+
+org org @relation(fields: [org_id], references: [id])
+user user @relation(fields: [user_id], references: [id])
+}
+    model repo {
+id Int @id @unique @default(autoincrement())
+name String
+slug String @unique
+description String
+is_public Boolean
+org_id Int
+
+issues issue[]
+
+org org @relation(fields: [org_id], references: [id])
+}
+    model issue {
+id Int @id @unique @default(autoincrement())
+title String
+body String
+repo_id Int
+
+
+
+repo repo @relation(fields: [repo_id], references: [id])
+}
+    model user {
+id Int @id @unique @default(autoincrement())
+name String
+
+authLocal userauthlocal[]
+accessToken useraccesstoken[]
+org_memberships orgmembership[]
+
+
+}
+    model userauthlocal {
+id Int @id @unique @default(autoincrement())
+username String @unique
+password String
+user_id Int
+
+
+
+user user @relation(fields: [user_id], references: [id])
+}
+    model useraccesstoken {
+id Int @id @unique @default(autoincrement())
+token String @unique
+expirydate String
+user_id Int
+
+
+
+user user @relation(fields: [user_id], references: [id])
+}

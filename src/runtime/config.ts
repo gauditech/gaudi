@@ -7,9 +7,9 @@ export type RuntimeConfig = {
   host: string;
   /** Runtime server port number */
   port: number;
-  /** Path to generated definition.json file. */
+  /** Path to "definition.json" file. */
   definitionPath: string;
-  /** Folder where runtime should output generated files */
+  /** Directory where runtime should output generated files */
   outputFolder: string;
   /** DB connection URL */
   dbConnUrl: string;

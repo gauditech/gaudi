@@ -5,16 +5,17 @@ import "../common/setupAliases";
 
 import { spawn } from "child_process";
 
+import _ from "lodash";
 import yargs, { ArgumentsCamelCase } from "yargs";
 import { hideBin } from "yargs/helpers";
 
-import { RuntimeConfig, readConfig } from "@src/runtime/config";
+import { EngineConfig, readConfig } from "@src/config";
 
 const config = readConfig();
 
 parseArguments(config);
 
-function parseArguments(config: RuntimeConfig) {
+function parseArguments(config: EngineConfig) {
   yargs(hideBin(process.argv))
     .scriptName("gaudi-cli")
     .command({
@@ -37,7 +38,7 @@ function parseArguments(config: RuntimeConfig) {
         yargs
           .command({
             command: "push",
-            describe: "Push model changes to DB",
+            describe: "Push model changes to development database",
             handler: (args) => dbPushCommand(args, config),
           })
           .command({
@@ -47,24 +48,32 @@ function parseArguments(config: RuntimeConfig) {
           })
           .command({
             command: "populate",
-            describe: "Reset DB and populate using populator",
+            describe: "Reset DB and populate it using populator",
             handler: (args) => dbPopulateCommand(args, config),
             builder: (yargs) =>
-              yargs
-                .option("populator", {
-                  alias: "p",
-                  type: "string",
-                  description: "Name of populator to use in population",
-                })
-                .demandOption("populator"),
+              yargs.option("populator", {
+                alias: "p",
+                type: "string",
+                description: "Name of populator to use in population",
+                demandOption: '  try adding: "--populator=<populator name>"',
+              }),
           })
           .command({
             command: "migrate",
-            builder: {
-              migrate: {},
-            },
+            builder: (yargs) =>
+              yargs.option("name", {
+                alias: "n",
+                type: "string",
+                description: "Name of migration to be created",
+                demandOption: '  try adding "--name=<migration name>"',
+              }),
             describe: "Create DB migration file",
             handler: (args) => dbMigrateCommand(args, config),
+          })
+          .command({
+            command: "deploy",
+            describe: "Deploy migrations to production database",
+            handler: (args) => dbDeployCommand(args, config),
           })
           .demandCommand(),
     })
@@ -72,23 +81,24 @@ function parseArguments(config: RuntimeConfig) {
     .help()
     .alias("help", "h")
     .demandCommand()
+    .strict()
     .parse();
 }
 
-function buildCommand(_args: ArgumentsCamelCase, _config: RuntimeConfig) {
+function buildCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Build Gaudi source");
 
   executeCommand("npx", ["gaudi-engine", "--enable-source-maps"]);
 }
 
-function runCommand(_args: ArgumentsCamelCase, _config: RuntimeConfig) {
+function runCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   // node --enable-source-maps ./node_modules/@gaudi/engine/runtime/runtime.js
   console.log("Run Gaudi project");
 
   executeCommand("npx", ["gaudi-runtime", "--enable-source-maps"]);
 }
 
-function dbPushCommand(_args: ArgumentsCamelCase, config: RuntimeConfig) {
+function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
   // npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss
   console.log("Push DB changes");
 
@@ -96,12 +106,12 @@ function dbPushCommand(_args: ArgumentsCamelCase, config: RuntimeConfig) {
     "prisma",
     "db",
     "push",
-    `--schema=${dbSchemaPath(config.outputFolder)}`,
+    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
     "--accept-data-loss",
   ]);
 }
 
-function dbResetCommand(args: ArgumentsCamelCase, config: RuntimeConfig) {
+function dbResetCommand(args: ArgumentsCamelCase, config: EngineConfig) {
   // npx prisma db push --force-reset --schema=./dist/db/schema.prisma
   console.log("Reset DB");
 
@@ -110,7 +120,7 @@ function dbResetCommand(args: ArgumentsCamelCase, config: RuntimeConfig) {
     "db",
     "push",
     "--force-reset",
-    `--schema=${dbSchemaPath(config.outputFolder)}`,
+    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
   ]);
 }
 
@@ -119,9 +129,12 @@ type DbPopulateOptions = {
   populator?: string;
 };
 
-function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config: RuntimeConfig) {
+function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config: EngineConfig) {
   // node ./node_modules/@gaudi/engine/runtime/populator/populator.js -p Dev
   const populatorName = args.populator!;
+
+  if (_.isEmpty(populatorName)) throw "Populator name cannot be empty";
+
   console.log(`Populate DB using populator "${populatorName}"`);
 
   executeCommand("npx", ["gaudi-populator", "-p", populatorName]);
@@ -130,14 +143,30 @@ function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config:
 type DbMigrateOptions = {
   name?: string;
 };
-function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: RuntimeConfig) {
-  const migrationName = args.name!;
-  console.log(`Create DB migration ${migrationName}`);
+function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+  const migrationName = args.name;
+
+  if (_.isEmpty(migrationName)) throw "Migration name cannot be empty";
+
+  console.log(`Create DB migration "${migrationName}"`);
 
   executeCommand("npx", [
-    "gaudi-populator",
+    "prisma",
+    "migrate",
+    "dev",
     `--name=${migrationName}`,
-    `--schema=${dbSchemaPath(config.outputFolder)}`,
+    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
+  ]);
+}
+
+function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+  console.log(`Deploying DB migrations`);
+
+  executeCommand("npx", [
+    "prisma",
+    "migrate",
+    "deploy",
+    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
   ]);
 }
 
