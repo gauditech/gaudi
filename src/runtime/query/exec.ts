@@ -1,6 +1,8 @@
 import { Knex } from "knex";
 import _ from "lodash";
 
+import { Vars } from "../server/vars";
+
 import { QueryTree, selectableId } from "./build";
 import { queryToString } from "./stringify";
 
@@ -21,13 +23,11 @@ interface Row {
   [key: string]: string | number;
 }
 
-export type Params = Record<string, string | number>;
-
 export async function executeQuery(
   conn: Knex | Knex.Transaction,
   def: Definition,
   q: QueryDef,
-  params: Params,
+  params: Vars,
   contextIds: number[]
 ): Promise<NestedRow[]> {
   const hasId = q.select.find((s) => s.kind === "field" && s.alias === "id");
@@ -40,7 +40,7 @@ export async function executeQuery(
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  const result: Result = await conn.raw(sqlTpl, { ...params, ...idMap });
+  const result: Result = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
   return result.rows;
 }
 
@@ -48,7 +48,7 @@ export async function executeQueryTree(
   conn: Knex | Knex.Transaction,
   def: Definition,
   qt: QueryTree,
-  params: Params,
+  params: Vars,
   contextIds: number[]
 ): Promise<NestedRow[]> {
   const results = await executeQuery(conn, def, qt.query, params, contextIds);

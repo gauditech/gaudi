@@ -22,13 +22,22 @@ export function ensureExists<I>(item: I | null | undefined): asserts item is I {
   }
 }
 
-export function ensureEqual<T, Tx extends T>(a: T, b: Tx): asserts a is Tx {
+export function ensureEqual<T, Tx extends T>(a: T, b: Tx, message?: string): asserts a is Tx {
   if (a === b) return;
-  throw new Error("Not equal");
+  throw new Error(message ?? "Not equal");
 }
 
 export function ensureNot<T, Tx extends T>(a: T, b: Tx): asserts a is Exclude<T, Tx> {
   if (a === b) throw new Error("Must not be equal!");
+}
+
+export function ensureThrow(cb: () => unknown, message?: string): void {
+  try {
+    cb();
+  } catch (e) {
+    return;
+  }
+  throw new Error(message ?? `Expected a callback to throw`);
 }
 
 /** Concat all keys who's value is `true` using `delimiter` */

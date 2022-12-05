@@ -15,35 +15,40 @@
         "slug": "repo1",
         "description": "Repo 1 description",
         "is_public": true,
-        "org_id": 1
+        "org_id": 1,
+        "latest_num": 0
       },
       {
         "name": "Repo 2",
         "slug": "repo2",
         "description": "Repo 2 description",
         "is_public": true,
-        "org_id": 1
+        "org_id": 1,
+        "latest_num": 0
       },
       {
         "name": "Repo 3",
         "slug": "repo3",
         "description": "Repo 3 description",
         "is_public": false,
-        "org_id": 1
+        "org_id": 1,
+        "latest_num": 0
       },
       {
         "name": "Repo 4",
         "slug": "repo4",
         "description": "Repo 4 description",
         "is_public": true,
-        "org_id": 2
+        "org_id": 2,
+        "latest_num": 0
       },
       {
         "name": "Repo 5",
         "slug": "repo5",
         "description": "Repo 5 description",
         "is_public": false,
-        "org_id": 2
+        "org_id": 2,
+        "latest_num": 0
       }
     ]
   }

@@ -1,11 +1,12 @@
+import { ActionContext } from "@src/runtime/common/action";
 import {
-  ActionChangesetContext,
   buildChangset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
+import { Vars } from "@src/runtime/server/vars";
 import { Changeset } from "@src/types/definition";
 
 describe("runtime", () => {
@@ -28,10 +29,11 @@ describe("runtime", () => {
         },
       };
 
-      const context: ActionChangesetContext = {
+      const context: ActionContext = {
         input: {
           input_prop: "input value",
         },
+        vars: new Vars(),
       };
 
       expect(buildChangset(data, context)).toMatchSnapshot();

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 
+import _ from "lodash";
 import request from "supertest";
 
 import { PopulatorData, createApiTestSetup } from "@src/e2e/api/setup";
@@ -94,7 +95,7 @@ describe("API endpoints", () => {
       const response = await request(getServer()).get("/org/org1/repos");
 
       expect(response.statusCode).toBe(200);
-      expect(response.body).toMatchSnapshot();
+      expect(_.sortBy(response.body, "id")).toMatchSnapshot();
     });
 
     it("create", async () => {
@@ -103,7 +104,6 @@ describe("API endpoints", () => {
         slug: "repo6",
         description: "Repo 6 description",
         is_public: true,
-        org_id: 1,
       };
       const postResp = await request(getServer()).post("/org/org1/repos").send(data);
       expect(postResp.statusCode).toBe(200);
@@ -130,6 +130,33 @@ describe("API endpoints", () => {
 
       const getResp = await request(getServer()).get("/org/org1/repos/1");
       expect(getResp.statusCode).toBe(404);
+    });
+  });
+
+  describe("Issue", () => {
+    beforeAll(async () => {
+      await setup();
+    });
+    afterAll(async () => {
+      await destroy();
+    });
+
+    it("create", async () => {
+      const data = {
+        issue: {
+          title: "Issue 1",
+        },
+        c: {
+          body: "Comment body",
+        },
+      };
+      const postResp = await request(getServer()).post("/org/org1/repos/1/issues").send(data);
+      console.dir(postResp.body);
+      expect(postResp.statusCode).toBe(200);
+
+      const getResp = await request(getServer()).get("/org/org1/repos/1/issues/1");
+      expect(getResp.statusCode).toBe(200);
+      expect(getResp.body).toMatchSnapshot();
     });
   });
 });
