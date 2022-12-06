@@ -141,7 +141,7 @@ async function processPopulate(
 
 /** Create new context from an existing one or a new, empty one. */
 function createNewCtx(parentCtx?: Vars) {
-  return new Vars({ ...parentCtx?.all() });
+  return parentCtx?.copy() ?? new Vars();
 }
 
 /** Create iterator object to be used in populate iterations. */
