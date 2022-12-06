@@ -1,7 +1,6 @@
 import _ from "lodash";
 
 import { CompilerError } from "@src/common/error";
-import { HookCode } from "@src/runtime/hooks";
 import {
   AST,
   ActionBodyAST,
@@ -29,6 +28,7 @@ import {
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
+  HookCode,
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,

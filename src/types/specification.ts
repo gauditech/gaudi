@@ -1,7 +1,6 @@
 import { BinaryOperator, EndpointType, LiteralValue, SelectAST, UnaryOperator } from "./ast";
 
 import { WithContext } from "@src/common/error";
-import { HookCode } from "@src/runtime/hooks";
 
 export type Specification = {
   models: ModelSpec[];
@@ -105,6 +104,10 @@ export type BaseHookSpec = WithContext<{
   name?: string;
   code: HookCode;
 }>;
+
+export type HookCode =
+  | { kind: "inline"; inline: string }
+  | { kind: "source"; target: string; file: string };
 
 export type ActionAtomSpecSet = {
   kind: "set";

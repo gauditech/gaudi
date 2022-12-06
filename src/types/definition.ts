@@ -1,7 +1,7 @@
 import { BinaryOperator } from "./ast";
+import { HookCode } from "./specification";
 
 import { RefKind } from "@src/common/refs";
-import { HookCode } from "@src/runtime/hooks";
 
 export type Definition = {
   models: ModelDef[];

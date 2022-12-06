@@ -80,6 +80,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 117,
         "sourceString": "model Vehicle {
@@ -161,6 +162,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 156,
         "sourceString": "model Vehicle {
@@ -1162,6 +1164,7 @@ model Repo {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 276,
         "sourceString": "// database {
@@ -1327,6 +1330,7 @@ model Repo {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 415,
         "sourceString": "// database {
@@ -1404,14 +1408,14 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 148,
+            "endIdx": 157,
             "sourceString": "model User {
   field fieldOne {
     type text
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
@@ -1437,21 +1441,21 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
           "validators": [
             {
               "hook": {
-                "args": [
-                  {
-                    "name": "fieldOne",
-                  },
-                ],
-                "inlineBody": undefined,
+                "arg": "fieldOne",
+                "code": {
+                  "file": "customValidateHook",
+                  "kind": "source",
+                  "target": "foo",
+                },
                 "interval": {
-                  "endIdx": 138,
+                  "endIdx": 147,
                   "sourceString": "model User {
   field fieldOne {
     type text
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
@@ -1471,18 +1475,16 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                   "startIdx": 67,
                 },
                 "name": undefined,
-                "returnType": undefined,
-                "source": "customValidateHook",
               },
               "interval": {
-                "endIdx": 138,
+                "endIdx": 147,
                 "sourceString": "model User {
   field fieldOne {
     type text
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
@@ -1508,14 +1510,14 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 332,
+            "endIdx": 341,
             "sourceString": "model User {
   field fieldOne {
     type text
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
@@ -1532,7 +1534,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
   }
 }
 ",
-            "startIdx": 151,
+            "startIdx": 160,
           },
           "name": "fieldTwo",
           "nullable": undefined,
@@ -1541,23 +1543,22 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
           "validators": [
             {
               "hook": {
-                "args": [
-                  {
-                    "name": "fieldTwo",
-                  },
-                ],
-                "inlineBody": "
+                "arg": "fieldTwo",
+                "code": {
+                  "inline": "
           return fieldTwo.toLowerCase() === "something";
         ",
+                  "kind": "inline",
+                },
                 "interval": {
-                  "endIdx": 322,
+                  "endIdx": 331,
                   "sourceString": "model User {
   field fieldOne {
     type text
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
@@ -1574,21 +1575,19 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
   }
 }
 ",
-                  "startIdx": 203,
+                  "startIdx": 212,
                 },
                 "name": undefined,
-                "returnType": undefined,
-                "source": undefined,
               },
               "interval": {
-                "endIdx": 322,
+                "endIdx": 331,
                 "sourceString": "model User {
   field fieldOne {
     type text
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
@@ -1605,22 +1604,23 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
   }
 }
 ",
-                "startIdx": 203,
+                "startIdx": 212,
               },
               "kind": "hook",
             },
           ],
         },
       ],
+      "hooks": [],
       "interval": {
-        "endIdx": 334,
+        "endIdx": 343,
         "sourceString": "model User {
   field fieldOne {
     type text
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
@@ -1656,6 +1656,7 @@ exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
       "alias": undefined,
       "computeds": [],
       "fields": [],
+      "hooks": [],
       "interval": {
         "endIdx": 56,
         "sourceString": "model Vehicle {
@@ -1714,6 +1715,7 @@ model Make {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 98,
         "sourceString": "model Vehicle {
@@ -1783,6 +1785,7 @@ model Student {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 404,
         "sourceString": "model Class {
@@ -2041,6 +2044,7 @@ model Student {
           "limit": undefined,
           "name": "active_students",
           "orderBy": undefined,
+          "select": undefined,
         },
         {
           "filter": {
@@ -2338,6 +2342,7 @@ model Student {
           "limit": undefined,
           "name": "good_students",
           "orderBy": undefined,
+          "select": undefined,
         },
         {
           "filter": {
@@ -2566,6 +2571,7 @@ model Student {
               "order": "desc",
             },
           ],
+          "select": undefined,
         },
       ],
       "references": [],
@@ -2921,6 +2927,7 @@ model Student {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 632,
         "sourceString": "model Class {
@@ -3109,6 +3116,7 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
           ],
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 138,
         "sourceString": "model User {

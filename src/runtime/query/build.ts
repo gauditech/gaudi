@@ -1,7 +1,5 @@
 import _ from "lodash";
 
-import { HookCode } from "../hooks";
-
 import { mkJoinConnection } from "./stringify";
 
 import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
@@ -20,6 +18,7 @@ import {
   SelectableItem,
   TargetDef,
 } from "@src/types/definition";
+import { HookCode } from "@src/types/specification";
 
 // FIXME introduce Queryable with SelectableItem[]?
 export type QueryTree = {

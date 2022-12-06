@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 
 import { RuntimeConfig } from "@src/runtime/config";
+import { HookCode } from "@src/types/specification";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const modules: Record<string, any> = {};
@@ -35,10 +36,6 @@ async function loadFileAsModule(path: string) {
 
   return await eval("import(_encodedContent)");
 }
-
-export type HookCode =
-  | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string };
 
 export function executeHook(code: HookCode, args: Record<string, unknown>) {
   switch (code.kind) {

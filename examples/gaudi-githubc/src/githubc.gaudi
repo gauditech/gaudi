@@ -11,7 +11,7 @@ model Org {
         validate {
             hook {
                 arg name
-                source foo from "bar.js"
+                source noUnicode from "githubc.js"
             }
         }
     }
@@ -19,9 +19,9 @@ model Org {
         type text,
         unique,
         validate {
-            hook {
+            hook noSpace { // hook can be named for documentation. Maybe use the name for hook code?
                 arg slug
-                inline `console.log('Inline Hook?!', slug); slug !== 'bad'`
+                inline `!/\s/.test(slug)`
             }
         }
     }
@@ -35,11 +35,11 @@ model Org {
     query public_repos { from repos, filter { is_public is true } }
     query public_issues { from public_repos.issues }
 
-    hook extra_data {
+    hook nameAndDesc {
         arg test query {
             select { name, description }
         }
-        inline `console.log('inside hook'); test`
+        inline `test.name + ": " + test.description`
     }
 }
 
@@ -89,7 +89,7 @@ model UserAccessToken {
 entrypoint Orgs {
     target model Org
     identify with slug
-    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, extra_data }
+    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, nameAndDesc }
 
     get endpoint {}
     list endpoint {}

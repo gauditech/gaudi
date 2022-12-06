@@ -1932,6 +1932,7 @@ exports[`Endpoint queries chained nested query 1`] = `
   "parentContextQueryTrees": [
     {
       "alias": "$target_0",
+      "hooks": [],
       "name": "$target_0",
       "query": {
         "filter": {
@@ -1980,6 +1981,7 @@ exports[`Endpoint queries chained nested query 1`] = `
   ],
   "responseQueryTree": {
     "alias": "$target_1",
+    "hooks": [],
     "name": "$target_1",
     "query": {
       "filter": {
@@ -2073,6 +2075,7 @@ exports[`Endpoint queries chained nested query 1`] = `
     "related": [
       {
         "alias": "repo",
+        "hooks": [],
         "name": "repo",
         "query": {
           "filter": {
@@ -2155,6 +2158,7 @@ exports[`Endpoint queries chained nested query 1`] = `
         "related": [
           {
             "alias": "org",
+            "hooks": [],
             "name": "org",
             "query": {
               "filter": {
@@ -2242,6 +2246,7 @@ exports[`Endpoint queries chained nested query 1`] = `
   },
   "targetQueryTree": {
     "alias": "$target_1",
+    "hooks": [],
     "name": "$target_1",
     "query": {
       "filter": {
@@ -2394,6 +2399,7 @@ exports[`Endpoint queries nested query 1`] = `
   "parentContextQueryTrees": [
     {
       "alias": "$target_0",
+      "hooks": [],
       "name": "$target_0",
       "query": {
         "filter": {
@@ -2442,6 +2448,7 @@ exports[`Endpoint queries nested query 1`] = `
   ],
   "responseQueryTree": {
     "alias": "$target_1",
+    "hooks": [],
     "name": "$target_1",
     "query": {
       "filter": {
@@ -2536,6 +2543,7 @@ exports[`Endpoint queries nested query 1`] = `
   },
   "targetQueryTree": {
     "alias": "$target_1",
+    "hooks": [],
     "name": "$target_1",
     "query": {
       "filter": {

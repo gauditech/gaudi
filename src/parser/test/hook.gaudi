@@ -4,7 +4,7 @@ model User {
     validate {
       hook {
         arg fieldOne
-        source "customValidateHook"
+        source foo from "customValidateHook"
       }
     }
   }
