@@ -4,6 +4,7 @@ import {
   AST,
   ActionAtomBodyAST,
   ActionBodyAST,
+  ActionKindAST,
   ComputedAST,
   EndpointAST,
   EndpointBodyAST,
@@ -17,6 +18,8 @@ import {
   HookAST,
   HookBodyAST,
   HookQueryAST,
+  InputFieldAST,
+  InputFieldOptAST,
   ModelAST,
   QueryAST,
   QueryBodyAST,
@@ -335,10 +338,26 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
+  ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
     return {
-      kind: kind.sourceString as ActionBodyAST["kind"],
-      target: identifier.parse(),
+      kind: kind.sourceString as ActionKindAST,
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionBody_named(this, kind, name, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      target: name.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionBody_aliased(this, kind, name, _as, alias, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      target: name.parse(),
+      alias: alias.parse(),
       body: body.parse(),
       interval: this.source,
     };
@@ -366,6 +385,45 @@ semantics.addOperation("parse()", {
       through: through.parse(),
       interval: this.source,
     };
+  },
+  ActionAtomBody_input(this, _input, _braceL, atoms, _braceR): ActionAtomBodyAST {
+    return {
+      kind: "input",
+      fields: atoms.parse(),
+    };
+  },
+  ActionAtomBody_deny(this, _deny, body) {
+    return {
+      kind: "deny",
+      fields: body.parse(),
+    };
+  },
+  ActionAtomBody_nested_action(this, action): ActionAtomBodyAST {
+    return {
+      kind: "action",
+      body: action.parse(),
+    };
+  },
+  ActionInputAtom_field(this, name): InputFieldAST {
+    return { name: name.parse(), opts: [] };
+  },
+  ActionInputAtom_field_with_opts(this, name, _braceL, opts, _braceR): InputFieldAST {
+    return { name: name.parse(), opts: opts.parse() };
+  },
+  ActionInputOpt_optional(this, _opt): InputFieldOptAST {
+    return { kind: "optional" };
+  },
+  ActionInputOpt_default_value(this, _default, identifierPath): InputFieldOptAST {
+    return { kind: "default-value", value: identifierPath.parse() };
+  },
+  ActionInputOpt_default_reference(this, _default, path): InputFieldOptAST {
+    return { kind: "default-reference", path: path.parse() };
+  },
+  DenyList_all(this, _asteriks) {
+    return "*";
+  },
+  DenyList_some(this, _braceL, fields, _braceR) {
+    return fields.parse();
   },
   IdentifierPath(this, head, _dot, tail): string[] {
     return [head.parse(), ...tail.children.map((child) => child.parse())];

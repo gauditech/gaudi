@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { processSelect } from "./entrypoints";
+import { getTypedLiteralValue } from "./utils";
 
 import { Ref, RefKind, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
@@ -17,7 +18,6 @@ import {
   FieldDef,
   FilterDef,
   IValidatorDef,
-  LiteralFilterDef,
   ModelDef,
   ModelHookDef,
   QueryDef,
@@ -323,24 +323,12 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   return queryFromParts(def, qspec.name, fromPath, filter, select);
 }
 
-function getLiteralType(literal: LiteralValue): LiteralFilterDef["type"] {
-  if (typeof literal === "string") return "text";
-  if (typeof literal === "number") return "integer";
-  if (typeof literal === "boolean") return "boolean";
-  if (literal === "null") return "null";
-  throw new Error(`Literal ${literal} not supported`);
-}
-
 function convertFilter(filter: ExpSpec | undefined, namePath: string[]): FilterDef {
   switch (filter?.kind) {
     case undefined:
       return undefined;
     case "literal": {
-      return {
-        kind: "literal",
-        type: getLiteralType(filter.literal),
-        value: filter.literal,
-      } as FilterDef;
+      return getTypedLiteralValue(filter.literal);
     }
     case "unary": {
       return {

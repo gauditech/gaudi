@@ -128,15 +128,34 @@ Gaudi {
   EndpointBody
     = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
 
+
+  ActionKind = "create" | "update" | "delete"
   ActionBody
-    = ("create" | "update") identifier "{" NewlineBody<ActionAtomBody, ";"> "}"
+    = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                     -- default
+    | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                      -- named
+    | ActionKind IdentifierPath "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"      -- aliased
+
 
   ActionAtomBody
-    = "set" identifier literal -- set_value
-    | "set" identifier identifier -- set_reference
-    | "reference" identifier "through" identifier -- reference
+    = "set" identifier literal                            -- set_value
+    | "set" identifier IdentifierPath                     -- set_reference
+    | "reference" identifier "through" identifier         -- reference
+    | "input" "{" NewlineBody<ActionInputAtom, ","> "}"   -- input
+    | "deny" DenyList                                     -- deny
+    | ActionBody                                          -- nested_action
 
+  ActionInputAtom
+    = identifier "{" NewlineBody<ActionInputOpt, ","> "}" -- field_with_opts
+    | identifier                                          -- field
 
+  ActionInputOpt
+    = "optional"                  -- optional
+    | "default" literal           -- default_value
+    | "default" IdentifierPath    -- default_reference
+
+  DenyList
+    = "*"                                         -- all
+    | "{" NewlineBody<identifier, ","> "}"        -- some
 
   // ********************
   // Hook grammar
@@ -154,6 +173,12 @@ Gaudi {
 
   HookQuery
     = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"
+    = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
+
+  HookBody
+    = "arg" identifier identifier   -- argument
+    | "returns" identifier          -- return_type
+    | "inline" multiLineString      -- inline_body
 
   IdentifierPath = identifier ("." identifier)*
 
@@ -183,7 +208,7 @@ Gaudi {
   in = "in" ~identifierPart
 
   identifier (an identifier) = identifierStart identifierPart*
-  identifierStart = letter | "_"
+  identifierStart = letter | "_" | "@"
   identifierPart = identifierStart | alnum
 
   OptionalBraces<Exp>

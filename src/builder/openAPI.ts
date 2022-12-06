@@ -1,7 +1,7 @@
 import { flatMap, mapValues } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
 
-import { buildEndpointPath } from "./query";
+import { PathFragmentIdentifier, buildEndpointPath } from "./query";
 
 import { getRef } from "@src/common/refs";
 import {
@@ -86,19 +86,33 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
   }
 
   const paths = endpoints.reduce((paths, endpoint) => {
-    const gaudiPath = buildEndpointPath(endpoint);
+    const endpointPath = buildEndpointPath(endpoint);
     const method = buildEndpointMethod(endpoint);
-    const parameters = gaudiPath.params.map(
-      ({ name, type }): OpenAPIV3.ParameterObject => ({
-        in: "path",
-        name,
-        required: true,
-        schema: { type: convertToOpenAPIType(type) },
-      })
-    );
-    // FIXME provide path components in definition
-    const pathRegex = /:([\w]*)/g;
-    const path = pathPrefix + gaudiPath.path.replace(pathRegex, "{$1}");
+
+    const path =
+      pathPrefix +
+      [
+        "",
+        ...endpointPath.fragments.map((frag) => {
+          switch (frag.kind) {
+            case "namespace":
+              return frag.name;
+            case "identifier":
+              return `{${frag.alias}}`;
+          }
+        }),
+      ].join("/");
+
+    const parameters = endpointPath.fragments
+      .filter((f): f is PathFragmentIdentifier => f.kind === "identifier")
+      .map(
+        (f): OpenAPIV3.ParameterObject => ({
+          in: "path",
+          name: f.alias,
+          required: true,
+          schema: { type: convertToOpenAPIType(f.type) },
+        })
+      );
 
     const pathItem = paths[path] ?? { parameters };
     pathItem[method] = buildEndpointOperation(endpoint, parameters.length > 0);

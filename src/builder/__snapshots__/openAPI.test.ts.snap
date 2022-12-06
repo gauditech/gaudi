@@ -268,13 +268,9 @@ exports[`openAPI build spec 1`] = `
                   "name": {
                     "type": "string",
                   },
-                  "org_id": {
-                    "type": "integer",
-                  },
                 },
                 "required": [
                   "name",
-                  "org_id",
                 ],
                 "type": "object",
               },

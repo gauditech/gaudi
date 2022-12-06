@@ -19,12 +19,14 @@ export type ModelDef = {
   hooks: ModelHookDef[];
 };
 
+export type FieldType = "integer" | "text" | "boolean";
+
 export type FieldDef = {
   refKey: string;
   modelRefKey: string;
   name: string;
   dbname: string;
-  type: "integer" | "text" | "boolean";
+  type: FieldType;
   dbtype: "serial" | "integer" | "text" | "boolean";
   primary: boolean;
   unique: boolean;
@@ -122,9 +124,11 @@ export type TargetDef = {
   namePath: string[];
   refKey: string;
   retType: string;
-  alias: string | null;
+  alias: string;
   identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
 };
+
+export type TargetWithSelectDef = TargetDef & { select: SelectDef };
 
 export type EndpointDef =
   | CreateEndpointDef
@@ -136,46 +140,50 @@ export type EndpointDef =
 
 export type ListEndpointDef = {
   kind: "list";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: Omit<TargetWithSelectDef, "identifyWith">;
   response: SelectDef;
-  actions: ActionDef[];
+  // actions: ActionDef[];
 };
 
 export type GetEndpointDef = {
   kind: "get";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: TargetWithSelectDef;
   response: SelectDef;
-  actions: ActionDef[];
+  // actions: ActionDef[];
 };
 
 export type CreateEndpointDef = {
   kind: "create";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: Omit<TargetWithSelectDef, "identifyWith">;
   response: SelectDef;
   fieldset: FieldsetDef;
-  contextActionChangeset: Changeset;
   actions: ActionDef[];
 };
 
 export type UpdateEndpointDef = {
   kind: "update";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: TargetWithSelectDef;
   response: SelectDef;
   fieldset: FieldsetDef;
-  contextActionChangeset: Changeset;
   actions: ActionDef[];
 };
 
 export type DeleteEndpointDef = {
   kind: "delete";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: TargetWithSelectDef;
   actions: ActionDef[];
   response: undefined;
 };
 
 type CustomEndpointDef = {
   kind: "custom";
-  targets: TargetDef[];
+  parentContext: TargetWithSelectDef[];
+  target: null;
   method: "post" | "get" | "put" | "delete";
   actions: ActionDef[];
   respondWith: {
@@ -317,42 +325,67 @@ type IntConst = { type: "integer"; value: number };
 type TextConst = { type: "text"; value: string };
 type NullConst = { type: "null"; value: null };
 
-export type ActionDef = CreateOneAction | UpdateOneAction | DeleteManyAction;
+export type ActionDef = CreateOneAction | UpdateOneAction | DeleteOneAction;
 
-type CreateOneAction = {
+export type CreateOneAction = {
   kind: "create-one";
+  alias: string;
   model: string;
+  targetPath: string[];
   changeset: Changeset;
+  select: SelectDef;
 };
 
-type UpdateOneAction = {
+export type UpdateOneAction = {
   kind: "update-one";
+  alias: string;
   model: string;
-  target: {
-    alias: string;
-    access: string[];
-  };
+  targetPath: string[];
   filter: FilterDef;
   changeset: Changeset;
+  select: SelectDef;
 };
 
-type DeleteManyAction = {
-  kind: "delete-many";
+export type DeleteOneAction = {
+  kind: "delete-one";
   model: string;
+  targetPath: string[];
+};
+
+export type DeleteManyAction = {
+  kind: "delete-many";
   filter: FilterDef;
 };
 
 export type Changeset = Record<string, FieldSetter>;
 
-export type FieldSetter =
-  // TODO add algebra
+export type FieldSetterValue =
   | { kind: "value"; type: "text"; value: string }
   | { kind: "value"; type: "boolean"; value: boolean }
   | { kind: "value"; type: "integer"; value: number }
-  | { kind: "fieldset-input"; type: FieldDef["type"]; fieldsetAccess: string[]; required: boolean }
-  | { kind: "reference-value"; type: FieldDef["type"]; target: { alias: string; access: string[] } }
-  | {
-      kind: "fieldset-reference-input";
-      fieldsetAccess: string[];
-      throughField: { name: string; refKey: string };
-    };
+  | { kind: "value"; type: "null"; value: null };
+
+export type FieldSetterReferenceValue = {
+  kind: "reference-value";
+  type: FieldDef["type"];
+  target: { alias: string; access: string[] };
+};
+
+export type FieldSetterInput = {
+  kind: "fieldset-input";
+  type: FieldDef["type"];
+  fieldsetAccess: string[];
+  required: boolean;
+  default?: FieldSetterValue | FieldSetterReferenceValue;
+};
+
+export type FieldSetterReferenceInput = {
+  kind: "fieldset-reference-input";
+  fieldsetAccess: string[];
+  throughField: { name: string; refKey: string };
+  // required: boolean;
+};
+
+export type FieldSetter =
+  // TODO add composite expression setter
+  FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;

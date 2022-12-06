@@ -28,7 +28,7 @@ export function readConfig(): RuntimeConfig {
   const outputFolder = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
 
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
-  const dbSchema = process.env.GAUDI_DATABASE_SCHEMA;
+  const dbSchema = process.env.GAUDI_DATABASE_SCHEMA || "public";
 
   return { host, port, definitionPath, outputFolder, dbConnUrl, dbSchema };
 }

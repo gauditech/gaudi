@@ -1,24 +1,30 @@
 import _ from "lodash";
 
-import { getModelProp, getTargetModel } from "@src/common/refs";
+import { composeActionBlock } from "./actions";
+
+import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
+import { mergePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
-  Changeset,
+  ActionDef,
   Definition,
+  DeleteOneAction,
   EndpointDef,
   EntrypointDef,
-  FieldSetter,
+  FieldSetterReferenceValue,
   FieldsetDef,
+  FieldsetFieldDef,
   ModelDef,
   SelectDef,
   SelectItem,
   TargetDef,
+  TargetWithSelectDef,
 } from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
-  def.entrypoints = input.map((spec) => processEntrypoint(def.models, spec, []));
+  def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
 }
 
 type EndpointContext = {
@@ -27,19 +33,20 @@ type EndpointContext = {
 };
 
 function processEntrypoint(
-  models: ModelDef[],
+  def: Definition,
   spec: EntrypointSpec,
   parents: EndpointContext[]
 ): EntrypointDef {
+  const models = def.models;
   const target = calculateTarget(
     models,
     parents,
     spec.target.identifier,
-    spec.alias ?? null,
+    spec.target.alias ?? null,
     spec.identify || "id"
   );
   const name = spec.name;
-  const targetModel = findModel(models, target.retType);
+  const { value: targetModel } = getRef<"model">(models, target.retType);
 
   const thisContext: EndpointContext = { model: targetModel, target };
   const targetParents = [...parents, thisContext];
@@ -47,8 +54,8 @@ function processEntrypoint(
   return {
     name,
     target,
-    endpoints: processEndpoints(models, targetParents, spec),
-    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(models, ispec, targetParents)),
+    endpoints: processEndpoints(def, targetParents, spec),
+    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(def, ispec, targetParents)),
   };
 }
 
@@ -66,7 +73,7 @@ function calculateTarget(
     switch (prop.kind) {
       case "reference": {
         const reference = prop.value;
-        const model = findModel(models, reference.toModelRefKey);
+        const { value: model } = getRef<"model">(models, reference.toModelRefKey);
         return {
           kind: "reference",
           name,
@@ -74,12 +81,12 @@ function calculateTarget(
           retType: reference.toModelRefKey,
           refKey: reference.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
-          alias,
+          alias: alias || `$target_${parents.length}`,
         };
       }
       case "relation": {
         const relation = prop.value;
-        const model = findModel(models, relation.fromModelRefKey);
+        const { value: model } = getRef<"model">(models, relation.fromModelRefKey);
         return {
           kind: "relation",
           name,
@@ -87,12 +94,12 @@ function calculateTarget(
           retType: relation.fromModel,
           refKey: relation.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
-          alias,
+          alias: alias || `$target_${parents.length}`,
         };
       }
       case "query": {
         const query = prop.value;
-        const model = findModel(models, query.retType);
+        const { value: model } = getRef<"model">(models, query.retType);
         return {
           kind: "query",
           name,
@@ -100,7 +107,7 @@ function calculateTarget(
           retType: query.retType,
           refKey: query.refKey,
           identifyWith: calculateIdentifyWith(model, identify),
-          alias,
+          alias: alias || `$target_${parents.length}`,
         };
       }
       default: {
@@ -108,7 +115,7 @@ function calculateTarget(
       }
     }
   } else {
-    const model = findModel(models, name);
+    const { value: model } = getRef<"model">(models, name);
     return {
       kind: "model",
       name,
@@ -116,7 +123,7 @@ function calculateTarget(
       refKey: model.refKey,
       retType: model.name,
       identifyWith: calculateIdentifyWith(model, identify),
-      alias,
+      alias: alias || `$target_${parents.length}`,
     };
   }
 }
@@ -146,14 +153,22 @@ function calculateIdentifyWith(
 }
 
 function processEndpoints(
-  models: ModelDef[],
+  def: Definition,
   parents: EndpointContext[],
   entrySpec: EntrypointSpec
 ): EndpointDef[] {
+  const models = def.models;
   const context = _.last(parents)!;
   const targets = parents.map((p) => p.target);
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
+    const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
+    const selectDeps = collectActionDeps(def, rawActions);
+    const actions = wrapActionsWithSelect(def, rawActions, selectDeps);
+    const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
+    const parentContext = _.initial(targetsWithSelect);
+    const target = _.last(targetsWithSelect)!;
+
     switch (endSpec.type) {
       case "get": {
         return {
@@ -164,8 +179,9 @@ function processEndpoints(
             entrySpec.response,
             context.target.namePath
           ),
-          actions: [],
-          targets,
+          // actions,
+          parentContext,
+          target,
         };
       }
       case "list": {
@@ -177,19 +193,19 @@ function processEndpoints(
             entrySpec.response,
             context.target.namePath
           ),
-          actions: [],
-          targets,
+          // actions,
+          parentContext,
+          target: _.omit(target, "identifyWith"),
         };
       }
       case "create": {
-        const fieldset = calculateCreateFieldsetForModel(context.model);
-        const changeset = calculateCreateChangesetForModel(context.model);
+        const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "create",
           fieldset,
-          contextActionChangeset: changeset,
-          actions: [],
-          targets,
+          actions,
+          parentContext,
+          target: _.omit(target, "identifyWith"),
           response: processSelect(
             models,
             context.model,
@@ -199,14 +215,13 @@ function processEndpoints(
         };
       }
       case "update": {
-        const fieldset = calculateUpdateFieldsetForModel(context.model);
-        const changeset = calculateUpdateChangesetForModel(context.model);
+        const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "update",
           fieldset,
-          contextActionChangeset: changeset,
-          actions: [],
-          targets,
+          actions,
+          parentContext,
+          target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
           response: processSelect(
             models,
             context.model,
@@ -218,8 +233,9 @@ function processEndpoints(
       case "delete": {
         return {
           kind: "delete",
-          actions: [],
-          targets,
+          actions,
+          parentContext,
+          target,
           response: undefined,
         };
       }
@@ -290,62 +306,213 @@ export function processSelect(
   }
 }
 
-export function calculateCreateFieldsetForModel(model: ModelDef): FieldsetDef {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldsetDef] => [
-      f.name,
-      {
-        kind: "field",
-        nullable: f.nullable,
-        type: f.type,
-        required: true,
-        validators: f.validators,
-      },
-    ]);
-  return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
+export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
+  const fieldsetWithPaths = actions
+    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+    .flatMap((action) => {
+      return _.chain(action.changeset)
+        .toPairs()
+        .map(([name, setter]): null | [string[], FieldsetFieldDef] => {
+          switch (setter.kind) {
+            case "fieldset-input": {
+              const { value: field } = getRef<"field">(def, `${action.model}.${name}`);
+              return [
+                setter.fieldsetAccess,
+                {
+                  kind: "field",
+                  required: setter.required,
+                  type: setter.type,
+                  nullable: field.nullable,
+                  validators: field.validators,
+                },
+              ];
+            }
+            case "fieldset-reference-input": {
+              const { value: field } = getRef<"field">(def, setter.throughField.refKey);
+              return [
+                setter.fieldsetAccess,
+                {
+                  kind: "field",
+                  required: true, // fixme
+                  nullable: field.nullable,
+                  type: field.type,
+                  validators: field.validators,
+                },
+              ];
+            }
+            default:
+              return null;
+          }
+        })
+        .compact()
+        .value();
+    });
+
+  return collectFieldsetPaths(fieldsetWithPaths);
 }
 
-export function calculateUpdateFieldsetForModel(model: ModelDef): FieldsetDef {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldsetDef] => [
-      f.name,
-      {
-        kind: "field",
-        nullable: f.nullable,
-        type: f.type,
-        required: false,
-        validators: f.validators,
-      },
-    ]);
-  return { kind: "record", nullable: false, record: Object.fromEntries(fields) };
+/**
+ * Converts a list of single `FieldsetFieldDef`s with their desired paths
+ * into a `FieldsetDef` that nests `FieldsetRecordDef`s in order to respect
+ * desired access path for each `FieldsetFieldDef`.ß
+ */
+function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDef {
+  const record = _.chain(paths)
+    .map((p) => p[0][0])
+    .uniq()
+    .map((name) => {
+      const relatedPaths = paths
+        .filter((p) => p[0][0] === name)
+        .map((p) => [_.tail(p[0]), p[1]] as [string[], FieldsetFieldDef]);
+      if (relatedPaths.length === 1 && relatedPaths[0][0].length === 0) {
+        // only a leaf node, return fieldset field
+        return [name, relatedPaths[0][1]];
+      } else if (relatedPaths.every((p) => p[0].length > 0)) {
+        // OK, record without faulty leaf nodes
+        return [name, collectFieldsetPaths(relatedPaths)];
+      } else {
+        // leaf node + non-empty node, this is not correct
+        throw new Error(`Error in paths: ${paths.map((p) => p[0].join(".")).sort()}`);
+      }
+    })
+    .fromPairs()
+    .value();
+  return { kind: "record", nullable: false, record };
 }
 
-export function calculateCreateChangesetForModel(model: ModelDef): Changeset {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldSetter] => [
-      f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required: true },
-    ]);
-  return Object.fromEntries(fields);
+type SelectDep = FieldSetterReferenceValue["target"];
+/**
+ * Iterates over actions in order to collect, for each of the actions and a default target
+ * context variables, which fields are required in the following actions, so that they can
+ * be fetched from the database beforehand.
+ * Eg. if a `Repo` aliased as `myrepo` requires `myorg.id`, we need to instruct `myorg`
+ * context variable to fetch the `id` so it can be referenced later by `myrepo`.ß
+ */
+function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
+  // collect all update paths
+  const nonDeleteActions = actions.filter(
+    (a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one"
+  );
+  const targetPaths = _.chain(nonDeleteActions)
+    .flatMap((a) => {
+      switch (a.kind) {
+        case "create-one": {
+          // there's already a parent setter resolving this path, so we can skip it
+          return null;
+        }
+        case "update-one": {
+          try {
+            // make sure we're not updating a model directly
+            getRef2.model(def, _.first(a.targetPath)!);
+            return null;
+          } catch (e) {
+            // last item is what's being updated, we need to collect the id
+            const [alias, ...access] = [...a.targetPath, "id"];
+            return { alias, access };
+          }
+        }
+      }
+    })
+    .compact()
+    .value();
+  // collect all targets
+  const setterTargets = nonDeleteActions.flatMap((a) => {
+    return _.compact(
+      Object.values(a.changeset).map((setter) => {
+        switch (setter.kind) {
+          case "reference-value": {
+            return setter.target;
+          }
+          default: {
+            return null;
+          }
+        }
+      })
+    );
+  });
+  return [...setterTargets, ...targetPaths];
 }
 
-export function calculateUpdateChangesetForModel(model: ModelDef): Changeset {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .map((f): [string, FieldSetter] => [
-      f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [f.name], required: false },
-    ]);
-  return Object.fromEntries(fields);
+/**
+ * Converts `TargetDef`s into `TargetWithSelectDef`s using select deps to resolve each target's `SelectDef`.
+ */
+function wrapTargetsWithSelect(
+  def: Definition,
+  targets: TargetDef[],
+  deps: SelectDep[]
+): TargetWithSelectDef[] {
+  return targets.map((target) => {
+    const paths = mergePaths(
+      deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
+    );
+    const model = getRef2.model(def, target.retType);
+    const select = pathsToSelectDef(def, model, paths, [target.alias]);
+    return { ...target, select };
+  });
 }
 
-function findModel(models: ModelDef[], name: string): ModelDef {
-  const model = models.find((m) => m.name === name);
-  if (!model) {
-    throw ["model-not-defined", name];
-  }
-  return model;
+/**
+ * Inserts `ActionDef`s `select` property using select deps to resolve each target's `SelectDef`.
+ * FIXME this is confusing because we don't have a special type for ActionDef with(out) select.
+ * Prior to calling this function, every `ActionDef` has an empty (`[]`) select property.
+ */
+function wrapActionsWithSelect(
+  def: Definition,
+  actions: ActionDef[],
+  deps: SelectDep[]
+): ActionDef[] {
+  return actions
+    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+    .map((a): ActionDef => {
+      // normalize paths related to this action alias
+      const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
+      const model = getRef2.model(def, a.model);
+      const select = pathsToSelectDef(def, model, paths, [a.alias]);
+      return { ...a, select };
+    });
+}
+
+function pathsToSelectDef(
+  def: Definition,
+  model: ModelDef,
+  paths: string[][],
+  namespace: string[]
+): SelectDef {
+  const direct = _.chain(paths)
+    .map((p) => p[0])
+    .uniq()
+    .value();
+  return direct.map((name): SelectItem => {
+    // what is name?
+    const ref = getRef2(def, model.name, name, ["query", "reference", "relation", "field"]);
+    const relatedPaths = paths
+      .filter((p) => p[0] === name)
+      .map(_.tail)
+      .filter((p) => p.length > 0);
+    switch (ref.kind) {
+      case "field": {
+        // ensure leaf
+        if (relatedPaths.length) {
+          throw new Error(`Field path is not root!`);
+        }
+        return {
+          kind: "field",
+          alias: name,
+          name,
+          refKey: ref.value.refKey,
+          namePath: [...namespace, name],
+        };
+      }
+      default: {
+        const newModel = getTargetModel(def.models, ref.value.refKey);
+        return {
+          kind: ref.kind,
+          alias: name,
+          name,
+          namePath: [...namespace, name],
+          select: pathsToSelectDef(def, newModel, relatedPaths, [...namespace, name]),
+        };
+      }
+    }
+  });
 }
