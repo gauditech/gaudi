@@ -72,14 +72,8 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     const filter = parentTarget
       ? applyFilterIdInContext([parentTarget.retType], targetFilter)
       : targetFilter;
-    /*
-    NOTE
-    `e.target.namePath` and `e.target.select` have mismatching namePaths!
-    `e.target.select` is namespaced from "context" eg. `["myrepo", "issues", ...] while
-    `e.target.namePath` is from entrypoint targets, starting with a model, eg. `["Org", "repos", "issues"].
-    `transformSelectPaths` takes care of it by converting to a desired `namePath`, in this case from ctx path.
-    */
-    const select = transformSelectPath(target.select, [target.alias], namePath);
+
+    const select = transformSelectPath(target.select, target.namePath, namePath);
     const query = queryFromParts(def, target.alias, namePath, filter, select);
     return buildQueryTree(def, query);
   });
@@ -99,14 +93,11 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     ? applyFilterIdInContext([parentTarget.retType], targetFilter)
     : targetFilter;
 
-  // see NOTE above
-  const select = transformSelectPath(endpoint.target.select, [endpoint.target.alias], namePath);
+  const select = transformSelectPath(endpoint.target.select, endpoint.target.namePath, namePath);
 
   const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  // see NOTE above, using absolute path rather than context path because `endpoint.response`
-  // is not generated from the action requirements
   const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, namePath);
   const responseQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, response);
   const responseQueryTree = buildQueryTree(def, responseQuery);

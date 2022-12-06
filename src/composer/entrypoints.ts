@@ -447,7 +447,7 @@ function wrapTargetsWithSelect(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
     const model = getRef2.model(def, target.retType);
-    const select = pathsToSelectDef(def, model, paths, [target.alias]);
+    const select = pathsToSelectDef(def, model, paths, target.namePath);
     return { ...target, select };
   });
 }
