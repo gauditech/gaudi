@@ -173,12 +173,6 @@ Gaudi {
 
   HookQuery
     = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"
-    = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
-
-  HookBody
-    = "arg" identifier identifier   -- argument
-    | "returns" identifier          -- return_type
-    | "inline" multiLineString      -- inline_body
 
   IdentifierPath = identifier ("." identifier)*
 
