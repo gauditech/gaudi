@@ -66,7 +66,6 @@ function calculateTarget(
 
   if (parentTarget) {
     const { value: ctxModel } = getRef<"model">(models, parentTarget.retType);
-    alias = alias || `$target_${parents.length}`;
 
     const prop = getModelProp(ctxModel, name);
     switch (prop.kind) {
