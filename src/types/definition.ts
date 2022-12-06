@@ -205,6 +205,7 @@ export type SelectFieldItem = {
 export type SelectHookItem = {
   kind: "hook";
   name: string;
+  alias: string;
   namePath: string[];
   args: { name: string; query: QueryDef }[];
   code: HookCode;

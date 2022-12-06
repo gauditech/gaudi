@@ -73,7 +73,7 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
       ? applyFilterIdInContext([parentTarget.retType], targetFilter)
       : targetFilter;
     /*
-    NOTE 
+    NOTE
     `e.target.namePath` and `e.target.select` have mismatching namePaths!
     `e.target.select` is namespaced from "context" eg. `["myrepo", "issues", ...] while
     `e.target.namePath` is from entrypoint targets, starting with a model, eg. `["Org", "repos", "issues"].
@@ -387,7 +387,8 @@ export function transformSelectPath(select: SelectDef, from: string[], to: strin
     );
     const newPath = [...to, ..._.drop(selItem.namePath, from.length)];
     switch (selItem.kind) {
-      case "field": {
+      case "field":
+      case "hook": {
         return { ...selItem, namePath: newPath };
       }
       case "query":

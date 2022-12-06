@@ -287,6 +287,7 @@ export function processSelect(
         return {
           kind: ref.kind,
           name,
+          alias: name,
           namePath: [...namePath, name],
           args: ref.value.args,
           code: ref.value.code,
