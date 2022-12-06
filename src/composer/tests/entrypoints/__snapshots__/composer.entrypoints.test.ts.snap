@@ -409,7 +409,7 @@ exports[`entrypoint composes basic example 1`] = `
                     "kind": "field",
                     "name": "id",
                     "namePath": [
-                      "$target_0",
+                      "Org",
                       "id",
                     ],
                     "refKey": "Org.id",

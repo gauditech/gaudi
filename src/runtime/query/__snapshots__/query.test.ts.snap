@@ -357,7 +357,8 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
         "kind": "field",
         "name": "id",
         "namePath": [
-          "$target_1",
+          "Org",
+          "repos",
           "id",
         ],
         "refKey": "Repo.id",
@@ -1875,7 +1876,9 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 3`] = `
       "kind": "field",
       "name": "id",
       "namePath": [
-        "$target_2",
+        "Org",
+        "repos",
+        "issues",
         "id",
       ],
       "refKey": "Issue.id",
