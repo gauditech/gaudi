@@ -4,7 +4,7 @@ import _, { compact } from "lodash";
 import { Vars } from "./vars";
 
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
-import { dataToFieldDbnames, getRef } from "@src/common/refs";
+import { getRef } from "@src/common/refs";
 import { executeActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { endpointQueries } from "@src/runtime/query/build";
@@ -222,7 +222,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          executeActions(
+          await executeActions(
             def,
             dbConn,
             { input: validationResult, vars: contextVars },
@@ -231,7 +231,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const targetId = contextVars.get(endpoint.target.alias)?.id;
 
-          if (targetId === null) {
+          if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
           console.log("Query result", targetId);

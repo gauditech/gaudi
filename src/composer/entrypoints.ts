@@ -343,6 +343,11 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
   return collectFieldsetPaths(fieldsetWithPaths);
 }
 
+/**
+ * Converts a list of single `FieldsetFieldDef`s with their desired paths
+ * into a `FieldsetDef` that nests `FieldsetRecordDef`s in order to respect
+ * desired access path for each `FieldsetFieldDef`.ß
+ */
 function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDef {
   const record = _.chain(paths)
     .map((p) => p[0][0])
@@ -368,37 +373,13 @@ function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDe
 }
 
 type SelectDep = FieldSetterReferenceValue["target"];
-
-function wrapTargetsWithSelect(
-  def: Definition,
-  targets: TargetDef[],
-  deps: SelectDep[]
-): TargetWithSelectDef[] {
-  return targets.map((target) => {
-    const paths = mergePaths(
-      deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
-    );
-    const model = getRef2.model(def, target.retType);
-    const select = pathsToSelectDef(def, model, paths, [target.alias]);
-    return { ...target, select };
-  });
-}
-function wrapActionsWithSelect(
-  def: Definition,
-  actions: ActionDef[],
-  deps: SelectDep[]
-): ActionDef[] {
-  return actions
-    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
-    .map((a): ActionDef => {
-      // normalize paths related to this action alias
-      const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
-      const model = getRef2.model(def, a.model);
-      const select = pathsToSelectDef(def, model, paths, [a.alias]);
-      return { ...a, select };
-    });
-}
-
+/**
+ * Iterates over actions in order to collect, for each of the actions and a default target
+ * context variables, which fields are required in the following actions, so that they can
+ * be fetched from the database beforehand.
+ * Eg. if a `Repo` aliased as `myrepo` requires `myorg.id`, we need to instruct `myorg`
+ * context variable to fetch the `id` so it can be referenced later by `myrepo`.ß
+ */
 function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
   const nonDeleteActions = actions.filter(
@@ -442,6 +423,45 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
     );
   });
   return [...setterTargets, ...targetPaths];
+}
+
+/**
+ * Converts `TargetDef`s into `TargetWithSelectDef`s using select deps to resolve each target's `SelectDef`.
+ */
+function wrapTargetsWithSelect(
+  def: Definition,
+  targets: TargetDef[],
+  deps: SelectDep[]
+): TargetWithSelectDef[] {
+  return targets.map((target) => {
+    const paths = mergePaths(
+      deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
+    );
+    const model = getRef2.model(def, target.retType);
+    const select = pathsToSelectDef(def, model, paths, [target.alias]);
+    return { ...target, select };
+  });
+}
+
+/**
+ * Inserts `ActionDef`s `select` property using select deps to resolve each target's `SelectDef`.
+ * FIXME this is confusing because we don't have a special type for ActionDef with(out) select.
+ * Prior to calling this function, every `ActionDef` has an empty (`[]`) select property.
+ */
+function wrapActionsWithSelect(
+  def: Definition,
+  actions: ActionDef[],
+  deps: SelectDep[]
+): ActionDef[] {
+  return actions
+    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+    .map((a): ActionDef => {
+      // normalize paths related to this action alias
+      const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
+      const model = getRef2.model(def, a.model);
+      const select = pathsToSelectDef(def, model, paths, [a.alias]);
+      return { ...a, select };
+    });
 }
 
 function pathsToSelectDef(

@@ -9,12 +9,30 @@ model Org {
 
 
 model Repo {
+  reference org { to Org }
+
   field name { type text }
   field slug { type text, unique }
   field description { type text }
   field is_public { type boolean, default true }
+  field latest_num { type integer }
 
-  reference org { to Org }
+  relation issues { from Issue, through repo }
+}
+
+
+model Issue {
+  reference repo { to Repo }
+
+  field number { type text }
+  field title { type text }
+
+  relation comments { from Comment, through issue }
+}
+
+model Comment {
+  reference issue { to Issue }
+  field body { type text }
 }
 
 // ----- entrypoints
@@ -46,7 +64,9 @@ entrypoint Orgs {
     list endpoint {}
     create endpoint {
       action {
-        create repo {}
+        create repo {
+          set latest_num 0
+        }
       }
     }
     update endpoint {
@@ -55,5 +75,25 @@ entrypoint Orgs {
       }
     }
     delete endpoint {}
+
+    entrypoint Issues {
+      target relation issues as issue
+      response { id, title, repo, comments }
+
+      get endpoint {}
+      create endpoint {
+        action {
+          create issue as issue {
+            set number repo.latest_num
+          }
+
+          update repo as repo2 {
+            set latest_num 1
+          }
+
+          create issue.comments as c {}
+        }
+      }
+    }
   }
 }

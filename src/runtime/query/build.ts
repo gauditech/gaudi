@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
+import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
@@ -60,56 +60,48 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
     const filter = parentTarget
       ? applyFilterIdInContext([parentTarget.retType], targetFilter)
       : targetFilter;
-    // transform select;
-    // FIXME see the comment about the transformation issue below
+    /*
+    NOTE 
+    `e.target.namePath` and `e.target.select` have mismatching namePaths!
+    `e.target.select` is namespaced from "context" eg. `["myrepo", "issues", ...] while
+    `e.target.namePath` is from entrypoint targets, starting with a model, eg. `["Org", "repos", "issues"].
+    `transformSelectPaths` takes care of it by converting to a desired `namePath`, in this case from ctx path.
+    */
     const select = transformSelectPath(target.select, [target.alias], namePath);
     const query = queryFromParts(def, target.alias, namePath, filter, select);
     return buildQueryTree(def, query);
   });
 
   // repeat the same for target
-  const e = endpoint; // just a better code formatting this way
-  const parentTarget = _.last(e.parentContext);
-  const namePath = parentTarget ? [parentTarget.retType, e.target.name] : [e.target.retType];
+  const parentTarget = _.last(endpoint.parentContext);
+  const namePath = parentTarget
+    ? [parentTarget.retType, endpoint.target.name]
+    : [endpoint.target.retType];
 
   const targetFilter =
-    e.kind === "create" || e.kind === "list"
+    endpoint.kind === "create" || endpoint.kind === "list"
       ? undefined
-      : targetToFilter({ ...e.target, namePath });
+      : targetToFilter({ ...endpoint.target, namePath });
 
   const filter = parentTarget
     ? applyFilterIdInContext([parentTarget.retType], targetFilter)
     : targetFilter;
 
-  /*
-    FIXME e.target.namePath and e.target.select have mismatching namePaths!!
-          e.target.select is prefixed with target.alias, while
-          e.target.namePath is nested `target.name` from root entrypoint
-    
-    This transformation makes it irrelevant, however we should make sure it doesn't
-    happen.
-    For example, target.namePath is ["Org", "repos", "issues"], target.alias is "issue",
-    e.target.select namePaths would be ["issue", *]
+  // see NOTE above
+  const select = transformSelectPath(endpoint.target.select, [endpoint.target.alias], namePath);
 
-    Nevertheless, this is just a difference between absolute and relative (context) path,
-    it is not a "wrong" path and perhaps we can keep using both, in that case
-    `transformSelectPath` would accept multiple `from`s.
-  */
-  const select = transformSelectPath(e.target.select, [e.target.alias], namePath);
-
-  const targetQuery = queryFromParts(def, e.target.alias, namePath, filter, select);
+  const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  // NOTE Here, we don't transform [e.target.alias] like we do above
-  // because the `response` doesn't come from action composer
-  // so paths are absolute
-  const response = transformSelectPath(e.response ?? [], e.target.namePath, namePath);
-  const responseQuery = queryFromParts(def, e.target.alias, namePath, filter, response);
+  // see NOTE above, using absolute path rather than context path because `endpoint.response`
+  // is not generated from the action requirements
+  const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, namePath);
+  const responseQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, response);
   const responseQueryTree = buildQueryTree(def, responseQuery);
   return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 
-function applyFilterIdInContext(namePath: NamePath, filter: FilterDef): FilterDef {
+export function applyFilterIdInContext(namePath: NamePath, filter?: FilterDef): FilterDef {
   const inFilter: FilterDef = {
     kind: "binary",
     operator: "in",
@@ -150,6 +142,18 @@ export function selectableId(def: Definition, namePath: NamePath): SelectableIte
 /**
  * Query builder
  */
+
+export function queryTreeFromParts(
+  def: Definition,
+  name: string,
+  fromPath: NamePath,
+  filter: FilterDef,
+  select: SelectDef
+): QueryTree {
+  const query = queryFromParts(def, name, fromPath, filter, select);
+  const qTree = buildQueryTree(def, query);
+  return qTree;
+}
 
 export function queryFromParts(
   def: Definition,
@@ -356,7 +360,7 @@ function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectIte
   };
 }
 
-function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
+export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
   return select.map((selItem: SelectItem) => {
     ensureEqual(
       _.isEqual(from, _.take(selItem.namePath, from.length)),
