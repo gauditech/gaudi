@@ -88,14 +88,14 @@ function parseArguments(config: EngineConfig) {
 function buildCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Build Gaudi source");
 
-  executeCommand("npx", ["gaudi-engine", "--enable-source-maps"]);
+  executeCommand("npx", ['--node-options="--enable-source-maps"', "gaudi-engine"]);
 }
 
 function runCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   // node --enable-source-maps ./node_modules/@gaudi/engine/runtime/runtime.js
   console.log("Run Gaudi project");
 
-  executeCommand("npx", ["gaudi-runtime", "--enable-source-maps"]);
+  executeCommand("npx", ['--node-options="--enable-source-maps"', "gaudi-runtime"]);
 }
 
 function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
