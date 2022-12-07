@@ -152,24 +152,24 @@ function constructIdField(mdef: ModelDef): FieldDef {
   };
 }
 
-function defineField(def: Definition, mdef: ModelDef, hspec: FieldSpec): FieldDef {
-  const refKey = `${mdef.refKey}.${hspec.name}`;
+function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDef {
+  const refKey = `${mdef.refKey}.${fspec.name}`;
   const ex = getDefinition(def, refKey, "field");
   if (ex) return ex;
 
-  const type = validateType(hspec.type);
+  const type = validateType(fspec.type);
 
   const f: FieldDef = {
     refKey,
     modelRefKey: mdef.refKey,
-    name: hspec.name,
-    dbname: hspec.name.toLowerCase(),
+    name: fspec.name,
+    dbname: fspec.name.toLowerCase(),
     type,
     dbtype: constructDbType(type),
     primary: false,
-    unique: !!hspec.unique,
-    nullable: !!hspec.nullable,
-    validators: validatorSpecsToDefs(type, hspec.validators),
+    unique: !!fspec.unique,
+    nullable: !!fspec.nullable,
+    validators: validatorSpecsToDefs(type, fspec.validators),
   };
   mdef.fields.push(f);
   return f;

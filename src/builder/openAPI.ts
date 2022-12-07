@@ -37,6 +37,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
           }
         }
         case "hook": {
+          // FIXME - add return types to hooks
           return [select.name, {}];
         }
       }
