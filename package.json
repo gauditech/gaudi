@@ -18,7 +18,7 @@
     "// --- test": "",
     "test": "npm run build:grammar && jest --testPathIgnorePatterns='<rootDir>/src/e2e/'",
     "test:watch": "npm test -- --watch",
-    "test:api": "dotenv -e ./src/e2e/api/test.env -- jest ./src/e2e/api",
+    "test:api": "jest ./src/e2e/api",
     "test:api:watch": "npm run test:api -- --watch",
     "// --- other": "",
     "clean": "rimraf ./dist"
@@ -51,7 +51,6 @@
     "chokidar-cli": "^3.0.0",
     "concurrently": "^7.4.0",
     "copyfiles": "^2.4.1",
-    "dotenv-cli": "^6.0.0",
     "eslint": "^8.23.1",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-typescript": "^3.5.1",
@@ -71,6 +70,7 @@
   "dependencies": {
     "bcrypt": "^5.1.0",
     "common-tags": "^1.8.2",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "knex": "^2.3.0",
     "lodash": "^4.17.21",

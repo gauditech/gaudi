@@ -19,20 +19,20 @@ function parseArguments(config: EngineConfig) {
   yargs(hideBin(process.argv))
     .scriptName("gaudi-cli")
     .command({
-      command: "build",
-      describe: "Build Gaudi source",
-      handler: (args) => buildCommand(args, config),
+      command: "compile",
+      describe: "Compile Gaudi source",
+      handler: (args) => compileCommand(args, config),
     })
     .command({
       command: "run",
-      describe: "Run Gaudi",
+      describe: "Run Gaudi project",
       handler: (args) => runCommand(args, config),
     })
     .command({
       command: "db",
-      describe: "Make changes to DB",
+      describe: "Make changes to DB. This is a no-op grouping command. See help for details.",
       handler: () => {
-        //
+        // handler is required but this a noop
       },
       builder: (yargs) =>
         yargs
@@ -85,22 +85,20 @@ function parseArguments(config: EngineConfig) {
     .parse();
 }
 
-function buildCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
-  console.log("Build Gaudi source");
+function compileCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
+  console.log("Compiling Gaudi source ...");
 
   executeCommand("npx", ['--node-options="--enable-source-maps"', "gaudi-engine"]);
 }
 
 function runCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
-  // node --enable-source-maps ./node_modules/@gaudi/engine/runtime/runtime.js
-  console.log("Run Gaudi project");
+  console.log("Running Gaudi project ...");
 
   executeCommand("npx", ['--node-options="--enable-source-maps"', "gaudi-runtime"]);
 }
 
 function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
-  // npx prisma db push --schema=./dist/db/schema.prisma --accept-data-loss
-  console.log("Push DB changes");
+  console.log("Pushing DB change ...");
 
   executeCommand("npx", [
     "prisma",
@@ -112,8 +110,7 @@ function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
 }
 
 function dbResetCommand(args: ArgumentsCamelCase, config: EngineConfig) {
-  // npx prisma db push --force-reset --schema=./dist/db/schema.prisma
-  console.log("Reset DB");
+  console.log("Resetting DB ...");
 
   executeCommand("npx", [
     "prisma",
@@ -130,12 +127,11 @@ type DbPopulateOptions = {
 };
 
 function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config: EngineConfig) {
-  // node ./node_modules/@gaudi/engine/runtime/populator/populator.js -p Dev
   const populatorName = args.populator!;
 
   if (_.isEmpty(populatorName)) throw "Populator name cannot be empty";
 
-  console.log(`Populate DB using populator "${populatorName}"`);
+  console.log(`Populating DB using populator "${populatorName} ..."`);
 
   executeCommand("npx", ["gaudi-populator", "-p", populatorName]);
 }
@@ -148,7 +144,7 @@ function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 
   if (_.isEmpty(migrationName)) throw "Migration name cannot be empty";
 
-  console.log(`Create DB migration "${migrationName}"`);
+  console.log(`Creating DB migration "${migrationName}" ...`);
 
   executeCommand("npx", [
     "prisma",
@@ -160,7 +156,7 @@ function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 }
 
 function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
-  console.log(`Deploying DB migrations`);
+  console.log(`Deploying DB migrations ...`);
 
   executeCommand("npx", [
     "prisma",
