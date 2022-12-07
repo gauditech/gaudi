@@ -5,6 +5,7 @@ import { WithContext } from "@src/common/error";
 export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
+  hooks: HookSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -68,9 +69,8 @@ export type ExpSpec = WithContext<
 
 export type EntrypointSpec = WithContext<{
   name: string;
-  target: { kind: "model" | "relation"; identifier: string };
+  target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
-  alias?: string;
   response?: SelectAST;
   endpoints: EndpointSpec[];
   entrypoints: EntrypointSpec[];
@@ -82,16 +82,38 @@ export type EndpointSpec = WithContext<{
 }>;
 
 export type ActionSpec = WithContext<{
-  kind: "create" | "update";
-  target: string;
+  kind: "create" | "update" | "delete";
+  targetPath: string[] | undefined;
+  alias: string | undefined;
   actionAtoms: ActionAtomSpec[];
 }>;
 
 export type ActionAtomSpec = WithContext<
-  | {
-      kind: "set";
-      target: string;
-      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
-    }
-  | { kind: "reference"; target: string; through: string }
+  | ActionAtomSpecSet
+  | ActionAtomSpecRefThrough
+  | ActionAtomSpecAction
+  | ActionAtomSpecDeny
+  | ActionAtomSpecInput
 >;
+
+export type ActionAtomSpecSet = {
+  kind: "set";
+  target: string;
+  set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+};
+export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
+export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
+export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
+export type ActionAtomSpecInput = { kind: "input"; fields: InputFieldSpec[] };
+export type InputFieldSpec = {
+  name: string;
+  optional: boolean;
+  default?: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+};
+
+export type HookSpec = WithContext<{
+  name: string;
+  args: { name: string; type: string }[];
+  returnType: string;
+  inlineBody: string;
+}>;

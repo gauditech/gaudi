@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 export function ensureFind<T>(
   arr: T[],
   predicate: (value: T, index: number, obj: T[]) => unknown
@@ -19,13 +22,22 @@ export function ensureExists<I>(item: I | null | undefined): asserts item is I {
   }
 }
 
-export function ensureEqual<T, Tx extends T>(a: T, b: Tx): asserts a is Tx {
+export function ensureEqual<T, Tx extends T>(a: T, b: Tx, message?: string): asserts a is Tx {
   if (a === b) return;
-  throw new Error("Not equal");
+  throw new Error(message ?? "Not equal");
 }
 
 export function ensureNot<T, Tx extends T>(a: T, b: Tx): asserts a is Exclude<T, Tx> {
   if (a === b) throw new Error("Must not be equal!");
+}
+
+export function ensureThrow(cb: () => unknown, message?: string): void {
+  try {
+    cb();
+  } catch (e) {
+    return;
+  }
+  throw new Error(message ?? `Expected a callback to throw`);
 }
 
 /** Concat all keys who's value is `true` using `delimiter` */
@@ -68,4 +80,30 @@ export function nameInitials(input: string): string {
 /** Function that ensures exhaustivness of conditional statements. */
 export function assertUnreachable(_: never): never {
   throw new Error("Unreachable code detected");
+}
+
+/**
+ * Save file to target path.
+ *
+ * If any of directories on the path are missing, create them.
+ *
+ * Check existing file's content and avoid saving if content has not changed. This avoids triggering any possible watches.
+ */
+export function saveOutputFile(destination: string, content: string): void {
+  // create folder(s) if they don't exist
+  const dir = path.dirname(destination);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  let contentChanged = true;
+  if (fs.existsSync(destination)) {
+    const existingContent = fs.readFileSync(destination, { encoding: "utf-8" });
+    contentChanged = content != existingContent;
+  }
+
+  // write file
+  if (contentChanged) {
+    fs.writeFileSync(destination, content, { encoding: "utf-8" });
+  }
 }

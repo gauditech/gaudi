@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import { CompilerError } from "@src/common/error";
 import {
   AST,
@@ -7,6 +9,8 @@ import {
   EntrypointAST,
   ExpAST,
   FieldAST,
+  HookAST,
+  InputFieldOptAST,
   LiteralValue,
   ModelAST,
   QueryAST,
@@ -14,12 +18,15 @@ import {
   RelationAST,
 } from "@src/types/ast";
 import {
+  ActionAtomSpec,
   ActionSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
   ExpSpec,
   FieldSpec,
+  HookSpec,
+  InputFieldSpec,
   ModelSpec,
   QuerySpec,
   ReferenceSpec,
@@ -212,7 +219,47 @@ function compileModel(model: ModelAST): ModelSpec {
 }
 
 function compileAction(action: ActionBodyAST): ActionSpec {
-  return { kind: action.kind, target: action.target, actionAtoms: action.body };
+  const atoms = action.body.map((a): ActionAtomSpec => {
+    switch (a.kind) {
+      case "action": {
+        return { kind: "action", body: compileAction(a.body) };
+      }
+      case "deny":
+      case "reference":
+      case "set": {
+        // action AST and Spec are currently the same
+        return a;
+      }
+      case "input": {
+        const fields = a.fields.map((f): InputFieldSpec => {
+          const defaults = f.opts
+            .filter((o): o is Exclude<InputFieldOptAST, { kind: "optional" }> =>
+              o.kind.startsWith("default")
+            )
+            .map((o): InputFieldSpec["default"] => {
+              switch (o.kind) {
+                case "default-value": {
+                  return { kind: "value", value: o.value };
+                }
+                case "default-reference": {
+                  return { kind: "reference", reference: o.path };
+                }
+              }
+            });
+          if (defaults.length > 1) {
+            throw new CompilerError(`Multiple 'default' for a field is not allowed`);
+          }
+          const optionals = f.opts.filter((o) => o.kind === "optional");
+          if (optionals.length > 1) {
+            throw new CompilerError(`Multiple 'optional' for a field is not allowed`);
+          }
+          return { name: f.name, default: defaults[0], optional: !_.isEmpty(optionals) };
+        });
+        return { kind: "input", fields };
+      }
+    }
+  });
+  return { kind: action.kind, targetPath: action.target, actionAtoms: atoms, alias: action.alias };
 }
 
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
@@ -262,17 +309,50 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
     interval: entrypoint.interval,
   };
 }
+
+function compileHook(hook: HookAST): HookSpec {
+  const name = hook.name;
+  let returnType: string | undefined;
+  const args: { name: string; type: string }[] = [];
+  let inlineBody: string | undefined;
+
+  hook.body.forEach((b) => {
+    if (b.kind === "arg") {
+      args.push({ name: b.name, type: b.type });
+    } else if (b.kind === "inlineBody") {
+      inlineBody = b.inlineBody;
+    } else if (b.kind === "returnType") {
+      returnType = b.type;
+    }
+  });
+
+  if (name && returnType && args.length && inlineBody) {
+    return {
+      name,
+      args,
+      inlineBody,
+      returnType,
+      interval: hook.interval,
+    };
+  } else {
+    throw new CompilerError(`Hook is missing required properties`, hook);
+  }
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
+  const hooks: HookSpec[] = [];
 
   input.map((definition) => {
     if (definition.kind === "model") {
       models.push(compileModel(definition));
-    } else {
+    } else if (definition.kind === "entrypoint") {
       entrypoints.push(compileEntrypoint(definition));
+    } else if (definition.kind === "hook") {
+      hooks.push(compileHook(definition));
     }
   });
 
-  return { models, entrypoints };
+  return { models, entrypoints, hooks };
 }

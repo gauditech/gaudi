@@ -1,12 +1,12 @@
-import knex from "knex";
+import { Knex, knex } from "knex";
 
-export const db = knex({
-  client: "pg",
-  connection: {
-    database: "gaudi",
-    user: "gaudi",
-    password: "gaudip",
-    host: "127.0.0.1",
-    port: 5432,
-  },
-});
+export type DbConn = Knex | Knex.Transaction;
+export type DbQueryBuilder = Knex.QueryBuilder;
+
+export function createDbConn(urlString: string, options?: { schema?: string }): DbConn {
+  return knex({
+    client: "pg",
+    connection: urlString,
+    searchPath: options?.schema ? [options.schema] : undefined,
+  });
+}

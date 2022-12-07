@@ -1,11 +1,12 @@
+import { ActionContext } from "@src/runtime/common/action";
 import {
-  ActionChangesetContext,
   buildChangset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
+import { Vars } from "@src/runtime/server/vars";
 import { Changeset } from "@src/types/definition";
 
 describe("runtime", () => {
@@ -18,18 +19,21 @@ describe("runtime", () => {
           fieldsetAccess: ["input_prop"],
           kind: "fieldset-input",
           type: "text",
+          required: true,
         },
         input_prop_missing: {
           fieldsetAccess: ["__missing__"],
           kind: "fieldset-input",
           type: "text",
+          required: false,
         },
       };
 
-      const context: ActionChangesetContext = {
+      const context: ActionContext = {
         input: {
           input_prop: "input value",
         },
+        vars: new Vars(),
       };
 
       expect(buildChangset(data, context)).toMatchSnapshot();
@@ -61,7 +65,7 @@ describe("runtime", () => {
   describe("formatting", () => {
     it("ignores undefined/null vlaue", () => {
       expect(formatFieldValue(undefined, "text")).toStrictEqual(undefined);
-      expect(formatFieldValue(null, "text")).toStrictEqual(undefined);
+      expect(formatFieldValue(null, "text")).toStrictEqual(null);
     });
 
     it("formats text field values", () => {
