@@ -1,35 +1,42 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
+import { assertUnreachable } from "@src/common/utils";
+import { ActionContext } from "@src/runtime/common/action";
 import { Changeset, FieldDef } from "@src/types/definition";
-
-export type ActionChangesetContext = {
-  input: Record<string, unknown>;
-};
 
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
  */
 export function buildChangset(
   actionChangset: Changeset,
-  context: ActionChangesetContext
+  actionContext: ActionContext
 ): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(actionChangset)
       .map(([name, setter]) => {
         // TODO: format values by type
-        if (setter.kind === "value") {
-          return [name, formatFieldValue(setter.value, setter.type)];
-        } else if (setter.kind === "fieldset-input") {
+        const setterKind = setter.kind;
+        if (setterKind === "value") {
+          return [
+            name,
+            setter.type === "null" ? null : formatFieldValue(setter.value, setter.type),
+          ];
+        } else if (setterKind === "fieldset-input") {
           return [
             name,
             formatFieldValue(
-              getFieldsetProperty(context.input, setter.fieldsetAccess),
+              getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
               setter.type
             ),
           ];
+        } else if (setterKind === "reference-value") {
+          return [name, actionContext.vars.get(setter.target.alias, setter.target.access)];
+        } else if (setterKind === "fieldset-reference-input") {
+          // TODO: implement "fieldset-reference-input" setters
+          throw `Unsupported changeset setter kind "${setterKind}"`;
+        } else {
+          assertUnreachable(setterKind);
         }
-
-        return [];
       })
       // skip empty entries
       .filter((entry) => entry.length > 0)
@@ -59,8 +66,8 @@ export function buildChangset(
 export function formatFieldValue(
   value: unknown,
   type: FieldDef["type"]
-): string | number | boolean | undefined {
-  if (value == null) return;
+): string | number | boolean | undefined | null {
+  if (value == null) return value;
 
   if (type === "boolean") {
     if (isString(value)) {

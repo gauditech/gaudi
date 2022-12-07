@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST;
+export type DefinitionAST = ModelAST | EntrypointAST | HookAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -109,9 +109,12 @@ export type EndpointType = "list" | "get" | "create" | "update" | "delete";
 
 export type EndpointBodyAST = WithContext<{ kind: "action"; body: ActionBodyAST[] }>;
 
+export type ActionKindAST = "create" | "update" | "delete";
+
 export type ActionBodyAST = WithContext<{
-  kind: "create" | "update";
-  target: string;
+  kind: ActionKindAST;
+  target?: string[];
+  alias?: string;
   body: ActionAtomBodyAST[];
 }>;
 
@@ -119,9 +122,35 @@ export type ActionAtomBodyAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
+      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
     }
   | { kind: "reference"; target: string; through: string }
+  | { kind: "input"; fields: InputFieldAST[] }
+  | { kind: "action"; body: ActionBodyAST }
+  | { kind: "deny"; fields: "*" | string[] }
+>;
+
+export type InputFieldAST = WithContext<{
+  name: string;
+  opts: InputFieldOptAST[];
+}>;
+
+export type InputFieldOptAST = WithContext<
+  | { kind: "optional" }
+  | { kind: "default-value"; value: LiteralValue }
+  | { kind: "default-reference"; path: string[] }
+>;
+
+export type HookAST = WithContext<{
+  kind: "hook";
+  name: string;
+  body: HookBodyAST[];
+}>;
+
+export type HookBodyAST = WithContext<
+  | { kind: "arg"; name: string; type: string }
+  | { kind: "returnType"; type: string }
+  | { kind: "inlineBody"; inlineBody: string }
 >;
 
 export type LiteralValue = null | boolean | number | string;

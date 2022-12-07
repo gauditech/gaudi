@@ -4,6 +4,7 @@ import {
   AST,
   ActionAtomBodyAST,
   ActionBodyAST,
+  ActionKindAST,
   ComputedAST,
   EndpointAST,
   EndpointBodyAST,
@@ -14,6 +15,10 @@ import {
   FieldAST,
   FieldBodyAST,
   FieldTag,
+  HookAST,
+  HookBodyAST,
+  InputFieldAST,
+  InputFieldOptAST,
   ModelAST,
   QueryAST,
   QueryBodyAST,
@@ -231,7 +236,7 @@ semantics.addOperation("parse()", {
   PrimaryExp_literal(this, literal): ExpAST {
     return { kind: "literal", literal: literal.parse(), interval: this.source };
   },
-  Entrypoint(this, _enrtypoint, identifier, _braceL, body, _braceR): EntrypointAST {
+  Entrypoint(this, _entrypoint, identifier, _braceL, body, _braceR): EntrypointAST {
     return {
       kind: "entrypoint",
       name: identifier.parse(),
@@ -281,10 +286,48 @@ semantics.addOperation("parse()", {
   EndpointBody_action(this, _action, _braceL, body, _braceR): EndpointBodyAST {
     return { kind: "action", body: body.parse(), interval: this.source };
   },
-  ActionBody(this, kind, identifier, _braceL, body, _braceR): ActionBodyAST {
+  Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
     return {
-      kind: kind.sourceString as ActionBodyAST["kind"],
-      target: identifier.parse(),
+      kind: "hook",
+      name: identifier.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  HookBody_argument(this, _arg, nameIdentifier, typeIdentifier): HookBodyAST {
+    return {
+      kind: "arg",
+      name: nameIdentifier.parse(),
+      type: typeIdentifier.parse(),
+      interval: this.source,
+    };
+  },
+  HookBody_return_type(this, _returns, identifier): HookBodyAST {
+    return { kind: "returnType", type: identifier.parse(), interval: this.source };
+  },
+  HookBody_inline_body(this, _inline, bodystr): HookBodyAST {
+    return { kind: "inlineBody", inlineBody: bodystr.parse() };
+  },
+  ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionBody_named(this, kind, name, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      target: name.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionBody_aliased(this, kind, name, _as, alias, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      target: name.parse(),
+      alias: alias.parse(),
       body: body.parse(),
       interval: this.source,
     };
@@ -312,6 +355,45 @@ semantics.addOperation("parse()", {
       through: through.parse(),
       interval: this.source,
     };
+  },
+  ActionAtomBody_input(this, _input, _braceL, atoms, _braceR): ActionAtomBodyAST {
+    return {
+      kind: "input",
+      fields: atoms.parse(),
+    };
+  },
+  ActionAtomBody_deny(this, _deny, body) {
+    return {
+      kind: "deny",
+      fields: body.parse(),
+    };
+  },
+  ActionAtomBody_nested_action(this, action): ActionAtomBodyAST {
+    return {
+      kind: "action",
+      body: action.parse(),
+    };
+  },
+  ActionInputAtom_field(this, name): InputFieldAST {
+    return { name: name.parse(), opts: [] };
+  },
+  ActionInputAtom_field_with_opts(this, name, _braceL, opts, _braceR): InputFieldAST {
+    return { name: name.parse(), opts: opts.parse() };
+  },
+  ActionInputOpt_optional(this, _opt): InputFieldOptAST {
+    return { kind: "optional" };
+  },
+  ActionInputOpt_default_value(this, _default, identifierPath): InputFieldOptAST {
+    return { kind: "default-value", value: identifierPath.parse() };
+  },
+  ActionInputOpt_default_reference(this, _default, path): InputFieldOptAST {
+    return { kind: "default-reference", path: path.parse() };
+  },
+  DenyList_all(this, _asteriks) {
+    return "*";
+  },
+  DenyList_some(this, _braceL, fields, _braceR) {
+    return fields.parse();
   },
   IdentifierPath(this, head, _dot, tail): string[] {
     return [head.parse(), ...tail.children.map((child) => child.parse())];
@@ -342,6 +424,9 @@ semantics.addOperation("parse()", {
   },
   string(_openQuote, string, _closeQuote) {
     return string.sourceString;
+  },
+  multiLineString(this, _tickL, body, _tickR): string {
+    return body.sourceString;
   },
   identifier(this, _letter, _alnum) {
     return this.sourceString;

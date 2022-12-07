@@ -1,29 +1,38 @@
-import { readConfig } from "@src/runtime/config";
+import { RuntimeConfig, readConfig } from "@src/runtime/config";
 
 describe("runtime", () => {
   describe("config", () => {
     it("provide default configuration", () => {
-      const config = readConfig();
+      const config: RuntimeConfig = readConfig();
 
       expect(config).toEqual({
+        dbConnUrl: "",
+        dbSchema: "public",
         host: "127.0.0.1",
         port: 3001,
         definitionPath: "definition.json",
-      });
+        outputFolder: ".",
+      } as RuntimeConfig);
     });
 
     it("provide custom configuration from environment", () => {
+      process.env.GAUDI_DATABASE_URL = "my://connection@string/";
+      process.env.GAUDI_DATABASE_SCHEMA = "test-schema";
       process.env.GAUDI_RUNTIME_SERVER_HOST = "test-host";
       process.env.GAUDI_RUNTIME_SERVER_PORT = "31337";
-      process.env.GAUDI_RUNTIME_DEFINITION_PATH = "test/path";
+      process.env.GAUDI_RUNTIME_DEFINITION_PATH = "test/definition/path";
+      process.env.GAUDI_RUNTIME_OUTPUT_PATH = "test/output/path";
 
-      const config = readConfig();
+      const config: RuntimeConfig = readConfig();
 
       expect(config).toEqual({
+        dbConnUrl: "my://connection@string/",
+        dbSchema: "test-schema",
         host: "test-host",
         port: 31337,
-        definitionPath: "test/path",
-      });
+        definitionPath: "test/definition/path",
+        outputFolder: "test/output/path",
+      } as RuntimeConfig);
     });
   });
 });

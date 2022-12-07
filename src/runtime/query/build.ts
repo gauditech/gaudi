@@ -44,62 +44,55 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
  * Endpoint query builder
  */
 
-type EndpointQueries = {
-  context?: QueryDef;
-  target: QueryTree;
+export type EndpointQueries = {
+  parentContextQueryTrees: QueryTree[];
+  targetQueryTree: QueryTree;
+  responseQueryTree: QueryTree;
 };
+
 export function endpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
-  // do we query context separately?
-  const card = endpoint.kind === "create" || endpoint.kind === "list" ? "many" : "one";
-  if (endpoint.targets.length === 0) {
-    throw new Error("Targets can't be empty");
-  } else if (card === "one") {
-    // context is target
-    const targets = endpoint.targets;
-    const fromPath = _.last(targets)!.namePath;
-    const filter = filterFromTargets(targets);
-    const query = queryFromParts(
-      def,
-      "target",
-      fromPath,
-      filter,
-      endpoint.response ?? [selectableId(def, fromPath)]
-    );
-    return { target: buildQueryTree(def, query) };
-  } else if (endpoint.targets.length === 1) {
-    // "many" root level, no context query
-    const targets = endpoint.targets;
-    const fromPath = _.last(targets)!.namePath;
-    const filter = filterFromTargets(_.initial(targets));
-    const query = queryFromParts(
-      def,
-      "target",
-      fromPath,
-      filter,
-      endpoint.response ?? [selectableId(def, fromPath)]
-    );
-    return { target: buildQueryTree(def, query) };
-  } else {
-    // many but nested
-    const targets = _.initial(endpoint.targets);
-    const fromPath = _.last(targets)!.namePath;
-    const filter = filterFromTargets(targets);
-    const ctxQuery = queryFromParts(def, "context", fromPath, filter, [
-      selectableId(def, fromPath),
-    ]);
-    const t = _.last(endpoint.targets)!;
-    const q = queryFromParts(
-      def,
-      "target",
-      [ctxQuery.retType, t.name],
-      applyFilterIdInContext([ctxQuery.retType], undefined),
-      endpoint.response ?? [selectableId(def, fromPath)]
-    );
-    return { context: ctxQuery, target: buildQueryTree(def, q) };
-  }
+  const parentContextQueryTrees = endpoint.parentContext.map((target, index) => {
+    const parentTarget = index === 0 ? null : endpoint.parentContext[index - 1];
+    const namePath = parentTarget ? [parentTarget.retType, target.name] : [target.retType];
+    // apply identifyWith filter
+    const targetFilter = targetToFilter({ ...target, namePath });
+    // apply filter from it's parent
+    const filter = parentTarget
+      ? applyFilterIdInContext([parentTarget.retType], targetFilter)
+      : targetFilter;
+
+    const select = transformSelectPath(target.select, target.namePath, namePath);
+    const query = queryFromParts(def, target.alias, namePath, filter, select);
+    return buildQueryTree(def, query);
+  });
+
+  // repeat the same for target
+  const parentTarget = _.last(endpoint.parentContext);
+  const namePath = parentTarget
+    ? [parentTarget.retType, endpoint.target.name]
+    : [endpoint.target.retType];
+
+  const targetFilter =
+    endpoint.kind === "create" || endpoint.kind === "list"
+      ? undefined
+      : targetToFilter({ ...endpoint.target, namePath });
+
+  const filter = parentTarget
+    ? applyFilterIdInContext([parentTarget.retType], targetFilter)
+    : targetFilter;
+
+  const select = transformSelectPath(endpoint.target.select, endpoint.target.namePath, namePath);
+
+  const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
+  const targetQueryTree = buildQueryTree(def, targetQuery);
+
+  const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, namePath);
+  const responseQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, response);
+  const responseQueryTree = buildQueryTree(def, responseQuery);
+  return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 
-function applyFilterIdInContext(namePath: NamePath, filter: FilterDef): FilterDef {
+export function applyFilterIdInContext(namePath: NamePath, filter?: FilterDef): FilterDef {
   const inFilter: FilterDef = {
     kind: "binary",
     operator: "in",
@@ -141,6 +134,18 @@ export function selectableId(def: Definition, namePath: NamePath): SelectableIte
  * Query builder
  */
 
+export function queryTreeFromParts(
+  def: Definition,
+  name: string,
+  fromPath: NamePath,
+  filter: FilterDef,
+  select: SelectDef
+): QueryTree {
+  const query = queryFromParts(def, name, fromPath, filter, select);
+  const qTree = buildQueryTree(def, query);
+  return qTree;
+}
+
 export function queryFromParts(
   def: Definition,
   name: string,
@@ -151,6 +156,22 @@ export function queryFromParts(
   if (select.length === 0) {
     return queryFromParts(def, name, fromPath, filter, [selectableId(def, fromPath)]);
   }
+  select.forEach((selItem) => {
+    if (selItem.alias === '"__join_connection"') {
+      /* We currently make exception for `"__join_connection"` field as it's the only selectable
+        not being in `fromPath`.
+        Otherwise, we ensure that only the leaf of the `fromPath` can be selected,
+        since we expect `retType` to match leaf model, we can't select from other (non-leaf) models.
+       */
+      return;
+    }
+    ensureEqual(
+      _.isEqual(fromPath, _.initial(selItem.namePath)),
+      true,
+      `Path ${fromPath.join(".")} selects ${selItem.namePath.join(".")} as ${selItem.alias}`
+    );
+  });
+
   const filterPaths = getFilterPaths(filter);
   const paths = mergePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
@@ -312,6 +333,9 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
   );
 }
 
+/**
+ * Deprecated, use `transformSelectPath` instead!
+ */
 function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
   const namePath = [model.name, ...select.namePath.slice(by)];
   if (select.kind === "field") {
@@ -325,4 +349,29 @@ function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectIte
     namePath,
     select: select.select.map((s) => shiftSelect(model, s, by)),
   };
+}
+
+export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
+  return select.map((selItem: SelectItem) => {
+    ensureEqual(
+      _.isEqual(from, _.take(selItem.namePath, from.length)),
+      true,
+      `Cannot transform select: ${selItem.namePath.join(".")} doesn't start with ${from.join(".")}`
+    );
+    const newPath = [...to, ..._.drop(selItem.namePath, from.length)];
+    switch (selItem.kind) {
+      case "field": {
+        return { ...selItem, namePath: newPath };
+      }
+      case "query":
+      case "reference":
+      case "relation": {
+        return {
+          ...selItem,
+          namePath: newPath,
+          select: transformSelectPath(selItem.select, from, to),
+        };
+      }
+    }
+  });
 }
