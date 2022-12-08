@@ -10,7 +10,10 @@ const config = readConfig();
 
 const definition = loadDefinition(config.definitionPath);
 
-importHooks(config);
+(async () => {
+  // wait for hooks to import, then start server
+  await importHooks(config.hookFolder);
 
-// start server
-createServer(definition, config);
+  // start server
+  createServer(definition, config);
+})();

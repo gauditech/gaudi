@@ -1,19 +1,18 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-import { RuntimeConfig } from "@src/runtime/config";
 import { HookCode } from "@src/types/specification";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const modules: Record<string, any> = {};
 
-export async function importHooks(config: RuntimeConfig) {
-  const hooksOutput = path.join(config.outputFolder, "hooks");
+export async function importHooks(hookFolder: string) {
+  const hooksOutput = path.join(hookFolder);
 
   async function loadHooksFromDir(dir: string) {
     const entities = await fs.readdir(path.join(hooksOutput, dir));
 
-    entities.forEach(async (entityFilename) => {
+    const promises = entities.map(async (entityFilename) => {
       const hookPath = path.join(dir, entityFilename);
       const entity = path.join(hooksOutput, hookPath);
 
@@ -25,6 +24,8 @@ export async function importHooks(config: RuntimeConfig) {
         modules[hookPath] = await loadFileAsModule(entity);
       }
     });
+
+    await Promise.all(promises);
   }
 
   await loadHooksFromDir("");
