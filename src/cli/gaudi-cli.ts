@@ -4,12 +4,32 @@
 import "../common/setupAliases";
 
 import { spawn } from "child_process";
+import path from "path";
 
 import _ from "lodash";
 import yargs, { ArgumentsCamelCase } from "yargs";
 import { hideBin } from "yargs/helpers";
 
 import { EngineConfig, readConfig } from "@src/config";
+
+const DEFAULT_NODE_OPTIONS = [
+  // development node options - maybe we should allow disabling them in production?
+  "--enable-source-maps",
+  "--stack-trace-limit=30",
+  "--stack-size=2048",
+];
+
+/**
+ * Paths to Gaudi scripts
+ *
+ * Target Gaudi scripts directly instead of via NPX because we cannot pass some node options through NPX (via --node-options")
+ * See a list of allowed options here: https://nodejs.org/docs/latest-v16.x/api/cli.html#node_optionsoptions
+ */
+const GAUDI_SCRIPTS = {
+  ENGINE: path.join(__dirname, "../engine.js"),
+  RUNTIME: path.join(__dirname, "../runtime/runtime.js"),
+  POPULATOR: path.join(__dirname, "../populator/populator.js"),
+};
 
 const config = readConfig();
 
@@ -88,13 +108,13 @@ function parseArguments(config: EngineConfig) {
 function compileCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Compiling Gaudi source ...");
 
-  executeCommand("npx", ['--node-options="--enable-source-maps"', "gaudi-engine"]);
+  executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
 }
 
 function runCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Running Gaudi project ...");
 
-  executeCommand("npx", ['--node-options="--enable-source-maps"', "gaudi-runtime"]);
+  executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.RUNTIME]);
 }
 
 function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
@@ -133,7 +153,12 @@ function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config:
 
   console.log(`Populating DB using populator "${populatorName} ..."`);
 
-  executeCommand("npx", ["gaudi-populator", "-p", populatorName]);
+  executeCommand("node", [
+    ...getDefaultNodeOptions(),
+    GAUDI_SCRIPTS.POPULATOR,
+    "-p",
+    populatorName,
+  ]);
 }
 
 type DbMigrateOptions = {
@@ -169,14 +194,26 @@ function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: Eng
 // ---------- utils
 
 function executeCommand(command: string, argv: string[]) {
+  console.log(`Command: ${command} ${argv.join(" ")}`);
+
   spawn(command, argv, {
     env: {
       ...process.env,
     },
+    shell: true, // let shell interpret arguments as if they would be when called directly from shell
     stdio: "inherit",
   });
 }
 
 function dbSchemaPath(outputFolder: string): string {
   return `${outputFolder}/db/schema.prisma`;
+}
+
+/**
+ * Default node options
+ *
+ * Additional node options can be passed via NODE_OPTIONS env var which is included when executing command
+ */
+function getDefaultNodeOptions(): string[] {
+  return [...DEFAULT_NODE_OPTIONS];
 }
