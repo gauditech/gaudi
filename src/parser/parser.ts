@@ -5,6 +5,7 @@ import {
   ActionAtomBodyAST,
   ActionBodyAST,
   ActionKindAST,
+  BinaryOperator,
   ComputedAST,
   EndpointAST,
   EndpointBodyAST,
@@ -201,40 +202,29 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  CompExp_lt(this, lhs, _lt, rhs): ExpAST {
+  CompExp_comparator(this, lhs, op, rhs): ExpAST {
     return {
       kind: "binary",
-      operator: "<",
+      operator: op.sourceString as BinaryOperator,
       lhs: lhs.parse(),
       rhs: rhs.parse(),
       interval: this.source,
     };
   },
-  CompExp_lteq(this, lhs, _lteq, rhs): ExpAST {
+  OpExp_operator(this, lhs, op, rhs): ExpAST {
     return {
       kind: "binary",
-      operator: "<=",
+      operator: op.sourceString as BinaryOperator,
       lhs: lhs.parse(),
       rhs: rhs.parse(),
       interval: this.source,
     };
   },
-  CompExp_gt(this, lhs, _gt, rhs): ExpAST {
+  FnExp_fn(this, identifier, _parenL, args, _parenR): ExpAST {
     return {
-      kind: "binary",
-      operator: ">",
-      lhs: lhs.parse(),
-      rhs: rhs.parse(),
-      interval: this.source,
-    };
-  },
-  CompExp_gteq(this, lhs, _gteq, rhs): ExpAST {
-    return {
-      kind: "binary",
-      operator: ">=",
-      lhs: lhs.parse(),
-      rhs: rhs.parse(),
-      interval: this.source,
+      kind: "function",
+      name: identifier.parse(),
+      args: args.parse(),
     };
   },
   PrimaryExp_paren(this, _parenL, exp, _parenR): ExpAST {

@@ -4,15 +4,16 @@ import _ from "lodash";
 import { NamePath, selectToSelectable } from "./build";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { BinaryOperator } from "@src/types/ast";
+import { assertUnreachable } from "@src/common/utils";
 import {
   Definition,
-  FilterDef,
   ModelDef,
   QueryDef,
   QueryDefPath,
   SelectFieldItem,
   SelectableItem,
+  TypedExprDef,
+  TypedFunction,
 } from "@src/types/definition";
 
 // FIXME this should accept Queryable
@@ -48,7 +49,7 @@ function namePathToAlias(namePath: NamePath): string {
   return `"${namePath.join(".")}"`;
 }
 
-function filterToString(filter: FilterDef): string {
+function filterToString(filter: TypedExprDef): string {
   if (filter === undefined) return "TRUE = TRUE";
   switch (filter.kind) {
     case "literal": {
@@ -61,6 +62,8 @@ function filterToString(filter: FilterDef): string {
           return `'${filter.value}'`;
         case "integer":
           return filter.value.toString();
+        default:
+          assertUnreachable(filter);
       }
     }
     // Due to bug in eslint/prettier, linter complains that `break` is expected in the case "literal"
@@ -71,14 +74,8 @@ function filterToString(filter: FilterDef): string {
       const f = filter.namePath.at(filter.namePath.length - 1);
       return `${namePathToAlias(np)}."${f}"`;
     }
-    case "binary": {
-      const fstr = `${filterToString(filter.lhs)} ${opToString(filter.operator)} ${filterToString(
-        filter.rhs
-      )}`;
-      if (filter.operator === "or") {
-        return `(${fstr})`;
-      }
-      return fstr;
+    case "function": {
+      return functionToString(filter);
     }
     case "variable": {
       return `:${filter.name}`;
@@ -86,14 +83,44 @@ function filterToString(filter: FilterDef): string {
   }
 }
 
-function opToString(op: BinaryOperator): string {
-  switch (op) {
-    case "is":
-      return "=";
-    case "is not":
-      return "<>";
+function functionToString(exp: TypedFunction): string {
+  function stringifyOp(lhs: TypedExprDef, rhs: TypedExprDef, op: string): string {
+    return `${filterToString(lhs)} ${op.toUpperCase()} ${filterToString(rhs)}`;
+  }
+  function stringifyFn(name: string, args: TypedExprDef[]): string {
+    return `${name}(${args.map((a) => filterToString(a)).join(", ")})`;
+  }
+  switch (exp.name) {
+    case "<":
+    case ">":
+    case ">=":
+    case "<=":
+    case "/":
+    case "*":
+    case "in":
+    case "not in":
+    case "and": {
+      return stringifyOp(exp.args[0], exp.args[1], exp.name);
+    }
+    case "+":
+    case "-":
+    case "or": {
+      return `(${stringifyOp(exp.args[0], exp.args[1], exp.name)})`;
+    }
+    case "is": {
+      return stringifyOp(exp.args[0], exp.args[1], "=");
+    }
+    case "is not": {
+      return stringifyOp(exp.args[0], exp.args[1], "<>");
+    }
+    case "length": {
+      return stringifyFn("char_length", exp.args);
+    }
+    case "concat": {
+      return stringifyFn("concat", exp.args);
+    }
     default:
-      return op.toUpperCase();
+      assertUnreachable(exp.name);
   }
 }
 
@@ -111,11 +138,13 @@ function joinToString(def: Definition, join: QueryDefPath): string {
   const model = getTargetModel(def.models, join.refKey);
   const joinNames = getJoinNames(def, join.refKey);
   const joinMode = join.joinType === "inner" ? "JOIN" : "LEFT JOIN";
-  const joinFilter: FilterDef = {
-    kind: "binary",
-    operator: "is",
-    lhs: { kind: "alias", namePath: [..._.initial(join.namePath), joinNames.from] },
-    rhs: { kind: "alias", namePath: [...join.namePath, joinNames.to] },
+  const joinFilter: TypedExprDef = {
+    kind: "function",
+    name: "is",
+    args: [
+      { kind: "alias", namePath: [..._.initial(join.namePath), joinNames.from] },
+      { kind: "alias", namePath: [...join.namePath, joinNames.to] },
+    ],
   };
 
   let src: string;

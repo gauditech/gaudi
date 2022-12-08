@@ -16,13 +16,14 @@ import {
   ConstantDef,
   Definition,
   FieldDef,
-  FilterDef,
+  FunctionName,
   IValidatorDef,
   ModelDef,
   ModelHookDef,
   QueryDef,
   ReferenceDef,
   RelationDef,
+  TypedExprDef,
   ValidatorDef,
   ValidatorDefinition,
 } from "@src/types/definition";
@@ -328,34 +329,38 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   return queryFromParts(def, qspec.name, fromPath, filter, select);
 }
 
-function convertFilter(filter: ExpSpec | undefined, namePath: string[]): FilterDef {
-  switch (filter?.kind) {
-    case undefined:
-      return undefined;
+/**
+ * FIXME remove this function
+ */
+function convertFilter(filter: ExpSpec | undefined, namePath: string[]): TypedExprDef {
+  if (filter === undefined) return undefined;
+  return composeExpression(filter, namePath);
+}
+
+function typedFunctionFromParts(name: string, args: ExpSpec[], namePath: string[]): TypedExprDef {
+  return {
+    kind: "function",
+    name: name as FunctionName, // FIXME proper validation
+    args: args.map((arg) => composeExpression(arg, namePath)),
+  };
+}
+
+function composeExpression(exp: ExpSpec, namePath: string[]): TypedExprDef {
+  switch (exp.kind) {
     case "literal": {
-      return getTypedLiteralValue(filter.literal);
+      return getTypedLiteralValue(exp.literal);
     }
     case "unary": {
-      return {
-        kind: "binary",
-        operator: "is not",
-        lhs: convertFilter(filter.exp, namePath),
-        rhs: { kind: "literal", type: "boolean", value: true },
-      };
-    }
-    case "binary": {
-      return {
-        kind: "binary",
-        operator: filter.operator,
-        lhs: convertFilter(filter.lhs, namePath),
-        rhs: convertFilter(filter.rhs, namePath),
-      };
+      return typedFunctionFromParts("not", [exp.exp, { kind: "literal", literal: true }], namePath);
     }
     case "identifier": {
-      return {
-        kind: "alias",
-        namePath: [...namePath, ...filter.identifier],
-      };
+      return { kind: "alias", namePath: [...namePath, ...exp.identifier] };
+    }
+    case "binary": {
+      return typedFunctionFromParts(exp.operator, [exp.lhs, exp.rhs], namePath);
+    }
+    case "function": {
+      return typedFunctionFromParts(exp.name, exp.args, namePath);
     }
   }
 }

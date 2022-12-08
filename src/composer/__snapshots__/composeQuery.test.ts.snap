@@ -4,34 +4,38 @@ exports[`compose model queries example with nested filters 1`] = `
 [
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "repos",
+                "org",
+                "id",
+              ],
+            },
+            {
+              "kind": "literal",
+              "type": "integer",
+              "value": 1,
+            },
+          ],
+          "kind": "function",
+          "name": "is",
+        },
+        {
           "kind": "alias",
           "namePath": [
             "Org",
             "repos",
-            "org",
-            "id",
+            "is_active",
           ],
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "literal",
-          "type": "integer",
-          "value": 1,
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "alias",
-        "namePath": [
-          "Org",
-          "repos",
-          "is_active",
-        ],
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",

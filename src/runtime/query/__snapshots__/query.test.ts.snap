@@ -4,20 +4,25 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
 [
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Org",
-          "slug",
-        ],
-      },
-      "operator": "is",
-      "rhs": {
-        "kind": "variable",
-        "name": "org_slug",
-        "type": "text",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "slug",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "org_slug",
+          "type": {
+            "nullable": false,
+            "type": "text",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
     },
     "from": {
       "kind": "model",
@@ -46,41 +51,53 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "repos",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "repos",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "repo_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "repo_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -124,20 +141,25 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Repo",
-          "id",
-        ],
-      },
-      "operator": "in",
-      "rhs": {
-        "kind": "variable",
-        "name": "@context_ids",
-        "type": "list-integer",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
     },
     "from": {
       "kind": "model",
@@ -181,20 +203,25 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-      },
-      "operator": "in",
-      "rhs": {
-        "kind": "variable",
-        "name": "@context_ids",
-        "type": "list-integer",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
     },
     "from": {
       "kind": "model",
@@ -353,20 +380,25 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
 [
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Org",
-          "slug",
-        ],
-      },
-      "operator": "is",
-      "rhs": {
-        "kind": "variable",
-        "name": "org_slug",
-        "type": "text",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "slug",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "org_slug",
+          "type": {
+            "nullable": false,
+            "type": "text",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
     },
     "from": {
       "kind": "model",
@@ -395,41 +427,53 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "repos",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "repos",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "repo_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "repo_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -473,41 +517,53 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "issues",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Repo",
+                "issues",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "issue_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "issue_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Repo",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -551,20 +607,25 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-      },
-      "operator": "in",
-      "rhs": {
-        "kind": "variable",
-        "name": "@context_ids",
-        "type": "list-integer",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
     },
     "from": {
       "kind": "model",
@@ -697,20 +758,25 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
 [
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Org",
-          "slug",
-        ],
-      },
-      "operator": "is",
-      "rhs": {
-        "kind": "variable",
-        "name": "org_slug",
-        "type": "text",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "slug",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "org_slug",
+          "type": {
+            "nullable": false,
+            "type": "text",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
     },
     "from": {
       "kind": "model",
@@ -739,41 +805,53 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "repos",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "repos",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "repo_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "repo_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -817,41 +895,53 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "issues",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Repo",
+                "issues",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "issue_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "issue_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Repo",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -895,20 +985,25 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-      },
-      "operator": "in",
-      "rhs": {
-        "kind": "variable",
-        "name": "@context_ids",
-        "type": "list-integer",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
     },
     "from": {
       "kind": "model",
@@ -1061,20 +1156,25 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
 [
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Org",
-          "slug",
-        ],
-      },
-      "operator": "is",
-      "rhs": {
-        "kind": "variable",
-        "name": "org_slug",
-        "type": "text",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "slug",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "org_slug",
+          "type": {
+            "nullable": false,
+            "type": "text",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
     },
     "from": {
       "kind": "model",
@@ -1103,41 +1203,53 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "repos",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "repos",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "repo_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "repo_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -1181,20 +1293,25 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Repo",
-          "id",
-        ],
-      },
-      "operator": "in",
-      "rhs": {
-        "kind": "variable",
-        "name": "@context_ids",
-        "type": "list-integer",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
     },
     "from": {
       "kind": "model",
@@ -1238,20 +1355,25 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Repo",
-          "id",
-        ],
-      },
-      "operator": "in",
-      "rhs": {
-        "kind": "variable",
-        "name": "@context_ids",
-        "type": "list-integer",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
     },
     "from": {
       "kind": "model",
@@ -1417,20 +1539,25 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
 [
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Org",
-          "slug",
-        ],
-      },
-      "operator": "is",
-      "rhs": {
-        "kind": "variable",
-        "name": "org_slug",
-        "type": "text",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "slug",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "org_slug",
+          "type": {
+            "nullable": false,
+            "type": "text",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
     },
     "from": {
       "kind": "model",
@@ -1459,41 +1586,53 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "repos",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "repos",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "repo_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "repo_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -1537,41 +1676,53 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "issues",
-            "id",
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Repo",
+                "issues",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "issue_id",
+              "type": {
+                "nullable": false,
+                "type": "integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "is",
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "variable",
-          "name": "issue_id",
-          "type": "integer",
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "id",
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Repo",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "nullable": false,
+                "type": "list-integer",
+              },
+            },
           ],
+          "kind": "function",
+          "name": "in",
         },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
-      },
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "from": {
       "kind": "model",
@@ -1615,20 +1766,25 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
   },
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "alias",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-      },
-      "operator": "in",
-      "rhs": {
-        "kind": "variable",
-        "name": "@context_ids",
-        "type": "list-integer",
-      },
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
     },
     "from": {
       "kind": "model",
@@ -1799,20 +1955,25 @@ exports[`Endpoint queries chained nested query 1`] = `
       "name": "$target_0",
       "query": {
         "filter": {
-          "kind": "binary",
-          "lhs": {
-            "kind": "alias",
-            "namePath": [
-              "Org",
-              "slug",
-            ],
-          },
-          "operator": "is",
-          "rhs": {
-            "kind": "variable",
-            "name": "org_slug",
-            "type": "text",
-          },
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "slug",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "org_slug",
+              "type": {
+                "nullable": false,
+                "type": "text",
+              },
+            },
+          ],
+          "kind": "function",
+          "name": "is",
         },
         "from": {
           "kind": "model",
@@ -1848,20 +2009,25 @@ exports[`Endpoint queries chained nested query 1`] = `
     "name": "$target_1",
     "query": {
       "filter": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Issue",
-            "id",
-          ],
-        },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
+        "args": [
+          {
+            "kind": "alias",
+            "namePath": [
+              "Issue",
+              "id",
+            ],
+          },
+          {
+            "kind": "variable",
+            "name": "@context_ids",
+            "type": {
+              "nullable": false,
+              "type": "list-integer",
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "in",
       },
       "from": {
         "kind": "model",
@@ -1905,20 +2071,25 @@ exports[`Endpoint queries chained nested query 1`] = `
         "name": "repo",
         "query": {
           "filter": {
-            "kind": "binary",
-            "lhs": {
-              "kind": "alias",
-              "namePath": [
-                "Issue",
-                "id",
-              ],
-            },
-            "operator": "in",
-            "rhs": {
-              "kind": "variable",
-              "name": "@context_ids",
-              "type": "list-integer",
-            },
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Issue",
+                  "id",
+                ],
+              },
+              {
+                "kind": "variable",
+                "name": "@context_ids",
+                "type": {
+                  "nullable": false,
+                  "type": "list-integer",
+                },
+              },
+            ],
+            "kind": "function",
+            "name": "in",
           },
           "from": {
             "kind": "model",
@@ -1988,20 +2159,25 @@ exports[`Endpoint queries chained nested query 1`] = `
             "name": "org",
             "query": {
               "filter": {
-                "kind": "binary",
-                "lhs": {
-                  "kind": "alias",
-                  "namePath": [
-                    "Repo",
-                    "id",
-                  ],
-                },
-                "operator": "in",
-                "rhs": {
-                  "kind": "variable",
-                  "name": "@context_ids",
-                  "type": "list-integer",
-                },
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Repo",
+                      "id",
+                    ],
+                  },
+                  {
+                    "kind": "variable",
+                    "name": "@context_ids",
+                    "type": {
+                      "nullable": false,
+                      "type": "list-integer",
+                    },
+                  },
+                ],
+                "kind": "function",
+                "name": "in",
               },
               "from": {
                 "kind": "model",
@@ -2076,41 +2252,53 @@ exports[`Endpoint queries chained nested query 1`] = `
     "name": "$target_1",
     "query": {
       "filter": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "binary",
-          "lhs": {
-            "kind": "alias",
-            "namePath": [
-              "Org",
-              "public_issues",
-              "id",
+        "args": [
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "public_issues",
+                  "id",
+                ],
+              },
+              {
+                "kind": "variable",
+                "name": "issue_id",
+                "type": {
+                  "nullable": false,
+                  "type": "integer",
+                },
+              },
             ],
+            "kind": "function",
+            "name": "is",
           },
-          "operator": "is",
-          "rhs": {
-            "kind": "variable",
-            "name": "issue_id",
-            "type": "integer",
-          },
-        },
-        "operator": "and",
-        "rhs": {
-          "kind": "binary",
-          "lhs": {
-            "kind": "alias",
-            "namePath": [
-              "Org",
-              "id",
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "id",
+                ],
+              },
+              {
+                "kind": "variable",
+                "name": "@context_ids",
+                "type": {
+                  "nullable": false,
+                  "type": "list-integer",
+                },
+              },
             ],
+            "kind": "function",
+            "name": "in",
           },
-          "operator": "in",
-          "rhs": {
-            "kind": "variable",
-            "name": "@context_ids",
-            "type": "list-integer",
-          },
-        },
+        ],
+        "kind": "function",
+        "name": "and",
       },
       "from": {
         "kind": "model",
@@ -2227,20 +2415,25 @@ exports[`Endpoint queries nested query 1`] = `
       "name": "$target_0",
       "query": {
         "filter": {
-          "kind": "binary",
-          "lhs": {
-            "kind": "alias",
-            "namePath": [
-              "Org",
-              "slug",
-            ],
-          },
-          "operator": "is",
-          "rhs": {
-            "kind": "variable",
-            "name": "org_slug",
-            "type": "text",
-          },
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "slug",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "org_slug",
+              "type": {
+                "nullable": false,
+                "type": "text",
+              },
+            },
+          ],
+          "kind": "function",
+          "name": "is",
         },
         "from": {
           "kind": "model",
@@ -2276,20 +2469,25 @@ exports[`Endpoint queries nested query 1`] = `
     "name": "$target_1",
     "query": {
       "filter": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "id",
-          ],
-        },
-        "operator": "in",
-        "rhs": {
-          "kind": "variable",
-          "name": "@context_ids",
-          "type": "list-integer",
-        },
+        "args": [
+          {
+            "kind": "alias",
+            "namePath": [
+              "Repo",
+              "id",
+            ],
+          },
+          {
+            "kind": "variable",
+            "name": "@context_ids",
+            "type": {
+              "nullable": false,
+              "type": "list-integer",
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "in",
       },
       "from": {
         "kind": "model",
@@ -2334,41 +2532,53 @@ exports[`Endpoint queries nested query 1`] = `
     "name": "$target_1",
     "query": {
       "filter": {
-        "kind": "binary",
-        "lhs": {
-          "kind": "binary",
-          "lhs": {
-            "kind": "alias",
-            "namePath": [
-              "Org",
-              "public_repos",
-              "id",
+        "args": [
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "public_repos",
+                  "id",
+                ],
+              },
+              {
+                "kind": "variable",
+                "name": "repo_id",
+                "type": {
+                  "nullable": false,
+                  "type": "integer",
+                },
+              },
             ],
+            "kind": "function",
+            "name": "is",
           },
-          "operator": "is",
-          "rhs": {
-            "kind": "variable",
-            "name": "repo_id",
-            "type": "integer",
-          },
-        },
-        "operator": "and",
-        "rhs": {
-          "kind": "binary",
-          "lhs": {
-            "kind": "alias",
-            "namePath": [
-              "Org",
-              "id",
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "id",
+                ],
+              },
+              {
+                "kind": "variable",
+                "name": "@context_ids",
+                "type": {
+                  "nullable": false,
+                  "type": "list-integer",
+                },
+              },
             ],
+            "kind": "function",
+            "name": "in",
           },
-          "operator": "in",
-          "rhs": {
-            "kind": "variable",
-            "name": "@context_ids",
-            "type": "list-integer",
-          },
-        },
+        ],
+        "kind": "function",
+        "name": "and",
       },
       "from": {
         "kind": "model",

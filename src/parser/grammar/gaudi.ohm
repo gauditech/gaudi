@@ -84,11 +84,19 @@ Gaudi {
     | CompExp
 
   CompExp
-    = CompExp "<" PrimaryExp -- lt
-    | CompExp "<=" PrimaryExp -- lteq
-    | CompExp ">" PrimaryExp -- gt
-    | CompExp ">=" PrimaryExp -- gteq
+    = CompExp Comparator OpExp -- comparator
+    | OpExp
+
+  OpExp
+    = OpExp Operator FnExp     -- operator
+    | FnExp
+
+  FnExp
+    = identifier "(" ListOf<QueryExp, ","> ")"    -- fn
     | PrimaryExp
+
+  Comparator  = "<=" | "<" | ">=" | ">"
+  Operator    = "+" | "-" | "/" | "*"
 
   PrimaryExp
     = "(" QueryExp ")" -- paren

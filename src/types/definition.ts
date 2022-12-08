@@ -70,7 +70,7 @@ export type QueryDef = {
   nullable: boolean;
   // unique: boolean;
   joinPaths: QueryDefPath[];
-  filter: FilterDef;
+  filter: TypedExprDef;
   select: SelectDef;
   // count?: true;
 };
@@ -93,20 +93,35 @@ export type QueryDefPath = {
   // retCardinality: "one" | "many";
 };
 
-// simple filter types, for now
-
-export type FilterDef =
-  | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
-  | { kind: "alias"; namePath: string[] }
-  | LiteralValueDef
-  | { kind: "variable"; type: "integer" | "list-integer" | "text" | "boolean"; name: string }
-  | undefined;
+type NaiveType = {
+  type: "integer" | "list-integer" | "text" | "boolean";
+  nullable: boolean;
+};
 
 export type LiteralValueDef =
-  | { kind: "literal"; type: "integer"; value: number }
-  | { kind: "literal"; type: "null"; value: null }
-  | { kind: "literal"; type: "text"; value: string }
-  | { kind: "literal"; type: "boolean"; value: boolean };
+  | LiteralIntegerDef
+  | LiteralNullDef
+  | LiteralTextDef
+  | LiteralBooleanDef;
+
+type TypedAlias = { kind: "alias"; namePath: string[]; type?: NaiveType };
+type TypedVariable = { kind: "variable"; type?: NaiveType; name: string };
+
+export type FunctionName = BinaryOperator | "length" | "concat";
+
+export type TypedFunction = {
+  kind: "function";
+  name: FunctionName;
+  args: TypedExprDef[];
+  type?: NaiveType;
+};
+
+export type TypedExprDef = LiteralValueDef | TypedAlias | TypedVariable | TypedFunction | undefined;
+
+type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
+type LiteralTextDef = { kind: "literal"; type: "text"; value: string };
+type LiteralNullDef = { kind: "literal"; type: "null"; value: null };
+type LiteralBooleanDef = { kind: "literal"; type: "boolean"; value: boolean };
 
 /**
  * ENTRYPOINTS
@@ -342,7 +357,7 @@ export type UpdateOneAction = {
   alias: string;
   model: string;
   targetPath: string[];
-  filter: FilterDef;
+  filter: TypedExprDef;
   changeset: Changeset;
   select: SelectDef;
 };
@@ -353,9 +368,9 @@ export type DeleteOneAction = {
   targetPath: string[];
 };
 
-export type DeleteManyAction = {
+type DeleteManyAction = {
   kind: "delete-many";
-  filter: FilterDef;
+  filter: TypedExprDef;
 };
 
 export type Changeset = Record<string, FieldSetter>;
@@ -394,3 +409,8 @@ export type FieldSetter =
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterHook;
+
+export type AliasDef = {
+  kind: "alias";
+  namePath: string[];
+};

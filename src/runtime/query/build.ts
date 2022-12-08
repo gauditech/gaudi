@@ -7,7 +7,6 @@ import { ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
   Definition,
-  FilterDef,
   ModelDef,
   QueryDef,
   QueryDefPath,
@@ -15,7 +14,7 @@ import {
   SelectHookItem,
   SelectItem,
   SelectableItem,
-  TargetDef,
+  TypedExprDef,
 } from "@src/types/definition";
 import { HookCode } from "@src/types/specification";
 
@@ -50,21 +49,18 @@ export function selectToHooks(select: SelectDef): SelectHookItem[] {
   return select.filter((s): s is SelectHookItem => s.kind === "hook");
 }
 
-export function applyFilterIdInContext(namePath: NamePath, filter?: FilterDef): FilterDef {
-  const inFilter: FilterDef = {
-    kind: "binary",
-    operator: "in",
-    lhs: { kind: "alias", namePath: [...namePath, "id"] },
-    rhs: { kind: "variable", type: "list-integer", name: "@context_ids" },
+export function applyFilterIdInContext(namePath: NamePath, filter?: TypedExprDef): TypedExprDef {
+  const inFilter: TypedExprDef = {
+    kind: "function",
+    name: "in",
+    args: [
+      { kind: "alias", namePath: [...namePath, "id"] },
+      { kind: "variable", type: { type: "list-integer", nullable: false }, name: "@context_ids" },
+    ],
   };
   return filter === undefined
     ? inFilter
-    : {
-        kind: "binary",
-        operator: "and",
-        lhs: filter,
-        rhs: inFilter,
-      };
+    : { kind: "function", name: "and", args: [filter, inFilter] };
 }
 
 function getPathRetType(def: Definition, path: NamePath): ModelDef {
@@ -96,7 +92,7 @@ export function queryTreeFromParts(
   def: Definition,
   name: string,
   fromPath: NamePath,
-  filter: FilterDef,
+  filter: TypedExprDef,
   select: SelectDef
 ): QueryTree {
   const query = queryFromParts(def, name, fromPath, filter, select);
@@ -108,7 +104,7 @@ export function queryFromParts(
   def: Definition,
   name: string,
   fromPath: NamePath,
-  filter: FilterDef,
+  filter: TypedExprDef,
   select: SelectDef
 ): QueryDef {
   if (select.length === 0) {
@@ -208,7 +204,7 @@ export function processPaths(
 
 // function queryToString(def: Definition, q: QueryDef): string {}
 
-export function getFilterPaths(filter: FilterDef): string[][] {
+export function getFilterPaths(filter: TypedExprDef): string[][] {
   switch (filter?.kind) {
     case undefined:
     case "literal":
@@ -216,8 +212,8 @@ export function getFilterPaths(filter: FilterDef): string[][] {
       return [];
     case "alias":
       return [[...filter.namePath]];
-    case "binary": {
-      return [...getFilterPaths(filter.lhs), ...getFilterPaths(filter.rhs)];
+    case "function": {
+      return filter.args.flatMap((arg) => getFilterPaths(arg));
     }
   }
 }

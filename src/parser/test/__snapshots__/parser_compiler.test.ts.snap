@@ -40,6 +40,112 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
           },
           "name": "is_registred",
         },
+        {
+          "exp": {
+            "interval": {
+              "endIdx": 158,
+              "startIdx": 141,
+            },
+            "kind": "binary",
+            "lhs": {
+              "identifier": [
+                "serial_number",
+              ],
+              "interval": {
+                "endIdx": 154,
+                "startIdx": 141,
+              },
+              "kind": "identifier",
+            },
+            "operator": "+",
+            "rhs": {
+              "interval": {
+                "endIdx": 158,
+                "startIdx": 157,
+              },
+              "kind": "literal",
+              "literal": 1,
+            },
+          },
+          "interval": {
+            "endIdx": 160,
+            "startIdx": 118,
+          },
+          "name": "next_number",
+        },
+        {
+          "exp": {
+            "args": [
+              {
+                "interval": {
+                  "endIdx": 212,
+                  "startIdx": 195,
+                },
+                "kind": "binary",
+                "lhs": {
+                  "identifier": [
+                    "serial_number",
+                  ],
+                  "interval": {
+                    "endIdx": 208,
+                    "startIdx": 195,
+                  },
+                  "kind": "identifier",
+                },
+                "operator": "/",
+                "rhs": {
+                  "interval": {
+                    "endIdx": 212,
+                    "startIdx": 211,
+                  },
+                  "kind": "literal",
+                  "literal": 2,
+                },
+              },
+            ],
+            "interval": undefined,
+            "kind": "function",
+            "name": "is_odd",
+          },
+          "interval": {
+            "endIdx": 215,
+            "startIdx": 163,
+          },
+          "name": "is_odd_number",
+        },
+        {
+          "exp": {
+            "interval": {
+              "endIdx": 274,
+              "startIdx": 245,
+            },
+            "kind": "binary",
+            "lhs": {
+              "identifier": [
+                "serial_number",
+              ],
+              "interval": {
+                "endIdx": 258,
+                "startIdx": 245,
+              },
+              "kind": "identifier",
+            },
+            "operator": ">",
+            "rhs": {
+              "interval": {
+                "endIdx": 274,
+                "startIdx": 261,
+              },
+              "kind": "literal",
+              "literal": 1000000000000,
+            },
+          },
+          "interval": {
+            "endIdx": 276,
+            "startIdx": 218,
+          },
+          "name": "is_large_number",
+        },
       ],
       "fields": [
         {
@@ -57,7 +163,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
       ],
       "hooks": [],
       "interval": {
-        "endIdx": 117,
+        "endIdx": 278,
         "startIdx": 0,
       },
       "name": "Vehicle",

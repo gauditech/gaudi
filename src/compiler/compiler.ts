@@ -184,6 +184,7 @@ function compileQueryExp(exp: ExpAST): ExpSpec {
   if (exp.kind === "paren") {
     return compileQueryExp(exp.exp);
   } else if (exp.kind === "binary") {
+    // FIXME should we split `binary` into `comparator` and `operator`?
     return {
       kind: "binary",
       operator: exp.operator,
@@ -196,6 +197,13 @@ function compileQueryExp(exp: ExpAST): ExpSpec {
       kind: "unary",
       operator: exp.operator,
       exp: compileQueryExp(exp.exp),
+      interval: exp.interval,
+    };
+  } else if (exp.kind === "function") {
+    return {
+      kind: "function",
+      name: exp.name,
+      args: exp.args.map((arg: ExpAST) => compileQueryExp(arg)),
       interval: exp.interval,
     };
   } else {

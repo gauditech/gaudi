@@ -83,6 +83,7 @@ export type ExpAST = WithContext<
   | { kind: "unary"; operator: UnaryOperator; exp: ExpAST }
   | { kind: "identifier"; identifier: string[] }
   | { kind: "literal"; literal: LiteralValue }
+  | { kind: "function"; name: string; args: ExpAST[] }
 >;
 
 export type EntrypointAST = WithContext<{
@@ -184,6 +185,10 @@ export type BinaryOperator =
   | "<"
   | "<="
   | ">"
-  | ">=";
+  | ">="
+  | "+"
+  | "-"
+  | "/"
+  | "*";
 
 export type UnaryOperator = "not";

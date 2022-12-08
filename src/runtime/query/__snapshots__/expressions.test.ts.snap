@@ -1,0 +1,117 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Expressions to queries composes a complex expression 1`] = `
+{
+  "filter": {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Source",
+                  "items",
+                  "multiplier",
+                ],
+              },
+              {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Source",
+                      "items",
+                      "value",
+                    ],
+                  },
+                  {
+                    "kind": "literal",
+                    "type": "integer",
+                    "value": 1,
+                  },
+                ],
+                "kind": "function",
+                "name": "+",
+              },
+            ],
+            "kind": "function",
+            "name": "*",
+          },
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Source",
+                      "items",
+                      "textual",
+                    ],
+                  },
+                  {
+                    "kind": "literal",
+                    "type": "text",
+                    "value": "tail",
+                  },
+                ],
+                "kind": "function",
+                "name": "concat",
+              },
+            ],
+            "kind": "function",
+            "name": "length",
+          },
+        ],
+        "kind": "function",
+        "name": "/",
+      },
+      {
+        "kind": "literal",
+        "type": "integer",
+        "value": 100,
+      },
+    ],
+    "kind": "function",
+    "name": ">",
+  },
+  "from": {
+    "kind": "model",
+    "refKey": "Source",
+  },
+  "fromPath": [
+    "Source",
+    "items",
+  ],
+  "joinPaths": [
+    {
+      "joinPaths": [],
+      "joinType": "inner",
+      "kind": "relation",
+      "name": "items",
+      "namePath": [
+        "Source",
+        "items",
+      ],
+      "refKey": "Source.items",
+      "retType": "Item",
+    },
+  ],
+  "name": "calc",
+  "nullable": false,
+  "refKey": "Source.calc",
+  "retType": "Item",
+  "select": [],
+}
+`;
+
+exports[`Expressions to queries composes a complex expression 2`] = `
+"SELECT 
+      FROM "source" AS "Source"
+      JOIN
+"item" AS "Source.items"
+ON "Source"."id" = "Source.items"."source_id"
+      WHERE "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) > 100"
+`;
