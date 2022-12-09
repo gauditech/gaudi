@@ -1,8 +1,22 @@
-hook compareLower {
-  arg first text
-  arg second text
-  returns text
-  inline `
-    return first.toLowerCase() === second.toLowerCase();
-  `
+model User {
+  field fieldOne {
+    type text
+    validate {
+      hook {
+        arg fieldOne
+        source foo from "customValidateHook"
+      }
+    }
+  }
+  field fieldTwo {
+    type text
+    validate {
+      hook {
+        arg fieldTwo
+        inline `
+          return fieldTwo.toLowerCase() === "something";
+        `
+      }
+    }
+  }
 }

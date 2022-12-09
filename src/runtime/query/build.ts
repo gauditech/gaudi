@@ -13,16 +13,23 @@ import {
   QueryDef,
   QueryDefPath,
   SelectDef,
+  SelectHookItem,
   SelectItem,
   SelectableItem,
   TargetDef,
 } from "@src/types/definition";
+import { HookCode } from "@src/types/specification";
 
 // FIXME introduce Queryable with SelectableItem[]?
 export type QueryTree = {
   name: string;
   alias: string;
   query: QueryDef;
+  hooks: {
+    name: string;
+    args: { name: string; query: QueryTree }[];
+    code: HookCode;
+  }[];
   related: QueryTree[];
 };
 
@@ -38,6 +45,10 @@ export function mergePaths(paths: NamePath[]): NamePath[] {
 
 export function selectToSelectable(select: SelectDef): SelectableItem[] {
   return select.filter((s): s is SelectableItem => s.kind === "field");
+}
+
+export function selectToHooks(select: SelectDef): SelectHookItem[] {
+  return select.filter((s): s is SelectHookItem => s.kind === "hook");
 }
 
 /**
@@ -181,11 +192,11 @@ export function queryFromParts(
 
   return {
     refKey: "N/A",
-    from: { kind: "model", refKey: fromPath[0] },
+    from: { kind: "model", refKey: ctx.refKey },
     filter,
     fromPath,
     name,
-    nullable: false,
+    nullable: false, // FIXME
     // retCardinality: "many", // FIXME,
     retType: getPathRetType(def, fromPath).refKey,
     select,
@@ -301,12 +312,18 @@ export function getFilterPaths(filter: FilterDef): string[][] {
 
 export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
+  const hooks = selectToHooks(q.select).map(({ name, args, code }) => ({
+    name,
+    args: args.map(({ name, query }) => ({ name, query: buildQueryTree(def, query) })),
+    code,
+  }));
   const { value: model } = getRef<"model">(def.models, query.retType);
 
   return {
     name: query.name,
     alias: query.name,
     query,
+    hooks,
     related: queriesFromSelect(def, model, q.select).map((q) => buildQueryTree(def, q)),
   };
 }
@@ -338,7 +355,7 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
  */
 function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
   const namePath = [model.name, ...select.namePath.slice(by)];
-  if (select.kind === "field") {
+  if (select.kind === "field" || select.kind === "hook") {
     return {
       ...select,
       namePath,
@@ -360,7 +377,8 @@ export function transformSelectPath(select: SelectDef, from: string[], to: strin
     );
     const newPath = [...to, ..._.drop(selItem.namePath, from.length)];
     switch (selItem.kind) {
-      case "field": {
+      case "field":
+      case "hook": {
         return { ...selItem, namePath: newPath };
       }
       case "query":

@@ -36,6 +36,10 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
             return [select.alias, { type: "array", items: { type: "object", properties } }];
           }
         }
+        case "hook": {
+          // FIXME - add return types to hooks
+          return [select.name, {}];
+        }
       }
     });
 
