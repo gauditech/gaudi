@@ -21,7 +21,7 @@ export async function importHooks(hookFolder: string) {
       if (stats.isDirectory()) {
         await loadHooksFromDir(hookPath);
       } else if (stats.isFile()) {
-        modules[hookPath] = await loadFileAsModule(entity);
+        modules[hookPath] = loadFileAsModule(entity);
       }
     });
 
@@ -31,11 +31,10 @@ export async function importHooks(hookFolder: string) {
   await loadHooksFromDir("");
 }
 
-async function loadFileAsModule(path: string) {
-  const content = await fs.readFile(path);
-  const _encodedContent = "data:text/javascript;base64," + content.toString("base64");
-
-  return await eval("import(_encodedContent)");
+function loadFileAsModule(filepath: string) {
+  const absolute = path.resolve(filepath);
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return require(absolute);
 }
 
 export function executeHook(code: HookCode, args: Record<string, unknown>) {
