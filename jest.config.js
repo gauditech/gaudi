@@ -5,7 +5,8 @@ module.exports = async () => {
     preset: "ts-jest",
     modulePathIgnorePatterns: ["<rootDir>/dist/"],
     moduleNameMapper: {
-      "@src/(.*)": "<rootDir>/src/$1"
+      "@src/(.*)": "<rootDir>/src/$1",
     },
+    snapshotSerializers: ["<rootDir>/src/tests/gaudiSerializer.js"],
   };
 };
