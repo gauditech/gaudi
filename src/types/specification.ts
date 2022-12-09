@@ -5,7 +5,6 @@ import { WithContext } from "@src/common/error";
 export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
-  hooks: HookSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -16,6 +15,7 @@ export type ModelSpec = WithContext<{
   relations: RelationSpec[];
   queries: QuerySpec[];
   computeds: ComputedSpec[];
+  hooks: ModelHookSpec[];
 }>;
 
 export type FieldSpec = WithContext<{
@@ -24,10 +24,13 @@ export type FieldSpec = WithContext<{
   default?: LiteralValue;
   unique?: boolean;
   nullable?: boolean;
-  validators?: Validator[];
+  validators?: ValidatorSpec[];
 }>;
 
-export type Validator = WithContext<{ name: string; args: LiteralValue[] }>;
+export type ValidatorSpec = WithContext<
+  | { kind: "hook"; hook: FieldValidatorHookSpec }
+  | { kind: "builtin"; name: string; args: LiteralValue[] }
+>;
 export type ReferenceSpec = WithContext<{
   name: string;
   toModel: string;
@@ -48,6 +51,7 @@ export type QuerySpec = WithContext<{
   filter?: ExpSpec;
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;
+  select?: SelectAST;
 }>;
 
 export type ComputedSpec = WithContext<{
@@ -96,6 +100,15 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecInput
 >;
 
+export type BaseHookSpec = WithContext<{
+  name?: string;
+  code: HookCode;
+}>;
+
+export type HookCode =
+  | { kind: "inline"; inline: string }
+  | { kind: "source"; target: string; file: string };
+
 export type ActionAtomSpecSet = {
   kind: "set";
   target: string;
@@ -117,3 +130,12 @@ export type HookSpec = WithContext<{
   returnType: string;
   inlineBody: string;
 }>;
+
+export type FieldValidatorHookSpec = BaseHookSpec & {
+  arg?: string;
+};
+
+export type ModelHookSpec = BaseHookSpec & {
+  name: string;
+  args: { name: string; query: QuerySpec }[];
+};

@@ -8,9 +8,10 @@ import express, { Express, json } from "express";
 import _ from "lodash";
 
 import { build } from "@src/builder/builder";
-import { dataToFieldDbnames, getRef } from "@src/common/refs";
+import { dataToFieldDbnames, getRef2 } from "@src/common/refs";
 import { compile, compose, parse } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
+import { importHooks } from "@src/runtime/hooks";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
@@ -46,6 +47,9 @@ export function createApiTestSetup(
     console.info(`  created output folder ${outputFolder}`);
     const def = buildDefinition(blueprint, outputFolder);
     console.info(`  created definition`);
+
+    // setup external hooks
+    await importHooks("./src/e2e/api/hooks");
 
     // setup DB
     await createDbSchema(context.dbConn, schema);
@@ -173,24 +177,20 @@ async function initializeDb(dbConnUrl: string, schema: string, definitionPath: s
 }
 
 async function populateDb(def: Definition, dbConn: DbConn, data: PopulatorData[]) {
-  await _.chain(data)
-    .flatMap(({ model, data }) => {
-      return data.map((row) => {
-        return insertQuery(def, dbConn, model, row);
-      });
-    })
-    .reduce((prev, next) => prev.then(() => next), Promise.resolve())
-    .value();
+  for (const populatorData of data) {
+    await insertBatchQuery(def, dbConn, populatorData.model, populatorData.data);
+  }
 }
 
-async function insertQuery(
+async function insertBatchQuery(
   def: Definition,
   dbConn: DbConn,
   refKey: string,
-  data: Record<string, string | number | boolean>
-) {
-  const { value: model } = getRef<"model">(def, refKey);
-  await dbConn.insert(dataToFieldDbnames(model, data)).into(model.dbname).returning("id");
+  data: Record<string, string | number | boolean>[]
+): Promise<number[]> {
+  const model = getRef2.model(def, refKey);
+  const dbData = data.map((d) => dataToFieldDbnames(model, d));
+  return dbConn.batchInsert(model.dbname, dbData).returning("id");
 }
 
 // ----- app server

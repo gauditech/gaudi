@@ -16,23 +16,27 @@ import {
   QueryAST,
   ReferenceAST,
   RelationAST,
+  ValidatorAST,
 } from "@src/types/ast";
 import {
   ActionAtomSpec,
   ActionSpec,
+  BaseHookSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
   ExpSpec,
   FieldSpec,
-  HookSpec,
+  FieldValidatorHookSpec,
+  HookCode,
   InputFieldSpec,
+  ModelHookSpec,
   ModelSpec,
   QuerySpec,
   ReferenceSpec,
   RelationSpec,
   Specification,
-  Validator,
+  ValidatorSpec,
 } from "@src/types/specification";
 
 function compileField(field: FieldAST): FieldSpec {
@@ -40,7 +44,7 @@ function compileField(field: FieldAST): FieldSpec {
   let default_: LiteralValue | undefined;
   let nullable: boolean | undefined;
   let unique: boolean | undefined;
-  let validators: Validator[] | undefined;
+  let validators: ValidatorSpec[] | undefined;
 
   field.body.forEach((b) => {
     if (b.kind === "tag") {
@@ -54,7 +58,7 @@ function compileField(field: FieldAST): FieldSpec {
     } else if (b.kind === "default") {
       default_ = b.default;
     } else if (b.kind === "validate") {
-      validators = b.validators;
+      validators = b.validators.map(compileValidator);
     }
   });
 
@@ -71,6 +75,15 @@ function compileField(field: FieldAST): FieldSpec {
     validators,
     interval: field.interval,
   };
+}
+
+function compileValidator(validator: ValidatorAST): ValidatorSpec {
+  switch (validator.kind) {
+    case "builtin":
+      return validator;
+    case "hook":
+      return { ...validator, hook: compileFieldValidatorHook(validator.hook) };
+  }
 }
 
 function compileReference(reference: ReferenceAST): ReferenceSpec {
@@ -119,12 +132,13 @@ function compileRelation(relation: RelationAST): RelationSpec {
   return { name: relation.name, fromModel, through, interval: relation.interval };
 }
 
-function compileQuery(query: QueryAST): QuerySpec {
-  let fromModel: string[] | undefined;
+function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
+  let fromModel: string[] | undefined = defaultFromModel;
   let fromAlias: string[] | undefined;
   let filter: ExpSpec | undefined;
   let orderBy: QuerySpec["orderBy"];
   let limit: number | undefined;
+  let select: QuerySpec["select"];
 
   query.body.forEach((b) => {
     if (b.kind === "from") {
@@ -136,6 +150,8 @@ function compileQuery(query: QueryAST): QuerySpec {
       orderBy = b.orderings;
     } else if (b.kind === "limit") {
       limit = b.limit;
+    } else if (b.kind === "select") {
+      select = b.select;
     }
   });
 
@@ -151,6 +167,7 @@ function compileQuery(query: QueryAST): QuerySpec {
     interval: query.interval,
     orderBy,
     limit,
+    select,
   };
 }
 
@@ -191,6 +208,7 @@ function compileModel(model: ModelAST): ModelSpec {
   const relations: RelationSpec[] = [];
   const queries: QuerySpec[] = [];
   const computeds: ComputedSpec[] = [];
+  const hooks: ModelHookSpec[] = [];
 
   model.body.forEach((b) => {
     if (b.kind === "field") {
@@ -203,6 +221,8 @@ function compileModel(model: ModelAST): ModelSpec {
       queries.push(compileQuery(b));
     } else if (b.kind === "computed") {
       computeds.push(compileComputed(b));
+    } else if (b.kind === "hook") {
+      hooks.push(compileModelHook(b));
     }
   });
 
@@ -214,6 +234,7 @@ function compileModel(model: ModelAST): ModelSpec {
     relations,
     queries,
     computeds,
+    hooks,
     interval: model.interval,
   };
 }
@@ -310,49 +331,88 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   };
 }
 
-function compileHook(hook: HookAST): HookSpec {
+function compileBaseHook(hook: HookAST): BaseHookSpec {
   const name = hook.name;
-  let returnType: string | undefined;
-  const args: { name: string; type: string }[] = [];
-  let inlineBody: string | undefined;
+  let code: HookCode | undefined;
 
   hook.body.forEach((b) => {
-    if (b.kind === "arg") {
-      args.push({ name: b.name, type: b.type });
-    } else if (b.kind === "inlineBody") {
-      inlineBody = b.inlineBody;
-    } else if (b.kind === "returnType") {
-      returnType = b.type;
+    if (b.kind === "inline") {
+      code = { kind: "inline", inline: b.inline };
+    } else if (b.kind === "source") {
+      code = { kind: "source", target: b.target, file: b.file };
     }
   });
 
-  if (name && returnType && args.length && inlineBody) {
-    return {
-      name,
-      args,
-      inlineBody,
-      returnType,
-      interval: hook.interval,
-    };
-  } else {
-    throw new CompilerError(`Hook is missing required properties`, hook);
+  if (!code) {
+    throw new CompilerError("'hook' needs to have 'source' or 'inline'", hook);
   }
+
+  return {
+    name,
+    code,
+    interval: hook.interval,
+  };
+}
+
+function compileFieldValidatorHook(hook: HookAST): FieldValidatorHookSpec {
+  let arg: string | undefined;
+  const baseHook = compileBaseHook(hook);
+
+  hook.body.forEach((b) => {
+    if (b.kind === "arg") {
+      if (arg !== undefined) {
+        throw new CompilerError("'hook' inside field validation can only have one arg", b);
+      }
+      if (b.query) {
+        throw new CompilerError(
+          "'hook' inside field validation must have 'arg' without 'query'",
+          b
+        );
+      }
+      arg = b.reference;
+    }
+  });
+
+  return { ...baseHook, arg };
+}
+
+function compileModelHook(hook: HookAST): ModelHookSpec {
+  const args: ModelHookSpec["args"] = [];
+
+  const baseHook = compileBaseHook(hook);
+  const name = baseHook.name;
+
+  if (!name) {
+    throw new CompilerError("'hook' inside model must be named", hook);
+  }
+
+  hook.body.forEach((b) => {
+    if (b.kind === "arg") {
+      if (!b.query) {
+        throw new CompilerError("'hook' inside model must have 'arg' with 'query'", b);
+      }
+      // hook query has a generated name with pattern -> HOOK_NAME:ARG_NAME
+      // placeholder name, not actually used FIXME
+      const queryName = `${name}:${b.reference}`;
+      const query = compileQuery({ ...b.query, name: queryName }, []);
+      args.push({ name: b.reference, query });
+    }
+  });
+
+  return { ...baseHook, name, args };
 }
 
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
-  const hooks: HookSpec[] = [];
 
   input.map((definition) => {
     if (definition.kind === "model") {
       models.push(compileModel(definition));
     } else if (definition.kind === "entrypoint") {
       entrypoints.push(compileEntrypoint(definition));
-    } else if (definition.kind === "hook") {
-      hooks.push(compileHook(definition));
     }
   });
 
-  return { models, entrypoints, hooks };
+  return { models, entrypoints };
 }

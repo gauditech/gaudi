@@ -27,10 +27,10 @@ describe("compose models", () => {
           references: [],
           queries: [],
           computeds: [],
+          hooks: [],
         },
       ],
       entrypoints: [],
-      hooks: [],
     };
     expect(() => compose(specification)).toThrowError("Items not unique!");
   });
@@ -44,10 +44,10 @@ describe("compose models", () => {
           relations: [],
           queries: [],
           computeds: [],
+          hooks: [],
         },
       ],
       entrypoints: [],
-      hooks: [],
     };
     expect(() => compose(specification)).toThrowError("Items not unique!");
   });
@@ -61,6 +61,7 @@ describe("compose models", () => {
           relations: [{ name: "repos", fromModel: "Repo", through: "name" }],
           queries: [],
           computeds: [],
+          hooks: [],
         },
         {
           name: "Repo",
@@ -69,10 +70,10 @@ describe("compose models", () => {
           relations: [],
           queries: [],
           computeds: [],
+          hooks: [],
         },
       ],
       entrypoints: [],
-      hooks: [],
     };
     expect(() => compose(specification)).toThrowError(
       "Expecting type reference but found a type field"

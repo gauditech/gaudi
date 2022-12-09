@@ -1,5 +1,6 @@
 import {
   AnySchema,
+  BaseSchema,
   BooleanSchema,
   NumberSchema,
   StringSchema,
@@ -10,9 +11,16 @@ import {
   string,
 } from "yup";
 
+import { executeHook } from "../hooks";
+
 import { assertUnreachable } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
-import { FieldsetDef, FieldsetFieldDef, FieldsetRecordDef } from "@src/types/definition";
+import {
+  FieldsetDef,
+  FieldsetFieldDef,
+  FieldsetRecordDef,
+  HookValidator,
+} from "@src/types/definition";
 
 // ----- validation&transformation
 
@@ -111,6 +119,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       } else if (v.name === "isTextEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
+      } else if (v.name === "hook") {
+        s = buildHookSchema(v, s);
       }
     });
 
@@ -135,6 +145,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       } else if (v.name === "isIntEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
         s = s.equals([v.args[0].value]) as NumberSchema;
+      } else if (v.name === "hook") {
+        s = buildHookSchema(v, s);
       }
     });
 
@@ -153,6 +165,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
       if (v.name === "isBoolEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit BooleanSchema
         s = s.equals([v.args[0].value]) as BooleanSchema;
+      } else if (v.name === "hook") {
+        s = buildHookSchema(v, s);
       }
     });
 
@@ -160,4 +174,12 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
   } else {
     assertUnreachable(field.type);
   }
+}
+
+function buildHookSchema<S extends BaseSchema>(validator: HookValidator, schema: S): S {
+  const arg = validator.arg;
+  const testFn = (value: unknown) => {
+    return executeHook(validator.code, arg ? { [arg]: value } : {});
+  };
+  return schema.test(testFn);
 }

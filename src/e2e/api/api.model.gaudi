@@ -1,10 +1,34 @@
 
 model Org {
-  field name { type text }
-  field slug { type text, unique }
+  field name {
+    type text
+    validate {
+      hook {
+        arg name
+        source noUnicode from "hooks.js"
+      }
+    }
+  }
+  field slug {
+    type text
+    unique
+    validate {
+      hook noSpace {
+        arg slug
+        inline `!/\s/.test(slug)`
+      }
+    }
+  }
   field description { type text }
 
   relation repos { from Repo, through org }
+
+  hook nameAndDesc {
+    arg test query {
+      select { name, description }
+    }
+    inline `test.name + ": " + test.description`
+  }
 }
 
 
@@ -40,7 +64,7 @@ model Comment {
 entrypoint Orgs {
   target model Org as org
   identify with slug
-  response { name, slug, description }
+  response { name, slug, description, nameAndDesc }
 
   get endpoint {}
   list endpoint {}
