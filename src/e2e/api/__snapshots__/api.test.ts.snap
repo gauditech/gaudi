@@ -76,6 +76,7 @@ exports[`API endpoints Org update 1`] = `
   "description": "Org 2A description",
   "id": 2,
   "name": "Org 2A",
+  "nameAndDesc": "Org 1: Org 1 description",
   "slug": "org2",
 }
 `;
