@@ -1,6 +1,7 @@
 import { Knex } from "knex";
 import _ from "lodash";
 
+import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
 import { QueryTree, selectableId } from "./build";
@@ -66,5 +67,25 @@ export async function executeQueryTree(
       Object.assign(r, { [rel.name]: relResultsForId });
     });
   }
+
+  const hooks = await Promise.all(
+    qt.hooks.map(async (h) => ({
+      ...h,
+      args: await Promise.all(
+        h.args.map(async ({ name, query }) => ({
+          name,
+          results: await executeQueryTree(conn, def, query, params, resultIds),
+        }))
+      ),
+    }))
+  );
+
+  results.forEach((result, i) => {
+    hooks.forEach((h) => {
+      const args = Object.fromEntries(h.args.map(({ name, results }) => [name, results[i]]));
+      result[h.name] = executeHook(h.code, args);
+    });
+  });
+
   return results;
 }

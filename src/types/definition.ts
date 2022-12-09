@@ -1,4 +1,5 @@
 import { BinaryOperator } from "./ast";
+import { HookCode } from "./specification";
 
 import { RefKind } from "@src/common/refs";
 
@@ -15,6 +16,7 @@ export type ModelDef = {
   references: ReferenceDef[];
   relations: RelationDef[];
   queries: QueryDef[];
+  hooks: ModelHookDef[];
 };
 
 export type FieldType = "integer" | "text" | "boolean";
@@ -71,6 +73,13 @@ export type QueryDef = {
   filter: FilterDef;
   select: SelectDef;
   // count?: true;
+};
+
+export type ModelHookDef = {
+  refKey: string;
+  name: string;
+  args: { name: string; query: QueryDef }[];
+  code: HookCode;
 };
 
 export type QueryDefPath = {
@@ -193,6 +202,15 @@ export type SelectFieldItem = {
   alias: string;
 };
 
+export type SelectHookItem = {
+  kind: "hook";
+  name: string;
+  alias: string;
+  namePath: string[];
+  args: { name: string; query: QueryDef }[];
+  code: HookCode;
+};
+
 export type DeepSelectItem = {
   kind: "reference" | "relation" | "query";
   name: string;
@@ -203,7 +221,7 @@ export type DeepSelectItem = {
   select: SelectItem[];
 };
 
-export type SelectItem = SelectableItem | DeepSelectItem;
+export type SelectItem = SelectableItem | DeepSelectItem | SelectHookItem;
 
 export type SelectDef = SelectItem[];
 
@@ -237,7 +255,8 @@ export type ValidatorDef =
   | MaxIntValidator
   | IsBooleanEqual
   | IsIntEqual
-  | IsTextEqual;
+  | IsTextEqual
+  | HookValidator;
 
 export const ValidatorDefinition = [
   ["text", "max", "maxLength", ["integer"]],
@@ -294,6 +313,11 @@ export interface IsTextEqual extends IValidatorDef {
   name: "isTextEqual";
   inputType: "text";
   args: [TextConst];
+}
+export interface HookValidator {
+  name: "hook";
+  arg?: string;
+  code: HookCode;
 }
 
 export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;
