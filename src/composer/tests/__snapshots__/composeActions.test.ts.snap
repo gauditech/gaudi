@@ -223,7 +223,7 @@ exports[`custom actions succeeds for basic composite create 1`] = `
         "type": "integer",
       },
       "is_new": {
-        "kind": "value",
+        "kind": "literal",
         "type": "boolean",
         "value": true,
       },
@@ -302,7 +302,7 @@ exports[`custom actions succeeds for basic update with a deny rule 1`] = `
         "type": "integer",
       },
       "name": {
-        "kind": "value",
+        "kind": "literal",
         "type": "text",
         "value": "new name",
       },
@@ -342,7 +342,7 @@ exports[`custom actions succeeds with custom inputs 1`] = `
         },
       },
       "name": {
-        "kind": "value",
+        "kind": "literal",
         "type": "text",
         "value": "new name",
       },

@@ -98,11 +98,11 @@ export type QueryDefPath = {
 export type FilterDef =
   | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
   | { kind: "alias"; namePath: string[] }
-  | LiteralFilterDef
+  | LiteralValueDef
   | { kind: "variable"; type: "integer" | "list-integer" | "text" | "boolean"; name: string }
   | undefined;
 
-export type LiteralFilterDef =
+export type LiteralValueDef =
   | { kind: "literal"; type: "integer"; value: number }
   | { kind: "literal"; type: "null"; value: null }
   | { kind: "literal"; type: "text"; value: string }
@@ -360,12 +360,6 @@ export type DeleteManyAction = {
 
 export type Changeset = Record<string, FieldSetter>;
 
-export type FieldSetterValue =
-  | { kind: "value"; type: "text"; value: string }
-  | { kind: "value"; type: "boolean"; value: boolean }
-  | { kind: "value"; type: "integer"; value: number }
-  | { kind: "value"; type: "null"; value: null };
-
 export type FieldSetterReferenceValue = {
   kind: "reference-value";
   type: FieldDef["type"];
@@ -377,7 +371,7 @@ export type FieldSetterInput = {
   type: FieldDef["type"];
   fieldsetAccess: string[];
   required: boolean;
-  default?: FieldSetterValue | FieldSetterReferenceValue;
+  default?: LiteralValueDef | FieldSetterReferenceValue;
 };
 
 export type FieldSetterReferenceInput = {
@@ -389,4 +383,4 @@ export type FieldSetterReferenceInput = {
 
 export type FieldSetter =
   // TODO add composite expression setter
-  FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
+  LiteralValueDef | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;

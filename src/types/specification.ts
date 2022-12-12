@@ -112,7 +112,7 @@ export type HookCode =
 export type ActionAtomSpecSet = {
   kind: "set";
   target: string;
-  set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+  set: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
@@ -121,7 +121,7 @@ export type ActionAtomSpecInput = { kind: "input"; fields: InputFieldSpec[] };
 export type InputFieldSpec = {
   name: string;
   optional: boolean;
-  default?: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+  default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 
 export type HookSpec = WithContext<{

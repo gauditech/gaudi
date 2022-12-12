@@ -125,7 +125,7 @@ export type ActionAtomBodyAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+      set: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
     }
   | { kind: "reference"; target: string; through: string }
   | { kind: "input"; fields: InputFieldAST[] }

@@ -366,7 +366,7 @@ semantics.addOperation("parse()", {
     return {
       kind: "set",
       target: identifier.parse(),
-      set: { kind: "value", value: value.parse() },
+      set: { kind: "literal", value: value.parse() },
       interval: this.source,
     };
   },
