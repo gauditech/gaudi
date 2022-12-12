@@ -16,7 +16,7 @@ export function buildChangset(
       .map(([name, setter]) => {
         // TODO: format values by type
         const setterKind = setter.kind;
-        if (setterKind === "value") {
+        if (setterKind === "literal") {
           return [
             name,
             setter.type === "null" ? null : formatFieldValue(setter.value, setter.type),

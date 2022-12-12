@@ -260,7 +260,7 @@ function compileAction(action: ActionBodyAST): ActionSpec {
             .map((o): InputFieldSpec["default"] => {
               switch (o.kind) {
                 case "default-value": {
-                  return { kind: "value", value: o.value };
+                  return { kind: "literal", value: o.value };
                 }
                 case "default-reference": {
                   return { kind: "reference", reference: o.path };

@@ -251,7 +251,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   },
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": 10,
                   },
                   "target": "foo",
@@ -263,7 +263,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   },
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": null,
                   },
                   "target": "baz",
@@ -288,7 +288,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                     },
                     {
                       "default": {
-                        "kind": "value",
+                        "kind": "literal",
                         "value": 10,
                       },
                       "name": "x",

@@ -2,9 +2,9 @@ import _ from "lodash";
 
 import { getRef2, getTargetModel } from "@src/common/refs";
 import { LiteralValue } from "@src/types/ast";
-import { Definition, LiteralFilterDef, ModelDef } from "@src/types/definition";
+import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 
-export function getTypedLiteralValue(literal: LiteralValue): LiteralFilterDef {
+export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
   if (typeof literal === "string") {
     return { type: "text", value: literal, kind: "literal" };
   }
