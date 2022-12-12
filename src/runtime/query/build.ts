@@ -168,8 +168,8 @@ export function queryFromParts(
     return queryFromParts(def, name, fromPath, filter, [selectableId(def, fromPath)]);
   }
   select.forEach((selItem) => {
-    if (selItem.alias === '"__join_connection"') {
-      /* We currently make exception for `"__join_connection"` field as it's the only selectable
+    if (selItem.alias === "__join_connection") {
+      /* We currently make exception for `__join_connection` field as it's the only selectable
         not being in `fromPath`.
         Otherwise, we ensure that only the leaf of the `fromPath` can be selected,
         since we expect `retType` to match leaf model, we can't select from other (non-leaf) models.

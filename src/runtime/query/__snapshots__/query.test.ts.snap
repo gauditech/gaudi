@@ -263,37 +263,37 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test create endpoint 2`] = `
 [
-  "SELECT "Org".id AS id
+  "SELECT "Org"."id" AS "id"
 FROM "org" AS "Org"
 
-WHERE "Org".slug = :org_slug
+WHERE "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Org.repos".id AS id
+  "SELECT "Org.repos"."id" AS "id"
       FROM "org" AS "Org"
       JOIN
 "repo" AS "Org.repos"
-ON "Org".id = "Org.repos".org_id
-      WHERE "Org.repos".id = :repo_id AND "Org".id IN :@context_ids
+ON "Org"."id" = "Org.repos"."org_id"
+      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id
+  "SELECT "Repo.issues"."id" AS "id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id, "Repo.issues".name AS name, "Repo.issues".repo_id AS repo_id
+  "SELECT "Repo.issues"."id" AS "id", "Repo.issues"."name" AS "name", "Repo.issues"."repo_id" AS "repo_id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo"."id" IN :@context_ids
 
 
 ",
@@ -651,37 +651,37 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 2`] = `
 [
-  "SELECT "Org".id AS id
+  "SELECT "Org"."id" AS "id"
 FROM "org" AS "Org"
 
-WHERE "Org".slug = :org_slug
+WHERE "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Org.repos".id AS id
+  "SELECT "Org.repos"."id" AS "id"
       FROM "org" AS "Org"
       JOIN
 "repo" AS "Org.repos"
-ON "Org".id = "Org.repos".org_id
-      WHERE "Org.repos".id = :repo_id AND "Org".id IN :@context_ids
+ON "Org"."id" = "Org.repos"."org_id"
+      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id
+  "SELECT "Repo.issues"."id" AS "id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo.issues".id = :issue_id AND "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id
+  "SELECT "Repo.issues"."id" AS "id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo.issues".id = :issue_id AND "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
 
 
 ",
@@ -1055,37 +1055,37 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test get endpoint 2`] = `
 [
-  "SELECT "Org".id AS id
+  "SELECT "Org"."id" AS "id"
 FROM "org" AS "Org"
 
-WHERE "Org".slug = :org_slug
+WHERE "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Org.repos".id AS id
+  "SELECT "Org.repos"."id" AS "id"
       FROM "org" AS "Org"
       JOIN
 "repo" AS "Org.repos"
-ON "Org".id = "Org.repos".org_id
-      WHERE "Org.repos".id = :repo_id AND "Org".id IN :@context_ids
+ON "Org"."id" = "Org.repos"."org_id"
+      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id
+  "SELECT "Repo.issues"."id" AS "id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo.issues".id = :issue_id AND "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id, "Repo.issues".name AS name, "Repo.issues".repo_id AS repo_id
+  "SELECT "Repo.issues"."id" AS "id", "Repo.issues"."name" AS "name", "Repo.issues"."repo_id" AS "repo_id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo.issues".id = :issue_id AND "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
 
 
 ",
@@ -1417,37 +1417,37 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test list endpoint 2`] = `
 [
-  "SELECT "Org".id AS id
+  "SELECT "Org"."id" AS "id"
 FROM "org" AS "Org"
 
-WHERE "Org".slug = :org_slug
+WHERE "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Org.repos".id AS id
+  "SELECT "Org.repos"."id" AS "id"
       FROM "org" AS "Org"
       JOIN
 "repo" AS "Org.repos"
-ON "Org".id = "Org.repos".org_id
-      WHERE "Org.repos".id = :repo_id AND "Org".id IN :@context_ids
+ON "Org"."id" = "Org.repos"."org_id"
+      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id
+  "SELECT "Repo.issues"."id" AS "id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id, "Repo.issues".name AS name, "Repo.issues".repo_id AS repo_id
+  "SELECT "Repo.issues"."id" AS "id", "Repo.issues"."name" AS "name", "Repo.issues"."repo_id" AS "repo_id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo"."id" IN :@context_ids
 
 
 ",
@@ -1815,37 +1815,37 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test update endpoint 2`] = `
 [
-  "SELECT "Org".id AS id
+  "SELECT "Org"."id" AS "id"
 FROM "org" AS "Org"
 
-WHERE "Org".slug = :org_slug
+WHERE "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Org.repos".id AS id
+  "SELECT "Org.repos"."id" AS "id"
       FROM "org" AS "Org"
       JOIN
 "repo" AS "Org.repos"
-ON "Org".id = "Org.repos".org_id
-      WHERE "Org.repos".id = :repo_id AND "Org".id IN :@context_ids
+ON "Org"."id" = "Org.repos"."org_id"
+      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id
+  "SELECT "Repo.issues"."id" AS "id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo.issues".id = :issue_id AND "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues".id AS id, "Repo.issues".name AS name, "Repo.issues".repo_id AS repo_id
+  "SELECT "Repo.issues"."id" AS "id", "Repo.issues"."name" AS "name", "Repo.issues"."repo_id" AS "repo_id"
       FROM "repo" AS "Repo"
       JOIN
 "issue" AS "Repo.issues"
-ON "Repo".id = "Repo.issues".repo_id
-      WHERE "Repo.issues".id = :issue_id AND "Repo".id IN :@context_ids
+ON "Repo"."id" = "Repo.issues"."repo_id"
+      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
 
 
 ",
@@ -2144,7 +2144,7 @@ exports[`Endpoint queries chained nested query 1`] = `
               "refKey": "Repo.is_public",
             },
             {
-              "alias": ""__join_connection"",
+              "alias": "__join_connection",
               "kind": "field",
               "name": "id",
               "namePath": [
@@ -2227,7 +2227,7 @@ exports[`Endpoint queries chained nested query 1`] = `
                   "refKey": "Org.slug",
                 },
                 {
-                  "alias": ""__join_connection"",
+                  "alias": "__join_connection",
                   "kind": "field",
                   "name": "id",
                   "namePath": [
@@ -2333,64 +2333,64 @@ exports[`Endpoint queries chained nested query 1`] = `
 
 exports[`Endpoint queries chained nested query 2`] = `
 [
-  "SELECT "Org".id AS id
+  "SELECT "Org"."id" AS "id"
 FROM "org" AS "Org"
 
-WHERE "Org".slug = :org_slug",
-  "SELECT "Org.public_issues".id AS id
+WHERE "Org"."slug" = :org_slug",
+  "SELECT "Org.public_issues"."id" AS "id"
       FROM "org" AS "Org"
       JOIN
 (
-      SELECT "Org.public_repos.issues".id AS id, "Org.public_repos.issues".name AS name, "Org.public_repos.issues".repo_id AS repo_id, "Org".id AS "__join_connection"
+      SELECT "Org.public_repos.issues"."id" AS "id", "Org.public_repos.issues"."name" AS "name", "Org.public_repos.issues"."repo_id" AS "repo_id", "Org"."id" AS "__join_connection"
             FROM "org" AS "Org"
             JOIN
         (
-              SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+              SELECT "Org.repos"."id" AS "id", "Org.repos"."is_public" AS "is_public", "Org.repos"."name" AS "name", "Org.repos"."org_id" AS "org_id", "Org"."id" AS "__join_connection"
                     FROM "org" AS "Org"
                     JOIN
               "repo" AS "Org.repos"
-              ON "Org".id = "Org.repos".org_id
-                    WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
-        ON "Org".id = "Org.public_repos"."__join_connection"
+              ON "Org"."id" = "Org.repos"."org_id"
+                    WHERE "Org.repos"."is_public" = TRUE) AS "Org.public_repos"
+        ON "Org"."id" = "Org.public_repos"."__join_connection"
         JOIN
       "issue" AS "Org.public_repos.issues"
-      ON "Org.public_repos".id = "Org.public_repos.issues".repo_id
+      ON "Org.public_repos"."id" = "Org.public_repos.issues"."repo_id"
             WHERE TRUE = TRUE) AS "Org.public_issues"
-ON "Org".id = "Org.public_issues"."__join_connection"
-      WHERE "Org.public_issues".id = :issue_id AND "Org".id IN :@context_ids",
-  "SELECT "Org.public_issues".id AS id, "Org.public_issues".name AS name
+ON "Org"."id" = "Org.public_issues"."__join_connection"
+      WHERE "Org.public_issues"."id" = :issue_id AND "Org"."id" IN :@context_ids",
+  "SELECT "Org.public_issues"."id" AS "id", "Org.public_issues"."name" AS "name"
       FROM "org" AS "Org"
       JOIN
 (
-      SELECT "Org.public_repos.issues".id AS id, "Org.public_repos.issues".name AS name, "Org.public_repos.issues".repo_id AS repo_id, "Org".id AS "__join_connection"
+      SELECT "Org.public_repos.issues"."id" AS "id", "Org.public_repos.issues"."name" AS "name", "Org.public_repos.issues"."repo_id" AS "repo_id", "Org"."id" AS "__join_connection"
             FROM "org" AS "Org"
             JOIN
         (
-              SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+              SELECT "Org.repos"."id" AS "id", "Org.repos"."is_public" AS "is_public", "Org.repos"."name" AS "name", "Org.repos"."org_id" AS "org_id", "Org"."id" AS "__join_connection"
                     FROM "org" AS "Org"
                     JOIN
               "repo" AS "Org.repos"
-              ON "Org".id = "Org.repos".org_id
-                    WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
-        ON "Org".id = "Org.public_repos"."__join_connection"
+              ON "Org"."id" = "Org.repos"."org_id"
+                    WHERE "Org.repos"."is_public" = TRUE) AS "Org.public_repos"
+        ON "Org"."id" = "Org.public_repos"."__join_connection"
         JOIN
       "issue" AS "Org.public_repos.issues"
-      ON "Org.public_repos".id = "Org.public_repos.issues".repo_id
+      ON "Org.public_repos"."id" = "Org.public_repos.issues"."repo_id"
             WHERE TRUE = TRUE) AS "Org.public_issues"
-ON "Org".id = "Org.public_issues"."__join_connection"
-      WHERE "Org.public_issues".id = :issue_id AND "Org".id IN :@context_ids",
-  "SELECT "Issue.repo".name AS name, "Issue.repo".is_public AS is_public, "Issue".id AS "__join_connection"
+ON "Org"."id" = "Org.public_issues"."__join_connection"
+      WHERE "Org.public_issues"."id" = :issue_id AND "Org"."id" IN :@context_ids",
+  "SELECT "Issue.repo"."name" AS "name", "Issue.repo"."is_public" AS "is_public", "Issue"."id" AS "__join_connection"
       FROM "issue" AS "Issue"
       JOIN
 "repo" AS "Issue.repo"
-ON "Issue".repo_id = "Issue.repo".id
-      WHERE "Issue".id IN :@context_ids",
-  "SELECT "Repo.org".id AS id, "Repo.org".slug AS slug, "Repo".id AS "__join_connection"
+ON "Issue"."repo_id" = "Issue.repo"."id"
+      WHERE "Issue"."id" IN :@context_ids",
+  "SELECT "Repo.org"."id" AS "id", "Repo.org"."slug" AS "slug", "Repo"."id" AS "__join_connection"
       FROM "repo" AS "Repo"
       JOIN
 "org" AS "Repo.org"
-ON "Repo".org_id = "Repo.org".id
-      WHERE "Repo".id IN :@context_ids",
+ON "Repo"."org_id" = "Repo.org"."id"
+      WHERE "Repo"."id" IN :@context_ids",
 ]
 `;
 
@@ -2630,33 +2630,33 @@ exports[`Endpoint queries nested query 1`] = `
 
 exports[`Endpoint queries nested query 2`] = `
 [
-  "SELECT "Org".id AS id
+  "SELECT "Org"."id" AS "id"
 FROM "org" AS "Org"
 
-WHERE "Org".slug = :org_slug",
-  "SELECT "Org.public_repos".id AS id
+WHERE "Org"."slug" = :org_slug",
+  "SELECT "Org.public_repos"."id" AS "id"
       FROM "org" AS "Org"
       JOIN
 (
-      SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+      SELECT "Org.repos"."id" AS "id", "Org.repos"."is_public" AS "is_public", "Org.repos"."name" AS "name", "Org.repos"."org_id" AS "org_id", "Org"."id" AS "__join_connection"
             FROM "org" AS "Org"
             JOIN
       "repo" AS "Org.repos"
-      ON "Org".id = "Org.repos".org_id
-            WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
-ON "Org".id = "Org.public_repos"."__join_connection"
-      WHERE "Org.public_repos".id = :repo_id AND "Org".id IN :@context_ids",
-  "SELECT "Org.public_repos".id AS id, "Org.public_repos".name AS name
+      ON "Org"."id" = "Org.repos"."org_id"
+            WHERE "Org.repos"."is_public" = TRUE) AS "Org.public_repos"
+ON "Org"."id" = "Org.public_repos"."__join_connection"
+      WHERE "Org.public_repos"."id" = :repo_id AND "Org"."id" IN :@context_ids",
+  "SELECT "Org.public_repos"."id" AS "id", "Org.public_repos"."name" AS "name"
       FROM "org" AS "Org"
       JOIN
 (
-      SELECT "Org.repos".id AS id, "Org.repos".is_public AS is_public, "Org.repos".name AS name, "Org.repos".org_id AS org_id, "Org".id AS "__join_connection"
+      SELECT "Org.repos"."id" AS "id", "Org.repos"."is_public" AS "is_public", "Org.repos"."name" AS "name", "Org.repos"."org_id" AS "org_id", "Org"."id" AS "__join_connection"
             FROM "org" AS "Org"
             JOIN
       "repo" AS "Org.repos"
-      ON "Org".id = "Org.repos".org_id
-            WHERE "Org.repos".is_public = TRUE) AS "Org.public_repos"
-ON "Org".id = "Org.public_repos"."__join_connection"
-      WHERE "Org.public_repos".id = :repo_id AND "Org".id IN :@context_ids",
+      ON "Org"."id" = "Org.repos"."org_id"
+            WHERE "Org.repos"."is_public" = TRUE) AS "Org.public_repos"
+ON "Org"."id" = "Org.public_repos"."__join_connection"
+      WHERE "Org.public_repos"."id" = :repo_id AND "Org"."id" IN :@context_ids",
 ]
 `;
