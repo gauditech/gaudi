@@ -4,20 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "// --- build": "",
-    "build": "npx gaudi-cli compile && npm run build:copy-files && npx gaudi-cli db push",
-    "build:copy-files": "copyfiles -u 1 -V \"./gaudi/db/**\" dist/",
-    "// --- dev": "",
-    "dev": "npm run dev:prepare; concurrently --names BUILD,COPY,MIGR,RUN --prefix-colors blue,yellow,magenta,cyan \"npm run dev:compile\" \"npm run dev:copy-files\" \"npm run dev:db:push\" \"npm run dev:start\"",
-    "// - prepare - precreate output folder(s) so watchers work as expected": "",
-    "dev:prepare": "make-dir ./gaudi/db;",
-    "dev:compile": "chokidar ./src \"./node_modules/@gaudi/engine/\" --debounce --initial --command \"npx gaudi-cli compile\"",
-    "dev:db:push": "chokidar ./gaudi/db/ --debounce --initial --command \"npx gaudi-cli db push\"",
-    "dev:copy-files": "chokidar ./gaudi/db --debounce --initial --command \"npm run build:copy-files\"",
-    "// - if definition.json exists then start server and let nedemon take over, otherwise, wait for definition.json to be created before starting server": "",
-    "dev:start": "if [ -f './dist/definition.json' ]; then npm start; else chokidar ./dist/definition.json --command \"if [[ '{event}' == 'add' ]]; then npm start; fi;\"; fi;",
-    "// --- server": "",
-    "start": "nodemon --watch ./node_modules/@gaudi/engine/runtime --watch ./dist --exec \"npx gaudi-cli run\"",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
@@ -27,10 +13,6 @@
     "@gaudi/engine": "file:../../dist"
   },
   "devDependencies": {
-    "chokidar-cli": "^3.0.0",
-    "copyfiles": "^2.4.1",
-    "make-dir-cli": "^3.0.0",
-    "nodemon": "^2.0.20",
     "rimraf": "^3.0.2"
   }
 }

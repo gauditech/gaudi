@@ -4,13 +4,20 @@
 import "../common/setupAliases";
 
 import { spawn } from "child_process";
+import { WatchOptions } from "fs";
 import path from "path";
 
+import chokidar from "chokidar";
+import copyfiles from "copyfiles";
 import _ from "lodash";
 import yargs, { ArgumentsCamelCase } from "yargs";
 import { hideBin } from "yargs/helpers";
 
 import { EngineConfig, readConfig } from "@src/config";
+
+type Stoppable = {
+  stop: () => Promise<void>;
+};
 
 const DEFAULT_NODE_OPTIONS = [
   // development node options - maybe we should allow disabling them in production?
@@ -31,22 +38,37 @@ const GAUDI_SCRIPTS = {
   POPULATOR: path.join(__dirname, "../populator/populator.js"),
 };
 
-const config = readConfig();
+const engineConfig = readConfig();
 
-parseArguments(config);
+parseArguments(engineConfig);
 
 function parseArguments(config: EngineConfig) {
   yargs(hideBin(process.argv))
     .scriptName("gaudi-cli")
     .command({
-      command: "compile",
-      describe: "Compile Gaudi source",
-      handler: (args) => compileCommand(args, config),
+      command: "build",
+      describe:
+        "Build entire project. Compiles Gaudi source, pushes changes to DB and copies files to output folder",
+      handler: (args) => buildCommand(args, config),
     })
     .command({
-      command: "run",
-      describe: "Run Gaudi project",
-      handler: (args) => runCommand(args, config),
+      command: "dev",
+      describe: "Start project dev builder which rebuilds project on detected source changes.",
+      handler: (args) => devCommand(args, config),
+    })
+    .command({
+      command: "compile",
+      describe: "Compile Gaudi source",
+      handler: (args) => {
+        compileCommand(args, config);
+      },
+    })
+    .command({
+      command: "start",
+      describe: "Start Gaudi project",
+      handler: (args) => {
+        startCommand(args, config);
+      },
     })
     .command({
       command: "db",
@@ -59,17 +81,23 @@ function parseArguments(config: EngineConfig) {
           .command({
             command: "push",
             describe: "Push model changes to development database",
-            handler: (args) => dbPushCommand(args, config),
+            handler: (args) => {
+              dbPushCommand(args, config);
+            },
           })
           .command({
             command: "reset",
             describe: "Reset DB",
-            handler: (args) => dbResetCommand(args, config),
+            handler: (args) => {
+              dbResetCommand(args, config);
+            },
           })
           .command({
             command: "populate",
             describe: "Reset DB and populate it using populator",
-            handler: (args) => dbPopulateCommand(args, config),
+            handler: (args) => {
+              dbPopulateCommand(args, config);
+            },
             builder: (yargs) =>
               yargs.option("populator", {
                 alias: "p",
@@ -88,12 +116,16 @@ function parseArguments(config: EngineConfig) {
                 demandOption: '  try adding "--name=<migration name>"',
               }),
             describe: "Create DB migration file",
-            handler: (args) => dbMigrateCommand(args, config),
+            handler: (args) => {
+              dbMigrateCommand(args, config);
+            },
           })
           .command({
             command: "deploy",
             describe: "Deploy migrations to production database",
-            handler: (args) => dbDeployCommand(args, config),
+            handler: (args) => {
+              dbDeployCommand(args, config);
+            },
           })
           .demandCommand(),
     })
@@ -105,22 +137,124 @@ function parseArguments(config: EngineConfig) {
     .parse();
 }
 
+// --- build
+
+async function buildCommand(args: ArgumentsCamelCase, config: EngineConfig) {
+  console.log("Building entire project ...");
+
+  await compileCommand(args, config);
+  await dbPushCommand(args, config);
+  await copyStaticCommand(args, config);
+}
+
+// --- dev
+
+async function devCommand(args: ArgumentsCamelCase, config: EngineConfig) {
+  console.log("Starting project dev build ...");
+
+  const children: Stoppable[] = [];
+
+  async function stop() {
+    for (const c in children) {
+      await children[c].stop();
+    }
+    console.log(`Stopped ${children.length} child processes`);
+
+    // truncate children
+    children.length = 0;
+  }
+
+  process.on("beforeExit", async () => {
+    console.log("Before exit");
+    await stop();
+  });
+
+  children.push(watchCompileCommand(args, config));
+  children.push(watchDbPushCommand(args, config));
+  children.push(watchCopyStaticCommand(args, config));
+}
+
+function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+  const run = async () => {
+    await compileCommand(args, config);
+  };
+
+  const resources = [
+    // compiler input path
+    path.join(config.inputPath),
+  ];
+
+  return watchResource(resources, run);
+}
+
+function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+  const run = async () => {
+    await dbPushCommand(args, config);
+  };
+
+  const resources = [
+    // gaudi DB folder
+    path.join(config.gaudiFolder, "db"),
+  ];
+
+  return watchResource(resources, run);
+}
+
+function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+  const run = async () => {
+    await copyStaticCommand(args, config);
+  };
+
+  const resources = [
+    // gaudi DB folder
+    path.join(config.gaudiFolder, "db"),
+  ];
+
+  return watchResource(resources, run);
+}
+
+// --- compile
+
 function compileCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Compiling Gaudi source ...");
 
-  executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
+  return executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
 }
 
-function runCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
-  console.log("Running Gaudi project ...");
+// --- start
 
-  executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.RUNTIME]);
+function startCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
+  console.log("Starting Gaudi project ...");
+
+  return executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.RUNTIME]);
 }
+
+// --- copy static
+
+function copyStaticCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
+  console.log("Copying static resources ...");
+
+  return new Promise((resolve, reject) => {
+    copyfiles(
+      [path.join(config.gaudiFolder, "db", "**"), config.outputFolder],
+      { up: -1, verbose: true, error: true },
+      (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(err);
+        }
+      }
+    );
+  });
+}
+
+// --- DB push
 
 function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Pushing DB change ...");
 
-  executeCommand("npx", [
+  return executeCommand("npx", [
     "prisma",
     "db",
     "push",
@@ -129,10 +263,12 @@ function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
   ]);
 }
 
+// --- DB reset
+
 function dbResetCommand(args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Resetting DB ...");
 
-  executeCommand("npx", [
+  return executeCommand("npx", [
     "prisma",
     "db",
     "push",
@@ -140,6 +276,8 @@ function dbResetCommand(args: ArgumentsCamelCase, config: EngineConfig) {
     `--schema=${dbSchemaPath(config.gaudiFolder)}`,
   ]);
 }
+
+// --- DB populate
 
 type DbPopulateOptions = {
   /** Populator name */
@@ -153,7 +291,7 @@ function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config:
 
   console.log(`Populating DB using populator "${populatorName} ..."`);
 
-  executeCommand("node", [
+  return executeCommand("node", [
     ...getDefaultNodeOptions(),
     GAUDI_SCRIPTS.POPULATOR,
     "-p",
@@ -161,9 +299,12 @@ function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config:
   ]);
 }
 
+// --- DB migrate
+
 type DbMigrateOptions = {
   name?: string;
 };
+
 function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   const migrationName = args.name;
 
@@ -171,7 +312,7 @@ function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 
   console.log(`Creating DB migration "${migrationName}" ...`);
 
-  executeCommand("npx", [
+  return executeCommand("npx", [
     "prisma",
     "migrate",
     "dev",
@@ -180,10 +321,12 @@ function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
   ]);
 }
 
+// --- DB deploy
+
 function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
-  executeCommand("npx", [
+  return executeCommand("npx", [
     "prisma",
     "migrate",
     "deploy",
@@ -196,12 +339,25 @@ function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: Eng
 function executeCommand(command: string, argv: string[]) {
   console.log(`Command: ${command} ${argv.join(" ")}`);
 
-  spawn(command, argv, {
-    env: {
-      ...process.env,
-    },
-    shell: true, // let shell interpret arguments as if they would be when called directly from shell
-    stdio: "inherit",
+  return new Promise<number | null>((resolve, reject) => {
+    const childProcess = spawn(command, argv, {
+      env: {
+        ...process.env,
+      },
+      shell: true, // let shell interpret arguments as if they would be when called directly from shell
+      stdio: "inherit", // allow child processes to use std streams
+    });
+
+    childProcess.on("error", (err) => {
+      reject(err);
+    });
+    childProcess.on("exit", (code) => {
+      if (code === 0 || code == null) {
+        resolve(code);
+      } else {
+        reject(`Process exited with error code: ${code}`);
+      }
+    });
   });
 }
 
@@ -216,4 +372,33 @@ function dbSchemaPath(outputFolder: string): string {
  */
 function getDefaultNodeOptions(): string[] {
   return [...DEFAULT_NODE_OPTIONS];
+}
+
+// --- file watcher
+
+function watchResource(target: string | string[], callback: () => Promise<void>): Stoppable;
+function watchResource(
+  target: string | string[],
+  callback: () => Promise<void>,
+  options?: WatchOptions
+): Stoppable {
+  // TODO: debounce callback
+
+  const watcher = chokidar
+    .watch(target, { ...options })
+    // file listeners
+    .on("add", () => callback())
+    .on("change", () => callback())
+    .on("unlink", () => callback())
+    // folder listeners
+    .on("addDir", () => callback())
+    .on("unlinkDir", () => callback())
+    // attached all listeners
+    .on("ready", () => callback());
+
+  return {
+    stop: () => {
+      return watcher.close();
+    },
+  };
 }
