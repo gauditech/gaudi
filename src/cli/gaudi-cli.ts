@@ -192,10 +192,7 @@ function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Sto
     await dbPushCommand(args, config);
   };
 
-  const resources = [
-    // gaudi DB folder
-    path.join(config.gaudiFolder, "db"),
-  ];
+  const resources = [getDbSchemaPath(config)];
 
   return watchResource(resources, run);
 }
@@ -258,7 +255,7 @@ function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
     "prisma",
     "db",
     "push",
-    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
+    `--schema=${getDbSchemaPath(config)}`,
     "--accept-data-loss",
   ]);
 }
@@ -273,7 +270,7 @@ function dbResetCommand(args: ArgumentsCamelCase, config: EngineConfig) {
     "db",
     "push",
     "--force-reset",
-    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
+    `--schema=${getDbSchemaPath(config)}`,
   ]);
 }
 
@@ -317,7 +314,7 @@ function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
     "migrate",
     "dev",
     `--name=${migrationName}`,
-    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
+    `--schema=${getDbSchemaPath(config)}`,
   ]);
 }
 
@@ -330,7 +327,7 @@ function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: Eng
     "prisma",
     "migrate",
     "deploy",
-    `--schema=${dbSchemaPath(config.gaudiFolder)}`,
+    `--schema=${getDbSchemaPath(config)}`,
   ]);
 }
 
@@ -361,8 +358,8 @@ function executeCommand(command: string, argv: string[]) {
   });
 }
 
-function dbSchemaPath(outputFolder: string): string {
-  return `${outputFolder}/db/schema.prisma`;
+function getDbSchemaPath(config: EngineConfig): string {
+  return `${config.gaudiFolder}/db/schema.prisma`;
 }
 
 /**
@@ -387,14 +384,14 @@ function watchResource(
   const watcher = chokidar
     .watch(target, { ...options })
     // file listeners
-    .on("add", () => callback())
-    .on("change", () => callback())
-    .on("unlink", () => callback())
+    .on("add", callback)
+    .on("change", callback)
+    .on("unlink", callback)
     // folder listeners
-    .on("addDir", () => callback())
-    .on("unlinkDir", () => callback())
+    .on("addDir", callback)
+    .on("unlinkDir", callback)
     // attached all listeners
-    .on("ready", () => callback());
+    .on("ready", callback);
 
   return {
     stop: () => {
