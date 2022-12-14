@@ -20,6 +20,7 @@ import {
 } from "@src/types/ast";
 import {
   ActionAtomSpec,
+  ActionHookSpec,
   ActionSpec,
   BaseHookSpec,
   ComputedSpec,
@@ -247,9 +248,12 @@ function compileAction(action: ActionBodyAST): ActionSpec {
       }
       case "deny":
       case "reference":
+        return a;
       case "set": {
         // action AST and Spec are currently the same
-        return a;
+        const set =
+          a.set.kind === "hook" ? { kind: a.set.kind, hook: compileActionHook(a.set.hook) } : a.set;
+        return { ...a, set };
       }
       case "input": {
         const fields = a.fields.map((f): InputFieldSpec => {
@@ -363,13 +367,10 @@ function compileFieldValidatorHook(hook: HookAST): FieldValidatorHookSpec {
       if (arg !== undefined) {
         throw new CompilerError("'hook' inside field validation can only have one arg", b);
       }
-      if (b.query) {
-        throw new CompilerError(
-          "'hook' inside field validation must have 'arg' without 'query'",
-          b
-        );
+      if (b.value.kind !== "default") {
+        throw new CompilerError("'hook' inside field validation must have a 'default' 'arg'", b);
       }
-      arg = b.reference;
+      arg = b.name;
     }
   });
 
@@ -388,14 +389,35 @@ function compileModelHook(hook: HookAST): ModelHookSpec {
 
   hook.body.forEach((b) => {
     if (b.kind === "arg") {
-      if (!b.query) {
+      if (b.value.kind !== "query") {
         throw new CompilerError("'hook' inside model must have 'arg' with 'query'", b);
       }
       // hook query has a generated name with pattern -> HOOK_NAME:ARG_NAME
       // placeholder name, not actually used FIXME
-      const queryName = `${name}:${b.reference}`;
-      const query = compileQuery({ ...b.query, name: queryName }, []);
-      args.push({ name: b.reference, query });
+      const queryName = `${name}:${b.name}`;
+      const query = compileQuery({ ...b.value.query, name: queryName }, []);
+      args.push({ name: b.name, query });
+    }
+  });
+
+  return { ...baseHook, name, args };
+}
+
+function compileActionHook(hook: HookAST): ActionHookSpec {
+  const args: ActionHookSpec["args"] = {};
+
+  const baseHook = compileBaseHook(hook);
+  const name = baseHook.name;
+
+  hook.body.forEach((b) => {
+    if (b.kind === "arg") {
+      if (b.value.kind === "literal") {
+        args[b.name] = { kind: "literal", value: b.value.literal };
+      } else if (b.value.kind === "reference") {
+        args[b.name] = { kind: "reference", reference: b.value.reference };
+      } else {
+        throw new CompilerError("Invalid `hook` type for this context", b);
+      }
     }
   });
 

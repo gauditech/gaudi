@@ -3,8 +3,8 @@ import { chain } from "lodash";
 import {
   Definition,
   FieldDef,
-  ModelHookDef,
   ModelDef,
+  ModelHookDef,
   QueryDef,
   ReferenceDef,
   RelationDef,

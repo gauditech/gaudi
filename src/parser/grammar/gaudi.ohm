@@ -137,7 +137,8 @@ Gaudi {
 
 
   ActionAtomBody
-    = "set" identifier literal                            -- set_value
+    = "set" identifier Hook                               -- set_hook
+    | "set" identifier literal                            -- set_value
     | "set" identifier IdentifierPath                     -- set_reference
     | "reference" identifier "through" identifier         -- reference
     | "input" "{" NewlineBody<ActionInputAtom, ","> "}"   -- input
@@ -166,7 +167,9 @@ Gaudi {
 
   HookBody
   = "arg" identifier HookQuery -- argument_query
-  | "arg" identifier -- argument
+  | "arg" identifier "default" -- argument_default
+  | "arg" identifier literal -- argument_literal
+  | "arg" identifier IdentifierPath -- argument_reference
   | "returns" identifier -- return_type
   | "source" identifier "from" string -- source
   | "inline" multiLineString -- inline
