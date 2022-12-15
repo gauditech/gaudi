@@ -97,9 +97,34 @@ export function endpointQueries(def: Definition, endpoint: EndpointDef): Endpoin
   const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, namePath);
-  const responseQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, response);
-  const responseQueryTree = buildQueryTree(def, responseQuery);
+  // response query
+  const responseQueryTree = ((): QueryTree => {
+    switch (endpoint.kind) {
+      case "update":
+      case "create":
+      case "delete": // FIXME delete should have no response query!
+      case "get": {
+        // fetch directly from the table, we have the ID
+        const np = [endpoint.target.retType];
+        const filter = applyFilterIdInContext(np, undefined);
+        const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, np);
+        const responseQuery = queryFromParts(def, endpoint.target.alias, np, filter, response);
+        return buildQueryTree(def, responseQuery);
+      }
+      case "list": {
+        const np = namePath;
+        const filter =
+          endpoint.parentContext.length > 0
+            ? applyFilterIdInContext([_.last(endpoint.parentContext)!.retType], undefined)
+            : undefined;
+
+        const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, np);
+        const responseQuery = queryFromParts(def, endpoint.target.alias, np, filter, response);
+        return buildQueryTree(def, responseQuery);
+      }
+    }
+  })();
+
   return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 

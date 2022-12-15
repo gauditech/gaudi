@@ -98,20 +98,17 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
           // FIXME run custom actions
 
-          // After all actions are done, fetch the list of records again. Ignore contextVars
-          // cache as custom actions may have modified the records.
-
-          let parentIds: number[] = [];
-          const parentTarget = _.last(endpoint.parentContext);
-          if (parentTarget) {
-            parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
-          }
+          /* Refetch target object by id using the response query. We ignore `target.identifyWith` because
+           * actions may have modified the record. We can only reliably identify it via `id` collected
+           * before the actions were executed.
+           */
+          const targetId = contextVars.get(endpoint.target.alias, ["id"]);
           const responseResults = await executeQueryTree(
             dbConn,
             def,
             queries.responseQueryTree,
             pathParamVars,
-            parentIds
+            [targetId]
           );
 
           resp.json(findOne(responseResults));
@@ -236,8 +233,17 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           }
           console.log("Query result", targetId);
 
-          // FIXME refetch using the response query
-          resp.json({ id: targetId });
+          // Refetch target object by id using the response query. We ignore `target.identifyWith` because
+          // actions may have modified the record. We can only reliably identify it via ID collected before
+          // actions were executed.
+          const responseObj = await executeQueryTree(
+            dbConn,
+            def,
+            queries.responseQueryTree,
+            new Vars(),
+            [targetId]
+          );
+          resp.json(findOne(responseObj));
         } catch (err) {
           errorResponse(err);
         }
@@ -294,14 +300,25 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             endpoint.actions
           );
 
-          const targetId = contextVars.get(endpoint.target.alias)?.id;
+          const targetId = contextVars.get(endpoint.target.alias, ["id"]);
 
           if (targetId === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
           }
           console.log("Query result", targetId);
 
-          resp.json({ id: targetId });
+          /* Refetch target object by id using the response query. We ignore `target.identifyWith` because
+           * actions may have modified the record. We can only reliably identify it via ID collected before
+           * actions were executed.
+           */
+          const responseObj = await executeQueryTree(
+            dbConn,
+            def,
+            queries.responseQueryTree,
+            new Vars(),
+            [targetId]
+          );
+          resp.json(findOne(responseObj));
         } catch (err) {
           errorResponse(err);
         }

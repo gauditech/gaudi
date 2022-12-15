@@ -4,7 +4,7 @@ import { EndpointQueries, QueryTree, endpointQueries } from "./build";
 import { queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
-import { CreateEndpointDef, EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
+import { EndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
   it("nested query", () => {
@@ -73,7 +73,9 @@ describe("Endpoint queries", () => {
     const q = endpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
     expect(extractEndpointQueries(q)).toHaveLength(5);
-    expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
+    expect(
+      extractEndpointQueries(q).map((q) => queryToString(def, q) + "\n\n\n")
+    ).toMatchSnapshot();
     q;
   });
 
