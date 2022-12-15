@@ -13,6 +13,7 @@ import _ from "lodash";
 import yargs, { ArgumentsCamelCase } from "yargs";
 import { hideBin } from "yargs/helpers";
 
+import { createAsyncQueueContext } from "@src/common/async/queueAsync";
 import { EngineConfig, readConfig } from "@src/config";
 
 type Stoppable = {
@@ -165,7 +166,8 @@ async function devCommand(args: ArgumentsCamelCase, config: EngineConfig) {
   }
 
   process.on("beforeExit", async () => {
-    console.log("Before exit");
+    console.log("Stopping child processes before exit");
+
     await stop();
   });
 
@@ -175,8 +177,11 @@ async function devCommand(args: ArgumentsCamelCase, config: EngineConfig) {
 }
 
 function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+  // create async queue to serialize multiple command calls
+  const enqueue = createAsyncQueueContext();
+
   const run = async () => {
-    await compileCommand(args, config);
+    enqueue(() => compileCommand(args, config));
   };
 
   const resources = [
@@ -184,22 +189,15 @@ function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): St
     path.join(config.inputPath),
   ];
 
-  return watchResource(resources, run);
+  return watchResources(resources, run);
 }
 
 function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+  // create async queue to serialize multiple command calls
+  const enqueue = createAsyncQueueContext();
+
   const run = async () => {
-    await dbPushCommand(args, config);
-  };
-
-  const resources = [getDbSchemaPath(config)];
-
-  return watchResource(resources, run);
-}
-
-function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
-  const run = async () => {
-    await copyStaticCommand(args, config);
+    enqueue(() => dbPushCommand(args, config));
   };
 
   const resources = [
@@ -207,7 +205,23 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
     path.join(config.gaudiFolder, "db"),
   ];
 
-  return watchResource(resources, run);
+  return watchResources(resources, run);
+}
+
+function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+  // create async queue to serialize multiple command calls
+  const enqueue = createAsyncQueueContext();
+
+  const run = async () => {
+    enqueue(() => copyStaticCommand(args, config));
+  };
+
+  const resources = [
+    // gaudi DB folder
+    path.join(config.gaudiFolder, "db"),
+  ];
+
+  return watchResources(resources, run);
 }
 
 // --- compile
@@ -373,25 +387,34 @@ function getDefaultNodeOptions(): string[] {
 
 // --- file watcher
 
-function watchResource(target: string | string[], callback: () => Promise<void>): Stoppable;
-function watchResource(
+type ResourceWatcherOptions = { debounce?: number } & WatchOptions;
+
+function watchResources(
   target: string | string[],
   callback: () => Promise<void>,
-  options?: WatchOptions
+  options?: ResourceWatcherOptions
 ): Stoppable {
-  // TODO: debounce callback
+  const {
+    /* custom options */
+    debounce,
+    /* chokidar options */
+    ...watcherOptions
+  } = options ?? {};
+
+  // prevent event flood
+  const debouncedCallback = _.debounce(callback, debounce ?? 300);
 
   const watcher = chokidar
-    .watch(target, { ...options })
+    .watch(target, { ...watcherOptions /* add default options */ })
     // file listeners
-    .on("add", callback)
-    .on("change", callback)
-    .on("unlink", callback)
+    .on("add", debouncedCallback)
+    .on("change", debouncedCallback)
+    .on("unlink", debouncedCallback)
     // folder listeners
-    .on("addDir", callback)
-    .on("unlinkDir", callback)
+    .on("addDir", debouncedCallback)
+    .on("unlinkDir", debouncedCallback)
     // attached all listeners
-    .on("ready", callback);
+    .on("ready", debouncedCallback);
 
   return {
     stop: () => {
