@@ -1,6 +1,6 @@
 import path from "path";
 
-import { readConfig } from "@src/config";
+import { EngineConfig, readConfig } from "@src/config";
 
 describe("engine", () => {
   describe("config", () => {
@@ -27,21 +27,25 @@ describe("engine", () => {
 
       const config = readConfig();
 
-      expect(config).toEqual({
+      const expected: Required<EngineConfig> = {
         inputPath: "INPUT",
         outputFolder: "OUTPUT",
         gaudiFolder: "./gaudi",
-      });
+      };
+
+      expect(config).toEqual(expected);
     });
 
     it("should reads values from config file", () => {
       const config = readConfig(path.join(__dirname, "config.test.env"));
 
-      expect(config).toEqual({
+      const expected: Required<EngineConfig> = {
         inputPath: "INPUT_FROM_FILE",
         outputFolder: "OUTPUT_FROM_FILE",
         gaudiFolder: "./gaudi",
-      });
+      };
+
+      expect(config).toEqual(expected);
     });
 
     it("should allow overriding config file values with custom values from environment", () => {
@@ -50,11 +54,13 @@ describe("engine", () => {
 
       const config = readConfig(path.join(__dirname, "config.test.env"));
 
-      expect(config).toEqual({
+      const expected: Required<EngineConfig> = {
         inputPath: "INPUT",
         outputFolder: "OUTPUT",
         gaudiFolder: "./gaudi",
-      });
+      };
+
+      expect(config).toEqual(expected);
     });
   });
 });
