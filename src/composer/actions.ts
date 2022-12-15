@@ -460,9 +460,9 @@ function getActionSetters(
     .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
     .map((atom): [string, FieldSetter] => {
       switch (atom.set.kind) {
-        case "value": {
+        case "literal": {
           const typedVal = getTypedLiteralValue(atom.set.value);
-          return [atom.target, { ...typedVal, kind: "value" }];
+          return [atom.target, typedVal];
         }
         case "reference": {
           const path = atom.set.reference;

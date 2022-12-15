@@ -243,7 +243,7 @@ function processEndpoints(
   });
 }
 
-function processSelect(
+export function processSelect(
   models: ModelDef[],
   model: ModelDef,
   selectAST: SelectAST | undefined,
@@ -282,6 +282,15 @@ function processSelect(
           alias: name,
           namePath: [...namePath, name],
           refKey: ref.value.refKey,
+        };
+      } else if (ref.kind === "hook") {
+        return {
+          kind: ref.kind,
+          name,
+          alias: name,
+          namePath: [...namePath, name],
+          args: ref.value.args,
+          code: ref.value.code,
         };
       } else {
         ensureNot(ref.kind, "model" as const);
@@ -438,7 +447,7 @@ function wrapTargetsWithSelect(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
     const model = getRef2.model(def, target.retType);
-    const select = pathsToSelectDef(def, model, paths, [target.alias]);
+    const select = pathsToSelectDef(def, model, paths, target.namePath);
     return { ...target, select };
   });
 }

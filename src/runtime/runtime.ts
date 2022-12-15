@@ -4,6 +4,7 @@
 import "../common/setupAliases";
 
 import { loadDefinition, readConfig } from "@src/runtime/config";
+import { importHooks } from "@src/runtime/hooks";
 import { createServer } from "@src/runtime/server/server";
 
 // read environment
@@ -11,5 +12,10 @@ const config = readConfig();
 
 const definition = loadDefinition(config.definitionPath);
 
-// start server
-createServer(definition, config);
+(async () => {
+  // wait for hooks to import, then start server
+  await importHooks(config.hookFolder);
+
+  // start server
+  createServer(definition, config);
+})();

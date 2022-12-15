@@ -3,13 +3,14 @@ import { chain } from "lodash";
 import {
   Definition,
   FieldDef,
+  ModelHookDef,
   ModelDef,
   QueryDef,
   ReferenceDef,
   RelationDef,
 } from "@src/types/definition";
 
-export type RefKind = "model" | "field" | "reference" | "relation" | "query";
+export type RefKind = "model" | "field" | "reference" | "relation" | "query" | "hook";
 export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "model"; value: ModelDef }
   : T extends "field"
@@ -20,6 +21,8 @@ export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "relation"; value: RelationDef }
   : T extends "query"
   ? { kind: "query"; value: QueryDef }
+  : T extends "hook"
+  ? { kind: "hook"; value: ModelHookDef }
   : never;
 
 export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKey: string): Ref<T> {
@@ -40,6 +43,9 @@ export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKe
 
   const query = source.flatMap((m) => m.queries).find((q) => q.refKey === refKey);
   if (query) return { kind: "query", value: query } as Ref<T>;
+
+  const hook = source.flatMap((m) => m.hooks).find((q) => q.refKey === refKey);
+  if (hook) return { kind: "hook", value: hook } as Ref<T>;
 
   throw ["unknown-refkey", refKey];
 }

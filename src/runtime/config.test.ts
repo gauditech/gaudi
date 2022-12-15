@@ -25,6 +25,7 @@ describe("runtime", () => {
         port: 3001,
         definitionPath: "definition.json",
         outputFolder: ".",
+        hookFolder: ".",
       } as RuntimeConfig);
     });
 
@@ -35,6 +36,7 @@ describe("runtime", () => {
       process.env.GAUDI_RUNTIME_SERVER_PORT = "31337";
       process.env.GAUDI_RUNTIME_DEFINITION_PATH = "test/definition/path";
       process.env.GAUDI_RUNTIME_OUTPUT_PATH = "test/output/path";
+      process.env.GAUDI_RUNTIME_HOOK_PATH = "test/hook/path";
 
       const config: RuntimeConfig = readConfig();
 
@@ -45,6 +47,7 @@ describe("runtime", () => {
         port: 31337,
         definitionPath: "test/definition/path",
         outputFolder: "test/output/path",
+        hookFolder: "test/hook/path",
       } as RuntimeConfig);
     });
 

@@ -17,6 +17,7 @@ import {
   FieldTag,
   HookAST,
   HookBodyAST,
+  HookQueryAST,
   InputFieldAST,
   InputFieldOptAST,
   ModelAST,
@@ -29,6 +30,7 @@ import {
   RelationAST,
   RelationBodyAST,
   SelectAST,
+  ValidatorAST,
 } from "@src/types/ast";
 
 const semantics = grammar.createSemantics();
@@ -61,8 +63,16 @@ semantics.addOperation("parse()", {
   FieldBody_validate(this, _validate, _parenL, body, _parenR): FieldBodyAST {
     return { kind: "validate", validators: body.parse(), interval: this.source };
   },
-  Validator(this, name, args) {
+  Validator_hook(this, hook): ValidatorAST {
     return {
+      kind: "hook",
+      hook: hook.parse(),
+      interval: this.source,
+    };
+  },
+  Validator_builtin(this, name, args): ValidatorAST {
+    return {
+      kind: "builtin",
       name: name.parse(),
       args: args.children.map((c) => c.parse()),
       interval: this.source,
@@ -116,6 +126,9 @@ semantics.addOperation("parse()", {
   },
   QueryBody_limit(this, _limit, limit): QueryBodyAST {
     return { kind: "limit", limit: limit.parse(), interval: this.source };
+  },
+  QueryBody_select(this, _select, select): QueryBodyAST {
+    return { kind: "select", select: select.parse(), interval: this.source };
   },
   QueryOrder(this, field, orderNode): QueryOrderAST {
     const order =
@@ -289,24 +302,41 @@ semantics.addOperation("parse()", {
   Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
     return {
       kind: "hook",
-      name: identifier.parse(),
+      name: identifier.numChildren > 0 ? identifier.child(0).parse() : undefined,
       body: body.parse(),
       interval: this.source,
     };
   },
-  HookBody_argument(this, _arg, nameIdentifier, typeIdentifier): HookBodyAST {
+  HookBody_argument_query(this, _arg, identifier, query): HookBodyAST {
     return {
       kind: "arg",
-      name: nameIdentifier.parse(),
-      type: typeIdentifier.parse(),
+      reference: identifier.parse(),
+      query: query.parse(),
+      interval: this.source,
+    };
+  },
+  HookBody_argument(this, _arg, identifier): HookBodyAST {
+    return {
+      kind: "arg",
+      reference: identifier.parse(),
       interval: this.source,
     };
   },
   HookBody_return_type(this, _returns, identifier): HookBodyAST {
     return { kind: "returnType", type: identifier.parse(), interval: this.source };
   },
-  HookBody_inline_body(this, _inline, bodystr): HookBodyAST {
-    return { kind: "inlineBody", inlineBody: bodystr.parse() };
+  HookBody_source(this, _source, target, _from, file): HookBodyAST {
+    return { kind: "source", target: target.parse(), file: file.parse(), interval: this.source };
+  },
+  HookBody_inline(this, _inline, inlineString): HookBodyAST {
+    return { kind: "inline", inline: inlineString.parse(), interval: this.source };
+  },
+  HookQuery(this, _query, _parenL, body, _parenR): HookQueryAST {
+    return {
+      kind: "query",
+      body: body.parse(),
+      interval: this.source,
+    };
   },
   ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
     return {
@@ -336,7 +366,7 @@ semantics.addOperation("parse()", {
     return {
       kind: "set",
       target: identifier.parse(),
-      set: { kind: "value", value: value.parse() },
+      set: { kind: "literal", value: value.parse() },
       interval: this.source,
     };
   },

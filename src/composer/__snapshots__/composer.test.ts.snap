@@ -91,6 +91,7 @@ exports[`compose models parses validators 1`] = `
           ],
         },
       ],
+      "hooks": [],
       "name": "Org",
       "queries": [],
       "refKey": "Org",

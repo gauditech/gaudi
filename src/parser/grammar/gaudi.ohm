@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Hook), ";">
+    = NewlineBody<(Model | Entrypoint), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -19,6 +19,7 @@ Gaudi {
     | Relation
     | Query
     | Computed
+    | Hook
 
   Field
     = "field" identifier "{" NonemptyNewlineBody<FieldBody, ","> "}"
@@ -30,7 +31,8 @@ Gaudi {
     | "validate" "{" NonemptyNewlineBody<Validator, ","> "}" -- validate
 
   Validator
-    = identifier literal*
+    = Hook -- hook
+    | identifier literal* -- builtin
 
   Reference
     = "reference" identifier "{" NonemptyNewlineBody<ReferenceBody, ","> "}"
@@ -54,6 +56,7 @@ Gaudi {
     | "filter" OptionalBraces<QueryExp> -- filter
     | "order" "by" NonemptyListOf<QueryOrder, ","> -- order_by
     | "limit" integer -- limit
+    | "select" SelectBody -- select
 
   QueryOrder = IdentifierPath ("asc" | "desc")?
 
@@ -159,12 +162,17 @@ Gaudi {
   // ********************
 
   Hook
-    = "hook" identifier "{" NonemptyNewlineBody<HookBody, ";"> "}"
+  = "hook" identifier? "{" NonemptyNewlineBody<HookBody, ";"> "}"
 
   HookBody
-    = "arg" identifier identifier   -- argument
-    | "returns" identifier          -- return_type
-    | "inline" multiLineString      -- inline_body
+  = "arg" identifier HookQuery -- argument_query
+  | "arg" identifier -- argument
+  | "returns" identifier -- return_type
+  | "source" identifier "from" string -- source
+  | "inline" multiLineString -- inline
+
+  HookQuery
+    = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
   IdentifierPath = identifier ("." identifier)*
 

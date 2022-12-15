@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@gaudi/engine": "file:../../dist"
+    "@gaudi/engine": "file:../../dist",
+    "is-ascii": "^1.0.0"
   },
   "devDependencies": {
     "rimraf": "^3.0.2"
