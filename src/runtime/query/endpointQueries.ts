@@ -62,11 +62,24 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
   return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 
+/**
+ * Response query is responsible for fetching the record(s) in order to return the data
+ * to the client initiating the request. Response queries ignore `target.identifyWith`
+ * filter, instead they fetch by parent `id` (`list`) or a record `id` (`get`, `update`).
+ *
+ * This is because `id` is the only non-modifiable identifier for a record; it's possible
+ * that (custom) actions modify the record in a way that it no longer passes the filter
+ * condition. For example, `target.identifyWith` may be a `slug` field and `update` changes
+ * the `slug` field to another value.
+ *
+ * Therefore, we first fetch all targets using `identifyWith` to find their `id` which we
+ * use to refetch the `response` query tree after actions are applied.
+ */
 function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTree {
   switch (endpoint.kind) {
     case "update":
     case "create":
-    case "delete": // FIXME delete should have no response query!
+    case "delete": // FIXME delete should have no response query! Make it nullable?
     case "get": {
       // fetch directly from the table, we have the ID
       const namePath = [endpoint.target.retType];
