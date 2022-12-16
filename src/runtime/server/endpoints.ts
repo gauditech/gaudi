@@ -236,14 +236,14 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           // Refetch target object by id using the response query. We ignore `target.identifyWith` because
           // actions may have modified the record. We can only reliably identify it via ID collected before
           // actions were executed.
-          const responseObj = await executeQueryTree(
+          const responseResults = await executeQueryTree(
             dbConn,
             def,
             queries.responseQueryTree,
             new Vars(),
             [targetId]
           );
-          resp.json(findOne(responseObj));
+          resp.json(findOne(responseResults));
         } catch (err) {
           errorResponse(err);
         }
@@ -311,14 +311,14 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
            * actions may have modified the record. We can only reliably identify it via ID collected before
            * actions were executed.
            */
-          const responseObj = await executeQueryTree(
+          const responseResults = await executeQueryTree(
             dbConn,
             def,
             queries.responseQueryTree,
             new Vars(),
             [targetId]
           );
-          resp.json(findOne(responseObj));
+          resp.json(findOne(responseResults));
         } catch (err) {
           errorResponse(err);
         }
