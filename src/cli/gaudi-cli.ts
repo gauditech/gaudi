@@ -3,7 +3,7 @@
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
 import "../common/setupAliases";
 
-import { spawn } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import { WatchOptions } from "fs";
 import path from "path";
 
@@ -155,25 +155,28 @@ async function devCommand(args: ArgumentsCamelCase, config: EngineConfig) {
 
   const children: Stoppable[] = [];
 
-  async function stop() {
-    for (const c in children) {
-      await children[c].stop();
-    }
-    console.log(`Stopped ${children.length} child processes`);
+  async function cleanup() {
+    if (children.length > 0) {
+      const promises = children.map((c) => c.stop());
 
-    // truncate children
-    children.length = 0;
+      const results = await Promise.allSettled(promises);
+      // check for errors during stopping
+      results.forEach((r) => {
+        if (r.status === "rejected") {
+          console.error("Cleanup error: ", r.reason);
+        }
+      });
+    }
   }
 
-  process.on("beforeExit", async () => {
-    console.log("Stopping child processes before exit");
+  // --- start dev commands
 
-    await stop();
-  });
+  attachProcessCleanup(process, cleanup);
 
   children.push(watchCompileCommand(args, config));
   children.push(watchDbPushCommand(args, config));
   children.push(watchCopyStaticCommand(args, config));
+  children.push(watchStartCommand(args, config));
 }
 
 function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
@@ -181,7 +184,7 @@ function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): St
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => compileCommand(args, config));
+    enqueue(() => compileCommand(args, config).start());
   };
 
   const resources = [
@@ -197,7 +200,7 @@ function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Sto
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => dbPushCommand(args, config));
+    enqueue(() => dbPushCommand(args, config).start());
   };
 
   const resources = [
@@ -216,12 +219,43 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
     enqueue(() => copyStaticCommand(args, config));
   };
 
+  // keep these resources in sync with the list of files this command actually copies
   const resources = [
     // gaudi DB folder
     path.join(config.gaudiFolder, "db"),
   ];
 
   return watchResources(resources, run);
+}
+
+function watchStartCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+  // no need for async enqueueing since `nodemon` is a long running process and we cannot await for it to finish
+
+  const command = startCommand(args, config);
+
+  const run = async () => {
+    if (!command.isRunning()) {
+      await command.start();
+    } else {
+      // ask `nodemon` to restart monitored process
+      // https://github.com/remy/nodemon/wiki/Events
+      command.sendMessage("restart");
+    }
+  };
+
+  const resources = [
+    // gaudi output folder
+    path.join(config.outputFolder),
+  ];
+
+  const watcher = watchResources(resources, run);
+
+  return {
+    stop: async () => {
+      await watcher.stop();
+      command.stop();
+    },
+  };
 }
 
 // --- compile
@@ -232,12 +266,13 @@ function compileCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   return executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
 }
 
-// --- start
+// --- server commands
 
 function startCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Starting Gaudi project ...");
 
-  return executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.RUNTIME]);
+  // use `nodemon` to control (start, reload, shotdown) runtime process
+  return executeCommand("nodemon", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.RUNTIME]);
 }
 
 // --- copy static
@@ -347,31 +382,78 @@ function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: Eng
 
 // ---------- utils
 
-function executeCommand(command: string, argv: string[]) {
+/** Structure that exposes some control over child process while hiding details. */
+type ExecuteCommandResult = {
+  /** Execute command and return promise that will resolve if process exits nicely and reject if it errs. */
+  start: () => Promise<number | null>;
+  /** Stop command process. */
+  stop: () => boolean;
+  /** Send message to command process via IPC. In order for this to work IPC must be enabled in "stdio". */
+  sendMessage: (message: string) => void;
+  /** Send signal to command process. */
+  sendSignal: (signal: NodeJS.Signals) => void;
+  /** Check if process is running. */
+  isRunning: () => boolean;
+};
+
+function executeCommand(command: string, argv: string[]): ExecuteCommandResult {
   console.log(`Command: ${command} ${argv.join(" ")}`);
 
-  return new Promise<number | null>((resolve, reject) => {
-    const childProcess = spawn(command, argv, {
-      env: {
-        ...process.env,
-      },
-      shell: true, // let shell interpret arguments as if they would be when called directly from shell
-      stdio: "inherit", // allow child processes to use std streams
-    });
+  // process instance has no indication whether it's running or not so use this flag for that
+  let isRunning = false;
+  let childProcess: ChildProcess;
+  return {
+    start: () => {
+      return new Promise<number | null>((resolve, reject) => {
+        childProcess = spawn(command, argv, {
+          env: {
+            ...process.env,
+          },
+          shell: true, // let shell interpret arguments as if they would be when called directly from shell
+          stdio: ["inherit", "inherit", "inherit", "ipc"], // allow child processes to use std streams and allow IPC communication
+        });
 
-    childProcess.on("error", (err) => {
-      reject(err);
-    });
-    childProcess.on("exit", (code) => {
-      if (code === 0 || code == null) {
-        resolve(code);
-      } else {
-        reject(`Process exited with error code: ${code}`);
+        // should we control child process the same way we control "dev" parent process?
+        childProcess.on("error", (err) => {
+          reject(err);
+        });
+        childProcess.on("exit", (code) => {
+          if (code === 0 || code == null) {
+            resolve(code);
+          } else {
+            reject(`Process exited with error code: ${code}`);
+          }
+        });
+
+        isRunning = true;
+      });
+    },
+    stop: () => {
+      if (childProcess == null) {
+        console.warn(`Cannot stop command "${command}", process not started yet`);
+        return false;
       }
-    });
-  });
+
+      // tell the process to terminate in a nice way
+      // on Windows, where there are no POSIX signals: "[...] process will be killed forcefully and abruptly (similar to'SIGKILL') [...]"
+      const successful = !childProcess.kill("SIGTERM");
+      isRunning = !successful;
+
+      return successful;
+    },
+    sendMessage: (message: string) => {
+      childProcess.send(message);
+    },
+    sendSignal: (signal: NodeJS.Signals) => {
+      console.log(`KILL child process ${childProcess.pid} using ${signal}`);
+
+      childProcess.kill(signal);
+    },
+    isRunning: () => isRunning,
+  };
 }
 
+/** Returns path to prisma schema file */
 function getDbSchemaPath(config: EngineConfig): string {
   return `${config.gaudiFolder}/db/schema.prisma`;
 }
@@ -421,4 +503,62 @@ function watchResources(
       return watcher.close();
     },
   };
+}
+
+// ---------- Process control
+
+function attachProcessCleanup(process: NodeJS.Process, cleanup: () => Promise<void> | void) {
+  // Listenable signals that terminate the process by default
+  // (except SIGQUIT, which generates a core dump and should not trigger cleanup)
+  // See https://nodejs.org/api/process.html#signal-events
+  const signals = [
+    "SIGBREAK", // Ctrl-Break on Windows
+    "SIGHUP", // Parent terminal closed
+    "SIGINT", // Terminal interrupt, usually by Ctrl-C
+    "SIGTERM", // Graceful termination
+    "SIGUSR2", // Used by Nodemon
+  ];
+
+  async function doCleanup() {
+    await cleanup();
+  }
+
+  async function cleanupAndExit(code: number) {
+    await doCleanup();
+    process.exit(code);
+  }
+
+  async function cleanupAndKill(signal: string): Promise<void> {
+    await doCleanup();
+    process.kill(process.pid, signal);
+  }
+
+  // --- handlers
+
+  function beforeExitHandler(code: number): void {
+    console.log(`Exiting with code ${code}`);
+    void cleanupAndExit(code);
+  }
+
+  function uncaughtExceptionHandler(error: Error): void {
+    console.error("Uncaught exception", error);
+    void cleanupAndExit(1);
+  }
+
+  function signalHandler(signal: string): void {
+    console.log(`Exiting due to signal ${signal}`);
+    void cleanupAndKill(signal);
+  }
+
+  // --- attach/detach handlers
+
+  function attachHandlers() {
+    // attach handlers only ONCE to allow normal event handling after we've finished with our cleanup
+
+    process.once("beforeExit", beforeExitHandler);
+    process.once("uncaughtException", uncaughtExceptionHandler);
+    signals.forEach((signal) => process.once(signal, signalHandler));
+  }
+
+  attachHandlers();
 }

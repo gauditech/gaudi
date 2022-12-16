@@ -79,6 +79,7 @@
     "knex": "^2.3.0",
     "lodash": "^4.17.21",
     "module-alias": "^2.2.2",
+    "nodemon": "^2.0.20",
     "ohm-js": "^16.4.0",
     "passport": "^0.6.0",
     "passport-http-bearer": "^1.0.1",
