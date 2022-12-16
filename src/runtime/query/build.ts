@@ -7,7 +7,6 @@ import { ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
   Definition,
-  EndpointDef,
   FilterDef,
   ModelDef,
   QueryDef,
@@ -49,83 +48,6 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
 
 export function selectToHooks(select: SelectDef): SelectHookItem[] {
   return select.filter((s): s is SelectHookItem => s.kind === "hook");
-}
-
-/**
- * Endpoint query builder
- */
-
-export type EndpointQueries = {
-  parentContextQueryTrees: QueryTree[];
-  targetQueryTree: QueryTree;
-  responseQueryTree: QueryTree;
-};
-
-export function endpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
-  const parentContextQueryTrees = endpoint.parentContext.map((target, index) => {
-    const parentTarget = index === 0 ? null : endpoint.parentContext[index - 1];
-    const namePath = parentTarget ? [parentTarget.retType, target.name] : [target.retType];
-    // apply identifyWith filter
-    const targetFilter = targetToFilter({ ...target, namePath });
-    // apply filter from it's parent
-    const filter = parentTarget
-      ? applyFilterIdInContext([parentTarget.retType], targetFilter)
-      : targetFilter;
-
-    const select = transformSelectPath(target.select, target.namePath, namePath);
-    const query = queryFromParts(def, target.alias, namePath, filter, select);
-    return buildQueryTree(def, query);
-  });
-
-  // repeat the same for target
-  const parentTarget = _.last(endpoint.parentContext);
-  const namePath = parentTarget
-    ? [parentTarget.retType, endpoint.target.name]
-    : [endpoint.target.retType];
-
-  const targetFilter =
-    endpoint.kind === "create" || endpoint.kind === "list"
-      ? undefined
-      : targetToFilter({ ...endpoint.target, namePath });
-
-  const filter = parentTarget
-    ? applyFilterIdInContext([parentTarget.retType], targetFilter)
-    : targetFilter;
-
-  const select = transformSelectPath(endpoint.target.select, endpoint.target.namePath, namePath);
-
-  const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
-  const targetQueryTree = buildQueryTree(def, targetQuery);
-
-  // response query
-  const responseQueryTree = ((): QueryTree => {
-    switch (endpoint.kind) {
-      case "update":
-      case "create":
-      case "delete": // FIXME delete should have no response query!
-      case "get": {
-        // fetch directly from the table, we have the ID
-        const np = [endpoint.target.retType];
-        const filter = applyFilterIdInContext(np, undefined);
-        const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, np);
-        const responseQuery = queryFromParts(def, endpoint.target.alias, np, filter, response);
-        return buildQueryTree(def, responseQuery);
-      }
-      case "list": {
-        const np = namePath;
-        const filter =
-          endpoint.parentContext.length > 0
-            ? applyFilterIdInContext([_.last(endpoint.parentContext)!.retType], undefined)
-            : undefined;
-
-        const response = transformSelectPath(endpoint.response ?? [], endpoint.target.namePath, np);
-        const responseQuery = queryFromParts(def, endpoint.target.alias, np, filter, response);
-        return buildQueryTree(def, responseQuery);
-      }
-    }
-  })();
-
-  return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 
 export function applyFilterIdInContext(namePath: NamePath, filter?: FilterDef): FilterDef {
@@ -226,37 +148,6 @@ export function queryFromParts(
     retType: getPathRetType(def, fromPath).refKey,
     select,
     joinPaths,
-  };
-}
-
-function targetToFilter(target: TargetDef): FilterDef {
-  return {
-    kind: "binary",
-    operator: "is",
-    lhs: { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
-    rhs: {
-      kind: "variable",
-      type: target.identifyWith.type,
-      name: target.identifyWith.paramName,
-    },
-  };
-}
-
-export function filterFromTargets(targets: TargetDef[]): FilterDef {
-  if (!targets.length) {
-    return undefined;
-  }
-  const [t, ...rest] = targets;
-  const f = targetToFilter(t);
-  if (rest.length === 0) {
-    return f;
-  }
-
-  return {
-    kind: "binary",
-    operator: "and",
-    lhs: f,
-    rhs: filterFromTargets(rest),
   };
 }
 

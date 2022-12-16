@@ -7,7 +7,7 @@ import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/bu
 import { getRef } from "@src/common/refs";
 import { executeActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { endpointQueries } from "@src/runtime/query/build";
+import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
 import { executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
@@ -67,7 +67,7 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
 /** Create "get" endpoint handler from definition */
 export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -123,7 +123,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 /** Create "list" endpoint handler from definition */
 export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -185,7 +185,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 /** Build "create" endpoint handler from definition */
 export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -255,7 +255,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 /** Build "update" endpoint handler from definition */
 export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -330,7 +330,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 /** Create "delete" endpoint handler from definition */
 export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
