@@ -50,25 +50,18 @@ function parseArguments(config: EngineConfig) {
       command: "build",
       describe:
         "Build entire project. Compiles Gaudi source, pushes changes to DB and copies files to output folder",
-      handler: (args) => buildCommand(args, config),
+      handler: (args) => buildCommandHandler(args, config),
     })
     .command({
       command: "dev",
       describe: "Start project dev builder which rebuilds project on detected source changes.",
-      handler: (args) => devCommand(args, config),
-    })
-    .command({
-      command: "compile",
-      describe: "Compile Gaudi source",
-      handler: (args) => {
-        compileCommand(args, config);
-      },
+      handler: (args) => devCommandHandler(args, config),
     })
     .command({
       command: "start",
       describe: "Start Gaudi project",
       handler: (args) => {
-        startCommand(args, config);
+        startCommandHandler(args, config);
       },
     })
     .command({
@@ -83,21 +76,21 @@ function parseArguments(config: EngineConfig) {
             command: "push",
             describe: "Push model changes to development database",
             handler: (args) => {
-              dbPushCommand(args, config);
+              dbPushCommandHandler(args, config);
             },
           })
           .command({
             command: "reset",
             describe: "Reset DB",
             handler: (args) => {
-              dbResetCommand(args, config);
+              dbResetCommandHandler(args, config);
             },
           })
           .command({
             command: "populate",
             describe: "Reset DB and populate it using populator",
             handler: (args) => {
-              dbPopulateCommand(args, config);
+              dbPopulateCommandHandler(args, config);
             },
             builder: (yargs) =>
               yargs.option("populator", {
@@ -118,14 +111,14 @@ function parseArguments(config: EngineConfig) {
               }),
             describe: "Create DB migration file",
             handler: (args) => {
-              dbMigrateCommand(args, config);
+              dbMigrateCommandHandler(args, config);
             },
           })
           .command({
             command: "deploy",
             describe: "Deploy migrations to production database",
             handler: (args) => {
-              dbDeployCommand(args, config);
+              dbDeployCommandHandler(args, config);
             },
           })
           .demandCommand(),
@@ -138,19 +131,21 @@ function parseArguments(config: EngineConfig) {
     .parse();
 }
 
-// --- build
+// --------- command handlers
 
-async function buildCommand(args: ArgumentsCamelCase, config: EngineConfig) {
+// --- build command
+
+async function buildCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Building entire project ...");
 
-  await compileCommand(args, config);
-  await dbPushCommand(args, config);
-  await copyStaticCommand(args, config);
+  await compile(args, config).start();
+  await dbPush(args, config).start();
+  await copyStatic(args, config);
 }
 
-// --- dev
+// --- dev command
 
-async function devCommand(args: ArgumentsCamelCase, config: EngineConfig) {
+async function devCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Starting project dev build ...");
 
   const children: Stoppable[] = [];
@@ -184,7 +179,7 @@ function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): St
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => compileCommand(args, config).start());
+    enqueue(() => compile(args, config).start());
   };
 
   const resources = [
@@ -200,7 +195,7 @@ function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Sto
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => dbPushCommand(args, config).start());
+    enqueue(() => dbPush(args, config).start());
   };
 
   const resources = [
@@ -216,7 +211,7 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => copyStaticCommand(args, config));
+    enqueue(() => copyStatic(args, config));
   };
 
   // keep these resources in sync with the list of files this command actually copies
@@ -231,7 +226,7 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
 function watchStartCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
   // no need for async enqueueing since `nodemon` is a long running process and we cannot await for it to finish
 
-  const command = startCommand(args, config);
+  const command = start(args, config);
 
   const run = async () => {
     if (!command.isRunning()) {
@@ -248,6 +243,7 @@ function watchStartCommand(args: ArgumentsCamelCase, config: EngineConfig): Stop
     path.join(config.outputFolder),
   ];
 
+  // use our resource watcher instead of `nodemon`'s watching to keep to consistent
   const watcher = watchResources(resources, run);
 
   return {
@@ -258,9 +254,51 @@ function watchStartCommand(args: ArgumentsCamelCase, config: EngineConfig): Stop
   };
 }
 
+// --- start command
+
+async function startCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+  console.log("Building entire project ...");
+
+  return start(args, config).start();
+}
+
+// -- DB push command
+function dbPushCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+  return dbPush(args, config).start();
+}
+
+// --- DB reset
+
+function dbResetCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+  return dbReset(args, config).start();
+}
+
+// --- DB populate
+
+function dbPopulateCommandHandler(
+  args: ArgumentsCamelCase<DbPopulateOptions>,
+  config: EngineConfig
+) {
+  return dbPopulate(args, config).start();
+}
+
+// --- DB migrate
+
+function dbMigrateCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+  return dbMigrate(args, config).start();
+}
+
+// --- DB deploy
+
+function dbDeployCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+  return dbDeploy(args, config).start();
+}
+
+// ---------- internal commands
+
 // --- compile
 
-function compileCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
+function compile(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Compiling Gaudi source ...");
 
   return executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
@@ -268,7 +306,7 @@ function compileCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
 
 // --- server commands
 
-function startCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
+function start(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Starting Gaudi project ...");
 
   // use `nodemon` to control (start, reload, shotdown) runtime process
@@ -277,7 +315,7 @@ function startCommand(_args: ArgumentsCamelCase, _config: EngineConfig) {
 
 // --- copy static
 
-function copyStaticCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
+function copyStatic(_args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Copying static resources ...");
 
   return new Promise((resolve, reject) => {
@@ -297,7 +335,7 @@ function copyStaticCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
 
 // --- DB push
 
-function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
+function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Pushing DB change ...");
 
   return executeCommand("npx", [
@@ -311,7 +349,7 @@ function dbPushCommand(_args: ArgumentsCamelCase, config: EngineConfig) {
 
 // --- DB reset
 
-function dbResetCommand(args: ArgumentsCamelCase, config: EngineConfig) {
+function dbReset(args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Resetting DB ...");
 
   return executeCommand("npx", [
@@ -330,7 +368,7 @@ type DbPopulateOptions = {
   populator?: string;
 };
 
-function dbPopulateCommand(args: ArgumentsCamelCase<DbPopulateOptions>, _config: EngineConfig) {
+function dbPopulate(args: ArgumentsCamelCase<DbPopulateOptions>, _config: EngineConfig) {
   const populatorName = args.populator!;
 
   if (_.isEmpty(populatorName)) throw "Populator name cannot be empty";
@@ -351,7 +389,7 @@ type DbMigrateOptions = {
   name?: string;
 };
 
-function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   const migrationName = args.name;
 
   if (_.isEmpty(migrationName)) throw "Migration name cannot be empty";
@@ -369,7 +407,7 @@ function dbMigrateCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 
 // --- DB deploy
 
-function dbDeployCommand(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+function dbDeploy(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
   return executeCommand("npx", [
