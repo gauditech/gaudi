@@ -4,6 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "// --- build": "",
+    "build": "npm run build:hooks && npx gaudi-cli build",
+    "build:hooks": "copyfiles -u 1 \"hooks/**/*.js\" dist/hooks",
+    "// --- dev": "",
+    "dev": "concurrently --names hooks,gaudi \"npm run dev:hooks\" \"npx gaudi-cli dev\"",
+    "dev:hooks": "chokidar ./hooks  --debounce --initial --command \"npm run build:hooks\"",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
@@ -14,6 +20,8 @@
     "is-ascii": "^1.0.0"
   },
   "devDependencies": {
+    "chokidar-cli": "^3.0.0",
+    "copyfiles": "^2.4.1",
     "rimraf": "^3.0.2"
   }
 }
