@@ -16,16 +16,29 @@ import { hideBin } from "yargs/helpers";
 import { createAsyncQueueContext } from "@src/common/async/queueAsync";
 import { EngineConfig, readConfig } from "@src/config";
 
+/**
+ * Something that can be stopped like eg. resource watcher.
+ *
+ * We should added "start" if we need to have control over starting (eg. do it later/elsewhere).
+ */
 type Stoppable = {
   stop: () => Promise<void>;
 };
 
+// defaul Node options
 const DEFAULT_NODE_OPTIONS = [
   // development node options - maybe we should allow disabling them in production?
   "--enable-source-maps",
   "--stack-trace-limit=30",
   "--stack-size=2048",
 ];
+
+/**
+ * Time to wait before reporting resource watcher changes (in millis).
+ *
+ * This allows basic debouncing (eg. when creating/updating multiple files at once).
+ */
+const RESOURCE_WATCH_DELAY = 500;
 
 /**
  * Paths to Gaudi scripts
@@ -310,7 +323,12 @@ function start(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Starting Gaudi project ...");
 
   // use `nodemon` to control (start, reload, shotdown) runtime process
-  return executeCommand("nodemon", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.RUNTIME]);
+  return executeCommand("nodemon", [
+    ...getDefaultNodeOptions(),
+    "--watch",
+    "false",
+    GAUDI_SCRIPTS.RUNTIME,
+  ]);
 }
 
 // --- copy static
@@ -522,7 +540,7 @@ function watchResources(
   } = options ?? {};
 
   // prevent event flood
-  const debouncedCallback = _.debounce(callback, debounce ?? 300);
+  const debouncedCallback = _.debounce(callback, debounce ?? RESOURCE_WATCH_DELAY);
 
   const watcher = chokidar
     .watch(target, { ...watcherOptions /* add default options */ })
@@ -574,7 +592,7 @@ function attachProcessCleanup(process: NodeJS.Process, cleanup: () => Promise<vo
   // --- handlers
 
   function beforeExitHandler(code: number): void {
-    console.log(`Exiting with code ${code}`);
+    // console.log(`Exiting with code ${code}`);
     void cleanupAndExit(code);
   }
 
@@ -584,7 +602,7 @@ function attachProcessCleanup(process: NodeJS.Process, cleanup: () => Promise<vo
   }
 
   function signalHandler(signal: string): void {
-    console.log(`Exiting due to signal ${signal}`);
+    // console.log(`Exiting due to signal ${signal}`);
     void cleanupAndKill(signal);
   }
 
