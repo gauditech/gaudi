@@ -418,18 +418,21 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
     .value();
   // collect all targets
   const setterTargets = nonDeleteActions.flatMap((a) => {
-    return _.compact(
-      Object.values(a.changeset).map((setter) => {
-        switch (setter.kind) {
-          case "reference-value": {
-            return setter.target;
-          }
-          default: {
-            return null;
-          }
+    return Object.values(a.changeset).flatMap((setter) => {
+      switch (setter.kind) {
+        case "reference-value": {
+          return [setter.target];
         }
-      })
-    );
+        case "fieldset-hook": {
+          return Object.values(setter.args).flatMap((setter) =>
+            setter.kind === "reference-value" ? [setter.target] : []
+          );
+        }
+        default: {
+          return [];
+        }
+      }
+    });
   });
   return [...setterTargets, ...targetPaths];
 }

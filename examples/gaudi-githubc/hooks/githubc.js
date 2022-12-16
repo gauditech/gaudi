@@ -7,6 +7,6 @@ module.exports.noUnicode = function ({ name }) {
   return isAscii(name);
 };
 
-module.exports.randomSlug = function ({ salt }) {
-  return salt + crypto.randomBytes(32).toString("base64");
+module.exports.randomSlug = function ({ org }) {
+  return org + "/" + crypto.randomBytes(32).toString("base64");
 };
