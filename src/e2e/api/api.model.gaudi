@@ -4,7 +4,7 @@ model Org {
     type text
     validate {
       hook {
-        arg name default
+        default arg name
         source noUnicode from "hooks.js"
       }
     }
@@ -14,7 +14,7 @@ model Org {
     unique
     validate {
       hook noSpace {
-        arg slug default
+        default arg slug
         inline `!/\s/.test(slug)`
       }
     }

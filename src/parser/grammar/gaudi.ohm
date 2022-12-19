@@ -166,8 +166,8 @@ Gaudi {
   = "hook" identifier? "{" NonemptyNewlineBody<HookBody, ";"> "}"
 
   HookBody
-  = "arg" identifier HookQuery -- argument_query
-  | "arg" identifier "default" -- argument_default
+  = "default" "arg" identifier -- argument_default
+  | "arg" identifier HookQuery -- argument_query
   | "arg" identifier literal -- argument_literal
   | "arg" identifier IdentifierPath -- argument_reference
   | "returns" identifier -- return_type

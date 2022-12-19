@@ -307,19 +307,19 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
+  HookBody_argument_default(this, _default, _arg, identifier): HookBodyAST {
+    return {
+      kind: "arg",
+      name: identifier.parse(),
+      value: { kind: "default" },
+      interval: this.source,
+    };
+  },
   HookBody_argument_query(this, _arg, identifier, query): HookBodyAST {
     return {
       kind: "arg",
       name: identifier.parse(),
       value: { kind: "query", query: query.parse() },
-      interval: this.source,
-    };
-  },
-  HookBody_argument_default(this, _arg, identifier, _default): HookBodyAST {
-    return {
-      kind: "arg",
-      name: identifier.parse(),
-      value: { kind: "default" },
       interval: this.source,
     };
   },

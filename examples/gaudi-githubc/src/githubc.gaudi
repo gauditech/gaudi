@@ -10,7 +10,7 @@ model Org {
         type text
         validate {
             hook {
-                arg name default
+                default arg name
                 source noUnicode from "githubc.js"
             }
         }
@@ -20,7 +20,7 @@ model Org {
         unique,
         validate {
             hook noSpace { // hook can be named for documentation. Maybe use the name for hook code?
-                arg slug default
+                default arg slug
                 inline `!/\s/.test(slug)`
             }
         }

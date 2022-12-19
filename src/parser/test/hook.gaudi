@@ -3,7 +3,7 @@ model User {
     type text
     validate {
       hook {
-        arg fieldOne default
+        default arg fieldOne
         source foo from "customValidateHook"
       }
     }
@@ -12,7 +12,7 @@ model User {
     type text
     validate {
       hook {
-        arg fieldTwo default
+        default arg fieldTwo
         inline `
           return fieldTwo.toLowerCase() === "something";
         `
