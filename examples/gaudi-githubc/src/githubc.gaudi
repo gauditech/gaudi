@@ -102,16 +102,7 @@ entrypoint Orgs {
 
         get endpoint {}
         list endpoint {}
-        create endpoint {
-            action {
-                create {
-                    set slug hook {
-                        arg org org.name
-                        source randomSlug from "githubc.js"
-                    }
-                }
-            }
-        }
+        create endpoint {}
         update endpoint {}
         delete endpoint {}
     }

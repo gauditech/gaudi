@@ -471,7 +471,6 @@ function getActionSetters(
       }
       case "reference": {
         const path = atom.set.reference;
-        // support both `set item item` and `set item_id item.id`
 
         const typedPath = getTypedPathWithLeaf(def, path, ctx);
         const ref = getRef2(def, model.name, atom.target);

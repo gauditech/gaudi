@@ -250,7 +250,6 @@ function compileAction(action: ActionBodyAST): ActionSpec {
       case "reference":
         return a;
       case "set": {
-        // action AST and Spec are currently the same
         const set =
           a.set.kind === "hook" ? { kind: a.set.kind, hook: compileActionHook(a.set.hook) } : a.set;
         return { ...a, set };
