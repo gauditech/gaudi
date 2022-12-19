@@ -69,6 +69,12 @@ function parseArguments(config: EngineConfig) {
       command: "dev",
       describe: "Start project dev builder which rebuilds project on detected source changes.",
       handler: (args) => devCommandHandler(args, config),
+      builder: (yargs) =>
+        yargs.option("gaudi-dev", {
+          hidden: true, // this is hidden option for devloping gaudi itself
+          type: "boolean",
+          description: "Watch additional Gaudi resources when developing Gaudi itself",
+        }),
     })
     .command({
       command: "start",
@@ -158,8 +164,18 @@ async function buildCommandHandler(args: ArgumentsCamelCase, config: EngineConfi
 
 // --- dev command
 
-async function devCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+type DevOptions = {
+  /** Gaudi dev mode */
+  gaudiDev?: boolean;
+};
+
+async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: EngineConfig) {
   console.log("Starting project dev build ...");
+  if (args.gaudiDev) {
+    console.log(
+      "Gaudi dev mode enabled. Please make sure 'node_modules/@gaudi' resources can be watched by chokidar/nodemon."
+    );
+  }
 
   const children: Stoppable[] = [];
 
@@ -187,7 +203,10 @@ async function devCommandHandler(args: ArgumentsCamelCase, config: EngineConfig)
   children.push(watchStartCommand(args, config));
 }
 
-function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+function watchCompileCommand(
+  args: ArgumentsCamelCase<DevOptions>,
+  config: EngineConfig
+): Stoppable {
   // create async queue to serialize multiple command calls
   const enqueue = createAsyncQueueContext();
 
@@ -195,10 +214,11 @@ function watchCompileCommand(args: ArgumentsCamelCase, config: EngineConfig): St
     enqueue(() => compile(args, config).start());
   };
 
-  const resources = [
+  const resources = _.compact([
     // compiler input path
     path.join(config.inputPath),
-  ];
+    args.gaudiDev ? "./node_modules/@gaudi/engine/" : null,
+  ]);
 
   return watchResources(resources, run);
 }
@@ -236,7 +256,7 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
   return watchResources(resources, run);
 }
 
-function watchStartCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineConfig): Stoppable {
   // no need for async enqueueing since `nodemon` is a long running process and we cannot await for it to finish
 
   const command = start(args, config);
@@ -251,10 +271,11 @@ function watchStartCommand(args: ArgumentsCamelCase, config: EngineConfig): Stop
     }
   };
 
-  const resources = [
+  const resources = _.compact([
     // gaudi output folder
     path.join(config.outputFolder),
-  ];
+    args.gaudiDev ? "./node_modules/@gaudi/engine/runtime" : null,
+  ]);
 
   // use our resource watcher instead of `nodemon`'s watching to keep to consistent
   const watcher = watchResources(resources, run);
