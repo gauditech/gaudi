@@ -20,3 +20,17 @@ model User {
     }
   }
 }
+
+entrypoint UserEntry {
+  target model User
+  create endpoint {
+    action {
+      create {
+        set fieldOne hook {
+          arg second fieldTwo
+          source foo from "customHook"
+        }
+      }
+    }
+  }
+}

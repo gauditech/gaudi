@@ -90,6 +90,10 @@ entrypoint Orgs {
       action {
         create repo {
           set latest_num 0
+          set slug hook {
+            arg org org.name
+            source randomSlug from "hooks.js"
+          }
         }
       }
     }

@@ -554,7 +554,72 @@ exports[`parser blueprint test/git.gaudi 1`] = `
 
 exports[`parser blueprint test/hook.gaudi 1`] = `
 {
-  "entrypoints": [],
+  "entrypoints": [
+    {
+      "endpoints": [
+        {
+          "action": [
+            {
+              "actionAtoms": [
+                {
+                  "interval": {
+                    "endIdx": 558,
+                    "startIdx": 460,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "hook": {
+                      "args": {
+                        "second": {
+                          "kind": "reference",
+                          "reference": [
+                            "fieldTwo",
+                          ],
+                        },
+                      },
+                      "code": {
+                        "file": "customHook",
+                        "kind": "source",
+                        "target": "foo",
+                      },
+                      "interval": {
+                        "endIdx": 558,
+                        "startIdx": 473,
+                      },
+                      "name": undefined,
+                    },
+                    "kind": "hook",
+                  },
+                  "target": "fieldOne",
+                },
+              ],
+              "alias": undefined,
+              "kind": "create",
+              "targetPath": undefined,
+            },
+          ],
+          "interval": {
+            "endIdx": 576,
+            "startIdx": 406,
+          },
+          "type": "create",
+        },
+      ],
+      "entrypoints": [],
+      "identify": undefined,
+      "interval": {
+        "endIdx": 578,
+        "startIdx": 361,
+      },
+      "name": "UserEntry",
+      "response": undefined,
+      "target": {
+        "alias": undefined,
+        "identifier": "User",
+        "kind": "model",
+      },
+    },
+  ],
   "models": [
     {
       "alias": undefined,
