@@ -4,7 +4,7 @@ model Org {
     type text
     validate {
       hook {
-        arg name
+        default arg name
         source noUnicode from "hooks.js"
       }
     }
@@ -14,7 +14,7 @@ model Org {
     unique
     validate {
       hook noSpace {
-        arg slug
+        default arg slug
         inline `!/\s/.test(slug)`
       }
     }
@@ -90,6 +90,10 @@ entrypoint Orgs {
       action {
         create repo {
           set latest_num 0
+          set slug hook {
+            arg org org.name
+            source randomSlug from "hooks.js"
+          }
         }
       }
     }

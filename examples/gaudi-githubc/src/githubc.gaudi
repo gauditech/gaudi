@@ -10,7 +10,7 @@ model Org {
         type text
         validate {
             hook {
-                arg name
+                default arg name
                 source noUnicode from "githubc.js"
             }
         }
@@ -20,7 +20,7 @@ model Org {
         unique,
         validate {
             hook noSpace { // hook can be named for documentation. Maybe use the name for hook code?
-                arg slug
+                default arg slug
                 inline `!/\s/.test(slug)`
             }
         }
@@ -87,7 +87,7 @@ model UserAccessToken {
 // ----- entrypoints
 
 entrypoint Orgs {
-    target model Org
+    target model Org as org
     identify with slug
     response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, nameAndDesc }
 

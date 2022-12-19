@@ -3,7 +3,7 @@ import _ from "lodash";
 import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual, ensureThrow } from "@src/common/utils";
+import { ensureEqual, ensureThrow } from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -446,6 +446,7 @@ function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: st
   };
   return setter;
 }
+
 /**
  * Creates a `Changeset` containing `reference-value` and `value` FieldSetter definitions
  * based on the action spec.
@@ -456,49 +457,53 @@ function getActionSetters(
   model: ModelDef,
   ctx: VarContext
 ): Changeset {
+  function toFieldSetter(atom: ActionAtomSpecSet): [string, FieldSetter] {
+    switch (atom.set.kind) {
+      case "hook": {
+        const args = _.chain(atom.set.hook.args)
+          .mapValues((arg) => toFieldSetter({ kind: "set", target: atom.target, set: arg })[1])
+          .value();
+        return [atom.target, { kind: "fieldset-hook", code: atom.set.hook.code, args }];
+      }
+      case "literal": {
+        const typedVal = getTypedLiteralValue(atom.set.value);
+        return [atom.target, typedVal];
+      }
+      case "reference": {
+        const path = atom.set.reference;
+
+        const typedPath = getTypedPathWithLeaf(def, path, ctx);
+        const ref = getRef2(def, model.name, atom.target);
+        // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
+        let targetField: FieldDef;
+        switch (ref.kind) {
+          case "field": {
+            targetField = ref.value;
+            break;
+          }
+          case "reference": {
+            targetField = getRef2.field(def, ref.value.fieldRefKey);
+            break;
+          }
+          default: {
+            throw new Error(`Cannot set a value from a ${ref.kind}`);
+          }
+        }
+
+        const namePath = typedPath.nodes.map((p) => p.name);
+        const access = [...namePath, typedPath.leaf.name];
+        const { value: field } = getRef<"field">(def, typedPath.leaf.refKey);
+        return [
+          targetField.name,
+          { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
+        ];
+      }
+    }
+  }
+
   const pairs = spec.actionAtoms
     .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
-    .map((atom): [string, FieldSetter] => {
-      switch (atom.set.kind) {
-        case "literal": {
-          const typedVal = getTypedLiteralValue(atom.set.value);
-          return [atom.target, typedVal];
-        }
-        case "reference": {
-          const path = atom.set.reference;
-          // support both `set item item` and `set item_id item.id`
-
-          const typedPath = getTypedPathWithLeaf(def, path, ctx);
-          const ref = getRef2(def, model.name, atom.target);
-          // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
-          let targetField: FieldDef;
-          switch (ref.kind) {
-            case "field": {
-              targetField = ref.value;
-              break;
-            }
-            case "reference": {
-              targetField = getRef2.field(def, ref.value.fieldRefKey);
-              break;
-            }
-            default: {
-              throw new Error(`Cannot set a value from a ${ref.kind}`);
-            }
-          }
-
-          const namePath = typedPath.nodes.map((p) => p.name);
-          const access = [...namePath, typedPath.leaf.name];
-          const { value: field } = getRef<"field">(def, typedPath.leaf.refKey);
-          return [
-            targetField.name,
-            { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
-          ];
-        }
-        default: {
-          assertUnreachable(atom.set);
-        }
-      }
-    });
+    .map(toFieldSetter);
   const duplicates = _.chain(pairs)
     .countBy(_.first)
     .toPairs()

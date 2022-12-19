@@ -381,6 +381,16 @@ export type FieldSetterReferenceInput = {
   // required: boolean;
 };
 
+export type FieldSetterHook = {
+  kind: "fieldset-hook";
+  code: HookCode;
+  args: Changeset;
+};
+
 export type FieldSetter =
   // TODO add composite expression setter
-  LiteralValueDef | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
+  | LiteralValueDef
+  | FieldSetterReferenceValue
+  | FieldSetterInput
+  | FieldSetterReferenceInput
+  | FieldSetterHook;

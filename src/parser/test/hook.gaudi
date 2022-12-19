@@ -3,7 +3,7 @@ model User {
     type text
     validate {
       hook {
-        arg fieldOne
+        default arg fieldOne
         source foo from "customValidateHook"
       }
     }
@@ -12,10 +12,24 @@ model User {
     type text
     validate {
       hook {
-        arg fieldTwo
+        default arg fieldTwo
         inline `
           return fieldTwo.toLowerCase() === "something";
         `
+      }
+    }
+  }
+}
+
+entrypoint UserEntry {
+  target model User
+  create endpoint {
+    action {
+      create {
+        set fieldOne hook {
+          arg second fieldTwo
+          source foo from "customHook"
+        }
       }
     }
   }

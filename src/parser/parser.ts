@@ -307,18 +307,35 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  HookBody_argument_query(this, _arg, identifier, query): HookBodyAST {
+  HookBody_argument_default(this, _default, _arg, identifier): HookBodyAST {
     return {
       kind: "arg",
-      reference: identifier.parse(),
-      query: query.parse(),
+      name: identifier.parse(),
+      value: { kind: "default" },
       interval: this.source,
     };
   },
-  HookBody_argument(this, _arg, identifier): HookBodyAST {
+  HookBody_argument_query(this, _arg, identifier, query): HookBodyAST {
     return {
       kind: "arg",
-      reference: identifier.parse(),
+      name: identifier.parse(),
+      value: { kind: "query", query: query.parse() },
+      interval: this.source,
+    };
+  },
+  HookBody_argument_literal(this, _arg, identifier, literal): HookBodyAST {
+    return {
+      kind: "arg",
+      name: identifier.parse(),
+      value: { kind: "literal", literal: literal.parse() },
+      interval: this.source,
+    };
+  },
+  HookBody_argument_reference(this, _arg, identifier, reference): HookBodyAST {
+    return {
+      kind: "arg",
+      name: identifier.parse(),
+      value: { kind: "reference", reference: reference.parse() },
       interval: this.source,
     };
   },
@@ -359,6 +376,14 @@ semantics.addOperation("parse()", {
       target: name.parse(),
       alias: alias.parse(),
       body: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionAtomBody_set_hook(this, _set, identifier, hook): ActionAtomBodyAST {
+    return {
+      kind: "set",
+      target: identifier.parse(),
+      set: { kind: "hook", hook: hook.parse() },
       interval: this.source,
     };
   },

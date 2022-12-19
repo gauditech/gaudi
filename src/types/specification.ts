@@ -100,11 +100,6 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecInput
 >;
 
-export type BaseHookSpec = WithContext<{
-  name?: string;
-  code: HookCode;
-}>;
-
 export type HookCode =
   | { kind: "inline"; inline: string }
   | { kind: "source"; target: string; file: string };
@@ -112,7 +107,10 @@ export type HookCode =
 export type ActionAtomSpecSet = {
   kind: "set";
   target: string;
-  set: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+  set:
+    | { kind: "hook"; hook: ActionHookSpec }
+    | { kind: "literal"; value: LiteralValue }
+    | { kind: "reference"; reference: string[] };
 };
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
@@ -124,11 +122,9 @@ export type InputFieldSpec = {
   default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 
-export type HookSpec = WithContext<{
-  name: string;
-  args: { name: string; type: string }[];
-  returnType: string;
-  inlineBody: string;
+export type BaseHookSpec = WithContext<{
+  name?: string;
+  code: HookCode;
 }>;
 
 export type FieldValidatorHookSpec = BaseHookSpec & {
@@ -138,4 +134,11 @@ export type FieldValidatorHookSpec = BaseHookSpec & {
 export type ModelHookSpec = BaseHookSpec & {
   name: string;
   args: { name: string; query: QuerySpec }[];
+};
+
+export type ActionHookSpec = BaseHookSpec & {
+  args: Record<
+    string,
+    { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] }
+  >;
 };
