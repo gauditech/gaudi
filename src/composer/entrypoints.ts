@@ -243,7 +243,7 @@ function processEndpoints(
   });
 }
 
-function processSelect(
+export function processSelect(
   models: ModelDef[],
   model: ModelDef,
   selectAST: SelectAST | undefined,
@@ -282,6 +282,15 @@ function processSelect(
           alias: name,
           namePath: [...namePath, name],
           refKey: ref.value.refKey,
+        };
+      } else if (ref.kind === "hook") {
+        return {
+          kind: ref.kind,
+          name,
+          alias: name,
+          namePath: [...namePath, name],
+          args: ref.value.args,
+          code: ref.value.code,
         };
       } else {
         ensureNot(ref.kind, "model" as const);
@@ -409,18 +418,21 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
     .value();
   // collect all targets
   const setterTargets = nonDeleteActions.flatMap((a) => {
-    return _.compact(
-      Object.values(a.changeset).map((setter) => {
-        switch (setter.kind) {
-          case "reference-value": {
-            return setter.target;
-          }
-          default: {
-            return null;
-          }
+    return Object.values(a.changeset).flatMap((setter) => {
+      switch (setter.kind) {
+        case "reference-value": {
+          return [setter.target];
         }
-      })
-    );
+        case "fieldset-hook": {
+          return Object.values(setter.args).flatMap((setter) =>
+            setter.kind === "reference-value" ? [setter.target] : []
+          );
+        }
+        default: {
+          return [];
+        }
+      }
+    });
   });
   return [...setterTargets, ...targetPaths];
 }
@@ -438,7 +450,7 @@ function wrapTargetsWithSelect(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
     const model = getRef2.model(def, target.retType);
-    const select = pathsToSelectDef(def, model, paths, [target.alias]);
+    const select = pathsToSelectDef(def, model, paths, target.namePath);
     return { ...target, select };
   });
 }

@@ -80,7 +80,8 @@
           "unique": false
         }
       ],
-      "queries": []
+      "queries": [],
+      "hooks": []
     },
     {
       "refKey": "Repo",
@@ -161,7 +162,8 @@
         }
       ],
       "relations": [],
-      "queries": []
+      "queries": [],
+      "hooks": []
     }
   ],
   "entrypoints": [],

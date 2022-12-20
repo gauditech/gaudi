@@ -7,12 +7,12 @@ exports[`populator succeeds for fixed iteration 1`] = `
     {
       "changeset": {
         "is_new": {
-          "kind": "value",
+          "kind": "literal",
           "type": "boolean",
           "value": true,
         },
         "name": {
-          "kind": "value",
+          "kind": "literal",
           "type": "text",
           "value": "test name",
         },
@@ -45,12 +45,12 @@ exports[`populator succeeds for nested iterations 1`] = `
     {
       "changeset": {
         "is_new": {
-          "kind": "value",
+          "kind": "literal",
           "type": "boolean",
           "value": true,
         },
         "name": {
-          "kind": "value",
+          "kind": "literal",
           "type": "text",
           "value": "test name",
         },
@@ -60,7 +60,7 @@ exports[`populator succeeds for nested iterations 1`] = `
         {
           "changeset": {
             "name": {
-              "kind": "value",
+              "kind": "literal",
               "type": "text",
               "value": "test name",
             },
@@ -120,12 +120,12 @@ exports[`populator succeeds for nested populators 1`] = `
     {
       "changeset": {
         "is_new": {
-          "kind": "value",
+          "kind": "literal",
           "type": "boolean",
           "value": true,
         },
         "name": {
-          "kind": "value",
+          "kind": "literal",
           "type": "text",
           "value": "test name",
         },
@@ -135,7 +135,7 @@ exports[`populator succeeds for nested populators 1`] = `
         {
           "changeset": {
             "name": {
-              "kind": "value",
+              "kind": "literal",
               "type": "text",
               "value": "test name",
             },
@@ -165,7 +165,7 @@ exports[`populator succeeds for nested populators 1`] = `
                   "type": "integer",
                 },
                 "title": {
-                  "kind": "value",
+                  "kind": "literal",
                   "type": "text",
                   "value": "test title",
                 },
@@ -233,12 +233,12 @@ exports[`populator succeeds for range iteration (only max) 1`] = `
     {
       "changeset": {
         "is_new": {
-          "kind": "value",
+          "kind": "literal",
           "type": "boolean",
           "value": true,
         },
         "name": {
-          "kind": "value",
+          "kind": "literal",
           "type": "text",
           "value": "test name",
         },
@@ -271,12 +271,12 @@ exports[`populator succeeds for range iteration 1`] = `
     {
       "changeset": {
         "is_new": {
-          "kind": "value",
+          "kind": "literal",
           "type": "boolean",
           "value": true,
         },
         "name": {
-          "kind": "value",
+          "kind": "literal",
           "type": "text",
           "value": "test name",
         },
@@ -309,12 +309,12 @@ exports[`populator succeeds for simple populator 1`] = `
     {
       "changeset": {
         "is_new": {
-          "kind": "value",
+          "kind": "literal",
           "type": "boolean",
           "value": true,
         },
         "name": {
-          "kind": "value",
+          "kind": "literal",
           "type": "text",
           "value": "test name",
         },

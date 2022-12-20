@@ -2,6 +2,7 @@ import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
 import { assertUnreachable } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
+import { executeHook } from "@src/runtime/hooks";
 import { Changeset, FieldDef } from "@src/types/definition";
 
 /**
@@ -16,7 +17,7 @@ export function buildChangset(
     .map(([name, setter]) => {
       // TODO: format values by type
       const setterKind = setter.kind;
-      if (setterKind === "value") {
+      if (setterKind === "literal") {
         return [name, setter.type === "null" ? null : formatFieldValue(setter.value, setter.type)];
       } else if (setterKind === "fieldset-input") {
         return [
@@ -31,6 +32,9 @@ export function buildChangset(
       } else if (setterKind === "fieldset-reference-input") {
         // TODO: implement "fieldset-reference-input" setters
         throw `Unsupported changeset setter kind "${setterKind}"`;
+      } else if (setterKind === "fieldset-hook") {
+        const args = buildChangset(setter.args, actionContext);
+        return [name, executeHook(setter.code, args)];
       } else {
         assertUnreachable(setterKind);
       }

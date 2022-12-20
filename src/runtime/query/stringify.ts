@@ -39,7 +39,7 @@ function selectableToString(def: Definition, select: SelectableItem[]) {
   return select
     .map((item) => {
       const { value: field } = getRef<"field">(def, item.refKey);
-      return `${namePathToAlias(_.initial(item.namePath))}.${field.dbname} AS ${item.alias}`;
+      return `${namePathToAlias(_.initial(item.namePath))}."${field.dbname}" AS "${item.alias}"`;
     })
     .join(", ");
 }
@@ -69,7 +69,7 @@ function filterToString(filter: FilterDef): string {
     case "alias": {
       const np = filter.namePath.slice(0, filter.namePath.length - 1);
       const f = filter.namePath.at(filter.namePath.length - 1);
-      return `${namePathToAlias(np)}.${f}`;
+      return `${namePathToAlias(np)}."${f}"`;
     }
     case "binary": {
       const fstr = `${filterToString(filter.lhs)} ${opToString(filter.operator)} ${filterToString(
@@ -152,7 +152,7 @@ export function mkJoinConnection(model: ModelDef): SelectFieldItem {
   return {
     kind: "field",
     refKey: `${model.name}.id`,
-    alias: '"__join_connection"',
+    alias: "__join_connection",
     name: "id",
     namePath: [model.name, "id"],
   };
@@ -177,7 +177,7 @@ function getJoinNames(def: Definition, refKey: string): { from: string; to: stri
       return { from: refField.name, to: field.name };
     }
     case "query": {
-      return { from: "id", to: '"__join_connection"' };
+      return { from: "id", to: "__join_connection" };
     }
     default:
       throw new Error(`Kind ${prop.kind} not supported`);

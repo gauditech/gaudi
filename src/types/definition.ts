@@ -1,4 +1,5 @@
 import { BinaryOperator } from "./ast";
+import { HookCode } from "./specification";
 
 import { RefKind } from "@src/common/refs";
 
@@ -16,6 +17,7 @@ export type ModelDef = {
   references: ReferenceDef[];
   relations: RelationDef[];
   queries: QueryDef[];
+  hooks: ModelHookDef[];
 };
 
 export type FieldType = "integer" | "text" | "boolean";
@@ -74,6 +76,13 @@ export type QueryDef = {
   // count?: true;
 };
 
+export type ModelHookDef = {
+  refKey: string;
+  name: string;
+  args: { name: string; query: QueryDef }[];
+  code: HookCode;
+};
+
 export type QueryDefPath = {
   kind: Extract<RefKind, "reference" | "relation" | "query">;
   refKey: string;
@@ -90,11 +99,11 @@ export type QueryDefPath = {
 export type FilterDef =
   | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
   | { kind: "alias"; namePath: string[] }
-  | LiteralFilterDef
+  | LiteralValueDef
   | { kind: "variable"; type: "integer" | "list-integer" | "text" | "boolean"; name: string }
   | undefined;
 
-export type LiteralFilterDef =
+export type LiteralValueDef =
   | { kind: "literal"; type: "integer"; value: number }
   | { kind: "literal"; type: "null"; value: null }
   | { kind: "literal"; type: "text"; value: string }
@@ -194,6 +203,15 @@ export type SelectFieldItem = {
   alias: string;
 };
 
+export type SelectHookItem = {
+  kind: "hook";
+  name: string;
+  alias: string;
+  namePath: string[];
+  args: { name: string; query: QueryDef }[];
+  code: HookCode;
+};
+
 export type DeepSelectItem = {
   kind: "reference" | "relation" | "query";
   name: string;
@@ -204,7 +222,7 @@ export type DeepSelectItem = {
   select: SelectItem[];
 };
 
-export type SelectItem = SelectableItem | DeepSelectItem;
+export type SelectItem = SelectableItem | DeepSelectItem | SelectHookItem;
 
 export type SelectDef = SelectItem[];
 
@@ -238,7 +256,8 @@ export type ValidatorDef =
   | MaxIntValidator
   | IsBooleanEqual
   | IsIntEqual
-  | IsTextEqual;
+  | IsTextEqual
+  | HookValidator;
 
 export const ValidatorDefinition = [
   ["text", "max", "maxLength", ["integer"]],
@@ -296,6 +315,11 @@ export interface IsTextEqual extends IValidatorDef {
   inputType: "text";
   args: [TextConst];
 }
+export interface HookValidator {
+  name: "hook";
+  arg?: string;
+  code: HookCode;
+}
 
 export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;
 type BoolConst = { type: "boolean"; value: boolean };
@@ -336,9 +360,6 @@ export type DeleteManyAction = {
 };
 
 export type Changeset = Record<string, FieldSetter>;
-export type FieldSetter =
-  // TODO add composite expression setter
-  FieldSetterValue | FieldSetterReferenceValue | FieldSetterInput | FieldSetterReferenceInput;
 
 // need this exported for TypedContextPath;
 type IdentifierDefGen<K> = { kind: K; name: string; refKey: string };
@@ -348,12 +369,6 @@ export type IdentifierDef =
   | IdentifierDefGen<"query" | "relation" | "reference">
   | IdentifierDefField
   | IdentifierDefModel;
-
-export type FieldSetterValue =
-  | { kind: "value"; type: "text"; value: string }
-  | { kind: "value"; type: "boolean"; value: boolean }
-  | { kind: "value"; type: "integer"; value: number }
-  | { kind: "value"; type: "null"; value: null };
 
 export type FieldSetterReferenceValue = {
   kind: "reference-value";
@@ -366,7 +381,7 @@ export type FieldSetterInput = {
   type: FieldDef["type"];
   fieldsetAccess: string[];
   required: boolean;
-  default?: FieldSetterValue | FieldSetterReferenceValue;
+  default?: LiteralValueDef | FieldSetterReferenceValue;
 };
 
 export type FieldSetterReferenceInput = {
@@ -403,6 +418,20 @@ export type PopulateRepeatDef = { alias?: string; min: number; max: number };
 export type PopulateChangeset = Record<string, PopulateSetter>;
 
 // TODO: this is very much alike to `FieldSetter` def
-export type PopulateSetter = FieldSetterValue | FieldSetterReferenceValue;
-// TODO: add hints
-// TODO: add hooks
+export type PopulateSetter = LiteralValueDef | FieldSetterReferenceValue;
+// TODO: add populator hints
+// TODO: add populator hooks
+
+export type FieldSetterHook = {
+  kind: "fieldset-hook";
+  code: HookCode;
+  args: Changeset;
+};
+
+export type FieldSetter =
+  // TODO add composite expression setter
+  | LiteralValueDef
+  | FieldSetterReferenceValue
+  | FieldSetterInput
+  | FieldSetterReferenceInput
+  | FieldSetterHook;

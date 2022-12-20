@@ -5,7 +5,6 @@ import { WithContext } from "@src/common/error";
 export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
-  hooks: HookSpec[];
   populators: PopulatorSpec[];
 };
 
@@ -17,6 +16,7 @@ export type ModelSpec = WithContext<{
   relations: RelationSpec[];
   queries: QuerySpec[];
   computeds: ComputedSpec[];
+  hooks: ModelHookSpec[];
 }>;
 
 export type FieldSpec = WithContext<{
@@ -25,10 +25,13 @@ export type FieldSpec = WithContext<{
   default?: LiteralValue;
   unique?: boolean;
   nullable?: boolean;
-  validators?: Validator[];
+  validators?: ValidatorSpec[];
 }>;
 
-export type Validator = WithContext<{ name: string; args: LiteralValue[] }>;
+export type ValidatorSpec = WithContext<
+  | { kind: "hook"; hook: FieldValidatorHookSpec }
+  | { kind: "builtin"; name: string; args: LiteralValue[] }
+>;
 export type ReferenceSpec = WithContext<{
   name: string;
   toModel: string;
@@ -49,6 +52,7 @@ export type QuerySpec = WithContext<{
   filter?: ExpSpec;
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;
+  select?: SelectAST;
 }>;
 
 export type ComputedSpec = WithContext<{
@@ -97,10 +101,17 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecInput
 >;
 
+export type HookCode =
+  | { kind: "inline"; inline: string }
+  | { kind: "source"; target: string; file: string };
+
 export type ActionAtomSpecSet = {
   kind: "set";
   target: string;
-  set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+  set:
+    | { kind: "hook"; hook: ActionHookSpec }
+    | { kind: "literal"; value: LiteralValue }
+    | { kind: "reference"; reference: string[] };
 };
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
@@ -109,14 +120,12 @@ export type ActionAtomSpecInput = { kind: "input"; fields: InputFieldSpec[] };
 export type InputFieldSpec = {
   name: string;
   optional: boolean;
-  default?: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+  default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 
-export type HookSpec = WithContext<{
-  name: string;
-  args: { name: string; type: string }[];
-  returnType: string;
-  inlineBody: string;
+export type BaseHookSpec = WithContext<{
+  name?: string;
+  code: HookCode;
 }>;
 
 export type PopulatorSpec = WithContext<{
@@ -141,5 +150,21 @@ export type PopulateRepeatSpec = WithContext<
 export type PopulateSetterSpec = WithContext<{
   kind: "set";
   target: string;
-  set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string };
+  set: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string };
 }>;
+
+export type FieldValidatorHookSpec = BaseHookSpec & {
+  arg?: string;
+};
+
+export type ModelHookSpec = BaseHookSpec & {
+  name: string;
+  args: { name: string; query: QuerySpec }[];
+};
+
+export type ActionHookSpec = BaseHookSpec & {
+  args: Record<
+    string,
+    { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] }
+  >;
+};

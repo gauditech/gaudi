@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | HookAST | PopulatorAST;
+export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -11,7 +11,7 @@ export type ModelAST = WithContext<{
   body: ModelBodyAST[];
 }>;
 
-export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST;
+export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST | HookAST;
 
 export type FieldAST = WithContext<{
   kind: "field";
@@ -23,10 +23,12 @@ export type FieldBodyAST = WithContext<
   | { kind: "type"; type: string }
   | { kind: "default"; default: LiteralValue }
   | { kind: "tag"; tag: FieldTag }
-  | { kind: "validate"; validators: Validator[] }
+  | { kind: "validate"; validators: ValidatorAST[] }
 >;
 
-export type Validator = WithContext<{ name: string; args: LiteralValue[] }>;
+export type ValidatorAST = WithContext<
+  { kind: "hook"; hook: HookAST } | { kind: "builtin"; name: string; args: LiteralValue[] }
+>;
 
 export type FieldTag = "nullable" | "unique";
 
@@ -63,6 +65,7 @@ export type QueryBodyAST = WithContext<
   | { kind: "filter"; filter: ExpAST }
   | { kind: "orderBy"; orderings: QueryOrderAST[] }
   | { kind: "limit"; limit: number }
+  | { kind: "select"; select: SelectAST }
 >;
 
 export type QueryOrderAST = WithContext<{ field: string[]; order?: "asc" | "desc" }>;
@@ -122,7 +125,10 @@ export type ActionAtomBodyAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set: { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string[] };
+      set:
+        | { kind: "hook"; hook: HookAST }
+        | { kind: "literal"; value: LiteralValue }
+        | { kind: "reference"; reference: string[] };
     }
   | { kind: "reference"; target: string; through: string }
   | { kind: "input"; fields: InputFieldAST[] }
@@ -143,15 +149,28 @@ export type InputFieldOptAST = WithContext<
 
 export type HookAST = WithContext<{
   kind: "hook";
-  name: string;
+  name?: string;
   body: HookBodyAST[];
 }>;
 
 export type HookBodyAST = WithContext<
-  | { kind: "arg"; name: string; type: string }
+  | { kind: "arg"; name: string; value: HookArgValueAST }
   | { kind: "returnType"; type: string }
-  | { kind: "inlineBody"; inlineBody: string }
+  | { kind: "source"; target: string; file: string }
+  | { kind: "inline"; inline: string }
 >;
+
+export type HookArgValueAST = WithContext<
+  | { kind: "query"; query: HookQueryAST }
+  | { kind: "literal"; literal: LiteralValue }
+  | { kind: "reference"; reference: string[] }
+  | { kind: "default" }
+>;
+
+export type HookQueryAST = WithContext<{
+  kind: "query";
+  body: QueryBodyAST[];
+}>;
 
 export type LiteralValue = null | boolean | number | string;
 
@@ -191,7 +210,7 @@ export type PopulateBodyAST = WithContext<
 >;
 
 export type PopulateSetterValueAST = WithContext<
-  { kind: "value"; value: LiteralValue } | { kind: "reference"; reference: string }
+  { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string }
 >;
 
 export type PopulateRepeatAST = WithContext<

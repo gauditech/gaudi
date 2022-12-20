@@ -11,7 +11,8 @@
       "references": [],
       "relations": [{ "name": "repos", "fromModel": "Repo", "through": "org" }],
       "queries": [],
-      "computeds": []
+      "computeds": [],
+      "hooks": []
     },
     {
       "name": "Repo",
@@ -23,7 +24,8 @@
       "references": [{ "name": "org", "toModel": "Org" }],
       "relations": [],
       "queries": [],
-      "computeds": []
+      "computeds": [],
+      "hooks": []
     }
   ],
   "entrypoints": [],

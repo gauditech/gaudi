@@ -13,7 +13,7 @@ describe("runtime", () => {
   describe("changeset", () => {
     it("build action changeset object", () => {
       const data: Changeset = {
-        value_prop: { kind: "value", value: "just value", type: "text" },
+        value_prop: { kind: "literal", value: "just value", type: "text" },
 
         input_prop: {
           fieldsetAccess: ["input_prop"],

@@ -95,6 +95,7 @@ function calculateTarget(
       }
       case "field":
       case "model":
+      case "hook":
       case "query": {
         throw `Unsupported populate target "${prop.kind}"`;
       }
@@ -193,11 +194,11 @@ function composeSetters(
     _.chain(populateSpec.setters)
       .map((setter): PopulateChangeset => {
         const setterKind = setter.set.kind;
-        if (setterKind === "value") {
+        if (setterKind === "literal") {
           return {
             [setter.target]: {
               ...getTypedLiteralValue(setter.set.value),
-              kind: "value",
+              kind: "literal",
             },
           };
         } else if (setterKind === "reference") {

@@ -1,8 +1,36 @@
-hook compareLower {
-  arg first text
-  arg second text
-  returns text
-  inline `
-    return first.toLowerCase() === second.toLowerCase();
-  `
+model User {
+  field fieldOne {
+    type text
+    validate {
+      hook {
+        default arg fieldOne
+        source foo from "customValidateHook"
+      }
+    }
+  }
+  field fieldTwo {
+    type text
+    validate {
+      hook {
+        default arg fieldTwo
+        inline `
+          return fieldTwo.toLowerCase() === "something";
+        `
+      }
+    }
+  }
+}
+
+entrypoint UserEntry {
+  target model User
+  create endpoint {
+    action {
+      create {
+        set fieldOne hook {
+          arg second fieldTwo
+          source foo from "customHook"
+        }
+      }
+    }
+  }
 }

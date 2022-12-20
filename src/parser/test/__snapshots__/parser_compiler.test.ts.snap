@@ -3,7 +3,6 @@
 exports[`parser blueprint test/computed.gaudi 1`] = `
 {
   "entrypoints": [],
-  "hooks": [],
   "models": [
     {
       "alias": undefined,
@@ -12,11 +11,6 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
           "exp": {
             "interval": {
               "endIdx": 113,
-              "sourceString": "model Vehicle {
-  field serial_number { type text, nullable }
-  computed is_registred { serial_number is not null }
-}
-",
               "startIdx": 88,
             },
             "kind": "binary",
@@ -26,11 +20,6 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
               ],
               "interval": {
                 "endIdx": 101,
-                "sourceString": "model Vehicle {
-  field serial_number { type text, nullable }
-  computed is_registred { serial_number is not null }
-}
-",
                 "startIdx": 88,
               },
               "kind": "identifier",
@@ -39,11 +28,6 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
             "rhs": {
               "interval": {
                 "endIdx": 113,
-                "sourceString": "model Vehicle {
-  field serial_number { type text, nullable }
-  computed is_registred { serial_number is not null }
-}
-",
                 "startIdx": 109,
               },
               "kind": "literal",
@@ -52,11 +36,6 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
           },
           "interval": {
             "endIdx": 115,
-            "sourceString": "model Vehicle {
-  field serial_number { type text, nullable }
-  computed is_registred { serial_number is not null }
-}
-",
             "startIdx": 64,
           },
           "name": "is_registred",
@@ -67,11 +46,6 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
           "default": undefined,
           "interval": {
             "endIdx": 61,
-            "sourceString": "model Vehicle {
-  field serial_number { type text, nullable }
-  computed is_registred { serial_number is not null }
-}
-",
             "startIdx": 18,
           },
           "name": "serial_number",
@@ -81,13 +55,9 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 117,
-        "sourceString": "model Vehicle {
-  field serial_number { type text, nullable }
-  computed is_registred { serial_number is not null }
-}
-",
         "startIdx": 0,
       },
       "name": "Vehicle",
@@ -103,7 +73,6 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
 exports[`parser blueprint test/default.gaudi 1`] = `
 {
   "entrypoints": [],
-  "hooks": [],
   "models": [
     {
       "alias": undefined,
@@ -113,12 +82,6 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "default": "car",
           "interval": {
             "endIdx": 57,
-            "sourceString": "model Vehicle {
-  field type { type text, default "car" }
-  field active { type boolean, default true }
-  field make { type text, nullable, default null }
-}
-",
             "startIdx": 18,
           },
           "name": "type",
@@ -131,12 +94,6 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "default": true,
           "interval": {
             "endIdx": 103,
-            "sourceString": "model Vehicle {
-  field type { type text, default "car" }
-  field active { type boolean, default true }
-  field make { type text, nullable, default null }
-}
-",
             "startIdx": 60,
           },
           "name": "active",
@@ -149,12 +106,6 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "default": null,
           "interval": {
             "endIdx": 154,
-            "sourceString": "model Vehicle {
-  field type { type text, default "car" }
-  field active { type boolean, default true }
-  field make { type text, nullable, default null }
-}
-",
             "startIdx": 106,
           },
           "name": "make",
@@ -164,14 +115,9 @@ exports[`parser blueprint test/default.gaudi 1`] = `
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 156,
-        "sourceString": "model Vehicle {
-  field type { type text, default "car" }
-  field active { type boolean, default true }
-  field make { type text, nullable, default null }
-}
-",
         "startIdx": 0,
       },
       "name": "Vehicle",
@@ -193,41 +139,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "action": undefined,
           "interval": {
             "endIdx": 133,
-            "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
             "startIdx": 117,
           },
           "type": "list",
@@ -236,41 +147,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "action": undefined,
           "interval": {
             "endIdx": 151,
-            "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
             "startIdx": 136,
           },
           "type": "get",
@@ -279,41 +155,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "action": undefined,
           "interval": {
             "endIdx": 172,
-            "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
             "startIdx": 154,
           },
           "type": "update",
@@ -325,41 +166,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                 {
                   "interval": {
                     "endIdx": 257,
-                    "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
                     "startIdx": 230,
                   },
                   "kind": "reference",
@@ -425,41 +231,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                 {
                   "interval": {
                     "endIdx": 464,
-                    "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
                     "startIdx": 440,
                   },
                   "kind": "set",
@@ -478,46 +249,11 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                 {
                   "interval": {
                     "endIdx": 483,
-                    "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
                     "startIdx": 473,
                   },
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": 10,
                   },
                   "target": "foo",
@@ -525,46 +261,11 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                 {
                   "interval": {
                     "endIdx": 504,
-                    "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
                     "startIdx": 492,
                   },
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": null,
                   },
                   "target": "baz",
@@ -589,7 +290,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                     },
                     {
                       "default": {
-                        "kind": "value",
+                        "kind": "literal",
                         "value": 10,
                       },
                       "name": "x",
@@ -627,41 +328,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           ],
           "interval": {
             "endIdx": 643,
-            "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
             "startIdx": 175,
           },
           "type": "create",
@@ -674,41 +340,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
               "action": undefined,
               "interval": {
                 "endIdx": 716,
-                "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
                 "startIdx": 698,
               },
               "type": "create",
@@ -718,41 +349,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "identify": undefined,
           "interval": {
             "endIdx": 720,
-            "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
             "startIdx": 646,
           },
           "name": "Review",
@@ -767,164 +363,24 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       "identify": "slug",
       "interval": {
         "endIdx": 722,
-        "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
         "startIdx": 0,
       },
       "name": "ItemEntry",
       "response": {
         "interval": {
           "endIdx": 114,
-          "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
           "startIdx": 83,
         },
         "select": {
           "brand": {
             "interval": {
               "endIdx": 112,
-              "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
               "startIdx": 104,
             },
             "select": {
               "name": {
                 "interval": {
                   "endIdx": 110,
-                  "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
                   "startIdx": 106,
                 },
               },
@@ -933,82 +389,12 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "name": {
             "interval": {
               "endIdx": 89,
-              "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
               "startIdx": 85,
             },
           },
           "price": {
             "interval": {
               "endIdx": 96,
-              "sourceString": "entrypoint ItemEntry {
-  target model Item as item
-  identify with slug
-  response { name, price, brand { name } }
-  list endpoint {}
-  get endpoint {}
-  update endpoint {}
-  create endpoint {
-    action {
-
-      create {
-        reference plan through name
-      }
-      create item {}
-      create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
-      update item.bar.baz {
-        set bar item.bar.baz.x.y
-        set foo 10
-        set baz null
-        deny *
-        deny { foo, bar }
-        input { z, x { optional, default 10 }, y, foo { default item.bar.id } }
-      }
-    }
-  }
-  entrypoint Review {
-    target relation reviews
-    create endpoint {}
-  }
-}
-",
               "startIdx": 91,
             },
           },
@@ -1021,7 +407,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       },
     },
   ],
-  "hooks": [],
   "models": [],
   "populators": [],
 }
@@ -1030,7 +415,6 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
 exports[`parser blueprint test/git.gaudi 1`] = `
 {
   "entrypoints": [],
-  "hooks": [],
   "models": [
     {
       "alias": undefined,
@@ -1040,27 +424,6 @@ exports[`parser blueprint test/git.gaudi 1`] = `
           "default": undefined,
           "interval": {
             "endIdx": 121,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 97,
           },
           "name": "name",
@@ -1073,27 +436,6 @@ model Repo {
           "default": undefined,
           "interval": {
             "endIdx": 156,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 124,
           },
           "name": "slug",
@@ -1106,27 +448,6 @@ model Repo {
           "default": undefined,
           "interval": {
             "endIdx": 190,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 159,
           },
           "name": "description",
@@ -1139,27 +460,6 @@ model Repo {
           "default": undefined,
           "interval": {
             "endIdx": 229,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 193,
           },
           "name": "optOut",
@@ -1169,29 +469,9 @@ model Repo {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 276,
-        "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
         "startIdx": 83,
       },
       "name": "Org",
@@ -1202,27 +482,6 @@ model Repo {
           "fromModel": "Repo",
           "interval": {
             "endIdx": 274,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 233,
           },
           "name": "repos",
@@ -1238,27 +497,6 @@ model Repo {
           "default": undefined,
           "interval": {
             "endIdx": 317,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 293,
           },
           "name": "name",
@@ -1271,27 +509,6 @@ model Repo {
           "default": undefined,
           "interval": {
             "endIdx": 352,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 320,
           },
           "name": "slug",
@@ -1304,27 +521,6 @@ model Repo {
           "default": undefined,
           "interval": {
             "endIdx": 386,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 355,
           },
           "name": "description",
@@ -1334,29 +530,9 @@ model Repo {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 415,
-        "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
         "startIdx": 278,
       },
       "name": "Repo",
@@ -1365,27 +541,6 @@ model Repo {
         {
           "interval": {
             "endIdx": 413,
-            "sourceString": "// database {
-//   engine pg
-//   uri 'postgresql://postgres@localhost:5342'
-// }
-
-model Org {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  field optOut { type text, nullable }
-
-  relation repos { from Repo, through org }
-}
-
-model Repo {
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
-  reference org { to Org }
-}
-",
             "startIdx": 389,
           },
           "name": "org",
@@ -1403,40 +558,156 @@ model Repo {
 
 exports[`parser blueprint test/hook.gaudi 1`] = `
 {
-  "entrypoints": [],
-  "hooks": [
+  "entrypoints": [
     {
-      "args": [
+      "endpoints": [
         {
-          "name": "first",
-          "type": "text",
-        },
-        {
-          "name": "second",
-          "type": "text",
+          "action": [
+            {
+              "actionAtoms": [
+                {
+                  "interval": {
+                    "endIdx": 558,
+                    "startIdx": 460,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "hook": {
+                      "args": {
+                        "second": {
+                          "kind": "reference",
+                          "reference": [
+                            "fieldTwo",
+                          ],
+                        },
+                      },
+                      "code": {
+                        "file": "customHook",
+                        "kind": "source",
+                        "target": "foo",
+                      },
+                      "interval": {
+                        "endIdx": 558,
+                        "startIdx": 473,
+                      },
+                      "name": undefined,
+                    },
+                    "kind": "hook",
+                  },
+                  "target": "fieldOne",
+                },
+              ],
+              "alias": undefined,
+              "kind": "create",
+              "targetPath": undefined,
+            },
+          ],
+          "interval": {
+            "endIdx": 576,
+            "startIdx": 406,
+          },
+          "type": "create",
         },
       ],
-      "inlineBody": "
-    return first.toLowerCase() === second.toLowerCase();
-  ",
+      "entrypoints": [],
+      "identify": undefined,
       "interval": {
-        "endIdx": 143,
-        "sourceString": "hook compareLower {
-  arg first text
-  arg second text
-  returns text
-  inline \`
-    return first.toLowerCase() === second.toLowerCase();
-  \`
-}
-",
-        "startIdx": 0,
+        "endIdx": 578,
+        "startIdx": 361,
       },
-      "name": "compareLower",
-      "returnType": "text",
+      "name": "UserEntry",
+      "response": undefined,
+      "target": {
+        "alias": undefined,
+        "identifier": "User",
+        "kind": "model",
+      },
     },
   ],
-  "models": [],
+  "models": [
+    {
+      "alias": undefined,
+      "computeds": [],
+      "fields": [
+        {
+          "default": undefined,
+          "interval": {
+            "endIdx": 165,
+            "startIdx": 15,
+          },
+          "name": "fieldOne",
+          "nullable": undefined,
+          "type": "text",
+          "unique": undefined,
+          "validators": [
+            {
+              "hook": {
+                "arg": "fieldOne",
+                "code": {
+                  "file": "customValidateHook",
+                  "kind": "source",
+                  "target": "foo",
+                },
+                "interval": {
+                  "endIdx": 155,
+                  "startIdx": 67,
+                },
+                "name": undefined,
+              },
+              "interval": {
+                "endIdx": 155,
+                "startIdx": 67,
+              },
+              "kind": "hook",
+            },
+          ],
+        },
+        {
+          "default": undefined,
+          "interval": {
+            "endIdx": 357,
+            "startIdx": 168,
+          },
+          "name": "fieldTwo",
+          "nullable": undefined,
+          "type": "text",
+          "unique": undefined,
+          "validators": [
+            {
+              "hook": {
+                "arg": "fieldTwo",
+                "code": {
+                  "inline": "
+          return fieldTwo.toLowerCase() === "something";
+        ",
+                  "kind": "inline",
+                },
+                "interval": {
+                  "endIdx": 347,
+                  "startIdx": 220,
+                },
+                "name": undefined,
+              },
+              "interval": {
+                "endIdx": 347,
+                "startIdx": 220,
+              },
+              "kind": "hook",
+            },
+          ],
+        },
+      ],
+      "hooks": [],
+      "interval": {
+        "endIdx": 359,
+        "startIdx": 0,
+      },
+      "name": "User",
+      "queries": [],
+      "references": [],
+      "relations": [],
+    },
+  ],
   "populators": [],
 }
 `;
@@ -1444,21 +715,14 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
 exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
 {
   "entrypoints": [],
-  "hooks": [],
   "models": [
     {
       "alias": undefined,
       "computeds": [],
       "fields": [],
+      "hooks": [],
       "interval": {
         "endIdx": 56,
-        "sourceString": "model Vehicle {
-  reference make { to Make, nullable }
-}
-model Make {
-  field name { type text }
-}
-",
         "startIdx": 0,
       },
       "name": "Vehicle",
@@ -1467,13 +731,6 @@ model Make {
         {
           "interval": {
             "endIdx": 54,
-            "sourceString": "model Vehicle {
-  reference make { to Make, nullable }
-}
-model Make {
-  field name { type text }
-}
-",
             "startIdx": 18,
           },
           "name": "make",
@@ -1492,13 +749,6 @@ model Make {
           "default": undefined,
           "interval": {
             "endIdx": 96,
-            "sourceString": "model Vehicle {
-  reference make { to Make, nullable }
-}
-model Make {
-  field name { type text }
-}
-",
             "startIdx": 72,
           },
           "name": "name",
@@ -1508,15 +758,9 @@ model Make {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 98,
-        "sourceString": "model Vehicle {
-  reference make { to Make, nullable }
-}
-model Make {
-  field name { type text }
-}
-",
         "startIdx": 57,
       },
       "name": "Make",
@@ -1532,7 +776,6 @@ model Make {
 exports[`parser blueprint test/populator.gaudi 1`] = `
 {
   "entrypoints": [],
-  "hooks": [],
   "models": [],
   "populators": [
     {
@@ -1558,7 +801,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 {
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": 2,
                   },
                   "target": "numberProp",
@@ -1566,7 +809,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 {
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": "fred",
                   },
                   "target": "stringProp",
@@ -1574,7 +817,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 {
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": false,
                   },
                   "target": "boolProp",
@@ -1582,7 +825,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 {
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": null,
                   },
                   "target": "nullProp",
@@ -1603,7 +846,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 {
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": 3,
                   },
                   "target": "numberProp",
@@ -1611,7 +854,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 {
                   "kind": "set",
                   "set": {
-                    "kind": "value",
+                    "kind": "literal",
                     "value": "foo",
                   },
                   "target": "stringProp",
@@ -1633,7 +876,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
             {
               "kind": "set",
               "set": {
-                "kind": "value",
+                "kind": "literal",
                 "value": 1,
               },
               "target": "numberProp",
@@ -1641,7 +884,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
             {
               "kind": "set",
               "set": {
-                "kind": "value",
+                "kind": "literal",
                 "value": "asdf",
               },
               "target": "stringProp",
@@ -1649,7 +892,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
             {
               "kind": "set",
               "set": {
-                "kind": "value",
+                "kind": "literal",
                 "value": true,
               },
               "target": "boolProp",
@@ -1657,7 +900,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
             {
               "kind": "set",
               "set": {
-                "kind": "value",
+                "kind": "literal",
                 "value": null,
               },
               "target": "nullProp",
@@ -1678,7 +921,6 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
 exports[`parser blueprint test/query.gaudi 1`] = `
 {
   "entrypoints": [],
-  "hooks": [],
   "models": [
     {
       "alias": undefined,
@@ -1688,34 +930,6 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           "default": undefined,
           "interval": {
             "endIdx": 43,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 16,
           },
           "name": "year",
@@ -1725,36 +939,9 @@ model Student {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 404,
-        "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
         "startIdx": 0,
       },
       "name": "Class",
@@ -1763,68 +950,12 @@ model Student {
           "filter": {
             "interval": {
               "endIdx": 181,
-              "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
               "startIdx": 145,
             },
             "kind": "binary",
             "lhs": {
               "interval": {
                 "endIdx": 171,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 146,
               },
               "kind": "binary",
@@ -1834,34 +965,6 @@ model Student {
                 ],
                 "interval": {
                   "endIdx": 155,
-                  "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                   "startIdx": 146,
                 },
                 "kind": "identifier",
@@ -1873,34 +976,6 @@ model Student {
                 ],
                 "interval": {
                   "endIdx": 171,
-                  "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                   "startIdx": 159,
                 },
                 "kind": "identifier",
@@ -1910,34 +985,6 @@ model Student {
             "rhs": {
               "interval": {
                 "endIdx": 181,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 177,
               },
               "kind": "literal",
@@ -1950,106 +997,23 @@ model Student {
           ],
           "interval": {
             "endIdx": 183,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 99,
           },
           "limit": undefined,
           "name": "active_students",
           "orderBy": undefined,
+          "select": undefined,
         },
         {
           "filter": {
             "interval": {
               "endIdx": 266,
-              "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
               "startIdx": 230,
             },
             "kind": "binary",
             "lhs": {
               "interval": {
                 "endIdx": 240,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 230,
               },
               "kind": "binary",
@@ -2059,34 +1023,6 @@ model Student {
                 ],
                 "interval": {
                   "endIdx": 235,
-                  "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                   "startIdx": 230,
                 },
                 "kind": "identifier",
@@ -2095,34 +1031,6 @@ model Student {
               "rhs": {
                 "interval": {
                   "endIdx": 240,
-                  "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                   "startIdx": 239,
                 },
                 "kind": "literal",
@@ -2133,34 +1041,6 @@ model Student {
             "rhs": {
               "interval": {
                 "endIdx": 266,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 244,
               },
               "kind": "binary",
@@ -2170,34 +1050,6 @@ model Student {
                 ],
                 "interval": {
                   "endIdx": 253,
-                  "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                   "startIdx": 244,
                 },
                 "kind": "identifier",
@@ -2206,34 +1058,6 @@ model Student {
               "rhs": {
                 "interval": {
                   "endIdx": 266,
-                  "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                   "startIdx": 261,
                 },
                 "kind": "literal",
@@ -2247,72 +1071,17 @@ model Student {
           ],
           "interval": {
             "endIdx": 268,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 186,
           },
           "limit": undefined,
           "name": "good_students",
           "orderBy": undefined,
+          "select": undefined,
         },
         {
           "filter": {
             "interval": {
               "endIdx": 344,
-              "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
               "startIdx": 334,
             },
             "kind": "binary",
@@ -2322,34 +1091,6 @@ model Student {
               ],
               "interval": {
                 "endIdx": 339,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 334,
               },
               "kind": "identifier",
@@ -2358,34 +1099,6 @@ model Student {
             "rhs": {
               "interval": {
                 "endIdx": 344,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 343,
               },
               "kind": "literal",
@@ -2398,34 +1111,6 @@ model Student {
           ],
           "interval": {
             "endIdx": 402,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 271,
           },
           "limit": 10,
@@ -2437,34 +1122,6 @@ model Student {
               ],
               "interval": {
                 "endIdx": 373,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 364,
               },
               "order": undefined,
@@ -2475,39 +1132,12 @@ model Student {
               ],
               "interval": {
                 "endIdx": 385,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 375,
               },
               "order": "desc",
             },
           ],
+          "select": undefined,
         },
       ],
       "references": [],
@@ -2516,34 +1146,6 @@ model Student {
           "fromModel": "Student",
           "interval": {
             "endIdx": 95,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 47,
           },
           "name": "students",
@@ -2558,34 +1160,6 @@ model Student {
           "exp": {
             "interval": {
               "endIdx": 628,
-              "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
               "startIdx": 613,
             },
             "kind": "binary",
@@ -2596,34 +1170,6 @@ model Student {
               ],
               "interval": {
                 "endIdx": 623,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 613,
               },
               "kind": "identifier",
@@ -2632,34 +1178,6 @@ model Student {
             "rhs": {
               "interval": {
                 "endIdx": 628,
-                "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
                 "startIdx": 627,
               },
               "kind": "literal",
@@ -2668,34 +1186,6 @@ model Student {
           },
           "interval": {
             "endIdx": 630,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 592,
           },
           "name": "is_senior",
@@ -2706,34 +1196,6 @@ model Student {
           "default": undefined,
           "interval": {
             "endIdx": 456,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 424,
           },
           "name": "is_active",
@@ -2746,34 +1208,6 @@ model Student {
           "default": undefined,
           "interval": {
             "endIdx": 494,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 459,
           },
           "name": "is_registred",
@@ -2786,34 +1220,6 @@ model Student {
           "default": undefined,
           "interval": {
             "endIdx": 524,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 497,
           },
           "name": "grade",
@@ -2826,34 +1232,6 @@ model Student {
           "default": undefined,
           "interval": {
             "endIdx": 556,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 527,
           },
           "name": "behaviour",
@@ -2863,36 +1241,9 @@ model Student {
           "validators": undefined,
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 632,
-        "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
         "startIdx": 406,
       },
       "name": "Student",
@@ -2901,34 +1252,6 @@ model Student {
         {
           "interval": {
             "endIdx": 588,
-            "sourceString": "model Class {
-  field year { type integer }
-
-  relation students { from Student, through class}
-
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
-  query good_students_alt {
-    from students
-    filter {
-      grade >= 3
-    }
-    order by behaviour, grade desc
-    limit 10
-  }
-}
-
-model Student {
-  field is_active { type boolean }
-  field is_registred { type boolean }
-  field grade { type integer}
-  field behaviour { type text }
-
-  reference class { to Class }
-
-  computed is_senior { class.year >= 4 }
-}
-",
             "startIdx": 560,
           },
           "name": "class",
@@ -2947,7 +1270,6 @@ model Student {
 exports[`parser blueprint test/validators.gaudi 1`] = `
 {
   "entrypoints": [],
-  "hooks": [],
   "models": [
     {
       "alias": undefined,
@@ -2957,14 +1279,6 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
           "default": undefined,
           "interval": {
             "endIdx": 84,
-            "sourceString": "model User {
-  field fullName {
-    type text
-    validate { min 4, max 20 }
-  }
-  field size { type integer, validate { min 0 } }
-}
-",
             "startIdx": 16,
           },
           "name": "fullName",
@@ -2978,16 +1292,9 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
               ],
               "interval": {
                 "endIdx": 69,
-                "sourceString": "model User {
-  field fullName {
-    type text
-    validate { min 4, max 20 }
-  }
-  field size { type integer, validate { min 0 } }
-}
-",
                 "startIdx": 64,
               },
+              "kind": "builtin",
               "name": "min",
             },
             {
@@ -2996,16 +1303,9 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
               ],
               "interval": {
                 "endIdx": 77,
-                "sourceString": "model User {
-  field fullName {
-    type text
-    validate { min 4, max 20 }
-  }
-  field size { type integer, validate { min 0 } }
-}
-",
                 "startIdx": 71,
               },
+              "kind": "builtin",
               "name": "max",
             },
           ],
@@ -3014,14 +1314,6 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
           "default": undefined,
           "interval": {
             "endIdx": 135,
-            "sourceString": "model User {
-  field fullName {
-    type text
-    validate { min 4, max 20 }
-  }
-  field size { type integer, validate { min 0 } }
-}
-",
             "startIdx": 88,
           },
           "name": "size",
@@ -3035,31 +1327,17 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
               ],
               "interval": {
                 "endIdx": 131,
-                "sourceString": "model User {
-  field fullName {
-    type text
-    validate { min 4, max 20 }
-  }
-  field size { type integer, validate { min 0 } }
-}
-",
                 "startIdx": 126,
               },
+              "kind": "builtin",
               "name": "min",
             },
           ],
         },
       ],
+      "hooks": [],
       "interval": {
         "endIdx": 138,
-        "sourceString": "model User {
-  field fullName {
-    type text
-    validate { min 4, max 20 }
-  }
-  field size { type integer, validate { min 0 } }
-}
-",
         "startIdx": 0,
       },
       "name": "User",

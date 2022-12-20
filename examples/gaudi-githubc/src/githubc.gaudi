@@ -1,13 +1,30 @@
 // database {
 //     engine pg
 //     uri 'postgresql://postgres@localhost:5342'
-// } 
+// }
 
 // ----- models
 
 model Org {
-    field name { type text }
-    field slug { type text, unique }
+    field name {
+        type text
+        validate {
+            hook {
+                default arg name
+                source noUnicode from "githubc.js"
+            }
+        }
+    }
+    field slug {
+        type text,
+        unique,
+        validate {
+            hook noSpace { // hook can be named for documentation. Maybe use the name for hook code?
+                default arg slug
+                inline `!/\s/.test(slug)`
+            }
+        }
+    }
     field description { type text }
     field optOut { type text, nullable }
 
@@ -17,6 +34,13 @@ model Org {
     query members { from memberships.user }
     query public_repos { from repos, filter { is_public is true } }
     query public_issues { from public_repos.issues }
+
+    hook nameAndDesc {
+        arg test query {
+            select { name, description }
+        }
+        inline `test.name + ": " + test.description`
+    }
 }
 
 model OrgMembership {
@@ -63,9 +87,9 @@ model UserAccessToken {
 // ----- entrypoints
 
 entrypoint Orgs {
-    target model Org
+    target model Org as org
     identify with slug
-    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues }
+    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, nameAndDesc }
 
     get endpoint {}
     list endpoint {}

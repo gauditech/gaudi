@@ -30,6 +30,7 @@ exports[`API endpoints Org create 1`] = `
   "description": "Org NEW description",
   "id": 4,
   "name": "Org NEW",
+  "nameAndDesc": "Org 1: Org 1 description",
   "slug": "orgNEW",
 }
 `;
@@ -39,6 +40,7 @@ exports[`API endpoints Org get 1`] = `
   "description": "Org 1 description",
   "id": 1,
   "name": "Org 1",
+  "nameAndDesc": "Org 1: Org 1 description",
   "slug": "org1",
 }
 `;
@@ -49,18 +51,21 @@ exports[`API endpoints Org list 1`] = `
     "description": "Org 1 description",
     "id": 1,
     "name": "Org 1",
+    "nameAndDesc": "Org 1: Org 1 description",
     "slug": "org1",
   },
   {
     "description": "Org 2 description",
     "id": 2,
     "name": "Org 2",
+    "nameAndDesc": "Org 2: Org 2 description",
     "slug": "org2",
   },
   {
     "description": "Org 3 description",
     "id": 3,
     "name": "Org 3",
+    "nameAndDesc": "Org 3: Org 3 description",
     "slug": "org3",
   },
 ]
@@ -71,6 +76,7 @@ exports[`API endpoints Org update 1`] = `
   "description": "Org 2A description",
   "id": 2,
   "name": "Org 2A",
+  "nameAndDesc": "Org 1: Org 1 description",
   "slug": "org2",
 }
 `;
@@ -80,7 +86,7 @@ exports[`API endpoints Repo create 1`] = `
   "description": "Repo 6 description",
   "id": 6,
   "org_id": 1,
-  "slug": "repo6",
+  "slug": "org_1-W5JU1e0Kj1Kv",
 }
 `;
 
