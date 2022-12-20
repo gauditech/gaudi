@@ -172,9 +172,7 @@ type DevOptions = {
 async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: EngineConfig) {
   console.log("Starting project dev build ...");
   if (args.gaudiDev) {
-    console.log(
-      "Gaudi dev mode enabled. Please make sure 'node_modules/@gaudi' resources can be watched by chokidar/nodemon."
-    );
+    console.log("Gaudi dev mode enabled.");
   }
 
   const children: Stoppable[] = [];
