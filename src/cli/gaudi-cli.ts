@@ -19,7 +19,7 @@ import { EngineConfig, readConfig } from "@src/config";
 /**
  * Something that can be stopped like eg. resource watcher.
  *
- * We should added "start" if we need to have control over starting (eg. do it later/elsewhere).
+ * We should add "start" if we need to have control over starting (eg. do it later/elsewhere).
  */
 type Stoppable = {
   stop: () => Promise<void>;
