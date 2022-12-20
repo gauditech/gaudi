@@ -4,7 +4,7 @@ import { EngineConfig, readConfig } from "@src/config";
 
 describe("engine", () => {
   describe("config", () => {
-    const ORIGINAL_ENV = process.env; // Make a copy
+    const ORIGINAL_ENV = { ...process.env } as const; // Make a readonly copy of the original env
 
     beforeEach(() => {
       jest.resetModules(); // clear cache
