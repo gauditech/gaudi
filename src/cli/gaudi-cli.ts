@@ -62,12 +62,12 @@ function parseArguments(config: EngineConfig) {
     .command({
       command: "build",
       describe:
-        "Build entire project. Compiles Gaudi source, pushes changes to DB and copies files to output folder",
+        "Build entire project. Compiles Gaudi blueprint, pushes changes to DB and copies files to output folder",
       handler: (args) => buildCommandHandler(args, config),
     })
     .command({
       command: "dev",
-      describe: "Start project dev builder which rebuilds project on detected source changes.",
+      describe: "Start project dev builder which rebuilds project on detected blueprint changes.",
       handler: (args) => devCommandHandler(args, config),
       builder: (yargs) =>
         yargs.option("gaudi-dev", {
@@ -331,7 +331,7 @@ function dbDeployCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, conf
 // --- compile
 
 function compile(_args: ArgumentsCamelCase, _config: EngineConfig) {
-  console.log("Compiling Gaudi source ...");
+  console.log("Compiling Gaudi blueprint ...");
 
   return executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
 }
