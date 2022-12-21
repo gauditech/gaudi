@@ -333,7 +333,7 @@ function dbDeployCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, conf
 function compile(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Compiling Gaudi blueprint ...");
 
-  return executeCommand("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
+  return createCommandRunner("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
 }
 
 // --- server commands
@@ -342,7 +342,7 @@ function start(_args: ArgumentsCamelCase, _config: EngineConfig) {
   console.log("Starting Gaudi project ...");
 
   // use `nodemon` to control (start, reload, shotdown) runtime process
-  return executeCommand("nodemon", [
+  return createCommandRunner("nodemon", [
     ...getDefaultNodeOptions(),
     "--watch",
     "false",
@@ -375,7 +375,7 @@ function copyStatic(_args: ArgumentsCamelCase, config: EngineConfig) {
 function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Pushing DB change ...");
 
-  return executeCommand("npx", [
+  return createCommandRunner("npx", [
     "prisma",
     "db",
     "push",
@@ -389,7 +389,7 @@ function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
 function dbReset(args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Resetting DB ...");
 
-  return executeCommand("npx", [
+  return createCommandRunner("npx", [
     "prisma",
     "db",
     "push",
@@ -412,7 +412,7 @@ function dbPopulate(args: ArgumentsCamelCase<DbPopulateOptions>, _config: Engine
 
   console.log(`Populating DB using populator "${populatorName} ..."`);
 
-  return executeCommand("node", [
+  return createCommandRunner("node", [
     ...getDefaultNodeOptions(),
     GAUDI_SCRIPTS.POPULATOR,
     "-p",
@@ -433,7 +433,7 @@ function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineCon
 
   console.log(`Creating DB migration "${migrationName}" ...`);
 
-  return executeCommand("npx", [
+  return createCommandRunner("npx", [
     "prisma",
     "migrate",
     "dev",
@@ -447,7 +447,7 @@ function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineCon
 function dbDeploy(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
-  return executeCommand("npx", [
+  return createCommandRunner("npx", [
     "prisma",
     "migrate",
     "deploy",
@@ -458,7 +458,7 @@ function dbDeploy(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConf
 // ---------- utils
 
 /** Structure that exposes some control over child process while hiding details. */
-type ExecuteCommandResult = {
+type CommandRunner = {
   /** Execute command and return promise that will resolve if process exits nicely and reject if it errs. */
   start: () => Promise<number | null>;
   /** Stop command process. */
@@ -471,14 +471,14 @@ type ExecuteCommandResult = {
   isRunning: () => boolean;
 };
 
-function executeCommand(command: string, argv: string[]): ExecuteCommandResult {
-  console.log(`Command: ${command} ${argv.join(" ")}`);
-
+function createCommandRunner(command: string, argv: string[]): CommandRunner {
   // process instance has no indication whether it's running or not so use this flag for that
   let isRunning = false;
   let childProcess: ChildProcess;
   return {
     start: () => {
+      console.log(`Starting command: ${command} ${argv.join(" ")}`);
+
       return new Promise<number | null>((resolve, reject) => {
         childProcess = spawn(command, argv, {
           env: {
@@ -504,6 +504,8 @@ function executeCommand(command: string, argv: string[]): ExecuteCommandResult {
       });
     },
     stop: () => {
+      // console.log(`Stopping command: ${command}`);
+
       if (childProcess == null) {
         console.warn(`Cannot stop command "${command}", process not started yet`);
         return false;
@@ -517,10 +519,12 @@ function executeCommand(command: string, argv: string[]): ExecuteCommandResult {
       return successful;
     },
     sendMessage: (message: string) => {
+      console.log("Sending message to ");
+
       childProcess.send(message);
     },
     sendSignal: (signal: NodeJS.Signals) => {
-      console.log(`KILL child process ${childProcess.pid} using ${signal}`);
+      // console.log(`KILL child process ${childProcess.pid} using ${signal}`);
 
       childProcess.kill(signal);
     },
@@ -536,7 +540,7 @@ function getDbSchemaPath(config: EngineConfig): string {
 /**
  * Default node options
  *
- * Additional node options can be passed via NODE_OPTIONS env var which is included when executing command
+ * Additional node options can be passed via NODE_OPTIONS env var which is included when running commands
  */
 function getDefaultNodeOptions(): string[] {
   return [...DEFAULT_NODE_OPTIONS];
