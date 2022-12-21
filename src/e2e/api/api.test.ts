@@ -11,7 +11,7 @@ import { readConfig } from "@src/runtime/config";
 jest.setTimeout(10000);
 
 describe("API endpoints", () => {
-  const config = readConfig();
+  const config = readConfig(path.join(__dirname, "api.test.env"));
 
   const { getServer, setup, destroy } = createApiTestSetup(
     config,

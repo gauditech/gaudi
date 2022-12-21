@@ -10,7 +10,12 @@ import { Definition } from "@src/types/definition";
 
 const DB_PROVIDER = "postgresql";
 
-export async function build(definition: Definition, outputFolder: string): Promise<void> {
+export type BuilderConfig = {
+  outputFolder: string;
+  gaudiFolder: string;
+};
+
+export async function build(definition: Definition, config: BuilderConfig): Promise<void> {
   /* TODO
 
  - server (express)
@@ -22,20 +27,23 @@ export async function build(definition: Definition, outputFolder: string): Promi
  - action
 */
 
-  setupOutputFolder(outputFolder);
-  await buildDefinition({ definition }, outputFolder);
-  await buildDb({ definition, dbProvider: DB_PROVIDER }, outputFolder);
+  setupFolder(config.outputFolder);
+  setupFolder(config.gaudiFolder);
+
+  await buildDefinition({ definition }, config.outputFolder);
+  await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
 }
 
 // -------------------- part builders
 
-// ---------- Setup output
+// ---------- Setup folders
 
-function setupOutputFolder(outputFolder: string) {
+/** Make sure folder exists */
+function setupFolder(path: string) {
   // clear output folder
-  if (!fs.existsSync(outputFolder)) {
+  if (!fs.existsSync(path)) {
     // (re)create output folder
-    fs.mkdirSync(outputFolder, { recursive: true });
+    fs.mkdirSync(path, { recursive: true });
   }
 }
 
