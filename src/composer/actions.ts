@@ -472,6 +472,27 @@ function getActionSetters(
       case "reference": {
         const path = atom.set.reference;
 
+        if (
+          spec.targetPath?.length &&
+          _.isEqual(spec.targetPath, path.slice(0, spec.targetPath.length))
+        ) {
+          const target = path.slice(spec.targetPath?.length);
+          try {
+            getRef2.field(def, model.name, target[0]);
+            return [atom.target, { kind: "reference-from-sibling", sibling: target[0] }];
+          } catch {
+            // continue if ref is not found
+          }
+        }
+        if (path.length === 1) {
+          try {
+            getRef2.field(def, model.name, path[0]);
+            return [atom.target, { kind: "reference-from-sibling", sibling: path[0] }];
+          } catch {
+            // continue if ref is not found
+          }
+        }
+
         const typedPath = getTypedPathWithLeaf(def, path, ctx);
         const ref = getRef2(def, model.name, atom.target);
         // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`

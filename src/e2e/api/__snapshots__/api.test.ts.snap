@@ -27,9 +27,9 @@ exports[`API endpoints Issue create 1`] = `
 
 exports[`API endpoints Org create 1`] = `
 {
-  "description": "Org NEW description",
+  "description": "orgNEW",
   "id": 4,
-  "name": "Org NEW",
+  "name": "orgNEW",
   "nameAndDesc": "Org 1: Org 1 description",
   "slug": "orgNEW",
 }

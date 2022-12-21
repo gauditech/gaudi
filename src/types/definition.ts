@@ -366,6 +366,11 @@ export type FieldSetterReferenceValue = {
   target: { alias: string; access: string[] };
 };
 
+export type FieldSetterReferenceFromSibling = {
+  kind: "reference-from-sibling";
+  sibling: string;
+};
+
 export type FieldSetterInput = {
   kind: "fieldset-input";
   type: FieldDef["type"];
@@ -391,6 +396,7 @@ export type FieldSetter =
   // TODO add composite expression setter
   | LiteralValueDef
   | FieldSetterReferenceValue
+  | FieldSetterReferenceFromSibling
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterHook;
