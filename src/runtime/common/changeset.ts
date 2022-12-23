@@ -19,15 +19,15 @@ export function buildChangset(
     .value();
 
   const result = _.chain(results)
-    .mapValues((_, name, results) =>
-      buildOrGetExsistingFieldsetResult(name, results, [name], changeset, context)
+    .mapValues((_value, name, results) =>
+      buildOrGetExistingFieldsetResult(name, results, [name], changeset, context)
     )
     .value();
   console.log(changeset, results, result);
   return result;
 }
 
-export function buildOrGetExsistingFieldsetResult(
+export function buildOrGetExistingFieldsetResult(
   name: string,
   results: Record<string, ChangesetResult>,
   requestedNames: string[],
@@ -41,10 +41,12 @@ export function buildOrGetExsistingFieldsetResult(
 
   const result = buildFieldsetResult(setter, context, (name: string) => {
     if (requestedNames.find((requested) => name === requested)) {
-      throw Error(`Circular dependacy in changeset, ${name} has already been requested`);
+      throw Error(
+        `Circular dependency in changeset, '${name}' already requested [${requestedNames}]`
+      );
     }
 
-    return buildOrGetExsistingFieldsetResult(
+    return buildOrGetExistingFieldsetResult(
       name,
       results,
       [...requestedNames, name],
