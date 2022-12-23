@@ -457,6 +457,29 @@ function getActionSetters(
   model: ModelDef,
   ctx: VarContext
 ): Changeset {
+  // Tracks requested siblings to detect if circular dependency exists
+  const requestedSiblings: Set<string> = new Set();
+
+  const setAtoms = Object.fromEntries(
+    spec.actionAtoms
+      .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
+      .map((atom) => [atom.target, atom] as const)
+  );
+  const fieldsets: Record<string, [string, FieldSetter]> = {};
+
+  Object.keys(setAtoms).forEach((key) => {
+    getOrCreateFieldset(key);
+  });
+
+  function getOrCreateFieldset(key: string): [string, FieldSetter] {
+    if (key in fieldsets) {
+      return fieldsets[key];
+    }
+    fieldsets[key] = toFieldSetter(setAtoms[key]);
+
+    return fieldsets[key];
+  }
+
   function toFieldSetter(atom: ActionAtomSpecSet): [string, FieldSetter] {
     switch (atom.set.kind) {
       case "hook": {
@@ -473,11 +496,15 @@ function getActionSetters(
         const path = atom.set.reference;
 
         if (spec.alias && path.length === 2 && spec.alias === path[0]) {
+          let isSibling = false;
           try {
             getRef2.field(def, model.name, path[1]);
-            return [atom.target, { kind: "reference-from-sibling", sibling: path[1] }];
+            isSibling = true;
           } catch {
             // continue if ref is not found
+          }
+          if (isSibling) {
+            return [atom.target, { kind: "reference-from-sibling", sibling: getSibling(path[1]) }];
           }
         }
 
@@ -488,7 +515,7 @@ function getActionSetters(
         } catch (error) {
           if (path.length === 1) {
             getRef2.field(def, model.name, path[0]);
-            return [atom.target, { kind: "reference-from-sibling", sibling: path[0] }];
+            return [atom.target, { kind: "reference-from-sibling", sibling: getSibling(path[0]) }];
           } else {
             throw error;
           }
@@ -522,9 +549,36 @@ function getActionSetters(
     }
   }
 
-  const pairs = spec.actionAtoms
-    .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
-    .map(toFieldSetter);
+  /**
+   * This function simplifies sibling references. If sibling references to another sibling reference,
+   * it will shorten it to reference to the last sibling in chain.
+   *
+   * In addition, this function checks if there is circular referencing inside sibling chain.
+   */
+  function getSibling(name: string): string {
+    if (!(name in setAtoms)) {
+      // Name is not inside another set, end of the chain
+      return name;
+    }
+
+    if (requestedSiblings.has(name)) {
+      const requested = Array.from(requestedSiblings).join(", ");
+      throw Error(
+        `Detected circular dependency in fieldset. Trying to request: ${name}. Already requested fields: ${requested}`
+      );
+    }
+
+    requestedSiblings.add(name);
+    const [siblingName, sibling] = getOrCreateFieldset(name);
+
+    if (sibling.kind === "reference-from-sibling") {
+      requestedSiblings.delete(name);
+      return sibling.sibling;
+    }
+    return siblingName;
+  }
+
+  const pairs = Object.values(fieldsets);
   const duplicates = _.chain(pairs)
     .countBy(_.first)
     .toPairs()

@@ -80,4 +80,27 @@ describe("compose models", () => {
     const spec = compile(parse(bp));
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Unknown validator!"`);
   });
+  it("fails circular dependency inside action", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      field description { type text }
+    }
+    entrypoint Orgs {
+      target model Org as org
+      create endpoint {
+        action {
+          create {
+            set name description
+            set description name
+          }
+        }
+      }
+    }
+    `;
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      `"Detected circular dependency in fieldset. Trying to request: description. Already requested fields: description, name"`
+    );
+  });
 });
