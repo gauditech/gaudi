@@ -70,7 +70,7 @@ entrypoint Orgs {
   list endpoint {}
   create endpoint {
     action {
-      create org {
+      create org as org {
         set slug org.name
         set description slug
       }

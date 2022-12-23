@@ -43,7 +43,9 @@ describe("API endpoints", () => {
 
     it("create", async () => {
       const data = {
-        name: "orgNEW",
+        org: {
+          name: "orgNEW",
+        },
       };
       const postResp = await request(getServer()).post("/org").send(data);
 
