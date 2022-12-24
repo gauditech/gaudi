@@ -5,6 +5,7 @@ exports[`compose models parses validators 1`] = `
   "entrypoints": [],
   "models": [
     {
+      "computeds": [],
       "dbname": "org",
       "fields": [
         {

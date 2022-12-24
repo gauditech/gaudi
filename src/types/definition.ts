@@ -16,6 +16,7 @@ export type ModelDef = {
   references: ReferenceDef[];
   relations: RelationDef[];
   queries: QueryDef[];
+  computeds: ComputedDef[];
   hooks: ModelHookDef[];
 };
 
@@ -73,6 +74,14 @@ export type QueryDef = {
   filter: TypedExprDef;
   select: SelectDef;
   // count?: true;
+};
+
+export type ComputedDef = {
+  refKey: string;
+  modelRefKey: string;
+  name: string;
+  exp: TypedExprDef;
+  type?: NaiveType;
 };
 
 export type ModelHookDef = {
@@ -206,7 +215,7 @@ type CustomEndpointDef = {
   };
 };
 
-export type SelectableItem = SelectFieldItem;
+export type SelectableItem = SelectFieldItem | SelectComputedItem; // TODO Computed might include joins ?
 
 export type SelectFieldItem = {
   kind: "field";
@@ -217,8 +226,19 @@ export type SelectFieldItem = {
   alias: string;
 };
 
+export type SelectComputedItem = {
+  kind: "computed";
+  refKey: string;
+  name: string;
+  namePath: string[];
+  // nullable: boolean
+  alias: string;
+};
+
+// FIXME add refKey instead of args and code
 export type SelectHookItem = {
   kind: "hook";
+  // refKey: string;
   name: string;
   alias: string;
   namePath: string[];

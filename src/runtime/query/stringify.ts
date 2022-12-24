@@ -3,7 +3,7 @@ import _ from "lodash";
 
 import { NamePath, selectToSelectable } from "./build";
 
-import { getRef, getTargetModel } from "@src/common/refs";
+import { getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import {
   Definition,
@@ -36,11 +36,21 @@ export function queryToString(def: Definition, q: QueryDef): string {
   }
 }
 
-function selectableToString(def: Definition, select: SelectableItem[]) {
+function selectableToString(def: Definition, select: SelectableItem[]): string {
   return select
     .map((item) => {
-      const { value: field } = getRef<"field">(def, item.refKey);
-      return `${namePathToAlias(_.initial(item.namePath))}."${field.dbname}" AS "${item.alias}"`;
+      switch (item.kind) {
+        case "field": {
+          const field = getRef2.field(def, item.refKey);
+          return `${namePathToAlias(_.initial(item.namePath))}."${field.dbname}" AS "${
+            item.alias
+          }"`;
+        }
+        case "computed": {
+          const computed = getRef2.computed(def, item.refKey);
+          return filterToString(computed.exp);
+        }
+      }
     })
     .join(", ");
 }

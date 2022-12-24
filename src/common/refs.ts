@@ -1,6 +1,7 @@
 import { chain } from "lodash";
 
 import {
+  ComputedDef,
   Definition,
   FieldDef,
   ModelDef,
@@ -10,7 +11,7 @@ import {
   RelationDef,
 } from "@src/types/definition";
 
-export type RefKind = "model" | "field" | "reference" | "relation" | "query" | "hook";
+export type RefKind = "model" | "field" | "reference" | "relation" | "query" | "computed" | "hook";
 export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "model"; value: ModelDef }
   : T extends "field"
@@ -21,6 +22,8 @@ export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "relation"; value: RelationDef }
   : T extends "query"
   ? { kind: "query"; value: QueryDef }
+  : T extends "computed"
+  ? { kind: "computed"; value: ComputedDef }
   : T extends "hook"
   ? { kind: "hook"; value: ModelHookDef }
   : never;
@@ -44,6 +47,9 @@ export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKe
   const query = source.flatMap((m) => m.queries).find((q) => q.refKey === refKey);
   if (query) return { kind: "query", value: query } as Ref<T>;
 
+  const computed = source.flatMap((m) => m.computeds).find((q) => q.refKey === refKey);
+  if (computed) return { kind: "computed", value: computed } as Ref<T>;
+
   const hook = source.flatMap((m) => m.hooks).find((q) => q.refKey === refKey);
   if (hook) return { kind: "hook", value: hook } as Ref<T>;
 
@@ -54,7 +60,7 @@ export function getRef2<T extends RefKind>(
   def: Definition,
   modelName: string,
   relName?: string,
-  kinds: T[] = ["model", "reference", "relation", "query", "field"] as T[]
+  kinds: T[] = ["model", "reference", "relation", "query", "field", "computed"] as T[]
 ): Ref<T> {
   const ref = getRef<typeof kinds[number]>(def, relName ? `${modelName}.${relName}` : modelName);
   if (kinds.indexOf(ref.kind as T) < 0) {
@@ -78,6 +84,14 @@ getRef2.field = function getRefField(
   fieldName?: string
 ): FieldDef {
   return getRef2(def, modelName, fieldName, ["field"]).value;
+};
+
+getRef2.computed = function getRefField(
+  def: Definition,
+  modelName: string,
+  computedName?: string
+): ComputedDef {
+  return getRef2(def, modelName, computedName, ["computed"]).value;
 };
 
 export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {

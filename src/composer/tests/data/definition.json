@@ -163,6 +163,7 @@
       ],
       "relations": [],
       "queries": [],
+      "computeds": [],
       "hooks": []
     }
   ],

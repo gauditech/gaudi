@@ -13,6 +13,7 @@ import {
 } from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
+  ComputedDef,
   ConstantDef,
   Definition,
   FieldDef,
@@ -28,6 +29,7 @@ import {
   ValidatorDefinition,
 } from "@src/types/definition";
 import {
+  ComputedSpec,
   ExpSpec,
   FieldSpec,
   ModelHookSpec,
@@ -72,21 +74,12 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
         ...mspec.computeds.map((c) => c.name.toLowerCase()),
       ]);
       const mdef = defineModel(def, mspec);
-      mspec.fields.forEach((hspec) => {
-        defineField(def, mdef, hspec);
-      });
-      mspec.references.forEach((rspec) => {
-        tryCall(() => defineReference(def, mdef, rspec));
-      });
-      mspec.relations.forEach((rspec) => {
-        tryCall(() => defineRelation(def, mdef, rspec));
-      });
-      mspec.queries.forEach((qspec) => {
-        tryCall(() => defineQuery(def, mdef, qspec));
-      });
-      mspec.hooks.forEach((hspec) => {
-        tryCall(() => defineModelHook(def, mdef, hspec));
-      });
+      mspec.fields.forEach((hspec) => defineField(def, mdef, hspec));
+      mspec.computeds.forEach((cspec) => tryCall(() => defineComputed(def, mdef, cspec)));
+      mspec.references.forEach((rspec) => tryCall(() => defineReference(def, mdef, rspec)));
+      mspec.relations.forEach((rspec) => tryCall(() => defineRelation(def, mdef, rspec)));
+      mspec.queries.forEach((qspec) => tryCall(() => defineQuery(def, mdef, qspec)));
+      mspec.hooks.forEach((hspec) => tryCall(() => defineModelHook(def, mdef, hspec)));
 
       return mdef;
     });
@@ -130,6 +123,7 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
     references: [],
     relations: [],
     queries: [],
+    computeds: [],
     hooks: [],
   };
   const idField = constructIdField(model);
@@ -174,6 +168,21 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
   };
   mdef.fields.push(f);
   return f;
+}
+
+function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): ComputedDef {
+  const refKey = `${mdef.refKey}.${cspec.name}`;
+  const ex = getDefinition(def, refKey, "computed");
+  if (ex) return ex;
+
+  const c: ComputedDef = {
+    refKey,
+    modelRefKey: mdef.refKey,
+    name: cspec.name,
+    exp: composeExpression(cspec.exp, []),
+  };
+  mdef.computeds.push(c);
+  return c;
 }
 
 function validatorSpecsToDefs(

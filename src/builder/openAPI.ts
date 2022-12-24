@@ -22,7 +22,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
           const field = getRef<"field">(definition, select.refKey);
           return [select.alias, { type: convertToOpenAPIType(field.value.type) }];
         }
-        // NOTE: not yet implemented
+        // NOTE: not yet implemented; TODO: rename to `literal`
         // case "constant":
         //   return [select.alias, { type: convertToOpenAPIType(select.type) }];
         case "reference":
@@ -36,8 +36,12 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
             return [select.alias, { type: "array", items: { type: "object", properties } }];
           }
         }
+        case "computed": {
+          // FIXME - add return type to computeds
+          return [select.name, {}];
+        }
         case "hook": {
-          // FIXME - add return types to hooks
+          // FIXME - add return type to hooks
           return [select.name, {}];
         }
       }

@@ -286,11 +286,20 @@ export function processSelect(
       } else if (ref.kind === "hook") {
         return {
           kind: ref.kind,
+          // refKey: ref.value.refKey,
           name,
           alias: name,
           namePath: [...namePath, name],
           args: ref.value.args,
           code: ref.value.code,
+        };
+      } else if (ref.kind === "computed") {
+        return {
+          kind: ref.kind,
+          refKey: ref.value.refKey,
+          name,
+          namePath: [...namePath, name],
+          alias: name,
         };
       } else {
         ensureNot(ref.kind, "model" as const);

@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
+import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
@@ -181,8 +181,15 @@ export function processPaths(
   return _.compact(
     direct.flatMap((name): QueryDefPath | null => {
       const relativeChildren = getRelatedPaths(paths, name);
-      const ref = getModelProp<"field" | "reference" | "relation" | "query">(parentCtx, name);
-      if (ref.kind === "field") {
+      const ref = getRef2(def, parentCtx.name, name, [
+        "field",
+        "query",
+        "reference",
+        "relation",
+        "computed",
+      ]);
+
+      if (ref.kind === "field" || ref.kind === "computed") {
         return null;
       }
 
@@ -267,7 +274,7 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
  */
 function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
   const namePath = [model.name, ...select.namePath.slice(by)];
-  if (select.kind === "field" || select.kind === "hook") {
+  if (select.kind === "field" || select.kind === "hook" || select.kind === "computed") {
     return {
       ...select,
       namePath,
@@ -290,6 +297,7 @@ export function transformSelectPath(select: SelectDef, from: string[], to: strin
     const newPath = [...to, ..._.drop(selItem.namePath, from.length)];
     switch (selItem.kind) {
       case "field":
+      case "computed":
       case "hook": {
         return { ...selItem, namePath: newPath };
       }
