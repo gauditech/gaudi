@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Expressions to queries composes a complex expression 1`] = `
+exports[`Expressions to queries composes a complex filter expression 1`] = `
 {
   "filter": {
     "args": [
@@ -107,11 +107,77 @@ exports[`Expressions to queries composes a complex expression 1`] = `
 }
 `;
 
-exports[`Expressions to queries composes a complex expression 2`] = `
+exports[`Expressions to queries composes a complex filter expression 2`] = `
 "SELECT 
       FROM "source" AS "Source"
       JOIN
 "item" AS "Source.items"
 ON "Source"."id" = "Source.items"."source_id"
       WHERE "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) > 100"
+`;
+
+exports[`Expressions to queries composes a complex local computed expression 1`] = `
+{
+  "exp": {
+    "args": [
+      {
+        "args": [
+          {
+            "kind": "alias",
+            "namePath": [
+              "multiplier",
+            ],
+          },
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "value",
+                ],
+              },
+              {
+                "kind": "literal",
+                "type": "integer",
+                "value": 1,
+              },
+            ],
+            "kind": "function",
+            "name": "+",
+          },
+        ],
+        "kind": "function",
+        "name": "*",
+      },
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "textual",
+                ],
+              },
+              {
+                "kind": "literal",
+                "type": "text",
+                "value": "tail",
+              },
+            ],
+            "kind": "function",
+            "name": "concat",
+          },
+        ],
+        "kind": "function",
+        "name": "length",
+      },
+    ],
+    "kind": "function",
+    "name": "/",
+  },
+  "modelRefKey": "Item",
+  "name": "worthiness",
+  "refKey": "Item.worthiness",
+}
 `;
