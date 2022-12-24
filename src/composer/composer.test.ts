@@ -1,14 +1,8 @@
 import { compile, compose, parse } from "../index";
 
-import definitionInput from "@src/composer/tests/data/definition.json";
-import specificationInput from "@src/composer/tests/data/specification.json";
-
 describe("compose models", () => {
   it("doesn't crash on empty blueprint", () => {
     expect(() => compose(compile(parse("")))).not.toThrow();
-  });
-  it("correctly composes the git example", () => {
-    expect(compose(specificationInput)).toStrictEqual(definitionInput);
   });
 
   it("fails on case insensitive duplicate field name", () => {
