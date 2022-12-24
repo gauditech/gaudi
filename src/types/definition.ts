@@ -6,6 +6,7 @@ import { RefKind } from "@src/common/refs";
 export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];
+  resolveOrder: string[];
 };
 
 export type ModelDef = {

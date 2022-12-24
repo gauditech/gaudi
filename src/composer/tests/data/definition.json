@@ -167,5 +167,6 @@
       "hooks": []
     }
   ],
-  "entrypoints": []
+  "entrypoints": [],
+  "resolveOrder": []
 }

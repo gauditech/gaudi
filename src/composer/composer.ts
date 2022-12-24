@@ -7,7 +7,7 @@ import { Specification } from "@src/types/specification";
 export function compose(input: Specification): Definition {
   // let's start with empty definition
   // sub-composers are expected to mutate it
-  const def: Definition = { models: [], entrypoints: [] };
+  const def: Definition = { models: [], entrypoints: [], resolveOrder: [] };
   composeModels(def, input.models);
   composeEntrypoints(def, input.entrypoints);
   return def;

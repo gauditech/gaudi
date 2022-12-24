@@ -39,11 +39,6 @@ import {
   RelationSpec,
 } from "@src/types/specification";
 
-function refCount(def: Definition): number {
-  return def.models.flatMap((m) => [...m.fields, ...m.references, ...m.relations, ...m.queries])
-    .length;
-}
-
 export function composeModels(def: Definition, specs: ModelSpec[]): void {
   // cache.clear();
   let needsExtraStep = true;
@@ -60,7 +55,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     }
   }
   while (needsExtraStep) {
-    const cacheSize = refCount(def);
+    const resolvedCount = def.resolveOrder.length;
     needsExtraStep = false;
     // ensure model uniqueness
     ensureUnique(specs.map((s) => s.name.toLowerCase()));
@@ -83,7 +78,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
 
       return mdef;
     });
-    if (refCount(def) === cacheSize && needsExtraStep) {
+    if (def.resolveOrder.length === resolvedCount && needsExtraStep) {
       // whole iteration has passed, nothing has changed, but not everything's defined
       throw "infinite-loop";
     }
@@ -129,6 +124,7 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
   const idField = constructIdField(model);
   model.fields.push(idField);
   def.models.push(model);
+  def.resolveOrder.push(model.refKey);
   return model;
 }
 
@@ -167,6 +163,7 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
     validators: validatorSpecsToDefs(type, fspec.validators),
   };
   mdef.fields.push(f);
+  def.resolveOrder.push(f.refKey);
   return f;
 }
 
@@ -182,6 +179,7 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
     exp: composeExpression(cspec.exp, []),
   };
   mdef.computeds.push(c);
+  def.resolveOrder.push(c.refKey);
   return c;
 }
 
@@ -248,6 +246,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     validators: [],
   };
   mdef.fields.push(f);
+  def.resolveOrder.push(f.refKey);
 
   const ref: ReferenceDef = {
     refKey,
@@ -260,6 +259,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     nullable: !!rspec.nullable,
   };
   mdef.references.push(ref);
+  def.resolveOrder.push(f.refKey);
   return ref;
 }
 
@@ -288,6 +288,7 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
     unique: throughRef.unique,
   };
   mdef.relations.push(rel);
+  def.resolveOrder.push(rel.refKey);
   return rel;
 }
 
@@ -301,6 +302,7 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
   query.select = []; // FIXME ??
 
   mdef.queries.push(query);
+  def.resolveOrder.push(query.refKey);
   return query;
 }
 
@@ -321,6 +323,7 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
     code: hspec.code,
   };
   mdef.hooks.push(h);
+  def.resolveOrder.push(h.refKey);
   return h;
 }
 
