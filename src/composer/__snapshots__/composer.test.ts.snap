@@ -1,104 +1,101 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`compose models parses validators 1`] = `
-{
-  "entrypoints": [],
-  "models": [
-    {
-      "computeds": [],
-      "dbname": "org",
-      "fields": [
-        {
-          "dbname": "id",
-          "dbtype": "serial",
-          "modelRefKey": "Org",
-          "name": "id",
-          "nullable": false,
-          "primary": true,
-          "refKey": "Org.id",
-          "type": "integer",
-          "unique": true,
-          "validators": [],
-        },
-        {
-          "dbname": "adminemail",
-          "dbtype": "text",
-          "modelRefKey": "Org",
-          "name": "adminEmail",
-          "nullable": false,
-          "primary": false,
-          "refKey": "Org.adminEmail",
-          "type": "text",
-          "unique": false,
-          "validators": [
-            {
-              "args": [
-                {
-                  "type": "integer",
-                  "value": 4,
-                },
-              ],
-              "inputType": "text",
-              "name": "minLength",
-            },
-            {
-              "args": [
-                {
-                  "type": "integer",
-                  "value": 100,
-                },
-              ],
-              "inputType": "text",
-              "name": "maxLength",
-            },
-            {
-              "args": [],
-              "inputType": "text",
-              "name": "isEmail",
-            },
-          ],
-        },
-        {
-          "dbname": "num_employees",
-          "dbtype": "integer",
-          "modelRefKey": "Org",
-          "name": "num_employees",
-          "nullable": false,
-          "primary": false,
-          "refKey": "Org.num_employees",
-          "type": "integer",
-          "unique": false,
-          "validators": [
-            {
-              "args": [
-                {
-                  "type": "integer",
-                  "value": 0,
-                },
-              ],
-              "inputType": "integer",
-              "name": "min",
-            },
-            {
-              "args": [
-                {
-                  "type": "integer",
-                  "value": 9999,
-                },
-              ],
-              "inputType": "integer",
-              "name": "max",
-            },
-          ],
-        },
-      ],
-      "hooks": [],
-      "name": "Org",
-      "queries": [],
-      "refKey": "Org",
-      "references": [],
-      "relations": [],
-    },
-  ],
-}
+[
+  {
+    "computeds": [],
+    "dbname": "org",
+    "fields": [
+      {
+        "dbname": "id",
+        "dbtype": "serial",
+        "modelRefKey": "Org",
+        "name": "id",
+        "nullable": false,
+        "primary": true,
+        "refKey": "Org.id",
+        "type": "integer",
+        "unique": true,
+        "validators": [],
+      },
+      {
+        "dbname": "adminemail",
+        "dbtype": "text",
+        "modelRefKey": "Org",
+        "name": "adminEmail",
+        "nullable": false,
+        "primary": false,
+        "refKey": "Org.adminEmail",
+        "type": "text",
+        "unique": false,
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 4,
+              },
+            ],
+            "inputType": "text",
+            "name": "minLength",
+          },
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 100,
+              },
+            ],
+            "inputType": "text",
+            "name": "maxLength",
+          },
+          {
+            "args": [],
+            "inputType": "text",
+            "name": "isEmail",
+          },
+        ],
+      },
+      {
+        "dbname": "num_employees",
+        "dbtype": "integer",
+        "modelRefKey": "Org",
+        "name": "num_employees",
+        "nullable": false,
+        "primary": false,
+        "refKey": "Org.num_employees",
+        "type": "integer",
+        "unique": false,
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 0,
+              },
+            ],
+            "inputType": "integer",
+            "name": "min",
+          },
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 9999,
+              },
+            ],
+            "inputType": "integer",
+            "name": "max",
+          },
+        ],
+      },
+    ],
+    "hooks": [],
+    "name": "Org",
+    "queries": [],
+    "refKey": "Org",
+    "references": [],
+    "relations": [],
+  },
+]
 `;

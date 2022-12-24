@@ -63,7 +63,7 @@ describe("compose models", () => {
       field num_employees { type integer, validate { min 0, max 9999 } }
     }`;
     const def = compose(compile(parse(bp)));
-    expect(def).toMatchSnapshot();
+    expect(def.models).toMatchSnapshot();
   });
   it("fails on invalid validator", () => {
     const bp = `
