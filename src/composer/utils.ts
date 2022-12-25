@@ -25,6 +25,7 @@ export type TypedPathItemField = { kind: "field"; name: string; refKey: string }
 export type TypedPathItemReference = { kind: "reference"; name: string; refKey: string };
 export type TypedPathItemRelation = { kind: "relation"; name: string; refKey: string };
 export type TypedPathItemQuery = { kind: "query"; name: string; refKey: string };
+export type TypedPathItemComputed = { kind: "computed"; name: string; refKey: string };
 export type TypedPathItemContext = { kind: "context"; model: TypedPathItemModel; name: string };
 
 export type TypedPathItem =
@@ -33,6 +34,7 @@ export type TypedPathItem =
   | TypedPathItemRelation
   | TypedPathItemQuery
   | TypedPathItemField
+  | TypedPathItemComputed
   | TypedPathItemModel;
 
 /*
@@ -45,7 +47,7 @@ export type TypedPathItem =
 export type TypedPath = {
   source: TypedPathItemModel | TypedPathItemContext;
   nodes: (TypedPathItemReference | TypedPathItemRelation | TypedPathItemQuery)[];
-  leaf: TypedPathItemField | null;
+  leaf: TypedPathItemField | TypedPathItemComputed | null;
 };
 
 export type VarContext = Record<string, ContextRecord>;
@@ -77,9 +79,15 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
       }
       // what is this?
       const refKey = `${acc.ctx.refKey}.${name}`;
-      const ref = getRef2(def, acc.ctx.refKey, name, ["field", "reference", "relation", "query"]);
+      const ref = getRef2(def, acc.ctx.refKey, name, [
+        "field",
+        "reference",
+        "relation",
+        "query",
+        "computed",
+      ]);
       let targetCtx: ModelDef | null;
-      if (ref.kind === "field") {
+      if (ref.kind === "field" || ref.kind === "computed") {
         targetCtx = null;
       } else {
         targetCtx = getTargetModel(def.models, refKey);
@@ -90,8 +98,9 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
     { path: [], ctx: startModel } as { path: TypedPathItem[]; ctx: ModelDef | null }
   );
   const tpath = ret.path;
+  const last = _.last(tpath);
 
-  if (_.last(tpath)?.kind === "field") {
+  if (last?.kind === "field" || last?.kind === "computed") {
     return {
       source,
       nodes: _.initial(tpath) as TypedPath["nodes"],
