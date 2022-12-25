@@ -49,4 +49,32 @@ describe("Expressions to queries", () => {
     const worthiness = item!.computeds[0]!;
     expect(worthiness).toMatchSnapshot();
   });
+  it("composes a correct wrapped query which contains local computed prop", () => {
+    const bp = `
+    model Source {
+      relation items { from Item, through source }
+      query calc {
+        from items
+        filter {
+          worthiness > 100
+        }
+      }
+    }
+    model Item {
+      reference source { to Source }
+      field value { type integer }
+      field multiplier { type integer }
+      field textual { type text }
+      computed worthiness {
+        multiplier * (value + 1) / length(concat(textual, "tail"))
+      }
+    }
+    `;
+
+    const def = compose(compile(parse(bp)));
+    const source = def.models.find((m) => m.name === "Source");
+    const calc = source!.queries[0]!;
+    expect(calc).toMatchSnapshot();
+    expect(queryToString(def, calc)).toMatchSnapshot();
+  });
 });

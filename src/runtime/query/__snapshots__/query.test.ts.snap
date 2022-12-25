@@ -2358,11 +2358,11 @@ WHERE "Org"."slug" = :org_slug
       FROM "org" AS "Org"
       JOIN
 (
-      SELECT "Org.public_repos.issues"."id" AS "id", "Org.public_repos.issues"."name" AS "name", "Org.public_repos.issues"."repo_id" AS "repo_id", "Org"."id" AS "__join_connection"
+      SELECT "Org.public_issues"."id" AS "id", "Org"."id" AS "__join_connection"
             FROM "org" AS "Org"
             JOIN
         (
-              SELECT "Org.repos"."id" AS "id", "Org.repos"."is_public" AS "is_public", "Org.repos"."name" AS "name", "Org.repos"."org_id" AS "org_id", "Org"."id" AS "__join_connection"
+              SELECT "Org"."id" AS "__join_connection"
                     FROM "org" AS "Org"
                     JOIN
               "repo" AS "Org.repos"
@@ -2635,7 +2635,7 @@ WHERE "Org"."slug" = :org_slug",
       FROM "org" AS "Org"
       JOIN
 (
-      SELECT "Org.repos"."id" AS "id", "Org.repos"."is_public" AS "is_public", "Org.repos"."name" AS "name", "Org.repos"."org_id" AS "org_id", "Org"."id" AS "__join_connection"
+      SELECT "Org.public_repos"."id" AS "id", "Org"."id" AS "__join_connection"
             FROM "org" AS "Org"
             JOIN
       "repo" AS "Org.repos"

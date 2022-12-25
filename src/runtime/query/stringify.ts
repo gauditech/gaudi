@@ -1,15 +1,17 @@
 import { source } from "common-tags";
 import _ from "lodash";
 
-import { NamePath, selectToSelectable } from "./build";
+import { NamePath, getFilterPaths, selectToSelectable } from "./build";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { getTypedPath } from "@src/composer/utils";
 import {
   Definition,
   ModelDef,
   QueryDef,
   QueryDefPath,
+  SelectComputedItem,
   SelectFieldItem,
   SelectableItem,
   TypedExprDef,
@@ -18,22 +20,68 @@ import {
 
 // FIXME this should accept Queryable
 export function queryToString(def: Definition, q: QueryDef): string {
+  const deps = filterToSelectableDeps(def, q);
   switch (q.from.kind) {
     case "model": {
       const { value: model } = getRef<"model">(def, q.from.refKey);
+      const selectable = selectToSelectable(q.select);
       return source`
-      SELECT ${selectableToString(def, selectToSelectable(q.select))}
-      FROM "${model.dbname}" AS ${namePathToAlias([model.name])}
-      ${q.joinPaths.map((j) => joinToString(def, j))}
+      SELECT ${selectableToString(def, selectable)}
+      FROM ${makeWrappedSource(def, model, selectable)} AS ${namePathToAlias([model.name])}
+      ${q.joinPaths.map((j) => joinToString(def, j, deps))}
       WHERE ${filterToString(q.filter)}`;
     }
     case "query":
       return source`
       SELECT ${selectableToString(def, selectToSelectable(q.select))}
       FROM (${queryToString(def, q.from.query)}) AS ${namePathToAlias(q.from.query.fromPath)}
-      ${q.joinPaths.map((j) => joinToString(def, j))}
+      ${q.joinPaths.map((j) => joinToString(def, j, deps))}
       WHERE ${filterToString(q.filter)}`;
   }
+}
+
+function filterToSelectableDeps(def: Definition, q: QueryDef): SelectableItem[] {
+  const paths = getFilterPaths(q.filter);
+  return paths.flatMap((path): SelectableItem => {
+    const typedPath = getTypedPath(def, path, {});
+    if (!typedPath.leaf) {
+      // FIXME this should be possible, eg. for IN operator. Use getTypedPathWithLeaf to populate the IDs
+      throw new Error(`Path not ending in a leaf`);
+    }
+    return {
+      kind: typedPath.leaf.kind,
+      refKey: typedPath.leaf.refKey,
+      name: typedPath.leaf.name,
+      alias: typedPath.leaf.name,
+      namePath: path,
+    };
+  });
+}
+
+function makeWrappedSource(def: Definition, model: ModelDef, select: SelectableItem[]): string {
+  /**
+   * FIXME ensure all fields and computeds belong to this model!!!
+   */
+  // any computeds here?
+  const isBareModel = select.filter((s) => s.kind === "computed").length === 0;
+  if (isBareModel) {
+    // no need to wrap, just source from a model
+    return `"${model.dbname}"`;
+  }
+  // reorder selects by a resolve order
+  const selectOrd = _.sortBy(select, [
+    (i) => def.resolveOrder.findIndex((ref) => ref === i.refKey),
+  ]);
+
+  // wrap with the final one and source it recursively
+  const wrapper = _.last(selectOrd) as SelectComputedItem; // it's a computed
+  const remaining = _.initial(selectOrd);
+  const source = makeWrappedSource(def, model, remaining);
+  const computed = getRef2.computed(def, wrapper.refKey);
+  // NOTE: we alias to `model.name` as that's what `computed.exp` is namespaced (`namePath`) with
+  return `(SELECT "${model.name}".*, ${filterToString(computed.exp)} AS "${
+    wrapper.alias
+  }" FROM ${source} AS "${model.name}")`;
 }
 
 function selectableToString(def: Definition, select: SelectableItem[]): string {
@@ -144,7 +192,19 @@ function getQuerySource(def: Definition, q: QueryDef): ModelDef {
   }
 }
 
-function joinToString(def: Definition, join: QueryDefPath): string {
+function extractRelevantDeps(deps: SelectableItem[], namePath: string[]): SelectableItem[] {
+  // find deps EXACTLY matching the namePath
+  return (
+    deps
+      // first, make sure `item.namePath` is correct length
+      .filter((item) => item.namePath.length === namePath.length + 1)
+      // make sure the path matches the namePath
+      .filter((item) => _.isEqual(_.initial(item.namePath), namePath))
+  );
+}
+
+function joinToString(def: Definition, join: QueryDefPath, deps: SelectableItem[]): string {
+  const thisDeps = extractRelevantDeps(deps, join.namePath);
   const model = getTargetModel(def.models, join.refKey);
   const joinNames = getJoinNames(def, join.refKey);
   const joinMode = join.joinType === "inner" ? "JOIN" : "LEFT JOIN";
@@ -164,27 +224,19 @@ function joinToString(def: Definition, join: QueryDefPath): string {
     // extend select
     const conn = mkJoinConnection(sourceModel);
 
-    const retModel = getRef<"model">(def, query.retType).value;
-    const fields = retModel.fields.map(
-      (f): SelectableItem => ({
-        kind: "field",
-        refKey: f.refKey,
-        alias: f.name,
-        name: f.name,
-        namePath: [...query.fromPath, f.name],
-      })
-    );
+    // FIXME make sure to pass correct queries / filters / filterPath??
     src = source`(
-      ${queryToString(def, { ...query, select: [...query.select, ...fields, conn] })})`; // FIXME should remove query.select?
+      ${queryToString(def, { ...query, select: [...query.select, ...thisDeps, conn] })})`; // FIXME should remove query.select?
   } else {
-    src = `"${model.dbname}"`;
+    // we need to read the dependencies of this join! SelectPaths or something!
+    src = makeWrappedSource(def, model, thisDeps);
   }
 
   return source`
   ${joinMode}
   ${src} AS ${namePathToAlias(join.namePath)}
   ON ${filterToString(joinFilter)}
-  ${join.joinPaths.map((j) => joinToString(def, j))}`;
+  ${join.joinPaths.map((j) => joinToString(def, j, deps))}`;
 }
 
 export function mkJoinConnection(model: ModelDef): SelectFieldItem {
