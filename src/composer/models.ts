@@ -176,7 +176,7 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
     refKey,
     modelRefKey: mdef.refKey,
     name: cspec.name,
-    exp: composeExpression(cspec.exp, []),
+    exp: composeExpression(cspec.exp, [mdef.name]),
   };
   mdef.computeds.push(c);
   def.resolveOrder.push(c.refKey);
