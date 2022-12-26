@@ -1,16 +1,16 @@
 import { source } from "common-tags";
 import _ from "lodash";
+import { format } from "sql-formatter";
 
-import { NamePath, getFilterPaths, selectToSelectable } from "./build";
+import { NamePath, selectToSelectable, transformNamePath, transformSelectPath } from "./build";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
 import { getTypedPath } from "@src/composer/utils";
 import {
   Definition,
   ModelDef,
   QueryDef,
-  QueryDefPath,
   SelectComputedItem,
   SelectFieldItem,
   SelectableItem,
@@ -20,42 +20,190 @@ import {
 
 // FIXME this should accept Queryable
 export function queryToString(def: Definition, q: QueryDef): string {
-  const deps = filterToSelectableDeps(def, q);
-  switch (q.from.kind) {
-    case "model": {
-      const { value: model } = getRef<"model">(def, q.from.refKey);
-      const selectable = selectToSelectable(q.select);
-      return source`
+  // FIXME We currently don't support querying from QueryDef!
+  ensureEqual(q.from.kind, "model" as const);
+
+  const paths = collectPaths(def, q);
+  const joinPlan = buildQueryJoinPlan(paths);
+  const model = getRef2.model(def, joinPlan.sourceModel);
+  const selectable = selectToSelectable(q.select);
+  const fromSelectables = joinPlan.selectable.map((s) => nameToSelectable(def, [model.refKey, s]));
+
+  const qstr = `
       SELECT ${selectableToString(def, selectable)}
-      FROM ${makeWrappedSource(def, model, selectable)} AS ${namePathToAlias([model.name])}
-      ${q.joinPaths.map((j) => joinToString(def, j, deps))}
+      FROM ${makeWrappedSource(def, model, fromSelectables)} AS ${namePathToAlias([model.refKey])}
+      ${joinPlan.joins.map((j) => joinToString(def, model, [model.refKey], j))}
       WHERE ${filterToString(q.filter)}`;
-    }
-    case "query":
-      return source`
-      SELECT ${selectableToString(def, selectToSelectable(q.select))}
-      FROM (${queryToString(def, q.from.query)}) AS ${namePathToAlias(q.from.query.fromPath)}
-      ${q.joinPaths.map((j) => joinToString(def, j, deps))}
-      WHERE ${filterToString(q.filter)}`;
-  }
+
+  return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
 }
 
-function filterToSelectableDeps(def: Definition, q: QueryDef): SelectableItem[] {
-  const paths = getFilterPaths(q.filter);
-  return paths.flatMap((path): SelectableItem => {
-    const typedPath = getTypedPath(def, path, {});
-    if (!typedPath.leaf) {
-      // FIXME this should be possible, eg. for IN operator. Use getTypedPathWithLeaf to populate the IDs
-      throw new Error(`Path not ending in a leaf`);
-    }
+function joinToString(
+  def: Definition,
+  sourceModel: ModelDef,
+  sourceNamePath: string[],
+  join: Join
+): string {
+  const namePath = [...sourceNamePath, join.relname];
+  const ref = getRef2(def, sourceModel.refKey, join.relname);
+  const model = getTargetModel(def.models, ref.value.refKey);
+  const joinNames = getJoinNames(def, ref.value.refKey);
+  const joinFilter: TypedExprDef = {
+    kind: "function",
+    name: "is",
+    args: [
+      { kind: "alias", namePath: [..._.initial(namePath), joinNames.from] },
+      { kind: "alias", namePath: [...namePath, joinNames.to] },
+    ],
+  };
+
+  const thisDeps = join.selectable.map((name) => nameToSelectable(def, [...namePath, name]));
+  let src: string;
+  if (ref.kind === "query") {
+    const query = ref.value;
+    const sourceModel = getQuerySource(def, query);
+    // extend select
+    const conn = mkJoinConnection(sourceModel);
+
+    src = `(
+      ${queryToString(def, { ...query, select: [...thisDeps, conn] })})`;
+  } else {
+    // we need to read the dependencies of this join! SelectPaths or something!
+    src = makeWrappedSource(def, model, thisDeps);
+  }
+
+  return `
+    JOIN ${src} AS ${namePathToAlias(namePath)}
+    ON ${filterToString(joinFilter)}
+    ${join.joins.map((j) => joinToString(def, model, namePath, j))}
+  `;
+}
+
+function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
+  const typedPath = getTypedPath(def, namePath, {});
+  ensureNot(typedPath.leaf, null);
+  const ref = getRef2(def, typedPath.leaf.refKey, undefined, ["field", "computed"]);
+  const name = typedPath.leaf.name;
+  return {
+    kind: ref.kind,
+    refKey: ref.value.refKey,
+    name,
+    alias: name,
+    namePath,
+  };
+}
+
+function collectPaths(def: Definition, q: QueryDef): string[][] {
+  /**
+   * Path sources:
+   * 1. query from
+   * 2. query filter
+   * 3. computeds from `select`
+   */
+
+  const allPaths = [
+    [...q.fromPath, "id"],
+    ...collectPathsFromExp(def, q.filter, q.fromPath),
+    // FIXME Query has no select!? Does it matter?
+    ...q.select
+      .filter((item): item is SelectComputedItem => item.kind === "computed")
+      .flatMap((item) => {
+        const computed = getRef2.computed(def, item.refKey);
+        return collectPathsFromExp(def, computed.exp, q.fromPath);
+      }),
+  ];
+  return _.uniqWith(allPaths, _.isEqual);
+}
+
+type QueryJoinPlan = {
+  sourceModel: string;
+  selectable: string[];
+  joins: Join[];
+};
+
+type Join = {
+  relname: string;
+  selectable: string[];
+  joins: Join[];
+};
+
+function buildQueryJoinPlan(paths: string[][]): QueryJoinPlan {
+  // Ensure all paths start with the same root and not empty!
+  const roots = _.uniq(paths.map((p) => p[0]));
+  ensureEqual(roots.length, 1);
+  return {
+    sourceModel: roots[0],
+    selectable: getLeaves(paths, roots),
+    joins: getJoins(paths, roots),
+  };
+}
+
+function getLeaves(paths: string[][], namespace: string[]): string[] {
+  return (
+    paths
+      // ensure equal namepath
+      .filter((p) => _.isEqual(_.initial(p), namespace))
+      .map((p) => _.last(p)!)
+  );
+}
+
+function getNodes(paths: string[][], namespace: string[]): string[] {
+  return (
+    _.chain(paths)
+      // make sure namespace matches
+      .filter((p) => _.isEqual(_.take(p, namespace.length), namespace))
+      // make sure it's not a leaf
+      .filter((p) => p.length > namespace.length + 1)
+      .map((p) => p[namespace.length])
+      .uniq()
+      .value()
+  );
+}
+
+function getJoins(paths: string[][], namespace: string[]): Join[] {
+  // get nodes
+  return getNodes(paths, namespace).map((node) => {
+    const selectable = getLeaves(paths, [...namespace, node]);
     return {
-      kind: typedPath.leaf.kind,
-      refKey: typedPath.leaf.refKey,
-      name: typedPath.leaf.name,
-      alias: typedPath.leaf.name,
-      namePath: path,
+      relname: node,
+      selectable,
+      joins: getJoins(paths, [...namespace, node]),
     };
   });
+}
+
+export function collectPathsFromExp(
+  def: Definition,
+  exp: TypedExprDef,
+  sourceNamePath: string[]
+): string[][] {
+  if (exp === undefined) {
+    return [];
+  }
+
+  switch (exp.kind) {
+    case "literal":
+    case "variable":
+      return [];
+    case "alias": {
+      const namePath = transformNamePath(exp.namePath, _.initial(exp.namePath), sourceNamePath);
+      const typedPath = getTypedPath(def, exp.namePath, {});
+      if (!typedPath.leaf) {
+        throw new Error(`Path doesn't end up with a leaf`);
+      }
+      if (typedPath.leaf.kind === "field") {
+        return [namePath];
+      } else if (typedPath.leaf.kind === "computed") {
+        const computed = getRef2.computed(def, typedPath.leaf.refKey);
+        return [namePath, ...collectPathsFromExp(def, computed.exp, sourceNamePath)];
+      } else {
+        return assertUnreachable(typedPath.leaf);
+      }
+    }
+    case "function": {
+      return exp.args.flatMap((arg) => collectPathsFromExp(def, arg, sourceNamePath));
+    }
+  }
 }
 
 function makeWrappedSource(def: Definition, model: ModelDef, select: SelectableItem[]): string {
@@ -190,53 +338,6 @@ function getQuerySource(def: Definition, q: QueryDef): ModelDef {
       return getQuerySource(def, q.from.query);
     }
   }
-}
-
-function extractRelevantDeps(deps: SelectableItem[], namePath: string[]): SelectableItem[] {
-  // find deps EXACTLY matching the namePath
-  return (
-    deps
-      // first, make sure `item.namePath` is correct length
-      .filter((item) => item.namePath.length === namePath.length + 1)
-      // make sure the path matches the namePath
-      .filter((item) => _.isEqual(_.initial(item.namePath), namePath))
-  );
-}
-
-function joinToString(def: Definition, join: QueryDefPath, deps: SelectableItem[]): string {
-  const thisDeps = extractRelevantDeps(deps, join.namePath);
-  const model = getTargetModel(def.models, join.refKey);
-  const joinNames = getJoinNames(def, join.refKey);
-  const joinMode = join.joinType === "inner" ? "JOIN" : "LEFT JOIN";
-  const joinFilter: TypedExprDef = {
-    kind: "function",
-    name: "is",
-    args: [
-      { kind: "alias", namePath: [..._.initial(join.namePath), joinNames.from] },
-      { kind: "alias", namePath: [...join.namePath, joinNames.to] },
-    ],
-  };
-
-  let src: string;
-  if (join.kind === "query") {
-    const { value: query } = getRef<"query">(def, join.refKey);
-    const sourceModel = getQuerySource(def, query);
-    // extend select
-    const conn = mkJoinConnection(sourceModel);
-
-    // FIXME make sure to pass correct queries / filters / filterPath??
-    src = source`(
-      ${queryToString(def, { ...query, select: [...query.select, ...thisDeps, conn] })})`; // FIXME should remove query.select?
-  } else {
-    // we need to read the dependencies of this join! SelectPaths or something!
-    src = makeWrappedSource(def, model, thisDeps);
-  }
-
-  return source`
-  ${joinMode}
-  ${src} AS ${namePathToAlias(join.namePath)}
-  ON ${filterToString(joinFilter)}
-  ${join.joinPaths.map((j) => joinToString(def, j, deps))}`;
 }
 
 export function mkJoinConnection(model: ModelDef): SelectFieldItem {

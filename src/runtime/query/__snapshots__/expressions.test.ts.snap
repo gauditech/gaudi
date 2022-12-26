@@ -85,22 +85,7 @@ exports[`Expressions to queries composes a complex filter expression 1`] = `
     "Source",
     "items",
   ],
-  "joinPaths": [
-    {
-      "joinPaths": [],
-      "joinType": "inner",
-      "kind": "relation",
-      "name": "items",
-      "namePath": [
-        "Source",
-        "items",
-      ],
-      "refKey": "Source.items",
-      "retType": "Item",
-    },
-  ],
   "name": "calc",
-  "nullable": false,
   "refKey": "Source.calc",
   "retType": "Item",
   "select": [],
@@ -108,12 +93,12 @@ exports[`Expressions to queries composes a complex filter expression 1`] = `
 `;
 
 exports[`Expressions to queries composes a complex filter expression 2`] = `
-"SELECT 
-      FROM "source" AS "Source"
-      JOIN
-"item" AS "Source.items"
-ON "Source"."id" = "Source.items"."source_id"
-      WHERE "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) > 100"
+"SELECT
+FROM
+  "source" AS "Source"
+  JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+WHERE
+  "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) > 100"
 `;
 
 exports[`Expressions to queries composes a complex local computed expression 1`] = `
@@ -214,22 +199,7 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
     "Source",
     "items",
   ],
-  "joinPaths": [
-    {
-      "joinPaths": [],
-      "joinType": "inner",
-      "kind": "relation",
-      "name": "items",
-      "namePath": [
-        "Source",
-        "items",
-      ],
-      "refKey": "Source.items",
-      "retType": "Item",
-    },
-  ],
   "name": "calc",
-  "nullable": false,
   "refKey": "Source.calc",
   "retType": "Item",
   "select": [],
@@ -237,10 +207,16 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
 `;
 
 exports[`Expressions to queries composes a correct wrapped query which contains local computed prop 2`] = `
-"SELECT 
-      FROM "source" AS "Source"
-      JOIN
-(SELECT "Item".*, "Item"."multiplier" * ("Item"."value" + 1) / char_length(concat("Item"."textual", 'tail')) AS "worthiness" FROM "item" AS "Item") AS "Source.items"
-ON "Source"."id" = "Source.items"."source_id"
-      WHERE "Source.items"."worthiness" > 100"
+"SELECT
+FROM
+  "source" AS "Source"
+  JOIN (
+    SELECT
+      "Item".*,
+      "Item"."multiplier" * ("Item"."value" + 1) / char_length(concat("Item"."textual", 'tail')) AS "worthiness"
+    FROM
+      "item" AS "Item"
+  ) AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+WHERE
+  "Source.items"."worthiness" > 100"
 `;

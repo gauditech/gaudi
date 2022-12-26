@@ -31,9 +31,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
-    "joinPaths": [],
     "name": "$target_0",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Org",
     "select": [
@@ -107,22 +105,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "Org",
       "repos",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
     "name": "$target_1",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Repo",
     "select": [
@@ -169,22 +152,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "Repo",
       "issues",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "issues",
-        "namePath": [
-          "Repo",
-          "issues",
-        ],
-        "refKey": "Repo.issues",
-        "retType": "Issue",
-      },
-    ],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -230,9 +198,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
-    "joinPaths": [],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -273,35 +239,44 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test create endpoint 2`] = `
 [
-  "SELECT "Org"."id" AS "id"
-FROM "org" AS "Org"
-
-WHERE "Org"."slug" = :org_slug
-
-
-",
-  "SELECT "Org.repos"."id" AS "id"
-      FROM "org" AS "Org"
-      JOIN
-"repo" AS "Org.repos"
-ON "Org"."id" = "Org.repos"."org_id"
-      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
+  "SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Repo.issues"."id" AS "id"
-      FROM "repo" AS "Repo"
-      JOIN
-"issue" AS "Repo.issues"
-ON "Repo"."id" = "Repo.issues"."repo_id"
-      WHERE "Repo"."id" IN :@context_ids
+  "SELECT
+  "Org.repos"."id" AS "id"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+WHERE
+  "Org.repos"."id" = :repo_id
+  AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Issue"."id" AS "id", "Issue"."name" AS "name", "Issue"."repo_id" AS "repo_id"
-FROM "issue" AS "Issue"
+  "SELECT
+  "Repo.issues"."id" AS "id"
+FROM
+  "repo" AS "Repo"
+  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+WHERE
+  "Repo"."id" IN :@context_ids
 
-WHERE "Issue"."id" IN :@context_ids
+
+",
+  "SELECT
+  "Issue"."id" AS "id",
+  "Issue"."name" AS "name",
+  "Issue"."repo_id" AS "repo_id"
+FROM
+  "issue" AS "Issue"
+WHERE
+  "Issue"."id" IN :@context_ids
 
 
 ",
@@ -407,9 +382,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
-    "joinPaths": [],
     "name": "$target_0",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Org",
     "select": [
@@ -483,22 +456,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "Org",
       "repos",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
     "name": "$target_1",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Repo",
     "select": [
@@ -573,22 +531,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "Repo",
       "issues",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "issues",
-        "namePath": [
-          "Repo",
-          "issues",
-        ],
-        "refKey": "Repo.issues",
-        "retType": "Issue",
-      },
-    ],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -634,9 +577,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
-    "joinPaths": [],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -657,35 +598,43 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 2`] = `
 [
-  "SELECT "Org"."id" AS "id"
-FROM "org" AS "Org"
-
-WHERE "Org"."slug" = :org_slug
-
-
-",
-  "SELECT "Org.repos"."id" AS "id"
-      FROM "org" AS "Org"
-      JOIN
-"repo" AS "Org.repos"
-ON "Org"."id" = "Org.repos"."org_id"
-      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
+  "SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Repo.issues"."id" AS "id"
-      FROM "repo" AS "Repo"
-      JOIN
-"issue" AS "Repo.issues"
-ON "Repo"."id" = "Repo.issues"."repo_id"
-      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
+  "SELECT
+  "Org.repos"."id" AS "id"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+WHERE
+  "Org.repos"."id" = :repo_id
+  AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Issue"."id" AS "id"
-FROM "issue" AS "Issue"
+  "SELECT
+  "Repo.issues"."id" AS "id"
+FROM
+  "repo" AS "Repo"
+  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+WHERE
+  "Repo.issues"."id" = :issue_id
+  AND "Repo"."id" IN :@context_ids
 
-WHERE "Issue"."id" IN :@context_ids
+
+",
+  "SELECT
+  "Issue"."id" AS "id"
+FROM
+  "issue" AS "Issue"
+WHERE
+  "Issue"."id" IN :@context_ids
 
 
 ",
@@ -785,9 +734,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
-    "joinPaths": [],
     "name": "$target_0",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Org",
     "select": [
@@ -861,22 +808,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "Org",
       "repos",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
     "name": "$target_1",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Repo",
     "select": [
@@ -951,22 +883,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "Repo",
       "issues",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "issues",
-        "namePath": [
-          "Repo",
-          "issues",
-        ],
-        "refKey": "Repo.issues",
-        "retType": "Issue",
-      },
-    ],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1012,9 +929,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
-    "joinPaths": [],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1055,35 +970,45 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test get endpoint 2`] = `
 [
-  "SELECT "Org"."id" AS "id"
-FROM "org" AS "Org"
-
-WHERE "Org"."slug" = :org_slug
-
-
-",
-  "SELECT "Org.repos"."id" AS "id"
-      FROM "org" AS "Org"
-      JOIN
-"repo" AS "Org.repos"
-ON "Org"."id" = "Org.repos"."org_id"
-      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
+  "SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Repo.issues"."id" AS "id"
-      FROM "repo" AS "Repo"
-      JOIN
-"issue" AS "Repo.issues"
-ON "Repo"."id" = "Repo.issues"."repo_id"
-      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
+  "SELECT
+  "Org.repos"."id" AS "id"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+WHERE
+  "Org.repos"."id" = :repo_id
+  AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Issue"."id" AS "id", "Issue"."name" AS "name", "Issue"."repo_id" AS "repo_id"
-FROM "issue" AS "Issue"
+  "SELECT
+  "Repo.issues"."id" AS "id"
+FROM
+  "repo" AS "Repo"
+  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+WHERE
+  "Repo.issues"."id" = :issue_id
+  AND "Repo"."id" IN :@context_ids
 
-WHERE "Issue"."id" IN :@context_ids
+
+",
+  "SELECT
+  "Issue"."id" AS "id",
+  "Issue"."name" AS "name",
+  "Issue"."repo_id" AS "repo_id"
+FROM
+  "issue" AS "Issue"
+WHERE
+  "Issue"."id" IN :@context_ids
 
 
 ",
@@ -1183,9 +1108,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
-    "joinPaths": [],
     "name": "$target_0",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Org",
     "select": [
@@ -1259,22 +1182,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "Org",
       "repos",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
     "name": "$target_1",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Repo",
     "select": [
@@ -1321,22 +1229,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "Repo",
       "issues",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "issues",
-        "namePath": [
-          "Repo",
-          "issues",
-        ],
-        "refKey": "Repo.issues",
-        "retType": "Issue",
-      },
-    ],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1383,22 +1276,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "Repo",
       "issues",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "issues",
-        "namePath": [
-          "Repo",
-          "issues",
-        ],
-        "refKey": "Repo.issues",
-        "retType": "Issue",
-      },
-    ],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1442,37 +1320,45 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test list endpoint 2`] = `
 [
-  "SELECT "Org"."id" AS "id"
-FROM "org" AS "Org"
-
-WHERE "Org"."slug" = :org_slug
-
-
-",
-  "SELECT "Org.repos"."id" AS "id"
-      FROM "org" AS "Org"
-      JOIN
-"repo" AS "Org.repos"
-ON "Org"."id" = "Org.repos"."org_id"
-      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
+  "SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Repo.issues"."id" AS "id"
-      FROM "repo" AS "Repo"
-      JOIN
-"issue" AS "Repo.issues"
-ON "Repo"."id" = "Repo.issues"."repo_id"
-      WHERE "Repo"."id" IN :@context_ids
+  "SELECT
+  "Org.repos"."id" AS "id"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+WHERE
+  "Org.repos"."id" = :repo_id
+  AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.issues"."id" AS "id", "Repo.issues"."name" AS "name", "Repo.issues"."repo_id" AS "repo_id"
-      FROM "repo" AS "Repo"
-      JOIN
-"issue" AS "Repo.issues"
-ON "Repo"."id" = "Repo.issues"."repo_id"
-      WHERE "Repo"."id" IN :@context_ids
+  "SELECT
+  "Repo.issues"."id" AS "id"
+FROM
+  "repo" AS "Repo"
+  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+WHERE
+  "Repo"."id" IN :@context_ids
+
+
+",
+  "SELECT
+  "Repo.issues"."id" AS "id",
+  "Repo.issues"."name" AS "name",
+  "Repo.issues"."repo_id" AS "repo_id"
+FROM
+  "repo" AS "Repo"
+  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+WHERE
+  "Repo"."id" IN :@context_ids
 
 
 ",
@@ -1566,9 +1452,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
-    "joinPaths": [],
     "name": "$target_0",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Org",
     "select": [
@@ -1642,22 +1526,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "Org",
       "repos",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
     "name": "$target_1",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Repo",
     "select": [
@@ -1732,22 +1601,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "Repo",
       "issues",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "issues",
-        "namePath": [
-          "Repo",
-          "issues",
-        ],
-        "refKey": "Repo.issues",
-        "retType": "Issue",
-      },
-    ],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1793,9 +1647,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
-    "joinPaths": [],
     "name": "$target_2",
-    "nullable": false,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1836,35 +1688,45 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
 
 exports[`Endpoint queries Deeply nested entrypoints test update endpoint 2`] = `
 [
-  "SELECT "Org"."id" AS "id"
-FROM "org" AS "Org"
-
-WHERE "Org"."slug" = :org_slug
-
-
-",
-  "SELECT "Org.repos"."id" AS "id"
-      FROM "org" AS "Org"
-      JOIN
-"repo" AS "Org.repos"
-ON "Org"."id" = "Org.repos"."org_id"
-      WHERE "Org.repos"."id" = :repo_id AND "Org"."id" IN :@context_ids
+  "SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Repo.issues"."id" AS "id"
-      FROM "repo" AS "Repo"
-      JOIN
-"issue" AS "Repo.issues"
-ON "Repo"."id" = "Repo.issues"."repo_id"
-      WHERE "Repo.issues"."id" = :issue_id AND "Repo"."id" IN :@context_ids
+  "SELECT
+  "Org.repos"."id" AS "id"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+WHERE
+  "Org.repos"."id" = :repo_id
+  AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Issue"."id" AS "id", "Issue"."name" AS "name", "Issue"."repo_id" AS "repo_id"
-FROM "issue" AS "Issue"
+  "SELECT
+  "Repo.issues"."id" AS "id"
+FROM
+  "repo" AS "Repo"
+  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+WHERE
+  "Repo.issues"."id" = :issue_id
+  AND "Repo"."id" IN :@context_ids
 
-WHERE "Issue"."id" IN :@context_ids
+
+",
+  "SELECT
+  "Issue"."id" AS "id",
+  "Issue"."name" AS "name",
+  "Issue"."repo_id" AS "repo_id"
+FROM
+  "issue" AS "Issue"
+WHERE
+  "Issue"."id" IN :@context_ids
 
 
 ",
@@ -1982,9 +1844,7 @@ exports[`Endpoint queries chained nested query 1`] = `
         "fromPath": [
           "Org",
         ],
-        "joinPaths": [],
         "name": "$target_0",
-        "nullable": false,
         "refKey": "N/A",
         "retType": "Org",
         "select": [
@@ -2036,9 +1896,7 @@ exports[`Endpoint queries chained nested query 1`] = `
       "fromPath": [
         "Issue",
       ],
-      "joinPaths": [],
       "name": "$target_1",
-      "nullable": false,
       "refKey": "N/A",
       "retType": "Issue",
       "select": [
@@ -2099,22 +1957,7 @@ exports[`Endpoint queries chained nested query 1`] = `
             "Issue",
             "repo",
           ],
-          "joinPaths": [
-            {
-              "joinPaths": [],
-              "joinType": "inner",
-              "kind": "reference",
-              "name": "repo",
-              "namePath": [
-                "Issue",
-                "repo",
-              ],
-              "refKey": "Issue.repo",
-              "retType": "Repo",
-            },
-          ],
           "name": "repo",
-          "nullable": false,
           "refKey": "N/A",
           "retType": "Repo",
           "select": [
@@ -2187,22 +2030,7 @@ exports[`Endpoint queries chained nested query 1`] = `
                 "Repo",
                 "org",
               ],
-              "joinPaths": [
-                {
-                  "joinPaths": [],
-                  "joinType": "inner",
-                  "kind": "reference",
-                  "name": "org",
-                  "namePath": [
-                    "Repo",
-                    "org",
-                  ],
-                  "refKey": "Repo.org",
-                  "retType": "Org",
-                },
-              ],
               "name": "org",
-              "nullable": false,
               "refKey": "N/A",
               "retType": "Org",
               "select": [
@@ -2308,22 +2136,7 @@ exports[`Endpoint queries chained nested query 1`] = `
         "Org",
         "public_issues",
       ],
-      "joinPaths": [
-        {
-          "joinPaths": [],
-          "joinType": "inner",
-          "kind": "query",
-          "name": "public_issues",
-          "namePath": [
-            "Org",
-            "public_issues",
-          ],
-          "refKey": "Org.public_issues",
-          "retType": "Issue",
-        },
-      ],
       "name": "$target_1",
-      "nullable": false,
       "refKey": "N/A",
       "retType": "Issue",
       "select": [
@@ -2347,59 +2160,75 @@ exports[`Endpoint queries chained nested query 1`] = `
 
 exports[`Endpoint queries chained nested query 2`] = `
 [
-  "SELECT "Org"."id" AS "id"
-FROM "org" AS "Org"
-
-WHERE "Org"."slug" = :org_slug
-
-
-",
-  "SELECT "Org.public_issues"."id" AS "id"
-      FROM "org" AS "Org"
-      JOIN
-(
-      SELECT "Org.public_issues"."id" AS "id", "Org"."id" AS "__join_connection"
-            FROM "org" AS "Org"
-            JOIN
-        (
-              SELECT "Org"."id" AS "__join_connection"
-                    FROM "org" AS "Org"
-                    JOIN
-              "repo" AS "Org.repos"
-              ON "Org"."id" = "Org.repos"."org_id"
-                    WHERE "Org.repos"."is_public" = TRUE) AS "Org.public_repos"
-        ON "Org"."id" = "Org.public_repos"."__join_connection"
-        JOIN
-      "issue" AS "Org.public_repos.issues"
-      ON "Org.public_repos"."id" = "Org.public_repos.issues"."repo_id"
-            WHERE TRUE = TRUE) AS "Org.public_issues"
-ON "Org"."id" = "Org.public_issues"."__join_connection"
-      WHERE "Org.public_issues"."id" = :issue_id AND "Org"."id" IN :@context_ids
+  "SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."slug" = :org_slug
 
 
 ",
-  "SELECT "Issue"."id" AS "id", "Issue"."name" AS "name"
-FROM "issue" AS "Issue"
-
-WHERE "Issue"."id" IN :@context_ids
+  "SELECT
+  "Org.public_issues"."id" AS "id"
+FROM
+  "org" AS "Org"
+  JOIN (
+    SELECT
+      "Org.public_issues"."id" AS "id",
+      "Org"."id" AS "__join_connection"
+    FROM
+      "org" AS "Org"
+      JOIN (
+        SELECT
+          "Org"."id" AS "__join_connection"
+        FROM
+          "org" AS "Org"
+          JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+        WHERE
+          "Org.repos"."is_public" = TRUE
+      ) AS "Org.public_repos" ON "Org"."id" = "Org.public_repos"."__join_connection"
+      JOIN "issue" AS "Org.public_repos.issues" ON "Org.public_repos"."id" = "Org.public_repos.issues"."repo_id"
+    WHERE
+      TRUE = TRUE
+  ) AS "Org.public_issues" ON "Org"."id" = "Org.public_issues"."__join_connection"
+WHERE
+  "Org.public_issues"."id" = :issue_id
+  AND "Org"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Issue.repo"."name" AS "name", "Issue.repo"."is_public" AS "is_public", "Issue"."id" AS "__join_connection"
-      FROM "issue" AS "Issue"
-      JOIN
-"repo" AS "Issue.repo"
-ON "Issue"."repo_id" = "Issue.repo"."id"
-      WHERE "Issue"."id" IN :@context_ids
+  "SELECT
+  "Issue"."id" AS "id",
+  "Issue"."name" AS "name"
+FROM
+  "issue" AS "Issue"
+WHERE
+  "Issue"."id" IN :@context_ids
 
 
 ",
-  "SELECT "Repo.org"."id" AS "id", "Repo.org"."slug" AS "slug", "Repo"."id" AS "__join_connection"
-      FROM "repo" AS "Repo"
-      JOIN
-"org" AS "Repo.org"
-ON "Repo"."org_id" = "Repo.org"."id"
-      WHERE "Repo"."id" IN :@context_ids
+  "SELECT
+  "Issue.repo"."name" AS "name",
+  "Issue.repo"."is_public" AS "is_public",
+  "Issue"."id" AS "__join_connection"
+FROM
+  "issue" AS "Issue"
+  JOIN "repo" AS "Issue.repo" ON "Issue"."repo_id" = "Issue.repo"."id"
+WHERE
+  "Issue"."id" IN :@context_ids
+
+
+",
+  "SELECT
+  "Repo.org"."id" AS "id",
+  "Repo.org"."slug" AS "slug",
+  "Repo"."id" AS "__join_connection"
+FROM
+  "repo" AS "Repo"
+  JOIN "org" AS "Repo.org" ON "Repo"."org_id" = "Repo.org"."id"
+WHERE
+  "Repo"."id" IN :@context_ids
 
 
 ",
@@ -2442,9 +2271,7 @@ exports[`Endpoint queries nested query 1`] = `
         "fromPath": [
           "Org",
         ],
-        "joinPaths": [],
         "name": "$target_0",
-        "nullable": false,
         "refKey": "N/A",
         "retType": "Org",
         "select": [
@@ -2496,9 +2323,7 @@ exports[`Endpoint queries nested query 1`] = `
       "fromPath": [
         "Repo",
       ],
-      "joinPaths": [],
       "name": "$target_1",
-      "nullable": false,
       "refKey": "N/A",
       "retType": "Repo",
       "select": [
@@ -2588,22 +2413,7 @@ exports[`Endpoint queries nested query 1`] = `
         "Org",
         "public_repos",
       ],
-      "joinPaths": [
-        {
-          "joinPaths": [],
-          "joinType": "inner",
-          "kind": "query",
-          "name": "public_repos",
-          "namePath": [
-            "Org",
-            "public_repos",
-          ],
-          "refKey": "Org.public_repos",
-          "retType": "Repo",
-        },
-      ],
       "name": "$target_1",
-      "nullable": false,
       "refKey": "N/A",
       "retType": "Repo",
       "select": [
@@ -2627,25 +2437,35 @@ exports[`Endpoint queries nested query 1`] = `
 
 exports[`Endpoint queries nested query 2`] = `
 [
-  "SELECT "Org"."id" AS "id"
-FROM "org" AS "Org"
-
-WHERE "Org"."slug" = :org_slug",
-  "SELECT "Org.public_repos"."id" AS "id"
-      FROM "org" AS "Org"
-      JOIN
-(
-      SELECT "Org.public_repos"."id" AS "id", "Org"."id" AS "__join_connection"
-            FROM "org" AS "Org"
-            JOIN
-      "repo" AS "Org.repos"
-      ON "Org"."id" = "Org.repos"."org_id"
-            WHERE "Org.repos"."is_public" = TRUE) AS "Org.public_repos"
-ON "Org"."id" = "Org.public_repos"."__join_connection"
-      WHERE "Org.public_repos"."id" = :repo_id AND "Org"."id" IN :@context_ids",
-  "SELECT "Repo"."id" AS "id", "Repo"."name" AS "name"
-FROM "repo" AS "Repo"
-
-WHERE "Repo"."id" IN :@context_ids",
+  "SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."slug" = :org_slug",
+  "SELECT
+  "Org.public_repos"."id" AS "id"
+FROM
+  "org" AS "Org"
+  JOIN (
+    SELECT
+      "Org.public_repos"."id" AS "id",
+      "Org"."id" AS "__join_connection"
+    FROM
+      "org" AS "Org"
+      JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+    WHERE
+      "Org.repos"."is_public" = TRUE
+  ) AS "Org.public_repos" ON "Org"."id" = "Org.public_repos"."__join_connection"
+WHERE
+  "Org.public_repos"."id" = :repo_id
+  AND "Org"."id" IN :@context_ids",
+  "SELECT
+  "Repo"."id" AS "id",
+  "Repo"."name" AS "name"
+FROM
+  "repo" AS "Repo"
+WHERE
+  "Repo"."id" IN :@context_ids",
 ]
 `;

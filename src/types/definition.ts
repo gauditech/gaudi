@@ -69,9 +69,7 @@ export type QueryDef = {
   from: QueryFrom;
   // retCardinality: "one" | "many";
   fromPath: string[];
-  nullable: boolean;
   // unique: boolean;
-  joinPaths: QueryDefPath[];
   filter: TypedExprDef;
   select: SelectDef;
   // count?: true;
@@ -90,17 +88,6 @@ export type ModelHookDef = {
   name: string;
   args: { name: string; query: QueryDef }[];
   code: HookCode;
-};
-
-export type QueryDefPath = {
-  kind: Extract<RefKind, "reference" | "relation" | "query">;
-  refKey: string;
-  name: string;
-  namePath: string[];
-  joinType: "inner" | "outer";
-  joinPaths: QueryDefPath[];
-  retType: string;
-  // retCardinality: "one" | "many";
 };
 
 type NaiveType = {

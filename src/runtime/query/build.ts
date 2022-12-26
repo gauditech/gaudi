@@ -2,14 +2,13 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
+import { getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
   Definition,
   ModelDef,
   QueryDef,
-  QueryDefPath,
   SelectDef,
   SelectHookItem,
   SelectItem,
@@ -131,7 +130,6 @@ export function queryFromParts(
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
   const { value: ctx } = getRef<"model">(def, direct[0]);
-  const joinPaths = processPaths(def, getRelatedPaths(paths, ctx.name), ctx, [ctx.name]);
 
   return {
     refKey: "N/A",
@@ -139,11 +137,9 @@ export function queryFromParts(
     filter,
     fromPath,
     name,
-    nullable: false, // FIXME
     // retCardinality: "many", // FIXME,
     retType: getPathRetType(def, fromPath).refKey,
     select,
-    joinPaths,
   };
 }
 
@@ -159,66 +155,15 @@ export function getRelatedPaths(paths: NamePath[], direct: string): NamePath[] {
   return paths.filter((path) => path[0] === direct).map(_.tail);
 }
 
-// function calculateCardinality(
-//   ref: Ref<"reference" | "relation" | "query">,
-//   paths: QueryDefPath[]
-// ): "one" | "many" {
-//   const joinsAllOnes = paths.every((p) => p.retCardinality === "one");
-//   const isOne =
-//     ref.kind === "reference" ||
-//     (ref.kind === "relation" && ref.value.unique) ||
-//     (ref.kind === "query" && ref.value.retCardinality === "one");
-//   return isOne && joinsAllOnes ? "one" : "many";
-// }
-
-export function processPaths(
-  def: Definition,
-  paths: NamePath[],
-  parentCtx: ModelDef,
-  prefixNames: NamePath
-): QueryDefPath[] {
-  const direct = getDirectChildren(paths);
-  return _.compact(
-    direct.flatMap((name): QueryDefPath | null => {
-      const relativeChildren = getRelatedPaths(paths, name);
-      const ref = getRef2(def, parentCtx.name, name, [
-        "field",
-        "query",
-        "reference",
-        "relation",
-        "computed",
-      ]);
-
-      if (ref.kind === "field" || ref.kind === "computed") {
-        return null;
-      }
-
-      const targetCtx = getTargetModel(def.models, ref.value.refKey);
-      const joinPaths = processPaths(def, relativeChildren, targetCtx, [...prefixNames, name]);
-      return {
-        kind: ref.kind,
-        joinType: "inner",
-        refKey: ref.value.refKey,
-        name,
-        namePath: [...prefixNames, name],
-        joinPaths,
-        retType: getTargetModel(def.models, ref.value.refKey).name,
-        // retCardinality: calculateCardinality(ref, joinPaths),
-      };
-    })
-  );
-}
-
-// function queryToString(def: Definition, q: QueryDef): string {}
-
 export function getFilterPaths(filter: TypedExprDef): string[][] {
   switch (filter?.kind) {
     case undefined:
     case "literal":
     case "variable":
       return [];
-    case "alias":
+    case "alias": {
       return [[...filter.namePath]];
+    }
     case "function": {
       return filter.args.flatMap((arg) => getFilterPaths(arg));
     }
@@ -289,12 +234,7 @@ function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectIte
 
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
   return select.map((selItem: SelectItem) => {
-    ensureEqual(
-      _.isEqual(from, _.take(selItem.namePath, from.length)),
-      true,
-      `Cannot transform select: ${selItem.namePath.join(".")} doesn't start with ${from.join(".")}`
-    );
-    const newPath = [...to, ..._.drop(selItem.namePath, from.length)];
+    const newPath = transformNamePath(selItem.namePath, from, to);
     switch (selItem.kind) {
       case "field":
       case "computed":
@@ -312,4 +252,13 @@ export function transformSelectPath(select: SelectDef, from: string[], to: strin
       }
     }
   });
+}
+
+export function transformNamePath(path: string[], from: string[], to: string[]): string[] {
+  ensureEqual(
+    _.isEqual(from, _.take(path, from.length)),
+    true,
+    `Cannot transform select: ${path.join(".")} doesn't start with ${from.join(".")}`
+  );
+  return [...to, ..._.drop(path, from.length)];
 }

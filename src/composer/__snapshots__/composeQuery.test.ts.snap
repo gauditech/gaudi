@@ -45,36 +45,7 @@ exports[`compose model queries example with nested filters 1`] = `
       "Org",
       "repos",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [
-          {
-            "joinPaths": [],
-            "joinType": "inner",
-            "kind": "reference",
-            "name": "org",
-            "namePath": [
-              "Org",
-              "repos",
-              "org",
-            ],
-            "refKey": "Repo.org",
-            "retType": "Org",
-          },
-        ],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
     "name": "repos_if_one",
-    "nullable": false,
     "refKey": "Org.repos_if_one",
     "retType": "Repo",
     "select": [],
@@ -95,36 +66,7 @@ exports[`compose model queries nested example without filters 1`] = `
       "repos",
       "org",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [
-          {
-            "joinPaths": [],
-            "joinType": "inner",
-            "kind": "reference",
-            "name": "org",
-            "namePath": [
-              "Org",
-              "repos",
-              "org",
-            ],
-            "refKey": "Repo.org",
-            "retType": "Org",
-          },
-        ],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
     "name": "back_to_org",
-    "nullable": false,
     "refKey": "Org.back_to_org",
     "retType": "Org",
     "select": [],
