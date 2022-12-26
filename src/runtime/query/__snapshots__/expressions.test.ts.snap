@@ -213,9 +213,15 @@ FROM
   JOIN (
     SELECT
       "Item".*,
-      "Item"."multiplier" * ("Item"."value" + 1) / char_length(concat("Item"."textual", 'tail')) AS "worthiness"
+      "Item"."multiplier" * ("Item"."value" + 1) / "Item"."text_tail_len" AS "worthiness"
     FROM
-      "item" AS "Item"
+      (
+        SELECT
+          "Item".*,
+          char_length(concat("Item"."textual", 'tail')) AS "text_tail_len"
+        FROM
+          "item" AS "Item"
+      ) AS "Item"
   ) AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
 WHERE
   "Source.items"."worthiness" > 100"

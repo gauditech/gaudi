@@ -65,8 +65,11 @@ describe("Expressions to queries", () => {
       field value { type integer }
       field multiplier { type integer }
       field textual { type text }
+      computed text_tail_len {
+        length(concat(textual, "tail"))
+      }
       computed worthiness {
-        multiplier * (value + 1) / length(concat(textual, "tail"))
+        multiplier * (value + 1) / text_tail_len
       }
     }
     `;
