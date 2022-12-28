@@ -3,7 +3,7 @@ import _ from "lodash";
 import { mkJoinConnection } from "./stringify";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
   Definition,
@@ -261,4 +261,36 @@ export function transformNamePath(path: string[], from: string[], to: string[]):
     `Cannot transform select: ${path.join(".")} doesn't start with ${from.join(".")}`
   );
   return [...to, ..._.drop(path, from.length)];
+}
+
+export function transformNamePaths(paths: string[][], from: string[], to: string[]): string[][] {
+  return paths.map((path) => transformNamePath(path, from, to));
+}
+
+export function transformExpressionPaths(
+  exp: TypedExprDef,
+  from: string[],
+  to: string[]
+): TypedExprDef {
+  if (exp === undefined) {
+    return undefined;
+  }
+  switch (exp.kind) {
+    case "literal":
+    case "variable": {
+      return exp;
+    }
+    case "alias": {
+      return { ...exp, namePath: transformNamePath(exp.namePath, from, to) };
+    }
+    case "function": {
+      return {
+        ...exp,
+        args: exp.args.map((arg) => transformExpressionPaths(arg, from, to)),
+      };
+    }
+    default: {
+      assertUnreachable(exp);
+    }
+  }
 }

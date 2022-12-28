@@ -59,17 +59,18 @@ describe("Expressions to queries", () => {
           worthiness > 100
         }
       }
+      computed strength { 10 }
     }
     model Item {
       reference source { to Source }
       field value { type integer }
       field multiplier { type integer }
       field textual { type text }
+      computed worthiness {
+        multiplier * (value + 1) / text_tail_len + source.strength
+      }
       computed text_tail_len {
         length(concat(textual, "tail"))
-      }
-      computed worthiness {
-        multiplier * (value + 1) / text_tail_len
       }
     }
     `;

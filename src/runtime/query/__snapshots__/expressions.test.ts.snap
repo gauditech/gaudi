@@ -210,19 +210,10 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
 "SELECT
 FROM
   "source" AS "Source"
-  JOIN (
-    SELECT
-      "Item".*,
-      "Item"."multiplier" * ("Item"."value" + 1) / "Item"."text_tail_len" AS "worthiness"
-    FROM
-      (
-        SELECT
-          "Item".*,
-          char_length(concat("Item"."textual", 'tail')) AS "text_tail_len"
-        FROM
-          "item" AS "Item"
-      ) AS "Item"
-  ) AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+  JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+  JOIN "source" AS "Source.items.source" ON "Source.items"."source_id" = "Source.items.source"."id"
 WHERE
-  "Source.items"."worthiness" > 100"
+  (
+    "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+  ) > 100"
 `;

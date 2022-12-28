@@ -1,8 +1,12 @@
-import { source } from "common-tags";
 import _ from "lodash";
 import { format } from "sql-formatter";
 
-import { NamePath, selectToSelectable, transformNamePath, transformSelectPath } from "./build";
+import {
+  NamePath,
+  selectToSelectable,
+  transformExpressionPaths,
+  transformNamePaths,
+} from "./build";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
@@ -23,6 +27,8 @@ export function queryToString(def: Definition, q: QueryDef): string {
   // FIXME We currently don't support querying from QueryDef!
   ensureEqual(q.from.kind, "model" as const);
 
+  const expandedFilter = expandExpression(def, q.filter);
+
   const paths = collectPaths(def, q);
   const joinPlan = buildQueryJoinPlan(paths);
   const model = getRef2.model(def, joinPlan.sourceModel);
@@ -33,7 +39,7 @@ export function queryToString(def: Definition, q: QueryDef): string {
       SELECT ${selectableToString(def, selectable)}
       FROM ${makeWrappedSource(def, model, fromSelectables)} AS ${namePathToAlias([model.refKey])}
       ${joinPlan.joins.map((j) => joinToString(def, model, [model.refKey], j))}
-      WHERE ${filterToString(q.filter)}`;
+      WHERE ${filterToString(expandedFilter)}`;
 
   return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
 }
@@ -79,6 +85,49 @@ function joinToString(
   `;
 }
 
+/**
+ * Expands computeds in the expression to build an expression consisting only
+ * of fields.
+ */
+function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
+  if (exp === undefined) {
+    return undefined;
+  }
+  switch (exp.kind) {
+    case "literal":
+    case "variable":
+      return exp;
+    case "alias": {
+      const tpath = getTypedPath(def, exp.namePath, {});
+      ensureNot(tpath.leaf, null);
+      switch (tpath.leaf.kind) {
+        case "field": {
+          return exp;
+        }
+        case "computed": {
+          const computed = getRef2.computed(def, tpath.leaf.refKey);
+          const newExp = expandExpression(def, computed.exp);
+          return transformExpressionPaths(newExp, [computed.modelRefKey], _.initial(exp.namePath));
+        }
+        default: {
+          assertUnreachable(tpath.leaf);
+        }
+      }
+    }
+    // eslint-disable-next-line no-fallthrough
+    case "function": {
+      return {
+        ...exp,
+        args: exp.args.map((arg) => expandExpression(def, arg)),
+      };
+    }
+    default: {
+      assertUnreachable(exp);
+    }
+  }
+}
+
+/** this should go together with the join plan */
 function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
   const typedPath = getTypedPath(def, namePath, {});
   ensureNot(typedPath.leaf, null);
@@ -93,23 +142,25 @@ function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
   };
 }
 
+/**
+ * Collects all the paths from `QueryDef.filter` and `QueryDef.select` that are needed
+ * for a query to evaluate. This will turn in a list of joins needed for a query to
+ * evaluate.
+ */
 function collectPaths(def: Definition, q: QueryDef): string[][] {
-  /**
-   * Path sources:
-   * 1. query from
-   * 2. query filter
-   * 3. computeds from `select`
-   */
-
   const allPaths = [
     [...q.fromPath, "id"],
-    ...collectPathsFromExp(def, q.filter, q.fromPath),
-    // FIXME Query has no select!? Does it matter?
-    ...q.select
+    ...collectPathsFromExp(def, q.filter),
+    // We only take root-level select - `Selectable`.
+    // FIXME is computed still considered selectable? Do we need expressable here?
+    // FIXME include aggregates here as well, they need to be in the paths so that
+    // we know what to wrap with
+    // QueryDef should have "aggregates" in the Join Plan (which are the "Wraps")
+    ...selectToSelectable(q.select)
       .filter((item): item is SelectComputedItem => item.kind === "computed")
       .flatMap((item) => {
         const computed = getRef2.computed(def, item.refKey);
-        return collectPathsFromExp(def, computed.exp, q.fromPath);
+        return collectPathsFromExp(def, computed.exp);
       }),
   ];
   return _.uniqWith(allPaths, _.isEqual);
@@ -172,11 +223,7 @@ function getJoins(paths: string[][], namespace: string[]): Join[] {
   });
 }
 
-export function collectPathsFromExp(
-  def: Definition,
-  exp: TypedExprDef,
-  sourceNamePath: string[]
-): string[][] {
+export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[][] {
   if (exp === undefined) {
     return [];
   }
@@ -186,32 +233,35 @@ export function collectPathsFromExp(
     case "variable":
       return [];
     case "alias": {
-      const namePath = transformNamePath(exp.namePath, _.initial(exp.namePath), sourceNamePath);
       const typedPath = getTypedPath(def, exp.namePath, {});
-      if (!typedPath.leaf) {
-        throw new Error(`Path doesn't end up with a leaf`);
-      }
+      ensureNot(typedPath.leaf, null);
       if (typedPath.leaf.kind === "field") {
-        return [namePath];
+        return [exp.namePath];
       } else if (typedPath.leaf.kind === "computed") {
         const computed = getRef2.computed(def, typedPath.leaf.refKey);
-        return [namePath, ...collectPathsFromExp(def, computed.exp, sourceNamePath)];
+        const computedInnerPaths = collectPathsFromExp(def, computed.exp);
+        const computedPaths = transformNamePaths(
+          computedInnerPaths,
+          [computed.modelRefKey],
+          _.initial(exp.namePath)
+        );
+        return [exp.namePath, ...computedPaths];
       } else {
         return assertUnreachable(typedPath.leaf);
       }
     }
     case "function": {
-      return exp.args.flatMap((arg) => collectPathsFromExp(def, arg, sourceNamePath));
+      return exp.args.flatMap((arg) => collectPathsFromExp(def, arg));
     }
   }
 }
 
 function makeWrappedSource(def: Definition, model: ModelDef, select: SelectableItem[]): string {
   /**
-   * FIXME ensure all fields and computeds belong to this model!!!
+   * FIXME We don't use this for computeds anymore, but will be useful for the aggregates!
    */
-  // any computeds here?
-  const isBareModel = select.filter((s) => s.kind === "computed").length === 0;
+  // const isBareModel = select.filter((s) => s.kind === "computed").length === 0;
+  const isBareModel = true;
   if (isBareModel) {
     // no need to wrap, just source from a model
     return `"${model.dbname}"`;
