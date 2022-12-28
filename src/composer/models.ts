@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { processSelect } from "./entrypoints";
-import { getTypedLiteralValue } from "./utils";
+import { getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
@@ -176,7 +176,7 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
     refKey,
     modelRefKey: mdef.refKey,
     name: cspec.name,
-    exp: composeExpression(cspec.exp, [mdef.name]),
+    exp: composeExpression(def, cspec.exp, [mdef.name]),
   };
   mdef.computeds.push(c);
   def.resolveOrder.push(c.refKey);
@@ -329,7 +329,7 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
 
 function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
   const fromPath = [mdef.name, ...qspec.fromModel];
-  const filter = convertFilter(qspec.filter, fromPath);
+  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath);
 
   const filterPaths = getFilterPaths(filter);
   const paths = mergePaths([fromPath, ...filterPaths]);
@@ -341,38 +341,43 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   return queryFromParts(def, qspec.name, fromPath, filter, select);
 }
 
-/**
- * FIXME remove this function
- */
-function convertFilter(filter: ExpSpec | undefined, namePath: string[]): TypedExprDef {
-  if (filter === undefined) return undefined;
-  return composeExpression(filter, namePath);
-}
-
-function typedFunctionFromParts(name: string, args: ExpSpec[], namePath: string[]): TypedExprDef {
+function typedFunctionFromParts(
+  def: Definition,
+  name: string,
+  args: ExpSpec[],
+  namePath: string[]
+): TypedExprDef {
   return {
     kind: "function",
     name: name as FunctionName, // FIXME proper validation
-    args: args.map((arg) => composeExpression(arg, namePath)),
+    args: args.map((arg) => composeExpression(def, arg, namePath)),
   };
 }
 
-function composeExpression(exp: ExpSpec, namePath: string[]): TypedExprDef {
+function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): TypedExprDef {
   switch (exp.kind) {
     case "literal": {
       return getTypedLiteralValue(exp.literal);
     }
     case "unary": {
-      return typedFunctionFromParts("not", [exp.exp, { kind: "literal", literal: true }], namePath);
+      return typedFunctionFromParts(
+        def,
+        "not",
+        [exp.exp, { kind: "literal", literal: true }],
+        namePath
+      );
     }
     case "identifier": {
-      return { kind: "alias", namePath: [...namePath, ...exp.identifier] };
+      const np = [...namePath, ...exp.identifier];
+      // ensure everything resolves
+      getTypedPath(def, np, {});
+      return { kind: "alias", namePath: np };
     }
     case "binary": {
-      return typedFunctionFromParts(exp.operator, [exp.lhs, exp.rhs], namePath);
+      return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath);
     }
     case "function": {
-      return typedFunctionFromParts(exp.name, exp.args, namePath);
+      return typedFunctionFromParts(def, exp.name, exp.args, namePath);
     }
   }
 }
