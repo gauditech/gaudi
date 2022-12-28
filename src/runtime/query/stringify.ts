@@ -128,7 +128,7 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
 }
 
 /** this should go together with the join plan */
-function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
+export function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
   const typedPath = getTypedPath(def, namePath, {});
   ensureNot(typedPath.leaf, null);
   const ref = getRef2(def, typedPath.leaf.refKey, undefined, ["field", "computed"]);
@@ -150,7 +150,7 @@ function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
 function collectPaths(def: Definition, q: QueryDef): string[][] {
   const allPaths = [
     [...q.fromPath, "id"],
-    ...collectPathsFromExp(def, q.filter),
+    ...collectPathsFromExp(def, expandExpression(def, q.filter)),
     // We only take root-level select - `Selectable`.
     // FIXME is computed still considered selectable? Do we need expressable here?
     // FIXME include aggregates here as well, they need to be in the paths so that
@@ -160,7 +160,15 @@ function collectPaths(def: Definition, q: QueryDef): string[][] {
       .filter((item): item is SelectComputedItem => item.kind === "computed")
       .flatMap((item) => {
         const computed = getRef2.computed(def, item.refKey);
-        return collectPathsFromExp(def, computed.exp);
+
+        const expandedExpression = expandExpression(def, computed.exp);
+        const newExp = transformExpressionPaths(
+          expandedExpression,
+          [computed.modelRefKey],
+          _.initial(item.namePath)
+        );
+
+        return collectPathsFromExp(def, newExp);
       }),
   ];
   return _.uniqWith(allPaths, _.isEqual);
@@ -294,7 +302,11 @@ function selectableToString(def: Definition, select: SelectableItem[]): string {
         }
         case "computed": {
           const computed = getRef2.computed(def, item.refKey);
-          return filterToString(computed.exp);
+          const exp = expandExpression(def, computed.exp);
+          const expStr = filterToString(
+            transformExpressionPaths(exp, [computed.modelRefKey], _.initial(item.namePath))
+          );
+          return `${expStr} AS "${item.alias}"`;
         }
       }
     })

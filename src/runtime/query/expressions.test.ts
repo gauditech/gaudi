@@ -1,4 +1,6 @@
-import { queryToString } from "./stringify";
+import _ from "lodash";
+
+import { nameToSelectable, queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
 
@@ -78,6 +80,9 @@ describe("Expressions to queries", () => {
     const def = compose(compile(parse(bp)));
     const source = def.models.find((m) => m.name === "Source");
     const calc = source!.queries[0]!;
+    calc.select = ["id", "value", "multiplier", "textual", "worthiness", "text_tail_len"].map(
+      (name) => nameToSelectable(def, [...calc.fromPath, name])
+    );
     expect(calc).toMatchSnapshot();
     expect(queryToString(def, calc)).toMatchSnapshot();
   });

@@ -41,7 +41,7 @@ export function mergePaths(paths: NamePath[]): NamePath[] {
 }
 
 export function selectToSelectable(select: SelectDef): SelectableItem[] {
-  return select.filter((s): s is SelectableItem => s.kind === "field");
+  return select.filter((s): s is SelectableItem => s.kind === "field" || s.kind === "computed");
 }
 
 export function selectToHooks(select: SelectDef): SelectHookItem[] {

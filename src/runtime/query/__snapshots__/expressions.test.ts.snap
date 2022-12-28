@@ -202,16 +202,90 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
   "name": "calc",
   "refKey": "Source.calc",
   "retType": "Item",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "kind": "field",
+      "name": "id",
+      "namePath": [
+        "Source",
+        "items",
+        "id",
+      ],
+      "refKey": "Item.id",
+    },
+    {
+      "alias": "value",
+      "kind": "field",
+      "name": "value",
+      "namePath": [
+        "Source",
+        "items",
+        "value",
+      ],
+      "refKey": "Item.value",
+    },
+    {
+      "alias": "multiplier",
+      "kind": "field",
+      "name": "multiplier",
+      "namePath": [
+        "Source",
+        "items",
+        "multiplier",
+      ],
+      "refKey": "Item.multiplier",
+    },
+    {
+      "alias": "textual",
+      "kind": "field",
+      "name": "textual",
+      "namePath": [
+        "Source",
+        "items",
+        "textual",
+      ],
+      "refKey": "Item.textual",
+    },
+    {
+      "alias": "worthiness",
+      "kind": "computed",
+      "name": "worthiness",
+      "namePath": [
+        "Source",
+        "items",
+        "worthiness",
+      ],
+      "refKey": "Item.worthiness",
+    },
+    {
+      "alias": "text_tail_len",
+      "kind": "computed",
+      "name": "text_tail_len",
+      "namePath": [
+        "Source",
+        "items",
+        "text_tail_len",
+      ],
+      "refKey": "Item.text_tail_len",
+    },
+  ],
 }
 `;
 
 exports[`Expressions to queries composes a correct wrapped query which contains local computed prop 2`] = `
 "SELECT
+  "Source.items"."id" AS "id",
+  "Source.items"."value" AS "value",
+  "Source.items"."multiplier" AS "multiplier",
+  "Source.items"."textual" AS "textual",
+  (
+    "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+  ) AS "worthiness",
+  char_length(concat("Source.items"."textual", 'tail')) AS "text_tail_len"
 FROM
   "source" AS "Source"
   JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
-  JOIN "source" AS "Source.items.source" ON "Source.items"."source_id" = "Source.items.source"."id"
 WHERE
   (
     "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
