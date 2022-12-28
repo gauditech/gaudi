@@ -47,6 +47,9 @@ export type TypedPathItem =
 export type TypedPath = {
   source: TypedPathItemModel | TypedPathItemContext;
   nodes: (TypedPathItemReference | TypedPathItemRelation | TypedPathItemQuery)[];
+  // Hooks are not a valid leaf yet. If you need to be able to resolve hook-ending paths,
+  // eg. when passing args to other hooks, we need to make sure the other places
+  // can't do that: filters, computeds...
   leaf: TypedPathItemField | TypedPathItemComputed | null;
 };
 
