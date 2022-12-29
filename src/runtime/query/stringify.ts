@@ -25,9 +25,6 @@ import {
 
 // FIXME this should accept Queryable
 export function queryToString(def: Definition, q: QueryDef): string {
-  // FIXME We currently don't support querying from QueryDef!
-  ensureEqual(q.from.kind, "model" as const);
-
   const expandedFilter = expandExpression(def, q.filter);
 
   const paths = collectPaths(def, q);
@@ -68,7 +65,7 @@ function joinToString(
   let src: string;
   if (ref.kind === "query") {
     const query = ref.value;
-    const sourceModel = getQuerySource(def, query);
+    const sourceModel = getRef2.model(def, query.fromPath[0]);
     // extend select
     const conn = mkJoinConnection(sourceModel);
 
@@ -390,16 +387,6 @@ function functionToString(exp: TypedFunction): string {
     }
     default:
       assertUnreachable(exp.name);
-  }
-}
-
-function getQuerySource(def: Definition, q: QueryDef): ModelDef {
-  switch (q.from.kind) {
-    case "model":
-      return getRef<"model">(def, q.from.refKey).value;
-    case "query": {
-      return getQuerySource(def, q.from.query);
-    }
   }
 }
 

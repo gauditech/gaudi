@@ -129,11 +129,9 @@ export function queryFromParts(
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
-  const { value: ctx } = getRef<"model">(def, direct[0]);
 
   return {
     refKey: "N/A",
-    from: { kind: "model", refKey: ctx.refKey },
     filter,
     fromPath,
     name,
