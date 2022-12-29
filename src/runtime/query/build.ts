@@ -206,28 +206,10 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
     namePath,
     applyFilterIdInContext([model.name], undefined),
     [
-      ...select.select.map((s) => shiftSelect(model, s, select.namePath.length - 1)),
+      ...transformSelectPath(select.select, _.initial(select.namePath), [model.name]),
       mkJoinConnection(model),
     ]
   );
-}
-
-/**
- * Deprecated, use `transformSelectPath` instead!
- */
-function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
-  const namePath = [model.name, ...select.namePath.slice(by)];
-  if (select.kind === "field" || select.kind === "hook" || select.kind === "computed") {
-    return {
-      ...select,
-      namePath,
-    };
-  }
-  return {
-    ...select,
-    namePath,
-    select: select.select.map((s) => shiftSelect(model, s, by)),
-  };
 }
 
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
