@@ -75,6 +75,20 @@ export type QueryDef = {
   // count?: true;
 };
 
+export interface Queryable extends QueryDef {
+  refKey: "N/A";
+  joins: QueryableJoin[];
+  expandedFilter: TypedExprDef;
+  select: SelectableItem[];
+}
+
+export type QueryableJoin = {
+  relRefKey: string;
+  modelRefKey: string;
+  aggregates: []; // AggregateDef refKeys
+  joins: QueryableJoin[];
+};
+
 export type ComputedDef = {
   refKey: string;
   modelRefKey: string;
@@ -220,6 +234,12 @@ export type SelectComputedItem = {
   name: string;
   namePath: string[];
   // nullable: boolean
+  alias: string;
+};
+
+export type SelectExpressionItem = {
+  kind: "expression";
+  exp: TypedExprDef;
   alias: string;
 };
 
