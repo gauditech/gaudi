@@ -77,10 +77,6 @@ exports[`Expressions to queries composes a complex filter expression 1`] = `
     "kind": "function",
     "name": ">",
   },
-  "from": {
-    "kind": "model",
-    "refKey": "Source",
-  },
   "fromPath": [
     "Source",
     "items",
@@ -190,10 +186,6 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
     ],
     "kind": "function",
     "name": ">",
-  },
-  "from": {
-    "kind": "model",
-    "refKey": "Source",
   },
   "fromPath": [
     "Source",

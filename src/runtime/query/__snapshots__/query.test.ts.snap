@@ -24,10 +24,6 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
     ],
@@ -97,10 +93,6 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
       "repos",
@@ -144,10 +136,6 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Repo",
-    },
     "fromPath": [
       "Repo",
       "issues",
@@ -190,10 +178,6 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       ],
       "kind": "function",
       "name": "in",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Issue",
     },
     "fromPath": [
       "Issue",
@@ -375,10 +359,6 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
     ],
@@ -447,10 +427,6 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       ],
       "kind": "function",
       "name": "and",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
     },
     "fromPath": [
       "Org",
@@ -523,10 +499,6 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Repo",
-    },
     "fromPath": [
       "Repo",
       "issues",
@@ -569,10 +541,6 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       ],
       "kind": "function",
       "name": "in",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Issue",
     },
     "fromPath": [
       "Issue",
@@ -727,10 +695,6 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
     ],
@@ -799,10 +763,6 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       ],
       "kind": "function",
       "name": "and",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
     },
     "fromPath": [
       "Org",
@@ -875,10 +835,6 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Repo",
-    },
     "fromPath": [
       "Repo",
       "issues",
@@ -921,10 +877,6 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       ],
       "kind": "function",
       "name": "in",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Issue",
     },
     "fromPath": [
       "Issue",
@@ -1101,10 +1053,6 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
     ],
@@ -1174,10 +1122,6 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
       "repos",
@@ -1221,10 +1165,6 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Repo",
-    },
     "fromPath": [
       "Repo",
       "issues",
@@ -1267,10 +1207,6 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       ],
       "kind": "function",
       "name": "in",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Repo",
     },
     "fromPath": [
       "Repo",
@@ -1445,10 +1381,6 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
     ],
@@ -1517,10 +1449,6 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       ],
       "kind": "function",
       "name": "and",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
     },
     "fromPath": [
       "Org",
@@ -1593,10 +1521,6 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Repo",
-    },
     "fromPath": [
       "Repo",
       "issues",
@@ -1639,10 +1563,6 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       ],
       "kind": "function",
       "name": "in",
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Issue",
     },
     "fromPath": [
       "Issue",
@@ -1837,10 +1757,6 @@ exports[`Endpoint queries chained nested query 1`] = `
           "kind": "function",
           "name": "is",
         },
-        "from": {
-          "kind": "model",
-          "refKey": "Org",
-        },
         "fromPath": [
           "Org",
         ],
@@ -1888,10 +1804,6 @@ exports[`Endpoint queries chained nested query 1`] = `
         ],
         "kind": "function",
         "name": "in",
-      },
-      "from": {
-        "kind": "model",
-        "refKey": "Issue",
       },
       "fromPath": [
         "Issue",
@@ -1948,10 +1860,6 @@ exports[`Endpoint queries chained nested query 1`] = `
             ],
             "kind": "function",
             "name": "in",
-          },
-          "from": {
-            "kind": "model",
-            "refKey": "Issue",
           },
           "fromPath": [
             "Issue",
@@ -2021,10 +1929,6 @@ exports[`Endpoint queries chained nested query 1`] = `
                 ],
                 "kind": "function",
                 "name": "in",
-              },
-              "from": {
-                "kind": "model",
-                "refKey": "Repo",
               },
               "fromPath": [
                 "Repo",
@@ -2127,10 +2031,6 @@ exports[`Endpoint queries chained nested query 1`] = `
         ],
         "kind": "function",
         "name": "and",
-      },
-      "from": {
-        "kind": "model",
-        "refKey": "Org",
       },
       "fromPath": [
         "Org",
@@ -2264,10 +2164,6 @@ exports[`Endpoint queries nested query 1`] = `
           "kind": "function",
           "name": "is",
         },
-        "from": {
-          "kind": "model",
-          "refKey": "Org",
-        },
         "fromPath": [
           "Org",
         ],
@@ -2315,10 +2211,6 @@ exports[`Endpoint queries nested query 1`] = `
         ],
         "kind": "function",
         "name": "in",
-      },
-      "from": {
-        "kind": "model",
-        "refKey": "Repo",
       },
       "fromPath": [
         "Repo",
@@ -2404,10 +2296,6 @@ exports[`Endpoint queries nested query 1`] = `
         ],
         "kind": "function",
         "name": "and",
-      },
-      "from": {
-        "kind": "model",
-        "refKey": "Org",
       },
       "fromPath": [
         "Org",

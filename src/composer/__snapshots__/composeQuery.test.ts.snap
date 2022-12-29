@@ -37,10 +37,6 @@ exports[`compose model queries example with nested filters 1`] = `
       "kind": "function",
       "name": "and",
     },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
       "repos",
@@ -57,10 +53,6 @@ exports[`compose model queries nested example without filters 1`] = `
 [
   {
     "filter": undefined,
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
       "repos",
