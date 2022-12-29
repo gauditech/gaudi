@@ -52,6 +52,9 @@ export type QuerySpec = WithContext<{
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;
   select?: SelectAST;
+  aggregate?: {
+    name: string;
+  };
 }>;
 
 export type ComputedSpec = WithContext<{

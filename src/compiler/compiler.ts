@@ -140,6 +140,7 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
   let orderBy: QuerySpec["orderBy"];
   let limit: number | undefined;
   let select: QuerySpec["select"];
+  let aggregate: QuerySpec["aggregate"];
 
   query.body.forEach((b) => {
     if (b.kind === "from") {
@@ -153,6 +154,8 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
       limit = b.limit;
     } else if (b.kind === "select") {
       select = b.select;
+    } else if (b.kind === "aggregate") {
+      aggregate = { name: b.name };
     }
   });
 
@@ -169,6 +172,7 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
     orderBy,
     limit,
     select,
+    aggregate,
   };
 }
 

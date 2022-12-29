@@ -52,11 +52,14 @@ Gaudi {
     = "query" identifier "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
   QueryBody
-    = "from" IdentifierPathWithAs -- from
-    | "filter" OptionalBraces<QueryExp> -- filter
-    | "order" "by" NonemptyListOf<QueryOrder, ","> -- order_by
-    | "limit" integer -- limit
-    | "select" SelectBody -- select
+    = "from" IdentifierPathWithAs                   -- from
+    | "filter" OptionalBraces<QueryExp>             -- filter
+    | "order" "by" NonemptyListOf<QueryOrder, ",">  -- order_by
+    | "limit" integer                               -- limit
+    | "select" SelectBody                           -- select
+    | AggregateFn                                   -- aggregate
+
+  AggregateFn = "count" | "sum"
 
   QueryOrder = IdentifierPath ("asc" | "desc")?
 

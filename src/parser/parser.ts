@@ -131,6 +131,9 @@ semantics.addOperation("parse()", {
   QueryBody_select(this, _select, select): QueryBodyAST {
     return { kind: "select", select: select.parse(), interval: this.source };
   },
+  QueryBody_aggregate(this, name): QueryBodyAST {
+    return { kind: "aggregate", name: name.sourceString };
+  },
   QueryOrder(this, field, orderNode): QueryOrderAST {
     const order =
       orderNode.sourceString === "asc"
