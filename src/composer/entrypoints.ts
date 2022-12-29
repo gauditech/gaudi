@@ -4,7 +4,7 @@ import { composeActionBlock } from "./actions";
 
 import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
-import { mergePaths } from "@src/runtime/query/build";
+import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
   ActionDef,
@@ -455,7 +455,7 @@ function wrapTargetsWithSelect(
   deps: SelectDep[]
 ): TargetWithSelectDef[] {
   return targets.map((target) => {
-    const paths = mergePaths(
+    const paths = uniqueNamePaths(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
     const model = getRef2.model(def, target.retType);
@@ -478,7 +478,7 @@ function wrapActionsWithSelect(
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .map((a): ActionDef => {
       // normalize paths related to this action alias
-      const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
+      const paths = uniqueNamePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
       const model = getRef2.model(def, a.model);
       const select = pathsToSelectDef(def, model, paths, [a.alias]);
       return { ...a, select };

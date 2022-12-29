@@ -6,6 +6,7 @@ import {
   selectToSelectable,
   transformExpressionPaths,
   transformNamePaths,
+  uniqueNamePaths,
 } from "./build";
 
 import { getRef, getRef2, getTargetModel } from "@src/common/refs";
@@ -171,7 +172,7 @@ function collectPaths(def: Definition, q: QueryDef): string[][] {
         return collectPathsFromExp(def, newExp);
       }),
   ];
-  return _.uniqWith(allPaths, _.isEqual);
+  return uniqueNamePaths(allPaths);
 }
 
 type QueryJoinPlan = {

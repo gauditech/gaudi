@@ -1,8 +1,6 @@
 import { BinaryOperator } from "./ast";
 import { HookCode } from "./specification";
 
-import { RefKind } from "@src/common/refs";
-
 export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];

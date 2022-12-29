@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getRef, getRef2, getTargetModel } from "@src/common/refs";
+import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
@@ -36,7 +36,7 @@ export type NamePath = string[];
  * Utils
  */
 
-export function mergePaths(paths: NamePath[]): NamePath[] {
+export function uniqueNamePaths(paths: NamePath[]): NamePath[] {
   return _.uniqWith(paths, _.isEqual);
 }
 
@@ -126,7 +126,7 @@ export function queryFromParts(
   });
 
   const filterPaths = getFilterPaths(filter);
-  const paths = mergePaths([fromPath, ...filterPaths]);
+  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
   const { value: ctx } = getRef<"model">(def, direct[0]);

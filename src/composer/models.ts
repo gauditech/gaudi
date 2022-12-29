@@ -8,8 +8,8 @@ import { ensureEqual, ensureUnique } from "@src/common/utils";
 import {
   getDirectChildren,
   getFilterPaths,
-  mergePaths,
   queryFromParts,
+  uniqueNamePaths,
 } from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
@@ -332,7 +332,7 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath);
 
   const filterPaths = getFilterPaths(filter);
-  const paths = mergePaths([fromPath, ...filterPaths]);
+  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
   const { value: targetModel } = getRef<"model">(def, direct[0]);
