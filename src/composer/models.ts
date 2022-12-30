@@ -384,7 +384,7 @@ function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): A
     refKey,
     kind: "aggregate",
     aggrFnName: aggregate,
-    aggrFieldRefKey: `${mdef.refKey}.id`,
+    targetPath: [mdef.refKey, "id"],
     name: qspec.name,
     query,
   };

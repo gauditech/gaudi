@@ -132,6 +132,9 @@ export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
 export function getTargetModel(models: ModelDef[], refKey: string): ModelDef {
   const prop = getRef(models, refKey);
   switch (prop.kind) {
+    case "model": {
+      return prop.value;
+    }
     case "reference": {
       return getRef<"model">(models, prop.value.toModelRefKey).value;
     }
@@ -140,6 +143,9 @@ export function getTargetModel(models: ModelDef[], refKey: string): ModelDef {
     }
     case "query": {
       return getRef<"model">(models, prop.value.retType).value;
+    }
+    case "aggregate": {
+      return getRef<"model">(models, prop.value.query.retType).value;
     }
     default:
       throw new Error(`Kind ${prop.kind} not supported`);

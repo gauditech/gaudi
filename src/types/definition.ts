@@ -85,7 +85,7 @@ export type AggregateDef = {
   refKey: string;
   name: string;
   aggrFnName: "count" | "sum";
-  aggrFieldRefKey: string;
+  targetPath: string[];
   query: Omit<QueryDef, "refKey" | "select" | "name">;
 };
 

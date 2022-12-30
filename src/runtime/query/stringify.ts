@@ -11,7 +11,7 @@ import {
 
 import { Ref, getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
-import { getTypedPath } from "@src/composer/utils";
+import { getTypedPath, getTypedPathWithLeaf } from "@src/composer/utils";
 import {
   AggregateDef,
   Definition,
@@ -274,12 +274,7 @@ function makeWrappedSource(
   namePath: NamePath,
   on?: TypedExprDef
 ): string {
-  // returns: fragment, alias, retType
-
-  // FIXME `model` handling is awkward currently
-  const isModel = ref.kind === "model";
-  const sourceModel = isModel ? ref.value : getRef2.model(def, ref.value.modelRefKey);
-  const targetModel = isModel ? ref.value : getTargetModel(def.models, ref.value.refKey);
+  const targetModel = getTargetModel(def.models, ref.value.refKey);
 
   if (_.isEmpty(aggrSelects)) {
     const onStr = on ? `ON ${filterToString(on)}` : "";
@@ -292,6 +287,7 @@ function makeWrappedSource(
       }
       case "query": {
         const query = ref.value;
+        const sourceModel = getRef2.model(def, ref.value.modelRefKey);
         const conn = mkJoinConnection(sourceModel);
         // FIXME take only the fields needed, not all of them!
         const fields = targetModel.fields.map(
@@ -307,6 +303,9 @@ function makeWrappedSource(
           ${queryToString(def, { ...query, select: [...fields, conn] })})
           AS ${namePathToAlias(namePath)}
           ${onStr}`;
+      }
+      default: {
+        assertUnreachable(ref);
       }
     }
   }
@@ -333,7 +332,9 @@ function makeWrappedSource(
 
 function aggregateToString(def: Definition, aggregate: AggregateDef): string {
   const query = aggregate.query;
-  const aggrField = getRef2.field(def, aggregate.aggrFieldRefKey);
+  const aggrTarget = getTypedPathWithLeaf(def, aggregate.targetPath, {});
+  // FIXME target can be a computed, other aggregate, etc.
+  const aggrField = getRef2.field(def, aggrTarget.leaf.refKey);
 
   const expandedFilter = expandExpression(def, query.filter);
 
