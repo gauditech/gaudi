@@ -13,6 +13,7 @@ import {
 } from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
+  AggregateDef,
   ComputedDef,
   ConstantDef,
   Definition,
@@ -73,7 +74,12 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
       mspec.computeds.forEach((cspec) => tryCall(() => defineComputed(def, mdef, cspec)));
       mspec.references.forEach((rspec) => tryCall(() => defineReference(def, mdef, rspec)));
       mspec.relations.forEach((rspec) => tryCall(() => defineRelation(def, mdef, rspec)));
-      mspec.queries.forEach((qspec) => tryCall(() => defineQuery(def, mdef, qspec)));
+      mspec.queries
+        .filter((qspec) => !qspec.aggregate)
+        .forEach((qspec) => tryCall(() => defineQuery(def, mdef, qspec)));
+      mspec.queries
+        .filter((qspec) => qspec.aggregate)
+        .forEach((qspec) => tryCall(() => defineAggregate(def, mdef, qspec)));
       mspec.hooks.forEach((hspec) => tryCall(() => defineModelHook(def, mdef, hspec)));
 
       return mdef;
@@ -118,6 +124,7 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
     references: [],
     relations: [],
     queries: [],
+    aggregates: [],
     computeds: [],
     hooks: [],
   };
@@ -306,6 +313,19 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
   return query;
 }
 
+function defineAggregate(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
+  const refKey = `${mdef.refKey}.${qspec.name}`;
+  const ex = getDefinition(def, refKey, "aggregate");
+  if (ex) return ex;
+
+  const query = aggregateFromSpec(def, mdef, qspec);
+  query.refKey = refKey;
+
+  mdef.aggregates.push(query);
+  def.resolveOrder.push(query.refKey);
+  return query;
+}
+
 function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec): ModelHookDef {
   const refKey = `${mdef.refKey}.${hspec.name}`;
   const ex = getDefinition(def, refKey, "hook");
@@ -328,6 +348,9 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
 }
 
 function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
+  if (qspec.aggregate) {
+    throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
+  }
   const fromPath = [mdef.name, ...qspec.fromModel];
   const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath);
 
@@ -339,6 +362,32 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   const select = processSelect(def.models, targetModel, qspec.select, fromPath);
 
   return queryFromParts(def, qspec.name, fromPath, filter, select);
+}
+
+function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
+  const aggregate = qspec.aggregate?.name;
+  if (!aggregate) {
+    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
+  }
+  if (qspec.select) {
+    throw new Error(`Aggregate query can't have a select`);
+  }
+  const qdef = queryFromSpec(def, mdef, { ...qspec, aggregate: undefined });
+  const { refKey } = qdef;
+  const query = _.omit(qdef, ["refKey", "name", "select"]);
+
+  if (aggregate !== "sum" && aggregate !== "count") {
+    throw new Error(`Unknown aggregate function ${aggregate}`);
+  }
+
+  return {
+    refKey,
+    kind: "aggregate",
+    aggrFnName: aggregate,
+    aggrFieldRefKey: `${mdef.refKey}.id`,
+    name: qspec.name,
+    query,
+  };
 }
 
 function typedFunctionFromParts(

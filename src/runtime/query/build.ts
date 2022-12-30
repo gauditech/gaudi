@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getRef, getTargetModel } from "@src/common/refs";
+import { getRef, getRef2, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
@@ -41,7 +41,10 @@ export function uniqueNamePaths(paths: NamePath[]): NamePath[] {
 }
 
 export function selectToSelectable(select: SelectDef): SelectableItem[] {
-  return select.filter((s): s is SelectableItem => s.kind === "field" || s.kind === "computed");
+  return select.filter(
+    (s): s is SelectableItem =>
+      s.kind === "field" || s.kind === "computed" || s.kind === "aggregate"
+  );
 }
 
 export function selectToHooks(select: SelectDef): SelectHookItem[] {
@@ -125,6 +128,8 @@ export function queryFromParts(
     );
   });
 
+  const sourceModel = getRef2.model(def, _.first(fromPath)!);
+
   const filterPaths = getFilterPaths(filter);
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
@@ -132,6 +137,7 @@ export function queryFromParts(
 
   return {
     refKey: "N/A",
+    modelRefKey: sourceModel.refKey,
     filter,
     fromPath,
     name,
@@ -213,7 +219,7 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
 }
 
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
-  return select.map((selItem: SelectItem) => {
+  return select.map(<T extends SelectItem>(selItem: T): T => {
     const newPath = transformNamePath(selItem.namePath, from, to);
     switch (selItem.kind) {
       case "field":
@@ -229,6 +235,12 @@ export function transformSelectPath(select: SelectDef, from: string[], to: strin
           namePath: newPath,
           select: transformSelectPath(selItem.select, from, to),
         };
+      }
+      case "aggregate": {
+        return { ...selItem, namePath: newPath };
+      }
+      default: {
+        assertUnreachable(selItem);
       }
     }
   });

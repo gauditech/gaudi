@@ -1,5 +1,24 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Aggregates to queries composes a query with simple aggregate through relation 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.repo_count"."result" AS "repo_count"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.repos".id) AS "result"
+    FROM
+      "org" AS "Org"
+      JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+    GROUP BY
+      "Org".id
+  ) AS "Org.repo_count" ON "Org".id = "Org.repo_count".id"
+`;
+
 exports[`Expressions to queries composes a complex filter expression 1`] = `
 {
   "filter": {
@@ -81,6 +100,7 @@ exports[`Expressions to queries composes a complex filter expression 1`] = `
     "Source",
     "items",
   ],
+  "modelRefKey": "Source",
   "name": "calc",
   "refKey": "Source.calc",
   "retType": "Item",
@@ -191,6 +211,7 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
     "Source",
     "items",
   ],
+  "modelRefKey": "Source",
   "name": "calc",
   "refKey": "Source.calc",
   "retType": "Item",
@@ -272,14 +293,29 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
   "Source.items"."multiplier" AS "multiplier",
   "Source.items"."textual" AS "textual",
   (
-    "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+    (
+      "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+    ) + "Source.items.source"."total_items"
   ) AS "worthiness",
   char_length(concat("Source.items"."textual", 'tail')) AS "text_tail_len"
 FROM
   "source" AS "Source"
   JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+  JOIN "source" AS "Source.items.source" ON "Source.items"."source_id" = "Source.items.source"."id"
+  LEFT JOIN (
+    SELECT
+      "Source".id,
+      count("Source.items".id) AS "result"
+    FROM
+      "source" AS "Source"
+      JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+    GROUP BY
+      "Source".id
+  ) AS "Source.items.source.total_items" ON "Source.items.source".id = "Source.items.source.total_items".id
 WHERE
   (
-    "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+    (
+      "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+    ) + "Source.items.source"."total_items"
   ) > 100"
 `;

@@ -27,6 +27,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
+    "modelRefKey": "Org",
     "name": "$target_0",
     "refKey": "N/A",
     "retType": "Org",
@@ -97,6 +98,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "Org",
       "repos",
     ],
+    "modelRefKey": "Org",
     "name": "$target_1",
     "refKey": "N/A",
     "retType": "Repo",
@@ -140,6 +142,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "Repo",
       "issues",
     ],
+    "modelRefKey": "Repo",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -182,6 +185,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
+    "modelRefKey": "Issue",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -362,6 +366,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
+    "modelRefKey": "Org",
     "name": "$target_0",
     "refKey": "N/A",
     "retType": "Org",
@@ -432,6 +437,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "Org",
       "repos",
     ],
+    "modelRefKey": "Org",
     "name": "$target_1",
     "refKey": "N/A",
     "retType": "Repo",
@@ -503,6 +509,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "Repo",
       "issues",
     ],
+    "modelRefKey": "Repo",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -545,6 +552,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
+    "modelRefKey": "Issue",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -698,6 +706,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
+    "modelRefKey": "Org",
     "name": "$target_0",
     "refKey": "N/A",
     "retType": "Org",
@@ -768,6 +777,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "Org",
       "repos",
     ],
+    "modelRefKey": "Org",
     "name": "$target_1",
     "refKey": "N/A",
     "retType": "Repo",
@@ -839,6 +849,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "Repo",
       "issues",
     ],
+    "modelRefKey": "Repo",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -881,6 +892,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
+    "modelRefKey": "Issue",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -1056,6 +1068,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
+    "modelRefKey": "Org",
     "name": "$target_0",
     "refKey": "N/A",
     "retType": "Org",
@@ -1126,6 +1139,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "Org",
       "repos",
     ],
+    "modelRefKey": "Org",
     "name": "$target_1",
     "refKey": "N/A",
     "retType": "Repo",
@@ -1169,6 +1183,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "Repo",
       "issues",
     ],
+    "modelRefKey": "Repo",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -1212,6 +1227,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "Repo",
       "issues",
     ],
+    "modelRefKey": "Repo",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -1384,6 +1400,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "fromPath": [
       "Org",
     ],
+    "modelRefKey": "Org",
     "name": "$target_0",
     "refKey": "N/A",
     "retType": "Org",
@@ -1454,6 +1471,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "Org",
       "repos",
     ],
+    "modelRefKey": "Org",
     "name": "$target_1",
     "refKey": "N/A",
     "retType": "Repo",
@@ -1525,6 +1543,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "Repo",
       "issues",
     ],
+    "modelRefKey": "Repo",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -1567,6 +1586,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "fromPath": [
       "Issue",
     ],
+    "modelRefKey": "Issue",
     "name": "$target_2",
     "refKey": "N/A",
     "retType": "Issue",
@@ -1760,6 +1780,7 @@ exports[`Endpoint queries chained nested query 1`] = `
         "fromPath": [
           "Org",
         ],
+        "modelRefKey": "Org",
         "name": "$target_0",
         "refKey": "N/A",
         "retType": "Org",
@@ -1808,6 +1829,7 @@ exports[`Endpoint queries chained nested query 1`] = `
       "fromPath": [
         "Issue",
       ],
+      "modelRefKey": "Issue",
       "name": "$target_1",
       "refKey": "N/A",
       "retType": "Issue",
@@ -1865,6 +1887,7 @@ exports[`Endpoint queries chained nested query 1`] = `
             "Issue",
             "repo",
           ],
+          "modelRefKey": "Issue",
           "name": "repo",
           "refKey": "N/A",
           "retType": "Repo",
@@ -1934,6 +1957,7 @@ exports[`Endpoint queries chained nested query 1`] = `
                 "Repo",
                 "org",
               ],
+              "modelRefKey": "Repo",
               "name": "org",
               "refKey": "N/A",
               "retType": "Org",
@@ -2036,6 +2060,7 @@ exports[`Endpoint queries chained nested query 1`] = `
         "Org",
         "public_issues",
       ],
+      "modelRefKey": "Org",
       "name": "$target_1",
       "refKey": "N/A",
       "retType": "Issue",
@@ -2075,12 +2100,18 @@ FROM
   "org" AS "Org"
   JOIN (
     SELECT
-      "Org.public_issues"."id" AS "id",
+      "Org.public_repos.issues"."id" AS "id",
+      "Org.public_repos.issues"."name" AS "name",
+      "Org.public_repos.issues"."repo_id" AS "repo_id",
       "Org"."id" AS "__join_connection"
     FROM
       "org" AS "Org"
       JOIN (
         SELECT
+          "Org.repos"."id" AS "id",
+          "Org.repos"."is_public" AS "is_public",
+          "Org.repos"."name" AS "name",
+          "Org.repos"."org_id" AS "org_id",
           "Org"."id" AS "__join_connection"
         FROM
           "org" AS "Org"
@@ -2089,8 +2120,6 @@ FROM
           "Org.repos"."is_public" = TRUE
       ) AS "Org.public_repos" ON "Org"."id" = "Org.public_repos"."__join_connection"
       JOIN "issue" AS "Org.public_repos.issues" ON "Org.public_repos"."id" = "Org.public_repos.issues"."repo_id"
-    WHERE
-      TRUE = TRUE
   ) AS "Org.public_issues" ON "Org"."id" = "Org.public_issues"."__join_connection"
 WHERE
   "Org.public_issues"."id" = :issue_id
@@ -2167,6 +2196,7 @@ exports[`Endpoint queries nested query 1`] = `
         "fromPath": [
           "Org",
         ],
+        "modelRefKey": "Org",
         "name": "$target_0",
         "refKey": "N/A",
         "retType": "Org",
@@ -2215,6 +2245,7 @@ exports[`Endpoint queries nested query 1`] = `
       "fromPath": [
         "Repo",
       ],
+      "modelRefKey": "Repo",
       "name": "$target_1",
       "refKey": "N/A",
       "retType": "Repo",
@@ -2301,6 +2332,7 @@ exports[`Endpoint queries nested query 1`] = `
         "Org",
         "public_repos",
       ],
+      "modelRefKey": "Org",
       "name": "$target_1",
       "refKey": "N/A",
       "retType": "Repo",
@@ -2337,7 +2369,10 @@ FROM
   "org" AS "Org"
   JOIN (
     SELECT
-      "Org.public_repos"."id" AS "id",
+      "Org.repos"."id" AS "id",
+      "Org.repos"."is_public" AS "is_public",
+      "Org.repos"."name" AS "name",
+      "Org.repos"."org_id" AS "org_id",
       "Org"."id" AS "__join_connection"
     FROM
       "org" AS "Org"

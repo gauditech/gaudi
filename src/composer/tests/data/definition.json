@@ -81,6 +81,7 @@
         }
       ],
       "queries": [],
+      "aggregates": [],
       "hooks": []
     },
     {
@@ -163,6 +164,7 @@
       ],
       "relations": [],
       "queries": [],
+      "aggregates": [],
       "computeds": [],
       "hooks": []
     }

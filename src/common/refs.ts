@@ -1,6 +1,7 @@
 import { chain } from "lodash";
 
 import {
+  AggregateDef,
   ComputedDef,
   Definition,
   FieldDef,
@@ -11,7 +12,15 @@ import {
   RelationDef,
 } from "@src/types/definition";
 
-export type RefKind = "model" | "field" | "reference" | "relation" | "query" | "computed" | "hook";
+export type RefKind =
+  | "model"
+  | "field"
+  | "reference"
+  | "relation"
+  | "query"
+  | "aggregate"
+  | "computed"
+  | "hook";
 export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "model"; value: ModelDef }
   : T extends "field"
@@ -22,6 +31,8 @@ export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "relation"; value: RelationDef }
   : T extends "query"
   ? { kind: "query"; value: QueryDef }
+  : T extends "aggregate"
+  ? { kind: "aggregate"; value: AggregateDef }
   : T extends "computed"
   ? { kind: "computed"; value: ComputedDef }
   : T extends "hook"
@@ -46,6 +57,9 @@ export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKe
 
   const query = source.flatMap((m) => m.queries).find((q) => q.refKey === refKey);
   if (query) return { kind: "query", value: query } as Ref<T>;
+
+  const aggr = source.flatMap((m) => m.aggregates).find((a) => a.refKey === refKey);
+  if (aggr) return { kind: "aggregate", value: aggr } as Ref<T>;
 
   const computed = source.flatMap((m) => m.computeds).find((q) => q.refKey === refKey);
   if (computed) return { kind: "computed", value: computed } as Ref<T>;
@@ -86,7 +100,23 @@ getRef2.field = function getRefField(
   return getRef2(def, modelName, fieldName, ["field"]).value;
 };
 
-getRef2.computed = function getRefField(
+getRef2.query = function getRefQuery(
+  def: Definition,
+  modelName: string,
+  queryName?: string
+): QueryDef {
+  return getRef2(def, modelName, queryName, ["query"]).value;
+};
+
+getRef2.aggregate = function getRefAggregate(
+  def: Definition,
+  modelName: string,
+  aggrName?: string
+): AggregateDef {
+  return getRef2(def, modelName, aggrName, ["aggregate"]).value;
+};
+
+getRef2.computed = function getRefComputed(
   def: Definition,
   modelName: string,
   computedName?: string

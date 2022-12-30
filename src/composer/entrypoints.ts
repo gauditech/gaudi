@@ -298,8 +298,16 @@ export function processSelect(
           kind: ref.kind,
           refKey: ref.value.refKey,
           name,
-          namePath: [...namePath, name],
           alias: name,
+          namePath: [...namePath, name],
+        };
+      } else if (ref.kind === "aggregate") {
+        return {
+          kind: ref.kind,
+          refKey: ref.value.refKey,
+          name,
+          alias: name,
+          namePath: [...namePath, name],
         };
       } else {
         ensureNot(ref.kind, "model" as const);

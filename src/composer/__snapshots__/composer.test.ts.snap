@@ -3,6 +3,7 @@
 exports[`compose models parses validators 1`] = `
 [
   {
+    "aggregates": [],
     "computeds": [],
     "dbname": "org",
     "fields": [

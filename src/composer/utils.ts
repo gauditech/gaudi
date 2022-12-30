@@ -25,6 +25,7 @@ export type TypedPathItemField = { kind: "field"; name: string; refKey: string }
 export type TypedPathItemReference = { kind: "reference"; name: string; refKey: string };
 export type TypedPathItemRelation = { kind: "relation"; name: string; refKey: string };
 export type TypedPathItemQuery = { kind: "query"; name: string; refKey: string };
+export type TypedPathItemAggregate = { kind: "aggregate"; name: string; refKey: string };
 export type TypedPathItemComputed = { kind: "computed"; name: string; refKey: string };
 export type TypedPathItemContext = { kind: "context"; model: TypedPathItemModel; name: string };
 
@@ -33,6 +34,7 @@ export type TypedPathItem =
   | TypedPathItemReference
   | TypedPathItemRelation
   | TypedPathItemQuery
+  | TypedPathItemAggregate
   | TypedPathItemField
   | TypedPathItemComputed
   | TypedPathItemModel;
@@ -50,7 +52,7 @@ export type TypedPath = {
   // Hooks are not a valid leaf yet. If you need to be able to resolve hook-ending paths,
   // eg. when passing args to other hooks, we need to make sure the other places
   // can't do that: filters, computeds...
-  leaf: TypedPathItemField | TypedPathItemComputed | null;
+  leaf: TypedPathItemField | TypedPathItemComputed | TypedPathItemAggregate | null;
 };
 
 export type VarContext = Record<string, ContextRecord>;
@@ -87,10 +89,11 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
         "reference",
         "relation",
         "query",
+        "aggregate",
         "computed",
       ]);
       let targetCtx: ModelDef | null;
-      if (ref.kind === "field" || ref.kind === "computed") {
+      if (ref.kind === "field" || ref.kind === "computed" || ref.kind === "aggregate") {
         targetCtx = null;
       } else {
         targetCtx = getTargetModel(def.models, refKey);
@@ -103,7 +106,7 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
   const tpath = ret.path;
   const last = _.last(tpath);
 
-  if (last?.kind === "field" || last?.kind === "computed") {
+  if (last?.kind === "field" || last?.kind === "computed" || last?.kind === "aggregate") {
     return {
       source,
       nodes: _.initial(tpath) as TypedPath["nodes"],

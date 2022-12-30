@@ -15,6 +15,7 @@ export type ModelDef = {
   references: ReferenceDef[];
   relations: RelationDef[];
   queries: QueryDef[];
+  aggregates: AggregateDef[];
   computeds: ComputedDef[];
   hooks: ModelHookDef[];
 };
@@ -59,6 +60,7 @@ export type RelationDef = {
 
 export type QueryDef = {
   refKey: string;
+  modelRefKey: string;
   name: string;
   // retType: string | "integer";
   retType: string;
@@ -76,6 +78,15 @@ export type ComputedDef = {
   name: string;
   exp: TypedExprDef;
   type?: NaiveType;
+};
+
+export type AggregateDef = {
+  kind: "aggregate";
+  refKey: string;
+  name: string;
+  aggrFnName: "count" | "sum";
+  aggrFieldRefKey: string;
+  query: Omit<QueryDef, "refKey" | "select" | "name">;
 };
 
 export type ModelHookDef = {
@@ -198,24 +209,32 @@ type CustomEndpointDef = {
   };
 };
 
-export type SelectableItem = SelectFieldItem | SelectComputedItem; // TODO Computed might include joins ?
+export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
 
 export type SelectFieldItem = {
   kind: "field";
-  name: string;
   refKey: string;
+  name: string;
+  alias: string;
   namePath: string[];
   // nullable: boolean;
-  alias: string;
 };
 
 export type SelectComputedItem = {
   kind: "computed";
   refKey: string;
   name: string;
+  alias: string;
   namePath: string[];
   // nullable: boolean
+};
+
+export type SelectAggregateItem = {
+  kind: "aggregate";
+  refKey: string;
+  name: string;
   alias: string;
+  namePath: string[];
 };
 
 // FIXME add refKey instead of args and code

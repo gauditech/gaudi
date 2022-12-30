@@ -1,8 +1,36 @@
 import _ from "lodash";
 
+import { queryFromParts } from "./build";
 import { nameToSelectable, queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
+
+describe("Aggregates to queries", () => {
+  it("composes a query with simple aggregate through relation", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      relation repos { from Repo, through org }
+      query repo_count { from repos, count }
+    }
+    model Repo {
+      reference org { to Org }
+      field name { type text }
+    }
+    `;
+
+    const def = compose(compile(parse(bp)));
+    const q = queryFromParts(
+      def,
+      "orgs",
+      ["Org"],
+      undefined,
+      ["id", "name", "repo_count"].map((name) => nameToSelectable(def, ["Org", name]))
+    );
+    // console.log(queryToString(def, q));
+    expect(queryToString(def, q)).toMatchSnapshot();
+  });
+});
 
 describe("Expressions to queries", () => {
   it("composes a complex filter expression", () => {
@@ -62,6 +90,10 @@ describe("Expressions to queries", () => {
         }
       }
       computed strength { 10 }
+      query total_items {
+        from items
+        count
+      }
     }
     model Item {
       reference source { to Source }
@@ -69,10 +101,13 @@ describe("Expressions to queries", () => {
       field multiplier { type integer }
       field textual { type text }
       computed worthiness {
-        multiplier * (value + 1) / text_tail_len + source.strength
+        multiplier * (value + 1) / text_tail_len + source.strength + source_items
       }
       computed text_tail_len {
         length(concat(textual, "tail"))
+      }
+      computed source_items {
+        source.total_items
       }
     }
     `;

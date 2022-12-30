@@ -36,6 +36,10 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
             return [select.alias, { type: "array", items: { type: "object", properties } }];
           }
         }
+        case "aggregate": {
+          // FIXME read the type from the `AggregateDef`
+          return [select.name, { type: "integer" }];
+        }
         case "computed": {
           // FIXME - add return type to computeds
           return [select.name, {}];
