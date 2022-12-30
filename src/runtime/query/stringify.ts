@@ -39,7 +39,7 @@ export function queryToString(def: Definition, q: QueryDef): string {
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
 
   const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.refKey], j));
-  const where = expandedFilter ? `WHERE ${filterToString(expandedFilter)}` : "";
+  const where = expandedFilter ? `WHERE ${filterToString(def, expandedFilter)}` : "";
 
   const qstr = `
       SELECT ${selectableToString(def, selectable)}
@@ -277,7 +277,7 @@ function makeWrappedSource(
   const targetModel = getTargetModel(def.models, ref.value.refKey);
 
   if (_.isEmpty(aggrSelects)) {
-    const onStr = on ? `ON ${filterToString(on)}` : "";
+    const onStr = on ? `ON ${filterToString(def, on)}` : "";
     // no need to wrap, just source from a model
     switch (ref.kind) {
       case "model":
@@ -348,7 +348,7 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
 
   const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.refKey], j));
   const source = makeWrappedSource(def, modelRef, aggrSelects, [model.refKey]);
-  const where = expandedFilter ? `WHERE ${filterToString(expandedFilter)}` : "";
+  const where = expandedFilter ? `WHERE ${filterToString(def, expandedFilter)}` : "";
   const aggrFieldExpr = `${namePathToAlias(aggregate.query.fromPath)}.${aggrField.dbname}`;
   const qstr = `
   (SELECT
@@ -376,6 +376,7 @@ function selectableToString(def: Definition, select: SelectableItem[]): string {
           const computed = getRef2.computed(def, item.refKey);
           const exp = expandExpression(def, computed.exp);
           const expStr = filterToString(
+            def,
             transformExpressionPaths(exp, [computed.modelRefKey], _.initial(item.namePath))
           );
           return `${expStr} AS "${item.alias}"`;
@@ -393,7 +394,7 @@ function namePathToAlias(namePath: NamePath): string {
   return `"${namePath.join(".")}"`;
 }
 
-function filterToString(filter: TypedExprDef): string {
+function filterToString(def: Definition, filter: TypedExprDef): string {
   if (filter === undefined) return "TRUE = TRUE";
   switch (filter.kind) {
     case "literal": {
@@ -414,12 +415,21 @@ function filterToString(filter: TypedExprDef): string {
     // Since inner switch is exaustive, break is unreachable so prettier deletes it
     // eslint-disable-next-line no-fallthrough
     case "alias": {
-      const np = filter.namePath.slice(0, filter.namePath.length - 1);
-      const f = filter.namePath.at(filter.namePath.length - 1);
+      try {
+        const tpath = getTypedPath(def, filter.namePath, {});
+        ensureNot(tpath.leaf, null);
+        if (tpath.leaf.kind === "aggregate") {
+          return `${namePathToAlias(filter.namePath)}."result"`;
+        }
+      } catch (_e) {
+        1;
+      }
+      const np = _.initial(filter.namePath);
+      const f = _.last(filter.namePath);
       return `${namePathToAlias(np)}."${f}"`;
     }
     case "function": {
-      return functionToString(filter);
+      return functionToString(def, filter);
     }
     case "variable": {
       return `:${filter.name}`;
@@ -427,12 +437,12 @@ function filterToString(filter: TypedExprDef): string {
   }
 }
 
-function functionToString(exp: TypedFunction): string {
+function functionToString(def: Definition, exp: TypedFunction): string {
   function stringifyOp(lhs: TypedExprDef, rhs: TypedExprDef, op: string): string {
-    return `${filterToString(lhs)} ${op.toUpperCase()} ${filterToString(rhs)}`;
+    return `${filterToString(def, lhs)} ${op.toUpperCase()} ${filterToString(def, rhs)}`;
   }
   function stringifyFn(name: string, args: TypedExprDef[]): string {
-    return `${name}(${args.map((a) => filterToString(a)).join(", ")})`;
+    return `${name}(${args.map((a) => filterToString(def, a)).join(", ")})`;
   }
   switch (exp.name) {
     case "<":

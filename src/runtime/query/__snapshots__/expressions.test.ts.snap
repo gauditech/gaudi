@@ -295,7 +295,7 @@ exports[`Expressions to queries composes a correct wrapped query which contains 
   (
     (
       "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
-    ) + "Source.items.source"."total_items"
+    ) + "Source.items.source.total_items"."result"
   ) AS "worthiness",
   char_length(concat("Source.items"."textual", 'tail')) AS "text_tail_len"
 FROM
@@ -316,6 +316,6 @@ WHERE
   (
     (
       "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
-    ) + "Source.items.source"."total_items"
+    ) + "Source.items.source.total_items"."result"
   ) > 100"
 `;
