@@ -7,7 +7,7 @@ import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/bu
 import { getRef } from "@src/common/refs";
 import { executeActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { endpointQueries } from "@src/runtime/query/build";
+import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
 import { executeQueryTree } from "@src/runtime/query/exec";
 import { authenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
@@ -67,7 +67,7 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
 /** Create "get" endpoint handler from definition */
 export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -98,20 +98,17 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
           // FIXME run custom actions
 
-          // After all actions are done, fetch the list of records again. Ignore contextVars
-          // cache as custom actions may have modified the records.
-
-          let parentIds: number[] = [];
-          const parentTarget = _.last(endpoint.parentContext);
-          if (parentTarget) {
-            parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
-          }
+          /* Refetch target object by id using the response query. We ignore `target.identifyWith` because
+           * actions may have modified the record. We can only reliably identify it via `id` collected
+           * before the actions were executed.
+           */
+          const targetId = contextVars.get(endpoint.target.alias, ["id"]);
           const responseResults = await executeQueryTree(
             dbConn,
             def,
             queries.responseQueryTree,
             pathParamVars,
-            parentIds
+            [targetId]
           );
 
           resp.json(findOne(responseResults));
@@ -126,7 +123,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 /** Create "list" endpoint handler from definition */
 export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -188,7 +185,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 /** Build "create" endpoint handler from definition */
 export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -236,8 +233,17 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           }
           console.log("Query result", targetId);
 
-          // FIXME refetch using the response query
-          resp.json({ id: targetId });
+          // Refetch target object by id using the response query. We ignore `target.identifyWith` because
+          // actions may have modified the record. We can only reliably identify it via ID collected before
+          // actions were executed.
+          const responseResults = await executeQueryTree(
+            dbConn,
+            def,
+            queries.responseQueryTree,
+            new Vars(),
+            [targetId]
+          );
+          resp.json(findOne(responseResults));
         } catch (err) {
           errorResponse(err);
         }
@@ -249,7 +255,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 /** Build "update" endpoint handler from definition */
 export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 
@@ -294,14 +300,25 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             endpoint.actions
           );
 
-          const targetId = contextVars.get(endpoint.target.alias)?.id;
+          const targetId = contextVars.get(endpoint.target.alias, ["id"]);
 
           if (targetId === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
           }
           console.log("Query result", targetId);
 
-          resp.json({ id: targetId });
+          /* Refetch target object by id using the response query. We ignore `target.identifyWith` because
+           * actions may have modified the record. We can only reliably identify it via ID collected before
+           * actions were executed.
+           */
+          const responseResults = await executeQueryTree(
+            dbConn,
+            def,
+            queries.responseQueryTree,
+            new Vars(),
+            [targetId]
+          );
+          resp.json(findOne(responseResults));
         } catch (err) {
           errorResponse(err);
         }
@@ -313,7 +330,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 /** Create "delete" endpoint handler from definition */
 export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef): EndpointConfig {
   const endpointPath = buildEndpointPath(endpoint);
-  const queries = endpointQueries(def, endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
 
   const requiresAuthentication = false; // TODO: read from endpoint
 

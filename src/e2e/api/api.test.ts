@@ -11,7 +11,7 @@ import { readConfig } from "@src/runtime/config";
 jest.setTimeout(10000);
 
 describe("API endpoints", () => {
-  const config = readConfig();
+  const config = readConfig(path.join(__dirname, "api.test.env"));
 
   const { getServer, setup, destroy } = createApiTestSetup(
     config,
@@ -50,10 +50,13 @@ describe("API endpoints", () => {
       const postResp = await request(getServer()).post("/org").send(data);
 
       expect(postResp.statusCode).toBe(200);
-
       const getResp = await request(getServer()).get("/org/orgNEW");
+
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
+
+      // ensure `.get` result is the same as returned from `create` method
+      expect(getResp.body).toEqual(postResp.body);
     });
 
     it("update", async () => {
@@ -65,6 +68,9 @@ describe("API endpoints", () => {
       const getResp = await request(getServer()).get("/org/org2");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
+
+      // ensure `.get` result is the same as returned from `update` method
+      expect(getResp.body).toEqual(patchResp.body);
     });
 
     it("delete", async () => {

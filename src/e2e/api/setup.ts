@@ -131,9 +131,10 @@ function removeOutputFolder(path: string) {
 
 // ----- gaudi definition
 
-function buildDefinition(blueprint: string, outputFolderPath: string) {
+function buildDefinition(blueprint: string, outputFolder: string) {
   const definition = compose(compile(parse(blueprint)));
-  build(definition, outputFolderPath);
+  // use output folder for both regular output and gaudi for simpler testing
+  build(definition, { outputFolder, gaudiFolder: outputFolder });
 
   return definition;
 }

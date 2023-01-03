@@ -1,10 +1,11 @@
 import _ from "lodash";
 
-import { EndpointQueries, QueryTree, endpointQueries } from "./build";
+import { QueryTree } from "./build";
+import { EndpointQueries, buildEndpointQueries } from "./endpointQueries";
 import { queryToString } from "./stringify";
 
 import { compile, compose, parse } from "@src/index";
-import { CreateEndpointDef, EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
+import { EndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
   it("nested query", () => {
@@ -34,7 +35,7 @@ describe("Endpoint queries", () => {
     const def = compose(compile(parse(bp)));
 
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
-    const q = endpointQueries(def, endpoint);
+    const q = buildEndpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
     expect(extractEndpointQueries(q)).toHaveLength(3);
     expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
@@ -70,10 +71,12 @@ describe("Endpoint queries", () => {
     `;
     const def = compose(compile(parse(bp)));
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
-    const q = endpointQueries(def, endpoint);
+    const q = buildEndpointQueries(def, endpoint);
     expect(q).toMatchSnapshot();
     expect(extractEndpointQueries(q)).toHaveLength(5);
-    expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
+    expect(
+      extractEndpointQueries(q).map((q) => queryToString(def, q) + "\n\n\n")
+    ).toMatchSnapshot();
     q;
   });
 
@@ -139,7 +142,7 @@ describe("Endpoint queries", () => {
     const entrypoint = def.entrypoints[0].entrypoints[0].entrypoints[0];
     const range = entrypoint.endpoints.map((ep) => [ep.kind, ep] as [string, EndpointDef]);
     it.each(range)("test %s endpoint", (_kind, endpoint) => {
-      const q = endpointQueries(def, endpoint);
+      const q = buildEndpointQueries(def, endpoint);
       expect(extractEndpointQueries(q)).toMatchSnapshot();
       expect(
         extractEndpointQueries(q).map((q) => queryToString(def, q) + "\n\n\n")
