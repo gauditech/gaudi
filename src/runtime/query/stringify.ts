@@ -1,3 +1,4 @@
+import { source } from "common-tags";
 import _ from "lodash";
 import { format } from "sql-formatter";
 
@@ -38,12 +39,15 @@ export function queryToString(def: Definition, q: QueryDef): string {
     .map((s) => nameToSelectable(def, [model.refKey, s]))
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
 
-  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.refKey], j));
+  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j));
+  const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
   const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
 
-  const qstr = `
+  const qstr = source`
       SELECT ${selectableToString(def, selectable)}
-      FROM ${makeWrappedSource(def, modelRef, aggrSelects, [model.refKey])}
+      FROM ${makeWrappedSource(def, modelRef)}
+      AS ${namePathToAlias([model.name])}
+      ${aggrJoins}
       ${joins}
       ${where}`;
 
@@ -72,9 +76,14 @@ function joinToString(
   const thisDeps = join.selectable.map((name) => nameToSelectable(def, [...namePath, name]));
   const aggregates = thisDeps.filter((d): d is SelectAggregateItem => d.kind === "aggregate");
 
-  return `
+  const aggregateJoins = aggregates.map((a) => makeAggregateJoin(def, a.namePath));
+
+  return source`
   ${join.scope.toUpperCase()}
-  JOIN ${makeWrappedSource(def, ref, aggregates, namePath, joinFilter)}
+  JOIN ${makeWrappedSource(def, ref)}
+  AS ${namePathToAlias(namePath)}
+  ON ${expressionToString(def, joinFilter)}
+  ${aggregateJoins.join("\n")}
   ${join.joins.map((j) => joinToString(def, model, namePath, j))}
 `;
 }
@@ -269,64 +278,49 @@ export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[
 
 function makeWrappedSource(
   def: Definition,
-  ref: Ref<"model" | "reference" | "relation" | "query">,
-  aggrSelects: SelectAggregateItem[],
-  namePath: NamePath,
-  on?: TypedExprDef
+  ref: Ref<"model" | "reference" | "relation" | "query">
 ): string {
   const targetModel = getTargetModel(def.models, ref.value.refKey);
 
-  if (_.isEmpty(aggrSelects)) {
-    const onStr = on ? `ON ${expressionToString(def, on)}` : "";
-    // no need to wrap, just source from a model
-    switch (ref.kind) {
-      case "model":
-      case "reference":
-      case "relation": {
-        return `"${targetModel.dbname}" AS ${namePathToAlias(namePath)} ${onStr}`;
-      }
-      case "query": {
-        const query = ref.value;
-        const sourceModel = getRef2.model(def, ref.value.modelRefKey);
-        const conn = mkJoinConnection(sourceModel);
-        // FIXME take only the fields needed, not all of them!
-        const fields = targetModel.fields.map(
-          (f): SelectFieldItem => ({
-            kind: "field",
-            refKey: f.refKey,
-            name: f.name,
-            alias: f.name,
-            namePath: [...query.fromPath, f.name],
-          })
-        );
-        return `(
-          ${queryToString(def, { ...query, select: [...fields, conn] })})
-          AS ${namePathToAlias(namePath)}
-          ${onStr}`;
-      }
-      default: {
-        assertUnreachable(ref);
-      }
+  // no need to wrap, just source from a model
+  switch (ref.kind) {
+    case "model":
+    case "reference":
+    case "relation": {
+      return `"${targetModel.dbname}"`;
+    }
+    case "query": {
+      const query = ref.value;
+      const sourceModel = getRef2.model(def, ref.value.modelRefKey);
+      const conn = mkJoinConnection(sourceModel);
+      // FIXME take only the fields needed, not all of them!
+      const fields = targetModel.fields.map(
+        (f): SelectFieldItem => ({
+          kind: "field",
+          refKey: f.refKey,
+          name: f.name,
+          alias: f.name,
+          namePath: [...query.fromPath, f.name],
+        })
+      );
+      return `(
+          ${queryToString(def, { ...query, select: [...fields, conn] })})`;
+    }
+    default: {
+      assertUnreachable(ref);
     }
   }
+}
 
-  // wrap with the final one and source it recursively
+function makeAggregateJoin(def: Definition, namePath: NamePath): string {
+  const tpath = getTypedPath(def, namePath, {});
+  ensureNot(tpath.leaf, null);
+  const aggregate = getRef2.aggregate(def, tpath.leaf.refKey);
 
-  const [wrapper, ...remaining] = aggrSelects;
-  const source = makeWrappedSource(def, ref, remaining, namePath, on);
-  const aggregate = getRef2.aggregate(def, wrapper.refKey);
-
-  // `remaining` are already wrapped
-
-  // FIXME we should also be able to join to get correct aggregates, for example
-  // when you're counting a nested field; such as `count { parent.foo }`
-
-  return `
-  ${source}
-  LEFT JOIN
-    ${aggregateToString(def, aggregate)}
-    AS ${namePathToAlias([...namePath, aggregate.name])}
-  ON ${namePathToAlias(namePath)}.id = ${namePathToAlias([...namePath, aggregate.name])}.id
+  return source`
+  LEFT JOIN ${aggregateToString(def, aggregate)}
+  AS ${namePathToAlias(namePath)}
+  ON ${namePathToAlias(_.initial(namePath))}.id = ${namePathToAlias(namePath)}.id
   `;
 }
 
@@ -339,6 +333,7 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
   const expandedFilter = expandExpression(def, query.filter);
 
   const paths = collectPaths(def, query);
+  // FIXME get the aggregate namePath in it as well
   const joinPlan = buildQueryJoinPlan(paths);
   const modelRef = getRef2(def, joinPlan.sourceModel, undefined, ["model"]);
   const model = modelRef.value;
@@ -346,18 +341,21 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
     .map((s) => nameToSelectable(def, [model.refKey, s]))
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
 
-  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.refKey], j));
-  const source = makeWrappedSource(def, modelRef, aggrSelects, [model.refKey]);
+  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j));
   const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
   const aggrFieldExpr = `${namePathToAlias(aggregate.query.fromPath)}.${aggrField.dbname}`;
-  const qstr = `
+  const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
+
+  const qstr = source`
   (SELECT
-    ${namePathToAlias([model.refKey])}.id,
+    ${namePathToAlias([model.name])}.id,
     ${aggregate.aggrFnName}(${aggrFieldExpr}) AS "result"
-  FROM ${source}
+  FROM ${makeWrappedSource(def, modelRef)}
+  AS ${namePathToAlias([model.name])}
   ${joins}
+  ${aggrJoins}
   ${where}
-  GROUP BY ${namePathToAlias([model.refKey])}.id)`;
+  GROUP BY ${namePathToAlias([model.name])}.id)`;
 
   return format(qstr, { language: "postgresql" });
 }
