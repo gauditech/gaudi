@@ -45,7 +45,7 @@ export function queryToString(def: Definition, q: QueryDef): string {
 
   const qstr = source`
       SELECT ${selectableToString(def, selectable)}
-      FROM ${makeWrappedSource(def, modelRef)}
+      FROM ${refToTableSqlFragment(def, modelRef)}
       AS ${namePathToAlias([model.name])}
       ${aggrJoins}
       ${joins}
@@ -80,7 +80,7 @@ function joinToString(
 
   return source`
   ${join.scope.toUpperCase()}
-  JOIN ${makeWrappedSource(def, ref)}
+  JOIN ${refToTableSqlFragment(def, ref)}
   AS ${namePathToAlias(namePath)}
   ON ${expressionToString(def, joinFilter)}
   ${aggregateJoins.join("\n")}
@@ -276,7 +276,7 @@ export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[
   }
 }
 
-function makeWrappedSource(
+function refToTableSqlFragment(
   def: Definition,
   ref: Ref<"model" | "reference" | "relation" | "query">
 ): string {
@@ -350,7 +350,7 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
   (SELECT
     ${namePathToAlias([model.name])}.id,
     ${aggregate.aggrFnName}(${aggrFieldExpr}) AS "result"
-  FROM ${makeWrappedSource(def, modelRef)}
+  FROM ${refToTableSqlFragment(def, modelRef)}
   AS ${namePathToAlias([model.name])}
   ${joins}
   ${aggrJoins}
