@@ -250,7 +250,7 @@ export function transformNamePath(path: string[], from: string[], to: string[]):
   ensureEqual(
     _.isEqual(from, _.take(path, from.length)),
     true,
-    `Cannot transform select: ${path.join(".")} doesn't start with ${from.join(".")}`
+    `Cannot transform name path: ${path.join(".")} doesn't start with ${from.join(".")}`
   );
   return [...to, ..._.drop(path, from.length)];
 }

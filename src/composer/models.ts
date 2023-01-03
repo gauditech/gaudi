@@ -408,6 +408,13 @@ function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): T
     case "literal": {
       return getTypedLiteralValue(exp.literal);
     }
+    case "identifier": {
+      const np = [...namePath, ...exp.identifier];
+      // ensure everything resolves
+      getTypedPath(def, np, {});
+      return { kind: "alias", namePath: np };
+    }
+    // everything else composes to a function
     case "unary": {
       return typedFunctionFromParts(
         def,
@@ -415,12 +422,6 @@ function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): T
         [exp.exp, { kind: "literal", literal: true }],
         namePath
       );
-    }
-    case "identifier": {
-      const np = [...namePath, ...exp.identifier];
-      // ensure everything resolves
-      getTypedPath(def, np, {});
-      return { kind: "alias", namePath: np };
     }
     case "binary": {
       return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath);

@@ -485,7 +485,6 @@ function wrapActionsWithSelect(
   return actions
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .map((a): ActionDef => {
-      // normalize paths related to this action alias
       const paths = uniqueNamePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
       const model = getRef2.model(def, a.model);
       const select = pathsToSelectDef(def, model, paths, [a.alias]);
