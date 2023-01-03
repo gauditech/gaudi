@@ -1,5 +1,42 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Aggregates to queries composes a query with simple aggregate through query 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.repo_count"."result" AS "repo_count"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.all_repos_nested".id) AS "result"
+    FROM
+      "org" AS "Org"
+      JOIN (
+        SELECT
+          "Org.all_repos"."id" AS "id",
+          "Org.all_repos"."name" AS "name",
+          "Org.all_repos"."org_id" AS "org_id",
+          "Org"."id" AS "__join_connection"
+        FROM
+          "org" AS "Org"
+          JOIN (
+            SELECT
+              "Org.repos"."id" AS "id",
+              "Org.repos"."name" AS "name",
+              "Org.repos"."org_id" AS "org_id",
+              "Org"."id" AS "__join_connection"
+            FROM
+              "org" AS "Org"
+              JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+          ) AS "Org.all_repos" ON "Org"."id" = "Org.all_repos"."__join_connection"
+      ) AS "Org.all_repos_nested" ON "Org"."id" = "Org.all_repos_nested"."__join_connection"
+    GROUP BY
+      "Org".id
+  ) AS "Org.repo_count" ON "Org".id = "Org.repo_count".id"
+`;
+
 exports[`Aggregates to queries composes a query with simple aggregate through relation 1`] = `
 "SELECT
   "Org"."id" AS "id",

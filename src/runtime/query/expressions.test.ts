@@ -30,6 +30,32 @@ describe("Aggregates to queries", () => {
     // console.log(queryToString(def, q));
     expect(queryToString(def, q)).toMatchSnapshot();
   });
+  it("composes a query with simple aggregate through query", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      relation repos { from Repo, through org }
+      query all_repos { from repos }
+      query all_repos_nested { from all_repos }
+      query repo_count { from all_repos_nested, count }
+    }
+    model Repo {
+      reference org { to Org }
+      field name { type text }
+    }
+    `;
+
+    const def = compose(compile(parse(bp)));
+    const q = queryFromParts(
+      def,
+      "orgs",
+      ["Org"],
+      undefined,
+      ["id", "name", "repo_count"].map((name) => nameToSelectable(def, ["Org", name]))
+    );
+    // console.log(queryToString(def, q));
+    expect(queryToString(def, q)).toMatchSnapshot();
+  });
 });
 
 describe("Expressions to queries", () => {
