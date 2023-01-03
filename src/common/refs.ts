@@ -74,7 +74,7 @@ export function getRef2<T extends RefKind>(
   def: Definition,
   modelName: string,
   relName?: string,
-  kinds: T[] = ["model", "reference", "relation", "query", "field", "computed"] as T[]
+  kinds: T[] = ["model", "reference", "relation", "query", "aggregate", "field", "computed"] as T[]
 ): Ref<T> {
   const ref = getRef<typeof kinds[number]>(def, relName ? `${modelName}.${relName}` : modelName);
   if (kinds.indexOf(ref.kind as T) < 0) {

@@ -69,25 +69,21 @@ Gaudi {
   QueryExp = OrExp
 
   OrExp
-    = OrExp or AndExp -- or
+    = OrExp or AndExp       -- or
     | AndExp
 
   AndExp
-    = AndExp and IsExp -- and
+    = AndExp and IsExp      -- and
     | IsExp
 
   IsExp
-    = IsExp is not InExp -- is_not
-    | IsExp is InExp -- is
+    = IsExp is not InExp      -- is_not
+    | IsExp is InExp          -- is
     | InExp
 
   InExp
-    = InExp not in CompExp -- not_in
-    | InExp in CompExp -- in
-    | CompExp
-
-  CompExp
-    = CompExp Comparator OpExp -- comparator
+    = InExp not in OpExp       -- not_in
+    | InExp in OpExp           -- in
     | OpExp
 
   OpExp
@@ -98,8 +94,7 @@ Gaudi {
     = identifier "(" ListOf<QueryExp, ","> ")"    -- fn
     | PrimaryExp
 
-  Comparator  = "<=" | "<" | ">=" | ">"
-  Operator    = "+" | "-" | "/" | "*"
+  Operator = "<=" | "<" | ">=" | ">" | "+" | "-" | "/" | "*"
 
   PrimaryExp
     = "(" QueryExp ")" -- paren

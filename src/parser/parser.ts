@@ -205,15 +205,6 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  CompExp_comparator(this, lhs, op, rhs): ExpAST {
-    return {
-      kind: "binary",
-      operator: op.sourceString as BinaryOperator,
-      lhs: lhs.parse(),
-      rhs: rhs.parse(),
-      interval: this.source,
-    };
-  },
   OpExp_operator(this, lhs, op, rhs): ExpAST {
     return {
       kind: "binary",
