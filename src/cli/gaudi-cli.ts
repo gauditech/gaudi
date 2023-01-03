@@ -49,7 +49,7 @@ const RESOURCE_WATCH_DELAY = 500;
 const GAUDI_SCRIPTS = {
   ENGINE: path.join(__dirname, "../engine.js"),
   RUNTIME: path.join(__dirname, "../runtime/runtime.js"),
-  POPULATOR: path.join(__dirname, "../populator/populator.js"),
+  POPULATOR: path.join(__dirname, "../runtime/populator/populator.js"),
 };
 
 const engineConfig = readConfig();
