@@ -136,6 +136,7 @@ export function queryFromParts(
   ensureEqual(direct.length, 1);
 
   return {
+    kind: "query",
     refKey: "N/A",
     modelRefKey: sourceModel.refKey,
     filter,

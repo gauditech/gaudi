@@ -117,9 +117,10 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
   if (ex) return ex;
 
   const model: ModelDef = {
-    dbname: spec.name.toLowerCase(),
-    name: spec.name,
+    kind: "model",
     refKey: spec.name,
+    name: spec.name,
+    dbname: spec.name.toLowerCase(),
     fields: [],
     references: [],
     relations: [],
@@ -137,6 +138,7 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
 
 function constructIdField(mdef: ModelDef): FieldDef {
   return {
+    kind: "field",
     refKey: `${mdef.refKey}.id`,
     modelRefKey: mdef.refKey,
     name: "id",
@@ -158,6 +160,7 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
   const type = validateType(fspec.type);
 
   const f: FieldDef = {
+    kind: "field",
     refKey,
     modelRefKey: mdef.refKey,
     name: fspec.name,
@@ -180,6 +183,7 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
   if (ex) return ex;
 
   const c: ComputedDef = {
+    kind: "computed",
     refKey,
     modelRefKey: mdef.refKey,
     name: cspec.name,
@@ -241,6 +245,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     throw new Error("Can't make reference field, name taken");
   }
   const f: FieldDef = {
+    kind: "field",
     refKey: fieldRefKey,
     modelRefKey: mdef.refKey,
     name: `${rspec.name}_id`,
@@ -256,6 +261,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
   def.resolveOrder.push(f.refKey);
 
   const ref: ReferenceDef = {
+    kind: "reference",
     refKey,
     fieldRefKey,
     modelRefKey: mdef.refKey,
@@ -284,6 +290,7 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
   }
 
   const rel: RelationDef = {
+    kind: "relation",
     refKey,
     modelRefKey: mdef.refKey,
     name: rspec.name,
@@ -337,6 +344,7 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
   }));
 
   const h: ModelHookDef = {
+    kind: "model-hook",
     refKey,
     name: hspec.name,
     args,

@@ -8,6 +8,7 @@ export type Definition = {
 };
 
 export type ModelDef = {
+  kind: "model";
   refKey: string;
   name: string;
   dbname: string;
@@ -23,6 +24,7 @@ export type ModelDef = {
 export type FieldType = "integer" | "text" | "boolean";
 
 export type FieldDef = {
+  kind: "field";
   refKey: string;
   modelRefKey: string;
   name: string;
@@ -36,6 +38,7 @@ export type FieldDef = {
 };
 
 export type ReferenceDef = {
+  kind: "reference";
   refKey: string;
   modelRefKey: string;
   name: string;
@@ -47,6 +50,7 @@ export type ReferenceDef = {
 };
 
 export type RelationDef = {
+  kind: "relation";
   refKey: string;
   modelRefKey: string;
   name: string;
@@ -59,6 +63,7 @@ export type RelationDef = {
 };
 
 export type QueryDef = {
+  kind: "query";
   refKey: string;
   modelRefKey: string;
   name: string;
@@ -72,14 +77,6 @@ export type QueryDef = {
   // count?: true;
 };
 
-export type ComputedDef = {
-  refKey: string;
-  modelRefKey: string;
-  name: string;
-  exp: TypedExprDef;
-  type?: NaiveType;
-};
-
 export type AggregateDef = {
   kind: "aggregate";
   refKey: string;
@@ -89,7 +86,17 @@ export type AggregateDef = {
   query: Omit<QueryDef, "refKey" | "select" | "name">;
 };
 
+export type ComputedDef = {
+  kind: "computed";
+  refKey: string;
+  modelRefKey: string;
+  name: string;
+  exp: TypedExprDef;
+  type?: NaiveType;
+};
+
 export type ModelHookDef = {
+  kind: "model-hook";
   refKey: string;
   name: string;
   args: { name: string; query: QueryDef }[];

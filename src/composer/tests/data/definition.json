@@ -1,11 +1,13 @@
 {
   "models": [
     {
+      "kind": "model",
       "refKey": "Org",
       "name": "Org",
       "dbname": "org",
       "fields": [
         {
+          "kind": "field",
           "refKey": "Org.id",
           "modelRefKey": "Org",
           "name": "id",
@@ -18,6 +20,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Org.name",
           "modelRefKey": "Org",
           "name": "name",
@@ -30,6 +33,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Org.slug",
           "modelRefKey": "Org",
           "name": "slug",
@@ -42,6 +46,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Org.description",
           "modelRefKey": "Org",
           "name": "description",
@@ -54,6 +59,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Org.optOut",
           "modelRefKey": "Org",
           "name": "optOut",
@@ -69,6 +75,7 @@
       "references": [],
       "relations": [
         {
+          "kind": "relation",
           "refKey": "Org.repos",
           "modelRefKey": "Org",
           "name": "repos",
@@ -85,11 +92,13 @@
       "hooks": []
     },
     {
+      "kind": "model",
       "refKey": "Repo",
       "name": "Repo",
       "dbname": "repo",
       "fields": [
         {
+          "kind": "field",
           "refKey": "Repo.id",
           "modelRefKey": "Repo",
           "name": "id",
@@ -102,6 +111,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Repo.name",
           "modelRefKey": "Repo",
           "name": "name",
@@ -114,6 +124,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Repo.slug",
           "modelRefKey": "Repo",
           "name": "slug",
@@ -126,6 +137,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Repo.description",
           "modelRefKey": "Repo",
           "name": "description",
@@ -138,6 +150,7 @@
           "validators": []
         },
         {
+          "kind": "field",
           "refKey": "Repo.org_id",
           "modelRefKey": "Repo",
           "name": "org_id",
@@ -152,6 +165,7 @@
       ],
       "references": [
         {
+          "kind": "reference",
           "refKey": "Repo.org",
           "name": "org",
           "modelRefKey": "Repo",

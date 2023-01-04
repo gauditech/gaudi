@@ -10,6 +10,7 @@ exports[`compose models parses validators 1`] = `
       {
         "dbname": "id",
         "dbtype": "serial",
+        "kind": "field",
         "modelRefKey": "Org",
         "name": "id",
         "nullable": false,
@@ -22,6 +23,7 @@ exports[`compose models parses validators 1`] = `
       {
         "dbname": "adminemail",
         "dbtype": "text",
+        "kind": "field",
         "modelRefKey": "Org",
         "name": "adminEmail",
         "nullable": false,
@@ -60,6 +62,7 @@ exports[`compose models parses validators 1`] = `
       {
         "dbname": "num_employees",
         "dbtype": "integer",
+        "kind": "field",
         "modelRefKey": "Org",
         "name": "num_employees",
         "nullable": false,
@@ -92,6 +95,7 @@ exports[`compose models parses validators 1`] = `
       },
     ],
     "hooks": [],
+    "kind": "model",
     "name": "Org",
     "queries": [],
     "refKey": "Org",
