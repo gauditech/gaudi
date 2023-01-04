@@ -8,7 +8,7 @@ import express, { Express, json } from "express";
 import _ from "lodash";
 
 import { build } from "@src/builder/builder";
-import { dataToFieldDbnames, getRef2 } from "@src/common/refs";
+import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { compile, compose, parse } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
 import { importHooks } from "@src/runtime/hooks";
@@ -189,7 +189,7 @@ async function insertBatchQuery(
   refKey: string,
   data: Record<string, string | number | boolean>[]
 ): Promise<number[]> {
-  const model = getRef2.model(def, refKey);
+  const model = getRef.model(def, refKey);
   const dbData = data.map((d) => dataToFieldDbnames(model, d));
   return dbConn.batchInsert(model.dbname, dbData).returning("id");
 }

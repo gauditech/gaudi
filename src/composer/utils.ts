@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getRef2, getTargetModel } from "@src/common/refs";
+import { getRef, getTargetModel } from "@src/common/refs";
 import { LiteralValue } from "@src/types/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 
@@ -64,7 +64,7 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
   }
   const start = _.first(path)!;
   const isCtx = start in ctx;
-  const startModel = getRef2.model(def, isCtx ? ctx[start].modelName : start);
+  const startModel = getRef.model(def, isCtx ? ctx[start].modelName : start);
 
   let source: TypedPathItemContext | TypedPathItemModel;
   if (isCtx) {
@@ -84,7 +84,7 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
       }
       // what is this?
       const refKey = `${acc.ctx.refKey}.${name}`;
-      const ref = getRef2(def, acc.ctx.refKey, name, [
+      const ref = getRef(def, acc.ctx.refKey, name, [
         "field",
         "reference",
         "relation",
@@ -96,7 +96,7 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
       if (ref.kind === "field" || ref.kind === "computed" || ref.kind === "aggregate") {
         targetCtx = null;
       } else {
-        targetCtx = getTargetModel(def.models, refKey);
+        targetCtx = getTargetModel(def, refKey);
       }
       const idDef: TypedPathItem = { kind: ref.kind, name, refKey };
       return { path: [...acc.path, idDef], ctx: targetCtx };

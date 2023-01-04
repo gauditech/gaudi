@@ -246,7 +246,7 @@ export type SelectAggregateItem = {
 
 // FIXME add refKey instead of args and code
 export type SelectHookItem = {
-  kind: "hook";
+  kind: "model-hook";
   // refKey: string;
   name: string;
   alias: string;

@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getRef, getRef2, getTargetModel } from "@src/common/refs";
+import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
@@ -48,7 +48,7 @@ export function selectToSelectable(select: SelectDef): SelectableItem[] {
 }
 
 export function selectToHooks(select: SelectDef): SelectHookItem[] {
-  return select.filter((s): s is SelectHookItem => s.kind === "hook");
+  return select.filter((s): s is SelectHookItem => s.kind === "model-hook");
 }
 
 export function applyFilterIdInContext(namePath: NamePath, filter?: TypedExprDef): TypedExprDef {
@@ -67,9 +67,9 @@ export function applyFilterIdInContext(namePath: NamePath, filter?: TypedExprDef
 
 function getPathRetType(def: Definition, path: NamePath): ModelDef {
   // assume it starts with model
-  const { value: model } = getRef<"model">(def, path[0]);
+  const model = getRef.model(def, path[0]);
   const ret = _.tail(path).reduce(
-    (ctx, name) => getTargetModel(def.models, `${ctx.refKey}.${name}`),
+    (ctx, name) => getTargetModel(def, `${ctx.refKey}.${name}`),
     model
   );
   return ret;
@@ -128,7 +128,7 @@ export function queryFromParts(
     );
   });
 
-  const sourceModel = getRef2.model(def, _.first(fromPath)!);
+  const sourceModel = getRef.model(def, _.first(fromPath)!);
 
   const filterPaths = getFilterPaths(filter);
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
@@ -186,7 +186,7 @@ export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
     args: args.map(({ name, query }) => ({ name, query: buildQueryTree(def, query) })),
     code,
   }));
-  const { value: model } = getRef<"model">(def.models, query.retType);
+  const model = getRef.model(def, query.retType);
 
   return {
     name: query.name,
@@ -225,7 +225,7 @@ export function transformSelectPath(select: SelectDef, from: string[], to: strin
     switch (selItem.kind) {
       case "field":
       case "computed":
-      case "hook": {
+      case "model-hook": {
         return { ...selItem, namePath: newPath };
       }
       case "query":

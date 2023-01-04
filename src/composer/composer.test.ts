@@ -32,8 +32,8 @@ describe("compose models", () => {
       relation children { from Org, through name}
     }
     `;
-    expect(() => compose(compile(parse(bp)))).toThrowError(
-      "Expecting type reference but found a type field"
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Expected one of: [reference], got field"`
     );
   });
   it("fails when relation points to a reference for another model", () => {

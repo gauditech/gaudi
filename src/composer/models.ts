@@ -96,20 +96,15 @@ function getDefinition<T extends RefKind, F extends true | undefined>(
   refKey: string,
   type: T,
   fail?: F
-): F extends true ? Ref<T>["value"] : Ref<T>["value"] | null {
+): F extends true ? Ref<T> : Ref<T> | null {
   let ref: Ref<T>;
   try {
-    ref = getRef<T>(def, refKey);
+    ref = getRef(def, refKey, undefined, type);
   } catch (e) {
     if (fail) throw e;
-    return null as F extends true ? Ref<T>["value"] : Ref<T>["value"] | null;
+    return null as F extends true ? Ref<T> : Ref<T> | null;
   }
-  try {
-    ensureEqual(ref.kind, type);
-  } catch (e) {
-    throw new Error(`Expecting type ${type} but found a type ${ref.kind}`);
-  }
-  return ref.value;
+  return ref;
 }
 
 function defineModel(def: Definition, spec: ModelSpec): ModelDef {
@@ -335,7 +330,7 @@ function defineAggregate(def: Definition, mdef: ModelDef, qspec: QuerySpec): Agg
 
 function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec): ModelHookDef {
   const refKey = `${mdef.refKey}.${hspec.name}`;
-  const ex = getDefinition(def, refKey, "hook");
+  const ex = getDefinition(def, refKey, "model-hook");
   if (ex) return ex;
 
   const args = hspec.args.map(({ name, query }) => ({
@@ -366,8 +361,8 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
-  const { value: targetModel } = getRef<"model">(def, direct[0]);
-  const select = processSelect(def.models, targetModel, qspec.select, fromPath);
+  const targetModel = getRef.model(def, direct[0]);
+  const select = processSelect(def, targetModel, qspec.select, fromPath);
 
   return queryFromParts(def, qspec.name, fromPath, filter, select);
 }
