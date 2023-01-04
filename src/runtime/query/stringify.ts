@@ -52,6 +52,7 @@ export function queryToString(def: Definition, q: QueryDef): string {
       ${joins}
       ${where}`;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
 }
 
@@ -152,9 +153,9 @@ export function nameToSelectable(def: Definition, namePath: string[]): Selectabl
  * for a query to evaluate. This will turn in a list of joins needed for a query to
  * evaluate.
  */
-function collectPaths(def: Definition, q: QueryDef | AggregateDef["query"]): string[][] {
-  // FIXME this is not how it should work!!
-  const selectables = "select" in q ? selectToSelectable(q.select) : [];
+function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
+  const selectables = q.kind === "query" ? selectToSelectable(q.select) : [];
+  const { filter, fromPath } = q.kind === "query" ? q : q.query;
   const computeds = selectables.filter(
     (item): item is SelectComputedItem => item.kind === "computed"
   );
@@ -162,8 +163,8 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef["query"]): str
     (item): item is SelectAggregateItem => item.kind === "aggregate"
   );
   const allPaths = [
-    [...q.fromPath, "id"],
-    ...collectPathsFromExp(def, expandExpression(def, q.filter)),
+    [...fromPath, "id"],
+    ...collectPathsFromExp(def, expandExpression(def, filter)),
     // We only take root-level select - `Selectable`.
     // FIXME is computed still considered selectable? Do we need expressable here?
     // FIXME include aggregates here as well, they need to be in the paths so that
@@ -333,7 +334,7 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
 
   const expandedFilter = expandExpression(def, query.filter);
 
-  const paths = collectPaths(def, query);
+  const paths = collectPaths(def, aggregate);
   // FIXME get the aggregate namePath in it as well
   const joinPlan = buildQueryJoinPlan(paths);
   const model = getRef(def, joinPlan.sourceModel, undefined, ["model"]);
