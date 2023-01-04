@@ -71,7 +71,7 @@ function getAnyRef(
 }
 
 export function getRef<T extends RefKind>(
-  def: Pick<Definition, "models">,
+  def: Definition,
   modelNameOrRefKey: string,
   relName?: string,
   kinds: T | T[] = [
@@ -146,8 +146,8 @@ getRef.computed = function getRefComputed(
   return getRef(def, modelName, computedName, ["computed"]);
 };
 
-export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
-  return getRef<T>({ models: [model] }, `${model.name}.${name}`);
+export function getModelProp(model: ModelDef, name: string) {
+  return getAnyRef({ models: [model] }, `${model.name}.${name}`);
 }
 
 export function getTargetModel(def: Definition, refKey: string): ModelDef {
