@@ -356,3 +356,24 @@ WHERE
     ) + "Source.items.source.total_items"."result"
   ) > 100"
 `;
+
+exports[`Expressions to queries composes a query that uses aggregate field in a filter expression 1`] = `
+"SELECT
+  "Org.repos"."id" AS "id",
+  "Org.repos.issue_count"."result" AS "issue_count"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  LEFT JOIN (
+    SELECT
+      "Repo".id,
+      count("Repo.issues".id) AS "result"
+    FROM
+      "repo" AS "Repo"
+      JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+    GROUP BY
+      "Repo".id
+  ) AS "Org.repos.issue_count" ON "Org.repos".id = "Org.repos.issue_count".id
+WHERE
+  "Org.repos.issue_count"."result" > 0"
+`;

@@ -147,4 +147,31 @@ describe("Expressions to queries", () => {
     expect(calc).toMatchSnapshot();
     expect(queryToString(def, calc)).toMatchSnapshot();
   });
+  it("composes a query that uses aggregate field in a filter expression", () => {
+    const bp = `
+
+    model Org {
+      field name { type text }
+      relation repos { from Repo, through org }
+      query active_repos {
+        from repos
+        filter { issue_count > 0 }
+      }
+    }
+    model Repo {
+      reference org { to Org }
+      field name { type text }
+      relation issues { from Issue, through repo }
+      query issue_count { from issues, count }
+    }
+    model Issue {
+      reference repo { to Repo }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const org = def.models.find((m) => m.name === "Org");
+    const q = org!.queries[0]!;
+    q.select = ["id", "issue_count"].map((name) => nameToSelectable(def, [...q.fromPath, name]));
+    expect(queryToString(def, q)).toMatchSnapshot();
+  });
 });
