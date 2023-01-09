@@ -13,7 +13,7 @@ FROM
       count("Org.all_repos_nested".id) AS "result"
     FROM
       "org" AS "Org"
-      JOIN (
+      LEFT JOIN (
         SELECT
           "Org.all_repos"."id" AS "id",
           "Org.all_repos"."name" AS "name",
@@ -50,7 +50,7 @@ FROM
       count("Org.repos".id) AS "result"
     FROM
       "org" AS "Org"
-      JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
     GROUP BY
       "Org".id
   ) AS "Org.repo_count" ON "Org".id = "Org.repo_count".id"
@@ -348,7 +348,7 @@ FROM
       count("Source.items".id) AS "result"
     FROM
       "source" AS "Source"
-      JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+      LEFT JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
     GROUP BY
       "Source".id
   ) AS "Source.items.source.total_items" ON "Source.items.source".id = "Source.items.source.total_items".id
@@ -358,4 +358,25 @@ WHERE
       "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
     ) + "Source.items.source.total_items"."result"
   ) > 100"
+`;
+
+exports[`Expressions to queries composes a query that uses aggregate field in a filter expression 1`] = `
+"SELECT
+  "Org.repos"."id" AS "id",
+  "Org.repos.issue_count"."result" AS "issue_count"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  LEFT JOIN (
+    SELECT
+      "Repo".id,
+      count("Repo.issues".id) AS "result"
+    FROM
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+    GROUP BY
+      "Repo".id
+  ) AS "Org.repos.issue_count" ON "Org.repos".id = "Org.repos.issue_count".id
+WHERE
+  "Org.repos.issue_count"."result" > 0"
 `;

@@ -33,8 +33,9 @@ export function queryToString(def: Definition, q: QueryDef): string {
   const expandedFilter = expandExpression(def, q.filter);
 
   const paths = collectPaths(def, q);
-  const joinPlan = buildQueryJoinPlan(paths);
+  const joinPlan = buildQueryJoinPlan(paths, false);
   const model = getRef(def, joinPlan.sourceModel, undefined, ["model"]);
+
   const selectable = selectToSelectable(q.select);
   const aggrSelects = joinPlan.selectable
     .map((s) => nameToSelectable(def, [model.refKey, s]))
@@ -199,14 +200,14 @@ type Join = {
   joins: Join[];
 };
 
-function buildQueryJoinPlan(paths: string[][]): QueryJoinPlan {
+function buildQueryJoinPlan(paths: string[][], leftJoin: boolean): QueryJoinPlan {
   // Ensure all paths start with the same root and not empty!
   const roots = _.uniq(paths.map((p) => p[0]));
   ensureEqual(roots.length, 1);
   return {
     sourceModel: roots[0],
     selectable: getLeaves(paths, roots),
-    joins: getJoins(paths, roots),
+    joins: getJoins(paths, roots, leftJoin),
   };
 }
 
@@ -232,15 +233,15 @@ function getNodes(paths: string[][], namespace: string[]): string[] {
   );
 }
 
-function getJoins(paths: string[][], namespace: string[]): Join[] {
+function getJoins(paths: string[][], namespace: string[], leftJoin: boolean): Join[] {
   // get nodes
   return getNodes(paths, namespace).map((node) => {
     const selectable = getLeaves(paths, [...namespace, node]);
     return {
-      scope: "",
+      scope: leftJoin ? "left" : "",
       relname: node,
       selectable,
-      joins: getJoins(paths, [...namespace, node]),
+      joins: getJoins(paths, [...namespace, node], leftJoin),
     };
   });
 }
@@ -336,8 +337,9 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
 
   const paths = collectPaths(def, aggregate);
   // FIXME get the aggregate namePath in it as well
-  const joinPlan = buildQueryJoinPlan(paths);
+  const joinPlan = buildQueryJoinPlan(paths, true);
   const model = getRef(def, joinPlan.sourceModel, undefined, ["model"]);
+
   const aggrSelects = joinPlan.selectable
     .map((s) => nameToSelectable(def, [model.refKey, s]))
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
