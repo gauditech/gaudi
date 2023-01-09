@@ -209,7 +209,15 @@ function watchCompileCommand(
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => compile(args, config).start());
+    enqueue(() =>
+      compile(args, config)
+        .start()
+        .catch((err) => {
+          // just use catch to prevent error from leaking to node and finishing entire watch process
+          // command will be reexecuted anyway on next change
+          console.error("Error running compile command:", err);
+        })
+    );
   };
 
   const resources = _.compact([
@@ -226,7 +234,15 @@ function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Sto
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => dbPush(args, config).start());
+    enqueue(() =>
+      dbPush(args, config)
+        .start()
+        .catch((err) => {
+          // just use catch to prevent error from leaking to node and finishing entire watch process
+          // command will be reexecuted anyway on next change
+          console.error("Error running DB push command:", err);
+        })
+    );
   };
 
   const resources = [
@@ -242,7 +258,13 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
-    enqueue(() => copyStatic(args, config));
+    enqueue(() =>
+      copyStatic(args, config).catch((err) => {
+        // just use catch to prevent error from leaking to node and finishing entire watch process
+        // command will be reexecuted anyway on next change
+        console.error("Error running copy static command:", err);
+      })
+    );
   };
 
   // keep these resources in sync with the list of files this command actually copies
@@ -261,7 +283,11 @@ function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineC
 
   const run = async () => {
     if (!command.isRunning()) {
-      await command.start();
+      await command.start().catch((err) => {
+        // just use catch to prevent error from leaking to node and finishing entire watch process
+        // nodemon will restart process on change anyway
+        console.error("Error running start command:", err);
+      });
     } else {
       // ask `nodemon` to restart monitored process
       // https://github.com/remy/nodemon/wiki/Events
@@ -519,7 +545,7 @@ function createCommandRunner(command: string, argv: string[]): CommandRunner {
       return successful;
     },
     sendMessage: (message: string) => {
-      console.log("Sending message to ");
+      console.log("Sending message to child process: ", message);
 
       childProcess.send(message);
     },
