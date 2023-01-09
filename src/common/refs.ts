@@ -94,6 +94,20 @@ export function getRef<T extends RefKind>(
   }
 }
 
+getRef.except = function getRefExcept<T extends RefKind>(
+  def: Definition,
+  modelNameOrRefKey: string,
+  relName?: string,
+  except: T | T[] = [] as T[]
+): Ref<Exclude<RefKind, T>> {
+  const ref = getAnyRef(def, modelNameOrRefKey, relName);
+  except = _.castArray(except);
+  if (ref.kind in except) {
+    throw new Error(`Ref ${ref.kind} not allowed`);
+  }
+  return ref as never;
+};
+
 getRef.model = function getRefModel(def: Definition, modelName: string): ModelDef {
   return getRef(def, modelName, undefined, ["model"]);
 };
@@ -146,9 +160,13 @@ getRef.computed = function getRefComputed(
   return getRef(def, modelName, computedName, ["computed"]);
 };
 
-export function getModelProp(model: ModelDef, name: string) {
-  return getAnyRef({ models: [model] }, `${model.name}.${name}`);
-}
+getRef.modelHook = function getRefModelHook(
+  def: Definition,
+  modelName: string,
+  hookName?: string
+): ModelHookDef {
+  return getRef(def, modelName, hookName, ["model-hook"]);
+};
 
 export function getTargetModel(def: Definition, refKey: string): ModelDef {
   const prop = getRef(def, refKey);

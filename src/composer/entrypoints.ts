@@ -2,8 +2,8 @@ import _ from "lodash";
 
 import { composeActionBlock } from "./actions";
 
-import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot } from "@src/common/utils";
+import { getRef, getTargetModel } from "@src/common/refs";
+import { ensureEqual } from "@src/common/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -68,7 +68,7 @@ function calculateTarget(
   const ctxModel = _.last(parents)?.model ?? null;
   const namePath = [...parents.map((p) => p.target.name), name];
   if (ctxModel) {
-    const prop = getModelProp(ctxModel, name);
+    const prop = getRef(def, ctxModel.name, name);
     switch (prop.kind) {
       case "reference": {
         const reference = prop;
@@ -79,7 +79,7 @@ function calculateTarget(
           namePath,
           retType: reference.toModelRefKey,
           refKey: reference.refKey,
-          identifyWith: calculateIdentifyWith(model, identify),
+          identifyWith: calculateIdentifyWith(def, model, identify),
           alias: alias || `$target_${parents.length}`,
         };
       }
@@ -92,7 +92,7 @@ function calculateTarget(
           namePath,
           retType: relation.fromModel,
           refKey: relation.refKey,
-          identifyWith: calculateIdentifyWith(model, identify),
+          identifyWith: calculateIdentifyWith(def, model, identify),
           alias: alias || `$target_${parents.length}`,
         };
       }
@@ -105,7 +105,7 @@ function calculateTarget(
           namePath,
           retType: query.retType,
           refKey: query.refKey,
-          identifyWith: calculateIdentifyWith(model, identify),
+          identifyWith: calculateIdentifyWith(def, model, identify),
           alias: alias || `$target_${parents.length}`,
         };
       }
@@ -121,18 +121,19 @@ function calculateTarget(
       namePath,
       refKey: model.refKey,
       retType: model.name,
-      identifyWith: calculateIdentifyWith(model, identify),
+      identifyWith: calculateIdentifyWith(def, model, identify),
       alias: alias || `$target_${parents.length}`,
     };
   }
 }
 
 function calculateIdentifyWith(
+  def: Definition,
   model: ModelDef,
   identify: string | undefined
 ): EntrypointDef["target"]["identifyWith"] {
   const name = identify ?? "id";
-  const prop = getModelProp(model, name);
+  const prop = getRef(def, model.name, name);
   switch (prop.kind) {
     case "field": {
       const field = prop;
@@ -251,7 +252,7 @@ export function processSelect(
 
     return Object.keys(selectAST.select).map((name: string): SelectItem => {
       // what is this?
-      const ref = getModelProp(model, name);
+      const ref = getRef.except(def, model.name, name, ["model"]);
       if (ref.kind === "field") {
         ensureEqual(s[name].select, undefined);
         return {
@@ -288,7 +289,6 @@ export function processSelect(
           namePath: [...namePath, name],
         };
       } else {
-        ensureNot(ref.kind, "model" as const);
         const targetModel = getTargetModel(def, ref.refKey);
         return {
           kind: ref.kind,
