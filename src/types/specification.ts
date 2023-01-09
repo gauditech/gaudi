@@ -150,7 +150,10 @@ export type PopulateRepeatSpec = WithContext<
 export type PopulateSetterSpec = WithContext<{
   kind: "set";
   target: string;
-  set: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string };
+  set:
+    | { kind: "literal"; value: LiteralValue }
+    | { kind: "reference"; reference: string[] }
+    | { kind: "hook"; hook: ActionHookSpec };
 }>;
 
 export type FieldValidatorHookSpec = BaseHookSpec & {

@@ -140,8 +140,13 @@ populator Dev {
     // org
     set name "Organization 1"
     set slug "org-1"
-    set description "Description of Organization 1"
-    set optOut "Opt out from org Organization 1"
+    set description hook {
+        arg name org.name
+        inline `"Description of " + name`
+    }
+    set optOut hook {
+        inline `"Opt out from org Organization 1"`
+    }
   }
 
   // org without repos and users
@@ -152,7 +157,7 @@ populator Dev {
     set name "Organization 2"
     set slug "org-2"
     set description "Description of Organization 2"
-    set optOut "Opt out from org Organization 2"
+    set optOut "Opt out from org Organization 2a"
 
     populate Repos {
         target relation repos as repo

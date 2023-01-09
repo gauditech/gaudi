@@ -567,6 +567,13 @@ semantics.addOperation("parse()", {
       // interval: this.source
     };
   },
+  PopulateSetterValue_hook(this, hook): PopulateSetterValueAST {
+    return {
+      kind: "hook",
+      hook: hook.parse(),
+      // interval: this.source,
+    };
+  },
   PopulateBody_populate(this, populate): PopulateBodyAST {
     return {
       kind: "populate",

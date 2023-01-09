@@ -251,9 +251,9 @@ Gaudi {
 
   PopulateSetterValue
     = literal -- literal
-    | identifier -- reference
+    | Hook -- hook
+    | IdentifierPath -- reference
     // TODO: hints
-    // TODO: hooks
 
   PopulateRepeat
     = integer -- fixed

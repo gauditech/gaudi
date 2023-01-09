@@ -47,7 +47,8 @@ export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKe
   const hook = source.flatMap((m) => m.hooks).find((q) => q.refKey === refKey);
   if (hook) return { kind: "hook", value: hook } as Ref<T>;
 
-  throw ["unknown-refkey", refKey];
+  throw ["unknown-refkey", refKey, new Error("asfd")];
+  // throw new Error(`unknown-refkey: ${refKey}`);
 }
 
 export function getRef2<T extends RefKind>(

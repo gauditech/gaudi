@@ -1,10 +1,11 @@
 import _ from "lodash";
 
-import { getModelProp, getRef } from "@src/common/refs";
+import { getModelProp, getRef, getRef2 } from "@src/common/refs";
 import { assertUnreachable, ensureExists, ensureNot } from "@src/common/utils";
-import { getTypedLiteralValue } from "@src/composer/utils";
+import { VarContext, getTypedLiteralValue, getTypedPathWithLeaf } from "@src/composer/utils";
 import {
   Definition,
+  FieldDef,
   FieldSetterReferenceValue,
   ModelDef,
   PopulateChangeset,
@@ -13,7 +14,12 @@ import {
   PopulateTargetDef,
   PopulatorDef,
 } from "@src/types/definition";
-import { PopulateRepeatSpec, PopulateSpec, PopulatorSpec } from "@src/types/specification";
+import {
+  PopulateRepeatSpec,
+  PopulateSetterSpec,
+  PopulateSpec,
+  PopulatorSpec,
+} from "@src/types/specification";
 
 export function composePopulators(def: Definition, populators: PopulatorSpec[]): void {
   def.populators = populators.map((p) => processPopulator(def.models, p));
@@ -38,11 +44,13 @@ function processPopulate(
     populateSpec.target.identifier,
     populateSpec.target.alias ?? null
   );
+  const { value: targetModel } = getRef<"model">(models, target.retType);
 
   const targets: PopulateTargetDef[] = [...parents, target];
+  const ctx = getInitialContext(targets);
 
   const repeat = calculateRepeat(populateSpec.repeat);
-  const changeset = composePopulateChangeset(models, populateSpec, targets);
+  const changeset = composePopulateChangeset(models, populateSpec, targets, targetModel, ctx);
 
   const populates = populateSpec.populates.map((p) => processPopulate(models, targets, p));
 
@@ -93,10 +101,7 @@ function calculateTarget(
           alias: alias || `$target_${parents.length}`,
         };
       }
-      case "field":
-      case "model":
-      case "hook":
-      case "query": {
+      default: {
         throw `Unsupported populate target "${prop.kind}"`;
       }
     }
@@ -147,9 +152,11 @@ function calculateRepeat(repeat?: PopulateRepeatSpec): PopulateRepeatDef {
 function composePopulateChangeset(
   models: ModelDef[],
   populateSpec: PopulateSpec,
-  parentTargets: PopulateTargetDef[]
+  targets: PopulateTargetDef[],
+  targetModel: ModelDef,
+  ctx: VarContext
 ): PopulateChangeset {
-  const target = _.last(parentTargets)!;
+  const target = _.last(targets)!;
 
   // ensure we're starting with model
   // ensure we have non-nullable references after starting model
@@ -157,11 +164,11 @@ function composePopulateChangeset(
   // setter for parent relation
   let parentContextChangeset: PopulateChangeset | undefined = undefined;
   if (target.kind === "relation") {
-    parentContextChangeset = getParentContextSetter(models, parentTargets);
+    parentContextChangeset = getParentContextSetter(models, targets, targetModel, ctx);
   }
 
   // Parsing an action specification
-  const modelChangeset = composeSetters(models, populateSpec, target);
+  const modelChangeset = composeSetters(models, populateSpec.setters, target, targetModel, ctx);
 
   // assign inputs
   return _.assign({}, parentContextChangeset, modelChangeset);
@@ -169,9 +176,11 @@ function composePopulateChangeset(
 
 function getParentContextSetter(
   models: ModelDef[],
-  parentTargets: PopulateTargetDef[]
+  targets: PopulateTargetDef[],
+  targetModel: ModelDef,
+  ctx: VarContext
 ): PopulateChangeset {
-  const [parentTarget, currentTarget] = _.takeRight(parentTargets, 2);
+  const [parentTarget, currentTarget] = _.takeRight(targets, 2);
   ensureExists(parentTarget);
   ensureExists(currentTarget);
 
@@ -182,16 +191,18 @@ function getParentContextSetter(
 
   const { value: relation } = getRef<"relation">(models, currentTarget.refKey);
 
-  return composeReferenceValue(models, parentTarget.alias, relation.throughRefKey);
+  return composeReferenceValue(models, parentTarget.alias, targetModel, [relation.through], ctx);
 }
 
 function composeSetters(
   models: ModelDef[],
-  populateSpec: PopulateSpec,
-  target: PopulateTargetDef
+  setters: PopulateSetterSpec[],
+  target: PopulateTargetDef,
+  targetModel: ModelDef,
+  ctx: VarContext
 ): PopulateChangeset {
   return (
-    _.chain(populateSpec.setters)
+    _.chain(setters)
       .map((setter): PopulateChangeset => {
         const setterKind = setter.set.kind;
         if (setterKind === "literal") {
@@ -202,10 +213,27 @@ function composeSetters(
             },
           };
         } else if (setterKind === "reference") {
-          const referenceTargetAlias = setter.set.reference;
-          const referenceRefKey = `${target.retType}.${setter.target}`;
-
-          return composeReferenceValue(models, referenceTargetAlias, referenceRefKey);
+          return composeReferenceValue(
+            models,
+            setter.target,
+            targetModel,
+            setter.set.reference,
+            ctx
+          );
+        } else if (setterKind === "hook") {
+          const args = _.chain(setter.set.hook.args)
+            .mapValues(
+              (arg) =>
+                composeSetters(
+                  models,
+                  [{ kind: "set", target: setter.target, set: arg }],
+                  target,
+                  targetModel,
+                  ctx
+                )[1]
+            )
+            .value();
+          return { [setter.target]: { kind: "fieldset-hook", code: setter.set.hook.code, args } };
         } else {
           assertUnreachable(setterKind);
         }
@@ -222,18 +250,48 @@ function composeSetters(
 
 function composeReferenceValue(
   models: ModelDef[],
-  referenceAlias: string,
-  referenceRefKey: string
+  target: string,
+  targetModel: ModelDef,
+  referencePath: string[],
+  ctx: VarContext
 ): { [name: string]: FieldSetterReferenceValue } {
-  const { value: reference } = getRef<"reference">(models, referenceRefKey);
-  const { value: referenceField } = getRef<"field">(models, reference.fieldRefKey);
-  const { value: relationField } = getRef<"field">(models, reference.toModelFieldRefKey);
+  const def: Definition = { models, entrypoints: [], populators: [] }; // FIXME: replace Definition with Model[] or vice versa
+
+  console.log("typed path", referencePath);
+
+  const typedPath = getTypedPathWithLeaf(def, referencePath, ctx);
+  const ref = getRef2(def, targetModel.name, target);
+  // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
+  let targetField: FieldDef;
+  switch (ref.kind) {
+    case "field": {
+      targetField = ref.value;
+      break;
+    }
+    case "reference": {
+      targetField = getRef2.field(def, ref.value.fieldRefKey);
+      break;
+    }
+    default: {
+      throw new Error(`Cannot set a value from a ${ref.kind}`);
+    }
+  }
+
+  const namePath = typedPath.nodes.map((p) => p.name);
+  const access = [...namePath, typedPath.leaf.name];
+  const { value: field } = getRef<"field">(def, typedPath.leaf.refKey);
 
   return {
-    [referenceField.name]: {
+    [targetField.name]: {
       kind: "reference-value",
-      type: referenceField.type,
-      target: { alias: referenceAlias, access: [relationField.name] },
+      type: field.type,
+      target: { alias: referencePath[0], access },
     },
   };
+}
+
+function getInitialContext(targets: PopulateTargetDef[]): VarContext {
+  return _.fromPairs(
+    _.initial(targets).map((t): [string, VarContext[string]] => [t.alias, { modelName: t.retType }])
+  );
 }

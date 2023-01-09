@@ -188,6 +188,8 @@ export type BinaryOperator =
 
 export type UnaryOperator = "not";
 
+// ----- Populators
+
 export type PopulatorAST = WithContext<{
   kind: "populator";
   name: string;
@@ -205,12 +207,13 @@ export type PopulateBodyAST = WithContext<
   | { kind: "repeat"; repeat: PopulateRepeatAST }
   | { kind: "set"; target: string; set: PopulateSetterValueAST }
   | { kind: "populate"; populate: PopulateAST }
-  // TODO: hooks
   // TODO: hints
 >;
 
 export type PopulateSetterValueAST = WithContext<
-  { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string }
+  | { kind: "literal"; value: LiteralValue }
+  | { kind: "reference"; reference: string[] }
+  | { kind: "hook"; hook: HookAST }
 >;
 
 export type PopulateRepeatAST = WithContext<
