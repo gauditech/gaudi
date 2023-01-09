@@ -20,6 +20,7 @@ import {
   dbPush,
   dbReset,
 } from "@src/cli/command/db";
+import { InitProjectOptions, initProject } from "@src/cli/command/initProject";
 import { start } from "@src/cli/command/start";
 import { attachProcessCleanup } from "@src/cli/process";
 import { Stoppable } from "@src/cli/types";
@@ -56,6 +57,19 @@ function parseArguments(config: EngineConfig) {
       describe: "Start Gaudi project",
       handler: (args) => {
         startCommandHandler(args, config);
+      },
+    })
+    .command({
+      command: "init",
+      describe: "Init new Gaudi project",
+      builder: (yargs) =>
+        yargs.option("name", {
+          type: "string",
+          description: "new project name",
+          demandOption: '  try adding "--name=<project name>"',
+        }),
+      handler: (args) => {
+        initCommandHandler(args, config);
       },
     })
     .command({
@@ -291,6 +305,15 @@ function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineC
 
 async function startCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
   return start(args, config).start();
+}
+
+// --- init project command
+
+async function initCommandHandler(
+  args: ArgumentsCamelCase<InitProjectOptions>,
+  config: EngineConfig
+) {
+  return initProject(args, config);
 }
 
 // -- DB push command

@@ -1,4 +1,4 @@
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, SpawnOptions, spawn } from "child_process";
 
 // -------------------- Command runner
 
@@ -16,7 +16,11 @@ type CommandRunner = {
   isRunning: () => boolean;
 };
 
-export function createCommandRunner(command: string, argv: string[]): CommandRunner {
+export function createCommandRunner(
+  command: string,
+  argv: string[],
+  options?: SpawnOptions
+): CommandRunner {
   // process instance has no indication whether it's running or not so use this flag for that
   let isRunning = false;
   let childProcess: ChildProcess;
@@ -31,6 +35,7 @@ export function createCommandRunner(command: string, argv: string[]): CommandRun
           },
           shell: true, // let shell interpret arguments as if they would be when called directly from shell
           stdio: ["inherit", "inherit", "inherit", "ipc"], // allow child processes to use std streams and allow IPC communication
+          ...(options ?? {}),
         });
 
         // should we control child process the same way we control "dev" parent process?
