@@ -114,11 +114,10 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
           return transformExpressionPaths(newExp, [computed.modelRefKey], _.initial(exp.namePath));
         }
         default: {
-          assertUnreachable(tpath.leaf);
+          return assertUnreachable(tpath.leaf);
         }
       }
     }
-    // eslint-disable-next-line no-fallthrough
     case "function": {
       return {
         ...exp,
@@ -160,6 +159,7 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef["query"]): str
   const aggregates = selectables.filter(
     (item): item is SelectAggregateItem => item.kind === "aggregate"
   );
+
   const allPaths = [
     [...q.fromPath, "id"],
     ...collectPathsFromExp(def, expandExpression(def, q.filter)),
@@ -381,7 +381,7 @@ function selectableToString(def: Definition, select: SelectableItem[]): string {
         }
         case "aggregate": {
           // const aggregate = getRef2.aggregate(def, item.refKey);
-          return `${namePathToAlias([...item.namePath])}."result" AS "${item.alias}"`;
+          return `${namePathToAlias(item.namePath)}."result" AS "${item.alias}"`;
         }
       }
     })
@@ -406,13 +406,13 @@ function expressionToString(def: Definition, filter: TypedExprDef): string {
         case "integer":
           return filter.value.toString();
         default:
-          assertUnreachable(filter);
+          return assertUnreachable(filter);
       }
     }
-    // Due to bug in eslint/prettier, linter complains that `break` is expected in the case "literal"
-    // Since inner switch is exaustive, break is unreachable so prettier deletes it
-    // eslint-disable-next-line no-fallthrough
     case "alias": {
+      // We need to check if alias points to an aggregate so we can attach "result".
+      // We try/catch because `__join_connection` appears in paths but is not resolved with `getTypedPath`.
+      // We could check specifically for `__join_connection` but this is sufficient.
       try {
         const tpath = getTypedPath(def, filter.namePath, {});
         ensureNot(tpath.leaf, null);
@@ -420,7 +420,7 @@ function expressionToString(def: Definition, filter: TypedExprDef): string {
           return `${namePathToAlias(filter.namePath)}."result"`;
         }
       } catch (_e) {
-        1;
+        // Just ignore the error and continue
       }
       const np = _.initial(filter.namePath);
       const f = _.last(filter.namePath);
@@ -430,6 +430,8 @@ function expressionToString(def: Definition, filter: TypedExprDef): string {
       return functionToString(def, filter);
     }
     case "variable": {
+      // Start variable names with a `:` which is a knex format for query variables
+      // Knex does interpolation on variables, taking care of SQL injection etc.
       return `:${filter.name}`;
     }
   }
