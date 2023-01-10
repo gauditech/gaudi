@@ -40,6 +40,16 @@ export function ensureThrow(cb: () => unknown, message?: string): void {
   throw new Error(message ?? `Expected a callback to throw`);
 }
 
+export function safeInvoke<T>(
+  cb: () => T
+): { kind: "error"; error: unknown } | { kind: "success"; result: T } {
+  try {
+    return { kind: "success", result: cb() };
+  } catch (error) {
+    return { kind: "error", error };
+  }
+}
+
 /** Concat all keys who's value is `true` using `delimiter` */
 export function concatKeys(map: Record<string, boolean>, delimiter = " "): string {
   return Object.entries(map)
