@@ -3,7 +3,7 @@ import _ from "lodash";
 import { composeActionBlock } from "./actions";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { ensureEqual, ensureNot } from "@src/common/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -329,7 +329,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                 setter.fieldsetAccess,
                 {
                   kind: "field",
-                  required: true, // fixme
+                  required: true, // FIXME
                   nullable: field.nullable,
                   type: field.type,
                   validators: field.validators,
@@ -353,11 +353,13 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
  * desired access path for each `FieldsetFieldDef`.ß
  */
 function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDef {
-  const record = _.chain(paths)
+  const uniqueFieldsetPaths = _.uniqWith(paths, _.isEqual);
+
+  const record = _.chain(uniqueFieldsetPaths)
     .map((p) => p[0][0])
     .uniq()
     .map((name) => {
-      const relatedPaths = paths
+      const relatedPaths = uniqueFieldsetPaths
         .filter((p) => p[0][0] === name)
         .map((p) => [_.tail(p[0]), p[1]] as [string[], FieldsetFieldDef]);
       if (relatedPaths.length === 1 && relatedPaths[0][0].length === 0) {

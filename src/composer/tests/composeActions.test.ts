@@ -60,6 +60,30 @@ describe("custom actions", () => {
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
+  it("succeeds with nested sibling reference", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      field name2 { type text }
+      field name3 { type text }
+    }
+    entrypoint Org {
+      target model Org
+      create endpoint {
+        action {
+          create {
+            set name2 name
+            set name3 name2
+          }
+        }
+      }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
+    expect(endpoint.fieldset).toMatchSnapshot();
+  });
   it("fails when reference and its field are being set at the same time", () => {
     const bp = `
     model Org { relation repos { from Repo, through org }}
@@ -80,9 +104,7 @@ describe("custom actions", () => {
     }
     `;
     const spec = compile(parse(bp));
-    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-      `"Duplicate setters for fields: [org_id]"`
-    );
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Found duplicates: [org_id]"`);
   });
   it("correctly sets parent context", () => {
     const bp = `
@@ -187,7 +209,6 @@ describe("custom actions", () => {
             set name "new name"
             input { description { optional } }
             reference extras through name
-            deny { extras_id }
           }
         }
       }
@@ -217,7 +238,7 @@ describe("custom actions", () => {
     }`;
     const spec = compile(parse(bp));
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-      `"Cannot reference and input the same field"`
+      `"Found duplicates: [extras_id]"`
     );
   });
   it("fails when there's an input and deny for the same field", () => {
@@ -238,9 +259,7 @@ describe("custom actions", () => {
     }
     `;
     const spec = compile(parse(bp));
-    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-      `"Overlapping inputs and deny rule"`
-    );
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Found duplicates: [name]"`);
   });
   it.todo("succeeds to update through unique relation");
   it("sets default action if not given", () => {
@@ -257,7 +276,7 @@ describe("custom actions", () => {
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
-  it("fails when action alias is not given", () => {
+  it("generates unique aliases when actions don't have one", () => {
     const bp = `
     model Org {
       field name { type text }
@@ -272,10 +291,9 @@ describe("custom actions", () => {
       }
     }
     `;
-    const spec = compile(parse(bp));
-    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-      `"We currently require every custom action to have an explicit alias"`
-    );
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
   });
   test.each(["Repo", "repo", "org"])(
     "fails when action alias uses existing model or context name %s",

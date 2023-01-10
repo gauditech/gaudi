@@ -161,6 +161,51 @@ exports[`custom actions correctly sets parent context 1`] = `
 ]
 `;
 
+exports[`custom actions generates unique aliases when actions don't have one 1`] = `
+[
+  {
+    "alias": undefined,
+    "changeset": {
+      "name": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+    },
+    "filter": undefined,
+    "kind": "update-one",
+    "model": "Org",
+    "select": [],
+    "targetPath": [
+      "org",
+    ],
+  },
+  {
+    "alias": undefined,
+    "changeset": {
+      "name": {
+        "fieldsetAccess": [
+          "Org",
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
+    },
+    "kind": "create-one",
+    "model": "Org",
+    "select": [],
+    "targetPath": [
+      "Org",
+    ],
+  },
+]
+`;
+
 exports[`custom actions sets default action if not given 1`] = `
 [
   {
@@ -325,6 +370,7 @@ exports[`custom actions succeeds with custom inputs 1`] = `
     "changeset": {
       "description": {
         "fieldsetAccess": [
+          "ox",
           "description",
         ],
         "kind": "fieldset-input",
@@ -333,6 +379,8 @@ exports[`custom actions succeeds with custom inputs 1`] = `
       },
       "extras": {
         "fieldsetAccess": [
+          "ox",
+          "extras",
           "name",
         ],
         "kind": "fieldset-reference-input",
@@ -365,4 +413,60 @@ exports[`custom actions succeeds with custom inputs 1`] = `
     ],
   },
 ]
+`;
+
+exports[`custom actions succeeds with nested sibling reference 1`] = `
+[
+  {
+    "alias": "$target_0",
+    "changeset": {
+      "name": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
+      "name2": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
+      "name3": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
+    },
+    "kind": "create-one",
+    "model": "Org",
+    "select": [],
+    "targetPath": [
+      "$target_0",
+    ],
+  },
+]
+`;
+
+exports[`custom actions succeeds with nested sibling reference 2`] = `
+{
+  "kind": "record",
+  "nullable": false,
+  "record": {
+    "name": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
+      "type": "text",
+      "validators": [],
+    },
+  },
+}
 `;

@@ -3,7 +3,7 @@ import _ from "lodash";
 import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureThrow } from "@src/common/utils";
+import { assertUnreachable, ensureEqual, ensureThrow, safeInvoke } from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -12,16 +12,17 @@ import {
   FieldDef,
   FieldSetter,
   FieldSetterInput,
-  FieldSetterReferenceInput,
   ModelDef,
   TargetDef,
 } from "@src/types/definition";
 import {
+  ActionAtomSpec,
   ActionAtomSpecDeny,
   ActionAtomSpecInput,
   ActionAtomSpecRefThrough,
   ActionAtomSpecSet,
   ActionSpec,
+  InputFieldSpec,
 } from "@src/types/specification";
 
 /**
@@ -146,40 +147,152 @@ function composeSingleAction(
     ensureCorrectDefaultAction(spec, target, endpointKind);
   } else {
     // ensure alias doesn't reuse an existing name
-    if (spec.alias) {
-      const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
+    const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
 
-      // FIXME not sure if this logic works
-      ensureThrow(() => getRef(def, spec.alias!), message);
-      ensureEqual(spec.alias! in ctx, false, message);
-    }
-    /*
-    FIXME with updates, we currently require re-aliasing in order to refresh the data to match updated values.
-    In other words, referencing a target path that was previously updated would reference stale values.
+    // FIXME not sure if this logic works
+    ensureThrow(() => getRef(def, spec.alias!), message);
+    ensureEqual(spec.alias! in ctx, false, message);
+  }
 
-    FIXME this check is not needed, but we currently require aliases in order to construct the fieldsets.
-    This should be improved in the future.
+  const simpleSpec = simplifyActionSpec(def, spec, target.alias, model);
 
-    We don't need an alias when:
-    - related action (eg. `update org.owner.profile`)
-    - model action without fieldsets (eg. `create AuditLog`)
+  function toFieldSetter(atom: ActionAtomSpecSet, changeset: Changeset): [string, FieldSetter] {
+    switch (atom.set.kind) {
+      case "hook": {
+        const args = _.chain(atom.set.hook.args)
+          .mapValues(
+            (arg) => toFieldSetter({ kind: "set", target: atom.target, set: arg }, changeset)[1]
+          )
+          .value();
+        return [atom.target, { kind: "fieldset-hook", code: atom.set.hook.code, args }];
+      }
+      case "literal": {
+        const typedVal = getTypedLiteralValue(atom.set.value);
+        return [atom.target, typedVal];
+      }
+      case "reference": {
+        /**
+         * Reference can be an alias or a computed/function.
+         * Currently, we don't support complex computeds so it will resolve to one of the known kinds of setters.
+         */
+        const path = atom.set.reference;
 
-    We should also check for conflicts between non-aliased context action ("root path") fields and any action aliases.
+        const maybeTypedPath = safeInvoke(() => getTypedPathWithLeaf(def, path, ctx));
+        switch (maybeTypedPath.kind) {
+          case "error": {
+            /**
+             * Is this a computed "sibling" call?
+             * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+             */
+            if (path[0] === simpleSpec.alias) {
+              ensureEqual(path.length, 2);
+            } else {
+              ensureEqual(path.length, 1);
+            }
+            const sibling = _.last(path)!;
+            // peek into the changeset to see if it's defined
+            if (sibling in changeset) {
+              return [atom.target, changeset[sibling]];
+            } else {
+              throw ["unresolved", path];
+            }
+          }
+          case "success": {
+            const typedPath = maybeTypedPath.result;
 
-    The rules for constructing the fieldset:
-    - non-named context action fields are in the root record (eg. `create {}`)
-    - aliased actions are nested within alias path (named context counts as alias if explicit alias not given)
-    - ensure no conflicts between aliases AND ensure no conflicts between aliases and context action fields if non-named
-  */
-    if (!spec.alias) {
-      throw new Error(`We currently require every custom action to have an explicit alias`);
+            const ref = getRef(def, model.name, atom.target);
+            // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
+            let targetField: FieldDef;
+            switch (ref.kind) {
+              case "field": {
+                targetField = ref;
+                break;
+              }
+              case "reference": {
+                targetField = getRef.field(def, ref.fieldRefKey);
+                break;
+              }
+              default: {
+                throw new Error(`Cannot set a value from a ${ref.kind}`);
+              }
+            }
+
+            const namePath = typedPath.nodes.map((p) => p.name);
+            const access = [...namePath, typedPath.leaf.name];
+            const field = getRef.field(def, typedPath.leaf.refKey);
+            return [
+              targetField.name,
+              { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
+            ];
+          }
+        }
+      }
     }
   }
 
-  /**
-   * Build a changeset
-   */
+  function atomToFieldSetters(
+    atom: PrettyActionSpec["actionAtoms"][number],
+    fieldsetNamespace: string[]
+  ): [string, FieldSetter][] {
+    switch (atom.kind) {
+      case "input": {
+        return atom.fields.map((fspec): [string, FieldSetterInput] => {
+          const field = getRef.field(def, model.name, fspec.name);
+          return [
+            fspec.name,
+            {
+              kind: "fieldset-input",
+              type: field.type,
+              required: !fspec.optional,
+              fieldsetAccess: [...fieldsetNamespace, fspec.name],
+            },
+          ];
+        });
+      }
+      case "reference": {
+        const reference = getRef.reference(def, model.name, atom.target);
+        const throughField = getRef.field(def, reference.toModelRefKey, atom.through);
+        return [
+          [
+            atom.target,
+            {
+              kind: "fieldset-reference-input",
+              throughField: { name: atom.through, refKey: throughField.refKey },
+              fieldsetAccess: [...fieldsetNamespace, atom.target, atom.through],
+            },
+          ],
+        ];
+      }
+      case "set": {
+        return [toFieldSetter(atom, changeset)];
+      }
+    }
+  }
+
   const changeset: Changeset = {};
+  let keyCount = _.keys(changeset).length;
+  let shouldRetry = true;
+  // eslint-disable-next-line no-constant-condition
+  while (shouldRetry) {
+    shouldRetry = false;
+    simpleSpec.actionAtoms.forEach((atom) => {
+      const result = safeInvoke(() => {
+        const fieldsetNamespace =
+          actionTargetScope === "target" ? _.compact([spec.alias]) : [simpleSpec.alias];
+        const fs = atomToFieldSetters(atom, fieldsetNamespace);
+        fs.forEach(([name, setter]) => (changeset[name] = setter));
+      });
+      if (result.kind === "error") {
+        shouldRetry = true;
+      }
+    });
+    if (shouldRetry && _.keys(changeset).length === keyCount) {
+      // we had an iteration in which nothing was resolved, and there are still unresolved setters
+      throw new Error(`Couldn't resolve all field setters`);
+    }
+    keyCount = _.keys(changeset).length;
+  }
+
   // Set parent context, if any.
   switch (actionTargetScope) {
     case "model":
@@ -202,62 +315,6 @@ function composeSingleAction(
       } // else: delete filter
     }
   }
-  // Parsing an action spec for `set` atoms
-  _.assign(changeset, getActionSetters(def, spec, model, ctx));
-  // ... reference inputs
-  const referenceInputs = getReferenceInputs(def, model, spec);
-  // ... field inputs
-  const inputs = getInputSetters(def, model, spec);
-
-  // Ensure no overlap between inputs and reference inputs.
-  ensureEqual(
-    _.intersection(Object.keys(inputs), Object.keys(referenceInputs)).length,
-    0,
-    "Overlap between reference inputs and field inputs"
-  );
-
-  // Ensure no field inputs for reference inputs
-  // FIXME ref to field translation is hackish but it works :)
-  const fieldsFromReferences = Object.keys(referenceInputs).map((name) => `${name}_id`);
-  ensureEqual(
-    _.intersection(fieldsFromReferences, Object.keys(inputs)).length,
-    0,
-    "Cannot reference and input the same field"
-  );
-
-  // Update changeset with inputs.
-  _.assign(changeset, referenceInputs, inputs);
-
-  /**
-   *  Filling implicit inputs based on a `deny` strategy.
-   */
-  const denyRules = spec.actionAtoms.filter((a): a is ActionAtomSpecDeny => a.kind === "deny");
-  if (denyRules.length > 1) {
-    // FIXME should be aggregated instead?
-    throw new Error(`Multiple deny rules not allowed`);
-  }
-  // ensure no overlap between input and explicit denies
-  const explicitDenyFields = denyRules[0]?.fields === "*" ? [] : denyRules[0]?.fields ?? [];
-  ensureEqual(
-    _.intersection(Object.keys(inputs), explicitDenyFields).length,
-    0,
-    "Overlapping inputs and deny rule"
-  );
-
-  // Calculate implicit inputs.
-  const implicitInputs =
-    denyRules[0]?.fields === "*"
-      ? {}
-      : createRemainingInputsChangesetForModel(
-          model,
-          spec.kind === "create",
-          _.compact([spec.alias!]),
-          // ensure existing field definitions are skipped
-          _.union(denyRules[0]?.fields, fieldsFromReferences, Object.keys(changeset))
-        );
-
-  // Finally, assign the remaining partial changesets into a main changeset.
-  _.assign(changeset, implicitInputs);
 
   // TODO ensure changeset has covered every non-optional field in the model!
 
@@ -449,148 +506,156 @@ function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: st
   return setter;
 }
 
-/**
- * Creates a `Changeset` containing `reference-value` and `value` FieldSetter definitions
- * based on the action spec.
- */
-function getActionSetters(
+interface PrettyActionSpec extends ActionSpec {
+  alias: string;
+  targetPath: string[];
+  actionAtoms: Exclude<ActionAtomSpec, { kind: "action" } | { kind: "deny" }>[];
+}
+
+function simplifyActionSpec(
   def: Definition,
   spec: ActionSpec,
-  model: ModelDef,
-  ctx: VarContext
-): Changeset {
-  function toFieldSetter(atom: ActionAtomSpecSet): [string, FieldSetter] {
-    switch (atom.set.kind) {
-      case "hook": {
-        const args = _.chain(atom.set.hook.args)
-          .mapValues((arg) => toFieldSetter({ kind: "set", target: atom.target, set: arg })[1])
-          .value();
-        return [atom.target, { kind: "fieldset-hook", code: atom.set.hook.code, args }];
-      }
-      case "literal": {
-        const typedVal = getTypedLiteralValue(atom.set.value);
-        return [atom.target, typedVal];
-      }
-      case "reference": {
-        const path = atom.set.reference;
+  targetAlias: string,
+  // ctx: VarContext,
+  model: ModelDef
+): PrettyActionSpec {
+  const atoms = spec.actionAtoms;
 
-        const typedPath = getTypedPathWithLeaf(def, path, ctx);
-        const ref = getRef(def, model.name, atom.target);
-        // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
-        let targetField: FieldDef;
-        switch (ref.kind) {
-          case "field": {
-            targetField = ref;
-            break;
+  // We don't support nested actions yet
+  const actions = atoms.filter((a) => a.kind === "action");
+  ensureEqual(actions.length, 0);
+
+  const inputs = atoms
+    .filter((a): a is ActionAtomSpecInput => a.kind === "input")
+    .map((i): ActionAtomSpecInput => {
+      /**
+       * Convert reference inputs to field inputs.
+       * TODO convert to reference inputs instead, to avoid runtime crashes, since
+       *      we expect runtime to handle missing foreign keys and return proper errors.
+       */
+      return {
+        ...i,
+        fields: i.fields.map((fspec): InputFieldSpec => {
+          const ref = getRef(def, model.name, fspec.name, ["field", "reference"]);
+          switch (ref.kind) {
+            case "field":
+              return fspec;
+            case "reference": {
+              return { ...fspec, name: `${fspec.name}_id` };
+            }
+            default:
+              assertUnreachable(ref);
           }
-          case "reference": {
-            targetField = getRef.field(def, ref.fieldRefKey);
-            break;
-          }
-          default: {
-            throw new Error(`Cannot set a value from a ${ref.kind}`);
-          }
+        }),
+      };
+    });
+
+  // TODO ensure every refInput points to a reference field
+  const refInputs = atoms.filter((a): a is ActionAtomSpecRefThrough => a.kind === "reference");
+  const setters = atoms
+    .filter((a): a is ActionAtomSpecSet => a.kind === "set")
+    .map((a): ActionAtomSpecSet => {
+      /*
+       * Convert every reference setter to a field setter
+       */
+      const ref = getRef(def, model.name, a.target, ["field", "reference"]);
+      switch (ref.kind) {
+        case "reference": {
+          ensureEqual(a.set.kind, "reference" as const); // reference setters can only target aliases
+          return {
+            ...a,
+            kind: "set",
+            target: `${a.target}_id`,
+            set: { kind: "reference", reference: [...a.set.reference, "id"] },
+          };
         }
-
-        const namePath = typedPath.nodes.map((p) => p.name);
-        const access = [...namePath, typedPath.leaf.name];
-        const field = getRef.field(def, typedPath.leaf.refKey);
-        return [
-          targetField.name,
-          { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
-        ];
+        case "field": {
+          return a;
+        }
+        default:
+          assertUnreachable(ref);
       }
-    }
-  }
+    });
 
-  const pairs = spec.actionAtoms
-    .filter((atom): atom is ActionAtomSpecSet => atom.kind === "set")
-    .map(toFieldSetter);
-  const duplicates = _.chain(pairs)
-    .countBy(_.first)
+  const denies = atoms
+    .filter((a): a is ActionAtomSpecDeny => a.kind === "deny")
+    .map((d, _index, array) => {
+      if (d.fields === "*") {
+        // ensure this is the only deny rule
+        ensureEqual(array.length, 1);
+        return d;
+      }
+      // convert deny references to fields
+      const fields = d.fields.map((fname): string => {
+        const ref = getRef(def, model.name, fname, ["field", "reference"]);
+        switch (ref.kind) {
+          case "reference":
+            return `${fname}_id`;
+          case "field":
+            return fname;
+          default:
+            assertUnreachable(ref);
+        }
+      });
+      return { ...d, fields };
+    });
+
+  /*
+   * ensure no duplicate fields
+   */
+  const allFieldNames = [
+    ...inputs.flatMap((i) => i.fields.map((f) => f.name)),
+    ...refInputs.map((r) => `${r.target}_id`),
+    ...setters.map((s) => s.target),
+    ...denies.flatMap((d) => d.fields),
+  ];
+  const duplicates = _.chain(allFieldNames)
+    .countBy()
     .toPairs()
-    .filter((pair) => pair[1] > 1)
-    .map((pair) => pair[0])
+    .filter(([_name, count]) => count > 1)
+    .map(([name, _count]) => name)
     .value();
-  if (duplicates.length) {
-    throw new Error(`Duplicate setters for fields: [${duplicates.join(", ")}]`);
+
+  const message = `Found duplicates: [${duplicates.join(", ")}]`;
+
+  ensureEqual(allFieldNames.length, _.uniq(allFieldNames).length, message);
+
+  // convert denies to implicit inputs
+  const implicitInputs: ActionAtomSpecInput[] = [];
+  const hasDenyAll = denies[0] && denies[0].fields === "*";
+  if (!hasDenyAll) {
+    /**
+     * If user hasn't explicitely denied all the implicit inputs, let's find all fields
+     * not used as targets in other rules
+     */
+    const modelFieldNames = model.fields.filter((f) => f.name !== "id").map((f) => f.name);
+    const denyFieldNames = denies.flatMap((d) => d.fields as string[]);
+    const implicitFieldNames = _.difference(modelFieldNames, allFieldNames, denyFieldNames);
+    implicitInputs.push({
+      kind: "input",
+      fields: implicitFieldNames.map((name) => ({
+        name,
+        optional: spec.kind === "update", // Partial updates, implicit inputs are optional
+      })),
+    });
   }
-  return Object.fromEntries(pairs);
-}
 
-/**
- * Creates a `Changeset` containing `fieldset-input` FieldSetter definitions
- * based on the action spec.
- */
-function getInputSetters(def: Definition, model: ModelDef, spec: ActionSpec): Changeset {
-  const setters: Changeset = Object.fromEntries(
-    spec.actionAtoms
-      .filter((a): a is ActionAtomSpecInput => a.kind === "input")
-      .flatMap((a) => a.fields)
-      .map((input): [string, FieldSetterInput] => {
-        const field = getRef.field(def, `${model.refKey}.${input.name}`);
-        const setter: FieldSetter = {
-          kind: "fieldset-input",
-          type: field.type,
-          required: !input.optional,
-          fieldsetAccess: [input.name],
-          // TODO add default
-        };
-        return [input.name, setter];
-      })
-  );
-  return setters;
-}
+  const simplifiedAtoms: PrettyActionSpec["actionAtoms"] = [
+    ...inputs,
+    ...refInputs,
+    ...implicitInputs,
+    ...setters,
+  ];
 
-/**
- * Creates a `Changeset` containing `fieldset-reference-input` FieldSetter definitions
- * based on the action spec.
- */
-function getReferenceInputs(def: Definition, model: ModelDef, spec: ActionSpec): Changeset {
-  return Object.fromEntries(
-    spec.actionAtoms
-      .filter((a): a is ActionAtomSpecRefThrough => a.kind === "reference")
-      .map((r): [string, FieldSetterReferenceInput] => {
-        const reference = getRef.reference(def, `${model.name}.${r.target}`);
-        ensureEqual(reference.kind, "reference");
-        const refModel = getRef.model(def, reference.toModelRefKey);
-        const throughField = getRef.field(def, `${refModel.refKey}.${r.through}`);
-        return [
-          reference.name,
-          {
-            kind: "fieldset-reference-input",
-            throughField: {
-              name: throughField.name,
-              refKey: throughField.refKey,
-            },
-            fieldsetAccess: [r.through],
-          },
-        ];
-      })
-  );
-}
+  const targetPath = spec.targetPath ?? [targetAlias];
 
-/**
- * Takes all the fields from `model`, omitting the ones in `skipFields`, and returns
- * a `Changeset`.
- */
-function createRemainingInputsChangesetForModel(
-  model: ModelDef,
-  required: boolean,
-  namePath: string[],
-  skipFields: string[]
-): Changeset {
-  const fields = model.fields
-    .filter((f) => !f.primary)
-    .filter((f) => {
-      return skipFields.indexOf(f.name) === -1;
-    })
-    .map((f): [string, FieldSetter] => [
-      f.name,
-      { kind: "fieldset-input", type: f.type, fieldsetAccess: [...namePath, f.name], required },
-    ]);
-
-  return Object.fromEntries(fields);
+  // return simplified spec
+  return {
+    ...spec,
+    alias: spec.alias || targetPath.join("|"),
+    targetPath,
+    actionAtoms: simplifiedAtoms,
+  };
 }
 
 /**
