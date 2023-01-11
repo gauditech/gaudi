@@ -1,5 +1,57 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Aggregates to queries composes a query that filters by aggregate field to produce another aggregate 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.total_issues"."result" AS "total_issues"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.repos.issues".id) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      LEFT JOIN "issue" AS "Org.repos.issues" ON "Org.repos"."id" = "Org.repos.issues"."repo_id"
+      LEFT JOIN (
+        SELECT
+          "Issue".id,
+          count("Issue.comments".id) AS "result"
+        FROM
+          "issue" AS "Issue"
+          LEFT JOIN "comment" AS "Issue.comments" ON "Issue"."id" = "Issue.comments"."issue_id"
+        GROUP BY
+          "Issue".id
+      ) AS "Org.repos.issues.comment_count" ON "Org.repos.issues".id = "Org.repos.issues.comment_count".id
+    WHERE
+      "Org.repos.issues.comment_count"."result" > 0
+    GROUP BY
+      "Org".id
+  ) AS "Org.total_issues" ON "Org".id = "Org.total_issues".id"
+`;
+
+exports[`Aggregates to queries composes a query with simple aggregate that has joins in the aggregate subquery 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.total_issues"."result" AS "total_issues"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.repos.issues".id) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      LEFT JOIN "issue" AS "Org.repos.issues" ON "Org.repos"."id" = "Org.repos.issues"."repo_id"
+    GROUP BY
+      "Org".id
+  ) AS "Org.total_issues" ON "Org".id = "Org.total_issues".id"
+`;
+
 exports[`Aggregates to queries composes a query with simple aggregate through query 1`] = `
 "SELECT
   "Org"."id" AS "id",
