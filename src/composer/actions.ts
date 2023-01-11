@@ -199,24 +199,9 @@ function composeSingleAction(
           }
           case "success": {
             const typedPath = maybeTypedPath.result;
-
-            const ref = getRef(def, model.name, atom.target);
-            // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
-            let targetField: FieldDef;
-            switch (ref.kind) {
-              case "field": {
-                targetField = ref;
-                break;
-              }
-              case "reference": {
-                targetField = getRef.field(def, ref.fieldRefKey);
-                break;
-              }
-              default: {
-                throw new Error(`Cannot set a value from a ${ref.kind}`);
-              }
-            }
-
+            // simpleSpec already resolved reference setters into a field setters,
+            // so here we should only check for fields
+            const targetField = getRef.field(def, model.name, atom.target);
             const namePath = typedPath.nodes.map((p) => p.name);
             const access = [...namePath, typedPath.leaf.name];
             const field = getRef.field(def, typedPath.leaf.refKey);
@@ -231,7 +216,7 @@ function composeSingleAction(
   }
 
   function atomToFieldSetters(
-    atom: PrettyActionSpec["actionAtoms"][number],
+    atom: SimpleActionSpec["actionAtoms"][number],
     fieldsetNamespace: string[]
   ): [string, FieldSetter][] {
     switch (atom.kind) {
@@ -506,7 +491,7 @@ function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: st
   return setter;
 }
 
-interface PrettyActionSpec extends ActionSpec {
+interface SimpleActionSpec extends ActionSpec {
   alias: string;
   targetPath: string[];
   actionAtoms: Exclude<ActionAtomSpec, { kind: "action" } | { kind: "deny" }>[];
@@ -518,7 +503,7 @@ function simplifyActionSpec(
   targetAlias: string,
   // ctx: VarContext,
   model: ModelDef
-): PrettyActionSpec {
+): SimpleActionSpec {
   const atoms = spec.actionAtoms;
 
   // We don't support nested actions yet
@@ -640,7 +625,7 @@ function simplifyActionSpec(
     });
   }
 
-  const simplifiedAtoms: PrettyActionSpec["actionAtoms"] = [
+  const simplifiedAtoms: SimpleActionSpec["actionAtoms"] = [
     ...inputs,
     ...refInputs,
     ...implicitInputs,
