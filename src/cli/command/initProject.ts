@@ -3,7 +3,7 @@ import path from "path";
 import { ArgumentsCamelCase } from "yargs";
 
 import { createCommandRunner } from "@src/cli/runner";
-import { createDir, storeTemplateOutput, verifyProjectName } from "@src/cli/utils";
+import { createDir, sanitizeProjectName, storeTemplateOutput } from "@src/cli/utils";
 import { saveOutputFile } from "@src/common/utils";
 import { EngineConfig } from "@src/config";
 
@@ -15,7 +15,7 @@ export type InitProjectOptions = {
 export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config: EngineConfig) {
   console.log("Initializing new Gaudi project project ...");
 
-  const projectName = verifyProjectName(args.name);
+  const projectName = sanitizeProjectName(args.name);
   const outputDir = resolveOutputDirPath(projectName);
 
   return (
@@ -34,7 +34,7 @@ export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config
         console.error("Error initializing NPM package", err);
         throw "Error initializing project";
       })
-      // create .env
+      // create .env config
       .then(() => console.log(`  create .env config`))
       .then(() => createEnvConfig(outputDir, projectName))
       .catch((err) => {
@@ -48,21 +48,20 @@ export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config
         console.error("Error creating README", err);
         throw "Error initializing project";
       })
-      // create node evironment
-      .then(() => console.log(`  create Node environment`))
-      .then(() => createNodeEnvironment(outputDir, projectName))
+      // create hooks environment
+      .then(() => console.log(`  create hooks environment`))
+      .then(() => createHooksEnvironment(outputDir, projectName))
       .catch((err) => {
-        console.error("Error creating Node environemnt", err);
+        console.error("Error creating hooks environemnt", err);
         throw "Error initializing project";
       })
-      // gaudi blueprint
-      .then(() => console.log(`  create Gaudi blueprint`))
+      // gaudi files
+      .then(() => console.log(`  create Gaudi files`))
       .then(() => createGaudiFiles(outputDir, projectName))
       .catch((err) => {
-        console.error("Error creating Gaudi blueprint", err);
+        console.error("Error creating Gaudi files", err);
         throw "Error initializing project";
       })
-      // gaudi folder
       // TODO: docker (postgres, adminer, ...)
       .then(() => console.log(``))
       .then(() => console.log(`Project initialized succesfully`))
@@ -103,7 +102,7 @@ function renderPackageJsonTemplate(projectName: string): string {
       scripts: {
         "// --- build": "",
         build: "npm run build:hooks && npx gaudi-cli build",
-        "build:hooks": "tsc --project ./tsconfig.json --preserveWatchOutput dist/hooks",
+        "build:hooks": "tsc --preserveWatchOutput",
         "// --- dev": "",
         dev: 'concurrently --names hooks,gaudi "npm run dev:hooks" "npx gaudi-cli dev --gaudi-dev"',
         "dev:hooks": 'chokidar ./hooks  --debounce --initial --command "npm run build:hooks"',
@@ -112,6 +111,7 @@ function renderPackageJsonTemplate(projectName: string): string {
       },
       devDependencies: {
         "chokidar-cli": "^3.0.0",
+        concurrently: "^7.6.0",
         rimraf: "^3.0.2",
         typescript: "^4.8.3",
       },
@@ -131,7 +131,7 @@ async function createEnvConfig(outputDir: string, projectName: string) {
 
 function renderEnvConfigTemplate(projectName: string): string {
   return `
-GAUDI_DATABASE_URL=postgresql://gaudi:gaudip@localhost:5432/gaudi
+GAUDI_DATABASE_URL=postgresql://gaudi:gaudip@localhost:5432/${projectName}
 
 GAUDI_ENGINE_INPUT_PATH=./src/${projectName}.gaudi
 GAUDI_ENGINE_OUTPUT_PATH=./dist
@@ -162,7 +162,7 @@ TODO: show the relevant links, eg. localhost:3001/api, /api-docs, /api-admin, /a
 
 // ----- Hooks
 
-async function createNodeEnvironment(outputDir: string, projectName: string) {
+async function createHooksEnvironment(outputDir: string, projectName: string) {
   const hooksDir = createHooksDir(outputDir, projectName);
 
   createHooksFile(hooksDir);
@@ -170,8 +170,8 @@ async function createNodeEnvironment(outputDir: string, projectName: string) {
   createTypescriptConfig(outputDir, hooksDir);
 }
 
-function createHooksDir(outputDir: string, projectName: string) {
-  const hooksDir = path.join(outputDir, "environment/node");
+function createHooksDir(outputDir: string, _projectName: string) {
+  const hooksDir = path.join(outputDir, "hooks");
 
   createDir(hooksDir);
 
@@ -195,7 +195,10 @@ function renderHooksFileTemplate() {
 function createTypescriptConfig(outputDir: string, hooksDir: string) {
   const typescriptConfigPath = path.join(outputDir, "tsconfig.json");
 
-  saveOutputFile(typescriptConfigPath, renderTsconfigJsonTemplate(hooksDir));
+  // use relative path for more flexibility
+  const hooksRelativeDir = path.relative(outputDir, hooksDir);
+
+  saveOutputFile(typescriptConfigPath, renderTsconfigJsonTemplate(hooksRelativeDir));
 }
 
 function renderTsconfigJsonTemplate(hooksDir: string) {
@@ -211,6 +214,7 @@ function renderTsconfigJsonTemplate(hooksDir: string) {
         moduleResolution: "node",
         sourceMap: true,
         outDir: "dist",
+        rootDir: ".",
         baseUrl: ".",
         strict: true,
         paths: {

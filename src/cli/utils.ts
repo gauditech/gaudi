@@ -2,9 +2,16 @@ import fs from "fs";
 
 import { saveOutputFile } from "@src/common/utils";
 
-export function verifyProjectName(name: string): string {
-  // TODO: allow only ascii characters
-  return name;
+export function sanitizeProjectName(name: string): string {
+  return (
+    name
+      // allow only word characters, replace all others with "-"
+      .replace(/\W/g, "-")
+      // remove multiple consecutive "-"
+      .replace(/-{2,}/g, "-")
+      // remove start/end "-"
+      .replace(/^-+|-+$/, "")
+  );
 }
 
 /** Create dir recursively if it doesn't exist already */

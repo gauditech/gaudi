@@ -1,7 +1,12 @@
 import _ from "lodash";
 import { ArgumentsCamelCase } from "yargs";
 
-import { GAUDI_SCRIPTS, getDbSchemaPath, getDefaultNodeOptions } from "@src/cli/config";
+import {
+  GAUDI_SCRIPTS,
+  appendBinPath,
+  getDbSchemaPath,
+  getDefaultNodeOptions,
+} from "@src/cli/config";
 import { createCommandRunner } from "@src/cli/runner";
 import { EngineConfig } from "@src/config";
 
@@ -12,12 +17,12 @@ import { EngineConfig } from "@src/config";
 export function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Pushing DB change ...");
 
-  return createCommandRunner("npx", [
-    "prisma",
+  return createCommandRunner(appendBinPath("prisma"), [
     "db",
     "push",
-    `--schema=${getDbSchemaPath(config)}`,
     "--accept-data-loss",
+    "--skip-generate",
+    `--schema=${getDbSchemaPath(config)}`,
   ]);
 }
 
@@ -26,11 +31,11 @@ export function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
 export function dbReset(_args: ArgumentsCamelCase, config: EngineConfig) {
   console.log("Resetting DB ...");
 
-  return createCommandRunner("npx", [
-    "prisma",
+  return createCommandRunner(appendBinPath("prisma"), [
     "db",
     "push",
     "--force-reset",
+    "--skip-generate",
     `--schema=${getDbSchemaPath(config)}`,
   ]);
 }
@@ -70,8 +75,7 @@ export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 
   console.log(`Creating DB migration "${migrationName}" ...`);
 
-  return createCommandRunner("npx", [
-    "prisma",
+  return createCommandRunner(appendBinPath("prisma"), [
     "migrate",
     "dev",
     `--name=${migrationName}`,
@@ -84,8 +88,7 @@ export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 export function dbDeploy(_args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
-  return createCommandRunner("npx", [
-    "prisma",
+  return createCommandRunner(appendBinPath("prisma"), [
     "migrate",
     "deploy",
     `--schema=${getDbSchemaPath(config)}`,
