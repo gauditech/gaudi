@@ -73,6 +73,19 @@ describe("API endpoints", () => {
       expect(getResp.body).toEqual(patchResp.body);
     });
 
+    it("update foo", async () => {
+      const barData = { slug: "bar" };
+
+      const barPostResponse = await request(getServer()).post("/bar").send(barData);
+      expect(barPostResponse.statusCode).toBe(200);
+
+      const data = { name: "foo", bar_slug: "bar" };
+
+      const postResponse = await request(getServer()).post("/foo").send(data);
+      expect(postResponse.statusCode).toBe(200);
+      expect(postResponse.body).toMatchSnapshot();
+    });
+
     it("delete", async () => {
       const patchResp = await request(getServer()).delete("/org/org3");
       expect(patchResp.statusCode).toBe(200);

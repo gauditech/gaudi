@@ -337,8 +337,10 @@ exports[`custom actions succeeds with custom inputs 1`] = `
         ],
         "kind": "fieldset-reference-input",
         "throughField": {
+          "modelRefKey": "OrgExtra",
           "name": "name",
           "refKey": "OrgExtra.name",
+          "type": "text",
         },
       },
       "name": {

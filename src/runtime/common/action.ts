@@ -3,7 +3,10 @@ import { executeQueryTree } from "../query/exec";
 
 import { dataToFieldDbnames, getRef2 } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
-import { buildChangset as buildChangesetData } from "@src/runtime/common/changeset";
+import {
+  buildChangset as buildChangesetData,
+  getReferenceIds,
+} from "@src/runtime/common/changeset";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { Vars } from "@src/runtime/server/vars";
 import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition";
@@ -25,14 +28,16 @@ export async function executeActions(
 
     const actionKind = action.kind;
     if (actionKind === "create-one") {
-      const changesetData = buildChangesetData(action.changeset, ctx);
+      const referenceIds = await getReferenceIds(def, dbConn, action.changeset, ctx);
+      const changesetData = buildChangesetData(action.changeset, ctx, referenceIds);
       const dbData = dataToFieldDbnames(model, changesetData);
 
       const id = await insertData(dbConn, dbModel, dbData);
       const deps = await fetchActionDeps(def, dbConn, action, id);
       deps && ctx.vars.set(action.alias, deps[0]);
     } else if (actionKind === "update-one") {
-      const changesetData = buildChangesetData(action.changeset, ctx);
+      const referenceIds = await getReferenceIds(def, dbConn, action.changeset, ctx);
+      const changesetData = buildChangesetData(action.changeset, ctx, referenceIds);
       const dbData = dataToFieldDbnames(model, changesetData);
 
       const targetId = resolveTargetId(ctx, action.targetPath);

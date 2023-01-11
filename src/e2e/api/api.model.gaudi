@@ -125,3 +125,29 @@ entrypoint Orgs {
     }
   }
 }
+
+model Foo {
+  field name { type text }
+  reference bar { to Bar } // TODO: unique?
+}
+
+model Bar {
+  field slug { type text, unique }
+  relation foo { from Foo, through bar }
+}
+
+entrypoint Bars {
+  target model Bar as bar
+  create endpoint {}
+}
+
+entrypoint Foos {
+  target model Foo as foo
+  create endpoint {
+    action {
+      create foo {
+        reference bar through slug
+      }
+    }
+  }
+}

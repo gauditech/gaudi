@@ -81,6 +81,14 @@ exports[`API endpoints Org update 1`] = `
 }
 `;
 
+exports[`API endpoints Org update foo 1`] = `
+{
+  "bar_id": 1,
+  "id": 1,
+  "name": "foo",
+}
+`;
+
 exports[`API endpoints Repo create 1`] = `
 {
   "description": "Repo 6 description",

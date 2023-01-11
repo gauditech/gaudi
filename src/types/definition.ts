@@ -377,7 +377,7 @@ export type FieldSetterInput = {
 export type FieldSetterReferenceInput = {
   kind: "fieldset-reference-input";
   fieldsetAccess: string[];
-  throughField: { name: string; refKey: string };
+  throughField: { name: string; type: FieldType; modelRefKey: string };
   // required: boolean;
 };
 
