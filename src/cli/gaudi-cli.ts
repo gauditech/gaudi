@@ -60,13 +60,13 @@ function parseArguments(config: EngineConfig) {
       },
     })
     .command({
-      command: "init",
+      command: "init <name>",
       describe: "Init new Gaudi project",
       builder: (yargs) =>
-        yargs.option("name", {
+        yargs.positional("name", {
           type: "string",
           description: "new project name",
-          demandOption: '  try adding "--name=<project name>"',
+          demandOption: true,
         }),
       handler: (args) => {
         initCommandHandler(args, config);
