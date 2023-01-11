@@ -160,7 +160,7 @@ function renderReadmeTemplate(projectName: string): string {
 
 This is a Gaudi starter project.
 
-### Building project
+## Building project
 Gaudi CLI is used to build Gaudi blueprints but since this project also contains Typescript hooks which are built independently from Gaudi blueprints, both are conveniently wrapped in NPM scripts:
 
 ##### **Build**
@@ -175,20 +175,44 @@ Starts project dev mode which will build hooks sources and Gaudi build but will 
 $ npm run dev
 \`\`\`
 
-#### **Start**
+##### **Start**
 Start successfully built app. See [Runtime configuration](#runtime-configuration) for app defaults.
+\`\`\`
+$ npm run start
+\`\`\`
 
-### Configure project
+### Building Gaudi engine
+If building Gaudi engine in parallel, Gaudi engine's output (\`dist\`) needs to be connected/linked to this project's dependencies.
+
+In Gaudi output folder run following
+\`\`\`
+npm install # creates node_modules folder
+npm link # compensate for not being on NPM repository
+\`\`\`
+
+In this project's folder run
+\`\`\`
+npm link @gaudi/engine
+\`\`\`
+This is executed when starter project is initialized but symlink is lost after each \`npm i\` and it must be repeated.
+
+Alternatively, you can install Gaudi engine as a local file but since this is very machine specific, it need s to be installed manually.
+\`\`\`
+npm i file://path/to/gaudi/dist
+\`\`\`
+
+
+## Configure project
 Project can be configured through \`.env\` file. Available configuration options:
 
-##### **Database**
+#### **Database**
 * \`GAUDI_DATABASE_URL\` [_"postgresql://gaudi:gaudip@localhost:5432/${projectName}"_] - DB connection string
 
-##### **Gaudi engine**
+#### **Gaudi engine**
 * \`GAUDI_ENGINE_INPUT_PATH\` [_"./src/${projectName}.gaudi"_] - path to Gaudi blueprint file
 * GAUDI_ENGINE_OUTPUT_PATH\` [_"./dist"_] - path to folder where Gaudi engine will output it's files
 
-##### **Runtime configuration**
+#### **Runtime configuration**
 * \`GAUDI_RUNTIME_DEFINITION_PATH\` [_"./dist/definition.json"_] - path to Gaudi definition file
 * \`GAUDI_RUNTIME_OUTPUT_PATH\` [_"./dist"_] - path to folder where Gaudi runtime will output it's files 
 * \`GAUDI_RUNTIME_HOOK_PATH\` [_"./dist/hooks"_] - folder where Gaudi runtime will find hooks files
@@ -205,7 +229,6 @@ Hooks code must be located in \`<root>/hooks\` folder in one or multiple files a
 Gaudi blueprints are located in \`<root>/src/${projectName}.gaudi\` file. It is compiled by Gaudi engine and output to \`dist\` folder.
 
 Gaudi engine also produces DB schema and migration files. Since those files need to be source controlled they are output to \`<root>/gaudi\` folder and then copied to output folder so they are available to app.
-
 
 ### API
 Gaudi engine produces following API resources:
