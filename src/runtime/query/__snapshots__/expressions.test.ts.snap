@@ -10,7 +10,10 @@ FROM
   LEFT JOIN (
     SELECT
       "Org".id,
-      count("Org.repos.issues".id) AS "result"
+      count("Org.repos.issues".id) FILTER (
+        WHERE
+          "Org.repos.issues.comment_count"."result" > 0
+      ) AS "result"
     FROM
       "org" AS "Org"
       LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
@@ -25,8 +28,6 @@ FROM
         GROUP BY
           "Issue".id
       ) AS "Org.repos.issues.comment_count" ON "Org.repos.issues".id = "Org.repos.issues.comment_count".id
-    WHERE
-      "Org.repos.issues.comment_count"."result" > 0
     GROUP BY
       "Org".id
   ) AS "Org.total_issues" ON "Org".id = "Org.total_issues".id"

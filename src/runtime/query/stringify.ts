@@ -342,19 +342,20 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
 
   const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j));
-  const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
+  const filterWhere = expandedFilter
+    ? `FILTER(WHERE ${expressionToString(def, expandedFilter)})`
+    : "";
   const aggrFieldExpr = `${namePathToAlias(aggregate.query.fromPath)}.${aggrField.dbname}`;
   const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
 
   const qstr = source`
   (SELECT
     ${namePathToAlias([model.name])}.id,
-    ${aggregate.aggrFnName}(${aggrFieldExpr}) AS "result"
+    ${aggregate.aggrFnName}(${aggrFieldExpr}) ${filterWhere} AS "result"
   FROM ${refToTableSqlFragment(def, modelRef)}
   AS ${namePathToAlias([model.name])}
   ${joins}
   ${aggrJoins}
-  ${where}
   GROUP BY ${namePathToAlias([model.name])}.id)`;
 
   return format(qstr, { language: "postgresql" });
