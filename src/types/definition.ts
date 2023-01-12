@@ -256,7 +256,8 @@ export type ValidatorDef =
   | IsBooleanEqual
   | IsIntEqual
   | IsTextEqual
-  | HookValidator;
+  | HookValidator
+  | NoReferenceValidator;
 
 export const ValidatorDefinition = [
   ["text", "max", "maxLength", ["integer"]],
@@ -318,6 +319,9 @@ export interface HookValidator {
   name: "hook";
   arg?: string;
   code: HookCode;
+}
+export interface NoReferenceValidator {
+  name: "noReference";
 }
 
 export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;

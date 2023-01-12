@@ -121,6 +121,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(v, s);
+      } else if (v.name === "noReference") {
+        s = buildNoReferenceSchema(s);
       }
     });
 
@@ -147,6 +149,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         s = s.equals([v.args[0].value]) as NumberSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(v, s);
+      } else if (v.name === "noReference") {
+        s = buildNoReferenceSchema(s);
       }
     });
 
@@ -167,6 +171,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         s = s.equals([v.args[0].value]) as BooleanSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(v, s);
+      } else if (v.name === "noReference") {
+        s = buildNoReferenceSchema(s);
       }
     });
 
@@ -182,4 +188,12 @@ function buildHookSchema<S extends BaseSchema>(validator: HookValidator, schema:
     return executeHook(validator.code, arg ? { [arg]: value } : {});
   };
   return schema.test(testFn);
+}
+
+function buildNoReferenceSchema<S extends BaseSchema>(schema: S): S {
+  return schema.test(
+    "noReference",
+    (params) => `Can't find ${params.path} with value: ${params.value}`,
+    () => false
+  );
 }

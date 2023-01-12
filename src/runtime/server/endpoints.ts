@@ -1,6 +1,8 @@
 import { Express, Request, Response } from "express";
 import _, { compact } from "lodash";
 
+import { getReferenceIds } from "../common/changeset";
+
 import { Vars } from "./vars";
 
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
@@ -216,13 +218,20 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           console.log("CTX PARAMS", pathParamVars);
           console.log("BODY", body);
 
+          const referenceIds = await getReferenceIds(
+            def,
+            dbConn,
+            endpoint.actions,
+            endpoint.fieldset,
+            body
+          );
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
             def,
             dbConn,
-            { input: validationResult, vars: contextVars },
+            { input: validationResult, vars: contextVars, referenceIds },
             endpoint.actions
           );
 
@@ -290,13 +299,20 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           console.log("FIELDSET", endpoint.fieldset);
 
+          const referenceIds = await getReferenceIds(
+            def,
+            dbConn,
+            endpoint.actions,
+            endpoint.fieldset,
+            body
+          );
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
             def,
             dbConn,
-            { input: validationResult, vars: contextVars },
+            { input: validationResult, vars: contextVars, referenceIds },
             endpoint.actions
           );
 

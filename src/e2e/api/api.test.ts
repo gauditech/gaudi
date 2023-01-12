@@ -86,6 +86,14 @@ describe("API endpoints", () => {
       expect(postResponse.body).toMatchSnapshot();
     });
 
+    it("update foo no reference", async () => {
+      const data = { name: "foo", bar_slug: "baz" };
+
+      const postResponse = await request(getServer()).post("/foo").send(data);
+      expect(postResponse.statusCode).toBe(400);
+      expect(postResponse.body).toMatchSnapshot();
+    });
+
     it("delete", async () => {
       const patchResp = await request(getServer()).delete("/org/org3");
       expect(patchResp.statusCode).toBe(200);

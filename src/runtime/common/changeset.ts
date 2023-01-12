@@ -8,15 +8,22 @@ import { queryFromParts } from "@src/runtime/query/build";
 import { executeQuery } from "@src/runtime/query/exec";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { Vars } from "@src/runtime/server/vars";
-import { Changeset, Definition, FieldDef, FilterDef } from "@src/types/definition";
+import {
+  ActionDef,
+  Changeset,
+  Definition,
+  FieldDef,
+  FieldsetDef,
+  FieldsetFieldDef,
+  FilterDef,
+} from "@src/types/definition";
 
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
  */
 export function buildChangset(
   actionChangset: Changeset,
-  actionContext: ActionContext,
-  referenceIds: Record<string, number | null>
+  actionContext: ActionContext
 ): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(actionChangset)
@@ -39,9 +46,9 @@ export function buildChangset(
         } else if (setterKind === "reference-value") {
           return [name, actionContext.vars.get(setter.target.alias, setter.target.access)];
         } else if (setterKind === "fieldset-reference-input") {
-          return [name + "_id", referenceIds[name]];
+          return [name + "_id", actionContext.referenceIds[name]];
         } else if (setterKind === "fieldset-hook") {
-          const args = buildChangset(setter.args, actionContext, referenceIds);
+          const args = buildChangset(setter.args, actionContext);
           return [name, executeHook(setter.code, args)];
         } else {
           assertUnreachable(setterKind);
@@ -55,15 +62,21 @@ export function buildChangset(
 export async function getReferenceIds(
   def: Definition,
   dbConn: DbConn,
-  actionChangset: Changeset,
-  actionContext: ActionContext
-): Promise<Record<string, number | null>> {
-  const promiseEntries = Object.entries(actionChangset).map(async ([name, setter]) => {
-    if (setter.kind !== "fieldset-reference-input") return null;
+  actions: ActionDef[],
+  fieldset: FieldsetDef,
+  input: Record<string, unknown>
+): Promise<Record<string, number>> {
+  const referenceInputs = actions.flatMap((action) => {
+    if (action.kind !== "create-one" && action.kind !== "update-one") return [];
+    return Object.entries(action.changeset).flatMap(([name, setter]) => {
+      if (setter.kind !== "fieldset-reference-input") return [];
+      return [[name, setter] as const];
+    });
+  });
 
+  const promiseEntries = referenceInputs.map(async ([name, setter]) => {
     const field = getRef2.field(def, setter.throughRefKey);
 
-    const inputValue = _.get(actionContext.input, setter.fieldsetAccess);
     const varName = field.name + "__input";
     const filter: FilterDef = {
       kind: "binary",
@@ -80,10 +93,12 @@ export async function getReferenceIds(
     };
     const queryName = field.modelRefKey + "." + field.name;
     const query = queryFromParts(def, queryName, [field.modelRefKey], filter, []);
+    const inputValue = _.get(input, setter.fieldsetAccess);
     const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
 
     if (result.length === 0) {
-      return [name, null] as const;
+      addNoReferenceValidator(getNestedFieldset(fieldset, setter.fieldsetAccess));
+      return null;
     }
     if (result.length > 1) {
       throw Error(
@@ -93,7 +108,26 @@ export async function getReferenceIds(
 
     return [name, result[0].id] as const;
   });
+
   return Object.fromEntries(_.compact(await Promise.all(promiseEntries)));
+}
+
+function getNestedFieldset(fieldset: FieldsetDef, fieldsetAccess: string[]): FieldsetFieldDef {
+  if (fieldsetAccess.length === 0) {
+    if (fieldset.kind === "record") {
+      throw Error("Unexpected FieldsetRecordDef when searching for a nested fieldset");
+    }
+    return fieldset;
+  }
+  if (fieldset.kind === "field") {
+    throw Error("Unexpected FieldsetFieldDef when searching for a nested fieldset");
+  }
+  const [head, ...tail] = fieldsetAccess;
+  return getNestedFieldset(fieldset.record[head], tail);
+}
+
+function addNoReferenceValidator(fieldset: FieldsetFieldDef) {
+  fieldset.validators.push({ name: "noReference" });
 }
 
 /**
