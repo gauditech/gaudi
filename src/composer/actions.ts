@@ -225,7 +225,7 @@ function composeSingleAction(
     }
   }
 
-  function atomToFieldSetters(
+  function atomToChangesetOperations(
     atom: SimpleActionSpec["actionAtoms"][number],
     fieldsetNamespace: string[]
   ): ChangesetOperationDef[] {
@@ -276,7 +276,7 @@ function composeSingleAction(
           actionTargetScope === "target"
             ? _.compact([simpleSpec.blueprintAlias])
             : [simpleSpec.alias];
-        const fs = atomToFieldSetters(atom, fieldsetNamespace);
+        const fs = atomToChangesetOperations(atom, fieldsetNamespace);
         fs.forEach((op) => {
           // Add the changeset operation only if not added before
           if (!_.find(changeset, { name: op.name })) {
