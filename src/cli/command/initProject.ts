@@ -160,6 +160,17 @@ function renderReadmeTemplate(projectName: string): string {
 
 This is a Gaudi starter project.
 
+## Initializing project
+To initialize a new starter project use Gaudi CLI anywhere where CLI is available.
+\`\`\`
+npx gaudi-cli init <project-name>
+\`\`\`
+
+Project name will be used as a name for project folder, NPM package name, Gaudi blueprint file and DB name. As such it will be sanitized and all (regex) "non-word" characters will be replaced with "-".
+Eg.
+ * \`"new project 1\` -> \`"new-project-1"\`
+ * \`"@myorg/acme_util"\` -> \`"myorg-acme_util"\`
+
 ## Building project
 Gaudi CLI is used to build Gaudi blueprints but since this project also contains Typescript hooks which are built independently from Gaudi blueprints, both are conveniently wrapped in NPM scripts:
 
