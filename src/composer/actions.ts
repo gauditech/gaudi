@@ -1,15 +1,10 @@
 import _ from "lodash";
 
+import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
 import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import {
-  assertUnreachable,
-  ensureEqual,
-  ensureNot,
-  ensureThrow,
-  safeInvoke,
-} from "@src/common/utils";
+import { ensureEqual, ensureNot, ensureThrow, safeInvoke } from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -19,15 +14,7 @@ import {
   ModelDef,
   TargetDef,
 } from "@src/types/definition";
-import {
-  ActionAtomSpec,
-  ActionAtomSpecDeny,
-  ActionAtomSpecInput,
-  ActionAtomSpecInputList,
-  ActionAtomSpecRefThrough,
-  ActionAtomSpecSet,
-  ActionSpec,
-} from "@src/types/specification";
+import { ActionAtomSpecSet, ActionSpec } from "@src/types/specification";
 
 /**
  * Composes the custom actions block for an endpoint. Adds a default action
@@ -416,179 +403,6 @@ function findChangesetModel(
   } else {
     return getTargetModel(def, _.last(typedPath.nodes)!.refKey);
   }
-}
-
-interface SimpleActionSpec extends ActionSpec {
-  alias: string;
-  blueprintAlias: string | undefined;
-  targetPath: string[];
-  blueprintTargetPath: string[] | undefined;
-  actionAtoms: Exclude<
-    ActionAtomSpec,
-    { kind: "action" } | { kind: "deny" } | { kind: "input-list" }
-  >[];
-}
-
-function simplifyActionSpec(
-  def: Definition,
-  spec: ActionSpec,
-  targetAlias: string,
-  model: ModelDef
-): SimpleActionSpec {
-  const atoms = spec.actionAtoms;
-
-  // We don't support nested actions yet
-  const actions = atoms.filter((a) => a.kind === "action");
-  ensureEqual(actions.length, 0);
-
-  /**
-   * Convert input-list to input for easier handling later in the code.
-   * Convert inputs on `reference`s to input on `field`s.
-   */
-  function maybeConvertReferenceToField(a: ActionAtomSpecInput): ActionAtomSpecInput {
-    const ref = getRef(def, model.name, a.fieldSpec.name, ["field", "reference"]);
-    switch (ref.kind) {
-      case "field": {
-        return a;
-      }
-      case "reference": {
-        // TODO convert to fieldset-reference-input instead, to get a better runtime error
-        return { ...a, fieldSpec: { ...a.fieldSpec, name: `${a.fieldSpec.name}_id` } };
-      }
-    }
-  }
-  const inputs = atoms
-    .filter(
-      (a): a is ActionAtomSpecInputList | ActionAtomSpecInput =>
-        a.kind === "input-list" || a.kind === "input"
-    )
-    .flatMap((i): ActionAtomSpecInput[] => {
-      switch (i.kind) {
-        case "input": {
-          return [maybeConvertReferenceToField(i)];
-        }
-        case "input-list": {
-          return i.fields.map(
-            (fspec): ActionAtomSpecInput =>
-              maybeConvertReferenceToField({
-                kind: "input",
-                fieldSpec: fspec,
-              })
-          );
-        }
-      }
-    });
-
-  // TODO ensure every refInput points to a reference field
-  const refInputs = atoms.filter((a): a is ActionAtomSpecRefThrough => a.kind === "reference");
-  const setters = atoms
-    .filter((a): a is ActionAtomSpecSet => a.kind === "set")
-    .map((a): ActionAtomSpecSet => {
-      /*
-       * Convert every reference setter to a field setter
-       */
-      const ref = getRef(def, model.name, a.target, ["field", "reference"]);
-      switch (ref.kind) {
-        case "reference": {
-          ensureEqual(a.set.kind, "reference" as const); // reference setters can only target aliases
-          return {
-            ...a,
-            kind: "set",
-            target: `${a.target}_id`,
-            set: { kind: "reference", reference: [...a.set.reference, "id"] },
-          };
-        }
-        case "field": {
-          return a;
-        }
-        default:
-          assertUnreachable(ref);
-      }
-    });
-
-  const denies = atoms
-    .filter((a): a is ActionAtomSpecDeny => a.kind === "deny")
-    .map((d, _index, array) => {
-      if (d.fields === "*") {
-        // ensure this is the only deny rule
-        ensureEqual(array.length, 1);
-        return d;
-      }
-      // convert deny references to fields
-      const fields = d.fields.map((fname): string => {
-        const ref = getRef(def, model.name, fname, ["field", "reference"]);
-        switch (ref.kind) {
-          case "reference":
-            return `${fname}_id`;
-          case "field":
-            return fname;
-          default:
-            assertUnreachable(ref);
-        }
-      });
-      return { ...d, fields };
-    });
-
-  /*
-   * ensure no duplicate fields
-   */
-  const allFieldNames = [
-    ...inputs.flatMap((f) => f.fieldSpec.name),
-    ...refInputs.map((r) => `${r.target}_id`),
-    ...setters.map((s) => s.target),
-    ...denies.flatMap((d) => d.fields),
-  ];
-  const duplicates = _.chain(allFieldNames)
-    .countBy()
-    .toPairs()
-    .filter(([_name, count]) => count > 1)
-    .map(([name, _count]) => name)
-    .value();
-
-  const message = `Found duplicates: [${duplicates.join(", ")}]`;
-
-  ensureEqual(allFieldNames.length, _.uniq(allFieldNames).length, message);
-
-  // convert denies to implicit inputs
-  const implicitInputs: ActionAtomSpecInput[] = [];
-  const hasDenyAll = denies[0] && denies[0].fields === "*";
-  if (!hasDenyAll) {
-    /**
-     * If user hasn't explicitely denied all the implicit inputs, let's find all fields
-     * not used as targets in other rules
-     */
-    const modelFieldNames = model.fields.filter((f) => f.name !== "id").map((f) => f.name);
-    const denyFieldNames = denies.flatMap((d) => d.fields as string[]);
-    const implicitFieldNames = _.difference(modelFieldNames, allFieldNames, denyFieldNames);
-    implicitFieldNames.forEach((name) => {
-      implicitInputs.push({
-        kind: "input",
-        fieldSpec: {
-          name,
-          optional: spec.kind === "update", // Partial updates, implicit inputs are optional
-        },
-      });
-    });
-  }
-
-  const simplifiedAtoms: SimpleActionSpec["actionAtoms"] = [
-    ...inputs,
-    ...refInputs,
-    ...implicitInputs,
-    ...setters,
-  ];
-
-  const targetPath = spec.targetPath ?? [targetAlias];
-
-  // return simplified spec
-  return {
-    ...spec,
-    alias: spec.alias || `$` + targetPath.join("|"), // FIXME
-    blueprintAlias: spec.alias,
-    targetPath,
-    blueprintTargetPath: spec.targetPath,
-    actionAtoms: simplifiedAtoms,
-  };
 }
 
 function assignParentContextSetter(
