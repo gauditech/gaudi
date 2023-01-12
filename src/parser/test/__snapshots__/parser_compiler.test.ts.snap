@@ -418,7 +418,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                       "optional": false,
                     },
                   ],
-                  "kind": "input",
+                  "kind": "input-list",
                 },
               ],
               "alias": undefined,

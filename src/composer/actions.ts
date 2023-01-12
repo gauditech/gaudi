@@ -23,10 +23,10 @@ import {
   ActionAtomSpec,
   ActionAtomSpecDeny,
   ActionAtomSpecInput,
+  ActionAtomSpecInputList,
   ActionAtomSpecRefThrough,
   ActionAtomSpecSet,
   ActionSpec,
-  InputFieldSpec,
 } from "@src/types/specification";
 
 /**
@@ -225,41 +225,37 @@ function composeSingleAction(
     }
   }
 
-  function atomToChangesetOperations(
+  function atomToChangesetOperation(
     atom: SimpleActionSpec["actionAtoms"][number],
     fieldsetNamespace: string[]
-  ): ChangesetOperationDef[] {
+  ): ChangesetOperationDef {
     switch (atom.kind) {
       case "input": {
-        return atom.fields.map((fspec): ChangesetOperationDef => {
-          const field = getRef.field(def, model.name, fspec.name);
-          return {
-            name: fspec.name,
-            setter: {
-              kind: "fieldset-input",
-              type: field.type,
-              required: !fspec.optional,
-              fieldsetAccess: [...fieldsetNamespace, fspec.name],
-            },
-          };
-        });
+        const field = getRef.field(def, model.name, atom.fieldSpec.name);
+        return {
+          name: atom.fieldSpec.name,
+          setter: {
+            kind: "fieldset-input",
+            type: field.type,
+            required: !atom.fieldSpec.optional,
+            fieldsetAccess: [...fieldsetNamespace, atom.fieldSpec.name],
+          },
+        };
       }
       case "reference": {
         const reference = getRef.reference(def, model.name, atom.target);
         const throughField = getRef.field(def, reference.toModelRefKey, atom.through);
-        return [
-          {
-            name: atom.target,
-            setter: {
-              kind: "fieldset-reference-input",
-              throughField: { name: atom.through, refKey: throughField.refKey },
-              fieldsetAccess: [...fieldsetNamespace, atom.target, atom.through],
-            },
+        return {
+          name: atom.target,
+          setter: {
+            kind: "fieldset-reference-input",
+            throughField: { name: atom.through, refKey: throughField.refKey },
+            fieldsetAccess: [...fieldsetNamespace, atom.target, atom.through],
           },
-        ];
+        };
       }
       case "set": {
-        return [toFieldSetter(atom, changeset)];
+        return toFieldSetter(atom, changeset);
       }
     }
   }
@@ -276,13 +272,11 @@ function composeSingleAction(
           actionTargetScope === "target"
             ? _.compact([simpleSpec.blueprintAlias])
             : [simpleSpec.alias];
-        const fs = atomToChangesetOperations(atom, fieldsetNamespace);
-        fs.forEach((op) => {
-          // Add the changeset operation only if not added before
-          if (!_.find(changeset, { name: op.name })) {
-            changeset.push(op);
-          }
-        });
+        const op = atomToChangesetOperation(atom, fieldsetNamespace);
+        // Add the changeset operation only if not added before
+        if (!_.find(changeset, { name: op.name })) {
+          changeset.push(op);
+        }
       });
       if (result.kind === "error") {
         console.error(result.error);
@@ -429,7 +423,10 @@ interface SimpleActionSpec extends ActionSpec {
   blueprintAlias: string | undefined;
   targetPath: string[];
   blueprintTargetPath: string[] | undefined;
-  actionAtoms: Exclude<ActionAtomSpec, { kind: "action" } | { kind: "deny" }>[];
+  actionAtoms: Exclude<
+    ActionAtomSpec,
+    { kind: "action" } | { kind: "deny" } | { kind: "input-list" }
+  >[];
 }
 
 function simplifyActionSpec(
@@ -444,29 +441,42 @@ function simplifyActionSpec(
   const actions = atoms.filter((a) => a.kind === "action");
   ensureEqual(actions.length, 0);
 
+  /**
+   * Convert input-list to input for easier handling later in the code.
+   * Convert inputs on `reference`s to input on `field`s.
+   */
+  function maybeConvertReferenceToField(a: ActionAtomSpecInput): ActionAtomSpecInput {
+    const ref = getRef(def, model.name, a.fieldSpec.name, ["field", "reference"]);
+    switch (ref.kind) {
+      case "field": {
+        return a;
+      }
+      case "reference": {
+        // TODO convert to fieldset-reference-input instead, to get a better runtime error
+        return { ...a, fieldSpec: { ...a.fieldSpec, name: `${a.fieldSpec.name}_id` } };
+      }
+    }
+  }
   const inputs = atoms
-    .filter((a): a is ActionAtomSpecInput => a.kind === "input")
-    .map((i): ActionAtomSpecInput => {
-      /**
-       * Convert reference inputs to field inputs.
-       * TODO convert to reference inputs instead, to avoid runtime crashes, since
-       *      we expect runtime to handle missing foreign keys and return proper errors.
-       */
-      return {
-        ...i,
-        fields: i.fields.map((fspec): InputFieldSpec => {
-          const ref = getRef(def, model.name, fspec.name, ["field", "reference"]);
-          switch (ref.kind) {
-            case "field":
-              return fspec;
-            case "reference": {
-              return { ...fspec, name: `${fspec.name}_id` };
-            }
-            default:
-              assertUnreachable(ref);
-          }
-        }),
-      };
+    .filter(
+      (a): a is ActionAtomSpecInputList | ActionAtomSpecInput =>
+        a.kind === "input-list" || a.kind === "input"
+    )
+    .flatMap((i): ActionAtomSpecInput[] => {
+      switch (i.kind) {
+        case "input": {
+          return [maybeConvertReferenceToField(i)];
+        }
+        case "input-list": {
+          return i.fields.map(
+            (fspec): ActionAtomSpecInput =>
+              maybeConvertReferenceToField({
+                kind: "input",
+                fieldSpec: fspec,
+              })
+          );
+        }
+      }
     });
 
   // TODO ensure every refInput points to a reference field
@@ -523,7 +533,7 @@ function simplifyActionSpec(
    * ensure no duplicate fields
    */
   const allFieldNames = [
-    ...inputs.flatMap((i) => i.fields.map((f) => f.name)),
+    ...inputs.flatMap((f) => f.fieldSpec.name),
     ...refInputs.map((r) => `${r.target}_id`),
     ...setters.map((s) => s.target),
     ...denies.flatMap((d) => d.fields),
@@ -550,12 +560,14 @@ function simplifyActionSpec(
     const modelFieldNames = model.fields.filter((f) => f.name !== "id").map((f) => f.name);
     const denyFieldNames = denies.flatMap((d) => d.fields as string[]);
     const implicitFieldNames = _.difference(modelFieldNames, allFieldNames, denyFieldNames);
-    implicitInputs.push({
-      kind: "input",
-      fields: implicitFieldNames.map((name) => ({
-        name,
-        optional: spec.kind === "update", // Partial updates, implicit inputs are optional
-      })),
+    implicitFieldNames.forEach((name) => {
+      implicitInputs.push({
+        kind: "input",
+        fieldSpec: {
+          name,
+          optional: spec.kind === "update", // Partial updates, implicit inputs are optional
+        },
+      });
     });
   }
 

@@ -290,7 +290,7 @@ function compileAction(action: ActionBodyAST): ActionSpec {
           }
           return { name: f.name, default: defaults[0], optional: !_.isEmpty(optionals) };
         });
-        return { kind: "input", fields };
+        return { kind: "input-list", fields };
       }
     }
   });
