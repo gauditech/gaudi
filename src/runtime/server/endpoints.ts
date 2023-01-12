@@ -293,7 +293,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          executeActions(
+          await executeActions(
             def,
             dbConn,
             { input: validationResult, vars: contextVars },
