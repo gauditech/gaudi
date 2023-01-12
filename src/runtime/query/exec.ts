@@ -4,10 +4,11 @@ import _ from "lodash";
 import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
-import { QueryTree, selectableId } from "./build";
+import { QueryTree, applyFilterIdInContext, selectableId } from "./build";
 import { queryToString } from "./stringify";
 
-import { Definition, QueryDef } from "@src/types/definition";
+import { getRef2 } from "@src/common/refs";
+import { Definition, QueryDef, SelectableItem } from "@src/types/definition";
 
 type Result = {
   rowCount: number;
@@ -68,24 +69,32 @@ export async function executeQueryTree(
     });
   }
 
-  const hooks = await Promise.all(
-    qt.hooks.map(async (h) => ({
-      ...h,
-      args: await Promise.all(
-        h.args.map(async ({ name, query }) => ({
-          name,
-          results: await executeQueryTree(conn, def, query, params, resultIds),
-        }))
-      ),
-    }))
-  );
+  // execute all queries in all hooks one by one
+  for (const hook of qt.hooks) {
+    // collect hook arg queries
+    const argResults: Record<string, NestedRow[]> = {};
+    for (const arg of hook.args) {
+      const res = await executeQueryTree(conn, def, arg.query, params, resultIds);
+      argResults[arg.name] = res;
+    }
 
-  results.forEach((result, i) => {
-    hooks.forEach((h) => {
-      const args = Object.fromEntries(h.args.map(({ name, results }) => [name, results[i]]));
-      result[h.name] = executeHook(h.code, args);
+    // for each entry in results, take their arg results and execute hook
+    results.forEach((result) => {
+      const args = Object.fromEntries(
+        hook.args.map((arg) => [
+          arg.name,
+          _.omit(
+            // FIXME we shouldn't have `[0]` here but we lack type checking feature
+            // to figure out the query cardinality so we hardcode "one" for now...
+            argResults[arg.name].filter((res) => res["__join_connection"] === result.id)[0],
+            "__join_connection"
+          ),
+        ])
+      );
+
+      result[hook.name] = executeHook(hook.code, args);
     });
-  });
+  }
 
   return results;
 }

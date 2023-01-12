@@ -30,7 +30,7 @@ exports[`API endpoints Org create 1`] = `
   "description": "Org NEW description",
   "id": 4,
   "name": "Org NEW",
-  "nameAndDesc": "Org 1: Org 1 description",
+  "nameAndDesc": "Org NEW: Org NEW description",
   "slug": "orgNEW",
 }
 `;
@@ -76,7 +76,7 @@ exports[`API endpoints Org update 1`] = `
   "description": "Org 2A description",
   "id": 2,
   "name": "Org 2A",
-  "nameAndDesc": "Org 1: Org 1 description",
+  "nameAndDesc": "Org 2A: Org 2A description",
   "slug": "org2",
 }
 `;
