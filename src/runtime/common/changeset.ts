@@ -1,5 +1,6 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
+import { getRef2 } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
@@ -15,7 +16,7 @@ import { Changeset, Definition, FieldDef, FilterDef } from "@src/types/definitio
 export function buildChangset(
   actionChangset: Changeset,
   actionContext: ActionContext,
-  referenceIds: Record<string, number>
+  referenceIds: Record<string, number | null>
 ): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(actionChangset)
@@ -56,37 +57,37 @@ export async function getReferenceIds(
   dbConn: DbConn,
   actionChangset: Changeset,
   actionContext: ActionContext
-): Promise<Record<string, number>> {
+): Promise<Record<string, number | null>> {
   const promiseEntries = Object.entries(actionChangset).map(async ([name, setter]) => {
     if (setter.kind !== "fieldset-reference-input") return null;
 
+    const field = getRef2.field(def, setter.throughRefKey);
+
     const inputValue = _.get(actionContext.input, setter.fieldsetAccess);
-    const varName = setter.throughField.name + "__input";
+    const varName = field.name + "__input";
     const filter: FilterDef = {
       kind: "binary",
       operator: "is",
       lhs: {
         kind: "alias",
-        namePath: [setter.throughField.modelRefKey, setter.throughField.name],
+        namePath: [field.modelRefKey, field.name],
       },
       rhs: {
         kind: "variable",
         name: varName,
-        type: setter.throughField.type,
+        type: field.type,
       },
     };
-    const queryName = setter.throughField.modelRefKey + "." + setter.throughField.name;
-    const query = queryFromParts(def, queryName, [setter.throughField.modelRefKey], filter, []);
+    const queryName = field.modelRefKey + "." + field.name;
+    const query = queryFromParts(def, queryName, [field.modelRefKey], filter, []);
     const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
 
     if (result.length === 0) {
-      throw Error(
-        `Failed to find reference: Can't find '${setter.throughField.modelRefKey}' where field '${setter.throughField.name}' is '${inputValue}'`
-      );
+      return [name, null] as const;
     }
     if (result.length > 1) {
       throw Error(
-        `Failed to find reference: There are multiple (${result.length}) '${setter.throughField.modelRefKey}' where field '${setter.throughField.name}' is '${inputValue}'`
+        `Failed to find reference: There are multiple (${result.length}) '${field.modelRefKey}' where field '${field.name}' is '${inputValue}'`
       );
     }
 

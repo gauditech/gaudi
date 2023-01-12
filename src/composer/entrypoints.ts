@@ -329,7 +329,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
               ];
             }
             case "fieldset-reference-input": {
-              const { value: field } = getRef<"field">(def, setter.throughField.refKey);
+              const { value: field } = getRef<"field">(def, setter.throughRefKey);
               return [
                 setter.fieldsetAccess,
                 {
