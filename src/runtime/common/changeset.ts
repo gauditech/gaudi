@@ -3,41 +3,41 @@ import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 import { assertUnreachable } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
-import { Changeset, FieldDef } from "@src/types/definition";
+import { ChangesetDef, FieldDef } from "@src/types/definition";
 
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
  */
 export function buildChangset(
-  actionChangset: Changeset,
+  actionChangset: ChangesetDef,
   actionContext: ActionContext
 ): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(actionChangset)
-      .map(([name, setter]) => {
+    actionChangset
+      .map(({ name, setter: operation }) => {
         // TODO: format values by type
-        const setterKind = setter.kind;
+        const setterKind = operation.kind;
         if (setterKind === "literal") {
           return [
             name,
-            setter.type === "null" ? null : formatFieldValue(setter.value, setter.type),
+            operation.type === "null" ? null : formatFieldValue(operation.value, operation.type),
           ];
         } else if (setterKind === "fieldset-input") {
           return [
             name,
             formatFieldValue(
-              getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
-              setter.type
+              getFieldsetProperty(actionContext.input, operation.fieldsetAccess),
+              operation.type
             ),
           ];
         } else if (setterKind === "reference-value") {
-          return [name, actionContext.vars.get(setter.target.alias, setter.target.access)];
+          return [name, actionContext.vars.get(operation.target.alias, operation.target.access)];
         } else if (setterKind === "fieldset-reference-input") {
           // TODO: implement "fieldset-reference-input" setters
           throw `Unsupported changeset setter kind "${setterKind}"`;
         } else if (setterKind === "fieldset-hook") {
-          const args = buildChangset(setter.args, actionContext);
-          return [name, executeHook(setter.code, args)];
+          const args = buildChangset(operation.args, actionContext);
+          return [name, executeHook(operation.code, args)];
         } else {
           assertUnreachable(setterKind);
         }

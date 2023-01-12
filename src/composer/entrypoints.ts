@@ -3,7 +3,7 @@ import _ from "lodash";
 import { composeActionBlock } from "./actions";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot } from "@src/common/utils";
+import { ensureEqual } from "@src/common/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -307,26 +307,25 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .flatMap((action) => {
       return _.chain(action.changeset)
-        .toPairs()
-        .map(([name, setter]): null | [string[], FieldsetFieldDef] => {
-          switch (setter.kind) {
+        .map(({ name, setter: operation }): null | [string[], FieldsetFieldDef] => {
+          switch (operation.kind) {
             case "fieldset-input": {
               const field = getRef.field(def, `${action.model}.${name}`);
               return [
-                setter.fieldsetAccess,
+                operation.fieldsetAccess,
                 {
                   kind: "field",
-                  required: setter.required,
-                  type: setter.type,
+                  required: operation.required,
+                  type: operation.type,
                   nullable: field.nullable,
                   validators: field.validators,
                 },
               ];
             }
             case "fieldset-reference-input": {
-              const field = getRef.field(def, setter.throughField.refKey);
+              const field = getRef.field(def, operation.throughField.refKey);
               return [
-                setter.fieldsetAccess,
+                operation.fieldsetAccess,
                 {
                   kind: "field",
                   required: true, // FIXME
@@ -415,14 +414,14 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
     .value();
   // collect all targets
   const setterTargets = nonDeleteActions.flatMap((a) => {
-    return Object.values(a.changeset).flatMap((setter) => {
-      switch (setter.kind) {
+    return a.changeset.flatMap(({ setter: operation }) => {
+      switch (operation.kind) {
         case "reference-value": {
-          return [setter.target];
+          return [operation.target];
         }
         case "fieldset-hook": {
-          return Object.values(setter.args).flatMap((setter) =>
-            setter.kind === "reference-value" ? [setter.target] : []
+          return operation.args.flatMap(({ setter: operation }) =>
+            operation.kind === "reference-value" ? [operation.target] : []
           );
         }
         default: {

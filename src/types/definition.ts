@@ -358,6 +358,7 @@ export interface IsTextEqual extends IValidatorDef {
   inputType: "text";
   args: [TextConst];
 }
+
 export interface HookValidator {
   name: "hook";
   arg?: string;
@@ -377,7 +378,7 @@ export type CreateOneAction = {
   alias: string;
   model: string;
   targetPath: string[];
-  changeset: Changeset;
+  changeset: ChangesetDef;
   select: SelectDef;
 };
 
@@ -387,7 +388,7 @@ export type UpdateOneAction = {
   model: string;
   targetPath: string[];
   filter: TypedExprDef;
-  changeset: Changeset;
+  changeset: ChangesetDef;
   select: SelectDef;
 };
 
@@ -402,7 +403,8 @@ type DeleteManyAction = {
   filter: TypedExprDef;
 };
 
-export type Changeset = Record<string, FieldSetter>;
+export type ChangesetDef = ChangesetOperationDef[];
+export type ChangesetOperationDef = { name: string; setter: FieldSetter };
 
 export type FieldSetterReferenceValue = {
   kind: "reference-value";
@@ -428,7 +430,7 @@ export type FieldSetterReferenceInput = {
 export type FieldSetterHook = {
   kind: "fieldset-hook";
   code: HookCode;
-  args: Changeset;
+  args: ChangesetDef;
 };
 
 export type FieldSetter =

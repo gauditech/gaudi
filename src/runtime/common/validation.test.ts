@@ -7,7 +7,7 @@ import { FieldsetDef } from "@src/types/definition";
 
 describe("runtime", () => {
   describe("validation", () => {
-    it("build fieldset validation schema", async () => {
+    it("build fieldset validation schema", () => {
       const fieldset: FieldsetDef = {
         kind: "record",
         nullable: false, // required record

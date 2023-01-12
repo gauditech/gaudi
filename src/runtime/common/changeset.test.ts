@@ -7,27 +7,35 @@ import {
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
 import { Vars } from "@src/runtime/server/vars";
-import { Changeset } from "@src/types/definition";
+import { ChangesetDef } from "@src/types/definition";
 
 describe("runtime", () => {
   describe("changeset", () => {
     it("build action changeset object", () => {
-      const data: Changeset = {
-        value_prop: { kind: "literal", value: "just value", type: "text" },
-
-        input_prop: {
-          fieldsetAccess: ["input_prop"],
-          kind: "fieldset-input",
-          type: "text",
-          required: true,
+      const data: ChangesetDef = [
+        {
+          name: "value_prop",
+          setter: { kind: "literal", value: "just value", type: "text" },
         },
-        input_prop_missing: {
-          fieldsetAccess: ["__missing__"],
-          kind: "fieldset-input",
-          type: "text",
-          required: false,
+        {
+          name: "input_prop",
+          setter: {
+            fieldsetAccess: ["input_prop"],
+            kind: "fieldset-input",
+            type: "text",
+            required: true,
+          },
         },
-      };
+        {
+          name: "input_prop_missing",
+          setter: {
+            fieldsetAccess: ["__missing__"],
+            kind: "fieldset-input",
+            type: "text",
+            required: false,
+          },
+        },
+      ];
 
       const context: ActionContext = {
         input: {

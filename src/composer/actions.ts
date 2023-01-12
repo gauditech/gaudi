@@ -3,15 +3,19 @@ import _ from "lodash";
 import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual, ensureThrow, safeInvoke } from "@src/common/utils";
+import {
+  assertUnreachable,
+  ensureEqual,
+  ensureNot,
+  ensureThrow,
+  safeInvoke,
+} from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
-  Changeset,
+  ChangesetDef,
+  ChangesetOperationDef,
   Definition,
-  FieldDef,
-  FieldSetter,
-  FieldSetterInput,
   ModelDef,
   TargetDef,
 } from "@src/types/definition";
@@ -146,6 +150,7 @@ function composeSingleAction(
   if (actionTargetScope === "target") {
     ensureCorrectDefaultAction(spec, target, endpointKind);
   } else {
+    ensureNot(spec.alias, undefined, `Custom action must have an alias`);
     // ensure alias doesn't reuse an existing name
     const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
 
@@ -154,21 +159,24 @@ function composeSingleAction(
     ensureEqual(spec.alias! in ctx, false, message);
   }
 
-  const simpleSpec = simplifyActionSpec(def, spec, target.alias, model);
+  const specWithParentSetter = assignParentContextSetter(def, spec, ctx, targets);
+  const simpleSpec = simplifyActionSpec(def, specWithParentSetter, target.alias, model);
 
-  function toFieldSetter(atom: ActionAtomSpecSet, changeset: Changeset): [string, FieldSetter] {
+  function toFieldSetter(atom: ActionAtomSpecSet, changeset: ChangesetDef): ChangesetOperationDef {
     switch (atom.set.kind) {
       case "hook": {
         const args = _.chain(atom.set.hook.args)
-          .mapValues(
-            (arg) => toFieldSetter({ kind: "set", target: atom.target, set: arg }, changeset)[1]
-          )
+          .toPairs()
+          .map(([name, arg]) => toFieldSetter({ kind: "set", target: name, set: arg }, changeset))
           .value();
-        return [atom.target, { kind: "fieldset-hook", code: atom.set.hook.code, args }];
+        return {
+          name: atom.target,
+          setter: { kind: "fieldset-hook", code: atom.set.hook.code, args },
+        };
       }
       case "literal": {
         const typedVal = getTypedLiteralValue(atom.set.value);
-        return [atom.target, typedVal];
+        return { name: atom.target, setter: typedVal };
       }
       case "reference": {
         /**
@@ -189,10 +197,11 @@ function composeSingleAction(
             } else {
               ensureEqual(path.length, 1);
             }
-            const sibling = _.last(path)!;
-            // peek into the changeset to see if it's defined
-            if (sibling in changeset) {
-              return [atom.target, changeset[sibling]];
+            const siblingName = _.last(path)!;
+            // check if sibling name is defined in th echangeset
+            const siblingOp = _.find(changeset, { name: siblingName });
+            if (siblingOp) {
+              return { ...siblingOp, name: atom.target };
             } else {
               throw ["unresolved", path];
             }
@@ -205,10 +214,14 @@ function composeSingleAction(
             const namePath = typedPath.nodes.map((p) => p.name);
             const access = [...namePath, typedPath.leaf.name];
             const field = getRef.field(def, typedPath.leaf.refKey);
-            return [
-              targetField.name,
-              { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
-            ];
+            return {
+              name: targetField.name,
+              setter: {
+                kind: "reference-value",
+                type: field.type,
+                target: { alias: path[0], access },
+              },
+            };
           }
         }
       }
@@ -218,34 +231,34 @@ function composeSingleAction(
   function atomToFieldSetters(
     atom: SimpleActionSpec["actionAtoms"][number],
     fieldsetNamespace: string[]
-  ): [string, FieldSetter][] {
+  ): ChangesetOperationDef[] {
     switch (atom.kind) {
       case "input": {
-        return atom.fields.map((fspec): [string, FieldSetterInput] => {
+        return atom.fields.map((fspec): ChangesetOperationDef => {
           const field = getRef.field(def, model.name, fspec.name);
-          return [
-            fspec.name,
-            {
+          return {
+            name: fspec.name,
+            setter: {
               kind: "fieldset-input",
               type: field.type,
               required: !fspec.optional,
               fieldsetAccess: [...fieldsetNamespace, fspec.name],
             },
-          ];
+          };
         });
       }
       case "reference": {
         const reference = getRef.reference(def, model.name, atom.target);
         const throughField = getRef.field(def, reference.toModelRefKey, atom.through);
         return [
-          [
-            atom.target,
-            {
+          {
+            name: atom.target,
+            setter: {
               kind: "fieldset-reference-input",
               throughField: { name: atom.through, refKey: throughField.refKey },
               fieldsetAccess: [...fieldsetNamespace, atom.target, atom.through],
             },
-          ],
+          },
         ];
       }
       case "set": {
@@ -254,8 +267,8 @@ function composeSingleAction(
     }
   }
 
-  const changeset: Changeset = {};
-  let keyCount = _.keys(changeset).length;
+  const changeset: ChangesetDef = [];
+  let keyCount = changeset.length;
   let shouldRetry = true;
   // eslint-disable-next-line no-constant-condition
   while (shouldRetry) {
@@ -263,48 +276,33 @@ function composeSingleAction(
     simpleSpec.actionAtoms.forEach((atom) => {
       const result = safeInvoke(() => {
         const fieldsetNamespace =
-          actionTargetScope === "target" ? _.compact([spec.alias]) : [simpleSpec.alias];
+          actionTargetScope === "target"
+            ? _.compact([simpleSpec.blueprintAlias])
+            : [simpleSpec.alias];
         const fs = atomToFieldSetters(atom, fieldsetNamespace);
-        fs.forEach(([name, setter]) => (changeset[name] = setter));
+        fs.forEach((op) => {
+          // Add the changeset operation only if not added before
+          if (!_.find(changeset, { name: op.name })) {
+            changeset.push(op);
+          }
+        });
       });
       if (result.kind === "error") {
+        console.error(result.error);
         shouldRetry = true;
       }
     });
-    if (shouldRetry && _.keys(changeset).length === keyCount) {
+    if (shouldRetry && changeset.length === keyCount) {
       // we had an iteration in which nothing was resolved, and there are still unresolved setters
       throw new Error(`Couldn't resolve all field setters`);
     }
-    keyCount = _.keys(changeset).length;
-  }
-
-  // Set parent context, if any.
-  switch (actionTargetScope) {
-    case "model":
-      break;
-    case "target": {
-      if (target.kind !== "model") {
-        if (spec.kind === "create") {
-          const [context, _target] = _.takeRight(targets, 2);
-          const parentPath = [context.alias, target.name];
-          const parent = getParentContextCreateSetter(def, ctx, parentPath);
-          _.assign(changeset, parent);
-        } // else: delete filter
-      }
-      break;
-    }
-    case "context-path": {
-      if (spec.kind === "create") {
-        const parent = getParentContextCreateSetter(def, ctx, spec.targetPath!);
-        _.assign(changeset, parent);
-      } // else: delete filter
-    }
+    keyCount = changeset.length;
   }
 
   // TODO ensure changeset has covered every non-optional field in the model!
 
   // Build the desired `ActionDef`.
-  return actionFromParts(spec, actionTargetScope, target, model, changeset);
+  return actionFromParts(simpleSpec, actionTargetScope, target, model, changeset);
 }
 
 /**
@@ -329,6 +327,7 @@ function ensureCorrectDefaultAction(
       );
     }
   }
+
   if (spec.kind === "delete" && spec.alias) {
     throw new Error(`Delete action cannot make an alias; remove "as ${spec.alias}"`);
   }
@@ -428,72 +427,11 @@ function findChangesetModel(
   }
 }
 
-/**
-
-/**
- * Create a `Changeset` containing `reference-value` FieldSetter definition
- * setting a relation to a parent context.
- * Eg. in entrypoint chain Org->Repo->Issue, it constructs a setter
- * that sets `repo_id` on an `Issue` instance we're operating on.
- */
-function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: string[]): Changeset {
-  const typedPath = getTypedPath(def, path, ctx);
-
-  // no parent context if path is absolute (starting with model)
-  if (typedPath.source.kind === "model") {
-    return {};
-  }
-
-  // ensure path doesn't have a `leaf`
-  ensureEqual(
-    typedPath.leaf,
-    null,
-    `Path ${path.join(".")} must end with a relation, ending with ${typedPath.leaf?.kind}`
-  );
-
-  // Replace this check with a cardinality=many check instead.
-  const last = _.last(typedPath.nodes)!; // this fn shoudln't be called when no nodes
-  ensureEqual(
-    last.kind,
-    "relation",
-    `Path ${path.join(".")} must end with a relation, ending with ${last.kind}`
-  );
-
-  // everything in between must be a (TODO: non-nullable??) reference
-  _.initial(typedPath.nodes).forEach((tp, i) =>
-    ensureEqual(
-      tp.kind,
-      "reference",
-      `Transient elements in path ${path.join(".")} must be references; element[${i}] (${
-        tp.name
-      }) is a ${tp.kind}`
-    )
-  );
-
-  // create a parent reference setter
-  const relation = getRef.relation(def, last.refKey);
-  const reference = getRef.reference(def, relation.throughRefKey);
-  const referenceField = getRef.field(def, reference.fieldRefKey);
-
-  // using _.initial to strip current context and only keep the parent context path
-  const parentNamePath = _.initial(typedPath.nodes.map((p) => p.name));
-  const setter: Changeset = {
-    [referenceField.name]: {
-      kind: "reference-value",
-      type: "integer",
-      target: {
-        alias: typedPath.source.name,
-        // set current field to a value from `parent.id`
-        access: [...parentNamePath, "id"],
-      },
-    },
-  };
-  return setter;
-}
-
 interface SimpleActionSpec extends ActionSpec {
   alias: string;
+  blueprintAlias: string | undefined;
   targetPath: string[];
+  blueprintTargetPath: string[] | undefined;
   actionAtoms: Exclude<ActionAtomSpec, { kind: "action" } | { kind: "deny" }>[];
 }
 
@@ -501,7 +439,6 @@ function simplifyActionSpec(
   def: Definition,
   spec: ActionSpec,
   targetAlias: string,
-  // ctx: VarContext,
   model: ModelDef
 ): SimpleActionSpec {
   const atoms = spec.actionAtoms;
@@ -637,10 +574,68 @@ function simplifyActionSpec(
   // return simplified spec
   return {
     ...spec,
-    alias: spec.alias || targetPath.join("|"),
+    alias: spec.alias || `$` + targetPath.join("|"), // FIXME
+    blueprintAlias: spec.alias,
     targetPath,
+    blueprintTargetPath: spec.targetPath,
     actionAtoms: simplifiedAtoms,
   };
+}
+
+function assignParentContextSetter(
+  def: Definition,
+  spec: ActionSpec,
+  ctx: VarContext,
+  targets: TargetDef[]
+): ActionSpec {
+  if (spec.kind !== "create") {
+    return spec;
+  }
+  const target = _.last(targets)!;
+  const actionScope = getActionTargetScope(def, spec, target.alias, ctx);
+  switch (actionScope) {
+    case "model":
+      return spec;
+    case "target": {
+      if (targets.length < 2) {
+        return spec;
+      }
+      const [context, target] = _.takeRight(targets, 2);
+      const targetPath = [context.alias, target.name];
+      const setter = toSetter(targetPath);
+
+      return { ...spec, actionAtoms: [setter, ...spec.actionAtoms] };
+    }
+    case "context-path": {
+      const targetPath = spec.targetPath!;
+      const setter = toSetter(targetPath);
+
+      return { ...spec, actionAtoms: [setter, ...spec.actionAtoms] };
+    }
+  }
+
+  function toSetter(targetPath: string[]): ActionAtomSpecSet {
+    const tpath = getTypedPath(def, targetPath, ctx);
+    ensureEqual(tpath.leaf, null);
+    ensureNot(tpath.nodes.length, 0);
+    const finalNode = _.last(tpath.nodes)!;
+    // We currently only support relations
+    const relation = getRef.relation(def, finalNode.refKey);
+    const reference = getRef.reference(def, relation.throughRefKey);
+
+    // Everything in between in the path must be a (TODO: non-nullable??) reference
+    _.initial(tpath.nodes).forEach((tp) => ensureEqual(tp.kind, "reference"));
+
+    const parentNamePath = [tpath.source.name, ..._.initial(tpath.nodes).map((node) => node.name)];
+    return {
+      kind: "set",
+      target: reference.name,
+      set: {
+        kind: "reference",
+        reference: parentNamePath,
+      },
+    };
+  }
 }
 
 /**
@@ -651,7 +646,7 @@ function actionFromParts(
   targetKind: ActionTargetScope,
   target: TargetDef,
   model: ModelDef,
-  changeset: Changeset
+  changeset: ChangesetDef
 ): ActionDef {
   // FIXME come up with an alias in case of nested actions
   const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias!;
