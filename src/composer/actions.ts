@@ -208,14 +208,11 @@ function composeSingleAction(
           }
           case "success": {
             const typedPath = maybeTypedPath.result;
-            // simpleSpec already resolved reference setters into a field setters,
-            // so here we should only check for fields
-            const targetField = getRef.field(def, model.name, atom.target);
             const namePath = typedPath.nodes.map((p) => p.name);
             const access = [...namePath, typedPath.leaf.name];
             const field = getRef.field(def, typedPath.leaf.refKey);
             return {
-              name: targetField.name,
+              name: atom.target,
               setter: {
                 kind: "reference-value",
                 type: field.type,

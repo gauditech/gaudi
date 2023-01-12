@@ -276,7 +276,7 @@ describe("custom actions", () => {
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
-  it("generates unique aliases when actions don't have one", () => {
+  it("fails when custom action doesn't have an alias", () => {
     const bp = `
     model Org {
       field name { type text }
@@ -291,9 +291,10 @@ describe("custom actions", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
-    expect(endpoint.actions).toMatchSnapshot();
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      `"Custom action must have an alias"`
+    );
   });
   test.each(["Repo", "repo", "org"])(
     "fails when action alias uses existing model or context name %s",

@@ -182,51 +182,6 @@ exports[`custom actions correctly sets parent context 1`] = `
 ]
 `;
 
-exports[`custom actions generates unique aliases when actions don't have one 1`] = `
-[
-  {
-    "alias": undefined,
-    "changeset": {
-      "name": {
-        "fieldsetAccess": [
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "text",
-      },
-    },
-    "filter": undefined,
-    "kind": "update-one",
-    "model": "Org",
-    "select": [],
-    "targetPath": [
-      "org",
-    ],
-  },
-  {
-    "alias": undefined,
-    "changeset": {
-      "name": {
-        "fieldsetAccess": [
-          "Org",
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": true,
-        "type": "text",
-      },
-    },
-    "kind": "create-one",
-    "model": "Org",
-    "select": [],
-    "targetPath": [
-      "Org",
-    ],
-  },
-]
-`;
-
 exports[`custom actions sets default action if not given 1`] = `
 [
   {
