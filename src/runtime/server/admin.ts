@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { selectableId } from "../query/build";
 
-import { getRef2 } from "@src/common/refs";
+import { getRef } from "@src/common/refs";
 import { composeActionBlock } from "@src/composer/actions";
 import { fieldsetFromActions } from "@src/composer/entrypoints";
 import {
@@ -46,7 +46,7 @@ function entrypointForModel(def: Definition, model: ModelDef): EntrypointDef {
       paramName: "id",
       type: "integer",
     },
-    select: [fieldToSelect(model, getRef2.field(def, model.name, "id"))],
+    select: [fieldToSelect(model, getRef.field(def, model.name, "id"))],
   };
   return {
     name,

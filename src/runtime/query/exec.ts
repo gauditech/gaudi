@@ -4,11 +4,10 @@ import _ from "lodash";
 import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
-import { QueryTree, applyFilterIdInContext, selectableId } from "./build";
+import { QueryTree, selectableId } from "./build";
 import { queryToString } from "./stringify";
 
-import { getRef2 } from "@src/common/refs";
-import { Definition, QueryDef, SelectableItem } from "@src/types/definition";
+import { Definition, QueryDef } from "@src/types/definition";
 
 type Result = {
   rowCount: number;

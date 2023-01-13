@@ -34,14 +34,14 @@ export function render(data: BuildDbSchemaData): string {
         ${(model.relations ?? []).map(
           (relation) => oneLine`
           ${relation.name}
-            ${getRef<"model">(d, relation.fromModelRefKey).value.dbname}${!relation.unique ? "[]" : ""}${relation.nullable ? "?" : ""}
+            ${getRef.model(d, relation.fromModelRefKey).dbname}${!relation.unique ? "[]" : ""}${relation.nullable ? "?" : ""}
         `)}
 
         ${(model.references ?? []).map(
           (reference) => oneLine`
             ${reference.name}
-              ${getRef<"model">(d, reference.toModelRefKey).value.dbname}
-              @relation(fields: [${getRef<"field">(d, reference.fieldRefKey).value.dbname}], references: [${getRef<"field">(d, reference.toModelFieldRefKey).value.dbname}])
+              ${getRef.model(d, reference.toModelRefKey).dbname}
+              @relation(fields: [${getRef.field(d, reference.fieldRefKey).dbname}], references: [${getRef.field(d, reference.toModelFieldRefKey).dbname}])
         `)}
         }
       `

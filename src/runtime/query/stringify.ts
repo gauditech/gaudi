@@ -10,7 +10,7 @@ import {
   uniqueNamePaths,
 } from "./build";
 
-import { Ref, getRef, getRef2, getTargetModel } from "@src/common/refs";
+import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
 import { getTypedPath, getTypedPathWithLeaf } from "@src/composer/utils";
 import {
@@ -18,6 +18,8 @@ import {
   Definition,
   ModelDef,
   QueryDef,
+  ReferenceDef,
+  RelationDef,
   SelectAggregateItem,
   SelectComputedItem,
   SelectFieldItem,
@@ -32,8 +34,8 @@ export function queryToString(def: Definition, q: QueryDef): string {
 
   const paths = collectPaths(def, q);
   const joinPlan = buildQueryJoinPlan(paths, false);
-  const modelRef = getRef2(def, joinPlan.sourceModel, undefined, ["model"]);
-  const model = modelRef.value;
+  const model = getRef(def, joinPlan.sourceModel, undefined, ["model"]);
+
   const selectable = selectToSelectable(q.select);
   const aggrSelects = joinPlan.selectable
     .map((s) => nameToSelectable(def, [model.refKey, s]))
@@ -45,12 +47,13 @@ export function queryToString(def: Definition, q: QueryDef): string {
 
   const qstr = source`
       SELECT ${selectableToString(def, selectable)}
-      FROM ${refToTableSqlFragment(def, modelRef)}
+      FROM ${refToTableSqlFragment(def, model)}
       AS ${namePathToAlias([model.name])}
       ${aggrJoins}
       ${joins}
       ${where}`;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
 }
 
@@ -61,9 +64,9 @@ function joinToString(
   join: Join
 ): string {
   const namePath = [...sourceNamePath, join.relname];
-  const ref = getRef2(def, sourceModel.refKey, join.relname, ["reference", "relation", "query"]);
-  const model = getTargetModel(def.models, ref.value.refKey);
-  const joinNames = getJoinNames(def, ref.value.refKey);
+  const ref = getRef(def, sourceModel.refKey, join.relname, ["reference", "relation", "query"]);
+  const model = getTargetModel(def, ref.refKey);
+  const joinNames = getJoinNames(def, ref.refKey);
   const joinFilter: TypedExprDef = {
     kind: "function",
     name: "is",
@@ -109,7 +112,7 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
           return exp;
         }
         case "computed": {
-          const computed = getRef2.computed(def, tpath.leaf.refKey);
+          const computed = getRef.computed(def, tpath.leaf.refKey);
           const newExp = expandExpression(def, computed.exp);
           return transformExpressionPaths(newExp, [computed.modelRefKey], _.initial(exp.namePath));
         }
@@ -134,11 +137,11 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
 export function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
   const typedPath = getTypedPath(def, namePath, {});
   ensureNot(typedPath.leaf, null);
-  const ref = getRef2(def, typedPath.leaf.refKey, undefined, ["field", "computed", "aggregate"]);
+  const ref = getRef(def, typedPath.leaf.refKey, undefined, ["field", "computed", "aggregate"]);
   const name = typedPath.leaf.name;
   return {
     kind: ref.kind,
-    refKey: ref.value.refKey,
+    refKey: ref.refKey,
     name,
     alias: name,
     namePath,
@@ -150,9 +153,9 @@ export function nameToSelectable(def: Definition, namePath: string[]): Selectabl
  * for a query to evaluate. This will turn in a list of joins needed for a query to
  * evaluate.
  */
-function collectPaths(def: Definition, q: QueryDef | AggregateDef["query"]): string[][] {
-  // FIXME this is not how it should work!!
-  const selectables = "select" in q ? selectToSelectable(q.select) : [];
+function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
+  const selectables = q.kind === "query" ? selectToSelectable(q.select) : [];
+  const { filter, fromPath } = q.kind === "query" ? q : q.query;
   const computeds = selectables.filter(
     (item): item is SelectComputedItem => item.kind === "computed"
   );
@@ -161,15 +164,15 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef["query"]): str
   );
 
   const allPaths = [
-    [...q.fromPath, "id"],
-    ...collectPathsFromExp(def, expandExpression(def, q.filter)),
+    [...fromPath, "id"],
+    ...collectPathsFromExp(def, expandExpression(def, filter)),
     // We only take root-level select - `Selectable`.
     // FIXME is computed still considered selectable? Do we need expressable here?
     // FIXME include aggregates here as well, they need to be in the paths so that
     // we know what to wrap with
     // QueryDef should have "aggregates" in the Join Plan (which are the "Wraps")
     ...computeds.flatMap((item) => {
-      const computed = getRef2.computed(def, item.refKey);
+      const computed = getRef.computed(def, item.refKey);
 
       const expandedExpression = expandExpression(def, computed.exp);
       const newExp = transformExpressionPaths(
@@ -258,7 +261,7 @@ export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[
       if (typedPath.leaf.kind === "field" || typedPath.leaf.kind === "aggregate") {
         return [exp.namePath];
       } else if (typedPath.leaf.kind === "computed") {
-        const computed = getRef2.computed(def, typedPath.leaf.refKey);
+        const computed = getRef.computed(def, typedPath.leaf.refKey);
         const computedInnerPaths = collectPathsFromExp(def, computed.exp);
         const computedPaths = transformNamePaths(
           computedInnerPaths,
@@ -278,9 +281,9 @@ export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[
 
 function refToTableSqlFragment(
   def: Definition,
-  ref: Ref<"model" | "reference" | "relation" | "query">
+  ref: ModelDef | ReferenceDef | RelationDef | QueryDef
 ): string {
-  const targetModel = getTargetModel(def.models, ref.value.refKey);
+  const targetModel = getTargetModel(def, ref.refKey);
 
   // no need to wrap, just source from a model
   switch (ref.kind) {
@@ -290,8 +293,8 @@ function refToTableSqlFragment(
       return `"${targetModel.dbname}"`;
     }
     case "query": {
-      const query = ref.value;
-      const sourceModel = getRef2.model(def, ref.value.modelRefKey);
+      const query = ref;
+      const sourceModel = getRef.model(def, ref.modelRefKey);
       const conn = mkJoinConnection(sourceModel);
       // FIXME take only the fields needed, not all of them!
       const fields = targetModel.fields.map(
@@ -315,7 +318,7 @@ function refToTableSqlFragment(
 function makeAggregateJoin(def: Definition, namePath: NamePath): string {
   const tpath = getTypedPath(def, namePath, {});
   ensureNot(tpath.leaf, null);
-  const aggregate = getRef2.aggregate(def, tpath.leaf.refKey);
+  const aggregate = getRef.aggregate(def, tpath.leaf.refKey);
 
   return source`
   LEFT JOIN ${aggregateToString(def, aggregate)}
@@ -328,15 +331,15 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
   const query = aggregate.query;
   const aggrTarget = getTypedPathWithLeaf(def, aggregate.targetPath, {});
   // FIXME target can be a computed, other aggregate, etc.
-  const aggrField = getRef2.field(def, aggrTarget.leaf.refKey);
+  const aggrField = getRef.field(def, aggrTarget.leaf.refKey);
 
   const expandedFilter = expandExpression(def, query.filter);
 
-  const paths = collectPaths(def, query);
-  // FIXME get the aggregate target field namePath in it as well
+  const paths = collectPaths(def, aggregate);
+  // FIXME get the aggregate namePath in it as well
   const joinPlan = buildQueryJoinPlan(paths, true);
-  const modelRef = getRef2(def, joinPlan.sourceModel, undefined, ["model"]);
-  const model = modelRef.value;
+  const model = getRef(def, joinPlan.sourceModel, undefined, ["model"]);
+
   const aggrSelects = joinPlan.selectable
     .map((s) => nameToSelectable(def, [model.refKey, s]))
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
@@ -352,7 +355,8 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
   (SELECT
     ${namePathToAlias([model.name])}.id,
     ${aggregate.aggrFnName}(${aggrFieldExpr}) ${filterWhere} AS "result"
-  FROM ${refToTableSqlFragment(def, modelRef)}
+  FROM ${refToTableSqlFragment(def, model)}
+
   AS ${namePathToAlias([model.name])}
   ${joins}
   ${aggrJoins}
@@ -366,13 +370,13 @@ function selectableToString(def: Definition, select: SelectableItem[]): string {
     .map((item): string => {
       switch (item.kind) {
         case "field": {
-          const field = getRef2.field(def, item.refKey);
+          const field = getRef.field(def, item.refKey);
           return `${namePathToAlias(_.initial(item.namePath))}."${field.dbname}" AS "${
             item.alias
           }"`;
         }
         case "computed": {
-          const computed = getRef2.computed(def, item.refKey);
+          const computed = getRef.computed(def, item.refKey);
           const exp = expandExpression(def, computed.exp);
           const expStr = expressionToString(
             def,
@@ -493,17 +497,17 @@ function getJoinNames(def: Definition, refKey: string): { from: string; to: stri
   const ref = getRef(def, refKey);
   switch (ref.kind) {
     case "reference": {
-      const reference = ref.value;
-      const { value: field } = getRef<"field">(def, reference.fieldRefKey);
-      const { value: refField } = getRef<"field">(def, reference.toModelFieldRefKey);
+      const reference = ref;
+      const field = getRef.field(def, reference.fieldRefKey);
+      const refField = getRef.field(def, reference.toModelFieldRefKey);
 
       return { from: field.name, to: refField.name };
     }
     case "relation": {
-      const relation = ref.value;
-      const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
-      const { value: field } = getRef<"field">(def, reference.fieldRefKey);
-      const { value: refField } = getRef<"field">(def, reference.toModelFieldRefKey);
+      const relation = ref;
+      const reference = getRef.reference(def, relation.throughRefKey);
+      const field = getRef.field(def, reference.fieldRefKey);
+      const refField = getRef.field(def, reference.toModelFieldRefKey);
 
       return { from: refField.name, to: field.name };
     }

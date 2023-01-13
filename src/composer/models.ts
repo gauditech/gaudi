@@ -96,20 +96,15 @@ function getDefinition<T extends RefKind, F extends true | undefined>(
   refKey: string,
   type: T,
   fail?: F
-): F extends true ? Ref<T>["value"] : Ref<T>["value"] | null {
+): F extends true ? Ref<T> : Ref<T> | null {
   let ref: Ref<T>;
   try {
-    ref = getRef<T>(def, refKey);
+    ref = getRef(def, refKey, undefined, type);
   } catch (e) {
     if (fail) throw e;
-    return null as F extends true ? Ref<T>["value"] : Ref<T>["value"] | null;
+    return null as F extends true ? Ref<T> : Ref<T> | null;
   }
-  try {
-    ensureEqual(ref.kind, type);
-  } catch (e) {
-    throw new Error(`Expecting type ${type} but found a type ${ref.kind}`);
-  }
-  return ref.value;
+  return ref;
 }
 
 function defineModel(def: Definition, spec: ModelSpec): ModelDef {
@@ -117,9 +112,10 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
   if (ex) return ex;
 
   const model: ModelDef = {
-    dbname: spec.name.toLowerCase(),
-    name: spec.name,
+    kind: "model",
     refKey: spec.name,
+    name: spec.name,
+    dbname: spec.name.toLowerCase(),
     fields: [],
     references: [],
     relations: [],
@@ -137,6 +133,7 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
 
 function constructIdField(mdef: ModelDef): FieldDef {
   return {
+    kind: "field",
     refKey: `${mdef.refKey}.id`,
     modelRefKey: mdef.refKey,
     name: "id",
@@ -158,6 +155,7 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
   const type = validateType(fspec.type);
 
   const f: FieldDef = {
+    kind: "field",
     refKey,
     modelRefKey: mdef.refKey,
     name: fspec.name,
@@ -180,6 +178,7 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
   if (ex) return ex;
 
   const c: ComputedDef = {
+    kind: "computed",
     refKey,
     modelRefKey: mdef.refKey,
     name: cspec.name,
@@ -241,6 +240,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     throw new Error("Can't make reference field, name taken");
   }
   const f: FieldDef = {
+    kind: "field",
     refKey: fieldRefKey,
     modelRefKey: mdef.refKey,
     name: `${rspec.name}_id`,
@@ -256,6 +256,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
   def.resolveOrder.push(f.refKey);
 
   const ref: ReferenceDef = {
+    kind: "reference",
     refKey,
     fieldRefKey,
     modelRefKey: mdef.refKey,
@@ -284,6 +285,7 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
   }
 
   const rel: RelationDef = {
+    kind: "relation",
     refKey,
     modelRefKey: mdef.refKey,
     name: rspec.name,
@@ -328,7 +330,7 @@ function defineAggregate(def: Definition, mdef: ModelDef, qspec: QuerySpec): Agg
 
 function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec): ModelHookDef {
   const refKey = `${mdef.refKey}.${hspec.name}`;
-  const ex = getDefinition(def, refKey, "hook");
+  const ex = getDefinition(def, refKey, "model-hook");
   if (ex) return ex;
 
   const args = hspec.args.map(({ name, query }) => ({
@@ -337,6 +339,7 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
   }));
 
   const h: ModelHookDef = {
+    kind: "model-hook",
     refKey,
     name: hspec.name,
     args,
@@ -358,8 +361,8 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
-  const { value: targetModel } = getRef<"model">(def, direct[0]);
-  const select = processSelect(def.models, targetModel, qspec.select, fromPath);
+  const targetModel = getRef.model(def, direct[0]);
+  const select = processSelect(def, targetModel, qspec.select, fromPath);
 
   return queryFromParts(def, qspec.name, fromPath, filter, select);
 }
