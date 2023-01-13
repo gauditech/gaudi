@@ -81,48 +81,6 @@ exports[`API endpoints Org update 1`] = `
 }
 `;
 
-exports[`API endpoints Org update foo 1`] = `
-{
-  "bar_id": 1,
-  "id": 1,
-  "name": "foo",
-}
-`;
-
-exports[`API endpoints Org update foo no reference 1`] = `
-{
-  "code": "ERROR_CODE_VALIDATION",
-  "data": {
-    "errors": [
-      "Can't find bar_slug with value: baz",
-    ],
-    "inner": [
-      {
-        "errors": [
-          "Can't find bar_slug with value: baz",
-        ],
-        "inner": [],
-        "message": "Can't find bar_slug with value: baz",
-        "name": "ValidationError",
-        "params": {
-          "originalValue": "baz",
-          "path": "bar_slug",
-          "value": "baz",
-        },
-        "path": "bar_slug",
-        "type": "noReference",
-        "value": "baz",
-      },
-    ],
-    "value": {
-      "bar_slug": "baz",
-      "name": "foo",
-    },
-  },
-  "message": "Validation error",
-}
-`;
-
 exports[`API endpoints Repo create 1`] = `
 {
   "description": "Repo 6 description",

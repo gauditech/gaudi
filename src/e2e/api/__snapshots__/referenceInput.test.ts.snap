@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Reference Input Element and Extra create with extra 1`] = `
+{
+  "extra_id": 1,
+  "id": 1,
+  "name": "element",
+}
+`;
+
+exports[`Reference Input Element and Extra create with extra no reference 1`] = `
+{
+  "code": "ERROR_CODE_VALIDATION",
+  "data": {
+    "errors": [
+      "Can't find extra_slug with value: baz",
+    ],
+    "inner": [
+      {
+        "errors": [
+          "Can't find extra_slug with value: baz",
+        ],
+        "inner": [],
+        "message": "Can't find extra_slug with value: baz",
+        "name": "ValidationError",
+        "params": {
+          "originalValue": "baz",
+          "path": "extra_slug",
+          "value": "baz",
+        },
+        "path": "extra_slug",
+        "type": "noReference",
+        "value": "baz",
+      },
+    ],
+    "value": {
+      "extra_slug": "baz",
+      "name": "element",
+    },
+  },
+  "message": "Validation error",
+}
+`;

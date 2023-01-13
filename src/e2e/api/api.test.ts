@@ -1,10 +1,9 @@
-import fs from "fs";
 import path from "path";
 
 import _ from "lodash";
 import request from "supertest";
 
-import { PopulatorData, createApiTestSetup } from "@src/e2e/api/setup";
+import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@src/e2e/api/setup";
 import { readConfig } from "@src/runtime/config";
 
 // these tests last longer than default 5s timeout so this seems to help
@@ -71,27 +70,6 @@ describe("API endpoints", () => {
 
       // ensure `.get` result is the same as returned from `update` method
       expect(getResp.body).toEqual(patchResp.body);
-    });
-
-    it("update foo", async () => {
-      const barData = { slug: "bar" };
-
-      const barPostResponse = await request(getServer()).post("/bar").send(barData);
-      expect(barPostResponse.statusCode).toBe(200);
-
-      const data = { name: "foo", bar_slug: "bar" };
-
-      const postResponse = await request(getServer()).post("/foo").send(data);
-      expect(postResponse.statusCode).toBe(200);
-      expect(postResponse.body).toMatchSnapshot();
-    });
-
-    it("update foo no reference", async () => {
-      const data = { name: "foo", bar_slug: "baz" };
-
-      const postResponse = await request(getServer()).post("/foo").send(data);
-      expect(postResponse.statusCode).toBe(400);
-      expect(postResponse.body).toMatchSnapshot();
     });
 
     it("delete", async () => {
@@ -187,29 +165,3 @@ describe("API endpoints", () => {
     });
   });
 });
-
-/** Load definition file and return it's content */
-function loadBlueprint(filePath: string): string {
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Blueprint file not found: "${filePath}"`);
-  }
-  return fs.readFileSync(filePath).toString("utf-8");
-}
-
-/** Load populator data rom JSON and parse it to object */
-function loadPopulatorData(filePath: string): PopulatorData[] {
-  try {
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Populator data file not found: "${filePath}"`);
-    }
-
-    const fileContent = fs.readFileSync(filePath).toString("utf-8");
-    return JSON.parse(fileContent);
-  } catch (err) {
-    if (err instanceof SyntaxError) {
-      throw new Error(`Populator data is not valid: ${err.message}`);
-    } else {
-      throw err;
-    }
-  }
-}
