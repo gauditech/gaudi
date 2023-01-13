@@ -188,7 +188,10 @@ function composeSingleAction(
             // check if sibling name is defined in th echangeset
             const siblingOp = _.find(changeset, { name: siblingName });
             if (siblingOp) {
-              return { ...siblingOp, name: atom.target };
+              return {
+                name: atom.target,
+                setter: { kind: "changeset-reference", referenceName: siblingName },
+              };
             } else {
               throw ["unresolved", path];
             }

@@ -446,23 +446,15 @@ exports[`custom actions succeeds with nested sibling reference 1`] = `
       {
         "name": "name2",
         "setter": {
-          "fieldsetAccess": [
-            "name",
-          ],
-          "kind": "fieldset-input",
-          "required": true,
-          "type": "text",
+          "kind": "changeset-reference",
+          "referenceName": "name",
         },
       },
       {
         "name": "name3",
         "setter": {
-          "fieldsetAccess": [
-            "name",
-          ],
-          "kind": "fieldset-input",
-          "required": true,
-          "type": "text",
+          "kind": "changeset-reference",
+          "referenceName": "name2",
         },
       },
     ],

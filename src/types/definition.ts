@@ -427,6 +427,11 @@ export type FieldSetterReferenceInput = {
   // required: boolean;
 };
 
+export type FieldSetterChangesetReference = {
+  kind: "changeset-reference";
+  referenceName: string;
+};
+
 export type FieldSetterHook = {
   kind: "fieldset-hook";
   code: HookCode;
@@ -439,6 +444,7 @@ export type FieldSetter =
   | FieldSetterReferenceValue
   | FieldSetterInput
   | FieldSetterReferenceInput
+  | FieldSetterChangesetReference
   | FieldSetterHook;
 
 export type AliasDef = {
