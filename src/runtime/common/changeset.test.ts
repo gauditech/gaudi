@@ -17,11 +17,7 @@ describe("runtime", () => {
 
         other_model: {
           kind: "fieldset-reference-input",
-          throughField: {
-            modelRefKey: "OtherModel",
-            name: "slug",
-            type: "text",
-          },
+          throughRefKey: "OtherModel.slug",
           fieldsetAccess: ["slug"],
         },
 
@@ -44,9 +40,10 @@ describe("runtime", () => {
           input_prop: "input value",
         },
         vars: new Vars(),
+        referenceIds: { other_model: 1 },
       };
 
-      expect(buildChangset(data, context, { other_model: 1 })).toMatchSnapshot();
+      expect(buildChangset(data, context)).toMatchSnapshot();
     });
   });
 
