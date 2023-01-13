@@ -1,6 +1,6 @@
 import { ActionContext } from "@src/runtime/common/action";
 import {
-  buildChangset,
+  buildChangeset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
@@ -44,7 +44,7 @@ describe("runtime", () => {
         vars: new Vars(),
       };
 
-      expect(buildChangset(data, context)).toMatchSnapshot();
+      expect(buildChangeset(data, context)).toMatchSnapshot();
     });
   });
 

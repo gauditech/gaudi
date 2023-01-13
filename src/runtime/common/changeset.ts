@@ -5,14 +5,18 @@ import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
 import { ChangesetDef, FieldDef, FieldSetter } from "@src/types/definition";
 
+type Changeset = Record<string, unknown>;
+
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
  */
-export function buildChangset(
+export function buildChangeset(
   actionChangsetDefinition: ChangesetDef,
-  actionContext: ActionContext
-): Record<string, unknown> {
-  const changeset: Record<string, unknown> = {};
+  actionContext: ActionContext,
+  // `changesetContext` is used for hooks, to be able to pass the "parent context" changeset
+  changesetContext: Changeset = {}
+): Changeset {
+  const changeset: Changeset = {};
 
   function getValue(setter: FieldSetter): unknown {
     switch (setter.kind) {
@@ -29,13 +33,13 @@ export function buildChangset(
         return actionContext.vars.get(setter.target.alias, setter.target.access);
       }
       case "fieldset-hook": {
-        const args = buildChangset(setter.args, actionContext);
+        const args = buildChangeset(setter.args, actionContext, changeset);
         return executeHook(setter.code, args);
       }
       case "changeset-reference": {
         // Assume that `referenceName` will already be in the changeset because
         // composer guarantees the correct order of array elements inside `ChangesetDef`
-        return changeset[setter.referenceName];
+        return changeset[setter.referenceName] || changesetContext[setter.referenceName];
       }
       case "fieldset-reference-input": {
         throw "not implemented";
