@@ -52,11 +52,14 @@ Gaudi {
     = "query" identifier "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
   QueryBody
-    = "from" IdentifierPathWithAs -- from
-    | "filter" OptionalBraces<QueryExp> -- filter
-    | "order" "by" NonemptyListOf<QueryOrder, ","> -- order_by
-    | "limit" integer -- limit
-    | "select" SelectBody -- select
+    = "from" IdentifierPathWithAs                   -- from
+    | "filter" OptionalBraces<QueryExp>             -- filter
+    | "order" "by" NonemptyListOf<QueryOrder, ",">  -- order_by
+    | "limit" integer                               -- limit
+    | "select" SelectBody                           -- select
+    | AggregateFn                                   -- aggregate
+
+  AggregateFn = "count" | "sum"
 
   QueryOrder = IdentifierPath ("asc" | "desc")?
 
@@ -66,29 +69,32 @@ Gaudi {
   QueryExp = OrExp
 
   OrExp
-    = OrExp or AndExp -- or
+    = OrExp or AndExp       -- or
     | AndExp
 
   AndExp
-    = AndExp and IsExp -- and
+    = AndExp and IsExp      -- and
     | IsExp
 
   IsExp
-    = IsExp is not InExp -- is_not
-    | IsExp is InExp -- is
+    = IsExp is not InExp      -- is_not
+    | IsExp is InExp          -- is
     | InExp
 
   InExp
-    = InExp not in CompExp -- not_in
-    | InExp in CompExp -- in
-    | CompExp
+    = InExp not in OpExp       -- not_in
+    | InExp in OpExp           -- in
+    | OpExp
 
-  CompExp
-    = CompExp "<" PrimaryExp -- lt
-    | CompExp "<=" PrimaryExp -- lteq
-    | CompExp ">" PrimaryExp -- gt
-    | CompExp ">=" PrimaryExp -- gteq
+  OpExp
+    = OpExp Operator FnExp     -- operator
+    | FnExp
+
+  FnExp
+    = identifier "(" ListOf<QueryExp, ","> ")"    -- fn
     | PrimaryExp
+
+  Operator = "<=" | "<" | ">=" | ">" | "+" | "-" | "/" | "*"
 
   PrimaryExp
     = "(" QueryExp ")" -- paren

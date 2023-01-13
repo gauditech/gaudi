@@ -81,6 +81,7 @@
         }
       ],
       "queries": [],
+      "aggregates": [],
       "hooks": []
     },
     {
@@ -163,8 +164,11 @@
       ],
       "relations": [],
       "queries": [],
+      "aggregates": [],
+      "computeds": [],
       "hooks": []
     }
   ],
-  "entrypoints": []
+  "entrypoints": [],
+  "resolveOrder": []
 }

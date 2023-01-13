@@ -4,73 +4,45 @@ exports[`compose model queries example with nested filters 1`] = `
 [
   {
     "filter": {
-      "kind": "binary",
-      "lhs": {
-        "kind": "binary",
-        "lhs": {
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "repos",
+                "org",
+                "id",
+              ],
+            },
+            {
+              "kind": "literal",
+              "type": "integer",
+              "value": 1,
+            },
+          ],
+          "kind": "function",
+          "name": "is",
+        },
+        {
           "kind": "alias",
           "namePath": [
             "Org",
             "repos",
-            "org",
-            "id",
+            "is_active",
           ],
         },
-        "operator": "is",
-        "rhs": {
-          "kind": "literal",
-          "type": "integer",
-          "value": 1,
-        },
-      },
-      "operator": "and",
-      "rhs": {
-        "kind": "alias",
-        "namePath": [
-          "Org",
-          "repos",
-          "is_active",
-        ],
-      },
-    },
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
+      ],
+      "kind": "function",
+      "name": "and",
     },
     "fromPath": [
       "Org",
       "repos",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [
-          {
-            "joinPaths": [],
-            "joinType": "inner",
-            "kind": "reference",
-            "name": "org",
-            "namePath": [
-              "Org",
-              "repos",
-              "org",
-            ],
-            "refKey": "Repo.org",
-            "retType": "Org",
-          },
-        ],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
+    "modelRefKey": "Org",
     "name": "repos_if_one",
-    "nullable": false,
     "refKey": "Org.repos_if_one",
     "retType": "Repo",
     "select": [],
@@ -82,45 +54,13 @@ exports[`compose model queries nested example without filters 1`] = `
 [
   {
     "filter": undefined,
-    "from": {
-      "kind": "model",
-      "refKey": "Org",
-    },
     "fromPath": [
       "Org",
       "repos",
       "org",
     ],
-    "joinPaths": [
-      {
-        "joinPaths": [
-          {
-            "joinPaths": [],
-            "joinType": "inner",
-            "kind": "reference",
-            "name": "org",
-            "namePath": [
-              "Org",
-              "repos",
-              "org",
-            ],
-            "refKey": "Repo.org",
-            "retType": "Org",
-          },
-        ],
-        "joinType": "inner",
-        "kind": "relation",
-        "name": "repos",
-        "namePath": [
-          "Org",
-          "repos",
-        ],
-        "refKey": "Org.repos",
-        "retType": "Repo",
-      },
-    ],
+    "modelRefKey": "Org",
     "name": "back_to_org",
-    "nullable": false,
     "refKey": "Org.back_to_org",
     "retType": "Org",
     "select": [],

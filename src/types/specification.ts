@@ -52,6 +52,9 @@ export type QuerySpec = WithContext<{
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;
   select?: SelectAST;
+  aggregate?: {
+    name: string;
+  };
 }>;
 
 export type ComputedSpec = WithContext<{
@@ -69,6 +72,7 @@ export type ExpSpec = WithContext<
   | { kind: "unary"; operator: UnaryOperator; exp: ExpSpec }
   | { kind: "identifier"; identifier: string[] }
   | { kind: "literal"; literal: LiteralValue }
+  | { kind: "function"; name: string; args: ExpSpec[] }
 >;
 
 export type EntrypointSpec = WithContext<{

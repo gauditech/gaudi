@@ -1,6 +1,8 @@
 import { chain } from "lodash";
 
 import {
+  AggregateDef,
+  ComputedDef,
   Definition,
   FieldDef,
   ModelDef,
@@ -10,7 +12,15 @@ import {
   RelationDef,
 } from "@src/types/definition";
 
-export type RefKind = "model" | "field" | "reference" | "relation" | "query" | "hook";
+export type RefKind =
+  | "model"
+  | "field"
+  | "reference"
+  | "relation"
+  | "query"
+  | "aggregate"
+  | "computed"
+  | "hook";
 export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "model"; value: ModelDef }
   : T extends "field"
@@ -21,6 +31,10 @@ export type Ref<T extends RefKind> = T extends "model"
   ? { kind: "relation"; value: RelationDef }
   : T extends "query"
   ? { kind: "query"; value: QueryDef }
+  : T extends "aggregate"
+  ? { kind: "aggregate"; value: AggregateDef }
+  : T extends "computed"
+  ? { kind: "computed"; value: ComputedDef }
   : T extends "hook"
   ? { kind: "hook"; value: ModelHookDef }
   : never;
@@ -44,6 +58,12 @@ export function getRef<T extends RefKind>(source: Definition | ModelDef[], refKe
   const query = source.flatMap((m) => m.queries).find((q) => q.refKey === refKey);
   if (query) return { kind: "query", value: query } as Ref<T>;
 
+  const aggr = source.flatMap((m) => m.aggregates).find((a) => a.refKey === refKey);
+  if (aggr) return { kind: "aggregate", value: aggr } as Ref<T>;
+
+  const computed = source.flatMap((m) => m.computeds).find((q) => q.refKey === refKey);
+  if (computed) return { kind: "computed", value: computed } as Ref<T>;
+
   const hook = source.flatMap((m) => m.hooks).find((q) => q.refKey === refKey);
   if (hook) return { kind: "hook", value: hook } as Ref<T>;
 
@@ -54,7 +74,7 @@ export function getRef2<T extends RefKind>(
   def: Definition,
   modelName: string,
   relName?: string,
-  kinds: T[] = ["model", "reference", "relation", "query", "field"] as T[]
+  kinds: T[] = ["model", "reference", "relation", "query", "aggregate", "field", "computed"] as T[]
 ): Ref<T> {
   const ref = getRef<typeof kinds[number]>(def, relName ? `${modelName}.${relName}` : modelName);
   if (kinds.indexOf(ref.kind as T) < 0) {
@@ -80,6 +100,30 @@ getRef2.field = function getRefField(
   return getRef2(def, modelName, fieldName, ["field"]).value;
 };
 
+getRef2.query = function getRefQuery(
+  def: Definition,
+  modelName: string,
+  queryName?: string
+): QueryDef {
+  return getRef2(def, modelName, queryName, ["query"]).value;
+};
+
+getRef2.aggregate = function getRefAggregate(
+  def: Definition,
+  modelName: string,
+  aggrName?: string
+): AggregateDef {
+  return getRef2(def, modelName, aggrName, ["aggregate"]).value;
+};
+
+getRef2.computed = function getRefComputed(
+  def: Definition,
+  modelName: string,
+  computedName?: string
+): ComputedDef {
+  return getRef2(def, modelName, computedName, ["computed"]).value;
+};
+
 export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
   return getRef<T>([model], `${model.name}.${name}`);
 }
@@ -88,6 +132,9 @@ export function getModelProp<T extends RefKind>(model: ModelDef, name: string) {
 export function getTargetModel(models: ModelDef[], refKey: string): ModelDef {
   const prop = getRef(models, refKey);
   switch (prop.kind) {
+    case "model": {
+      return prop.value;
+    }
     case "reference": {
       return getRef<"model">(models, prop.value.toModelRefKey).value;
     }
@@ -96,6 +143,9 @@ export function getTargetModel(models: ModelDef[], refKey: string): ModelDef {
     }
     case "query": {
       return getRef<"model">(models, prop.value.retType).value;
+    }
+    case "aggregate": {
+      return getRef<"model">(models, prop.value.query.retType).value;
     }
     default:
       throw new Error(`Kind ${prop.kind} not supported`);

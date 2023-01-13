@@ -87,6 +87,7 @@
     "passport-http-bearer": "^1.0.1",
     "pg": "^8.8.0",
     "prisma": "^4.4.0",
+    "sql-formatter": "^12.0.4",
     "swagger-ui-express": "^4.5.0",
     "yargs": "^17.6.2",
     "yup": "^0.32.11"

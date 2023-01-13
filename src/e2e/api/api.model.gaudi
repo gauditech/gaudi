@@ -23,6 +23,8 @@ model Org {
 
   relation repos { from Repo, through org }
 
+  computed summary { concat(name, "", description) }
+
   hook nameAndDesc {
     arg test query {
       select { name, description }
@@ -64,7 +66,7 @@ model Comment {
 entrypoint Orgs {
   target model Org as org
   identify with slug
-  response { name, slug, description, nameAndDesc }
+  response { name, slug, description, summary, nameAndDesc }
 
   get endpoint {}
   list endpoint {}
