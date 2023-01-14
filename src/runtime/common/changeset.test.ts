@@ -35,6 +35,13 @@ describe("runtime", () => {
             required: false,
           },
         },
+        {
+          name: "input_value_copy",
+          setter: {
+            kind: "changeset-reference",
+            referenceName: "input_prop",
+          },
+        },
       ];
 
       const context: ActionContext = {
