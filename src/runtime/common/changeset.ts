@@ -37,9 +37,23 @@ export function buildChangeset(
         return executeHook(setter.code, args);
       }
       case "changeset-reference": {
-        // Assume that `referenceName` will already be in the changeset because
-        // composer guarantees the correct order of array elements inside `ChangesetDef`
-        return changeset[setter.referenceName] || changesetContext[setter.referenceName];
+        /**
+         * Composer guarantees the correct order of array elements, so `setter.referenceName` should
+         * be in the context and we should be able to return `changeset[setter.referenceName]`.
+         *
+         * However, hooks inherit the action changeset context, but also build their own changeset,
+         * so we need to check which changeset `setter.referenceName` belongs to. In other words,
+         * it's possible that `setter.referenceName in changeset` is `false` when building a hooks changeset,
+         * but in that case we can assume it's in the `changesetContext`.
+         *
+         * NOTE the following code wouldn't work because `undefined` is a valid changeset value:
+         * `return changeset[setter.referenceName] || changesetContext[setter.referenceName];`
+         */
+        if (setter.referenceName in changeset) {
+          return changeset[setter.referenceName];
+        } else {
+          return changesetContext[setter.referenceName];
+        }
       }
       case "fieldset-reference-input": {
         throw "not implemented";
