@@ -6,6 +6,8 @@ import { HookCode } from "@src/types/specification";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const modules: Record<string, any> = {};
 
+const HOOKS_FILES_PATTERN = /.+\.[tj]s$/;
+
 export async function importHooks(hookFolder: string) {
   const hooksOutput = path.join(hookFolder);
 
@@ -20,7 +22,7 @@ export async function importHooks(hookFolder: string) {
 
       if (stats.isDirectory()) {
         await loadHooksFromDir(hookPath);
-      } else if (stats.isFile()) {
+      } else if (stats.isFile() && HOOKS_FILES_PATTERN.test(entityFilename)) {
         modules[hookPath] = loadFileAsModule(entity);
       }
     });
