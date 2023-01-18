@@ -1,7 +1,7 @@
 import { applyFilterIdInContext, queryTreeFromParts, transformSelectPath } from "../query/build";
 import { executeQueryTree } from "../query/exec";
 
-import { dataToFieldDbnames, getRef2 } from "@src/common/refs";
+import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { buildChangset as buildChangesetData } from "@src/runtime/common/changeset";
 import { DbConn } from "@src/runtime/server/dbConn";
@@ -21,7 +21,7 @@ export async function executeActions(
   actions: ActionDef[]
 ) {
   for (const action of actions) {
-    const model = getRef2.model(def, action.model);
+    const model = getRef.model(def, action.model);
     const dbModel = model.dbname;
 
     const actionKind = action.kind;

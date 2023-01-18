@@ -1,6 +1,6 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { getRef2 } from "@src/common/refs";
+import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
@@ -15,7 +15,7 @@ import {
   FieldDef,
   FieldsetDef,
   FieldsetFieldDef,
-  FilterDef,
+  TypedExprDef,
 } from "@src/types/definition";
 
 /**
@@ -74,21 +74,23 @@ export async function fetchReferenceIds(
   });
 
   const promiseEntries = referenceInputs.map(async ([name, setter]) => {
-    const field = getRef2.field(def, setter.throughRefKey);
+    const field = getRef.field(def, setter.throughRefKey);
 
     const varName = field.name + "__input";
-    const filter: FilterDef = {
-      kind: "binary",
-      operator: "is",
-      lhs: {
-        kind: "alias",
-        namePath: [field.modelRefKey, field.name],
-      },
-      rhs: {
-        kind: "variable",
-        name: varName,
-        type: field.type,
-      },
+    const filter: TypedExprDef = {
+      kind: "function",
+      name: "is",
+      args: [
+        {
+          kind: "alias",
+          namePath: [field.modelRefKey, field.name],
+        },
+        {
+          kind: "variable",
+          name: varName,
+          type: { type: field.type, nullable: field.nullable },
+        },
+      ],
     };
     const queryName = field.modelRefKey + "." + field.name;
     const query = queryFromParts(def, queryName, [field.modelRefKey], filter, []);

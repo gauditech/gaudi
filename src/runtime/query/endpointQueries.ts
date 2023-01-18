@@ -8,7 +8,7 @@ import {
   transformSelectPath,
 } from "./build";
 
-import { Definition, EndpointDef, FilterDef, TargetDef } from "@src/types/definition";
+import { Definition, EndpointDef, TargetDef, TypedExprDef } from "@src/types/definition";
 
 /**
  * Endpoint query builder
@@ -112,15 +112,17 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
   }
 }
 
-function targetToFilter(target: TargetDef): FilterDef {
+function targetToFilter(target: TargetDef): TypedExprDef {
   return {
-    kind: "binary",
-    operator: "is",
-    lhs: { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
-    rhs: {
-      kind: "variable",
-      type: target.identifyWith.type,
-      name: target.identifyWith.paramName,
-    },
+    kind: "function",
+    name: "is",
+    args: [
+      { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
+      {
+        kind: "variable",
+        type: { type: target.identifyWith.type, nullable: false },
+        name: target.identifyWith.paramName,
+      },
+    ],
   };
 }

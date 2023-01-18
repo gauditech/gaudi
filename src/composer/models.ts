@@ -1,32 +1,36 @@
 import _ from "lodash";
 
 import { processSelect } from "./entrypoints";
-import { getTypedLiteralValue } from "./utils";
+import { getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
 import {
   getDirectChildren,
   getFilterPaths,
-  mergePaths,
   queryFromParts,
+  uniqueNamePaths,
 } from "@src/runtime/query/build";
 import { LiteralValue } from "@src/types/ast";
 import {
+  AggregateDef,
+  ComputedDef,
   ConstantDef,
   Definition,
   FieldDef,
-  FilterDef,
+  FunctionName,
   IValidatorDef,
   ModelDef,
   ModelHookDef,
   QueryDef,
   ReferenceDef,
   RelationDef,
+  TypedExprDef,
   ValidatorDef,
   ValidatorDefinition,
 } from "@src/types/definition";
 import {
+  ComputedSpec,
   ExpSpec,
   FieldSpec,
   ModelHookSpec,
@@ -35,11 +39,6 @@ import {
   ReferenceSpec,
   RelationSpec,
 } from "@src/types/specification";
-
-function refCount(def: Definition): number {
-  return def.models.flatMap((m) => [...m.fields, ...m.references, ...m.relations, ...m.queries])
-    .length;
-}
 
 export function composeModels(def: Definition, specs: ModelSpec[]): void {
   // cache.clear();
@@ -57,7 +56,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     }
   }
   while (needsExtraStep) {
-    const cacheSize = refCount(def);
+    const resolvedCount = def.resolveOrder.length;
     needsExtraStep = false;
     // ensure model uniqueness
     ensureUnique(specs.map((s) => s.name.toLowerCase()));
@@ -71,25 +70,21 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
         ...mspec.computeds.map((c) => c.name.toLowerCase()),
       ]);
       const mdef = defineModel(def, mspec);
-      mspec.fields.forEach((hspec) => {
-        defineField(def, mdef, hspec);
-      });
-      mspec.references.forEach((rspec) => {
-        tryCall(() => defineReference(def, mdef, rspec));
-      });
-      mspec.relations.forEach((rspec) => {
-        tryCall(() => defineRelation(def, mdef, rspec));
-      });
-      mspec.queries.forEach((qspec) => {
-        tryCall(() => defineQuery(def, mdef, qspec));
-      });
-      mspec.hooks.forEach((hspec) => {
-        tryCall(() => defineModelHook(def, mdef, hspec));
-      });
+      mspec.fields.forEach((hspec) => defineField(def, mdef, hspec));
+      mspec.computeds.forEach((cspec) => tryCall(() => defineComputed(def, mdef, cspec)));
+      mspec.references.forEach((rspec) => tryCall(() => defineReference(def, mdef, rspec)));
+      mspec.relations.forEach((rspec) => tryCall(() => defineRelation(def, mdef, rspec)));
+      mspec.queries
+        .filter((qspec) => !qspec.aggregate)
+        .forEach((qspec) => tryCall(() => defineQuery(def, mdef, qspec)));
+      mspec.queries
+        .filter((qspec) => qspec.aggregate)
+        .forEach((qspec) => tryCall(() => defineAggregate(def, mdef, qspec)));
+      mspec.hooks.forEach((hspec) => tryCall(() => defineModelHook(def, mdef, hspec)));
 
       return mdef;
     });
-    if (refCount(def) === cacheSize && needsExtraStep) {
+    if (def.resolveOrder.length === resolvedCount && needsExtraStep) {
       // whole iteration has passed, nothing has changed, but not everything's defined
       throw "infinite-loop";
     }
@@ -101,20 +96,15 @@ function getDefinition<T extends RefKind, F extends true | undefined>(
   refKey: string,
   type: T,
   fail?: F
-): F extends true ? Ref<T>["value"] : Ref<T>["value"] | null {
+): F extends true ? Ref<T> : Ref<T> | null {
   let ref: Ref<T>;
   try {
-    ref = getRef<T>(def, refKey);
+    ref = getRef(def, refKey, undefined, type);
   } catch (e) {
     if (fail) throw e;
-    return null as F extends true ? Ref<T>["value"] : Ref<T>["value"] | null;
+    return null as F extends true ? Ref<T> : Ref<T> | null;
   }
-  try {
-    ensureEqual(ref.kind, type);
-  } catch (e) {
-    throw new Error(`Expecting type ${type} but found a type ${ref.kind}`);
-  }
-  return ref.value;
+  return ref;
 }
 
 function defineModel(def: Definition, spec: ModelSpec): ModelDef {
@@ -122,23 +112,28 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
   if (ex) return ex;
 
   const model: ModelDef = {
-    dbname: spec.name.toLowerCase(),
-    name: spec.name,
+    kind: "model",
     refKey: spec.name,
+    name: spec.name,
+    dbname: spec.name.toLowerCase(),
     fields: [],
     references: [],
     relations: [],
     queries: [],
+    aggregates: [],
+    computeds: [],
     hooks: [],
   };
   const idField = constructIdField(model);
   model.fields.push(idField);
   def.models.push(model);
+  def.resolveOrder.push(model.refKey);
   return model;
 }
 
 function constructIdField(mdef: ModelDef): FieldDef {
   return {
+    kind: "field",
     refKey: `${mdef.refKey}.id`,
     modelRefKey: mdef.refKey,
     name: "id",
@@ -160,6 +155,7 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
   const type = validateType(fspec.type);
 
   const f: FieldDef = {
+    kind: "field",
     refKey,
     modelRefKey: mdef.refKey,
     name: fspec.name,
@@ -172,7 +168,25 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
     validators: validatorSpecsToDefs(type, fspec.validators),
   };
   mdef.fields.push(f);
+  def.resolveOrder.push(f.refKey);
   return f;
+}
+
+function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): ComputedDef {
+  const refKey = `${mdef.refKey}.${cspec.name}`;
+  const ex = getDefinition(def, refKey, "computed");
+  if (ex) return ex;
+
+  const c: ComputedDef = {
+    kind: "computed",
+    refKey,
+    modelRefKey: mdef.refKey,
+    name: cspec.name,
+    exp: composeExpression(def, cspec.exp, [mdef.name]),
+  };
+  mdef.computeds.push(c);
+  def.resolveOrder.push(c.refKey);
+  return c;
 }
 
 function validatorSpecsToDefs(
@@ -226,6 +240,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     throw new Error("Can't make reference field, name taken");
   }
   const f: FieldDef = {
+    kind: "field",
     refKey: fieldRefKey,
     modelRefKey: mdef.refKey,
     name: `${rspec.name}_id`,
@@ -238,8 +253,10 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     validators: [],
   };
   mdef.fields.push(f);
+  def.resolveOrder.push(f.refKey);
 
   const ref: ReferenceDef = {
+    kind: "reference",
     refKey,
     fieldRefKey,
     modelRefKey: mdef.refKey,
@@ -250,6 +267,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     nullable: !!rspec.nullable,
   };
   mdef.references.push(ref);
+  def.resolveOrder.push(f.refKey);
   return ref;
 }
 
@@ -267,6 +285,7 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
   }
 
   const rel: RelationDef = {
+    kind: "relation",
     refKey,
     modelRefKey: mdef.refKey,
     name: rspec.name,
@@ -278,6 +297,7 @@ function defineRelation(def: Definition, mdef: ModelDef, rspec: RelationSpec): R
     unique: throughRef.unique,
   };
   mdef.relations.push(rel);
+  def.resolveOrder.push(rel.refKey);
   return rel;
 }
 
@@ -291,12 +311,26 @@ function defineQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDe
   query.select = []; // FIXME ??
 
   mdef.queries.push(query);
+  def.resolveOrder.push(query.refKey);
+  return query;
+}
+
+function defineAggregate(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
+  const refKey = `${mdef.refKey}.${qspec.name}`;
+  const ex = getDefinition(def, refKey, "aggregate");
+  if (ex) return ex;
+
+  const query = aggregateFromSpec(def, mdef, qspec);
+  query.refKey = refKey;
+
+  mdef.aggregates.push(query);
+  def.resolveOrder.push(query.refKey);
   return query;
 }
 
 function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec): ModelHookDef {
   const refKey = `${mdef.refKey}.${hspec.name}`;
-  const ex = getDefinition(def, refKey, "hook");
+  const ex = getDefinition(def, refKey, "model-hook");
   if (ex) return ex;
 
   const args = hspec.args.map(({ name, query }) => ({
@@ -305,57 +339,98 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
   }));
 
   const h: ModelHookDef = {
+    kind: "model-hook",
     refKey,
     name: hspec.name,
     args,
     code: hspec.code,
   };
   mdef.hooks.push(h);
+  def.resolveOrder.push(h.refKey);
   return h;
 }
 
 function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
+  if (qspec.aggregate) {
+    throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
+  }
   const fromPath = [mdef.name, ...qspec.fromModel];
-  const filter = convertFilter(qspec.filter, fromPath);
+  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath);
 
   const filterPaths = getFilterPaths(filter);
-  const paths = mergePaths([fromPath, ...filterPaths]);
+  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
-  const { value: targetModel } = getRef<"model">(def, direct[0]);
-  const select = processSelect(def.models, targetModel, qspec.select, fromPath);
+  const targetModel = getRef.model(def, direct[0]);
+  const select = processSelect(def, targetModel, qspec.select, fromPath);
 
   return queryFromParts(def, qspec.name, fromPath, filter, select);
 }
 
-function convertFilter(filter: ExpSpec | undefined, namePath: string[]): FilterDef {
-  switch (filter?.kind) {
-    case undefined:
-      return undefined;
+function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
+  const aggregate = qspec.aggregate?.name;
+  if (!aggregate) {
+    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
+  }
+  if (qspec.select) {
+    throw new Error(`Aggregate query can't have a select`);
+  }
+  const qdef = queryFromSpec(def, mdef, { ...qspec, aggregate: undefined });
+  const { refKey } = qdef;
+  const query = _.omit(qdef, ["refKey", "name", "select"]);
+
+  if (aggregate !== "sum" && aggregate !== "count") {
+    throw new Error(`Unknown aggregate function ${aggregate}`);
+  }
+
+  return {
+    refKey,
+    kind: "aggregate",
+    aggrFnName: aggregate,
+    targetPath: [mdef.refKey, "id"],
+    name: qspec.name,
+    query,
+  };
+}
+
+function typedFunctionFromParts(
+  def: Definition,
+  name: string,
+  args: ExpSpec[],
+  namePath: string[]
+): TypedExprDef {
+  return {
+    kind: "function",
+    name: name as FunctionName, // FIXME proper validation
+    args: args.map((arg) => composeExpression(def, arg, namePath)),
+  };
+}
+
+function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): TypedExprDef {
+  switch (exp.kind) {
     case "literal": {
-      return getTypedLiteralValue(filter.literal);
-    }
-    case "unary": {
-      return {
-        kind: "binary",
-        operator: "is not",
-        lhs: convertFilter(filter.exp, namePath),
-        rhs: { kind: "literal", type: "boolean", value: true },
-      };
-    }
-    case "binary": {
-      return {
-        kind: "binary",
-        operator: filter.operator,
-        lhs: convertFilter(filter.lhs, namePath),
-        rhs: convertFilter(filter.rhs, namePath),
-      };
+      return getTypedLiteralValue(exp.literal);
     }
     case "identifier": {
-      return {
-        kind: "alias",
-        namePath: [...namePath, ...filter.identifier],
-      };
+      const np = [...namePath, ...exp.identifier];
+      // ensure everything resolves
+      getTypedPath(def, np, {});
+      return { kind: "alias", namePath: np };
+    }
+    // everything else composes to a function
+    case "unary": {
+      return typedFunctionFromParts(
+        def,
+        "not",
+        [exp.exp, { kind: "literal", literal: true }],
+        namePath
+      );
+    }
+    case "binary": {
+      return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath);
+    }
+    case "function": {
+      return typedFunctionFromParts(def, exp.name, exp.args, namePath);
     }
   }
 }

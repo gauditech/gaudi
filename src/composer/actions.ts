@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
 
-import { getRef, getRef2, getTargetModel } from "@src/common/refs";
+import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureThrow } from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
@@ -148,6 +148,8 @@ function composeSingleAction(
     // ensure alias doesn't reuse an existing name
     if (spec.alias) {
       const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
+
+      // FIXME not sure if this logic works
       ensureThrow(() => getRef(def, spec.alias!), message);
       ensureEqual(spec.alias! in ctx, false, message);
     }
@@ -344,14 +346,14 @@ function findChangesetModel(
   if (path.length === 1) {
     // Check if model.
     try {
-      return getRef2.model(def, path[0]);
+      return getRef.model(def, path[0]);
       // eslint-disable-next-line no-empty
     } catch (e) {}
     // Not a model, check if initialization of a default target.ß
     const inCtx = path[0] in ctx;
     if (!inCtx) {
       if (path[0] === target.alias) {
-        return getRef2.model(def, target.retType);
+        return getRef.model(def, target.retType);
       }
     }
   }
@@ -373,14 +375,14 @@ function findChangesetModel(
         // Another case of single-element path that is not handled above because it may be
         // an operation on something that's already defined in the context, eg. updating
         // a parent context (updating `org` within the `repos` endpoint).
-        return getRef2.model(def, typedPath.source.model.refKey);
+        return getRef.model(def, typedPath.source.model.refKey);
       }
       case "model": {
-        return getRef2.model(def, typedPath.source.refKey);
+        return getRef.model(def, typedPath.source.refKey);
       }
     }
   } else {
-    return getTargetModel(def.models, _.last(typedPath.nodes)!.refKey);
+    return getTargetModel(def, _.last(typedPath.nodes)!.refKey);
   }
 }
 
@@ -427,9 +429,9 @@ function getParentContextCreateSetter(def: Definition, ctx: VarContext, path: st
   );
 
   // create a parent reference setter
-  const { value: relation } = getRef<"relation">(def, last.refKey);
-  const { value: reference } = getRef<"reference">(def, relation.throughRefKey);
-  const { value: referenceField } = getRef<"field">(def, reference.fieldRefKey);
+  const relation = getRef.relation(def, last.refKey);
+  const reference = getRef.reference(def, relation.throughRefKey);
+  const referenceField = getRef.field(def, reference.fieldRefKey);
 
   // using _.initial to strip current context and only keep the parent context path
   const parentNamePath = _.initial(typedPath.nodes.map((p) => p.name));
@@ -473,16 +475,16 @@ function getActionSetters(
         const path = atom.set.reference;
 
         const typedPath = getTypedPathWithLeaf(def, path, ctx);
-        const ref = getRef2(def, model.name, atom.target);
+        const ref = getRef(def, model.name, atom.target);
         // support both field and reference setters, eg. `set item myitem` and `set item_id myitem.id`
         let targetField: FieldDef;
         switch (ref.kind) {
           case "field": {
-            targetField = ref.value;
+            targetField = ref;
             break;
           }
           case "reference": {
-            targetField = getRef2.field(def, ref.value.fieldRefKey);
+            targetField = getRef.field(def, ref.fieldRefKey);
             break;
           }
           default: {
@@ -492,7 +494,7 @@ function getActionSetters(
 
         const namePath = typedPath.nodes.map((p) => p.name);
         const access = [...namePath, typedPath.leaf.name];
-        const { value: field } = getRef<"field">(def, typedPath.leaf.refKey);
+        const field = getRef.field(def, typedPath.leaf.refKey);
         return [
           targetField.name,
           { kind: "reference-value", type: field.type, target: { alias: path[0], access } },
@@ -526,8 +528,7 @@ function getInputSetters(def: Definition, model: ModelDef, spec: ActionSpec): Ch
       .filter((a): a is ActionAtomSpecInput => a.kind === "input")
       .flatMap((a) => a.fields)
       .map((input): [string, FieldSetterInput] => {
-        const { kind, value: field } = getRef<"field">(def, `${model.refKey}.${input.name}`);
-        ensureEqual(kind, "field");
+        const field = getRef.field(def, `${model.refKey}.${input.name}`);
         const setter: FieldSetter = {
           kind: "fieldset-input",
           type: field.type,
@@ -550,11 +551,10 @@ function getReferenceInputs(def: Definition, model: ModelDef, spec: ActionSpec):
     spec.actionAtoms
       .filter((a): a is ActionAtomSpecRefThrough => a.kind === "reference")
       .map((r): [string, FieldSetterReferenceInput] => {
-        const ref = getRef<"reference">(def, `${model.name}.${r.target}`);
-        ensureEqual(ref.kind, "reference");
-        const reference = ref.value;
-        const { value: refModel } = getRef<"model">(def, reference.toModelRefKey);
-        const { value: throughField } = getRef<"field">(def, `${refModel.refKey}.${r.through}`);
+        const reference = getRef.reference(def, `${model.name}.${r.target}`);
+        ensureEqual(reference.kind, "reference");
+        const refModel = getRef.model(def, reference.toModelRefKey);
+        const throughField = getRef.field(def, `${refModel.refKey}.${r.through}`);
         return [
           reference.name,
           {

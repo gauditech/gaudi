@@ -423,7 +423,7 @@ async function deleteData(
   const target = endpoint.target;
   if (target == null) throw `Endpoint update target is empty`;
 
-  const { value: model } = getRef<"model">(definition, target.retType);
+  const model = getRef.model(definition, target.retType);
 
   await dbConn(model.dbname).where({ id: dataId }).delete();
 }

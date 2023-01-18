@@ -2,20 +2,18 @@ import _ from "lodash";
 
 import { mkJoinConnection } from "./stringify";
 
-import { getModelProp, getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { getRef, getTargetModel } from "@src/common/refs";
+import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
   Definition,
-  FilterDef,
   ModelDef,
   QueryDef,
-  QueryDefPath,
   SelectDef,
   SelectHookItem,
   SelectItem,
   SelectableItem,
-  TargetDef,
+  TypedExprDef,
 } from "@src/types/definition";
 import { HookCode } from "@src/types/specification";
 
@@ -38,40 +36,40 @@ export type NamePath = string[];
  * Utils
  */
 
-export function mergePaths(paths: NamePath[]): NamePath[] {
+export function uniqueNamePaths(paths: NamePath[]): NamePath[] {
   return _.uniqWith(paths, _.isEqual);
 }
 
 export function selectToSelectable(select: SelectDef): SelectableItem[] {
-  return select.filter((s): s is SelectableItem => s.kind === "field");
+  return select.filter(
+    (s): s is SelectableItem =>
+      s.kind === "field" || s.kind === "computed" || s.kind === "aggregate"
+  );
 }
 
 export function selectToHooks(select: SelectDef): SelectHookItem[] {
-  return select.filter((s): s is SelectHookItem => s.kind === "hook");
+  return select.filter((s): s is SelectHookItem => s.kind === "model-hook");
 }
 
-export function applyFilterIdInContext(namePath: NamePath, filter?: FilterDef): FilterDef {
-  const inFilter: FilterDef = {
-    kind: "binary",
-    operator: "in",
-    lhs: { kind: "alias", namePath: [...namePath, "id"] },
-    rhs: { kind: "variable", type: "list-integer", name: "@context_ids" },
+export function applyFilterIdInContext(namePath: NamePath, filter?: TypedExprDef): TypedExprDef {
+  const inFilter: TypedExprDef = {
+    kind: "function",
+    name: "in",
+    args: [
+      { kind: "alias", namePath: [...namePath, "id"] },
+      { kind: "variable", type: { type: "list-integer", nullable: false }, name: "@context_ids" },
+    ],
   };
   return filter === undefined
     ? inFilter
-    : {
-        kind: "binary",
-        operator: "and",
-        lhs: filter,
-        rhs: inFilter,
-      };
+    : { kind: "function", name: "and", args: [filter, inFilter] };
 }
 
 function getPathRetType(def: Definition, path: NamePath): ModelDef {
   // assume it starts with model
-  const { value: model } = getRef<"model">(def, path[0]);
+  const model = getRef.model(def, path[0]);
   const ret = _.tail(path).reduce(
-    (ctx, name) => getTargetModel(def.models, `${ctx.refKey}.${name}`),
+    (ctx, name) => getTargetModel(def, `${ctx.refKey}.${name}`),
     model
   );
   return ret;
@@ -96,7 +94,7 @@ export function queryTreeFromParts(
   def: Definition,
   name: string,
   fromPath: NamePath,
-  filter: FilterDef,
+  filter: TypedExprDef,
   select: SelectDef
 ): QueryTree {
   const query = queryFromParts(def, name, fromPath, filter, select);
@@ -108,7 +106,7 @@ export function queryFromParts(
   def: Definition,
   name: string,
   fromPath: NamePath,
-  filter: FilterDef,
+  filter: TypedExprDef,
   select: SelectDef
 ): QueryDef {
   if (select.length === 0) {
@@ -130,24 +128,23 @@ export function queryFromParts(
     );
   });
 
+  const sourceModel = getRef.model(def, _.first(fromPath)!);
+
   const filterPaths = getFilterPaths(filter);
-  const paths = mergePaths([fromPath, ...filterPaths]);
+  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
   ensureEqual(direct.length, 1);
-  const { value: ctx } = getRef<"model">(def, direct[0]);
-  const joinPaths = processPaths(def, getRelatedPaths(paths, ctx.name), ctx, [ctx.name]);
 
   return {
+    kind: "query",
     refKey: "N/A",
-    from: { kind: "model", refKey: ctx.refKey },
+    modelRefKey: sourceModel.refKey,
     filter,
     fromPath,
     name,
-    nullable: false, // FIXME
     // retCardinality: "many", // FIXME,
     retType: getPathRetType(def, fromPath).refKey,
     select,
-    joinPaths,
   };
 }
 
@@ -163,61 +160,17 @@ export function getRelatedPaths(paths: NamePath[], direct: string): NamePath[] {
   return paths.filter((path) => path[0] === direct).map(_.tail);
 }
 
-// function calculateCardinality(
-//   ref: Ref<"reference" | "relation" | "query">,
-//   paths: QueryDefPath[]
-// ): "one" | "many" {
-//   const joinsAllOnes = paths.every((p) => p.retCardinality === "one");
-//   const isOne =
-//     ref.kind === "reference" ||
-//     (ref.kind === "relation" && ref.value.unique) ||
-//     (ref.kind === "query" && ref.value.retCardinality === "one");
-//   return isOne && joinsAllOnes ? "one" : "many";
-// }
-
-export function processPaths(
-  def: Definition,
-  paths: NamePath[],
-  parentCtx: ModelDef,
-  prefixNames: NamePath
-): QueryDefPath[] {
-  const direct = getDirectChildren(paths);
-  return _.compact(
-    direct.flatMap((name): QueryDefPath | null => {
-      const relativeChildren = getRelatedPaths(paths, name);
-      const ref = getModelProp<"field" | "reference" | "relation" | "query">(parentCtx, name);
-      if (ref.kind === "field") {
-        return null;
-      }
-
-      const targetCtx = getTargetModel(def.models, ref.value.refKey);
-      const joinPaths = processPaths(def, relativeChildren, targetCtx, [...prefixNames, name]);
-      return {
-        kind: ref.kind,
-        joinType: "inner",
-        refKey: ref.value.refKey,
-        name,
-        namePath: [...prefixNames, name],
-        joinPaths,
-        retType: getTargetModel(def.models, ref.value.refKey).name,
-        // retCardinality: calculateCardinality(ref, joinPaths),
-      };
-    })
-  );
-}
-
-// function queryToString(def: Definition, q: QueryDef): string {}
-
-export function getFilterPaths(filter: FilterDef): string[][] {
+export function getFilterPaths(filter: TypedExprDef): string[][] {
   switch (filter?.kind) {
     case undefined:
     case "literal":
     case "variable":
       return [];
-    case "alias":
+    case "alias": {
       return [[...filter.namePath]];
-    case "binary": {
-      return [...getFilterPaths(filter.lhs), ...getFilterPaths(filter.rhs)];
+    }
+    case "function": {
+      return filter.args.flatMap((arg) => getFilterPaths(arg));
     }
   }
 }
@@ -230,10 +183,21 @@ export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
   const hooks = selectToHooks(q.select).map(({ name, args, code }) => ({
     name,
-    args: args.map(({ name, query }) => ({ name, query: buildQueryTree(def, query) })),
+    args: args.map(({ name, query }) => {
+      // apply a batching filter
+      const filter = applyFilterIdInContext(query.fromPath, query.filter);
+      // select the __join_connection
+      const conn = mkJoinConnection(getRef.model(def, _.first(query.fromPath)!));
+      const select = [...query.select, conn];
+
+      return {
+        name,
+        query: buildQueryTree(def, { ...query, filter, select }),
+      };
+    }),
     code,
   }));
-  const { value: model } = getRef<"model">(def.models, query.retType);
+  const model = getRef.model(def, query.retType);
 
   return {
     name: query.name,
@@ -260,41 +224,19 @@ function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem)
     namePath,
     applyFilterIdInContext([model.name], undefined),
     [
-      ...select.select.map((s) => shiftSelect(model, s, select.namePath.length - 1)),
+      ...transformSelectPath(select.select, _.initial(select.namePath), [model.name]),
       mkJoinConnection(model),
     ]
   );
 }
 
-/**
- * Deprecated, use `transformSelectPath` instead!
- */
-function shiftSelect(model: ModelDef, select: SelectItem, by: number): SelectItem {
-  const namePath = [model.name, ...select.namePath.slice(by)];
-  if (select.kind === "field" || select.kind === "hook") {
-    return {
-      ...select,
-      namePath,
-    };
-  }
-  return {
-    ...select,
-    namePath,
-    select: select.select.map((s) => shiftSelect(model, s, by)),
-  };
-}
-
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
-  return select.map((selItem: SelectItem) => {
-    ensureEqual(
-      _.isEqual(from, _.take(selItem.namePath, from.length)),
-      true,
-      `Cannot transform select: ${selItem.namePath.join(".")} doesn't start with ${from.join(".")}`
-    );
-    const newPath = [...to, ..._.drop(selItem.namePath, from.length)];
+  return select.map(<T extends SelectItem>(selItem: T): T => {
+    const newPath = transformNamePath(selItem.namePath, from, to);
     switch (selItem.kind) {
       case "field":
-      case "hook": {
+      case "computed":
+      case "model-hook": {
         return { ...selItem, namePath: newPath };
       }
       case "query":
@@ -306,6 +248,53 @@ export function transformSelectPath(select: SelectDef, from: string[], to: strin
           select: transformSelectPath(selItem.select, from, to),
         };
       }
+      case "aggregate": {
+        return { ...selItem, namePath: newPath };
+      }
+      default: {
+        assertUnreachable(selItem);
+      }
     }
   });
+}
+
+export function transformNamePath(path: string[], from: string[], to: string[]): string[] {
+  ensureEqual(
+    _.isEqual(from, _.take(path, from.length)),
+    true,
+    `Cannot transform name path: ${path.join(".")} doesn't start with ${from.join(".")}`
+  );
+  return [...to, ..._.drop(path, from.length)];
+}
+
+export function transformNamePaths(paths: string[][], from: string[], to: string[]): string[][] {
+  return paths.map((path) => transformNamePath(path, from, to));
+}
+
+export function transformExpressionPaths(
+  exp: TypedExprDef,
+  from: string[],
+  to: string[]
+): TypedExprDef {
+  if (exp === undefined) {
+    return undefined;
+  }
+  switch (exp.kind) {
+    case "literal":
+    case "variable": {
+      return exp;
+    }
+    case "alias": {
+      return { ...exp, namePath: transformNamePath(exp.namePath, from, to) };
+    }
+    case "function": {
+      return {
+        ...exp,
+        args: exp.args.map((arg) => transformExpressionPaths(arg, from, to)),
+      };
+    }
+    default: {
+      assertUnreachable(exp);
+    }
+  }
 }
