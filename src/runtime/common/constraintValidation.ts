@@ -26,7 +26,7 @@ export async function fetchReferenceIds(
 ): Promise<ReferenceIdResult[]> {
   const referenceInputs = actions.flatMap((action) => {
     if (action.kind !== "create-one" && action.kind !== "update-one") return [];
-    return Object.entries(action.changeset).flatMap(([name, setter]) => {
+    return action.changeset.flatMap(({ name, setter }) => {
       if (setter.kind !== "fieldset-reference-input") return [];
       return [[name, setter] as const];
     });

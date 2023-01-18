@@ -27,8 +27,12 @@ export function ensureEqual<T, Tx extends T>(a: T, b: Tx, message?: string): ass
   throw new Error(message ?? "Not equal");
 }
 
-export function ensureNot<T, Tx extends T>(a: T, b: Tx): asserts a is Exclude<T, Tx> {
-  if (a === b) throw new Error("Must not be equal!");
+export function ensureNot<T, Tx extends T>(
+  a: T,
+  b: Tx,
+  message?: string
+): asserts a is Exclude<T, Tx> {
+  if (a === b) throw new Error(message ?? "Must not be equal!");
 }
 
 export function ensureThrow(cb: () => unknown, message?: string): void {
@@ -38,6 +42,16 @@ export function ensureThrow(cb: () => unknown, message?: string): void {
     return;
   }
   throw new Error(message ?? `Expected a callback to throw`);
+}
+
+export function safeInvoke<T>(
+  cb: () => T
+): { kind: "error"; error: unknown } | { kind: "success"; result: T } {
+  try {
+    return { kind: "success", result: cb() };
+  } catch (error) {
+    return { kind: "error", error };
+  }
 }
 
 /** Concat all keys who's value is `true` using `delimiter` */

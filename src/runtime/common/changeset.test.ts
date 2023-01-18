@@ -1,39 +1,56 @@
 import { ActionContext } from "@src/runtime/common/action";
 import {
-  buildChangset,
+  buildChangeset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
 import { Vars } from "@src/runtime/server/vars";
-import { Changeset } from "@src/types/definition";
+import { ChangesetDef } from "@src/types/definition";
 
 describe("runtime", () => {
   describe("changeset", () => {
     it("build action changeset object", () => {
-      const data: Changeset = {
-        value_prop: { kind: "literal", value: "just value", type: "text" },
-
-        other_model: {
-          kind: "fieldset-reference-input",
-          throughRefKey: "OtherModel.slug",
-          fieldsetAccess: ["slug"],
+      const data: ChangesetDef = [
+        {
+          name: "value_prop",
+          setter: { kind: "literal", value: "just value", type: "text" },
         },
-
-        input_prop: {
-          fieldsetAccess: ["input_prop"],
-          kind: "fieldset-input",
-          type: "text",
-          required: true,
+        {
+          name: "input_prop",
+          setter: {
+            fieldsetAccess: ["input_prop"],
+            kind: "fieldset-input",
+            type: "text",
+            required: true,
+          },
         },
-        input_prop_missing: {
-          fieldsetAccess: ["__missing__"],
-          kind: "fieldset-input",
-          type: "text",
-          required: false,
+        {
+          name: "input_prop_missing",
+          setter: {
+            fieldsetAccess: ["__missing__"],
+            kind: "fieldset-input",
+            type: "text",
+            required: false,
+          },
         },
-      };
+        {
+          name: "input_value_copy",
+          setter: {
+            kind: "changeset-reference",
+            referenceName: "input_prop",
+          },
+        },
+        {
+          name: "other_model",
+          setter: {
+            kind: "fieldset-reference-input",
+            throughRefKey: "OtherModel.slug",
+            fieldsetAccess: ["slug"],
+          },
+        },
+      ];
 
       const context: ActionContext = {
         input: {
@@ -43,7 +60,7 @@ describe("runtime", () => {
         referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
-      expect(buildChangset(data, context)).toMatchSnapshot();
+      expect(buildChangeset(data, context)).toMatchSnapshot();
     });
   });
 
@@ -73,6 +90,8 @@ describe("runtime", () => {
     it("ignores undefined/null vlaue", () => {
       expect(formatFieldValue(undefined, "text")).toStrictEqual(undefined);
       expect(formatFieldValue(null, "text")).toStrictEqual(null);
+      expect(formatFieldValue(undefined, "null")).toStrictEqual(undefined);
+      expect(formatFieldValue(null, "null")).toStrictEqual(null);
     });
 
     it("formats text field values", () => {
