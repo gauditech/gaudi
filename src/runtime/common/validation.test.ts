@@ -277,6 +277,17 @@ describe("runtime", () => {
               },
             ],
           },
+          noReferenceProp: {
+            kind: "field",
+            nullable: false,
+            required: true,
+            type: "text",
+            validators: [
+              {
+                name: "noReference",
+              },
+            ],
+          },
         },
       };
 
@@ -299,6 +310,7 @@ describe("runtime", () => {
         textProp: "too long string",
         integerProp: 10001,
         booleanProp: false,
+        noReferenceProp: "noReference",
       };
 
       let thrownError;

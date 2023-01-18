@@ -15,6 +15,12 @@ describe("runtime", () => {
       const data: Changeset = {
         value_prop: { kind: "literal", value: "just value", type: "text" },
 
+        other_model: {
+          kind: "fieldset-reference-input",
+          throughRefKey: "OtherModel.slug",
+          fieldsetAccess: ["slug"],
+        },
+
         input_prop: {
           fieldsetAccess: ["input_prop"],
           kind: "fieldset-input",
@@ -34,6 +40,7 @@ describe("runtime", () => {
           input_prop: "input value",
         },
         vars: new Vars(),
+        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
       expect(buildChangset(data, context)).toMatchSnapshot();

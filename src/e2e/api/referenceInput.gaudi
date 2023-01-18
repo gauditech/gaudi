@@ -1,0 +1,25 @@
+model Element {
+  field name { type text }
+  reference extra { to Extra } // TODO: unique?
+}
+
+model Extra {
+  field slug { type text, unique }
+  relation element { from Element, through extra }
+}
+
+entrypoint Extras {
+  target model Extra as extra
+  create endpoint {}
+}
+
+entrypoint Elements {
+  target model Element as element
+  create endpoint {
+    action {
+      create element {
+        reference extra through slug
+      }
+    }
+  }
+}

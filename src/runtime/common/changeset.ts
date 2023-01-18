@@ -1,6 +1,6 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
 import { Changeset, FieldDef } from "@src/types/definition";
@@ -33,8 +33,11 @@ export function buildChangset(
         } else if (setterKind === "reference-value") {
           return [name, actionContext.vars.get(setter.target.alias, setter.target.access)];
         } else if (setterKind === "fieldset-reference-input") {
-          // TODO: implement "fieldset-reference-input" setters
-          throw `Unsupported changeset setter kind "${setterKind}"`;
+          const referenceIdResult = actionContext.referenceIds.find((result) =>
+            _.isEqual(result.fieldsetAccess, setter.fieldsetAccess)
+          );
+          ensureNot(referenceIdResult, undefined);
+          return [name + "_id", referenceIdResult.value];
         } else if (setterKind === "fieldset-hook") {
           const args = buildChangset(setter.args, actionContext);
           return [name, executeHook(setter.code, args)];

@@ -333,13 +333,10 @@ exports[`custom actions succeeds with custom inputs 1`] = `
       },
       "extras": {
         "fieldsetAccess": [
-          "name",
+          "extras_name",
         ],
         "kind": "fieldset-reference-input",
-        "throughField": {
-          "name": "name",
-          "refKey": "OrgExtra.name",
-        },
+        "throughRefKey": "OrgExtra.name",
       },
       "name": {
         "kind": "literal",

@@ -559,11 +559,8 @@ function getReferenceInputs(def: Definition, model: ModelDef, spec: ActionSpec):
           reference.name,
           {
             kind: "fieldset-reference-input",
-            throughField: {
-              name: throughField.name,
-              refKey: throughField.refKey,
-            },
-            fieldsetAccess: [r.through],
+            throughRefKey: throughField.refKey,
+            fieldsetAccess: [r.target + "_" + r.through],
           },
         ];
       })
