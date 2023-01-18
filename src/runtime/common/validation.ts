@@ -66,6 +66,7 @@ export function createRecordValidationError(error: ValidationError): RecordValid
 export async function validateRecord(record: unknown, schema: AnySchema) {
   return schema.validate(record, {
     abortEarly: false, // report ALL errors, not just the first one
+    context: {},
   });
 }
 
