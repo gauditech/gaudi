@@ -131,7 +131,7 @@ export function createApiTestSetup(
 
 let schemeCounter = 0; // simple schema sequence
 function generateSchemaName() {
-  return `test-${schemeCounter++}`;
+  return `test-${process.pid}-${schemeCounter++}`;
 }
 
 // ----- folders
