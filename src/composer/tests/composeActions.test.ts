@@ -1,4 +1,3 @@
-import { ensureEqual } from "@src/common/utils";
 import { compile, compose, parse } from "@src/index";
 import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
 

@@ -293,7 +293,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          executeActions(
+          await executeActions(
             def,
             dbConn,
             { input: validationResult, vars: contextVars },
@@ -418,7 +418,7 @@ async function deleteData(
   const target = endpoint.target;
   if (target == null) throw `Endpoint update target is empty`;
 
-  const { value: model } = getRef<"model">(definition, target.retType);
+  const model = getRef.model(definition, target.retType);
 
   await dbConn(model.dbname).where({ id: dataId }).delete();
 }

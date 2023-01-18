@@ -10,7 +10,13 @@ import { buildChangset } from "@src/runtime/common/changeset";
 import { RuntimeConfig, loadDefinition, readConfig } from "@src/runtime/config";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
 import { Vars } from "@src/runtime/server/vars";
-import { ModelDef, PopulateDef, PopulateRepeatDef, PopulatorDef } from "@src/types/definition";
+import {
+  Definition,
+  ModelDef,
+  PopulateDef,
+  PopulateRepeatDef,
+  PopulatorDef,
+} from "@src/types/definition";
 
 type PopulatorIterator = {
   current: number;
@@ -54,7 +60,7 @@ async function run(args: ProcessArgs, config: RuntimeConfig) {
 
       console.log(`Running populator ${populator.name}`);
 
-      await processPopulator(definition.models, tx, createNewCtx(), populator);
+      await processPopulator(definition, tx, createNewCtx(), populator);
     });
   } finally {
     // clear connection
@@ -90,23 +96,23 @@ function readArgs(): ProcessArgs {
 }
 
 async function processPopulator(
-  models: ModelDef[],
+  def: Definition,
   dbConn: DbConn,
   ctx: Vars,
   populator: PopulatorDef
 ) {
   for (const p of populator.populates) {
-    await processPopulate(models, dbConn, ctx, p);
+    await processPopulate(def, dbConn, ctx, p);
   }
 }
 
 async function processPopulate(
-  models: ModelDef[],
+  def: Definition,
   dbConn: DbConn,
   parentCtx: Vars,
   populate: PopulateDef
 ) {
-  const model = getRef<"model">(models, populate.target.retType).value;
+  const model = getRef.model(def, populate.target.retType);
   const targetAlias = populate.target.alias;
   const repeater = populate.repeat;
   const repeaterAlias = populate.repeat.alias;
@@ -134,7 +140,7 @@ async function processPopulate(
     }
 
     for (const p of populate.populates) {
-      await processPopulate(models, dbConn, ctx, p);
+      await processPopulate(def, dbConn, ctx, p);
     }
 
     iterator.next();

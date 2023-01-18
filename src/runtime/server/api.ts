@@ -75,10 +75,7 @@ function setupEntrypointApiSpec(
   basePath: string,
   outputFile: string
 ) {
-  const openApi = buildOpenAPI(
-    { models: definition.models, entrypoints, populators: [] },
-    basePath
-  );
+  const openApi = buildOpenAPI({ ...definition, entrypoints }, basePath);
 
   saveOutputFile(outputFile, JSON.stringify(openApi, undefined, 2));
 

@@ -147,6 +147,7 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
   let orderBy: QuerySpec["orderBy"];
   let limit: number | undefined;
   let select: QuerySpec["select"];
+  let aggregate: QuerySpec["aggregate"];
 
   query.body.forEach((b) => {
     if (b.kind === "from") {
@@ -160,6 +161,8 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
       limit = b.limit;
     } else if (b.kind === "select") {
       select = b.select;
+    } else if (b.kind === "aggregate") {
+      aggregate = { name: b.name };
     }
   });
 
@@ -176,6 +179,7 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
     orderBy,
     limit,
     select,
+    aggregate,
   };
 }
 
@@ -203,6 +207,13 @@ function compileQueryExp(exp: ExpAST): ExpSpec {
       kind: "unary",
       operator: exp.operator,
       exp: compileQueryExp(exp.exp),
+      interval: exp.interval,
+    };
+  } else if (exp.kind === "function") {
+    return {
+      kind: "function",
+      name: exp.name,
+      args: exp.args.map((arg: ExpAST) => compileQueryExp(arg)),
       interval: exp.interval,
     };
   } else {

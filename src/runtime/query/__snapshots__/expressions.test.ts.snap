@@ -1,0 +1,435 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Aggregates to queries composes a query that filters by aggregate field to produce another aggregate 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.total_issues"."result" AS "total_issues"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.repos.issues".id) FILTER (
+        WHERE
+          "Org.repos.issues.comment_count"."result" > 0
+      ) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      LEFT JOIN "issue" AS "Org.repos.issues" ON "Org.repos"."id" = "Org.repos.issues"."repo_id"
+      LEFT JOIN (
+        SELECT
+          "Issue".id,
+          count("Issue.comments".id) AS "result"
+        FROM
+          "issue" AS "Issue"
+          LEFT JOIN "comment" AS "Issue.comments" ON "Issue"."id" = "Issue.comments"."issue_id"
+        GROUP BY
+          "Issue".id
+      ) AS "Org.repos.issues.comment_count" ON "Org.repos.issues".id = "Org.repos.issues.comment_count".id
+    GROUP BY
+      "Org".id
+  ) AS "Org.total_issues" ON "Org".id = "Org.total_issues".id"
+`;
+
+exports[`Aggregates to queries composes a query with simple aggregate that has joins in the aggregate subquery 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.total_issues"."result" AS "total_issues"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.repos.issues".id) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      LEFT JOIN "issue" AS "Org.repos.issues" ON "Org.repos"."id" = "Org.repos.issues"."repo_id"
+    GROUP BY
+      "Org".id
+  ) AS "Org.total_issues" ON "Org".id = "Org.total_issues".id"
+`;
+
+exports[`Aggregates to queries composes a query with simple aggregate through query 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.repo_count"."result" AS "repo_count"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.all_repos_nested".id) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN (
+        SELECT
+          "Org.all_repos"."id" AS "id",
+          "Org.all_repos"."name" AS "name",
+          "Org.all_repos"."org_id" AS "org_id",
+          "Org"."id" AS "__join_connection"
+        FROM
+          "org" AS "Org"
+          JOIN (
+            SELECT
+              "Org.repos"."id" AS "id",
+              "Org.repos"."name" AS "name",
+              "Org.repos"."org_id" AS "org_id",
+              "Org"."id" AS "__join_connection"
+            FROM
+              "org" AS "Org"
+              JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+          ) AS "Org.all_repos" ON "Org"."id" = "Org.all_repos"."__join_connection"
+      ) AS "Org.all_repos_nested" ON "Org"."id" = "Org.all_repos_nested"."__join_connection"
+    GROUP BY
+      "Org".id
+  ) AS "Org.repo_count" ON "Org".id = "Org.repo_count".id"
+`;
+
+exports[`Aggregates to queries composes a query with simple aggregate through relation 1`] = `
+"SELECT
+  "Org"."id" AS "id",
+  "Org"."name" AS "name",
+  "Org.repo_count"."result" AS "repo_count"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org".id,
+      count("Org.repos".id) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+    GROUP BY
+      "Org".id
+  ) AS "Org.repo_count" ON "Org".id = "Org.repo_count".id"
+`;
+
+exports[`Expressions to queries composes a complex filter expression 1`] = `
+{
+  "filter": {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Source",
+                  "items",
+                  "multiplier",
+                ],
+              },
+              {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Source",
+                      "items",
+                      "value",
+                    ],
+                  },
+                  {
+                    "kind": "literal",
+                    "type": "integer",
+                    "value": 1,
+                  },
+                ],
+                "kind": "function",
+                "name": "+",
+              },
+            ],
+            "kind": "function",
+            "name": "*",
+          },
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Source",
+                      "items",
+                      "textual",
+                    ],
+                  },
+                  {
+                    "kind": "literal",
+                    "type": "text",
+                    "value": "tail",
+                  },
+                ],
+                "kind": "function",
+                "name": "concat",
+              },
+            ],
+            "kind": "function",
+            "name": "length",
+          },
+        ],
+        "kind": "function",
+        "name": "/",
+      },
+      {
+        "kind": "literal",
+        "type": "integer",
+        "value": 100,
+      },
+    ],
+    "kind": "function",
+    "name": ">",
+  },
+  "fromPath": [
+    "Source",
+    "items",
+  ],
+  "kind": "query",
+  "modelRefKey": "Source",
+  "name": "calc",
+  "refKey": "Source.calc",
+  "retType": "Item",
+  "select": [],
+}
+`;
+
+exports[`Expressions to queries composes a complex filter expression 2`] = `
+"SELECT
+FROM
+  "source" AS "Source"
+  JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+WHERE
+  "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) > 100"
+`;
+
+exports[`Expressions to queries composes a complex local computed expression 1`] = `
+{
+  "exp": {
+    "args": [
+      {
+        "args": [
+          {
+            "kind": "alias",
+            "namePath": [
+              "Item",
+              "multiplier",
+            ],
+          },
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Item",
+                  "value",
+                ],
+              },
+              {
+                "kind": "literal",
+                "type": "integer",
+                "value": 1,
+              },
+            ],
+            "kind": "function",
+            "name": "+",
+          },
+        ],
+        "kind": "function",
+        "name": "*",
+      },
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Item",
+                  "textual",
+                ],
+              },
+              {
+                "kind": "literal",
+                "type": "text",
+                "value": "tail",
+              },
+            ],
+            "kind": "function",
+            "name": "concat",
+          },
+        ],
+        "kind": "function",
+        "name": "length",
+      },
+    ],
+    "kind": "function",
+    "name": "/",
+  },
+  "kind": "computed",
+  "modelRefKey": "Item",
+  "name": "worthiness",
+  "refKey": "Item.worthiness",
+}
+`;
+
+exports[`Expressions to queries composes a correct wrapped query which contains local computed prop 1`] = `
+{
+  "filter": {
+    "args": [
+      {
+        "kind": "alias",
+        "namePath": [
+          "Source",
+          "items",
+          "worthiness",
+        ],
+      },
+      {
+        "kind": "literal",
+        "type": "integer",
+        "value": 100,
+      },
+    ],
+    "kind": "function",
+    "name": ">",
+  },
+  "fromPath": [
+    "Source",
+    "items",
+  ],
+  "kind": "query",
+  "modelRefKey": "Source",
+  "name": "calc",
+  "refKey": "Source.calc",
+  "retType": "Item",
+  "select": [
+    {
+      "alias": "id",
+      "kind": "field",
+      "name": "id",
+      "namePath": [
+        "Source",
+        "items",
+        "id",
+      ],
+      "refKey": "Item.id",
+    },
+    {
+      "alias": "value",
+      "kind": "field",
+      "name": "value",
+      "namePath": [
+        "Source",
+        "items",
+        "value",
+      ],
+      "refKey": "Item.value",
+    },
+    {
+      "alias": "multiplier",
+      "kind": "field",
+      "name": "multiplier",
+      "namePath": [
+        "Source",
+        "items",
+        "multiplier",
+      ],
+      "refKey": "Item.multiplier",
+    },
+    {
+      "alias": "textual",
+      "kind": "field",
+      "name": "textual",
+      "namePath": [
+        "Source",
+        "items",
+        "textual",
+      ],
+      "refKey": "Item.textual",
+    },
+    {
+      "alias": "worthiness",
+      "kind": "computed",
+      "name": "worthiness",
+      "namePath": [
+        "Source",
+        "items",
+        "worthiness",
+      ],
+      "refKey": "Item.worthiness",
+    },
+    {
+      "alias": "text_tail_len",
+      "kind": "computed",
+      "name": "text_tail_len",
+      "namePath": [
+        "Source",
+        "items",
+        "text_tail_len",
+      ],
+      "refKey": "Item.text_tail_len",
+    },
+  ],
+}
+`;
+
+exports[`Expressions to queries composes a correct wrapped query which contains local computed prop 2`] = `
+"SELECT
+  "Source.items"."id" AS "id",
+  "Source.items"."value" AS "value",
+  "Source.items"."multiplier" AS "multiplier",
+  "Source.items"."textual" AS "textual",
+  (
+    (
+      "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+    ) + "Source.items.source.total_items"."result"
+  ) AS "worthiness",
+  char_length(concat("Source.items"."textual", 'tail')) AS "text_tail_len"
+FROM
+  "source" AS "Source"
+  JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+  JOIN "source" AS "Source.items.source" ON "Source.items"."source_id" = "Source.items.source"."id"
+  LEFT JOIN (
+    SELECT
+      "Source".id,
+      count("Source.items".id) AS "result"
+    FROM
+      "source" AS "Source"
+      LEFT JOIN "item" AS "Source.items" ON "Source"."id" = "Source.items"."source_id"
+    GROUP BY
+      "Source".id
+  ) AS "Source.items.source.total_items" ON "Source.items.source".id = "Source.items.source.total_items".id
+WHERE
+  (
+    (
+      "Source.items"."multiplier" * ("Source.items"."value" + 1) / char_length(concat("Source.items"."textual", 'tail')) + 10
+    ) + "Source.items.source.total_items"."result"
+  ) > 100"
+`;
+
+exports[`Expressions to queries composes a query that uses aggregate field in a filter expression 1`] = `
+"SELECT
+  "Org.repos"."id" AS "id",
+  "Org.repos.issue_count"."result" AS "issue_count"
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  LEFT JOIN (
+    SELECT
+      "Repo".id,
+      count("Repo.issues".id) AS "result"
+    FROM
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+    GROUP BY
+      "Repo".id
+  ) AS "Org.repos.issue_count" ON "Org.repos".id = "Org.repos.issue_count".id
+WHERE
+  "Org.repos.issue_count"."result" > 0"
+`;

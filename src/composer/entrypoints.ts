@@ -2,9 +2,9 @@ import _ from "lodash";
 
 import { composeActionBlock } from "./actions";
 
-import { getModelProp, getRef, getRef2, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot } from "@src/common/utils";
-import { mergePaths } from "@src/runtime/query/build";
+import { getRef, getTargetModel } from "@src/common/refs";
+import { ensureEqual } from "@src/common/utils";
+import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
   ActionDef,
@@ -37,16 +37,15 @@ function processEntrypoint(
   spec: EntrypointSpec,
   parents: EndpointContext[]
 ): EntrypointDef {
-  const models = def.models;
   const target = calculateTarget(
-    models,
+    def,
     parents,
     spec.target.identifier,
     spec.target.alias ?? null,
     spec.identify || "id"
   );
   const name = spec.name;
-  const { value: targetModel } = getRef<"model">(models, target.retType);
+  const targetModel = getRef.model(def, target.retType);
 
   const thisContext: EndpointContext = { model: targetModel, target };
   const targetParents = [...parents, thisContext];
@@ -60,7 +59,7 @@ function processEntrypoint(
 }
 
 function calculateTarget(
-  models: ModelDef[],
+  def: Definition,
   parents: EndpointContext[],
   name: string,
   alias: string | null,
@@ -69,44 +68,44 @@ function calculateTarget(
   const ctxModel = _.last(parents)?.model ?? null;
   const namePath = [...parents.map((p) => p.target.name), name];
   if (ctxModel) {
-    const prop = getModelProp(ctxModel, name);
+    const prop = getRef(def, ctxModel.name, name);
     switch (prop.kind) {
       case "reference": {
-        const reference = prop.value;
-        const { value: model } = getRef<"model">(models, reference.toModelRefKey);
+        const reference = prop;
+        const model = getRef.model(def, reference.toModelRefKey);
         return {
           kind: "reference",
           name,
           namePath,
           retType: reference.toModelRefKey,
           refKey: reference.refKey,
-          identifyWith: calculateIdentifyWith(model, identify),
+          identifyWith: calculateIdentifyWith(def, model, identify),
           alias: alias || `$target_${parents.length}`,
         };
       }
       case "relation": {
-        const relation = prop.value;
-        const { value: model } = getRef<"model">(models, relation.fromModelRefKey);
+        const relation = prop;
+        const model = getRef.model(def, relation.fromModelRefKey);
         return {
           kind: "relation",
           name,
           namePath,
           retType: relation.fromModel,
           refKey: relation.refKey,
-          identifyWith: calculateIdentifyWith(model, identify),
+          identifyWith: calculateIdentifyWith(def, model, identify),
           alias: alias || `$target_${parents.length}`,
         };
       }
       case "query": {
-        const query = prop.value;
-        const { value: model } = getRef<"model">(models, query.retType);
+        const query = prop;
+        const model = getRef.model(def, query.retType);
         return {
           kind: "query",
           name,
           namePath,
           retType: query.retType,
           refKey: query.refKey,
-          identifyWith: calculateIdentifyWith(model, identify),
+          identifyWith: calculateIdentifyWith(def, model, identify),
           alias: alias || `$target_${parents.length}`,
         };
       }
@@ -115,28 +114,29 @@ function calculateTarget(
       }
     }
   } else {
-    const { value: model } = getRef<"model">(models, name);
+    const model = getRef.model(def, name);
     return {
       kind: "model",
       name,
       namePath,
       refKey: model.refKey,
       retType: model.name,
-      identifyWith: calculateIdentifyWith(model, identify),
+      identifyWith: calculateIdentifyWith(def, model, identify),
       alias: alias || `$target_${parents.length}`,
     };
   }
 }
 
 function calculateIdentifyWith(
+  def: Definition,
   model: ModelDef,
   identify: string | undefined
 ): EntrypointDef["target"]["identifyWith"] {
   const name = identify ?? "id";
-  const prop = getModelProp(model, name);
+  const prop = getRef(def, model.name, name);
   switch (prop.kind) {
     case "field": {
-      const field = prop.value;
+      const field = prop;
       if (field.type === "boolean") {
         throw "invalid-type";
       }
@@ -157,7 +157,6 @@ function processEndpoints(
   parents: EndpointContext[],
   entrySpec: EntrypointSpec
 ): EndpointDef[] {
-  const models = def.models;
   const context = _.last(parents)!;
   const targets = parents.map((p) => p.target);
 
@@ -173,12 +172,7 @@ function processEndpoints(
       case "get": {
         return {
           kind: "get",
-          response: processSelect(
-            models,
-            context.model,
-            entrySpec.response,
-            context.target.namePath
-          ),
+          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
           // actions,
           parentContext,
           target,
@@ -187,12 +181,7 @@ function processEndpoints(
       case "list": {
         return {
           kind: "list",
-          response: processSelect(
-            models,
-            context.model,
-            entrySpec.response,
-            context.target.namePath
-          ),
+          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
           // actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
@@ -206,12 +195,7 @@ function processEndpoints(
           actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
-          response: processSelect(
-            models,
-            context.model,
-            entrySpec.response,
-            context.target.namePath
-          ),
+          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
         };
       }
       case "update": {
@@ -222,12 +206,7 @@ function processEndpoints(
           actions,
           parentContext,
           target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
-          response: processSelect(
-            models,
-            context.model,
-            entrySpec.response,
-            context.target.namePath
-          ),
+          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
         };
       }
       case "delete": {
@@ -244,7 +223,7 @@ function processEndpoints(
 }
 
 export function processSelect(
-  models: ModelDef[],
+  def: Definition,
   model: ModelDef,
   selectAST: SelectAST | undefined,
   namePath: string[]
@@ -273,7 +252,7 @@ export function processSelect(
 
     return Object.keys(selectAST.select).map((name: string): SelectItem => {
       // what is this?
-      const ref = getModelProp(model, name);
+      const ref = getRef.except(def, model.name, name, ["model"]);
       if (ref.kind === "field") {
         ensureEqual(s[name].select, undefined);
         return {
@@ -281,26 +260,42 @@ export function processSelect(
           name,
           alias: name,
           namePath: [...namePath, name],
-          refKey: ref.value.refKey,
+          refKey: ref.refKey,
         };
-      } else if (ref.kind === "hook") {
+      } else if (ref.kind === "model-hook") {
         return {
           kind: ref.kind,
+          // refKey: ref.refKey,
           name,
           alias: name,
           namePath: [...namePath, name],
-          args: ref.value.args,
-          code: ref.value.code,
+          args: ref.args,
+          code: ref.code,
+        };
+      } else if (ref.kind === "computed") {
+        return {
+          kind: ref.kind,
+          refKey: ref.refKey,
+          name,
+          alias: name,
+          namePath: [...namePath, name],
+        };
+      } else if (ref.kind === "aggregate") {
+        return {
+          kind: ref.kind,
+          refKey: ref.refKey,
+          name,
+          alias: name,
+          namePath: [...namePath, name],
         };
       } else {
-        ensureNot(ref.kind, "model" as const);
-        const targetModel = getTargetModel(models, ref.value.refKey);
+        const targetModel = getTargetModel(def, ref.refKey);
         return {
           kind: ref.kind,
           name,
           namePath: [...namePath, name],
           alias: name,
-          select: processSelect(models, targetModel, s[name], [...namePath, name]),
+          select: processSelect(def, targetModel, s[name], [...namePath, name]),
         };
       }
     });
@@ -316,7 +311,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
         .map(([name, setter]): null | [string[], FieldsetFieldDef] => {
           switch (setter.kind) {
             case "fieldset-input": {
-              const { value: field } = getRef<"field">(def, `${action.model}.${name}`);
+              const field = getRef.field(def, `${action.model}.${name}`);
               return [
                 setter.fieldsetAccess,
                 {
@@ -329,7 +324,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
               ];
             }
             case "fieldset-reference-input": {
-              const { value: field } = getRef<"field">(def, setter.throughField.refKey);
+              const field = getRef.field(def, setter.throughField.refKey);
               return [
                 setter.fieldsetAccess,
                 {
@@ -404,7 +399,7 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
         case "update-one": {
           try {
             // make sure we're not updating a model directly
-            getRef2.model(def, _.first(a.targetPath)!);
+            getRef.model(def, _.first(a.targetPath)!);
             return null;
           } catch (e) {
             // last item is what's being updated, we need to collect the id
@@ -446,10 +441,10 @@ function wrapTargetsWithSelect(
   deps: SelectDep[]
 ): TargetWithSelectDef[] {
   return targets.map((target) => {
-    const paths = mergePaths(
+    const paths = uniqueNamePaths(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
-    const model = getRef2.model(def, target.retType);
+    const model = getRef.model(def, target.retType);
     const select = pathsToSelectDef(def, model, paths, target.namePath);
     return { ...target, select };
   });
@@ -468,9 +463,8 @@ function wrapActionsWithSelect(
   return actions
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .map((a): ActionDef => {
-      // normalize paths related to this action alias
-      const paths = mergePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
-      const model = getRef2.model(def, a.model);
+      const paths = uniqueNamePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
+      const model = getRef.model(def, a.model);
       const select = pathsToSelectDef(def, model, paths, [a.alias]);
       return { ...a, select };
     });
@@ -488,7 +482,7 @@ function pathsToSelectDef(
     .value();
   return direct.map((name): SelectItem => {
     // what is name?
-    const ref = getRef2(def, model.name, name, ["query", "reference", "relation", "field"]);
+    const ref = getRef(def, model.name, name, ["query", "reference", "relation", "field"]);
     const relatedPaths = paths
       .filter((p) => p[0] === name)
       .map(_.tail)
@@ -503,12 +497,12 @@ function pathsToSelectDef(
           kind: "field",
           alias: name,
           name,
-          refKey: ref.value.refKey,
+          refKey: ref.refKey,
           namePath: [...namespace, name],
         };
       }
       default: {
-        const newModel = getTargetModel(def.models, ref.value.refKey);
+        const newModel = getTargetModel(def, ref.refKey);
         return {
           kind: ref.kind,
           alias: name,

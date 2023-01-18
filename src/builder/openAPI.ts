@@ -19,10 +19,10 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
     const schemaEntries = select.map((select): [string, OpenAPIV3.SchemaObject] => {
       switch (select.kind) {
         case "field": {
-          const field = getRef<"field">(definition, select.refKey);
-          return [select.alias, { type: convertToOpenAPIType(field.value.type) }];
+          const field = getRef.field(definition, select.refKey);
+          return [select.alias, { type: convertToOpenAPIType(field.type) }];
         }
-        // NOTE: not yet implemented
+        // NOTE: not yet implemented; TODO: rename to `literal`
         // case "constant":
         //   return [select.alias, { type: convertToOpenAPIType(select.type) }];
         case "reference":
@@ -36,8 +36,16 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
             return [select.alias, { type: "array", items: { type: "object", properties } }];
           }
         }
-        case "hook": {
-          // FIXME - add return types to hooks
+        case "aggregate": {
+          // FIXME read the type from the `AggregateDef`
+          return [select.name, { type: "integer" }];
+        }
+        case "computed": {
+          // FIXME - add return type to computeds
+          return [select.name, {}];
+        }
+        case "model-hook": {
+          // FIXME - add return type to hooks
           return [select.name, {}];
         }
       }

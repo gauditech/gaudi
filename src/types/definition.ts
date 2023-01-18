@@ -1,15 +1,15 @@
 import { BinaryOperator } from "./ast";
 import { HookCode } from "./specification";
 
-import { RefKind } from "@src/common/refs";
-
 export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];
+  resolveOrder: string[];
   populators: PopulatorDef[];
 };
 
 export type ModelDef = {
+  kind: "model";
   refKey: string;
   name: string;
   dbname: string;
@@ -17,12 +17,15 @@ export type ModelDef = {
   references: ReferenceDef[];
   relations: RelationDef[];
   queries: QueryDef[];
+  aggregates: AggregateDef[];
+  computeds: ComputedDef[];
   hooks: ModelHookDef[];
 };
 
 export type FieldType = "integer" | "text" | "boolean";
 
 export type FieldDef = {
+  kind: "field";
   refKey: string;
   modelRefKey: string;
   name: string;
@@ -36,6 +39,7 @@ export type FieldDef = {
 };
 
 export type ReferenceDef = {
+  kind: "reference";
   refKey: string;
   modelRefKey: string;
   name: string;
@@ -47,6 +51,7 @@ export type ReferenceDef = {
 };
 
 export type RelationDef = {
+  kind: "relation";
   refKey: string;
   modelRefKey: string;
   name: string;
@@ -58,56 +63,76 @@ export type RelationDef = {
   unique: boolean;
 };
 
-type QueryFrom = { kind: "model"; refKey: string } | { kind: "query"; query: QueryDef };
-
 export type QueryDef = {
+  kind: "query";
   refKey: string;
+  modelRefKey: string;
   name: string;
   // retType: string | "integer";
   retType: string;
-  from: QueryFrom;
   // retCardinality: "one" | "many";
   fromPath: string[];
-  nullable: boolean;
   // unique: boolean;
-  joinPaths: QueryDefPath[];
-  filter: FilterDef;
+  filter: TypedExprDef;
   select: SelectDef;
   // count?: true;
 };
 
+export type AggregateDef = {
+  kind: "aggregate";
+  refKey: string;
+  name: string;
+  aggrFnName: "count" | "sum";
+  targetPath: string[];
+  query: Omit<QueryDef, "refKey" | "select" | "name">;
+};
+
+export type ComputedDef = {
+  kind: "computed";
+  refKey: string;
+  modelRefKey: string;
+  name: string;
+  exp: TypedExprDef;
+  type?: NaiveType;
+};
+
 export type ModelHookDef = {
+  kind: "model-hook";
   refKey: string;
   name: string;
   args: { name: string; query: QueryDef }[];
   code: HookCode;
 };
 
-export type QueryDefPath = {
-  kind: Extract<RefKind, "reference" | "relation" | "query">;
-  refKey: string;
-  name: string;
-  namePath: string[];
-  joinType: "inner" | "outer";
-  joinPaths: QueryDefPath[];
-  retType: string;
-  // retCardinality: "one" | "many";
+type NaiveType = {
+  type: "integer" | "list-integer" | "text" | "boolean";
+  nullable: boolean;
 };
 
-// simple filter types, for now
-
-export type FilterDef =
-  | { kind: "binary"; lhs: FilterDef; rhs: FilterDef; operator: BinaryOperator }
-  | { kind: "alias"; namePath: string[] }
-  | LiteralValueDef
-  | { kind: "variable"; type: "integer" | "list-integer" | "text" | "boolean"; name: string }
-  | undefined;
-
 export type LiteralValueDef =
-  | { kind: "literal"; type: "integer"; value: number }
-  | { kind: "literal"; type: "null"; value: null }
-  | { kind: "literal"; type: "text"; value: string }
-  | { kind: "literal"; type: "boolean"; value: boolean };
+  | LiteralIntegerDef
+  | LiteralNullDef
+  | LiteralTextDef
+  | LiteralBooleanDef;
+
+type TypedAlias = { kind: "alias"; namePath: string[]; type?: NaiveType };
+type TypedVariable = { kind: "variable"; type?: NaiveType; name: string };
+
+export type FunctionName = BinaryOperator | "length" | "concat";
+
+export type TypedFunction = {
+  kind: "function";
+  name: FunctionName;
+  args: TypedExprDef[];
+  type?: NaiveType;
+};
+
+export type TypedExprDef = LiteralValueDef | TypedAlias | TypedVariable | TypedFunction | undefined;
+
+type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
+type LiteralTextDef = { kind: "literal"; type: "text"; value: string };
+type LiteralNullDef = { kind: "literal"; type: "null"; value: null };
+type LiteralBooleanDef = { kind: "literal"; type: "boolean"; value: boolean };
 
 /**
  * ENTRYPOINTS
@@ -192,19 +217,38 @@ type CustomEndpointDef = {
   };
 };
 
-export type SelectableItem = SelectFieldItem;
+export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
 
 export type SelectFieldItem = {
   kind: "field";
-  name: string;
   refKey: string;
+  name: string;
+  alias: string;
   namePath: string[];
   // nullable: boolean;
-  alias: string;
 };
 
+export type SelectComputedItem = {
+  kind: "computed";
+  refKey: string;
+  name: string;
+  alias: string;
+  namePath: string[];
+  // nullable: boolean
+};
+
+export type SelectAggregateItem = {
+  kind: "aggregate";
+  refKey: string;
+  name: string;
+  alias: string;
+  namePath: string[];
+};
+
+// FIXME add refKey instead of args and code
 export type SelectHookItem = {
-  kind: "hook";
+  kind: "model-hook";
+  // refKey: string;
   name: string;
   alias: string;
   namePath: string[];
@@ -343,7 +387,7 @@ export type UpdateOneAction = {
   alias: string;
   model: string;
   targetPath: string[];
-  filter: FilterDef;
+  filter: TypedExprDef;
   changeset: Changeset;
   select: SelectDef;
 };
@@ -354,9 +398,9 @@ export type DeleteOneAction = {
   targetPath: string[];
 };
 
-export type DeleteManyAction = {
+type DeleteManyAction = {
   kind: "delete-many";
-  filter: FilterDef;
+  filter: TypedExprDef;
 };
 
 export type Changeset = Record<string, FieldSetter>;
@@ -434,3 +478,8 @@ export type FieldSetter =
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterHook;
+
+export type AliasDef = {
+  kind: "alias";
+  namePath: string[];
+};
