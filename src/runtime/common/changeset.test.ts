@@ -81,6 +81,8 @@ describe("runtime", () => {
     it("ignores undefined/null vlaue", () => {
       expect(formatFieldValue(undefined, "text")).toStrictEqual(undefined);
       expect(formatFieldValue(null, "text")).toStrictEqual(null);
+      expect(formatFieldValue(undefined, "null")).toStrictEqual(undefined);
+      expect(formatFieldValue(null, "null")).toStrictEqual(null);
     });
 
     it("formats text field values", () => {
