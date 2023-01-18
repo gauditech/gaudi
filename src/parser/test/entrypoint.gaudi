@@ -21,6 +21,7 @@ entrypoint ItemEntry {
         set bar item.bar.baz.x.y
         set foo 10
         set baz null
+        // set bar c * (a - b)
         deny *
         deny { foo, bar }
         input { z, x { optional, default 10 }, y, foo { default item.bar.id } }

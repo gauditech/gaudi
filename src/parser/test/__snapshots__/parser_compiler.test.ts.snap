@@ -333,44 +333,53 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "actionAtoms": [
                 {
-                  "interval": {
-                    "endIdx": 464,
-                    "startIdx": 440,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "reference",
-                    "reference": [
-                      "item",
-                      "bar",
-                      "baz",
-                      "x",
-                      "y",
-                    ],
+                    "exp": {
+                      "identifier": [
+                        "item",
+                        "bar",
+                        "baz",
+                        "x",
+                        "y",
+                      ],
+                      "interval": {
+                        "endIdx": 464,
+                        "startIdx": 448,
+                      },
+                      "kind": "identifier",
+                    },
+                    "kind": "expression",
                   },
                   "target": "bar",
                 },
                 {
-                  "interval": {
-                    "endIdx": 483,
-                    "startIdx": 473,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": 10,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 483,
+                        "startIdx": 481,
+                      },
+                      "kind": "literal",
+                      "literal": 10,
+                    },
+                    "kind": "expression",
                   },
                   "target": "foo",
                 },
                 {
-                  "interval": {
-                    "endIdx": 504,
-                    "startIdx": 492,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": null,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 504,
+                        "startIdx": 500,
+                      },
+                      "kind": "literal",
+                      "literal": null,
+                    },
+                    "kind": "expression",
                   },
                   "target": "baz",
                 },
@@ -431,7 +440,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             },
           ],
           "interval": {
-            "endIdx": 643,
+            "endIdx": 674,
             "startIdx": 175,
           },
           "type": "create",
@@ -443,8 +452,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "action": undefined,
               "interval": {
-                "endIdx": 716,
-                "startIdx": 698,
+                "endIdx": 747,
+                "startIdx": 729,
               },
               "type": "create",
             },
@@ -452,8 +461,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 720,
-            "startIdx": 646,
+            "endIdx": 751,
+            "startIdx": 677,
           },
           "name": "Review",
           "response": undefined,
@@ -466,7 +475,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 722,
+        "endIdx": 753,
         "startIdx": 0,
       },
       "name": "ItemEntry",
@@ -677,10 +686,17 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                     "hook": {
                       "args": {
                         "second": {
-                          "kind": "reference",
-                          "reference": [
-                            "fieldTwo",
-                          ],
+                          "exp": {
+                            "identifier": [
+                              "fieldTwo",
+                            ],
+                            "interval": {
+                              "endIdx": 509,
+                              "startIdx": 501,
+                            },
+                            "kind": "identifier",
+                          },
+                          "kind": "expression",
                         },
                       },
                       "code": {

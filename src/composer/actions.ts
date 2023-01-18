@@ -4,7 +4,13 @@ import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
 import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot, ensureThrow, safeInvoke } from "@src/common/utils";
+import {
+  assertUnreachable,
+  ensureEqual,
+  ensureNot,
+  ensureThrow,
+  safeInvoke,
+} from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -161,54 +167,63 @@ function composeSingleAction(
           setter: { kind: "fieldset-hook", code: atom.set.hook.code, args },
         };
       }
-      case "literal": {
-        const typedVal = getTypedLiteralValue(atom.set.value);
-        return { name: atom.target, setter: typedVal };
-      }
-      case "reference": {
-        /**
-         * Reference can be an alias or a computed/function.
-         * Currently, we don't support complex computeds so it will resolve to one of the known kinds of setters.
-         */
-        const path = atom.set.reference;
+      case "expression": {
+        const exp = atom.set.exp;
+        switch (exp.kind) {
+          case "literal": {
+            const typedVal = getTypedLiteralValue(exp.literal);
+            return { name: atom.target, setter: typedVal };
+          }
+          case "identifier": {
+            const path = exp.identifier;
 
-        const maybeTypedPath = safeInvoke(() => getTypedPathWithLeaf(def, path, ctx));
-        switch (maybeTypedPath.kind) {
-          case "error": {
-            /**
-             * Is this a computed "sibling" call?
-             * It must start with an action spec alias, and must be a shallow path (no deep aliases)
-             */
-            if (path[0] === simpleSpec.alias) {
-              ensureEqual(path.length, 2);
-            } else {
-              ensureEqual(path.length, 1);
-            }
-            const siblingName = _.last(path)!;
-            // check if sibling name is defined in th echangeset
-            const siblingOp = _.find(changeset, { name: siblingName });
-            if (siblingOp) {
-              return {
-                name: atom.target,
-                setter: { kind: "changeset-reference", referenceName: siblingName },
-              };
-            } else {
-              throw ["unresolved", path];
+            const maybeTypedPath = safeInvoke(() => getTypedPathWithLeaf(def, path, ctx));
+            switch (maybeTypedPath.kind) {
+              case "error": {
+                /**
+                 * Is this a computed "sibling" call?
+                 * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+                 */
+                if (path[0] === simpleSpec.alias) {
+                  ensureEqual(path.length, 2);
+                } else {
+                  ensureEqual(path.length, 1);
+                }
+                const siblingName = _.last(path)!;
+                // check if sibling name is defined in the changeset
+                const siblingOp = _.find(changeset, { name: siblingName });
+                if (siblingOp) {
+                  return {
+                    name: atom.target,
+                    setter: { kind: "changeset-reference", referenceName: siblingName },
+                  };
+                } else {
+                  throw ["unresolved", path];
+                }
+              }
+              case "success": {
+                const typedPath = maybeTypedPath.result;
+                const namePath = typedPath.nodes.map((p) => p.name);
+                const access = [...namePath, typedPath.leaf.name];
+                const field = getRef.field(def, typedPath.leaf.refKey);
+                return {
+                  name: atom.target,
+                  setter: {
+                    kind: "reference-value",
+                    type: field.type,
+                    target: { alias: path[0], access },
+                  },
+                };
+              }
+              default: {
+                return assertUnreachable(maybeTypedPath);
+              }
             }
           }
-          case "success": {
-            const typedPath = maybeTypedPath.result;
-            const namePath = typedPath.nodes.map((p) => p.name);
-            const access = [...namePath, typedPath.leaf.name];
-            const field = getRef.field(def, typedPath.leaf.refKey);
-            return {
-              name: atom.target,
-              setter: {
-                kind: "reference-value",
-                type: field.type,
-                target: { alias: path[0], access },
-              },
-            };
+          case "unary":
+          case "binary":
+          case "function": {
+            throw "TODO";
           }
         }
       }
@@ -269,7 +284,6 @@ function composeSingleAction(
         }
       });
       if (result.kind === "error") {
-        console.error(result.error);
         shouldRetry = true;
       }
     });
@@ -457,8 +471,11 @@ function assignParentContextSetter(
       kind: "set",
       target: reference.name,
       set: {
-        kind: "reference",
-        reference: parentNamePath,
+        kind: "expression",
+        exp: {
+          kind: "identifier",
+          identifier: parentNamePath,
+        },
       },
     };
   }

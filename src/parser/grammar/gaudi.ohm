@@ -144,8 +144,7 @@ Gaudi {
 
   ActionAtomBody
     = "set" identifier Hook                               -- set_hook
-    | "set" identifier literal                            -- set_value
-    | "set" identifier IdentifierPath                     -- set_reference
+    | "set" identifier QueryExp                           -- set_expression
     | "reference" identifier "through" identifier         -- reference
     | "input" "{" NewlineBody<ActionInputAtom, ","> "}"   -- input
     | "deny" DenyList                                     -- deny
@@ -172,13 +171,12 @@ Gaudi {
   = "hook" identifier? "{" NonemptyNewlineBody<HookBody, ";"> "}"
 
   HookBody
-  = "default" "arg" identifier -- argument_default
-  | "arg" identifier HookQuery -- argument_query
-  | "arg" identifier literal -- argument_literal
-  | "arg" identifier IdentifierPath -- argument_reference
-  | "returns" identifier -- return_type
-  | "source" identifier "from" string -- source
-  | "inline" multiLineString -- inline
+  = "default" "arg" identifier          -- argument_default
+  | "arg" identifier HookQuery          -- argument_query
+  | "arg" identifier QueryExp           -- argument_expression
+  | "returns" identifier                -- return_type
+  | "source" identifier "from" string   -- source
+  | "inline" multiLineString            -- inline
 
   HookQuery
     = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"

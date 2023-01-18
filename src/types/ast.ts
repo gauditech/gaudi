@@ -127,10 +127,7 @@ export type ActionAtomBodyAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set:
-        | { kind: "hook"; hook: HookAST }
-        | { kind: "literal"; value: LiteralValue }
-        | { kind: "reference"; reference: string[] };
+      set: { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
     }
   | { kind: "reference"; target: string; through: string }
   | { kind: "input"; fields: InputFieldAST[] }
@@ -163,10 +160,7 @@ export type HookBodyAST = WithContext<
 >;
 
 export type HookArgValueAST = WithContext<
-  | { kind: "query"; query: HookQueryAST }
-  | { kind: "literal"; literal: LiteralValue }
-  | { kind: "reference"; reference: string[] }
-  | { kind: "default" }
+  { kind: "query"; query: HookQueryAST } | { kind: "expression"; exp: ExpAST } | { kind: "default" }
 >;
 
 export type HookQueryAST = WithContext<{
