@@ -384,6 +384,59 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   "target": "baz",
                 },
                 {
+                  "kind": "set",
+                  "set": {
+                    "exp": {
+                      "interval": {
+                        "endIdx": 532,
+                        "startIdx": 521,
+                      },
+                      "kind": "binary",
+                      "lhs": {
+                        "identifier": [
+                          "c",
+                        ],
+                        "interval": {
+                          "endIdx": 522,
+                          "startIdx": 521,
+                        },
+                        "kind": "identifier",
+                      },
+                      "operator": "*",
+                      "rhs": {
+                        "interval": {
+                          "endIdx": 531,
+                          "startIdx": 526,
+                        },
+                        "kind": "binary",
+                        "lhs": {
+                          "identifier": [
+                            "a",
+                          ],
+                          "interval": {
+                            "endIdx": 527,
+                            "startIdx": 526,
+                          },
+                          "kind": "identifier",
+                        },
+                        "operator": "-",
+                        "rhs": {
+                          "identifier": [
+                            "b",
+                          ],
+                          "interval": {
+                            "endIdx": 531,
+                            "startIdx": 530,
+                          },
+                          "kind": "identifier",
+                        },
+                      },
+                    },
+                    "kind": "expression",
+                  },
+                  "target": "bar",
+                },
+                {
                   "fields": "*",
                   "kind": "deny",
                 },
@@ -440,7 +493,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             },
           ],
           "interval": {
-            "endIdx": 674,
+            "endIdx": 671,
             "startIdx": 175,
           },
           "type": "create",
@@ -452,8 +505,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "action": undefined,
               "interval": {
-                "endIdx": 747,
-                "startIdx": 729,
+                "endIdx": 744,
+                "startIdx": 726,
               },
               "type": "create",
             },
@@ -461,8 +514,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 751,
-            "startIdx": 677,
+            "endIdx": 748,
+            "startIdx": 674,
           },
           "name": "Review",
           "response": undefined,
@@ -475,7 +528,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 753,
+        "endIdx": 750,
         "startIdx": 0,
       },
       "name": "ItemEntry",
