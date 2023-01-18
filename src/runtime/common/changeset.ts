@@ -110,6 +110,24 @@ export async function fetchReferenceIds(
   return Object.fromEntries(await Promise.all(promiseEntries));
 }
 
+/**
+ * This mutates endpoint fieldset.
+ * If reference has no id it will add "noReference" validator to fieldset field.
+ */
+export function assignNoReferenceValidators(
+  fieldset: FieldsetDef,
+  referenceIds: Record<string, number | { kind: "noReference"; fieldsetAccess: string[] }>
+): asserts referenceIds is Record<string, number> {
+  console.log(referenceIds);
+
+  Object.entries(referenceIds).forEach(([_name, value]) => {
+    console.log(_name, value);
+    if (typeof value === "number") return;
+    const currentFieldset = getNestedFieldset(fieldset, value.fieldsetAccess);
+    currentFieldset.validators.push({ name: "noReference" });
+  });
+}
+
 function getNestedFieldset(fieldset: FieldsetDef, fieldsetAccess: string[]): FieldsetFieldDef {
   if (fieldsetAccess.length === 0) {
     if (fieldset.kind === "record") {
@@ -122,21 +140,6 @@ function getNestedFieldset(fieldset: FieldsetDef, fieldsetAccess: string[]): Fie
   }
   const [head, ...tail] = fieldsetAccess;
   return getNestedFieldset(fieldset.record[head], tail);
-}
-
-/**
- * This mutates endpoint fieldset.
- * If reference has no id it will add "noReference" validator to fieldset field.
- */
-export function assignNoReferenceValidators(
-  fieldset: FieldsetDef,
-  referenceIds: Record<string, number | { kind: "noReference"; fieldsetAccess: string[] }>
-): asserts referenceIds is Record<string, number> {
-  _.chain(referenceIds).forEach((value, _name) => {
-    if (typeof value === "number") return;
-    const currentFieldset = getNestedFieldset(fieldset, value.fieldsetAccess);
-    currentFieldset.validators.push({ name: "noReference" });
-  });
 }
 
 /**
