@@ -40,7 +40,7 @@ describe("runtime", () => {
           input_prop: "input value",
         },
         vars: new Vars(),
-        referenceIds: { other_model: 1 },
+        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
       expect(buildChangset(data, context)).toMatchSnapshot();
