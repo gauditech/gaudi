@@ -1,9 +1,9 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
-import { ChangesetDef, FieldDef, FieldSetter } from "@src/types/definition";
+import { ChangesetDef, FieldDef, FieldSetter, FunctionName } from "@src/types/definition";
 
 type Changeset = Record<string, unknown>;
 
@@ -58,6 +58,60 @@ export function buildChangeset(
       case "fieldset-reference-input": {
         throw "not implemented";
       }
+      case "function": {
+        switch (setter.name) {
+          case "+":
+          case "-":
+          case "*":
+          case "/":
+          case ">":
+          case "<":
+          case ">=":
+          case "<=": {
+            ensureEqual(setter.args.length, 2);
+            const val1 = getValue(setter.args[0]);
+            const val2 = getValue(setter.args[1]);
+
+            return fnNameToFunction(setter.name)(val1, val2);
+          }
+          case "and":
+          case "or": {
+            ensureEqual(setter.args.length, 2);
+            const val1 = getValue(setter.args[0]);
+            const val2 = getValue(setter.args[1]);
+
+            return fnNameToFunction(setter.name)(val1, val2);
+          }
+          case "is":
+          case "is not":
+          case "in":
+          case "not in": {
+            ensureEqual(setter.args.length, 2);
+            const val1 = getValue(setter.args[0]);
+            const val2 = getValue(setter.args[1]);
+
+            return fnNameToFunction(setter.name)(val1, val2);
+          }
+          case "concat": {
+            const vals = setter.args.map((arg) => {
+              const value = getValue(arg);
+
+              return value;
+            });
+
+            return fnNameToFunction(setter.name)(vals);
+          }
+          case "length": {
+            ensureEqual(setter.args.length, 1);
+            const val = getValue(setter.args[0]);
+
+            return fnNameToFunction(setter.name)(val);
+          }
+          default: {
+            return assertUnreachable(setter.name);
+          }
+        }
+      }
       default: {
         return assertUnreachable(setter);
       }
@@ -68,6 +122,46 @@ export function buildChangeset(
     changeset[name] = getValue(setter);
   });
   return changeset;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function fnNameToFunction(name: FunctionName): (...args: any[]) => unknown {
+  switch (name) {
+    case "+":
+      return _.add;
+    case "-":
+      return _.subtract;
+    case "*":
+      return _.multiply;
+    case "/":
+      return _.divide;
+    case "<":
+      return _.lt;
+    case ">":
+      return _.gt;
+    case "<=":
+      return _.lte;
+    case ">=":
+      return _.gte;
+    case "is":
+      return _.isEqual;
+    case "is not":
+      return (a: unknown, b: unknown) => !_.isEqual(a, b);
+    case "and":
+      return (a: unknown, b: unknown) => a && b;
+    case "or":
+      return (a: unknown, b: unknown) => a || b;
+    case "in":
+      return _.includes;
+    case "not in":
+      return (a: unknown[], v: unknown) => !_.includes(a, v);
+    case "concat":
+      return (a: unknown[]) => a.join("");
+    case "length":
+      return _.toLength;
+    default:
+      return assertUnreachable(name);
+  }
 }
 
 /**

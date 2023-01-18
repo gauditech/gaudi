@@ -432,6 +432,12 @@ export type FieldSetterChangesetReference = {
   referenceName: string;
 };
 
+export type FieldSetterFunction = {
+  kind: "function";
+  name: FunctionName; // TODO rename to `fnName` to make it more clear, see line 124 as well
+  args: FieldSetter[];
+};
+
 export type FieldSetterHook = {
   kind: "fieldset-hook";
   code: HookCode;
@@ -445,9 +451,5 @@ export type FieldSetter =
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
-  | FieldSetterHook;
-
-export type AliasDef = {
-  kind: "alias";
-  namePath: string[];
-};
+  | FieldSetterHook
+  | FieldSetterFunction;

@@ -17,10 +17,12 @@ import {
   ChangesetDef,
   ChangesetOperationDef,
   Definition,
+  FieldSetter,
+  FunctionName,
   ModelDef,
   TargetDef,
 } from "@src/types/definition";
-import { ActionAtomSpecSet, ActionSpec } from "@src/types/specification";
+import { ActionAtomSpecSet, ActionSpec, ExpSpec } from "@src/types/specification";
 
 /**
  * Composes the custom actions block for an endpoint. Adds a default action
@@ -155,6 +157,78 @@ function composeSingleAction(
   const specWithParentSetter = assignParentContextSetter(def, spec, ctx, targets);
   const simpleSpec = simplifyActionSpec(def, specWithParentSetter, target.alias, model);
 
+  function expandSetterExpression(exp: ExpSpec, changeset: ChangesetDef): FieldSetter {
+    switch (exp.kind) {
+      case "literal": {
+        return getTypedLiteralValue(exp.literal);
+      }
+      case "identifier": {
+        const path = exp.identifier;
+
+        const maybeTypedPath = safeInvoke(() => getTypedPathWithLeaf(def, path, ctx));
+        switch (maybeTypedPath.kind) {
+          case "error": {
+            /**
+             * Is this a computed "sibling" call?
+             * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+             */
+            if (path[0] === simpleSpec.alias) {
+              ensureEqual(path.length, 2);
+            } else {
+              ensureEqual(path.length, 1);
+            }
+            const siblingName = _.last(path)!;
+            // check if sibling name is defined in the changeset
+            const siblingOp = _.find(changeset, { name: siblingName });
+            if (siblingOp) {
+              return { kind: "changeset-reference", referenceName: siblingName };
+            } else {
+              throw ["unresolved", path];
+            }
+          }
+          case "success": {
+            const typedPath = maybeTypedPath.result;
+            const namePath = typedPath.nodes.map((p) => p.name);
+            const access = [...namePath, typedPath.leaf.name];
+            const field = getRef.field(def, typedPath.leaf.refKey);
+            return {
+              kind: "reference-value",
+              type: field.type,
+              target: { alias: path[0], access },
+            };
+          }
+          default: {
+            return assertUnreachable(maybeTypedPath);
+          }
+        }
+      }
+      case "unary": {
+        return {
+          kind: "function",
+          name: exp.operator as FunctionName, // FIXME proper validation
+          args: [expandSetterExpression(exp.exp, changeset)],
+        };
+      }
+      case "binary": {
+        return {
+          kind: "function",
+          name: exp.operator as FunctionName, // FIXME proper validation
+          args: [
+            expandSetterExpression(exp.lhs, changeset),
+            expandSetterExpression(exp.rhs, changeset),
+          ],
+        };
+      }
+      case "function": {
+        return {
+          kind: "function",
+          name: exp.name as FunctionName, // FIXME proper validation
+          args: exp.args.map((a) => expandSetterExpression(a, changeset)),
+        };
+      }
+    }
+  }
+
   function toFieldSetter(atom: ActionAtomSpecSet, changeset: ChangesetDef): ChangesetOperationDef {
     switch (atom.set.kind) {
       case "hook": {
@@ -169,63 +243,8 @@ function composeSingleAction(
       }
       case "expression": {
         const exp = atom.set.exp;
-        switch (exp.kind) {
-          case "literal": {
-            const typedVal = getTypedLiteralValue(exp.literal);
-            return { name: atom.target, setter: typedVal };
-          }
-          case "identifier": {
-            const path = exp.identifier;
-
-            const maybeTypedPath = safeInvoke(() => getTypedPathWithLeaf(def, path, ctx));
-            switch (maybeTypedPath.kind) {
-              case "error": {
-                /**
-                 * Is this a computed "sibling" call?
-                 * It must start with an action spec alias, and must be a shallow path (no deep aliases)
-                 */
-                if (path[0] === simpleSpec.alias) {
-                  ensureEqual(path.length, 2);
-                } else {
-                  ensureEqual(path.length, 1);
-                }
-                const siblingName = _.last(path)!;
-                // check if sibling name is defined in the changeset
-                const siblingOp = _.find(changeset, { name: siblingName });
-                if (siblingOp) {
-                  return {
-                    name: atom.target,
-                    setter: { kind: "changeset-reference", referenceName: siblingName },
-                  };
-                } else {
-                  throw ["unresolved", path];
-                }
-              }
-              case "success": {
-                const typedPath = maybeTypedPath.result;
-                const namePath = typedPath.nodes.map((p) => p.name);
-                const access = [...namePath, typedPath.leaf.name];
-                const field = getRef.field(def, typedPath.leaf.refKey);
-                return {
-                  name: atom.target,
-                  setter: {
-                    kind: "reference-value",
-                    type: field.type,
-                    target: { alias: path[0], access },
-                  },
-                };
-              }
-              default: {
-                return assertUnreachable(maybeTypedPath);
-              }
-            }
-          }
-          case "unary":
-          case "binary":
-          case "function": {
-            throw "TODO";
-          }
-        }
+        const setter = expandSetterExpression(exp, changeset);
+        return { name: atom.target, setter };
       }
     }
   }

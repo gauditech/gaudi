@@ -363,6 +363,72 @@ exports[`custom actions succeeds for basic update with a deny rule 1`] = `
 ]
 `;
 
+exports[`custom actions succeeds with arithmetic expressions in setters 1`] = `
+[
+  {
+    "alias": "org",
+    "changeset": [
+      {
+        "name": "name",
+        "setter": {
+          "kind": "literal",
+          "type": "text",
+          "value": "new name",
+        },
+      },
+      {
+        "name": "description",
+        "setter": {
+          "args": [
+            {
+              "kind": "changeset-reference",
+              "referenceName": "name",
+            },
+            {
+              "kind": "literal",
+              "type": "text",
+              "value": " is great",
+            },
+          ],
+          "kind": "function",
+          "name": "concat",
+        },
+      },
+      {
+        "name": "descLength",
+        "setter": {
+          "args": [
+            {
+              "args": [
+                {
+                  "kind": "changeset-reference",
+                  "referenceName": "description",
+                },
+              ],
+              "kind": "function",
+              "name": "length",
+            },
+            {
+              "kind": "literal",
+              "type": "integer",
+              "value": 1,
+            },
+          ],
+          "kind": "function",
+          "name": "+",
+        },
+      },
+    ],
+    "kind": "create-one",
+    "model": "Org",
+    "select": [],
+    "targetPath": [
+      "org",
+    ],
+  },
+]
+`;
+
 exports[`custom actions succeeds with custom inputs 1`] = `
 [
   {
