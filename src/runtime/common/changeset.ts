@@ -118,7 +118,7 @@ export function assignNoReferenceValidators(
   fieldset: FieldsetDef,
   referenceIds: Record<string, number | { kind: "noReference"; fieldsetAccess: string[] }>
 ): asserts referenceIds is Record<string, number> {
-  Object.entries(referenceIds).forEach(([_name, value]) => {
+  Object.values(referenceIds).forEach((value) => {
     if (typeof value === "number") return;
     const currentFieldset = getNestedFieldset(fieldset, value.fieldsetAccess);
     currentFieldset.validators.push({ name: "noReference" });
