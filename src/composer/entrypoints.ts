@@ -307,25 +307,25 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .flatMap((action) => {
       return _.chain(action.changeset)
-        .map(({ name, setter: operation }): null | [string[], FieldsetFieldDef] => {
-          switch (operation.kind) {
+        .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
+          switch (setter.kind) {
             case "fieldset-input": {
               const field = getRef.field(def, `${action.model}.${name}`);
               return [
-                operation.fieldsetAccess,
+                setter.fieldsetAccess,
                 {
                   kind: "field",
-                  required: operation.required,
-                  type: operation.type,
+                  required: setter.required,
+                  type: setter.type,
                   nullable: field.nullable,
                   validators: field.validators,
                 },
               ];
             }
             case "fieldset-reference-input": {
-              const field = getRef.field(def, operation.throughField.refKey);
+              const field = getRef.field(def, setter.throughRefKey);
               return [
-                operation.fieldsetAccess,
+                setter.fieldsetAccess,
                 {
                   kind: "field",
                   required: true, // FIXME

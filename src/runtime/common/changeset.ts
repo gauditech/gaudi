@@ -1,6 +1,6 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
 import { ChangesetDef, FieldDef, FieldSetter } from "@src/types/definition";
@@ -56,7 +56,11 @@ export function buildChangeset(
         }
       }
       case "fieldset-reference-input": {
-        throw "not implemented";
+        const referenceIdResult = actionContext.referenceIds.find((result) =>
+          _.isEqual(result.fieldsetAccess, setter.fieldsetAccess)
+        );
+        ensureNot(referenceIdResult, undefined);
+        return referenceIdResult.value;
       }
       default: {
         return assertUnreachable(setter);
@@ -65,7 +69,15 @@ export function buildChangeset(
   }
 
   actionChangsetDefinition.forEach(({ name, setter }) => {
-    changeset[name] = getValue(setter);
+    switch (setter.kind) {
+      case "fieldset-reference-input": {
+        changeset[name + "_id"] = getValue(setter);
+        break;
+      }
+      default: {
+        changeset[name] = getValue(setter);
+      }
+    }
   });
   return changeset;
 }

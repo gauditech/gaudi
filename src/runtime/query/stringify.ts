@@ -117,11 +117,10 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
           return transformExpressionPaths(newExp, [computed.modelRefKey], _.initial(exp.namePath));
         }
         default: {
-          assertUnreachable(tpath.leaf);
+          return assertUnreachable(tpath.leaf);
         }
       }
     }
-    // eslint-disable-next-line no-fallthrough
     case "function": {
       return {
         ...exp,
@@ -163,6 +162,7 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
   const aggregates = selectables.filter(
     (item): item is SelectAggregateItem => item.kind === "aggregate"
   );
+
   const allPaths = [
     [...fromPath, "id"],
     ...collectPathsFromExp(def, expandExpression(def, filter)),
@@ -345,19 +345,21 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
 
   const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j));
-  const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
+  const filterWhere = expandedFilter
+    ? `FILTER(WHERE ${expressionToString(def, expandedFilter)})`
+    : "";
   const aggrFieldExpr = `${namePathToAlias(aggregate.query.fromPath)}.${aggrField.dbname}`;
   const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
 
   const qstr = source`
   (SELECT
     ${namePathToAlias([model.name])}.id,
-    ${aggregate.aggrFnName}(${aggrFieldExpr}) AS "result"
+    ${aggregate.aggrFnName}(${aggrFieldExpr}) ${filterWhere} AS "result"
   FROM ${refToTableSqlFragment(def, model)}
+
   AS ${namePathToAlias([model.name])}
   ${joins}
   ${aggrJoins}
-  ${where}
   GROUP BY ${namePathToAlias([model.name])}.id)`;
 
   return format(qstr, { language: "postgresql" });
@@ -383,8 +385,8 @@ function selectableToString(def: Definition, select: SelectableItem[]): string {
           return `${expStr} AS "${item.alias}"`;
         }
         case "aggregate": {
-          // const aggregate = getRef.aggregate(def, item.refKey);
-          return `${namePathToAlias([...item.namePath])}."result" AS "${item.alias}"`;
+          // const aggregate = getRef2.aggregate(def, item.refKey);
+          return `${namePathToAlias(item.namePath)}."result" AS "${item.alias}"`;
         }
       }
     })
@@ -409,13 +411,13 @@ function expressionToString(def: Definition, filter: TypedExprDef): string {
         case "integer":
           return filter.value.toString();
         default:
-          assertUnreachable(filter);
+          return assertUnreachable(filter);
       }
     }
-    // Due to bug in eslint/prettier, linter complains that `break` is expected in the case "literal"
-    // Since inner switch is exaustive, break is unreachable so prettier deletes it
-    // eslint-disable-next-line no-fallthrough
     case "alias": {
+      // We need to check if alias points to an aggregate so we can attach "result".
+      // We try/catch because `__join_connection` appears in paths but is not resolved with `getTypedPath`.
+      // We could check specifically for `__join_connection` but this is sufficient.
       try {
         const tpath = getTypedPath(def, filter.namePath, {});
         ensureNot(tpath.leaf, null);
@@ -423,7 +425,7 @@ function expressionToString(def: Definition, filter: TypedExprDef): string {
           return `${namePathToAlias(filter.namePath)}."result"`;
         }
       } catch (_e) {
-        1;
+        // Just ignore the error and continue
       }
       const np = _.initial(filter.namePath);
       const f = _.last(filter.namePath);
@@ -433,6 +435,8 @@ function expressionToString(def: Definition, filter: TypedExprDef): string {
       return functionToString(def, filter);
     }
     case "variable": {
+      // Start variable names with a `:` which is a knex format for query variables
+      // Knex does interpolation on variables, taking care of SQL injection etc.
       return `:${filter.name}`;
     }
   }

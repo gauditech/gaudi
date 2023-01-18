@@ -239,8 +239,8 @@ function composeSingleAction(
           name: atom.target,
           setter: {
             kind: "fieldset-reference-input",
-            throughField: { name: atom.through, refKey: throughField.refKey },
-            fieldsetAccess: [...fieldsetNamespace, atom.target, atom.through],
+            throughRefKey: throughField.refKey,
+            fieldsetAccess: [...fieldsetNamespace, `${atom.target}_${atom.through}`],
           },
         };
       }
