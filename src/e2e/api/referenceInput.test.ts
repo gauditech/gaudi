@@ -26,7 +26,7 @@ describe("Reference Input", () => {
       await destroy();
     });
 
-    it("create with extra", async () => {
+    it("create with a valid reference", async () => {
       const extraData = { slug: "extra" };
 
       const extraPostResponse = await request(getServer()).post("/extra").send(extraData);
@@ -39,7 +39,7 @@ describe("Reference Input", () => {
       expect(postResponse.body).toMatchSnapshot();
     });
 
-    it("create with extra no reference", async () => {
+    it("create with an invalid reference", async () => {
       const data = { name: "element", extra_slug: "baz" };
 
       const postResponse = await request(getServer()).post("/element").send(data);
