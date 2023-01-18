@@ -451,14 +451,10 @@ exports[`custom actions succeeds with custom inputs 1`] = `
         "setter": {
           "fieldsetAccess": [
             "ox",
-            "extras",
-            "name",
+            "extras_name",
           ],
           "kind": "fieldset-reference-input",
-          "throughField": {
-            "name": "name",
-            "refKey": "OrgExtra.name",
-          },
+          "throughRefKey": "OrgExtra.name",
         },
       },
       {

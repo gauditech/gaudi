@@ -42,6 +42,14 @@ describe("runtime", () => {
             referenceName: "input_prop",
           },
         },
+        {
+          name: "other_model",
+          setter: {
+            kind: "fieldset-reference-input",
+            throughRefKey: "OtherModel.slug",
+            fieldsetAccess: ["slug"],
+          },
+        },
       ];
 
       const context: ActionContext = {
@@ -49,6 +57,7 @@ describe("runtime", () => {
           input_prop: "input value",
         },
         vars: new Vars(),
+        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
       expect(buildChangeset(data, context)).toMatchSnapshot();
@@ -81,6 +90,8 @@ describe("runtime", () => {
     it("ignores undefined/null vlaue", () => {
       expect(formatFieldValue(undefined, "text")).toStrictEqual(undefined);
       expect(formatFieldValue(null, "text")).toStrictEqual(null);
+      expect(formatFieldValue(undefined, "null")).toStrictEqual(undefined);
+      expect(formatFieldValue(null, "null")).toStrictEqual(null);
     });
 
     it("formats text field values", () => {

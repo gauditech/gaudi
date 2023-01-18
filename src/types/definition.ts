@@ -300,7 +300,8 @@ export type ValidatorDef =
   | IsBooleanEqual
   | IsIntEqual
   | IsTextEqual
-  | HookValidator;
+  | HookValidator
+  | NoReferenceValidator;
 
 export const ValidatorDefinition = [
   ["text", "max", "maxLength", ["integer"]],
@@ -364,6 +365,9 @@ export interface HookValidator {
   arg?: string;
   code: HookCode;
 }
+export interface NoReferenceValidator {
+  name: "noReference";
+}
 
 export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;
 type BoolConst = { type: "boolean"; value: boolean };
@@ -423,7 +427,7 @@ export type FieldSetterInput = {
 export type FieldSetterReferenceInput = {
   kind: "fieldset-reference-input";
   fieldsetAccess: string[];
-  throughField: { name: string; refKey: string };
+  throughRefKey: string;
   // required: boolean;
 };
 

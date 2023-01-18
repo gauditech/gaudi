@@ -183,7 +183,18 @@ export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
   const hooks = selectToHooks(q.select).map(({ name, args, code }) => ({
     name,
-    args: args.map(({ name, query }) => ({ name, query: buildQueryTree(def, query) })),
+    args: args.map(({ name, query }) => {
+      // apply a batching filter
+      const filter = applyFilterIdInContext(query.fromPath, query.filter);
+      // select the __join_connection
+      const conn = mkJoinConnection(getRef.model(def, _.first(query.fromPath)!));
+      const select = [...query.select, conn];
+
+      return {
+        name,
+        query: buildQueryTree(def, { ...query, filter, select }),
+      };
+    }),
     code,
   }));
   const model = getRef.model(def, query.retType);
