@@ -4,6 +4,8 @@ exports[`runtime changeset build action changeset object 1`] = `
 {
   "input_prop": "input value",
   "input_prop_missing": undefined,
+  "input_value_copy": "input value",
+  "other_model_id": 1,
   "value_prop": "just value",
 }
 `;

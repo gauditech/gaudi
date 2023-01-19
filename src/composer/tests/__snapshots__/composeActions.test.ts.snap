@@ -4,24 +4,30 @@ exports[`custom actions can create nested relations through transient references
 [
   {
     "alias": "repo",
-    "changeset": {
-      "name": {
-        "fieldsetAccess": [
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": true,
-        "type": "text",
+    "changeset": [
+      {
+        "name": "name",
+        "setter": {
+          "fieldsetAccess": [
+            "name",
+          ],
+          "kind": "fieldset-input",
+          "required": true,
+          "type": "text",
+        },
       },
-      "org_id": {
-        "fieldsetAccess": [
-          "org_id",
-        ],
-        "kind": "fieldset-input",
-        "required": true,
-        "type": "integer",
+      {
+        "name": "org_id",
+        "setter": {
+          "fieldsetAccess": [
+            "org_id",
+          ],
+          "kind": "fieldset-input",
+          "required": true,
+          "type": "integer",
+        },
       },
-    },
+    ],
     "kind": "create-one",
     "model": "Repo",
     "select": [
@@ -54,19 +60,22 @@ exports[`custom actions can create nested relations through transient references
   },
   {
     "alias": "log",
-    "changeset": {
-      "org_id": {
-        "kind": "reference-value",
-        "target": {
-          "access": [
-            "org",
-            "id",
-          ],
-          "alias": "repo",
+    "changeset": [
+      {
+        "name": "org_id",
+        "setter": {
+          "kind": "reference-value",
+          "target": {
+            "access": [
+              "org",
+              "id",
+            ],
+            "alias": "repo",
+          },
+          "type": "integer",
         },
-        "type": "integer",
       },
-    },
+    ],
     "kind": "create-one",
     "model": "OrgLog",
     "select": [],
@@ -82,17 +91,20 @@ exports[`custom actions can create nested relations through transient references
 exports[`custom actions can update deeply nested references 1`] = `
 [
   {
-    "alias": undefined,
-    "changeset": {
-      "repo_id": {
-        "fieldsetAccess": [
-          "repo_id",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "integer",
+    "alias": "$issue",
+    "changeset": [
+      {
+        "name": "repo_id",
+        "setter": {
+          "fieldsetAccess": [
+            "repo_id",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "integer",
+        },
       },
-    },
+    ],
     "filter": undefined,
     "kind": "update-one",
     "model": "Issue",
@@ -103,17 +115,20 @@ exports[`custom actions can update deeply nested references 1`] = `
   },
   {
     "alias": "org",
-    "changeset": {
-      "name": {
-        "fieldsetAccess": [
-          "org",
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "text",
+    "changeset": [
+      {
+        "name": "name",
+        "setter": {
+          "fieldsetAccess": [
+            "org",
+            "name",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "text",
+        },
       },
-    },
+    ],
     "filter": undefined,
     "kind": "update-one",
     "model": "Org",
@@ -131,26 +146,32 @@ exports[`custom actions correctly sets parent context 1`] = `
 [
   {
     "alias": "myrepo",
-    "changeset": {
-      "name": {
-        "fieldsetAccess": [
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": true,
-        "type": "text",
-      },
-      "org_id": {
-        "kind": "reference-value",
-        "target": {
-          "access": [
-            "id",
+    "changeset": [
+      {
+        "name": "name",
+        "setter": {
+          "fieldsetAccess": [
+            "name",
           ],
-          "alias": "myorg",
+          "kind": "fieldset-input",
+          "required": true,
+          "type": "text",
         },
-        "type": "integer",
       },
-    },
+      {
+        "name": "org_id",
+        "setter": {
+          "kind": "reference-value",
+          "target": {
+            "access": [
+              "id",
+            ],
+            "alias": "myorg",
+          },
+          "type": "integer",
+        },
+      },
+    ],
     "kind": "create-one",
     "model": "Repo",
     "select": [],
@@ -164,17 +185,20 @@ exports[`custom actions correctly sets parent context 1`] = `
 exports[`custom actions sets default action if not given 1`] = `
 [
   {
-    "alias": undefined,
-    "changeset": {
-      "name": {
-        "fieldsetAccess": [
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "text",
+    "alias": "$org",
+    "changeset": [
+      {
+        "name": "name",
+        "setter": {
+          "fieldsetAccess": [
+            "name",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "text",
+        },
       },
-    },
+    ],
     "filter": undefined,
     "kind": "update-one",
     "model": "Org",
@@ -190,7 +214,7 @@ exports[`custom actions succeeds for basic composite create 1`] = `
 [
   {
     "alias": "e",
-    "changeset": {},
+    "changeset": [],
     "kind": "create-one",
     "model": "OrgExtra",
     "select": [
@@ -211,31 +235,40 @@ exports[`custom actions succeeds for basic composite create 1`] = `
   },
   {
     "alias": "org",
-    "changeset": {
-      "extras_id": {
-        "kind": "reference-value",
-        "target": {
-          "access": [
-            "id",
+    "changeset": [
+      {
+        "name": "name",
+        "setter": {
+          "fieldsetAccess": [
+            "name",
           ],
-          "alias": "e",
+          "kind": "fieldset-input",
+          "required": true,
+          "type": "text",
         },
-        "type": "integer",
       },
-      "is_new": {
-        "kind": "literal",
-        "type": "boolean",
-        "value": true,
+      {
+        "name": "is_new",
+        "setter": {
+          "kind": "literal",
+          "type": "boolean",
+          "value": true,
+        },
       },
-      "name": {
-        "fieldsetAccess": [
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": true,
-        "type": "text",
+      {
+        "name": "extras_id",
+        "setter": {
+          "kind": "reference-value",
+          "target": {
+            "access": [
+              "id",
+            ],
+            "alias": "e",
+          },
+          "type": "integer",
+        },
       },
-    },
+    ],
     "kind": "create-one",
     "model": "Org",
     "select": [
@@ -256,18 +289,21 @@ exports[`custom actions succeeds for basic composite create 1`] = `
   },
   {
     "alias": "oo",
-    "changeset": {
-      "org_id": {
-        "kind": "reference-value",
-        "target": {
-          "access": [
-            "id",
-          ],
-          "alias": "org",
+    "changeset": [
+      {
+        "name": "org_id",
+        "setter": {
+          "kind": "reference-value",
+          "target": {
+            "access": [
+              "id",
+            ],
+            "alias": "org",
+          },
+          "type": "integer",
         },
-        "type": "integer",
       },
-    },
+    ],
     "kind": "create-one",
     "model": "OrgOwner",
     "select": [],
@@ -282,31 +318,40 @@ exports[`custom actions succeeds for basic update with a deny rule 1`] = `
 [
   {
     "alias": "ox",
-    "changeset": {
-      "description": {
-        "fieldsetAccess": [
-          "ox",
-          "description",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "text",
+    "changeset": [
+      {
+        "name": "description",
+        "setter": {
+          "fieldsetAccess": [
+            "ox",
+            "description",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "text",
+        },
       },
-      "extras_id": {
-        "fieldsetAccess": [
-          "ox",
-          "extras_id",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "integer",
+      {
+        "name": "extras_id",
+        "setter": {
+          "fieldsetAccess": [
+            "ox",
+            "extras_id",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "integer",
+        },
       },
-      "name": {
-        "kind": "literal",
-        "type": "text",
-        "value": "new name",
+      {
+        "name": "name",
+        "setter": {
+          "kind": "literal",
+          "type": "text",
+          "value": "new name",
+        },
       },
-    },
+    ],
     "filter": undefined,
     "kind": "update-one",
     "model": "Org",
@@ -322,40 +367,51 @@ exports[`custom actions succeeds with custom inputs 1`] = `
 [
   {
     "alias": "ox",
-    "changeset": {
-      "description": {
-        "fieldsetAccess": [
-          "description",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "text",
-      },
-      "extras": {
-        "fieldsetAccess": [
-          "name",
-        ],
-        "kind": "fieldset-reference-input",
-        "throughField": {
-          "name": "name",
-          "refKey": "OrgExtra.name",
+    "changeset": [
+      {
+        "name": "description",
+        "setter": {
+          "fieldsetAccess": [
+            "ox",
+            "description",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "text",
         },
       },
-      "name": {
-        "kind": "literal",
-        "type": "text",
-        "value": "new name",
+      {
+        "name": "extras",
+        "setter": {
+          "fieldsetAccess": [
+            "ox",
+            "extras_name",
+          ],
+          "kind": "fieldset-reference-input",
+          "throughRefKey": "OrgExtra.name",
+        },
       },
-      "uuid": {
-        "fieldsetAccess": [
-          "ox",
-          "uuid",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "text",
+      {
+        "name": "uuid",
+        "setter": {
+          "fieldsetAccess": [
+            "ox",
+            "uuid",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "text",
+        },
       },
-    },
+      {
+        "name": "name",
+        "setter": {
+          "kind": "literal",
+          "type": "text",
+          "value": "new name",
+        },
+      },
+    ],
     "filter": undefined,
     "kind": "update-one",
     "model": "Org",
@@ -365,4 +421,61 @@ exports[`custom actions succeeds with custom inputs 1`] = `
     ],
   },
 ]
+`;
+
+exports[`custom actions succeeds with nested sibling reference 1`] = `
+[
+  {
+    "alias": "$target_0",
+    "changeset": [
+      {
+        "name": "name",
+        "setter": {
+          "fieldsetAccess": [
+            "name",
+          ],
+          "kind": "fieldset-input",
+          "required": true,
+          "type": "text",
+        },
+      },
+      {
+        "name": "name2",
+        "setter": {
+          "kind": "changeset-reference",
+          "referenceName": "name",
+        },
+      },
+      {
+        "name": "name3",
+        "setter": {
+          "kind": "changeset-reference",
+          "referenceName": "name2",
+        },
+      },
+    ],
+    "kind": "create-one",
+    "model": "Org",
+    "select": [],
+    "targetPath": [
+      "$target_0",
+    ],
+  },
+]
+`;
+
+exports[`custom actions succeeds with nested sibling reference 2`] = `
+{
+  "kind": "record",
+  "nullable": false,
+  "record": {
+    "name": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
+      "type": "text",
+      "validators": [],
+    },
+  },
+}
 `;

@@ -345,26 +345,32 @@ exports[`entrypoint composes basic example 1`] = `
             "actions": [
               {
                 "alias": "repo",
-                "changeset": {
-                  "org_id": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "id",
+                "changeset": [
+                  {
+                    "name": "title",
+                    "setter": {
+                      "fieldsetAccess": [
+                        "title",
                       ],
-                      "alias": "$target_0",
+                      "kind": "fieldset-input",
+                      "required": true,
+                      "type": "text",
                     },
-                    "type": "integer",
                   },
-                  "title": {
-                    "fieldsetAccess": [
-                      "title",
-                    ],
-                    "kind": "fieldset-input",
-                    "required": true,
-                    "type": "text",
+                  {
+                    "name": "org_id",
+                    "setter": {
+                      "kind": "reference-value",
+                      "target": {
+                        "access": [
+                          "id",
+                        ],
+                        "alias": "$target_0",
+                      },
+                      "type": "integer",
+                    },
                   },
-                },
+                ],
                 "kind": "create-one",
                 "model": "Repo",
                 "select": [],

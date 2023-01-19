@@ -307,8 +307,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .flatMap((action) => {
       return _.chain(action.changeset)
-        .toPairs()
-        .map(([name, setter]): null | [string[], FieldsetFieldDef] => {
+        .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
           switch (setter.kind) {
             case "fieldset-input": {
               const field = getRef.field(def, `${action.model}.${name}`);
@@ -324,12 +323,12 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
               ];
             }
             case "fieldset-reference-input": {
-              const field = getRef.field(def, setter.throughField.refKey);
+              const field = getRef.field(def, setter.throughRefKey);
               return [
                 setter.fieldsetAccess,
                 {
                   kind: "field",
-                  required: true, // fixme
+                  required: true, // FIXME
                   nullable: field.nullable,
                   type: field.type,
                   validators: field.validators,
@@ -353,11 +352,13 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
  * desired access path for each `FieldsetFieldDef`.ß
  */
 function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDef {
-  const record = _.chain(paths)
+  const uniqueFieldsetPaths = _.uniqWith(paths, _.isEqual);
+
+  const record = _.chain(uniqueFieldsetPaths)
     .map((p) => p[0][0])
     .uniq()
     .map((name) => {
-      const relatedPaths = paths
+      const relatedPaths = uniqueFieldsetPaths
         .filter((p) => p[0][0] === name)
         .map((p) => [_.tail(p[0]), p[1]] as [string[], FieldsetFieldDef]);
       if (relatedPaths.length === 1 && relatedPaths[0][0].length === 0) {
@@ -413,14 +414,14 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
     .value();
   // collect all targets
   const setterTargets = nonDeleteActions.flatMap((a) => {
-    return Object.values(a.changeset).flatMap((setter) => {
-      switch (setter.kind) {
+    return a.changeset.flatMap(({ setter: operation }) => {
+      switch (operation.kind) {
         case "reference-value": {
-          return [setter.target];
+          return [operation.target];
         }
         case "fieldset-hook": {
-          return Object.values(setter.args).flatMap((setter) =>
-            setter.kind === "reference-value" ? [setter.target] : []
+          return operation.args.flatMap(({ setter: operation }) =>
+            operation.kind === "reference-value" ? [operation.target] : []
           );
         }
         default: {

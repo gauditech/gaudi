@@ -102,6 +102,7 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecRefThrough
   | ActionAtomSpecAction
   | ActionAtomSpecDeny
+  | ActionAtomSpecInputList
   | ActionAtomSpecInput
 >;
 
@@ -120,7 +121,8 @@ export type ActionAtomSpecSet = {
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
-export type ActionAtomSpecInput = { kind: "input"; fields: InputFieldSpec[] };
+export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
+export type ActionAtomSpecInput = { kind: "input"; fieldSpec: InputFieldSpec };
 export type InputFieldSpec = {
   name: string;
   optional: boolean;

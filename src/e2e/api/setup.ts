@@ -20,6 +20,32 @@ import { Definition } from "@src/types/definition";
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
 
+/** Load definition file and return it's content */
+export function loadBlueprint(filePath: string): string {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Blueprint file not found: "${filePath}"`);
+  }
+  return fs.readFileSync(filePath).toString("utf-8");
+}
+
+/** Load populator data rom JSON and parse it to object */
+export function loadPopulatorData(filePath: string): PopulatorData[] {
+  try {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Populator data file not found: "${filePath}"`);
+    }
+
+    const fileContent = fs.readFileSync(filePath).toString("utf-8");
+    return JSON.parse(fileContent);
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      throw new Error(`Populator data is not valid: ${err.message}`);
+    } else {
+      throw err;
+    }
+  }
+}
+
 export function createApiTestSetup(
   config: RuntimeConfig,
   blueprint: string,
@@ -105,7 +131,7 @@ export function createApiTestSetup(
 
 let schemeCounter = 0; // simple schema sequence
 function generateSchemaName() {
-  return `test-${schemeCounter++}`;
+  return `test-${process.pid}-${schemeCounter++}`;
 }
 
 // ----- folders

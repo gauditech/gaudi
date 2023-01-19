@@ -1,6 +1,8 @@
 import { Express, Request, Response } from "express";
 import _, { compact } from "lodash";
 
+import { assignNoReferenceValidators, fetchReferenceIds } from "../common/constraintValidation";
+
 import { Vars } from "./vars";
 
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
@@ -216,13 +218,15 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           console.log("CTX PARAMS", pathParamVars);
           console.log("BODY", body);
 
+          const referenceIds = await fetchReferenceIds(def, dbConn, endpoint.actions, body);
+          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
             def,
             dbConn,
-            { input: validationResult, vars: contextVars },
+            { input: validationResult, vars: contextVars, referenceIds },
             endpoint.actions
           );
 
@@ -289,14 +293,15 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           console.log("BODY", body);
 
           console.log("FIELDSET", endpoint.fieldset);
-
+          const referenceIds = await fetchReferenceIds(def, dbConn, endpoint.actions, body);
+          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
             def,
             dbConn,
-            { input: validationResult, vars: contextVars },
+            { input: validationResult, vars: contextVars, referenceIds },
             endpoint.actions
           );
 

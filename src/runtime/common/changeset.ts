@@ -1,46 +1,85 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
-import { Changeset, FieldDef } from "@src/types/definition";
+import { ChangesetDef, FieldDef, FieldSetter } from "@src/types/definition";
+
+type Changeset = Record<string, unknown>;
 
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
  */
-export function buildChangset(
-  actionChangset: Changeset,
-  actionContext: ActionContext
-): Record<string, any> {
-  return _.chain(actionChangset)
-    .toPairs()
-    .map(([name, setter]) => {
-      // TODO: format values by type
-      const setterKind = setter.kind;
-      if (setterKind === "literal") {
-        return [name, setter.type === "null" ? null : formatFieldValue(setter.value, setter.type)];
-      } else if (setterKind === "fieldset-input") {
-        return [
-          name,
-          formatFieldValue(
-            getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
-            setter.type
-          ),
-        ];
-      } else if (setterKind === "reference-value") {
-        return [name, actionContext.vars.get(setter.target.alias, setter.target.access)];
-      } else if (setterKind === "fieldset-reference-input") {
-        // TODO: implement "fieldset-reference-input" setters
-        throw `Unsupported changeset setter kind "${setterKind}"`;
-      } else if (setterKind === "fieldset-hook") {
-        const args = buildChangset(setter.args, actionContext);
-        return [name, executeHook(setter.code, args)];
-      } else {
-        assertUnreachable(setterKind);
+export function buildChangeset(
+  actionChangsetDefinition: ChangesetDef,
+  actionContext: ActionContext,
+  // `changesetContext` is used for hooks, to be able to pass the "parent context" changeset
+  changesetContext: Changeset = {}
+): Changeset {
+  const changeset: Changeset = {};
+
+  function getValue(setter: FieldSetter): unknown {
+    switch (setter.kind) {
+      case "literal": {
+        return formatFieldValue(setter.value, setter.type);
       }
-    })
-    .fromPairs()
-    .value();
+      case "fieldset-input": {
+        return formatFieldValue(
+          getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
+          setter.type
+        );
+      }
+      case "reference-value": {
+        return actionContext.vars.get(setter.target.alias, setter.target.access);
+      }
+      case "fieldset-hook": {
+        const args = buildChangeset(setter.args, actionContext, changeset);
+        return executeHook(setter.code, args);
+      }
+      case "changeset-reference": {
+        /**
+         * Composer guarantees the correct order of array elements, so `setter.referenceName` should
+         * be in the context and we should be able to return `changeset[setter.referenceName]`.
+         *
+         * However, hooks inherit the action changeset context, but also build their own changeset,
+         * so we need to check which changeset `setter.referenceName` belongs to. In other words,
+         * it's possible that `setter.referenceName in changeset` is `false` when building a hooks changeset,
+         * but in that case we can assume it's in the `changesetContext`.
+         *
+         * NOTE the following code wouldn't work because `undefined` is a valid changeset value:
+         * `return changeset[setter.referenceName] || changesetContext[setter.referenceName];`
+         */
+        if (setter.referenceName in changeset) {
+          return changeset[setter.referenceName];
+        } else {
+          return changesetContext[setter.referenceName];
+        }
+      }
+      case "fieldset-reference-input": {
+        const referenceIdResult = actionContext.referenceIds.find((result) =>
+          _.isEqual(result.fieldsetAccess, setter.fieldsetAccess)
+        );
+        ensureNot(referenceIdResult, undefined);
+        return referenceIdResult.value;
+      }
+      default: {
+        return assertUnreachable(setter);
+      }
+    }
+  }
+
+  actionChangsetDefinition.forEach(({ name, setter }) => {
+    switch (setter.kind) {
+      case "fieldset-reference-input": {
+        changeset[name + "_id"] = getValue(setter);
+        break;
+      }
+      default: {
+        changeset[name] = getValue(setter);
+      }
+    }
+  });
+  return changeset;
 }
 
 /**
@@ -65,9 +104,9 @@ export function buildChangset(
  */
 export function formatFieldValue(
   value: unknown,
-  type: FieldDef["type"]
+  type: FieldDef["type"] | "null"
 ): string | number | boolean | undefined | null {
-  if (value == null) return value;
+  if (_.isNil(value)) return value;
 
   if (type === "boolean") {
     if (isString(value)) {
