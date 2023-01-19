@@ -52,6 +52,7 @@ export function buildChangeset(
         if (setter.referenceName in changeset) {
           return changeset[setter.referenceName];
         } else {
+          ensureEqual(setter.referenceName in changesetContext, true);
           return changesetContext[setter.referenceName];
         }
       }

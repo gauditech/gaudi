@@ -1,3 +1,4 @@
+import { getTypedLiteralValue } from "@src/composer/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
@@ -7,7 +8,13 @@ import {
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
 import { Vars } from "@src/runtime/server/vars";
-import { ChangesetDef } from "@src/types/definition";
+import {
+  ChangesetDef,
+  FieldSetter,
+  FieldSetterChangesetReference,
+  FieldSetterFunction,
+  FunctionName,
+} from "@src/types/definition";
 
 describe("runtime", () => {
   describe("changeset", () => {
@@ -61,6 +68,56 @@ describe("runtime", () => {
       };
 
       expect(buildChangeset(data, context)).toMatchSnapshot();
+    });
+    it("calculate changeset arithmetic operations", () => {
+      const mkRef = (referenceName: string): FieldSetterChangesetReference => ({
+        kind: "changeset-reference",
+        referenceName,
+      });
+      const mkFn = (name: FunctionName, args: FieldSetter[]): FieldSetterFunction => ({
+        kind: "function",
+        name,
+        args,
+      });
+
+      const changeset: ChangesetDef = [
+        { name: "a", setter: getTypedLiteralValue(2) },
+
+        { name: "foo", setter: getTypedLiteralValue("foo1") },
+        { name: "bar", setter: getTypedLiteralValue("bar2") },
+        { name: "is_a", setter: getTypedLiteralValue(true) },
+
+        { name: "plus", setter: mkFn("+", [mkRef("a"), getTypedLiteralValue(4)]) },
+        { name: "minus", setter: mkFn("-", [mkRef("a"), getTypedLiteralValue(-3)]) },
+        { name: "multiply", setter: mkFn("*", [getTypedLiteralValue(6), mkRef("a")]) },
+        { name: "divide", setter: mkFn("/", [getTypedLiteralValue(6), mkRef("a")]) },
+
+        { name: "gt", setter: mkFn(">", [mkRef("a"), getTypedLiteralValue(2)]) },
+        { name: "gte", setter: mkFn(">=", [mkRef("a"), getTypedLiteralValue(2)]) },
+        { name: "lt", setter: mkFn("<", [mkRef("a"), getTypedLiteralValue(2)]) },
+        { name: "lte", setter: mkFn("<=", [mkRef("a"), getTypedLiteralValue(2)]) },
+
+        { name: "and", setter: mkFn("and", [mkRef("is_a"), getTypedLiteralValue(false)]) },
+        { name: "or", setter: mkFn("or", [mkRef("is_a"), getTypedLiteralValue(false)]) },
+
+        { name: "is", setter: mkFn("is", [mkRef("a"), getTypedLiteralValue(4)]) },
+        { name: "is not", setter: mkFn("is not", [mkRef("a"), getTypedLiteralValue(4)]) },
+
+        { name: "in", setter: getTypedLiteralValue("TODO") },
+        { name: "not in", setter: getTypedLiteralValue("TODO") },
+
+        {
+          name: "concat",
+          setter: mkFn("concat", [mkRef("foo"), getTypedLiteralValue(" "), mkRef("bar")]),
+        },
+        { name: "length", setter: mkFn("length", [mkRef("foo")]) },
+      ];
+      const context: ActionContext = {
+        input: {},
+        vars: new Vars(),
+        referenceIds: [],
+      };
+      expect(buildChangeset(changeset, context)).toMatchSnapshot();
     });
   });
 

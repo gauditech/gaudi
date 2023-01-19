@@ -9,3 +9,28 @@ exports[`runtime changeset build action changeset object 1`] = `
   "value_prop": "just value",
 }
 `;
+
+exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
+{
+  "a": 2,
+  "and": false,
+  "bar": "bar2",
+  "concat": "foo1 bar2",
+  "divide": 3,
+  "foo": "foo1",
+  "gt": false,
+  "gte": true,
+  "in": "TODO",
+  "is": false,
+  "is not": true,
+  "is_a": true,
+  "length": 0,
+  "lt": false,
+  "lte": true,
+  "minus": 5,
+  "multiply": 12,
+  "not in": "TODO",
+  "or": true,
+  "plus": 6,
+}
+`;
