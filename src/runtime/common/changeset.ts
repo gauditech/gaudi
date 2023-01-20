@@ -171,7 +171,7 @@ function fnNameToFunction(name: FunctionName): (...args: any[]) => unknown {
     case "concat":
       return (a: unknown[]) => a.join("");
     case "length":
-      return _.toLength;
+      return (value: string) => value.length;
     default:
       return assertUnreachable(name);
   }

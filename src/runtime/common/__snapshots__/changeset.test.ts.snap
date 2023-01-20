@@ -24,7 +24,7 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
   "is": false,
   "is not": true,
   "is_a": true,
-  "length": 0,
+  "length": 4,
   "lt": false,
   "lte": true,
   "minus": 5,
