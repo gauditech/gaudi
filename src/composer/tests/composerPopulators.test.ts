@@ -1,19 +1,24 @@
 import { compile, compose, parse } from "@src/index";
 
-describe("populator", () => {
+describe("populator composer", () => {
   it("succeeds for simple populator", () => {
     const bp = `
     model Org {
       field is_new { type boolean }
       field name { type text }
+      field description { type text }
     }
 
     populator DevData {
       populate Orgs {
         target model Org as org
 
-        set is_new true
-        set name "test name"
+        set is_new true // boolean literal setter
+        set name "test name" // string literal setter
+        set description hook { // hook setter
+          arg name name // (translates to) changeset reference setter
+          inline \`"Description of" + name\`
+        }
       }
     }`;
 
@@ -26,7 +31,6 @@ describe("populator", () => {
   it("succeeds for nested populators", () => {
     const bp = `
     model Org {
-      field is_new { type boolean }
       field name { type text }
 
       relation repos { from Repo, through org }
@@ -49,18 +53,17 @@ describe("populator", () => {
       populate Orgs {
         target model Org as org
 
-        set is_new true
         set name "test name"
 
         populate Repos {
           target relation repos as repo
   
-          set name "test name"
+          set name org.name // nested reference
 
           populate Issues {
             target relation issues as issue
 
-            set title "test title"
+            set title repo.name // nested reference
           }
         }
       }

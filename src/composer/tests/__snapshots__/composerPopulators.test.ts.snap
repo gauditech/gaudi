@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`populator succeeds for fixed iteration 1`] = `
+exports[`populator composer succeeds for fixed iteration 1`] = `
 {
   "name": "DevData",
   "populates": [
@@ -62,7 +62,7 @@ exports[`populator succeeds for fixed iteration 1`] = `
 }
 `;
 
-exports[`populator succeeds for nested iterations 1`] = `
+exports[`populator composer succeeds for nested iterations 1`] = `
 {
   "name": "DevData",
   "populates": [
@@ -196,7 +196,7 @@ exports[`populator succeeds for nested iterations 1`] = `
 }
 `;
 
-exports[`populator succeeds for nested populators 1`] = `
+exports[`populator composer succeeds for nested populators 1`] = `
 {
   "name": "DevData",
   "populates": [
@@ -205,14 +205,6 @@ exports[`populator succeeds for nested populators 1`] = `
         {
           "alias": "org",
           "changeset": [
-            {
-              "name": "is_new",
-              "setter": {
-                "kind": "literal",
-                "type": "boolean",
-                "value": true,
-              },
-            },
             {
               "name": "name",
               "setter": {
@@ -234,6 +226,16 @@ exports[`populator succeeds for nested populators 1`] = `
                 "id",
               ],
               "refKey": "Org.id",
+            },
+            {
+              "alias": "name",
+              "kind": "field",
+              "name": "name",
+              "namePath": [
+                "org",
+                "name",
+              ],
+              "refKey": "Org.name",
             },
           ],
           "targetPath": [
@@ -264,9 +266,14 @@ exports[`populator succeeds for nested populators 1`] = `
                 {
                   "name": "name",
                   "setter": {
-                    "kind": "literal",
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "name",
+                      ],
+                      "alias": "org",
+                    },
                     "type": "text",
-                    "value": "test name",
                   },
                 },
               ],
@@ -282,6 +289,16 @@ exports[`populator succeeds for nested populators 1`] = `
                     "id",
                   ],
                   "refKey": "Repo.id",
+                },
+                {
+                  "alias": "name",
+                  "kind": "field",
+                  "name": "name",
+                  "namePath": [
+                    "repo",
+                    "name",
+                  ],
+                  "refKey": "Repo.name",
                 },
               ],
               "targetPath": [
@@ -312,9 +329,14 @@ exports[`populator succeeds for nested populators 1`] = `
                     {
                       "name": "title",
                       "setter": {
-                        "kind": "literal",
+                        "kind": "reference-value",
+                        "target": {
+                          "access": [
+                            "name",
+                          ],
+                          "alias": "repo",
+                        },
                         "type": "text",
-                        "value": "test title",
                       },
                     },
                   ],
@@ -400,7 +422,7 @@ exports[`populator succeeds for nested populators 1`] = `
 }
 `;
 
-exports[`populator succeeds for range iteration (only max) 1`] = `
+exports[`populator composer succeeds for range iteration (only max) 1`] = `
 {
   "name": "DevData",
   "populates": [
@@ -462,7 +484,7 @@ exports[`populator succeeds for range iteration (only max) 1`] = `
 }
 `;
 
-exports[`populator succeeds for range iteration 1`] = `
+exports[`populator composer succeeds for range iteration 1`] = `
 {
   "name": "DevData",
   "populates": [
@@ -524,7 +546,7 @@ exports[`populator succeeds for range iteration 1`] = `
 }
 `;
 
-exports[`populator succeeds for simple populator 1`] = `
+exports[`populator composer succeeds for simple populator 1`] = `
 {
   "name": "DevData",
   "populates": [
@@ -547,6 +569,25 @@ exports[`populator succeeds for simple populator 1`] = `
                 "kind": "literal",
                 "type": "text",
                 "value": "test name",
+              },
+            },
+            {
+              "name": "description",
+              "setter": {
+                "args": [
+                  {
+                    "name": "name",
+                    "setter": {
+                      "kind": "changeset-reference",
+                      "referenceName": "name",
+                    },
+                  },
+                ],
+                "code": {
+                  "inline": ""Description of" + name",
+                  "kind": "inline",
+                },
+                "kind": "fieldset-hook",
               },
             },
           ],
