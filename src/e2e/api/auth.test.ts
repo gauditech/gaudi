@@ -62,5 +62,19 @@ describe("Auth", () => {
         .set("Authorization", "bearer " + token);
       expect(secondLogoutResponse.statusCode).toBe(401);
     });
+
+    it("Wrong Login password", async () => {
+      const loginResponse = await request(getServer())
+        .post("/auth/login")
+        .send({ username: "first", password: "wrong password" });
+      expect(loginResponse.statusCode).toBe(401);
+    });
+
+    it("Wrong Login username", async () => {
+      const loginResponse = await request(getServer())
+        .post("/auth/login")
+        .send({ username: "wrong username", password: "1234" });
+      expect(loginResponse.statusCode).toBe(401);
+    });
   });
 });
