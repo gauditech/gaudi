@@ -44,7 +44,8 @@ export function executeHook(code: HookCode, args: Record<string, unknown>) {
     case "inline": {
       const argString = Object.entries(args)
         .map(([name, value]) => `const ${name} = ${JSON.stringify(value)};`)
-        .join();
+        .join("");
+
       return eval(`${argString}${code.inline}`);
     }
     case "source": {
