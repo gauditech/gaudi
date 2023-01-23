@@ -228,5 +228,7 @@ export type RepeaterAST = WithContext<{
 }>;
 
 export type RepeaterAtomAST = WithContext<
-  { kind: "fixed"; value: number } | { kind: "min"; value: number } | { kind: "max"; value: number }
+  | { kind: "fixed"; value: number }
+  | { kind: "start"; value: number }
+  | { kind: "end"; value: number }
 >;

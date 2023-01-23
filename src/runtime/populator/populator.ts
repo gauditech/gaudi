@@ -103,7 +103,7 @@ async function processPopulate(
 ) {
   const repeater = populate.repeater;
   const repeaterAlias = repeater.alias;
-  const iterator = createIterator(repeater.min, repeater.max);
+  const iterator = createIterator(repeater.start, repeater.end);
 
   for (const iter of iterator) {
     // each iteration has it's own context which prepopulated from parent context

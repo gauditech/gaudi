@@ -270,5 +270,5 @@ Gaudi {
     | "{" NonemptyNewlineBody<RepeaterRangeAtom, ","> "}" -- range
 
   RepeaterRangeAtom
-    = ("min" | "max") integer -- limits
+    = ("start" | "end") integer -- limits
 }

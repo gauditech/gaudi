@@ -137,7 +137,7 @@ export type BaseHookSpec = WithContext<{
 
 export type RepeaterSpec = WithContext<
   | { kind: "fixed"; alias?: string; value: number }
-  | { kind: "range"; alias?: string; range: { min?: number; max?: number } }
+  | { kind: "range"; alias?: string; range: { start?: number; end?: number } }
 >;
 
 export type PopulatorSpec = WithContext<{

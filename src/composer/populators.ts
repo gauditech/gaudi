@@ -132,7 +132,7 @@ function checkActionChangeset(action: ActionDef | ActionDef[]) {
 function composeRepeater(repeat?: RepeaterSpec): RepeaterDef {
   // if empty, default to 1s
   if (repeat == null) {
-    return { min: 1, max: 1 };
+    return { start: 1, end: 1 };
   }
 
   const repeatKind = repeat.kind;
@@ -142,18 +142,18 @@ function composeRepeater(repeat?: RepeaterSpec): RepeaterDef {
     // make sure counter is greater than zero
     ensureNot(count <= 0, true);
 
-    return { alias: repeat.alias, min: count, max: count };
+    return { alias: repeat.alias, start: count, end: count };
   } else if (repeatKind === "range") {
     const range = repeat.range;
-    const max = range.max || 1;
-    const min = range.min || max;
+    const end = range.end || 1;
+    const start = range.start || end;
 
     // make sure min is greater than zero
-    ensureNot(min <= 0, true);
-    // make sure min not greater than max
-    ensureNot(min > max, true);
+    ensureNot(start <= 0, true);
+    // make sure min not greater than end
+    ensureNot(start > end, true);
 
-    return { alias: repeat.alias, min, max };
+    return { alias: repeat.alias, start, end };
   } else {
     assertUnreachable(repeatKind);
   }

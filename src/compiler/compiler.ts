@@ -464,17 +464,17 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
       identify = p.identifier;
     } else if (kind === "repeat") {
       let fixed: number | undefined;
-      let range: { min?: number; max?: number } | undefined;
+      let range: { start?: number; end?: number } | undefined;
       p.repeat.atoms.forEach((a) => {
         const kind = a.kind;
         if (kind === "fixed") {
           fixed = a.value;
-        } else if (kind === "min") {
+        } else if (kind === "start") {
           range = range ?? {};
-          range.min = a.value;
-        } else if (kind === "max") {
+          range.start = a.value;
+        } else if (kind === "end") {
           range = range ?? {};
-          range.max = a.value;
+          range.end = a.value;
         } else {
           assertUnreachable(kind);
         }

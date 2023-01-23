@@ -38,8 +38,8 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
       "populates": [],
       "repeater": {
         "alias": undefined,
-        "max": 5,
-        "min": 5,
+        "end": 5,
+        "start": 5,
       },
       "target": {
         "alias": "org",
@@ -148,8 +148,8 @@ exports[`populator composer succeeds for nested iterations 1`] = `
           "populates": [],
           "repeater": {
             "alias": undefined,
-            "max": 2000,
-            "min": 20,
+            "end": 2000,
+            "start": 20,
           },
           "target": {
             "alias": "repo",
@@ -172,8 +172,8 @@ exports[`populator composer succeeds for nested iterations 1`] = `
       ],
       "repeater": {
         "alias": undefined,
-        "max": 4,
-        "min": 4,
+        "end": 4,
+        "start": 4,
       },
       "target": {
         "alias": "org",
@@ -351,8 +351,8 @@ exports[`populator composer succeeds for nested populators 1`] = `
               "name": "Issues",
               "populates": [],
               "repeater": {
-                "max": 1,
-                "min": 1,
+                "end": 1,
+                "start": 1,
               },
               "target": {
                 "alias": "issue",
@@ -375,8 +375,8 @@ exports[`populator composer succeeds for nested populators 1`] = `
             },
           ],
           "repeater": {
-            "max": 1,
-            "min": 1,
+            "end": 1,
+            "start": 1,
           },
           "target": {
             "alias": "repo",
@@ -398,8 +398,8 @@ exports[`populator composer succeeds for nested populators 1`] = `
         },
       ],
       "repeater": {
-        "max": 1,
-        "min": 1,
+        "end": 1,
+        "start": 1,
       },
       "target": {
         "alias": "org",
@@ -422,7 +422,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
 }
 `;
 
-exports[`populator composer succeeds for range iteration (only max) 1`] = `
+exports[`populator composer succeeds for range iteration (only end) 1`] = `
 {
   "name": "DevData",
   "populates": [
@@ -460,8 +460,8 @@ exports[`populator composer succeeds for range iteration (only max) 1`] = `
       "populates": [],
       "repeater": {
         "alias": undefined,
-        "max": 3,
-        "min": 3,
+        "end": 3,
+        "start": 3,
       },
       "target": {
         "alias": "org",
@@ -522,8 +522,8 @@ exports[`populator composer succeeds for range iteration 1`] = `
       "populates": [],
       "repeater": {
         "alias": undefined,
-        "max": 3,
-        "min": 1,
+        "end": 3,
+        "start": 1,
       },
       "target": {
         "alias": "org",
@@ -602,8 +602,8 @@ exports[`populator composer succeeds for simple populator 1`] = `
       "name": "Orgs",
       "populates": [],
       "repeater": {
-        "max": 1,
-        "min": 1,
+        "end": 1,
+        "start": 1,
       },
       "target": {
         "alias": "org",

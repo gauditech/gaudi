@@ -592,7 +592,7 @@ semantics.addOperation("parse()", {
   },
   RepeaterRangeAtom_limits(this, boundary, interval): RepeaterAtomAST {
     return {
-      kind: boundary.sourceString as "min" | "max",
+      kind: boundary.sourceString as "start" | "end",
       value: interval.parse(),
     };
   },

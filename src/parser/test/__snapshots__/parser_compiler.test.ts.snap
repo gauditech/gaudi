@@ -899,15 +899,15 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 "alias": undefined,
                 "kind": "range",
                 "range": {
-                  "max": 100,
-                  "min": 0,
+                  "end": 100,
+                  "start": 0,
                 },
               },
               "setters": [
                 {
                   "interval": {
-                    "endIdx": 320,
-                    "startIdx": 304,
+                    "endIdx": 322,
+                    "startIdx": 306,
                   },
                   "kind": "set",
                   "set": {
@@ -918,8 +918,8 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 },
                 {
                   "interval": {
-                    "endIdx": 348,
-                    "startIdx": 327,
+                    "endIdx": 350,
+                    "startIdx": 329,
                   },
                   "kind": "set",
                   "set": {
@@ -930,8 +930,8 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 },
                 {
                   "interval": {
-                    "endIdx": 373,
-                    "startIdx": 355,
+                    "endIdx": 375,
+                    "startIdx": 357,
                   },
                   "kind": "set",
                   "set": {
@@ -942,8 +942,8 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 },
                 {
                   "interval": {
-                    "endIdx": 397,
-                    "startIdx": 380,
+                    "endIdx": 399,
+                    "startIdx": 382,
                   },
                   "kind": "set",
                   "set": {
@@ -967,8 +967,8 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "setters": [
                 {
                   "interval": {
-                    "endIdx": 514,
-                    "startIdx": 498,
+                    "endIdx": 516,
+                    "startIdx": 500,
                   },
                   "kind": "set",
                   "set": {
@@ -979,8 +979,8 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 },
                 {
                   "interval": {
-                    "endIdx": 541,
-                    "startIdx": 521,
+                    "endIdx": 543,
+                    "startIdx": 523,
                   },
                   "kind": "set",
                   "set": {
@@ -1070,8 +1070,8 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                 "alias": "iter2",
                 "kind": "range",
                 "range": {
-                  "max": 100,
-                  "min": 0,
+                  "end": 100,
+                  "start": 0,
                 },
               },
               "setters": [],

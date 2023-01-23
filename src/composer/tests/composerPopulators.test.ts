@@ -110,7 +110,7 @@ describe("populator composer", () => {
       populate Orgs {
         target model Org as org
 
-        repeat { min 1, max 3 }
+        repeat { start 1, end 3 }
 
         set is_new true
         set name "test name"
@@ -123,7 +123,7 @@ describe("populator composer", () => {
     expect(populator).toMatchSnapshot();
   });
 
-  it("succeeds for range iteration (only max)", () => {
+  it("succeeds for range iteration (only end)", () => {
     const bp = `
     model Org {
       field is_new { type boolean }
@@ -134,7 +134,7 @@ describe("populator composer", () => {
       populate Orgs {
         target model Org as org
 
-        repeat { max 3 }
+        repeat { end 3 }
 
         set is_new true
         set name "test name"
@@ -174,7 +174,7 @@ describe("populator composer", () => {
         populate repos {
           target relation repos as repo
 
-          repeat { min 20, max 2000 }
+          repeat { start 20, end 2000 }
           
           set name "test name"
         }
