@@ -297,17 +297,6 @@ exports[`populator succeeds for nested populators 1`] = `
                   "alias": "issue",
                   "changeset": [
                     {
-                      "name": "org_id",
-                      "setter": {
-                        "fieldsetAccess": [
-                          "org_id",
-                        ],
-                        "kind": "fieldset-input",
-                        "required": true,
-                        "type": "integer",
-                      },
-                    },
-                    {
                       "name": "repo_id",
                       "setter": {
                         "kind": "reference-value",

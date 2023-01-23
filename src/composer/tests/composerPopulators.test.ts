@@ -30,7 +30,6 @@ describe("populator", () => {
       field name { type text }
 
       relation repos { from Repo, through org }
-      relation issues { from Issue, through org }
     }
 
     model Repo {
@@ -44,7 +43,6 @@ describe("populator", () => {
       field title { type text }
 
       reference repo { to Repo }
-      reference org { to Org }
     }
 
     populator DevData {
@@ -184,5 +182,27 @@ describe("populator", () => {
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();
+  });
+
+  it("fails when missing field setter", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      field description { type text }
+      field active { type boolean }
+    }
+
+    populator DevData {
+      populate Orgs {
+        target model Org as org
+
+        set name "test name"
+        // missing field setters for "description" and "active" fields
+      }
+    }`;
+
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Action create-one "org" is missing setters for fields: description,active"`
+    );
   });
 });

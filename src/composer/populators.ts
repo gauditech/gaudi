@@ -48,6 +48,7 @@ function processPopulate(
   const targetParents: ParentContext[] = [...parents, currentContext];
 
   const rawActions = composeAction(def, populateSpec, targetParents);
+  checkActionChangeset(rawActions);
   const populates = populateSpec.populates.map((p) => processPopulate(def, targetParents, p));
   const subactions = populates.flatMap((p) => p.actions);
 
@@ -86,6 +87,46 @@ function composeAction(
   };
 
   return composeActionBlock(def, [actionSpec], targets, "create");
+}
+
+/**
+ * Check that action changeset contains setters for all fields.
+ *
+ * Populator cannot handle fieldset input setters and all fields must be set using manually (literal, reference, hook, ...)
+ * NOTE: this can create problems on models that have diamond shaped relations eg.
+ *      Org
+ *     /  |
+ * Repo   |
+ *    |   /
+ *   Issue
+ *
+ * "issue" create action's changeset will contain reference setter for "repo_id" and input setter for "org_id"
+ * which will fail in this check.
+ */
+function checkActionChangeset(action: ActionDef | ActionDef[]) {
+  const inputSetters: string[] = [];
+  _.castArray(action).forEach((action) => {
+    if (action.kind === "create-one" || action.kind === "update-one") {
+      action.changeset.forEach((operation) => {
+        // search for input setters
+        if (
+          operation.setter.kind === "fieldset-input" ||
+          operation.setter.kind === "fieldset-reference-input"
+        ) {
+          inputSetters.push(operation.name);
+        }
+      });
+    }
+
+    // throw error if changeset contains input setters
+    if (inputSetters.length > 0) {
+      throw new Error(
+        `Action ${action.kind} "${action.targetPath.join(
+          "."
+        )}" is missing setters for fields: ${inputSetters.join()}`
+      );
+    }
+  });
 }
 
 function composeRepeater(repeat?: RepeaterSpec): RepeaterDef {
