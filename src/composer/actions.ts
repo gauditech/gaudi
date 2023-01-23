@@ -194,6 +194,10 @@ function composeSingleAction(
               };
             } else {
               // fallback to resolving reference from context
+              /*
+               * NOTE: fallbacking to context-reference is dangerous because it will swallow any invalid reference and we will not know it until runtime
+               * we should check  expected references and still fallback to throwing exception
+               */
               return {
                 name: atom.target,
                 setter: { kind: "context-reference", referenceName: siblingName },
@@ -481,7 +485,6 @@ function actionFromParts(
 ): ActionDef {
   // FIXME come up with an alias in case of nested actions
   const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias!;
-  console.log("ALIAS", alias, target.alias, spec.alias);
 
   switch (spec.kind) {
     case "create": {
