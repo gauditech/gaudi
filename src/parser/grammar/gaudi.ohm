@@ -251,7 +251,7 @@ Gaudi {
   PopulateBody
     = "target" ("model" | "relation") IdentifierWithAs -- target
     | "identify" "with" identifier -- identify
-    | "repeat" PopulateRepeat -- repeat
+    | "repeat" Repeater -- repeat
     | "set" identifier PopulateSetterValue -- setter
     | Populate -- populate
 
@@ -261,11 +261,14 @@ Gaudi {
     | IdentifierPath -- reference
     // TODO: hints
 
-  PopulateRepeat
+  Repeater
+   = RepeaterBody "as" identifier -- aliased
+   | RepeaterBody -- anonymous
+
+  RepeaterBody
     = integer -- fixed
-    | "{" NonemptyNewlineBody<PopulateRepeatRange, ","> "}" -- range
-  
-  PopulateRepeatRange
-    = "min" integer -- min
-    | "max" integer -- max
+    | "{" NonemptyNewlineBody<RepeaterRangeAtom, ","> "}" -- range
+
+  RepeaterRangeAtom
+    = ("min" | "max") integer -- limits
 }

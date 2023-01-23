@@ -210,7 +210,7 @@ export type PopulateAST = WithContext<{
 export type PopulateBodyAST = WithContext<
   | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
   | { kind: "identify"; identifier: string }
-  | { kind: "repeat"; repeat: PopulateRepeatAST }
+  | { kind: "repeat"; repeat: RepeaterAST }
   | { kind: "set"; target: string; set: PopulateSetterValueAST }
   | { kind: "populate"; populate: PopulateAST }
   // TODO: hints
@@ -222,11 +222,11 @@ export type PopulateSetterValueAST = WithContext<
   | { kind: "hook"; hook: HookAST }
 >;
 
-export type PopulateRepeatAST = WithContext<
-  | { kind: "fixed"; alias?: string; value: number }
-  | { kind: "range"; alias?: string; range: PopulateRepeatRangeAST[] }
->;
+export type RepeaterAST = WithContext<{
+  alias?: string;
+  atoms: RepeaterAtomAST[];
+}>;
 
-export type PopulateRepeatRangeAST = WithContext<
-  { kind: "min"; value: number } | { kind: "max"; value: number }
+export type RepeaterAtomAST = WithContext<
+  { kind: "fixed"; value: number } | { kind: "min"; value: number } | { kind: "max"; value: number }
 >;

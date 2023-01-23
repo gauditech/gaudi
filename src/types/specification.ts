@@ -123,6 +123,7 @@ export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; thro
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
 export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
 export type ActionAtomSpecInput = { kind: "input"; fieldSpec: InputFieldSpec };
+
 export type InputFieldSpec = {
   name: string;
   optional: boolean;
@@ -134,6 +135,11 @@ export type BaseHookSpec = WithContext<{
   code: HookCode;
 }>;
 
+export type RepeaterSpec = WithContext<
+  | { kind: "fixed"; alias?: string; value: number }
+  | { kind: "range"; alias?: string; range: { min?: number; max?: number } }
+>;
+
 export type PopulatorSpec = WithContext<{
   name: string;
   populates: PopulateSpec[];
@@ -143,15 +149,10 @@ export type PopulateSpec = WithContext<{
   name: string;
   target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
-  repeat?: PopulateRepeatSpec;
   setters: PopulateSetterSpec[];
   populates: PopulateSpec[];
+  repeater?: RepeaterSpec;
 }>;
-
-export type PopulateRepeatSpec = WithContext<
-  | { kind: "fixed"; alias?: string; value: number }
-  | { kind: "range"; alias?: string; range: { min?: number; max?: number } }
->;
 
 export type PopulateSetterSpec = WithContext<{
   kind: "set";

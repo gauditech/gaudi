@@ -5,26 +5,50 @@ exports[`populator succeeds for fixed iteration 1`] = `
   "name": "DevData",
   "populates": [
     {
-      "changeset": {
-        "is_new": {
-          "kind": "literal",
-          "type": "boolean",
-          "value": true,
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "is_new",
+              "setter": {
+                "kind": "literal",
+                "type": "boolean",
+                "value": true,
+              },
+            },
+            {
+              "name": "name",
+              "setter": {
+                "kind": "literal",
+                "type": "text",
+                "value": "test name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [],
+          "targetPath": [
+            "org",
+          ],
         },
-        "name": {
-          "kind": "literal",
-          "type": "text",
-          "value": "test name",
-        },
-      },
+      ],
       "name": "Orgs",
       "populates": [],
-      "repeat": {
+      "repeater": {
+        "alias": undefined,
         "max": 5,
         "min": 5,
       },
       "target": {
         "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
         "kind": "model",
         "name": "Org",
         "namePath": [
@@ -43,46 +67,98 @@ exports[`populator succeeds for nested iterations 1`] = `
   "name": "DevData",
   "populates": [
     {
-      "changeset": {
-        "is_new": {
-          "kind": "literal",
-          "type": "boolean",
-          "value": true,
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "is_new",
+              "setter": {
+                "kind": "literal",
+                "type": "boolean",
+                "value": true,
+              },
+            },
+            {
+              "name": "name",
+              "setter": {
+                "kind": "literal",
+                "type": "text",
+                "value": "test name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [
+            {
+              "alias": "id",
+              "kind": "field",
+              "name": "id",
+              "namePath": [
+                "org",
+                "id",
+              ],
+              "refKey": "Org.id",
+            },
+          ],
+          "targetPath": [
+            "org",
+          ],
         },
-        "name": {
-          "kind": "literal",
-          "type": "text",
-          "value": "test name",
-        },
-      },
+      ],
       "name": "Orgs",
       "populates": [
         {
-          "changeset": {
-            "name": {
-              "kind": "literal",
-              "type": "text",
-              "value": "test name",
+          "actions": [
+            {
+              "alias": "repo",
+              "changeset": [
+                {
+                  "name": "org_id",
+                  "setter": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "id",
+                      ],
+                      "alias": "org",
+                    },
+                    "type": "integer",
+                  },
+                },
+                {
+                  "name": "name",
+                  "setter": {
+                    "kind": "literal",
+                    "type": "text",
+                    "value": "test name",
+                  },
+                },
+              ],
+              "kind": "create-one",
+              "model": "Repo",
+              "select": [],
+              "targetPath": [
+                "repo",
+              ],
             },
-            "org_id": {
-              "kind": "reference-value",
-              "target": {
-                "access": [
-                  "id",
-                ],
-                "alias": "org",
-              },
-              "type": "integer",
-            },
-          },
+          ],
           "name": "repos",
           "populates": [],
-          "repeat": {
+          "repeater": {
+            "alias": undefined,
             "max": 2000,
             "min": 20,
           },
           "target": {
             "alias": "repo",
+            "identifyWith": {
+              "name": "id",
+              "paramName": "repo_id",
+              "refKey": "Repo.id",
+              "type": "integer",
+            },
             "kind": "relation",
             "name": "repos",
             "namePath": [
@@ -94,12 +170,19 @@ exports[`populator succeeds for nested iterations 1`] = `
           },
         },
       ],
-      "repeat": {
+      "repeater": {
+        "alias": undefined,
         "max": 4,
         "min": 4,
       },
       "target": {
         "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
         "kind": "model",
         "name": "Org",
         "namePath": [
@@ -118,66 +201,156 @@ exports[`populator succeeds for nested populators 1`] = `
   "name": "DevData",
   "populates": [
     {
-      "changeset": {
-        "is_new": {
-          "kind": "literal",
-          "type": "boolean",
-          "value": true,
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "is_new",
+              "setter": {
+                "kind": "literal",
+                "type": "boolean",
+                "value": true,
+              },
+            },
+            {
+              "name": "name",
+              "setter": {
+                "kind": "literal",
+                "type": "text",
+                "value": "test name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [
+            {
+              "alias": "id",
+              "kind": "field",
+              "name": "id",
+              "namePath": [
+                "org",
+                "id",
+              ],
+              "refKey": "Org.id",
+            },
+          ],
+          "targetPath": [
+            "org",
+          ],
         },
-        "name": {
-          "kind": "literal",
-          "type": "text",
-          "value": "test name",
-        },
-      },
+      ],
       "name": "Orgs",
       "populates": [
         {
-          "changeset": {
-            "name": {
-              "kind": "literal",
-              "type": "text",
-              "value": "test name",
+          "actions": [
+            {
+              "alias": "repo",
+              "changeset": [
+                {
+                  "name": "org_id",
+                  "setter": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "id",
+                      ],
+                      "alias": "org",
+                    },
+                    "type": "integer",
+                  },
+                },
+                {
+                  "name": "name",
+                  "setter": {
+                    "kind": "literal",
+                    "type": "text",
+                    "value": "test name",
+                  },
+                },
+              ],
+              "kind": "create-one",
+              "model": "Repo",
+              "select": [
+                {
+                  "alias": "id",
+                  "kind": "field",
+                  "name": "id",
+                  "namePath": [
+                    "repo",
+                    "id",
+                  ],
+                  "refKey": "Repo.id",
+                },
+              ],
+              "targetPath": [
+                "repo",
+              ],
             },
-            "org_id": {
-              "kind": "reference-value",
-              "target": {
-                "access": [
-                  "id",
-                ],
-                "alias": "org",
-              },
-              "type": "integer",
-            },
-          },
+          ],
           "name": "Repos",
           "populates": [
             {
-              "changeset": {
-                "repo_id": {
-                  "kind": "reference-value",
-                  "target": {
-                    "access": [
-                      "id",
-                    ],
-                    "alias": "repo",
-                  },
-                  "type": "integer",
+              "actions": [
+                {
+                  "alias": "issue",
+                  "changeset": [
+                    {
+                      "name": "org_id",
+                      "setter": {
+                        "fieldsetAccess": [
+                          "org_id",
+                        ],
+                        "kind": "fieldset-input",
+                        "required": true,
+                        "type": "integer",
+                      },
+                    },
+                    {
+                      "name": "repo_id",
+                      "setter": {
+                        "kind": "reference-value",
+                        "target": {
+                          "access": [
+                            "id",
+                          ],
+                          "alias": "repo",
+                        },
+                        "type": "integer",
+                      },
+                    },
+                    {
+                      "name": "title",
+                      "setter": {
+                        "kind": "literal",
+                        "type": "text",
+                        "value": "test title",
+                      },
+                    },
+                  ],
+                  "kind": "create-one",
+                  "model": "Issue",
+                  "select": [],
+                  "targetPath": [
+                    "issue",
+                  ],
                 },
-                "title": {
-                  "kind": "literal",
-                  "type": "text",
-                  "value": "test title",
-                },
-              },
+              ],
               "name": "Issues",
               "populates": [],
-              "repeat": {
+              "repeater": {
                 "max": 1,
                 "min": 1,
               },
               "target": {
                 "alias": "issue",
+                "identifyWith": {
+                  "name": "id",
+                  "paramName": "issue_id",
+                  "refKey": "Issue.id",
+                  "type": "integer",
+                },
                 "kind": "relation",
                 "name": "issues",
                 "namePath": [
@@ -190,12 +363,18 @@ exports[`populator succeeds for nested populators 1`] = `
               },
             },
           ],
-          "repeat": {
+          "repeater": {
             "max": 1,
             "min": 1,
           },
           "target": {
             "alias": "repo",
+            "identifyWith": {
+              "name": "id",
+              "paramName": "repo_id",
+              "refKey": "Repo.id",
+              "type": "integer",
+            },
             "kind": "relation",
             "name": "repos",
             "namePath": [
@@ -207,12 +386,18 @@ exports[`populator succeeds for nested populators 1`] = `
           },
         },
       ],
-      "repeat": {
+      "repeater": {
         "max": 1,
         "min": 1,
       },
       "target": {
         "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
         "kind": "model",
         "name": "Org",
         "namePath": [
@@ -231,26 +416,50 @@ exports[`populator succeeds for range iteration (only max) 1`] = `
   "name": "DevData",
   "populates": [
     {
-      "changeset": {
-        "is_new": {
-          "kind": "literal",
-          "type": "boolean",
-          "value": true,
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "is_new",
+              "setter": {
+                "kind": "literal",
+                "type": "boolean",
+                "value": true,
+              },
+            },
+            {
+              "name": "name",
+              "setter": {
+                "kind": "literal",
+                "type": "text",
+                "value": "test name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [],
+          "targetPath": [
+            "org",
+          ],
         },
-        "name": {
-          "kind": "literal",
-          "type": "text",
-          "value": "test name",
-        },
-      },
+      ],
       "name": "Orgs",
       "populates": [],
-      "repeat": {
+      "repeater": {
+        "alias": undefined,
         "max": 3,
         "min": 3,
       },
       "target": {
         "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
         "kind": "model",
         "name": "Org",
         "namePath": [
@@ -269,26 +478,50 @@ exports[`populator succeeds for range iteration 1`] = `
   "name": "DevData",
   "populates": [
     {
-      "changeset": {
-        "is_new": {
-          "kind": "literal",
-          "type": "boolean",
-          "value": true,
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "is_new",
+              "setter": {
+                "kind": "literal",
+                "type": "boolean",
+                "value": true,
+              },
+            },
+            {
+              "name": "name",
+              "setter": {
+                "kind": "literal",
+                "type": "text",
+                "value": "test name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [],
+          "targetPath": [
+            "org",
+          ],
         },
-        "name": {
-          "kind": "literal",
-          "type": "text",
-          "value": "test name",
-        },
-      },
+      ],
       "name": "Orgs",
       "populates": [],
-      "repeat": {
+      "repeater": {
+        "alias": undefined,
         "max": 3,
         "min": 1,
       },
       "target": {
         "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
         "kind": "model",
         "name": "Org",
         "namePath": [
@@ -307,26 +540,49 @@ exports[`populator succeeds for simple populator 1`] = `
   "name": "DevData",
   "populates": [
     {
-      "changeset": {
-        "is_new": {
-          "kind": "literal",
-          "type": "boolean",
-          "value": true,
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "is_new",
+              "setter": {
+                "kind": "literal",
+                "type": "boolean",
+                "value": true,
+              },
+            },
+            {
+              "name": "name",
+              "setter": {
+                "kind": "literal",
+                "type": "text",
+                "value": "test name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [],
+          "targetPath": [
+            "org",
+          ],
         },
-        "name": {
-          "kind": "literal",
-          "type": "text",
-          "value": "test name",
-        },
-      },
+      ],
       "name": "Orgs",
       "populates": [],
-      "repeat": {
+      "repeater": {
         "max": 1,
         "min": 1,
       },
       "target": {
         "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
         "kind": "model",
         "name": "Org",
         "namePath": [

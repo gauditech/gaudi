@@ -182,10 +182,10 @@ function composeSingleAction(
             if (path[0] === simpleSpec.alias) {
               ensureEqual(path.length, 2);
             } else {
-              ensureEqual(path.length, 1);
+              ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
             }
             const siblingName = _.last(path)!;
-            // check if sibling name is defined in th echangeset
+            // check if sibling name is defined in the changeset
             const siblingOp = _.find(changeset, { name: siblingName });
             if (siblingOp) {
               return {
@@ -193,7 +193,12 @@ function composeSingleAction(
                 setter: { kind: "changeset-reference", referenceName: siblingName },
               };
             } else {
-              throw ["unresolved", path];
+              // fallback to resolving reference from context
+              return {
+                name: atom.target,
+                setter: { kind: "context-reference", referenceName: siblingName },
+              };
+              // throw ["unresolved", path];
             }
           }
           case "success": {
@@ -283,7 +288,7 @@ function composeSingleAction(
   // TODO ensure changeset has covered every non-optional field in the model!
 
   // Build the desired `ActionDef`.
-  return actionFromParts(simpleSpec, actionTargetScope, target, model, changeset);
+  return actionFromParts(spec, actionTargetScope, target, model, changeset);
 }
 
 /**

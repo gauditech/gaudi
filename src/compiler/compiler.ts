@@ -36,13 +36,13 @@ import {
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,
-  PopulateRepeatSpec,
   PopulateSetterSpec,
   PopulateSpec,
   PopulatorSpec,
   QuerySpec,
   ReferenceSpec,
   RelationSpec,
+  RepeaterSpec,
   Specification,
   ValidatorSpec,
 } from "@src/types/specification";
@@ -452,7 +452,7 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
   const name = populate.name;
   let target: PopulateSpec["target"] | undefined;
   let identify: string | undefined;
-  let repeat: PopulateRepeatSpec | undefined;
+  let repeater: RepeaterSpec | undefined;
   const setters: PopulateSetterSpec[] = [];
   const populates: PopulateSpec[] = [];
 
@@ -463,21 +463,42 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
     } else if (kind === "identify") {
       identify = p.identifier;
     } else if (kind === "repeat") {
-      if (p.repeat.kind === "fixed") {
-        repeat = {
+      let fixed: number | undefined;
+      let range: { min?: number; max?: number } | undefined;
+      p.repeat.atoms.forEach((a) => {
+        const kind = a.kind;
+        if (kind === "fixed") {
+          fixed = a.value;
+        } else if (kind === "min") {
+          range = range ?? {};
+          range.min = a.value;
+        } else if (kind === "max") {
+          range = range ?? {};
+          range.max = a.value;
+        } else {
+          assertUnreachable(kind);
+        }
+      });
+      if (fixed != null && range != null) {
+        throw new CompilerError(
+          `Action repeat contains both fixed and range values: ${p.interval}`
+        );
+      }
+
+      if (fixed != null) {
+        repeater = {
           kind: "fixed",
           alias: p.repeat.alias,
-          value: p.repeat.value,
+          value: fixed,
         };
-      } else {
-        repeat = {
+      } else if (range != null) {
+        repeater = {
           kind: "range",
           alias: p.repeat.alias,
-          range: _.chain(p.repeat.range)
-            .map((r) => [r.kind, r.value])
-            .fromPairs()
-            .value(),
+          range,
         };
+      } else {
+        throw new CompilerError(`Action repeat contains no values: ${p.interval}`);
       }
     } else if (kind === "set") {
       const set =
@@ -499,7 +520,7 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
     name,
     target,
     identify,
-    repeat,
+    repeater,
     setters,
     populates,
   };

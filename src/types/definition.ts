@@ -448,10 +448,10 @@ export type PopulatorDef = {
 
 export type PopulateDef = {
   name: string;
-  target: PopulateTargetDef;
-  repeat: PopulateRepeatDef;
-  changeset: PopulateChangeset;
+  target: TargetDef;
+  actions: ActionDef[];
   populates: PopulateDef[];
+  repeater: RepeaterDef;
 };
 
 export type PopulateTargetDef = {
@@ -463,7 +463,7 @@ export type PopulateTargetDef = {
   alias: string;
 };
 
-export type PopulateRepeatDef = { alias?: string; min: number; max: number };
+export type RepeaterDef = { alias?: string; min: number; max: number };
 
 export type PopulateChangeset = Record<string, PopulateSetter>;
 
@@ -473,6 +473,11 @@ export type PopulateSetter = LiteralValueDef | FieldSetterReferenceValue | Field
 
 export type FieldSetterChangesetReference = {
   kind: "changeset-reference";
+  referenceName: string;
+};
+
+export type FieldSetterContextReference = {
+  kind: "context-reference";
   referenceName: string;
 };
 
@@ -489,7 +494,8 @@ export type FieldSetter =
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
-  | FieldSetterHook;
+  | FieldSetterHook
+  | FieldSetterContextReference;
 
 export type AliasDef = {
   kind: "alias";

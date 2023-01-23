@@ -141,11 +141,12 @@ populator Dev {
     set name "Organization 1"
     set slug "org-1"
     set description hook {
-        arg name org.name
-        inline `"Description of " + name`
+        arg slug slug
+        inline `"Description of " + slug`
     }
     set optOut hook {
-        inline `"Opt out from org Organization 1"`
+        arg slug slug
+        inline `"Opt out from org " + slug`
     }
   }
 
@@ -156,16 +157,79 @@ populator Dev {
     // org
     set name "Organization 2"
     set slug "org-2"
-    set description "Description of Organization 2"
-    set optOut "Opt out from org Organization 2a"
+    set description hook {
+        arg slug slug
+        inline `"Description of " + slug`
+    }
+    set optOut hook {
+        arg slug slug
+        inline `"Opt out from org " + slug`
+    }
 
     populate Repos {
         target relation repos as repo
 
         // fields
-        set name "Repo 1 for org-2"
-        set slug "repo-org-2"
-        set description "Description of repo-1-org-2"
+        set name hook {
+            arg orgSlug org.slug
+            inline `"Repo 1 at " + orgSlug`
+        }
+        set slug hook {
+            arg orgSlug org.slug
+            inline `"repo-1-" + orgSlug`
+        }
+        set description hook {
+            arg slug slug
+            inline `"Description for " + slug`
+        }
+        set is_public true
+    }
+  }
+
+  // org without repos and users
+  populate OrgWithMultipleReposAndMembers {
+    target model Org as org
+
+    repeat { min 3, max 5 } as iter
+
+    // org
+    set name hook {
+        arg iter iter
+        inline `"Organization " + iter.current`
+    }
+    set slug hook {
+        arg iter iter
+        inline `"org-" + iter.current`
+    }
+    set description hook {
+        arg slug slug
+        inline `"Description of " + slug`
+    }
+    set optOut hook {
+        arg slug slug
+        inline `"Opt out from org " + slug`
+    }
+
+    populate Repos {
+        target relation repos as repo
+
+        repeat { min 1, max 3 } as iter
+
+        // fields
+        set name hook {
+            arg iter iter
+            arg orgSlug org.slug
+            inline `"Repo " + iter.current + " at " + orgSlug`
+        }
+        set slug hook {
+            arg iter iter
+            arg orgSlug org.slug
+            inline `"repo-" + iter.current + "-" + orgSlug`
+        }
+        set description hook {
+            arg slug slug
+            inline `"Description for " + slug`
+        }
         set is_public true
     }
   }

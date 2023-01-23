@@ -31,4 +31,17 @@ populator TestPopulator {
       set stringProp "foo"
     }
   }
+
+  // test aliased repeats
+  populate Item2 {
+    target model Item
+
+    repeat 2 as iter1
+
+    populate SubItem2 {
+      target relation repos as repo
+
+      repeat { min 0, max 100 } as iter2
+    }
+  }
 }

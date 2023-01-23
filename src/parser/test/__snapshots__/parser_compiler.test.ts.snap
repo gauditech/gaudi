@@ -895,7 +895,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "identify": undefined,
               "name": "SubItem2",
               "populates": [],
-              "repeat": {
+              "repeater": {
                 "alias": undefined,
                 "kind": "range",
                 "range": {
@@ -947,7 +947,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "identify": undefined,
               "name": "SubItem3",
               "populates": [],
-              "repeat": undefined,
+              "repeater": undefined,
               "setters": [
                 {
                   "kind": "set",
@@ -973,7 +973,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               },
             },
           ],
-          "repeat": {
+          "repeater": {
             "alias": undefined,
             "kind": "fixed",
             "value": 2,
@@ -1012,6 +1012,42 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "target": "nullProp",
             },
           ],
+          "target": {
+            "alias": undefined,
+            "identifier": "Item",
+            "kind": "model",
+          },
+        },
+        {
+          "identify": undefined,
+          "name": "Item2",
+          "populates": [
+            {
+              "identify": undefined,
+              "name": "SubItem2",
+              "populates": [],
+              "repeater": {
+                "alias": "iter2",
+                "kind": "range",
+                "range": {
+                  "max": 100,
+                  "min": 0,
+                },
+              },
+              "setters": [],
+              "target": {
+                "alias": "repo",
+                "identifier": "repos",
+                "kind": "relation",
+              },
+            },
+          ],
+          "repeater": {
+            "alias": "iter1",
+            "kind": "fixed",
+            "value": 2,
+          },
+          "setters": [],
           "target": {
             "alias": undefined,
             "identifier": "Item",

@@ -23,8 +23,6 @@ import {
   ModelAST,
   PopulateAST,
   PopulateBodyAST,
-  PopulateRepeatAST,
-  PopulateRepeatRangeAST,
   PopulateSetterValueAST,
   PopulatorAST,
   QueryAST,
@@ -35,6 +33,8 @@ import {
   ReferenceTag,
   RelationAST,
   RelationBodyAST,
+  RepeaterAST,
+  RepeaterAtomAST,
   SelectAST,
   ValidatorAST,
 } from "@src/types/ast";
@@ -565,29 +565,31 @@ semantics.addOperation("parse()", {
       // interval: this.source
     };
   },
-  PopulateRepeat_fixed(this, value): PopulateRepeatAST {
+  Repeater_aliased(this, body, _as, alias): RepeaterAST {
     return {
-      kind: "fixed",
-      value: value.parse(),
-      // interval: this.source,
+      alias: alias.parse(),
+      atoms: body.parse(),
     };
   },
-  PopulateRepeat_range(this, _lbrace, range, _rbrace): PopulateRepeatAST {
+  Repeater_anonymous(this, body): RepeaterAST {
     return {
-      kind: "range",
-      range: range.parse(),
-      // interval: this.source,
+      atoms: body.parse(),
     };
   },
-  PopulateRepeatRange_min(this, _boundary, interval): PopulateRepeatRangeAST {
-    return {
-      kind: "min",
-      value: interval.parse(),
-    };
+  RepeaterBody_fixed(this, atom): RepeaterAtomAST[] {
+    return [
+      {
+        kind: "fixed",
+        value: atom.parse(),
+      },
+    ];
   },
-  PopulateRepeatRange_max(this, _boundary, interval): PopulateRepeatRangeAST {
+  RepeaterBody_range(this, _lbrace, atoms, _rbrace): RepeaterAtomAST[] {
+    return atoms.parse();
+  },
+  RepeaterRangeAtom_limits(this, boundary, interval): RepeaterAtomAST {
     return {
-      kind: "max",
+      kind: boundary.sourceString as "min" | "max",
       value: interval.parse(),
     };
   },

@@ -5,25 +5,12 @@ import "../../common/setupAliases";
 
 import _ from "lodash";
 
-import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { buildChangset } from "@src/runtime/common/changeset";
+import { ActionContext, executeActions } from "@src/runtime/common/action";
+import { createIterator } from "@src/runtime/common/iterator";
 import { RuntimeConfig, loadDefinition, readConfig } from "@src/runtime/config";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
 import { Vars } from "@src/runtime/server/vars";
-import {
-  Definition,
-  ModelDef,
-  PopulateDef,
-  PopulateRepeatDef,
-  PopulatorDef,
-} from "@src/types/definition";
-
-type PopulatorIterator = {
-  current: number;
-  total: number;
-  next: () => number;
-  hasNext: () => boolean;
-};
+import { Definition, PopulateDef, PopulatorDef } from "@src/types/definition";
 
 // read environment
 const config = readConfig();
@@ -42,25 +29,27 @@ async function run(args: ProcessArgs, config: RuntimeConfig) {
 
     dbConn = createDbConn(config.dbConnUrl, { schema: config.dbSchema });
 
-    // wrap entire populator proces in a single transaction
+    const targetPopulatorName = args.populator;
+
+    if (targetPopulatorName == null) {
+      throw new Error(`Populator name is missing. Try adding "-p <name>"`);
+    }
+
+    const populator: PopulatorDef | undefined = definition.populators.find(
+      (p) => p.name === targetPopulatorName
+    ); // take simply the first one
+
+    if (populator == null) {
+      throw new Error(`Populator "${targetPopulatorName}" not found`);
+    }
+
+    console.log(`Running populator ${populator.name}`);
+
+    const targetCtx: ActionContext = { input: {}, vars: new Vars(), referenceIds: [] };
+
+    // wrap entire populator process in a single transaction
     await dbConn.transaction(async (tx) => {
-      const targetPopulatorName = args.populator;
-
-      if (targetPopulatorName == null) {
-        throw new Error(`Populator name not defined`);
-      }
-
-      const populator: PopulatorDef | undefined = definition.populators.find(
-        (p) => p.name === targetPopulatorName
-      ); // take simply the first one
-
-      if (populator == null) {
-        throw new Error(`Populator definition "${targetPopulatorName}" not found`);
-      }
-
-      console.log(`Running populator ${populator.name}`);
-
-      await processPopulator(definition, tx, createNewCtx(), populator);
+      await processPopulator(definition, tx, targetCtx, populator);
     });
   } finally {
     // clear connection
@@ -98,7 +87,7 @@ function readArgs(): ProcessArgs {
 async function processPopulator(
   def: Definition,
   dbConn: DbConn,
-  ctx: Vars,
+  ctx: ActionContext,
   populator: PopulatorDef
 ) {
   for (const p of populator.populates) {
@@ -109,78 +98,41 @@ async function processPopulator(
 async function processPopulate(
   def: Definition,
   dbConn: DbConn,
-  parentCtx: Vars,
+  ctx: ActionContext,
   populate: PopulateDef
 ) {
-  const model = getRef.model(def, populate.target.retType);
-  const targetAlias = populate.target.alias;
-  const repeater = populate.repeat;
-  const repeaterAlias = populate.repeat.alias;
+  const repeater = populate.repeater;
+  const repeaterAlias = repeater.alias;
+  const iterator = createIterator(repeater.min, repeater.max);
 
-  const iterator = createIterator(repeater);
-  while (iterator.hasNext()) {
+  for (const iter of iterator) {
     // each iteration has it's own context which prepopulated from parent context
     // by having it's own context iteration can override parent values without tinkering with parent's context
-    const ctx = createNewCtx(parentCtx);
+    const actionCtx = createNewCtx(ctx);
 
     // add repeater to new context
     if (repeaterAlias) {
       // add only readonly props so other populates/setters/hooks/... cannot mess with iterator state
-      ctx.set(repeaterAlias, { current: iterator.current, total: iterator.total });
+      actionCtx.vars.set(repeaterAlias, {
+        current: iter.current,
+        total: iter.total,
+      });
     }
 
-    // changesets are used in actions as well but we don't have input object here
-    const data = buildChangset(populate.changeset, { input: {}, vars: ctx });
-
-    const result = await insertChangesetData(dbConn, model, data);
-
-    // add insert result to context (eg. to be available to child populates)
-    if (targetAlias) {
-      ctx.set(targetAlias, result);
-    }
+    await executeActions(def, dbConn, actionCtx, populate.actions);
 
     for (const p of populate.populates) {
-      await processPopulate(def, dbConn, ctx, p);
+      await processPopulate(def, dbConn, actionCtx, p);
     }
-
-    iterator.next();
   }
 }
 
-/** Create new context from an existing one or a new, empty one. */
-function createNewCtx(parentCtx?: Vars) {
-  return parentCtx?.copy() ?? new Vars();
-}
-
-/** Create iterator object to be used in populate iterations. */
-function createIterator(repeater: PopulateRepeatDef): PopulatorIterator {
-  let current = 1;
-  const total = repeater.max - repeater.min + 1;
-
-  return {
-    current,
-    total,
-    next: () => current++,
-    hasNext: () => current <= total,
-  };
-}
-
 /**
- * Execute DB insert.
+ * Create new context from an existing one or a new, empty one.
  *
- * TODO: could we extract or reuse this from another file?
+ * Context `input` is copies since it's an external data,
+ * but `vars` is copied to a new instance.
  */
-async function insertChangesetData(
-  dbConn: DbConn,
-  model: ModelDef,
-  data: Record<string, string | number | boolean | null>
-) {
-  const ret = await dbConn
-    .insert(dataToFieldDbnames(model, data))
-    .into(model.dbname)
-    .returning("*");
-
-  if (!ret.length) return null;
-
-  return ret[0];
+function createNewCtx(ctx: ActionContext): ActionContext {
+  return { input: ctx.input, vars: ctx.vars?.copy() ?? new Vars(), referenceIds: ctx.referenceIds };
 }
