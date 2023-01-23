@@ -496,7 +496,7 @@ semantics.addOperation("parse()", {
       kind: "populator",
       name: identifier.parse(),
       body: body.parse(),
-      // interval: this.source,
+      interval: this.source,
     };
   },
   Populate(this, _keyword, identifier, _braceL, body, _braceR): PopulateAST {
@@ -504,7 +504,7 @@ semantics.addOperation("parse()", {
       kind: "populate",
       name: identifier.parse(),
       body: body.parse(),
-      // interval: this.source,
+      interval: this.source,
     };
   },
   PopulateBody_target(this, _target, kind, identifierAs): PopulateBodyAST {
@@ -512,21 +512,21 @@ semantics.addOperation("parse()", {
     return {
       kind: "target",
       target: { kind: kind.sourceString as "model" | "relation", identifier, alias },
-      // interval: this.source,
+      interval: this.source,
     };
   },
   PopulateBody_identify(this, _identify, _with, identifier): PopulateBodyAST {
     return {
       kind: "identify",
       identifier: identifier.parse(),
-      // interval: this.source
+      interval: this.source,
     };
   },
   PopulateBody_repeat(this, _identifier, repeat): PopulateBodyAST {
     return {
       kind: "repeat",
       repeat: repeat.parse(),
-      // interval: this.source,
+      interval: this.source,
     };
   },
   PopulateBody_setter(this, _identify, identifier, target): PopulateBodyAST {
@@ -534,7 +534,7 @@ semantics.addOperation("parse()", {
       kind: "set",
       target: identifier.parse(),
       set: target.parse(),
-      // interval: this.source,
+      interval: this.source,
     };
   },
   PopulateSetterValue_literal(this, value): PopulateSetterValueAST {
@@ -548,14 +548,14 @@ semantics.addOperation("parse()", {
     return {
       kind: "reference",
       reference: reference.parse(),
-      // interval: this.source
+      interval: this.source,
     };
   },
   PopulateSetterValue_hook(this, hook): PopulateSetterValueAST {
     return {
       kind: "hook",
       hook: hook.parse(),
-      // interval: this.source,
+      interval: this.source,
     };
   },
   PopulateBody_populate(this, populate): PopulateBodyAST {
@@ -569,11 +569,13 @@ semantics.addOperation("parse()", {
     return {
       alias: alias.parse(),
       atoms: body.parse(),
+      interval: this.source,
     };
   },
   Repeater_anonymous(this, body): RepeaterAST {
     return {
       atoms: body.parse(),
+      interval: this.source,
     };
   },
   RepeaterBody_fixed(this, atom): RepeaterAtomAST[] {
@@ -581,6 +583,7 @@ semantics.addOperation("parse()", {
       {
         kind: "fixed",
         value: atom.parse(),
+        interval: this.source,
       },
     ];
   },

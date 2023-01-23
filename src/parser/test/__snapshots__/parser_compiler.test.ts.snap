@@ -905,6 +905,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               },
               "setters": [
                 {
+                  "interval": {
+                    "endIdx": 320,
+                    "startIdx": 304,
+                  },
                   "kind": "set",
                   "set": {
                     "kind": "literal",
@@ -913,6 +917,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "target": "numberProp",
                 },
                 {
+                  "interval": {
+                    "endIdx": 348,
+                    "startIdx": 327,
+                  },
                   "kind": "set",
                   "set": {
                     "kind": "literal",
@@ -921,6 +929,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "target": "stringProp",
                 },
                 {
+                  "interval": {
+                    "endIdx": 373,
+                    "startIdx": 355,
+                  },
                   "kind": "set",
                   "set": {
                     "kind": "literal",
@@ -929,6 +941,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "target": "boolProp",
                 },
                 {
+                  "interval": {
+                    "endIdx": 397,
+                    "startIdx": 380,
+                  },
                   "kind": "set",
                   "set": {
                     "kind": "literal",
@@ -950,6 +966,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "repeater": undefined,
               "setters": [
                 {
+                  "interval": {
+                    "endIdx": 514,
+                    "startIdx": 498,
+                  },
                   "kind": "set",
                   "set": {
                     "kind": "literal",
@@ -958,6 +978,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "target": "numberProp",
                 },
                 {
+                  "interval": {
+                    "endIdx": 541,
+                    "startIdx": 521,
+                  },
                   "kind": "set",
                   "set": {
                     "kind": "literal",
@@ -980,6 +1004,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
           },
           "setters": [
             {
+              "interval": {
+                "endIdx": 116,
+                "startIdx": 100,
+              },
               "kind": "set",
               "set": {
                 "kind": "literal",
@@ -988,6 +1016,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "target": "numberProp",
             },
             {
+              "interval": {
+                "endIdx": 142,
+                "startIdx": 121,
+              },
               "kind": "set",
               "set": {
                 "kind": "literal",
@@ -996,6 +1028,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "target": "stringProp",
             },
             {
+              "interval": {
+                "endIdx": 164,
+                "startIdx": 147,
+              },
               "kind": "set",
               "set": {
                 "kind": "literal",
@@ -1004,6 +1040,10 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "target": "boolProp",
             },
             {
+              "interval": {
+                "endIdx": 186,
+                "startIdx": 169,
+              },
               "kind": "set",
               "set": {
                 "kind": "literal",
