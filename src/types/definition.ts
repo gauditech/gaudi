@@ -2,10 +2,13 @@ import { BinaryOperator } from "./ast";
 import { HookCode } from "./specification";
 
 export type Definition = {
+  auth?: AuthDef;
   models: ModelDef[];
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
 };
+
+export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
 
 export type ModelDef = {
   kind: "model";

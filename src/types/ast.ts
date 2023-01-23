@@ -9,6 +9,7 @@ export type ModelAST = WithContext<{
   name: string;
   alias?: string;
   body: ModelBodyAST[];
+  isAuth: boolean;
 }>;
 
 export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST | HookAST;

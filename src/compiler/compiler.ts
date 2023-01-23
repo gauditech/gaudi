@@ -240,6 +240,7 @@ function compileModel(model: ModelAST): ModelSpec {
 
   return {
     name: model.name,
+    isAuth: model.isAuth,
     alias: model.alias,
     fields,
     references,
@@ -434,6 +435,22 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
   return { ...baseHook, name, args };
 }
 
+function checkMaxOneAuthModel(models: ModelSpec[]) {
+  let authModel: ModelSpec | null = null;
+  models.forEach((model) => {
+    if (model.isAuth) {
+      if (authModel) {
+        throw new CompilerError(
+          "Default `auth model` already defined! There can be maximum of 1 `auth model`",
+          model
+        );
+      } else {
+        authModel = model;
+      }
+    }
+  });
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
@@ -445,6 +462,8 @@ export function compile(input: AST): Specification {
       entrypoints.push(compileEntrypoint(definition));
     }
   });
+
+  checkMaxOneAuthModel(models);
 
   return { models, entrypoints };
 }

@@ -128,7 +128,80 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
   model.fields.push(idField);
   def.models.push(model);
   def.resolveOrder.push(model.refKey);
+
+  if (spec.isAuth && !def.auth) {
+    defineAuthModel(def, model);
+  }
+
   return model;
+}
+
+function defineAuthModel(def: Definition, baseModel: ModelDef) {
+  const localModel = defineModel(def, {
+    name: baseModel.name + "__AuthLocal",
+    isAuth: false,
+    fields: [],
+    references: [],
+    relations: [],
+    queries: [],
+    computeds: [],
+    hooks: [],
+  });
+  const localReference = defineReference(def, localModel, {
+    name: "base",
+    toModel: baseModel.name,
+    // FIXME: fix unique references in prisma generation
+    //unique: true,
+  });
+  defineField(def, localModel, {
+    name: "username",
+    type: "text",
+    unique: true,
+  });
+  defineField(def, localModel, {
+    name: "password",
+    type: "text",
+  });
+  defineRelation(def, baseModel, {
+    name: "authLocal",
+    fromModel: localModel.name,
+    through: localReference.name,
+  });
+
+  const accessTokenModel = defineModel(def, {
+    name: baseModel.name + "__AuthAccessToken",
+    isAuth: false,
+    fields: [],
+    references: [],
+    relations: [],
+    queries: [],
+    computeds: [],
+    hooks: [],
+  });
+  const accessTokenReference = defineReference(def, accessTokenModel, {
+    name: "base",
+    toModel: baseModel.name,
+  });
+  defineField(def, accessTokenModel, {
+    name: "token",
+    type: "text",
+    unique: true,
+  });
+  defineField(def, accessTokenModel, {
+    name: "expiryDate",
+    type: "text",
+  });
+  defineRelation(def, baseModel, {
+    name: "authAccessTokens",
+    fromModel: accessTokenModel.name,
+    through: accessTokenReference.name,
+  });
+
+  def.auth = {
+    baseRefKey: baseModel.refKey,
+    localRefKey: localModel.refKey,
+    accessTokenRefKey: accessTokenModel.refKey,
+  };
 }
 
 function constructIdField(mdef: ModelDef): FieldDef {

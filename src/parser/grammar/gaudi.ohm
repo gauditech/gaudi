@@ -11,7 +11,7 @@ Gaudi {
   // Model grammar
   // ********************
 
-  Model = "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
+  Model = "auth"? "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
 
   ModelBody
     = Field

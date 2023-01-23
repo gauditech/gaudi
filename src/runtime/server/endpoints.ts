@@ -78,7 +78,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
     method: "get",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      requiresAuthentication ? authenticationHandler(def, { allowAnonymous: true }) : undefined,
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -134,7 +134,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     method: "get",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      requiresAuthentication ? authenticationHandler(def, { allowAnonymous: true }) : undefined,
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -196,7 +196,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
     method: "post",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler() : undefined,
+      requiresAuthentication ? authenticationHandler(def) : undefined,
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -268,7 +268,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
     method: "patch",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler() : undefined,
+      requiresAuthentication ? authenticationHandler(def) : undefined,
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -344,7 +344,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
     method: "delete",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler({ allowAnonymous: true }) : undefined,
+      requiresAuthentication ? authenticationHandler(def, { allowAnonymous: true }) : undefined,
       // handler
       async (req: Request, resp: Response) => {
         try {

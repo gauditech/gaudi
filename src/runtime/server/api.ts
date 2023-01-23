@@ -46,7 +46,7 @@ export function setupServerApis(definition: Definition, app: Express) {
   );
 
   // --- authentication API
-  const authConfigs = buildAuthEndpoints();
+  const authConfigs = buildAuthEndpoints(definition);
   setupConfigEndpoints("api", authConfigs, app);
 }
 

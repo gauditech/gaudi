@@ -1,0 +1,9 @@
+auth model Operator {
+  field name { type text }
+}
+
+entrypoint Operators {
+  target model Operator
+  create endpoint {}
+  list endpoint {}
+}
