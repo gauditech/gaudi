@@ -456,8 +456,6 @@ export type PopulateTargetDef = {
 
 export type RepeaterDef = { alias?: string; min: number; max: number };
 
-export type PopulateChangeset = Record<string, PopulateSetter>;
-
 // TODO: this is very much alike to `FieldSetter` def
 export type PopulateSetter = LiteralValueDef | FieldSetterReferenceValue | FieldSetterHook;
 // TODO: add populator hints
