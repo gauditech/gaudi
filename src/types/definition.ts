@@ -411,15 +411,6 @@ type DeleteManyAction = {
 export type ChangesetDef = ChangesetOperationDef[];
 export type ChangesetOperationDef = { name: string; setter: FieldSetter };
 
-// need this exported for TypedContextPath;
-type IdentifierDefGen<K> = { kind: K; name: string; refKey: string };
-export type IdentifierDefModel = IdentifierDefGen<"model">;
-export type IdentifierDefField = IdentifierDefGen<"field">;
-export type IdentifierDef =
-  | IdentifierDefGen<"query" | "relation" | "reference">
-  | IdentifierDefField
-  | IdentifierDefModel;
-
 export type FieldSetterReferenceValue = {
   kind: "reference-value";
   type: FieldDef["type"];

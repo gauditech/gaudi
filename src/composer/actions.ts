@@ -288,7 +288,7 @@ function composeSingleAction(
   // TODO ensure changeset has covered every non-optional field in the model!
 
   // Build the desired `ActionDef`.
-  return actionFromParts(spec, actionTargetScope, target, model, changeset);
+  return actionFromParts(simpleSpec, actionTargetScope, target, model, changeset);
 }
 
 /**
@@ -481,6 +481,7 @@ function actionFromParts(
 ): ActionDef {
   // FIXME come up with an alias in case of nested actions
   const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias!;
+  console.log("ALIAS", alias, target.alias, spec.alias);
 
   switch (spec.kind) {
     case "create": {
