@@ -91,6 +91,8 @@ exports[`compose model queries order and limit 1`] = `
       "exp": {
         "kind": "alias",
         "namePath": [
+          "Org",
+          "repos",
           "id",
         ],
       },

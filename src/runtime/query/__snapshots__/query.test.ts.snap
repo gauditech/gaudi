@@ -2476,3 +2476,14 @@ WHERE
   "Repo"."id" IN :@context_ids",
 ]
 `;
+
+exports[`Order and limit Supports limit and order in non-batching query 1`] = `
+"SELECT
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+ORDER BY
+  "Org.repos"."id" desc
+LIMIT
+  10"
+`;

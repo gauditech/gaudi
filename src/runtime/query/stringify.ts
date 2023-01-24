@@ -18,6 +18,7 @@ import {
   Definition,
   ModelDef,
   QueryDef,
+  QueryOrderByAtomDef,
   ReferenceDef,
   RelationDef,
   SelectAggregateItem,
@@ -45,16 +46,52 @@ export function queryToString(def: Definition, q: QueryDef): string {
   const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
   const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
 
-  const qstr = source`
+  function isBatching(exp: TypedExprDef): boolean {
+    if (exp === undefined) {
+      return false;
+    }
+    switch (exp.kind) {
+      case "alias":
+      case "literal": {
+        return false;
+      }
+      case "variable": {
+        return exp.name === "@context_ids";
+      }
+      case "function": {
+        // returns `true` if any of the args is `true`
+        return exp.args.map((a) => isBatching(a)).some(_.identity);
+      }
+    }
+  }
+  const isTopN = q.limit && isBatching(q.filter);
+  if (isTopN) {
+    return ``;
+  } else {
+    const qstr = source`
       SELECT ${selectableToString(def, selectable)}
       FROM ${refToTableSqlFragment(def, model)}
       AS ${namePathToAlias([model.name])}
       ${aggrJoins}
       ${joins}
-      ${where}`;
+      ${where}
+      ${orderByToString(def, q.orderBy)}
+      ${limitToString(q.limit)}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
+  }
+}
+
+function orderByToString(def: Definition, orderBy: QueryOrderByAtomDef[] | undefined): string {
+  if (!orderBy?.length) return "";
+  return `ORDER BY ${orderBy
+    .map((atom) => `${expressionToString(def, atom.exp)} ${atom.direction}`)
+    .join(", ")}`;
+}
+
+function limitToString(limit: number | undefined): string {
+  return limit ? `LIMIT ${limit}` : "";
 }
 
 function joinToString(

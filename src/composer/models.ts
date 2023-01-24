@@ -367,7 +367,7 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
 
   const orderBy = qspec.orderBy?.map(
     ({ field, order }): QueryOrderByAtomDef => ({
-      exp: { kind: "alias", namePath: field },
+      exp: { kind: "alias", namePath: [...fromPath, ...field] },
       direction: order ?? "asc",
     })
   );

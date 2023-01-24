@@ -153,6 +153,28 @@ describe("Endpoint queries", () => {
   });
 });
 
+describe("Order and limit", () => {
+  it("Supports limit and order in non-batching query", () => {
+    const bp = `
+    model Org {
+      relation repos { from Repo, through org }
+      query recent_repos {
+        from repos
+        order by id desc
+        limit 10
+      }
+    }
+    model Repo {
+      reference org { to Org }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const q = def.models[0].queries[0];
+
+    expect(queryToString(def, q)).toMatchSnapshot();
+  });
+});
+
 function extractEndpointQueries(q: EndpointQueries): QueryDef[] {
   const allTrees = [...q.parentContextQueryTrees, q.targetQueryTree, q.responseQueryTree];
   return allTrees.flatMap(extractQueryTree);
