@@ -23,6 +23,7 @@ import {
   ModelDef,
   ModelHookDef,
   QueryDef,
+  QueryOrderByAtomDef,
   ReferenceDef,
   RelationDef,
   TypedExprDef,
@@ -364,7 +365,14 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   const targetModel = getRef.model(def, direct[0]);
   const select = processSelect(def, targetModel, qspec.select, fromPath);
 
-  return queryFromParts(def, qspec.name, fromPath, filter, select);
+  const orderBy = qspec.orderBy?.map(
+    ({ field, order }): QueryOrderByAtomDef => ({
+      exp: { kind: "alias", namePath: field },
+      direction: order ?? "asc",
+    })
+  );
+
+  return queryFromParts(def, qspec.name, fromPath, filter, select, orderBy, qspec.limit);
 }
 
 function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {

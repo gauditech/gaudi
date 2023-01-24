@@ -9,6 +9,7 @@ import {
   Definition,
   ModelDef,
   QueryDef,
+  QueryOrderByAtomDef,
   SelectDef,
   SelectHookItem,
   SelectItem,
@@ -107,10 +108,20 @@ export function queryFromParts(
   name: string,
   fromPath: NamePath,
   filter: TypedExprDef,
-  select: SelectDef
+  select: SelectDef,
+  orderBy?: QueryOrderByAtomDef[],
+  limit?: number
 ): QueryDef {
   if (select.length === 0) {
-    return queryFromParts(def, name, fromPath, filter, [selectableId(def, fromPath)]);
+    return queryFromParts(
+      def,
+      name,
+      fromPath,
+      filter,
+      [selectableId(def, fromPath)],
+      orderBy,
+      limit
+    );
   }
   select.forEach((selItem) => {
     if (selItem.alias === "__join_connection") {
@@ -145,6 +156,8 @@ export function queryFromParts(
     // retCardinality: "many", // FIXME,
     retType: getPathRetType(def, fromPath).refKey,
     select,
+    orderBy,
+    limit,
   };
 }
 
