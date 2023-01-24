@@ -138,7 +138,7 @@ function calculateIdentifyWith(
     case "field": {
       const field = prop;
       if (field.type === "boolean") {
-        throw "invalid-type";
+        throw new Error("Invalid type of identifiyWith - boolean");
       }
       return {
         name,
@@ -148,7 +148,7 @@ function calculateIdentifyWith(
       };
     }
     default:
-      throw "invalid-kind";
+      throw new Error(`Identify with target must be a field`);
   }
 }
 
