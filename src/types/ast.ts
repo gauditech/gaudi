@@ -98,6 +98,7 @@ export type EntrypointBodyAST = WithContext<
   | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
   | { kind: "identify"; identifier: string }
   | { kind: "response"; select: SelectAST }
+  | { kind: "authorize"; expression: ExpAST }
   | { kind: "endpoint"; endpoint: EndpointAST }
   | { kind: "entrypoint"; entrypoint: EntrypointAST }
 >;

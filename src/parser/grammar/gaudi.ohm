@@ -114,6 +114,7 @@ Gaudi {
     = "target" ("model" | "relation") IdentifierWithAs -- target
     | "identify" "with" identifier -- identify
     | "response" SelectBody -- response
+    | "authorize" "{" QueryExp "}" -- authorize
     | Endpoint -- endpoint
     | Entrypoint -- entrypoint
 

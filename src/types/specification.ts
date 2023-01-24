@@ -81,6 +81,7 @@ export type EntrypointSpec = WithContext<{
   target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
   response?: SelectAST;
+  authorize?: ExpSpec;
   endpoints: EndpointSpec[];
   entrypoints: EntrypointSpec[];
 }>;

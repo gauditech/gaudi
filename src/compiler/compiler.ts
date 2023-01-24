@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { CompilerError } from "@src/common/error";
+import { assertUnreachable } from "@src/common/utils";
 import {
   AST,
   ActionBodyAST,
@@ -314,6 +315,7 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   let target: EntrypointSpec["target"] | undefined;
   let identify: string | undefined;
   let response: EntrypointSpec["response"] | undefined;
+  let authorize: ExpSpec | undefined;
   const endpoints: EndpointSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
 
@@ -328,6 +330,10 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
       endpoints.push(compileEndpoint(b.endpoint));
     } else if (b.kind === "entrypoint") {
       entrypoints.push(compileEntrypoint(b.entrypoint));
+    } else if (b.kind === "authorize") {
+      authorize = compileQueryExp(b.expression);
+    } else {
+      assertUnreachable(b);
     }
   });
 
@@ -340,6 +346,7 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
     target,
     identify,
     response,
+    authorize,
     endpoints,
     entrypoints,
     interval: entrypoint.interval,
