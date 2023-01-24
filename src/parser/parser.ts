@@ -256,7 +256,7 @@ semantics.addOperation("parse()", {
   EntrypointBody_response(this, _response, body): EntrypointBodyAST {
     return { kind: "response", select: body.parse(), interval: this.source };
   },
-  EntrypointBody_authorize(this, _authorize, body): EntrypointBodyAST {
+  EntrypointBody_authorize(this, _authorize, _braceL, body, _braceR): EntrypointBodyAST {
     return { kind: "authorize", expression: body.parse(), interval: this.source };
   },
   EntrypointBody_endpoint(this, endpoint): EntrypointBodyAST {
