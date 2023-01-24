@@ -479,7 +479,7 @@ function typedFunctionFromParts(
   };
 }
 
-function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): TypedExprDef {
+export function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): TypedExprDef {
   switch (exp.kind) {
     case "literal": {
       return getTypedLiteralValue(exp.literal);

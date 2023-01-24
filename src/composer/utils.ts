@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { LiteralValue } from "@src/types/ast";
-import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
+import { Definition, LiteralValueDef, ModelDef, TypedExprDef } from "@src/types/definition";
 
 export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
   if (typeof literal === "string") {
@@ -138,4 +138,19 @@ export function getTypedPathWithLeaf(
   } else {
     return getTypedPath(def, [...path, "id"], ctx) as TypedContextPathWithLeaf;
   }
+}
+
+export function combineBooleanExprDef(
+  lhs: TypedExprDef,
+  rhs: TypedExprDef,
+  operator: "and" | "or" = "and"
+): TypedExprDef {
+  if (lhs === undefined) return rhs;
+  if (rhs === undefined) return lhs;
+  return {
+    kind: "function",
+    name: operator,
+    args: [lhs, rhs],
+    type: { type: "boolean", nullable: false },
+  };
 }

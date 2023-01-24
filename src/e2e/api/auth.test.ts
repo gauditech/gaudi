@@ -29,8 +29,38 @@ describe("Auth", () => {
           },
         ],
       },
+      {
+        model: "Box",
+        data: [
+          { id: 1, name: "public", is_public: true },
+          { id: 2, name: "private", is_public: false },
+        ],
+      },
+      {
+        model: "Item",
+        data: [
+          { id: 1, box_id: 1, name: "public", is_public: true },
+          { id: 2, box_id: 1, name: "private", is_public: false },
+          { id: 3, box_id: 2, name: "public", is_public: true },
+          { id: 4, box_id: 2, name: "private", is_public: false },
+        ],
+      },
     ]
   );
+
+  async function loginTestUser() {
+    const loginResponse = await request(getServer())
+      .post("/auth/login")
+      .send({ username: "first", password: "1234" });
+    return loginResponse.body.token;
+  }
+
+  async function getItem(box: string, item: string) {
+    const token = await loginTestUser();
+    return await request(getServer())
+      .get(`/box/${box}/items/${item}`)
+      .set("Authorization", "bearer " + token);
+  }
 
   describe("Login and Logout", () => {
     beforeAll(async () => {
@@ -48,7 +78,9 @@ describe("Auth", () => {
       const token = loginResponse.body.token;
       expect(token ?? "").not.toBe("");
 
-      const listResponse = await request(getServer()).get("/operator");
+      const listResponse = await request(getServer())
+        .get("/box")
+        .set("Authorization", "bearer " + token);
       expect(listResponse.statusCode).toBe(200);
 
       const logoutResponse = await request(getServer())
@@ -75,6 +107,51 @@ describe("Auth", () => {
         .post("/auth/login")
         .send({ username: "wrong username", password: "1234" });
       expect(loginResponse.statusCode).toBe(401);
+    });
+
+    it("Success public", async () => {
+      const token = await loginTestUser();
+      const getResponse = await request(getServer())
+        .get("/box/public")
+        .set("Authorization", "bearer " + token);
+      expect(getResponse.statusCode).toBe(200);
+    });
+
+    it("Fail pivate", async () => {
+      const token = await loginTestUser();
+      const getResponse = await request(getServer())
+        .get("/box/private")
+        .set("Authorization", "bearer " + token);
+      expect(getResponse.statusCode).toBe(401);
+    });
+
+    it("Success public > public", async () => {
+      const response = await getItem("public", "public");
+      expect(response.statusCode).toBe(200);
+    });
+
+    it("Fail private > private", async () => {
+      const token = await loginTestUser();
+      const getResponse = await request(getServer())
+        .get("/box/private/items/private")
+        .set("Authorization", "bearer " + token);
+      expect(getResponse.statusCode).toBe(401);
+    });
+
+    it("Fail public > private", async () => {
+      const token = await loginTestUser();
+      const getResponse = await request(getServer())
+        .get("/box/public/items/private")
+        .set("Authorization", "bearer " + token);
+      expect(getResponse.statusCode).toBe(401);
+    });
+
+    it("Fail private > public", async () => {
+      const token = await loginTestUser();
+      const getResponse = await request(getServer())
+        .get("/box/private/items/public")
+        .set("Authorization", "bearer " + token);
+      expect(getResponse.statusCode).toBe(401);
     });
   });
 });

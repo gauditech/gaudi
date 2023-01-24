@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { composeActionBlock } from "./actions";
+import { composeExpression } from "./models";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
@@ -20,6 +21,7 @@ import {
   SelectItem,
   TargetDef,
   TargetWithSelectDef,
+  TypedExprDef,
 } from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
@@ -30,6 +32,7 @@ export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): vo
 type EndpointContext = {
   model: ModelDef;
   target: TargetDef;
+  authorize: TypedExprDef;
 };
 
 function processEntrypoint(
@@ -46,8 +49,11 @@ function processEntrypoint(
   );
   const name = spec.name;
   const targetModel = getRef.model(def, target.retType);
+  const authorize = spec.authorize
+    ? composeExpression(def, spec.authorize, target.namePath)
+    : undefined;
 
-  const thisContext: EndpointContext = { model: targetModel, target };
+  const thisContext: EndpointContext = { model: targetModel, target, authorize };
   const targetParents = [...parents, thisContext];
 
   return {
@@ -164,7 +170,7 @@ function processEndpoints(
     const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
     const selectDeps = collectActionDeps(def, rawActions);
     const actions = wrapActionsWithSelect(def, rawActions, selectDeps);
-    const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
+    const targetsWithSelect = wrapTargetsWithSelect(def, parents, selectDeps);
     const parentContext = _.initial(targetsWithSelect);
     const target = _.last(targetsWithSelect)!;
 
@@ -205,7 +211,7 @@ function processEndpoints(
           fieldset,
           actions,
           parentContext,
-          target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
+          target: _.first(wrapTargetsWithSelect(def, [context], selectDeps))!,
           response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
         };
       }
@@ -438,16 +444,16 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
  */
 function wrapTargetsWithSelect(
   def: Definition,
-  targets: TargetDef[],
+  context: EndpointContext[],
   deps: SelectDep[]
 ): TargetWithSelectDef[] {
-  return targets.map((target) => {
+  return context.map(({ target, authorize }) => {
     const paths = uniqueNamePaths(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
     const model = getRef.model(def, target.retType);
     const select = pathsToSelectDef(def, model, paths, target.namePath);
-    return { ...target, select };
+    return { ...target, select, authorize };
   });
 }
 

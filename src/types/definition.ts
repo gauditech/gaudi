@@ -156,7 +156,7 @@ export type TargetDef = {
   identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
 };
 
-export type TargetWithSelectDef = TargetDef & { select: SelectDef };
+export type TargetWithSelectDef = TargetDef & { select: SelectDef; authorize: TypedExprDef };
 
 export type EndpointDef =
   | CreateEndpointDef

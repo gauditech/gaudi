@@ -15,8 +15,8 @@ import { Definition, EndpointDef, TargetDef, TypedExprDef } from "@src/types/def
  */
 
 export type EndpointQueries = {
-  parentContextQueryTrees: QueryTree[];
-  targetQueryTree: QueryTree;
+  parentContextQueryTrees: { context: QueryTree; authorize?: QueryTree }[];
+  targetQueryTree: { context: QueryTree; authorize?: QueryTree };
   responseQueryTree: QueryTree;
 };
 
@@ -33,7 +33,21 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
 
     const select = transformSelectPath(target.select, target.namePath, namePath);
     const query = queryFromParts(def, target.alias, namePath, filter, select);
-    return buildQueryTree(def, query);
+
+    let authorize;
+    if (target.authorize) {
+      const authorizeFilter: TypedExprDef = {
+        kind: "function",
+        name: "and",
+        args: [filter, target.authorize],
+        type: { type: "boolean", nullable: false },
+      };
+
+      const authorizeQuery = queryFromParts(def, target.alias, namePath, authorizeFilter, []);
+      authorize = buildQueryTree(def, authorizeQuery);
+    }
+
+    return { context: buildQueryTree(def, query), authorize };
   });
 
   // repeat the same for target
@@ -54,7 +68,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
   const select = transformSelectPath(endpoint.target.select, endpoint.target.namePath, namePath);
 
   const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
-  const targetQueryTree = buildQueryTree(def, targetQuery);
+  const targetQueryTree = { context: buildQueryTree(def, targetQuery), authorize: undefined };
 
   // response query
   const responseQueryTree = buildResponseQueryTree(def, endpoint);
