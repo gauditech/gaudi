@@ -72,8 +72,8 @@ describe("custom actions", () => {
       create endpoint {
         action {
           create {
-            set name2 name
             set name3 name2
+            set name2 name
           }
         }
       }
