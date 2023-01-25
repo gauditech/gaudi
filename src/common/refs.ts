@@ -41,8 +41,10 @@ export type Ref<T extends RefKind> = T extends "model"
   : never;
 
 export class UnknownRefKeyError extends Error {
+  refKey: string;
   constructor(refKey: string) {
     super(`Unknown refkey: ${refKey}`);
+    this.refKey = refKey;
   }
 }
 
