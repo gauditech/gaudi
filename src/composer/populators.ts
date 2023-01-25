@@ -135,26 +135,31 @@ function composeRepeater(repeat?: RepeaterSpec): RepeaterDef {
     return { start: 1, end: 1 };
   }
 
+  let repeater: RepeaterDef;
+
   const repeatKind = repeat.kind;
   if (repeatKind === "fixed") {
     const count = repeat.value;
 
-    // make sure counter is greater than zero
-    ensureNot(count <= 0, true);
-
-    return { alias: repeat.alias, start: count, end: count };
+    repeater = { alias: repeat.alias, start: 1, end: count };
   } else if (repeatKind === "range") {
     const range = repeat.range;
-    const end = range.end || 1;
-    const start = range.start || end;
+    const start = range.start ?? 1;
+    const end = range.end ?? 1;
 
-    // make sure min is greater than zero
-    ensureNot(start <= 0, true);
-    // make sure min not greater than end
-    ensureNot(start > end, true);
-
-    return { alias: repeat.alias, start, end };
+    repeater = { alias: repeat.alias, start, end };
   } else {
     assertUnreachable(repeatKind);
   }
+
+  // make sure min is greater than zero
+  ensureNot(repeater.start <= 0, true, `Repeater start (${repeater.start}) must be greater than 0`);
+  // make sure min not greater than end
+  ensureNot(
+    repeater.start > repeater.end,
+    true,
+    `Repeater 'start' (${repeater.start}) must be greater or equal to 'end' (${repeater.end})`
+  );
+
+  return repeater;
 }

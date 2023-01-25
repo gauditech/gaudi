@@ -39,7 +39,7 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
       "repeater": {
         "alias": undefined,
         "end": 5,
-        "start": 5,
+        "start": 1,
       },
       "target": {
         "alias": "org",
@@ -173,7 +173,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
       "repeater": {
         "alias": undefined,
         "end": 4,
-        "start": 4,
+        "start": 1,
       },
       "target": {
         "alias": "org",
@@ -461,7 +461,7 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
       "repeater": {
         "alias": undefined,
         "end": 3,
-        "start": 3,
+        "start": 1,
       },
       "target": {
         "alias": "org",
