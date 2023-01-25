@@ -10,15 +10,15 @@ type Changeset = Record<string, unknown>;
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
  */
-export function buildChangeset(
+export async function buildChangeset(
   actionChangsetDefinition: ChangesetDef,
   actionContext: ActionContext,
   // `changesetContext` is used for hooks, to be able to pass the "parent context" changeset
   changesetContext: Changeset = {}
-): Changeset {
+): Promise<Changeset> {
   const changeset: Changeset = {};
 
-  function getValue(setter: FieldSetter): unknown {
+  async function getValue(setter: FieldSetter): Promise<unknown> {
     switch (setter.kind) {
       case "literal": {
         return formatFieldValue(setter.value, setter.type);
@@ -33,8 +33,8 @@ export function buildChangeset(
         return actionContext.vars.get(setter.target.alias, setter.target.access);
       }
       case "fieldset-hook": {
-        const args = buildChangeset(setter.args, actionContext, changeset);
-        return executeHook(setter.code, args);
+        const args = await buildChangeset(setter.args, actionContext, changeset);
+        return await executeHook(setter.code, args);
       }
       case "changeset-reference": {
         /**
@@ -68,17 +68,18 @@ export function buildChangeset(
     }
   }
 
-  actionChangsetDefinition.forEach(({ name, setter }) => {
+  for (const { name, setter } of actionChangsetDefinition) {
     switch (setter.kind) {
       case "fieldset-reference-input": {
-        changeset[name + "_id"] = getValue(setter);
+        changeset[name + "_id"] = await getValue(setter);
         break;
       }
       default: {
-        changeset[name] = getValue(setter);
+        changeset[name] = await getValue(setter);
       }
     }
-  });
+  }
+
   return changeset;
 }
 

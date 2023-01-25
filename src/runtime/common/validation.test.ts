@@ -241,6 +241,19 @@ describe("runtime", () => {
               },
             ],
           },
+          hookTextProp: {
+            kind: "field",
+            nullable: false,
+            required: true,
+            type: "text",
+            validators: [
+              {
+                name: "hook",
+                arg: "value",
+                code: { kind: "inline", inline: "value === 'expected text'" },
+              },
+            ],
+          },
           integerProp: {
             kind: "field",
             nullable: false,
@@ -308,6 +321,7 @@ describe("runtime", () => {
 
         // failing validators
         textProp: "too long string",
+        hookTextProp: "invalid hook field text",
         integerProp: 10001,
         booleanProp: false,
         noReferenceProp: "noReference",
