@@ -27,7 +27,7 @@ export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): vo
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
 }
 
-export type ParentContext = {
+export type TargetContext = {
   model: ModelDef;
   target: TargetDef;
 };
@@ -35,7 +35,7 @@ export type ParentContext = {
 function processEntrypoint(
   def: Definition,
   spec: EntrypointSpec,
-  parents: ParentContext[]
+  parents: TargetContext[]
 ): EntrypointDef {
   const target = calculateTarget(
     def,
@@ -47,7 +47,7 @@ function processEntrypoint(
   const name = spec.name;
   const targetModel = getRef.model(def, target.retType);
 
-  const thisContext: ParentContext = { model: targetModel, target };
+  const thisContext: TargetContext = { model: targetModel, target };
   const targetParents = [...parents, thisContext];
 
   return {
@@ -60,7 +60,7 @@ function processEntrypoint(
 
 export function calculateTarget(
   def: Definition,
-  parents: ParentContext[],
+  parents: TargetContext[],
   name: string,
   alias: string | null,
   identify: string
@@ -154,7 +154,7 @@ function calculateIdentifyWith(
 
 function processEndpoints(
   def: Definition,
-  parents: ParentContext[],
+  parents: TargetContext[],
   entrySpec: EntrypointSpec
 ): EndpointDef[] {
   const context = _.last(parents)!;

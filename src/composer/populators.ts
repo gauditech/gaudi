@@ -4,7 +4,7 @@ import { getRef } from "@src/common/refs";
 import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
 import {
-  ParentContext,
+  TargetContext,
   calculateTarget,
   collectActionDeps,
   wrapActionsWithSelect,
@@ -31,7 +31,7 @@ function processPopulator(def: Definition, populator: PopulatorSpec): PopulatorD
 
 function processPopulate(
   def: Definition,
-  parents: ParentContext[],
+  parents: TargetContext[],
   populateSpec: PopulateSpec
 ): PopulateDef {
   const name = populateSpec.name;
@@ -45,7 +45,7 @@ function processPopulate(
   const targetModel = getRef.model(def, target.retType);
 
   const currentContext = { target, model: targetModel };
-  const targetParents: ParentContext[] = [...parents, currentContext];
+  const targetParents: TargetContext[] = [...parents, currentContext];
 
   const rawActions = composeAction(def, populateSpec, targetParents);
   checkActionChangeset(rawActions);
@@ -70,7 +70,7 @@ function processPopulate(
 function composeAction(
   def: Definition,
   populate: PopulateSpec,
-  parents: ParentContext[]
+  parents: TargetContext[]
 ): ActionDef[] {
   const targets = parents.map((p) => p.target);
 
