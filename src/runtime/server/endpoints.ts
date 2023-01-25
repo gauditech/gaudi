@@ -71,12 +71,14 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
   const endpointPath = buildEndpointPath(endpoint);
   const queries = buildEndpointQueries(def, endpoint);
 
+  const requiresAuthentication = false; // TODO: read from endpoint
+
   return {
     path: endpointPath.fullPath,
     method: "get",
     handlers: compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      requiresAuthentication ? authenticationHandler(def, { allowAnonymous: true }) : undefined,
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -89,25 +91,10 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
           // group context and target queries since all are findOne
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           let pids: number[] = [];
-          for (const { context, authorize } of allQueries) {
-            const results = await executeQueryTree(dbConn, def, context, pathParamVars, pids);
+          for (const qt of allQueries) {
+            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
             const result = findOne(results);
-            contextVars.set(context.alias, result);
-
-            // run parent auth
-            if (authorize) {
-              const authorizeResults = await executeQueryTree(
-                dbConn,
-                def,
-                authorize,
-                pathParamVars,
-                pids
-              );
-              if (authorizeResults.length === 0) {
-                throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
-              }
-            }
-
+            contextVars.set(qt.alias, result);
             pids = [result.id];
           }
 
@@ -158,32 +145,17 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           const contextVars = new Vars();
 
           let pids: number[] = [];
-          for (const { context, authorize } of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(dbConn, def, context, pathParamVars, pids);
+          for (const qt of queries.parentContextQueryTrees) {
+            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
             const result = findOne(results);
-            contextVars.set(context.alias, result);
-
-            // run parent auth
-            if (authorize) {
-              const authorizeResults = await executeQueryTree(
-                dbConn,
-                def,
-                authorize,
-                pathParamVars,
-                pids
-              );
-              if (authorizeResults.length === 0) {
-                throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
-              }
-            }
-
+            contextVars.set(qt.alias, result);
             pids = [result.id];
           }
 
           // fetch target query (list, so no findOne here)
           const tQt = queries.targetQueryTree;
-          const results = await executeQueryTree(dbConn, def, tQt.context, pathParamVars, pids);
-          contextVars.set(tQt.context.alias, results);
+          const results = await executeQueryTree(dbConn, def, tQt, pathParamVars, pids);
+          contextVars.set(tQt.alias, results);
 
           // FIXME run custom actions
 
@@ -235,25 +207,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const contextVars = new Vars();
 
           let pids: number[] = [];
-          for (const { context, authorize } of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(dbConn, def, context, pathParamVars, pids);
+          for (const qt of queries.parentContextQueryTrees) {
+            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
             const result = findOne(results);
-            contextVars.set(context.alias, result);
-
-            // run parent auth
-            if (authorize) {
-              const authorizeResults = await executeQueryTree(
-                dbConn,
-                def,
-                authorize,
-                pathParamVars,
-                pids
-              );
-              if (authorizeResults.length === 0) {
-                throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
-              }
-            }
-
+            contextVars.set(qt.alias, result);
             pids = [result.id];
           }
 
@@ -324,25 +281,10 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
-          for (const { context, authorize } of allQueries) {
-            const results = await executeQueryTree(dbConn, def, context, pathParamVars, pids);
+          for (const qt of allQueries) {
+            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
             const result = findOne(results);
-            contextVars.set(context.alias, result);
-
-            // run parent auth
-            if (authorize) {
-              const authorizeResults = await executeQueryTree(
-                dbConn,
-                def,
-                authorize,
-                pathParamVars,
-                pids
-              );
-              if (authorizeResults.length === 0) {
-                throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
-              }
-            }
-
+            contextVars.set(qt.alias, result);
             pids = [result.id];
           }
 
@@ -416,25 +358,10 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
-          for (const { context, authorize } of allQueries) {
-            const results = await executeQueryTree(dbConn, def, context, pathParamVars, pids);
+          for (const qt of allQueries) {
+            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
             const result = findOne(results);
-            contextVars.set(context.alias, result);
-
-            // run parent auth
-            if (authorize) {
-              const authorizeResults = await executeQueryTree(
-                dbConn,
-                def,
-                authorize,
-                pathParamVars,
-                pids
-              );
-              if (authorizeResults.length === 0) {
-                throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
-              }
-            }
-
+            contextVars.set(qt.alias, result);
             pids = [result.id];
           }
 

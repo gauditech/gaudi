@@ -2,31 +2,8 @@ auth model Operator {
   field name { type text }
 }
 
-model Box {
-  field name { type text, unique }
-  field is_public { type boolean }
-  relation items { from Item, through box }
-}
-
-model Item {
-  field name { type text }
-  field is_public { type boolean }
-  reference box { to Box }
-}
-
-entrypoint Boxes {
-  target model Box as box
-  identify with name
-
+entrypoint Operators {
+  target model Operator
+  create endpoint {}
   list endpoint {}
-  get endpoint {}
-
-  entrypoint Items {
-    target relation items
-    identify with name
-
-    authorize { is_public }
-
-    get endpoint {}
-  }
 }
