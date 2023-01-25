@@ -44,7 +44,11 @@ function processPopulate(
   );
   const targetModel = getRef.model(def, target.retType);
 
-  const currentContext = { target, model: targetModel };
+  const currentContext = {
+    target,
+    model: targetModel,
+    authorize: { expr: undefined, deps: [] },
+  };
   const targetParents: TargetContext[] = [...parents, currentContext];
 
   const rawActions = composeAction(def, populateSpec, targetParents);
