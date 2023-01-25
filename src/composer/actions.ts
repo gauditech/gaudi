@@ -1,10 +1,22 @@
 import _ from "lodash";
 
 import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
-import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
+import {
+  VarContext,
+  getTypedIterator,
+  getTypedLiteralValue,
+  getTypedPath,
+  getTypedPathWithLeaf,
+} from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot, ensureThrow, safeInvoke } from "@src/common/utils";
+import {
+  assertUnreachable,
+  ensureEqual,
+  ensureNot,
+  ensureThrow,
+  safeInvoke,
+} from "@src/common/utils";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -39,7 +51,7 @@ export function composeActionBlock(
       const [currentCtx, actions] = acc;
       const action = composeSingleAction(def, atom, currentCtx, targets, endpointKind);
       if (action.kind !== "delete-one" && action.alias) {
-        currentCtx[action.alias] = { modelName: action.model };
+        currentCtx[action.alias] = { kind: "record", modelName: action.model };
       }
       return [currentCtx, [...actions, action]];
     },
@@ -102,7 +114,10 @@ export function composeActionBlock(
  */
 function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
   const parentContext: VarContext = _.fromPairs(
-    _.initial(targets).map((t): [string, VarContext[string]] => [t.alias, { modelName: t.retType }])
+    _.initial(targets).map((t): [string, VarContext[string]] => [
+      t.alias,
+      { kind: "record", modelName: t.retType },
+    ])
   );
   switch (endpointKind) {
     case "create":
@@ -113,7 +128,10 @@ function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): Va
     case "delete":
     case "get": {
       const thisTarget = _.last(targets)!;
-      return { ...parentContext, [thisTarget.alias]: { modelName: thisTarget.retType } };
+      return {
+        ...parentContext,
+        [thisTarget.alias]: { kind: "record", modelName: thisTarget.retType },
+      };
     }
   }
 }
@@ -193,16 +211,22 @@ function composeSingleAction(
                 setter: { kind: "changeset-reference", referenceName: siblingName },
               };
             } else {
-              // fallback to resolving reference from context
-              /*
-               * NOTE: fallbacking to context-reference is dangerous because it will swallow any invalid reference and we will not know it until runtime
-               * we should check  expected references and still fallback to throwing exception
-               */
-              return {
-                name: atom.target,
-                setter: { kind: "context-reference", referenceName: siblingName },
-              };
-              // throw ["unresolved", path];
+              // check if this is an iterator?
+              const maybeIterator = safeInvoke(() => getTypedIterator(def, path, ctx));
+              switch (maybeIterator.kind) {
+                case "success": {
+                  return {
+                    name: atom.target,
+                    setter: { kind: "context-reference", referenceName: siblingName },
+                  };
+                }
+                case "error": {
+                  throw ["unresolved", path];
+                }
+                default: {
+                  return assertUnreachable(maybeIterator);
+                }
+              }
             }
           }
           case "success": {
