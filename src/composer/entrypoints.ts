@@ -29,7 +29,7 @@ export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): vo
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
 }
 
-type EndpointContext = {
+export type TargetContext = {
   model: ModelDef;
   target: TargetDef;
   authorize: { expr: TypedExprDef; deps: SelectDep[] };
@@ -38,7 +38,7 @@ type EndpointContext = {
 function processEntrypoint(
   def: Definition,
   spec: EntrypointSpec,
-  parents: EndpointContext[]
+  parents: TargetContext[]
 ): EntrypointDef {
   const target = calculateTarget(
     def,
@@ -59,7 +59,7 @@ function processEntrypoint(
     : undefined;
   const authorizeDeps = collectAuthorizeDeps(def, authorizeExpr);
 
-  const thisContext: EndpointContext = {
+  const thisContext: TargetContext = {
     model: targetModel,
     target,
     authorize: { expr: authorizeExpr, deps: authorizeDeps },
@@ -74,9 +74,9 @@ function processEntrypoint(
   };
 }
 
-function calculateTarget(
+export function calculateTarget(
   def: Definition,
-  parents: EndpointContext[],
+  parents: TargetContext[],
   name: string,
   alias: string | null,
   identify: string
@@ -154,7 +154,7 @@ function calculateIdentifyWith(
     case "field": {
       const field = prop;
       if (field.type === "boolean") {
-        throw "invalid-type";
+        throw new Error("Invalid type of identifiyWith - boolean");
       }
       return {
         name,
@@ -164,13 +164,13 @@ function calculateIdentifyWith(
       };
     }
     default:
-      throw "invalid-kind";
+      throw new Error(`Identify with target must be a field`);
   }
 }
 
 function processEndpoints(
   def: Definition,
-  parents: EndpointContext[],
+  parents: TargetContext[],
   entrySpec: EntrypointSpec
 ): EndpointDef[] {
   const context = _.last(parents)!;
@@ -423,9 +423,9 @@ type SelectDep = FieldSetterReferenceValue["target"];
  * context variables, which fields are required in the following actions, so that they can
  * be fetched from the database beforehand.
  * Eg. if a `Repo` aliased as `myrepo` requires `myorg.id`, we need to instruct `myorg`
- * context variable to fetch the `id` so it can be referenced later by `myrepo`.ß
+ * context variable to fetch the `id` so it can be referenced later by `myrepo`.
  */
-function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
+export function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
   const nonDeleteActions = actions.filter(
     (a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one"
@@ -518,7 +518,7 @@ function wrapTargetsWithSelect(
  * FIXME this is confusing because we don't have a special type for ActionDef with(out) select.
  * Prior to calling this function, every `ActionDef` has an empty (`[]`) select property.
  */
-function wrapActionsWithSelect(
+export function wrapActionsWithSelect(
   def: Definition,
   actions: ActionDef[],
   deps: SelectDep[]
@@ -526,8 +526,9 @@ function wrapActionsWithSelect(
   return actions
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .map((a): ActionDef => {
-      const paths = uniqueNamePaths(deps.filter((t) => t.alias === a.alias).map((a) => a.access));
+      const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
       const model = getRef.model(def, a.model);
+
       const select = pathsToSelectDef(def, model, paths, [a.alias]);
       return { ...a, select };
     });

@@ -29,5 +29,6 @@
     }
   ],
   "entrypoints": [],
-  "hooks": []
+  "hooks": [],
+  "populators": []
 }
