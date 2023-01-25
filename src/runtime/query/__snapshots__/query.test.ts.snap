@@ -2477,7 +2477,120 @@ WHERE
 ]
 `;
 
-exports[`Order and limit Supports limit and order in non-batching query 1`] = `
+exports[`Order and limit supports limit and order in batching query 1`] = `
+[
+  {
+    "filter": undefined,
+    "fromPath": [
+      "Org",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "test",
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retType": "Org",
+    "select": [],
+  },
+  {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "nullable": false,
+            "type": "list-integer",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
+    },
+    "fromPath": [
+      "Org",
+      "recent_repos",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "recent_repos",
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retType": "Repo",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "recent_repos",
+          "id",
+        ],
+        "refKey": "Repo.id",
+      },
+      {
+        "alias": "__join_connection",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Order and limit supports limit and order in batching query 2`] = `
+"SELECT
+FROM
+  "org" AS "Org"
+
+
+SELECT
+  "Org.recent_repos"."id" AS "id",
+  "Org"."id" AS "__join_connection"
+FROM
+  "org" AS "Org"
+  JOIN (
+    SELECT
+      *
+    FROM
+      (
+        SELECT
+          "Org.repos"."id" AS "id",
+          "Org.repos"."org_id" AS "org_id",
+          "Org"."id" AS "__join_connection",
+          ROW_NUMBER() OVER (
+            PARTITION BY
+              "Org"."id"
+            ORDER BY
+              "Org.repos"."id" desc
+          ) AS "__row_number"
+        FROM
+          "org" AS "Org"
+          JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      ) as topn
+    WHERE
+      topn."__row_number" <= 10
+  ) AS "Org.recent_repos" ON "Org"."id" = "Org.recent_repos"."__join_connection"
+WHERE
+  "Org"."id" IN :@context_ids"
+`;
+
+exports[`Order and limit supports limit and order in non-batching query 1`] = `
 "SELECT
 FROM
   "org" AS "Org"
