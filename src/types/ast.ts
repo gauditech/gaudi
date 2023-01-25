@@ -114,7 +114,9 @@ export type EndpointAST = WithContext<{
 
 export type EndpointType = "list" | "get" | "create" | "update" | "delete";
 
-export type EndpointBodyAST = WithContext<{ kind: "action"; body: ActionBodyAST[] }>;
+export type EndpointBodyAST = WithContext<
+  { kind: "action"; body: ActionBodyAST[] } | { kind: "authorize"; expression: ExpAST }
+>;
 
 export type ActionKindAST = "create" | "update" | "delete";
 

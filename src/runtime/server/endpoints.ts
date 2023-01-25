@@ -7,6 +7,7 @@ import { Vars } from "./vars";
 
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
+import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { executeActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
@@ -23,8 +24,11 @@ import {
   DeleteEndpointDef,
   EndpointDef,
   EntrypointDef,
+  FunctionName,
   GetEndpointDef,
   ListEndpointDef,
+  TypedExprDef,
+  TypedFunction,
   UpdateEndpointDef,
 } from "@src/types/definition";
 
@@ -98,6 +102,8 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
             pids = [result.id];
           }
 
+          authorizeEndpoint(endpoint, contextVars);
+
           // FIXME run custom actions
 
           /* Refetch target object by id using the response query. We ignore `target.identifyWith` because
@@ -151,6 +157,8 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             contextVars.set(qt.alias, result);
             pids = [result.id];
           }
+
+          authorizeEndpoint(endpoint, contextVars);
 
           // fetch target query (list, so no findOne here)
           const tQt = queries.targetQueryTree;
@@ -213,6 +221,8 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             contextVars.set(qt.alias, result);
             pids = [result.id];
           }
+
+          authorizeEndpoint(endpoint, contextVars);
 
           const body = req.body;
           console.log("CTX PARAMS", pathParamVars);
@@ -287,6 +297,8 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             contextVars.set(qt.alias, result);
             pids = [result.id];
           }
+
+          authorizeEndpoint(endpoint, contextVars);
 
           const body = req.body;
           console.log("CTX PARAMS", pathParamVars);
@@ -365,6 +377,8 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
             pids = [result.id];
           }
 
+          authorizeEndpoint(endpoint, contextVars);
+
           const target = contextVars.get(endpoint.target.alias);
           await deleteData(def, dbConn, endpoint, target.id);
 
@@ -438,4 +452,133 @@ function findOne<T>(result: T[]): T {
   }
 
   return result[0];
+}
+function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
+  if (!endpoint.authorize) return;
+  const authorizeResult = executeTypedExpr(endpoint.authorize, contextVars);
+  if (!authorizeResult) {
+    throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
+  }
+}
+
+function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): unknown {
+  if (!expr) return null;
+
+  switch (expr.kind) {
+    case "alias": {
+      const [name, ...path] = expr.namePath;
+      return contextVars.get(name, path);
+    }
+    case "function": {
+      return executeTypedFunction(expr, contextVars);
+    }
+    case "literal": {
+      return expr.value;
+    }
+    case "variable": {
+      throw new Error(
+        `Unexpected kind variable in runtime execution of expression, name: ${expr.name}`
+      );
+    }
+    default: {
+      return assertUnreachable(expr);
+    }
+  }
+}
+function executeTypedFunction(func: TypedFunction, contextVars: Vars): unknown {
+  function getValue(expr: TypedExprDef) {
+    return executeTypedExpr(expr, contextVars);
+  }
+
+  switch (func.name) {
+    case "+":
+    case "-":
+    case "*":
+    case "/":
+    case ">":
+    case "<":
+    case ">=":
+    case "<=": {
+      ensureEqual(func.args.length, 2);
+      const val1 = getValue(func.args[0]);
+      const val2 = getValue(func.args[1]);
+
+      return fnNameToFunction(func.name)(val1, val2);
+    }
+    case "and":
+    case "or": {
+      ensureEqual(func.args.length, 2);
+      const val1 = getValue(func.args[0]);
+      const val2 = getValue(func.args[1]);
+
+      return fnNameToFunction(func.name)(val1, val2);
+    }
+    case "is":
+    case "is not":
+    case "in":
+    case "not in": {
+      ensureEqual(func.args.length, 2);
+      const val1 = getValue(func.args[0]);
+      const val2 = getValue(func.args[1]);
+
+      return fnNameToFunction(func.name)(val1, val2);
+    }
+    case "concat": {
+      const vals = func.args.map((arg) => {
+        const value = getValue(arg);
+
+        return value;
+      });
+
+      return fnNameToFunction(func.name)(vals);
+    }
+    case "length": {
+      ensureEqual(func.args.length, 1);
+      const val = getValue(func.args[0]);
+
+      return fnNameToFunction(func.name)(val);
+    }
+    default: {
+      return assertUnreachable(func.name);
+    }
+  }
+}
+
+function fnNameToFunction(name: FunctionName): (...args: any[]) => unknown {
+  switch (name) {
+    case "+":
+      return _.add;
+    case "-":
+      return _.subtract;
+    case "*":
+      return _.multiply;
+    case "/":
+      return _.divide;
+    case "<":
+      return _.lt;
+    case ">":
+      return _.gt;
+    case "<=":
+      return _.lte;
+    case ">=":
+      return _.gte;
+    case "is":
+      return _.isEqual;
+    case "is not":
+      return (a: unknown, b: unknown) => !_.isEqual(a, b);
+    case "and":
+      return (a: unknown, b: unknown) => a && b;
+    case "or":
+      return (a: unknown, b: unknown) => a || b;
+    case "in":
+      return _.includes;
+    case "not in":
+      return (a: unknown[], v: unknown) => !_.includes(a, v);
+    case "concat":
+      return (a: unknown[]) => a.join("");
+    case "length":
+      return (value: string) => value.length;
+    default:
+      return assertUnreachable(name);
+  }
 }

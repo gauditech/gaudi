@@ -1,9 +1,10 @@
 import _ from "lodash";
 
-import { composeActionBlock } from "./actions";
+import { composeActionBlock, getInitialContext } from "./actions";
+import { composeExpression } from "./models";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -20,6 +21,7 @@ import {
   SelectItem,
   TargetDef,
   TargetWithSelectDef,
+  TypedExprDef,
 } from "@src/types/definition";
 import { EntrypointSpec } from "@src/types/specification";
 
@@ -30,6 +32,7 @@ export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): vo
 type EndpointContext = {
   model: ModelDef;
   target: TargetDef;
+  authorize: { expr: TypedExprDef; deps: SelectDep[] };
 };
 
 function processEntrypoint(
@@ -47,7 +50,20 @@ function processEntrypoint(
   const name = spec.name;
   const targetModel = getRef.model(def, target.retType);
 
-  const thisContext: EndpointContext = { model: targetModel, target };
+  const authorizeContext = getInitialContext(
+    [...parents.map(({ target }) => target), target],
+    "create"
+  );
+  const authorizeExpr = spec.authorize
+    ? composeExpression(def, spec.authorize, [], authorizeContext)
+    : undefined;
+  const authorizeDeps = collectAuthorizeDeps(def, authorizeExpr);
+
+  const thisContext: EndpointContext = {
+    model: targetModel,
+    target,
+    authorize: { expr: authorizeExpr, deps: authorizeDeps },
+  };
   const targetParents = [...parents, thisContext];
 
   return {
@@ -159,12 +175,31 @@ function processEndpoints(
 ): EndpointDef[] {
   const context = _.last(parents)!;
   const targets = parents.map((p) => p.target);
+  const parentAuthorizes = parents.map((p) => p.authorize.expr);
+  const parentDeps = parents.flatMap((p) => p.authorize.deps);
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
     const selectDeps = collectActionDeps(def, rawActions);
     const actions = wrapActionsWithSelect(def, rawActions, selectDeps);
-    const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
+    const authorizeContext = getInitialContext(
+      parents.map(({ target }) => target),
+      endSpec.type
+    );
+    const currentAuthorize = endSpec.authorize
+      ? composeExpression(def, endSpec.authorize, [], authorizeContext)
+      : undefined;
+    const authorize = [...parentAuthorizes, currentAuthorize].reduce((prev, curr) => {
+      if (prev === undefined) return curr;
+      if (curr === undefined) return prev;
+      return { kind: "function", name: "and", args: [prev, curr] };
+    });
+    const authorizeDeps = collectAuthorizeDeps(def, currentAuthorize);
+    const targetsWithSelect = wrapTargetsWithSelect(def, targets, [
+      ...parentDeps,
+      ...selectDeps,
+      ...authorizeDeps,
+    ]);
     const parentContext = _.initial(targetsWithSelect);
     const target = _.last(targetsWithSelect)!;
 
@@ -172,6 +207,7 @@ function processEndpoints(
       case "get": {
         return {
           kind: "get",
+          authorize,
           response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
           // actions,
           parentContext,
@@ -181,6 +217,7 @@ function processEndpoints(
       case "list": {
         return {
           kind: "list",
+          authorize,
           response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
           // actions,
           parentContext,
@@ -195,6 +232,7 @@ function processEndpoints(
           actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
+          authorize,
           response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
         };
       }
@@ -206,6 +244,7 @@ function processEndpoints(
           actions,
           parentContext,
           target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
+          authorize,
           response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
         };
       }
@@ -215,6 +254,7 @@ function processEndpoints(
           actions,
           parentContext,
           target,
+          authorize,
           response: undefined,
         };
       }
@@ -431,6 +471,28 @@ function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
     });
   });
   return [...setterTargets, ...targetPaths];
+}
+
+function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] {
+  if (!expr) return [];
+  switch (expr.kind) {
+    case "alias": {
+      const [alias, ...access] = expr.namePath;
+      return [{ alias, access }];
+    }
+    case "literal": {
+      return [];
+    }
+    case "variable": {
+      return [];
+    }
+    case "function": {
+      return expr.args.flatMap((arg) => collectAuthorizeDeps(def, arg));
+    }
+    default: {
+      assertUnreachable(expr);
+    }
+  }
 }
 
 /**

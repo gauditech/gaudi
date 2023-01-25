@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { processSelect } from "./entrypoints";
-import { getTypedLiteralValue, getTypedPath } from "./utils";
+import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
@@ -479,7 +479,12 @@ function typedFunctionFromParts(
   };
 }
 
-function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): TypedExprDef {
+export function composeExpression(
+  def: Definition,
+  exp: ExpSpec,
+  namePath: string[],
+  context: VarContext = {}
+): TypedExprDef {
   switch (exp.kind) {
     case "literal": {
       return getTypedLiteralValue(exp.literal);
@@ -487,7 +492,7 @@ function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): T
     case "identifier": {
       const np = [...namePath, ...exp.identifier];
       // ensure everything resolves
-      getTypedPath(def, np, {});
+      getTypedPath(def, np, context);
       return { kind: "alias", namePath: np };
     }
     // everything else composes to a function

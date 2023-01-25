@@ -134,6 +134,7 @@ Gaudi {
 
   EndpointBody
     = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
+    | "authorize" "{" QueryExp "}" -- authorize
 
 
   ActionKind = "create" | "update" | "delete"

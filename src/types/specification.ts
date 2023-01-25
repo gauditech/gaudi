@@ -89,6 +89,7 @@ export type EntrypointSpec = WithContext<{
 export type EndpointSpec = WithContext<{
   type: EndpointType;
   action?: ActionSpec[];
+  authorize?: ExpSpec;
 }>;
 
 export type ActionSpec = WithContext<{

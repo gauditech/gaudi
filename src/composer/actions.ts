@@ -100,7 +100,7 @@ export function composeActionBlock(
  * until it's created by an action, while `update` sees is immediately, as it already exists
  * in the database.
  */
-function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
+export function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
   const parentContext: VarContext = _.fromPairs(
     _.initial(targets).map((t): [string, VarContext[string]] => [t.alias, { modelName: t.retType }])
   );

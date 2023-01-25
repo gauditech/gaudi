@@ -170,6 +170,7 @@ export type ListEndpointDef = {
   kind: "list";
   parentContext: TargetWithSelectDef[];
   target: Omit<TargetWithSelectDef, "identifyWith">;
+  authorize: TypedExprDef;
   response: SelectDef;
   // actions: ActionDef[];
 };
@@ -178,6 +179,7 @@ export type GetEndpointDef = {
   kind: "get";
   parentContext: TargetWithSelectDef[];
   target: TargetWithSelectDef;
+  authorize: TypedExprDef;
   response: SelectDef;
   // actions: ActionDef[];
 };
@@ -186,6 +188,7 @@ export type CreateEndpointDef = {
   kind: "create";
   parentContext: TargetWithSelectDef[];
   target: Omit<TargetWithSelectDef, "identifyWith">;
+  authorize: TypedExprDef;
   response: SelectDef;
   fieldset: FieldsetDef;
   actions: ActionDef[];
@@ -195,6 +198,7 @@ export type UpdateEndpointDef = {
   kind: "update";
   parentContext: TargetWithSelectDef[];
   target: TargetWithSelectDef;
+  authorize: TypedExprDef;
   response: SelectDef;
   fieldset: FieldsetDef;
   actions: ActionDef[];
@@ -205,6 +209,7 @@ export type DeleteEndpointDef = {
   parentContext: TargetWithSelectDef[];
   target: TargetWithSelectDef;
   actions: ActionDef[];
+  authorize: TypedExprDef;
   response: undefined;
 };
 

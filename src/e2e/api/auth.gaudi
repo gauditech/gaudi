@@ -19,14 +19,18 @@ entrypoint Boxes {
   identify with name
 
   list endpoint {}
-  get endpoint {}
+  get endpoint {
+      authorize { box.is_public }
+  }
 
   entrypoint Items {
-    target relation items
+    target relation items as item
     identify with name
 
-    authorize { is_public }
+    authorize { box.is_public }
 
-    get endpoint {}
+    get endpoint {
+      authorize { item.is_public }
+    }
   }
 }

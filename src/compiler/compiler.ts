@@ -301,14 +301,19 @@ function compileAction(action: ActionBodyAST): ActionSpec {
 
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
   let action: ActionSpec[] | undefined;
+  let authorize: ExpSpec | undefined;
 
   endpoint.body.map((b) => {
     if (b.kind === "action") {
       action = b.body.map(compileAction);
+    } else if (b.kind === "authorize") {
+      authorize = compileQueryExp(b.expression);
+    } else {
+      assertUnreachable(b);
     }
   });
 
-  return { type: endpoint.type, action, interval: endpoint.interval };
+  return { type: endpoint.type, action, authorize, interval: endpoint.interval };
 }
 
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {

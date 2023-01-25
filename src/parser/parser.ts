@@ -287,6 +287,9 @@ semantics.addOperation("parse()", {
   EndpointBody_action(this, _action, _braceL, body, _braceR): EndpointBodyAST {
     return { kind: "action", body: body.parse(), interval: this.source };
   },
+  EndpointBody_authorize(this, _authorize, _braceL, body, _braceR): EndpointBodyAST {
+    return { kind: "authorize", expression: body.parse(), interval: this.source };
+  },
   Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
     return {
       kind: "hook",

@@ -244,6 +244,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       "endpoints": [
         {
           "action": undefined,
+          "authorize": undefined,
           "interval": {
             "endIdx": 133,
             "startIdx": 117,
@@ -252,6 +253,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         },
         {
           "action": undefined,
+          "authorize": undefined,
           "interval": {
             "endIdx": 151,
             "startIdx": 136,
@@ -260,6 +262,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         },
         {
           "action": undefined,
+          "authorize": undefined,
           "interval": {
             "endIdx": 172,
             "startIdx": 154,
@@ -433,6 +436,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
               ],
             },
           ],
+          "authorize": undefined,
           "interval": {
             "endIdx": 643,
             "startIdx": 175,
@@ -446,6 +450,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "endpoints": [
             {
               "action": undefined,
+              "authorize": undefined,
               "interval": {
                 "endIdx": 716,
                 "startIdx": 698,
@@ -711,6 +716,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
               "targetPath": undefined,
             },
           ],
+          "authorize": undefined,
           "interval": {
             "endIdx": 576,
             "startIdx": 406,
