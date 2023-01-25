@@ -3,7 +3,7 @@ import _ from "lodash";
 import { processSelect } from "./entrypoints";
 import { getTypedLiteralValue, getTypedPath } from "./utils";
 
-import { Ref, RefKind, getRef } from "@src/common/refs";
+import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
 import {
   getDirectChildren,
@@ -47,7 +47,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     try {
       return fn();
     } catch (e) {
-      if (Array.isArray(e) && e[0] === "unknown-refkey") {
+      if (e instanceof UnknownRefKeyError) {
         needsExtraStep = true;
         return null;
       } else {
@@ -86,7 +86,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     });
     if (def.resolveOrder.length === resolvedCount && needsExtraStep) {
       // whole iteration has passed, nothing has changed, but not everything's defined
-      throw "infinite-loop";
+      throw new Error(`Couldn't resolve the spec`);
     }
   }
 }
