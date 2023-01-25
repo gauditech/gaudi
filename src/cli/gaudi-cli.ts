@@ -333,7 +333,13 @@ function dbPopulateCommandHandler(
   args: ArgumentsCamelCase<DbPopulateOptions>,
   config: EngineConfig
 ) {
-  return dbPopulate(args, config).start();
+  return dbPopulate(args, config)
+    .start()
+    .catch((err) => {
+      // just use catch to prevent error from leaking to node and finishing entire watch process
+      // command will be reexecuted anyway on next change
+      console.error("Error running db populate command:", err);
+    });
 }
 
 // --- DB migrate

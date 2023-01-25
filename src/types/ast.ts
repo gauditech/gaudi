@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST;
+export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -193,3 +193,42 @@ export type BinaryOperator =
   | "*";
 
 export type UnaryOperator = "not";
+
+// ----- Populators
+
+export type PopulatorAST = WithContext<{
+  kind: "populator";
+  name: string;
+  body: PopulateAST[];
+}>;
+
+export type PopulateAST = WithContext<{
+  kind: "populate";
+  name: string;
+  body: PopulateBodyAST[];
+}>;
+export type PopulateBodyAST = WithContext<
+  | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
+  | { kind: "identify"; identifier: string }
+  | { kind: "repeat"; repeat: RepeaterAST }
+  | { kind: "set"; target: string; set: PopulateSetterValueAST }
+  | { kind: "populate"; populate: PopulateAST }
+  // TODO: hints
+>;
+
+export type PopulateSetterValueAST = WithContext<
+  | { kind: "literal"; value: LiteralValue }
+  | { kind: "reference"; reference: string[] }
+  | { kind: "hook"; hook: HookAST }
+>;
+
+export type RepeaterAST = WithContext<{
+  alias?: string;
+  atoms: RepeaterAtomAST[];
+}>;
+
+export type RepeaterAtomAST = WithContext<
+  | { kind: "fixed"; value: number }
+  | { kind: "start"; value: number }
+  | { kind: "end"; value: number }
+>;
