@@ -188,10 +188,7 @@ function composeSingleAction(
                * NOTE: fallbacking to context-reference is dangerous because it will swallow any invalid reference and we will not know it until runtime
                * we should check  expected references and still fallback to throwing exception
                */
-              return {
-                name: atom.target,
-                setter: { kind: "context-reference", referenceName: siblingName },
-              };
+              return { kind: "context-reference", referenceName: siblingName };
               // throw ["unresolved", path];
             }
           }

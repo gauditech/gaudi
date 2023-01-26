@@ -981,7 +981,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "kind": "set",
                   "set": {
                     "kind": "literal",
-                    "value": 2,
+                    "literal": 2,
                   },
                   "target": "numberProp",
                 },
@@ -993,7 +993,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "kind": "set",
                   "set": {
                     "kind": "literal",
-                    "value": "fred",
+                    "literal": "fred",
                   },
                   "target": "stringProp",
                 },
@@ -1005,7 +1005,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "kind": "set",
                   "set": {
                     "kind": "literal",
-                    "value": false,
+                    "literal": false,
                   },
                   "target": "boolProp",
                 },
@@ -1017,7 +1017,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "kind": "set",
                   "set": {
                     "kind": "literal",
-                    "value": null,
+                    "literal": null,
                   },
                   "target": "nullProp",
                 },
@@ -1042,7 +1042,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "kind": "set",
                   "set": {
                     "kind": "literal",
-                    "value": 3,
+                    "literal": 3,
                   },
                   "target": "numberProp",
                 },
@@ -1054,7 +1054,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
                   "kind": "set",
                   "set": {
                     "kind": "literal",
-                    "value": "foo",
+                    "literal": "foo",
                   },
                   "target": "stringProp",
                 },
@@ -1080,7 +1080,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "kind": "set",
               "set": {
                 "kind": "literal",
-                "value": 1,
+                "literal": 1,
               },
               "target": "numberProp",
             },
@@ -1092,7 +1092,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "kind": "set",
               "set": {
                 "kind": "literal",
-                "value": "asdf",
+                "literal": "asdf",
               },
               "target": "stringProp",
             },
@@ -1104,7 +1104,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "kind": "set",
               "set": {
                 "kind": "literal",
-                "value": true,
+                "literal": true,
               },
               "target": "boolProp",
             },
@@ -1116,7 +1116,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "kind": "set",
               "set": {
                 "kind": "literal",
-                "value": null,
+                "literal": null,
               },
               "target": "nullProp",
             },

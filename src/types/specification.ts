@@ -158,7 +158,7 @@ export type PopulateSetterSpec = WithContext<{
   kind: "set";
   target: string;
   set:
-    | { kind: "literal"; value: LiteralValue }
+    | { kind: "literal"; literal: LiteralValue }
     | { kind: "reference"; reference: string[] }
     | { kind: "hook"; hook: ActionHookSpec };
 }>;

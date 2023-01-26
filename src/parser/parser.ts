@@ -523,7 +523,7 @@ semantics.addOperation("parse()", {
   PopulateSetterValue_literal(this, value): PopulateSetterValueAST {
     return {
       kind: "literal",
-      value: value.parse(),
+      literal: value.parse(),
       // interval: this.source
     };
   },

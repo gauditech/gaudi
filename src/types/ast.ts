@@ -211,7 +211,7 @@ export type PopulateBodyAST = WithContext<
 >;
 
 export type PopulateSetterValueAST = WithContext<
-  | { kind: "literal"; value: LiteralValue }
+  | { kind: "literal"; literal: LiteralValue }
   | { kind: "reference"; reference: string[] }
   | { kind: "hook"; hook: HookAST }
 >;
