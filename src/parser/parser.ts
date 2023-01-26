@@ -1,5 +1,4 @@
-import grammar from "./grammar/gaudi.ohm-bundle.js";
-
+import grammar from "@src/parser/grammar/gaudi.ohm-bundle";
 import {
   AST,
   ActionAtomBodyAST,
@@ -22,6 +21,10 @@ import {
   InputFieldAST,
   InputFieldOptAST,
   ModelAST,
+  PopulateAST,
+  PopulateBodyAST,
+  PopulateSetterValueAST,
+  PopulatorAST,
   QueryAST,
   QueryBodyAST,
   QueryOrderAST,
@@ -30,6 +33,8 @@ import {
   ReferenceTag,
   RelationAST,
   RelationBodyAST,
+  RepeaterAST,
+  RepeaterAtomAST,
   SelectAST,
   ValidatorAST,
 } from "@src/types/ast";
@@ -484,6 +489,112 @@ semantics.addOperation("parse()", {
   },
   NonemptyListOf(this, head, _seperator, tail) {
     return [head.parse(), ...tail.children.map((c) => c.parse())];
+  },
+
+  Populator(this, _populator, identifier, _braceL, body, _braceR): PopulatorAST {
+    return {
+      kind: "populator",
+      name: identifier.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  Populate(this, _keyword, identifier, _braceL, body, _braceR): PopulateAST {
+    return {
+      kind: "populate",
+      name: identifier.parse(),
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  PopulateBody_target(this, _target, kind, identifierAs): PopulateBodyAST {
+    const [identifier, alias] = identifierAs.parse();
+    return {
+      kind: "target",
+      target: { kind: kind.sourceString as "model" | "relation", identifier, alias },
+      interval: this.source,
+    };
+  },
+  PopulateBody_identify(this, _identify, _with, identifier): PopulateBodyAST {
+    return {
+      kind: "identify",
+      identifier: identifier.parse(),
+      interval: this.source,
+    };
+  },
+  PopulateBody_repeat(this, _identifier, repeat): PopulateBodyAST {
+    return {
+      kind: "repeat",
+      repeat: repeat.parse(),
+      interval: this.source,
+    };
+  },
+  PopulateBody_setter(this, _identify, identifier, target): PopulateBodyAST {
+    return {
+      kind: "set",
+      target: identifier.parse(),
+      set: target.parse(),
+      interval: this.source,
+    };
+  },
+  PopulateSetterValue_literal(this, value): PopulateSetterValueAST {
+    return {
+      kind: "literal",
+      value: value.parse(),
+      // interval: this.source
+    };
+  },
+  PopulateSetterValue_reference(this, reference): PopulateSetterValueAST {
+    return {
+      kind: "reference",
+      reference: reference.parse(),
+      interval: this.source,
+    };
+  },
+  PopulateSetterValue_hook(this, hook): PopulateSetterValueAST {
+    return {
+      kind: "hook",
+      hook: hook.parse(),
+      interval: this.source,
+    };
+  },
+  PopulateBody_populate(this, populate): PopulateBodyAST {
+    return {
+      kind: "populate",
+      populate: populate.parse(),
+      // interval: this.source
+    };
+  },
+  Repeater_aliased(this, body, _as, alias): RepeaterAST {
+    return {
+      alias: alias.parse(),
+      atoms: body.parse(),
+      interval: this.source,
+    };
+  },
+  Repeater_anonymous(this, body): RepeaterAST {
+    return {
+      atoms: body.parse(),
+      interval: this.source,
+    };
+  },
+  RepeaterBody_fixed(this, atom): RepeaterAtomAST[] {
+    return [
+      {
+        kind: "fixed",
+        value: atom.parse(),
+        interval: this.source,
+      },
+    ];
+  },
+  RepeaterBody_range(this, _lbrace, atoms, _rbrace): RepeaterAtomAST[] {
+    return atoms.parse();
+  },
+  RepeaterRangeAtom_limits(this, boundary, interval): RepeaterAtomAST {
+    return {
+      kind: boundary.sourceString as "start" | "end",
+      value: interval.parse(),
+    };
   },
 });
 
