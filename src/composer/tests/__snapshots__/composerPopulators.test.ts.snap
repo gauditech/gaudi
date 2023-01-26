@@ -636,14 +636,23 @@ exports[`populator composer succeeds with iterator variable in the context 1`] =
           "alias": "org",
           "changeset": [
             {
+              "name": "index",
+              "setter": {
+                "kind": "iterator-reference",
+                "leaf": "current",
+                "name": "iter",
+              },
+            },
+            {
               "name": "name",
               "setter": {
                 "args": [
                   {
                     "name": "iter",
                     "setter": {
-                      "kind": "context-reference",
-                      "referenceName": "iter",
+                      "kind": "iterator-reference",
+                      "leaf": null,
+                      "name": "iter",
                     },
                   },
                 ],

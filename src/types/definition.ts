@@ -465,9 +465,10 @@ export type FieldSetterChangesetReference = {
   referenceName: string;
 };
 
-export type FieldSetterContextReference = {
-  kind: "context-reference";
-  referenceName: string;
+export type FieldSetterIteratorReference = {
+  kind: "iterator-reference";
+  name: string;
+  leaf: "start" | "end" | "current" | null;
 };
 
 export type FieldSetterHook = {
@@ -484,7 +485,7 @@ export type FieldSetter =
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
   | FieldSetterHook
-  | FieldSetterContextReference;
+  | FieldSetterIteratorReference;
 
 export type AliasDef = {
   kind: "alias";

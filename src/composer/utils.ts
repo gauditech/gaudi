@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, safeInvoke } from "@src/common/utils";
+import { ensureEqual } from "@src/common/utils";
 import { LiteralValue } from "@src/types/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 
@@ -72,7 +72,11 @@ export function getTypedIterator(def: Definition, path: string[], ctx: VarContex
       return { name: path[0], leaf: null };
     }
     ensureEqual(path.length, 2);
-    ensureEqual(path[1] in ["start", "end", "current"], true);
+    ensureEqual(
+      ["start", "end", "current"].includes(path[1]),
+      true,
+      `Path ${path[1]} is not valid in iterator`
+    );
     return { name: path[0], leaf: path[1] as never };
   } else {
     throw new Error(`Iterator with name ${path[0]} is not in the context`);

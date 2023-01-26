@@ -192,6 +192,7 @@ describe("populator composer", () => {
       model Org {
         field name { type text }
         field name2 { type text }
+        field index { type integer }
       }
 
       populator Dev {
@@ -199,6 +200,7 @@ describe("populator composer", () => {
           repeat 10 as iter
           target model Org as org
           set name2 name
+          set index iter.current
           set name hook {
             arg iter iter
             inline \`"Org " + iter.current\`
