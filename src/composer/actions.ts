@@ -51,7 +51,14 @@ export function composeActionBlock(
 
   const targetsCtx = getInitialTargetsContext(targets, endpointKind);
   // ensure no overlap between target context and iterator context
-  ensureEqual(_.intersection(_.keys(targetsCtx), _.keys(iteratorCtx)).length, 0);
+  ensureEqual(
+    _.intersection(_.keys(targetsCtx), _.keys(iteratorCtx)).length,
+    0,
+    `Overlap between iterator context and targets context: ${_.intersection(
+      _.keys(targetsCtx),
+      _.keys(iteratorCtx)
+    ).join(", ")}`
+  );
   const initialCtx = _.merge(targetsCtx, iteratorCtx);
 
   // Collect actions from the spec, updating the context during the pass through.
