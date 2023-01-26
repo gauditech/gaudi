@@ -65,6 +65,7 @@ export type QueryBodyAST = WithContext<
   | { kind: "filter"; filter: ExpAST }
   | { kind: "orderBy"; orderings: QueryOrderAST[] }
   | { kind: "limit"; limit: number }
+  | { kind: "offset"; offset: number }
   | { kind: "select"; select: SelectAST }
   | { kind: "aggregate"; name: string }
 >;

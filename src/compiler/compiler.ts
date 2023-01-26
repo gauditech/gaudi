@@ -139,6 +139,7 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
   let filter: ExpSpec | undefined;
   let orderBy: QuerySpec["orderBy"];
   let limit: number | undefined;
+  let offset: number | undefined;
   let select: QuerySpec["select"];
   let aggregate: QuerySpec["aggregate"];
 
@@ -152,6 +153,8 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
       orderBy = b.orderings;
     } else if (b.kind === "limit") {
       limit = b.limit;
+    } else if (b.kind === "offset") {
+      offset = b.offset;
     } else if (b.kind === "select") {
       select = b.select;
     } else if (b.kind === "aggregate") {
@@ -163,6 +166,13 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
     throw new CompilerError("'query' has no 'from'", query);
   }
 
+  if (limit === undefined && offset !== undefined) {
+    throw new CompilerError(
+      `Can't use offset without limit`,
+      query.body.find((a) => a.kind === "offset")
+    );
+  }
+
   return {
     name: query.name,
     fromModel,
@@ -171,6 +181,7 @@ function compileQuery(query: QueryAST, defaultFromModel?: string[]): QuerySpec {
     interval: query.interval,
     orderBy,
     limit,
+    offset,
     select,
     aggregate,
   };

@@ -372,7 +372,16 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
     })
   );
 
-  return queryFromParts(def, qspec.name, fromPath, filter, select, orderBy, qspec.limit);
+  return queryFromParts(
+    def,
+    qspec.name,
+    fromPath,
+    filter,
+    select,
+    orderBy,
+    qspec.limit,
+    qspec.offset
+  );
 }
 
 function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {

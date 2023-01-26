@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { QueryTree, queryFromParts, queryTreeFromParts } from "./build";
+import { QueryTree, queryTreeFromParts } from "./build";
 import { EndpointQueries, buildEndpointQueries } from "./endpointQueries";
 import { queryToString } from "./stringify";
 
@@ -153,15 +153,15 @@ describe("Endpoint queries", () => {
   });
 });
 
-describe("Order and limit", () => {
-  it("supports limit and order in non-batching query", () => {
+describe("Orderby, limit and offset", () => {
+  it("supports orderby, limit and offset in non-batching query", () => {
     const bp = `
     model Org {
       relation repos { from Repo, through org }
       query recent_repos {
         from repos
         order by id desc
-        limit 10
+        limit 10, offset 5
       }
     }
     model Repo {
@@ -173,14 +173,14 @@ describe("Order and limit", () => {
 
     expect(queryToString(def, q)).toMatchSnapshot();
   });
-  it("supports limit and order in batching query", () => {
+  it("supports orderby, limit and offset in batching query", () => {
     const bp = `
     model Org {
       relation repos { from Repo, through org }
       query recent_repos {
         from repos
         order by id desc
-        limit 10
+        limit 10, offset 5
       }
     }
     model Repo {

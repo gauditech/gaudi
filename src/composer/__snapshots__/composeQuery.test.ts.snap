@@ -45,6 +45,7 @@ exports[`compose model queries example with nested filters 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "repos_if_one",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "Org.repos_if_one",
     "retType": "Repo",
@@ -66,6 +67,7 @@ exports[`compose model queries nested example without filters 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "back_to_org",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "Org.back_to_org",
     "retType": "Org",
@@ -85,6 +87,7 @@ exports[`compose model queries order and limit 1`] = `
   "limit": 5,
   "modelRefKey": "Org",
   "name": "recent_repos",
+  "offset": undefined,
   "orderBy": [
     {
       "direction": "desc",

@@ -31,6 +31,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_0",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
@@ -105,6 +106,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_1",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
@@ -152,6 +154,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Repo",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -198,6 +201,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Issue",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -382,6 +386,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_0",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
@@ -456,6 +461,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_1",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
@@ -531,6 +537,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Repo",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -577,6 +584,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Issue",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -734,6 +742,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_0",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
@@ -808,6 +817,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_1",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
@@ -883,6 +893,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Repo",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -929,6 +940,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Issue",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -1108,6 +1120,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_0",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
@@ -1182,6 +1195,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_1",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
@@ -1229,6 +1243,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Repo",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -1276,6 +1291,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Repo",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -1452,6 +1468,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_0",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
@@ -1526,6 +1543,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "$target_1",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
@@ -1601,6 +1619,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Repo",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -1647,6 +1666,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "limit": undefined,
     "modelRefKey": "Issue",
     "name": "$target_2",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -1844,6 +1864,7 @@ exports[`Endpoint queries chained nested query 1`] = `
         "limit": undefined,
         "modelRefKey": "Org",
         "name": "$target_0",
+        "offset": undefined,
         "orderBy": undefined,
         "refKey": "N/A",
         "retType": "Org",
@@ -1896,6 +1917,7 @@ exports[`Endpoint queries chained nested query 1`] = `
       "limit": undefined,
       "modelRefKey": "Issue",
       "name": "$target_1",
+      "offset": undefined,
       "orderBy": undefined,
       "refKey": "N/A",
       "retType": "Issue",
@@ -1957,6 +1979,7 @@ exports[`Endpoint queries chained nested query 1`] = `
           "limit": undefined,
           "modelRefKey": "Issue",
           "name": "repo",
+          "offset": undefined,
           "orderBy": undefined,
           "refKey": "N/A",
           "retType": "Repo",
@@ -2030,6 +2053,7 @@ exports[`Endpoint queries chained nested query 1`] = `
               "limit": undefined,
               "modelRefKey": "Repo",
               "name": "org",
+              "offset": undefined,
               "orderBy": undefined,
               "refKey": "N/A",
               "retType": "Org",
@@ -2136,6 +2160,7 @@ exports[`Endpoint queries chained nested query 1`] = `
       "limit": undefined,
       "modelRefKey": "Org",
       "name": "$target_1",
+      "offset": undefined,
       "orderBy": undefined,
       "refKey": "N/A",
       "retType": "Issue",
@@ -2275,6 +2300,7 @@ exports[`Endpoint queries nested query 1`] = `
         "limit": undefined,
         "modelRefKey": "Org",
         "name": "$target_0",
+        "offset": undefined,
         "orderBy": undefined,
         "refKey": "N/A",
         "retType": "Org",
@@ -2327,6 +2353,7 @@ exports[`Endpoint queries nested query 1`] = `
       "limit": undefined,
       "modelRefKey": "Repo",
       "name": "$target_1",
+      "offset": undefined,
       "orderBy": undefined,
       "refKey": "N/A",
       "retType": "Repo",
@@ -2417,6 +2444,7 @@ exports[`Endpoint queries nested query 1`] = `
       "limit": undefined,
       "modelRefKey": "Org",
       "name": "$target_1",
+      "offset": undefined,
       "orderBy": undefined,
       "refKey": "N/A",
       "retType": "Repo",
@@ -2477,7 +2505,7 @@ WHERE
 ]
 `;
 
-exports[`Order and limit supports limit and order in batching query 1`] = `
+exports[`Orderby, limit and offset supports orderby, limit and offset in batching query 1`] = `
 [
   {
     "filter": undefined,
@@ -2488,6 +2516,7 @@ exports[`Order and limit supports limit and order in batching query 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "test",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
@@ -2523,6 +2552,7 @@ exports[`Order and limit supports limit and order in batching query 1`] = `
     "limit": undefined,
     "modelRefKey": "Org",
     "name": "recent_repos",
+    "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
@@ -2553,7 +2583,7 @@ exports[`Order and limit supports limit and order in batching query 1`] = `
 ]
 `;
 
-exports[`Order and limit supports limit and order in batching query 2`] = `
+exports[`Orderby, limit and offset supports orderby, limit and offset in batching query 2`] = `
 "SELECT
 FROM
   "org" AS "Org"
@@ -2584,13 +2614,14 @@ FROM
           JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
       ) as topn
     WHERE
-      topn."__row_number" <= 10
+      topn."__row_number" <= 15
+      AND topn."__row_number" > 5
   ) AS "Org.recent_repos" ON "Org"."id" = "Org.recent_repos"."__join_connection"
 WHERE
   "Org"."id" IN :@context_ids"
 `;
 
-exports[`Order and limit supports limit and order in non-batching query 1`] = `
+exports[`Orderby, limit and offset supports orderby, limit and offset in non-batching query 1`] = `
 "SELECT
 FROM
   "org" AS "Org"
@@ -2598,5 +2629,7 @@ FROM
 ORDER BY
   "Org.repos"."id" desc
 LIMIT
-  10"
+  10
+OFFSET
+  5"
 `;

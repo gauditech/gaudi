@@ -51,6 +51,7 @@ export type QuerySpec = WithContext<{
   filter?: ExpSpec;
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
   limit?: number;
+  offset?: number;
   select?: SelectAST;
   aggregate?: {
     name: string;

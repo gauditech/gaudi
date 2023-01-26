@@ -76,6 +76,7 @@ export type QueryDef = {
   select: SelectDef;
   orderBy: QueryOrderByAtomDef[] | undefined;
   limit: number | undefined;
+  offset: number | undefined;
 };
 
 export type QueryOrderByAtomDef = { exp: TypedExprDef; direction: "asc" | "desc" };

@@ -110,7 +110,8 @@ export function queryFromParts(
   filter: TypedExprDef,
   select: SelectDef,
   orderBy?: QueryOrderByAtomDef[],
-  limit?: number
+  limit?: number,
+  offset?: number
 ): QueryDef {
   if (select.length === 0) {
     return queryFromParts(
@@ -120,7 +121,8 @@ export function queryFromParts(
       filter,
       [selectableId(def, fromPath)],
       orderBy,
-      limit
+      limit,
+      offset
     );
   }
   select.forEach((selItem) => {
@@ -158,6 +160,7 @@ export function queryFromParts(
     select,
     orderBy,
     limit,
+    offset,
   };
 }
 
