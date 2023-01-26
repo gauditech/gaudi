@@ -215,6 +215,27 @@ describe("populator composer", () => {
     expect(populator).toMatchSnapshot();
   });
 
+  it("fails when there's a name overlap in the context", () => {
+    const bp = `
+      model Org {
+        field name { type text }
+      }
+
+      populator Dev {
+        populate Orgs {
+          repeat 10 as myvar
+          target model Org as myvar
+          set name "myname"
+        }
+      }
+      `;
+
+    const spec = compile(parse(bp));
+    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      `"Overlap between iterator context and targets context: myvar"`
+    );
+  });
+
   it("fails when missing field setter", () => {
     const bp = `
     model Org {

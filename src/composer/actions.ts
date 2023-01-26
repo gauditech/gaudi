@@ -50,12 +50,18 @@ export function composeActionBlock(
   }
 
   const targetsCtx = getInitialTargetsContext(targets, endpointKind);
-  // ensure no overlap between target context and iterator context
+
+  /**
+   * Ensure no overlap between target context and iterator context.
+   * Current target may not be in the context, but we can't reuse the alias, so we take aliases
+   * directly from `targets` rather than from the `targetsCtx` keys.
+   */
+  const targetAliases = targets.map((t) => t.alias);
   ensureEqual(
-    _.intersection(_.keys(targetsCtx), _.keys(iteratorCtx)).length,
+    _.intersection(targetAliases, _.keys(iteratorCtx)).length,
     0,
     `Overlap between iterator context and targets context: ${_.intersection(
-      _.keys(targetsCtx),
+      targetAliases,
       _.keys(iteratorCtx)
     ).join(", ")}`
   );
@@ -422,10 +428,11 @@ function findChangesetModel(
     // Check if model.
     try {
       return getRef.model(def, path[0]);
-      // eslint-disable-next-line no-empty
-    } catch (e) {}
-    // Not a model, check if initialization of a default target.ß
-    const inCtx = path[0] in ctx;
+    } catch (e) {
+      // noop
+    }
+    // Not a model, check if initialization of a default target.
+    const inCtx = path[0] in ctx && ctx[path[0]]?.kind === "record";
     if (!inCtx) {
       if (path[0] === target.alias) {
         return getRef.model(def, target.retType);
