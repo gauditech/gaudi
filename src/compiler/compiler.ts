@@ -454,19 +454,13 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
 }
 
 function checkMaxOneAuthModel(models: ModelSpec[]) {
-  let authModel: ModelSpec | null = null;
-  models.forEach((model) => {
-    if (model.isAuth) {
-      if (authModel) {
-        throw new CompilerError(
-          "Default `auth model` already defined! There can be maximum of 1 `auth model`",
-          model
-        );
-      } else {
-        authModel = model;
-      }
-    }
-  });
+  const authModels = models.filter((m) => m.isAuth);
+  if (authModels.length > 1) {
+    throw new CompilerError(
+      "Default `auth model` already defined! There can be maximum of 1 `auth model`",
+      authModels[1]
+    );
+  }
 }
 
 function compilePopulator(populator: PopulatorAST): PopulatorSpec {
