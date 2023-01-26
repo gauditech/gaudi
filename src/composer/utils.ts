@@ -63,7 +63,7 @@ export type TypedIterator = {
 };
 
 export type VarContext = Record<string, ContextRecord | undefined>;
-type ContextRecord = { kind: "record"; modelName: string } | { kind: "iterator"; iterName: string };
+type ContextRecord = { kind: "record"; modelName: string } | { kind: "iterator" };
 
 export function getTypedIterator(def: Definition, path: string[], ctx: VarContext): TypedIterator {
   if (path[0] in ctx) {

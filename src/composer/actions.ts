@@ -37,14 +37,23 @@ export function composeActionBlock(
   def: Definition,
   specs: ActionSpec[],
   targets: TargetDef[],
-  endpointKind: EndpointType
+  endpointKind: EndpointType,
+  /*
+   * NOTE: `iteratorCtx` is used by populator only
+   * TODO we should add support for iterators in actions
+   */
+  iteratorCtx: VarContext = {}
 ): ActionDef[] {
   // we currently only allow create and update
   if (["create", "update"].indexOf(endpointKind) < 0) {
     ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
   }
 
-  const initialContext = getInitialContext(targets, endpointKind);
+  const targetsCtx = getInitialTargetsContext(targets, endpointKind);
+  // ensure no overlap between target context and iterator context
+  ensureEqual(_.intersection(_.keys(targetsCtx), _.keys(iteratorCtx)).length, 0);
+  const initialCtx = _.merge(targetsCtx, iteratorCtx);
+
   // Collect actions from the spec, updating the context during the pass through.
   const [ctx, actions] = specs.reduce(
     (acc, atom) => {
@@ -55,7 +64,7 @@ export function composeActionBlock(
       }
       return [currentCtx, [...actions, action]];
     },
-    [initialContext, []] as [VarContext, ActionDef[]]
+    [initialCtx, []] as [VarContext, ActionDef[]]
   );
 
   // Create a default context action if not specified in blueprint.
@@ -112,7 +121,7 @@ export function composeActionBlock(
  * until it's created by an action, while `update` sees is immediately, as it already exists
  * in the database.
  */
-function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
+function getInitialTargetsContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
   const parentContext: VarContext = _.fromPairs(
     _.initial(targets).map((t): [string, VarContext[string]] => [
       t.alias,
@@ -286,7 +295,6 @@ function composeSingleAction(
   const changeset: ChangesetDef = [];
   let keyCount = changeset.length;
   let shouldRetry = true;
-  // eslint-disable-next-line no-constant-condition
   while (shouldRetry) {
     shouldRetry = false;
     simpleSpec.actionAtoms.forEach((atom) => {
@@ -302,7 +310,6 @@ function composeSingleAction(
         }
       });
       if (result.kind === "error") {
-        console.error(result.error);
         shouldRetry = true;
       }
     });

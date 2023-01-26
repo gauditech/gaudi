@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+import { VarContext } from "./utils";
+
 import { getRef } from "@src/common/refs";
 import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
@@ -86,7 +88,11 @@ function composeAction(
     actionAtoms,
   };
 
-  return composeActionBlock(def, [actionSpec], targets, "create");
+  const vars: VarContext = populate.repeater?.alias
+    ? { [populate.repeater?.alias]: { kind: "iterator" } }
+    : {};
+
+  return composeActionBlock(def, [actionSpec], targets, "create", vars);
 }
 
 /**

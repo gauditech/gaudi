@@ -625,3 +625,75 @@ exports[`populator composer succeeds for simple populator 1`] = `
   ],
 }
 `;
+
+exports[`populator composer succeeds with iterator variable in the context 1`] = `
+{
+  "name": "Dev",
+  "populates": [
+    {
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "name",
+              "setter": {
+                "args": [
+                  {
+                    "name": "iter",
+                    "setter": {
+                      "kind": "context-reference",
+                      "referenceName": "iter",
+                    },
+                  },
+                ],
+                "code": {
+                  "inline": ""Org " + iter.current",
+                  "kind": "inline",
+                },
+                "kind": "fieldset-hook",
+              },
+            },
+            {
+              "name": "name2",
+              "setter": {
+                "kind": "changeset-reference",
+                "referenceName": "name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [],
+          "targetPath": [
+            "org",
+          ],
+        },
+      ],
+      "name": "Orgs",
+      "populates": [],
+      "repeater": {
+        "alias": "iter",
+        "end": 10,
+        "start": 1,
+      },
+      "target": {
+        "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;

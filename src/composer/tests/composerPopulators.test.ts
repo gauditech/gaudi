@@ -187,6 +187,32 @@ describe("populator composer", () => {
     expect(populator).toMatchSnapshot();
   });
 
+  it("succeeds with iterator variable in the context", () => {
+    const bp = `
+      model Org {
+        field name { type text }
+        field name2 { type text }
+      }
+
+      populator Dev {
+        populate Orgs {
+          repeat 10 as iter
+          target model Org as org
+          set name2 name
+          set name hook {
+            arg iter iter
+            inline \`"Org " + iter.current\`
+          }
+        }
+      }
+      `;
+
+    const def = compose(compile(parse(bp)));
+    const populator = def.populators[0];
+
+    expect(populator).toMatchSnapshot();
+  });
+
   it("fails when missing field setter", () => {
     const bp = `
     model Org {
