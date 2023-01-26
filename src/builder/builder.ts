@@ -16,17 +16,6 @@ export type BuilderConfig = {
 };
 
 export async function build(definition: Definition, config: BuilderConfig): Promise<void> {
-  /* TODO
-
- - server (express)
- 	* read env/config with defaults
- - model
- 	* many-to-many relations
- - fieldset
- - entrypoint
- - action
-*/
-
   setupFolder(config.outputFolder);
   setupFolder(config.gaudiFolder);
 

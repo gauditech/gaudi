@@ -175,7 +175,7 @@ function composeSingleAction(
             if (path[0] === simpleSpec.alias) {
               ensureEqual(path.length, 2);
             } else {
-              ensureEqual(path.length, 1);
+              ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
             }
             const siblingName = _.last(path)!;
             // check if sibling name is defined in the changeset
@@ -183,7 +183,16 @@ function composeSingleAction(
             if (siblingOp) {
               return { kind: "changeset-reference", referenceName: siblingName };
             } else {
-              throw ["unresolved", path];
+              // fallback to resolving reference from context
+              /*
+               * NOTE: fallbacking to context-reference is dangerous because it will swallow any invalid reference and we will not know it until runtime
+               * we should check  expected references and still fallback to throwing exception
+               */
+              return {
+                name: atom.target,
+                setter: { kind: "context-reference", referenceName: siblingName },
+              };
+              // throw ["unresolved", path];
             }
           }
           case "success": {

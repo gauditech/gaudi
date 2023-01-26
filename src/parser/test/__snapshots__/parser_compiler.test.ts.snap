@@ -172,6 +172,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -231,6 +232,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -574,6 +576,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
     },
   ],
   "models": [],
+  "populators": [],
 }
 `;
 
@@ -717,6 +720,7 @@ exports[`parser blueprint test/git.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -879,6 +883,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -937,6 +942,228 @@ exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
       "queries": [],
       "references": [],
       "relations": [],
+    },
+  ],
+  "populators": [],
+}
+`;
+
+exports[`parser blueprint test/populator.gaudi 1`] = `
+{
+  "entrypoints": [],
+  "models": [],
+  "populators": [
+    {
+      "name": "TestPopulator",
+      "populates": [
+        {
+          "identify": undefined,
+          "name": "Item1",
+          "populates": [
+            {
+              "identify": undefined,
+              "name": "SubItem2",
+              "populates": [],
+              "repeater": {
+                "alias": undefined,
+                "kind": "range",
+                "range": {
+                  "end": 100,
+                  "start": 0,
+                },
+              },
+              "setters": [
+                {
+                  "interval": {
+                    "endIdx": 322,
+                    "startIdx": 306,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "kind": "literal",
+                    "value": 2,
+                  },
+                  "target": "numberProp",
+                },
+                {
+                  "interval": {
+                    "endIdx": 350,
+                    "startIdx": 329,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "kind": "literal",
+                    "value": "fred",
+                  },
+                  "target": "stringProp",
+                },
+                {
+                  "interval": {
+                    "endIdx": 375,
+                    "startIdx": 357,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "kind": "literal",
+                    "value": false,
+                  },
+                  "target": "boolProp",
+                },
+                {
+                  "interval": {
+                    "endIdx": 399,
+                    "startIdx": 382,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "kind": "literal",
+                    "value": null,
+                  },
+                  "target": "nullProp",
+                },
+              ],
+              "target": {
+                "alias": "repo",
+                "identifier": "repos",
+                "kind": "relation",
+              },
+            },
+            {
+              "identify": undefined,
+              "name": "SubItem3",
+              "populates": [],
+              "repeater": undefined,
+              "setters": [
+                {
+                  "interval": {
+                    "endIdx": 516,
+                    "startIdx": 500,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "kind": "literal",
+                    "value": 3,
+                  },
+                  "target": "numberProp",
+                },
+                {
+                  "interval": {
+                    "endIdx": 543,
+                    "startIdx": 523,
+                  },
+                  "kind": "set",
+                  "set": {
+                    "kind": "literal",
+                    "value": "foo",
+                  },
+                  "target": "stringProp",
+                },
+              ],
+              "target": {
+                "alias": "user",
+                "identifier": "User",
+                "kind": "model",
+              },
+            },
+          ],
+          "repeater": {
+            "alias": undefined,
+            "kind": "fixed",
+            "value": 2,
+          },
+          "setters": [
+            {
+              "interval": {
+                "endIdx": 116,
+                "startIdx": 100,
+              },
+              "kind": "set",
+              "set": {
+                "kind": "literal",
+                "value": 1,
+              },
+              "target": "numberProp",
+            },
+            {
+              "interval": {
+                "endIdx": 142,
+                "startIdx": 121,
+              },
+              "kind": "set",
+              "set": {
+                "kind": "literal",
+                "value": "asdf",
+              },
+              "target": "stringProp",
+            },
+            {
+              "interval": {
+                "endIdx": 164,
+                "startIdx": 147,
+              },
+              "kind": "set",
+              "set": {
+                "kind": "literal",
+                "value": true,
+              },
+              "target": "boolProp",
+            },
+            {
+              "interval": {
+                "endIdx": 186,
+                "startIdx": 169,
+              },
+              "kind": "set",
+              "set": {
+                "kind": "literal",
+                "value": null,
+              },
+              "target": "nullProp",
+            },
+          ],
+          "target": {
+            "alias": undefined,
+            "identifier": "Item",
+            "kind": "model",
+          },
+        },
+        {
+          "identify": undefined,
+          "name": "Item2",
+          "populates": [
+            {
+              "identify": undefined,
+              "name": "SubItem2",
+              "populates": [],
+              "repeater": {
+                "alias": "iter2",
+                "kind": "range",
+                "range": {
+                  "end": 100,
+                  "start": 0,
+                },
+              },
+              "setters": [],
+              "target": {
+                "alias": "repo",
+                "identifier": "repos",
+                "kind": "relation",
+              },
+            },
+          ],
+          "repeater": {
+            "alias": "iter1",
+            "kind": "fixed",
+            "value": 2,
+          },
+          "setters": [],
+          "target": {
+            "alias": undefined,
+            "identifier": "Item",
+            "kind": "model",
+          },
+        },
+      ],
     },
   ],
 }
@@ -1308,6 +1535,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;
 
@@ -1390,5 +1618,6 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
       "relations": [],
     },
   ],
+  "populators": [],
 }
 `;

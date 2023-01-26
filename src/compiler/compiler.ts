@@ -14,6 +14,8 @@ import {
   InputFieldOptAST,
   LiteralValue,
   ModelAST,
+  PopulateAST,
+  PopulatorAST,
   QueryAST,
   ReferenceAST,
   RelationAST,
@@ -34,9 +36,13 @@ import {
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,
+  PopulateSetterSpec,
+  PopulateSpec,
+  PopulatorSpec,
   QuerySpec,
   ReferenceSpec,
   RelationSpec,
+  RepeaterSpec,
   Specification,
   ValidatorSpec,
 } from "@src/types/specification";
@@ -441,17 +447,108 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
   return { ...baseHook, name, args };
 }
 
-export function compile(input: AST): Specification {
-  const models: ModelSpec[] = [];
-  const entrypoints: EntrypointSpec[] = [];
+function compilePopulator(populator: PopulatorAST): PopulatorSpec {
+  const name = populator.name;
+  const populates = populator.body.map(compilePopulate);
 
-  input.map((definition) => {
-    if (definition.kind === "model") {
-      models.push(compileModel(definition));
-    } else if (definition.kind === "entrypoint") {
-      entrypoints.push(compileEntrypoint(definition));
+  return { name, populates };
+}
+
+function compilePopulate(populate: PopulateAST): PopulateSpec {
+  const name = populate.name;
+  let target: PopulateSpec["target"] | undefined;
+  let identify: string | undefined;
+  let repeater: RepeaterSpec | undefined;
+  const setters: PopulateSetterSpec[] = [];
+  const populates: PopulateSpec[] = [];
+
+  populate.body.forEach((p) => {
+    const kind = p.kind;
+    if (kind === "target") {
+      target = p.target;
+    } else if (kind === "identify") {
+      identify = p.identifier;
+    } else if (kind === "repeat") {
+      let fixed: number | undefined;
+      let range: { start?: number; end?: number } | undefined;
+      p.repeat.atoms.forEach((a) => {
+        const kind = a.kind;
+        if (kind === "fixed") {
+          fixed = a.value;
+        } else if (kind === "start") {
+          range = range ?? {};
+          range.start = a.value;
+        } else if (kind === "end") {
+          range = range ?? {};
+          range.end = a.value;
+        } else {
+          assertUnreachable(kind);
+        }
+      });
+      if (fixed != null && range != null) {
+        throw new CompilerError(
+          `Action repeat contains both fixed and range values: ${p.interval}`
+        );
+      }
+
+      if (fixed != null) {
+        repeater = {
+          kind: "fixed",
+          alias: p.repeat.alias,
+          value: fixed,
+        };
+      } else if (range != null) {
+        repeater = {
+          kind: "range",
+          alias: p.repeat.alias,
+          range,
+        };
+      } else {
+        throw new CompilerError(`Action repeat contains no values: ${p.interval}`);
+      }
+    } else if (kind === "set") {
+      const set =
+        p.set.kind === "hook" ? { kind: p.set.kind, hook: compileActionHook(p.set.hook) } : p.set;
+
+      setters.push({ ...p, set });
+    } else if (kind === "populate") {
+      populates.push(compilePopulate(p.populate));
+    } else {
+      assertUnreachable(kind);
     }
   });
 
-  return { models, entrypoints };
+  if (target === undefined) {
+    throw new CompilerError("'populate' has no 'target'", populate);
+  }
+
+  return {
+    name,
+    target,
+    identify,
+    repeater,
+    setters,
+    populates,
+  };
+}
+
+export function compile(input: AST): Specification {
+  const models: ModelSpec[] = [];
+  const entrypoints: EntrypointSpec[] = [];
+  const populators: PopulatorSpec[] = [];
+
+  input.map((definition) => {
+    const kind = definition.kind;
+    if (kind === "model") {
+      models.push(compileModel(definition));
+    } else if (kind === "entrypoint") {
+      entrypoints.push(compileEntrypoint(definition));
+    } else if (kind === "populator") {
+      populators.push(compilePopulator(definition));
+    } else {
+      assertUnreachable(kind);
+    }
+  });
+
+  return { models, entrypoints, populators };
 }

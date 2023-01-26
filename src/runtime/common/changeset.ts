@@ -117,6 +117,8 @@ export function buildChangeset(
           }
         }
       }
+      case "context-reference":
+        return actionContext.vars.get(setter.referenceName);
       default: {
         return assertUnreachable(setter);
       }
