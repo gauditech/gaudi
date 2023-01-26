@@ -203,39 +203,48 @@ function composeSingleAction(
         switch (maybeTypedPath.kind) {
           case "error": {
             /**
-             * Is this a computed "sibling" call?
-             * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+             * First, check if this is an iterator variable
              */
-            if (path[0] === simpleSpec.alias) {
-              ensureEqual(path.length, 2);
-            } else {
-              ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
-            }
-            const siblingName = _.last(path)!;
-            // check if sibling name is defined in the changeset
-            const siblingOp = _.find(changeset, { name: siblingName });
-            if (siblingOp) {
-              return {
-                name: atom.target,
-                setter: { kind: "changeset-reference", referenceName: siblingName },
-              };
-            } else {
-              // check if this is an iterator?
-              const maybeIterator = safeInvoke(() => getTypedIterator(def, path, ctx));
-              switch (maybeIterator.kind) {
-                case "success": {
+
+            const maybeIterator = safeInvoke(() => getTypedIterator(def, path, ctx));
+            switch (maybeIterator.kind) {
+              case "success": {
+                return {
+                  name: atom.target,
+                  setter: {
+                    kind: "reference-value",
+                    target: {
+                      alias: maybeIterator.result.name,
+                      access: _.tail(path),
+                    },
+                    type: "integer", // FIXME we need a better type
+                  },
+                };
+              }
+              case "error": {
+                /**
+                 * Is this a computed "sibling" call?
+                 * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+                 */
+                if (path[0] === simpleSpec.alias) {
+                  ensureEqual(path.length, 2);
+                } else {
+                  ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
+                }
+                const siblingName = _.last(path)!;
+                // check if sibling name is defined in the changeset
+                const siblingOp = _.find(changeset, { name: siblingName });
+                if (siblingOp) {
                   return {
                     name: atom.target,
-                    setter: { kind: "context-reference", referenceName: siblingName },
+                    setter: { kind: "changeset-reference", referenceName: siblingName },
                   };
-                }
-                case "error": {
+                } else {
                   throw ["unresolved", path];
                 }
-                default: {
-                  return assertUnreachable(maybeIterator);
-                }
               }
+              default:
+                return assertUnreachable(maybeIterator);
             }
           }
           case "success": {

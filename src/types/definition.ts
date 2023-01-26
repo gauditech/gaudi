@@ -465,11 +465,6 @@ export type FieldSetterChangesetReference = {
   referenceName: string;
 };
 
-export type FieldSetterContextReference = {
-  kind: "context-reference";
-  referenceName: string;
-};
-
 export type FieldSetterHook = {
   kind: "fieldset-hook";
   code: HookCode;
@@ -483,8 +478,7 @@ export type FieldSetter =
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
-  | FieldSetterHook
-  | FieldSetterContextReference;
+  | FieldSetterHook;
 
 export type AliasDef = {
   kind: "alias";
