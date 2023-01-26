@@ -22,7 +22,16 @@ entrypoint Boxes {
 
   list endpoint {}
   get endpoint {
-      authorize { box.is_public or @auth.id is box.owner.id }
+    authorize { box.is_public or @auth.id is box.owner.id }
+  }
+  create endpoint {
+    // user must be logged in
+    authorize { @auth.id }
+    action {
+      create {
+        set owner_id @auth.id
+      }
+    }
   }
 
   entrypoint Items {

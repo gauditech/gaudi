@@ -18,23 +18,18 @@ describe("Auth", () => {
     [
       {
         model: "Operator",
-        data: [
-          { id: 1, name: "First" },
-          { id: 2, name: "Second" },
-        ],
+        data: [{ name: "First" }, { name: "Second" }],
       },
       {
         model: "Operator__AuthLocal",
         // password: 1234
         data: [
           {
-            id: 1,
             base_id: 1,
             username: "first",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
           {
-            id: 2,
             base_id: 2,
             username: "second",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
@@ -44,17 +39,17 @@ describe("Auth", () => {
       {
         model: "Box",
         data: [
-          { id: 1, owner_id: 1, name: "public", is_public: true },
-          { id: 2, owner_id: 1, name: "private", is_public: false },
+          { owner_id: 1, name: "public", is_public: true },
+          { owner_id: 1, name: "private", is_public: false },
         ],
       },
       {
         model: "Item",
         data: [
-          { id: 1, box_id: 1, name: "public", is_public: true },
-          { id: 2, box_id: 1, name: "private", is_public: false },
-          { id: 3, box_id: 2, name: "public", is_public: true },
-          { id: 4, box_id: 2, name: "private", is_public: false },
+          { box_id: 1, name: "public", is_public: true },
+          { box_id: 1, name: "private", is_public: false },
+          { box_id: 2, name: "public", is_public: true },
+          { box_id: 2, name: "private", is_public: false },
         ],
       },
     ]
@@ -177,6 +172,22 @@ describe("Auth", () => {
         .get("/box/private/items/public")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(200);
+    });
+
+    it("Success create box", async () => {
+      const token = await loginTestUser2();
+      const getResponse = await request(getServer())
+        .post("/box")
+        .set("Authorization", "bearer " + token)
+        .send({ name: "new box", is_public: false });
+      expect(getResponse.statusCode).toBe(200);
+    });
+
+    it("Fail create box not logged in", async () => {
+      const getResponse = await request(getServer())
+        .post("/box")
+        .send({ name: "another box", is_public: false });
+      expect(getResponse.statusCode).toBe(401);
     });
   });
 });

@@ -188,7 +188,6 @@ function processEndpoints(
       parents.map(({ target }) => target),
       endSpec.type
     );
-    console.log(authorizeContext);
     const currentAuthorize = endSpec.authorize
       ? composeExpression(def, endSpec.authorize, [], authorizeContext)
       : undefined;

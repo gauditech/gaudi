@@ -504,6 +504,7 @@ function findOne<T>(result: T[]): T {
 
   return result[0];
 }
+
 function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
   if (!endpoint.authorize) return;
   const authorizeResult = executeTypedExpr(endpoint.authorize, contextVars);
@@ -518,7 +519,8 @@ function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): unknown {
   switch (expr.kind) {
     case "alias": {
       // FIXME: cardinality
-      return _.castArray(contextVars.collect(expr.namePath))[0];
+      // don't return undefined so user can compare to null, eg @auth.id is not null
+      return _.castArray(contextVars.collect(expr.namePath))[0] ?? null;
     }
     case "function": {
       return executeTypedFunction(expr, contextVars);
