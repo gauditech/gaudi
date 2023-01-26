@@ -88,6 +88,7 @@ function composeAction(
     actionAtoms,
   };
 
+  // FIXME Should we add parent iterators to the context?
   const vars: VarContext = populate.repeater?.alias
     ? { [populate.repeater?.alias]: { kind: "iterator" } }
     : {};
