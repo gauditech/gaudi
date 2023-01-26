@@ -78,26 +78,30 @@ describe("Auth", () => {
     });
 
     it("Login and Logout successfully", async () => {
+      const listResponse1 = await request(getServer()).get("/box");
+      expect(listResponse1.statusCode).toBe(401);
+
       const loginResponse = await request(getServer())
         .post("/auth/login")
         .send({ username: "first", password: "1234" });
       expect(loginResponse.statusCode).toBe(200);
       const token = loginResponse.body.token;
-      expect(token ?? "").not.toBe("");
+      expect(token.length).toBe(43);
 
-      const listResponse = await request(getServer()).get("/box");
-      expect(listResponse.statusCode).toBe(200);
+      const listResponse2 = await request(getServer())
+        .get("/box")
+        .set("Authorization", "bearer " + token);
+      expect(listResponse2.statusCode).toBe(200);
 
       const logoutResponse = await request(getServer())
         .post("/auth/logout")
         .set("Authorization", "bearer " + token);
       expect(logoutResponse.statusCode).toBe(200);
 
-      // check if token is deleted, second logout should fail
-      const secondLogoutResponse = await request(getServer())
-        .post("/auth/logout")
+      const listResponse3 = await request(getServer())
+        .get("/box")
         .set("Authorization", "bearer " + token);
-      expect(secondLogoutResponse.statusCode).toBe(401);
+      expect(listResponse3.statusCode).toBe(401);
     });
 
     it("Wrong Login password", async () => {

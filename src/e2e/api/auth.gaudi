@@ -20,12 +20,14 @@ entrypoint Boxes {
   target model Box as box
   identify with name
 
-  list endpoint {}
+  list endpoint {
+    // user must be logged in
+    authorize { @auth.id }
+  }
   get endpoint {
     authorize { box.is_public or @auth.id is box.owner.id }
   }
   create endpoint {
-    // user must be logged in
     authorize { @auth.id }
     action {
       create {
