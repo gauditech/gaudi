@@ -11,7 +11,7 @@ import { ChangesetDef } from "@src/types/definition";
 
 describe("runtime", () => {
   describe("changeset", () => {
-    it("build action changeset object", () => {
+    it("build action changeset object", async () => {
       const data: ChangesetDef = [
         {
           name: "value_prop",
@@ -50,6 +50,20 @@ describe("runtime", () => {
             fieldsetAccess: ["slug"],
           },
         },
+        {
+          name: "hook_field",
+          setter: {
+            kind: "fieldset-hook",
+            args: [
+              { name: "x", setter: { kind: "literal", type: "integer", value: 6 } },
+              { name: "y", setter: { kind: "literal", type: "integer", value: 2 } },
+            ],
+            code: {
+              kind: "inline",
+              inline: "x / y",
+            },
+          },
+        },
       ];
 
       const context: ActionContext = {
@@ -60,7 +74,7 @@ describe("runtime", () => {
         referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
-      expect(buildChangeset(data, context)).toMatchSnapshot();
+      expect(await buildChangeset(data, context)).toMatchSnapshot();
     });
   });
 

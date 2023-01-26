@@ -185,8 +185,8 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
 
 function buildHookSchema<S extends BaseSchema>(validator: HookValidator, schema: S): S {
   const arg = validator.arg;
-  const testFn = (value: unknown) => {
-    return executeHook(validator.code, arg ? { [arg]: value } : {});
+  const testFn = async (value: unknown) => {
+    return await executeHook(validator.code, arg ? { [arg]: value } : {});
   };
   return schema.test(testFn);
 }
