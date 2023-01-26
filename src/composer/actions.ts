@@ -32,7 +32,7 @@ export function composeActionBlock(
     ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
   }
 
-  const initialContext = getInitialContext(targets, endpointKind);
+  const initialContext = getInitialContext(def, targets, endpointKind);
   // Collect actions from the spec, updating the context during the pass through.
   const [ctx, actions] = specs.reduce(
     (acc, atom) => {
@@ -100,10 +100,17 @@ export function composeActionBlock(
  * until it's created by an action, while `update` sees is immediately, as it already exists
  * in the database.
  */
-export function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
+export function getInitialContext(
+  def: Definition,
+  targets: TargetDef[],
+  endpointKind: EndpointType
+): VarContext {
   const parentContext: VarContext = _.fromPairs(
     _.initial(targets).map((t): [string, VarContext[string]] => [t.alias, { modelName: t.retType }])
   );
+  if (def.auth) {
+    parentContext["@auth"] = { modelName: getRef.model(def, def.auth.baseRefKey).name };
+  }
   switch (endpointKind) {
     case "create":
     case "list": {

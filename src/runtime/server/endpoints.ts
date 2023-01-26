@@ -75,14 +75,12 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
   const endpointPath = buildEndpointPath(endpoint);
   const queries = buildEndpointQueries(def, endpoint);
 
-  const requiresAuthentication = false; // TODO: read from endpoint
-
   return {
     path: endpointPath.fullPath,
     method: "get",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler(def, { allowAnonymous: true }) : undefined,
+      authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -91,6 +89,18 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              dbConn,
+              def,
+              queries.authQueryTree,
+              new Vars({ base_id: req.user.base_id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
 
           // group context and target queries since all are findOne
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
@@ -133,14 +143,12 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
   const endpointPath = buildEndpointPath(endpoint);
   const queries = buildEndpointQueries(def, endpoint);
 
-  const requiresAuthentication = false; // TODO: read from endpoint
-
   return {
     path: endpointPath.fullPath,
     method: "get",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler(def, { allowAnonymous: true }) : undefined,
+      authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -149,6 +157,18 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              dbConn,
+              def,
+              queries.authQueryTree,
+              new Vars({ base_id: req.user.base_id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
@@ -197,14 +217,12 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
   const endpointPath = buildEndpointPath(endpoint);
   const queries = buildEndpointQueries(def, endpoint);
 
-  const requiresAuthentication = false; // TODO: read from endpoint
-
   return {
     path: endpointPath.fullPath,
     method: "post",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler(def) : undefined,
+      authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -213,6 +231,18 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              dbConn,
+              def,
+              queries.authQueryTree,
+              new Vars({ base_id: req.user.base_id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
@@ -271,14 +301,12 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
   const endpointPath = buildEndpointPath(endpoint);
   const queries = buildEndpointQueries(def, endpoint);
 
-  const requiresAuthentication = false; // TODO: read from endpoint
-
   return {
     path: endpointPath.fullPath,
     method: "patch",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler(def) : undefined,
+      authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -287,6 +315,19 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              dbConn,
+              def,
+              queries.authQueryTree,
+              new Vars({ base_id: req.user.base_id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
+
           let pids: number[] = [];
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
@@ -349,14 +390,12 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
   const endpointPath = buildEndpointPath(endpoint);
   const queries = buildEndpointQueries(def, endpoint);
 
-  const requiresAuthentication = false; // TODO: read from endpoint
-
   return {
     path: endpointPath.fullPath,
     method: "delete",
     handlers: compact([
       // prehandlers
-      requiresAuthentication ? authenticationHandler(def, { allowAnonymous: true }) : undefined,
+      authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         try {
@@ -365,6 +404,18 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              dbConn,
+              def,
+              queries.authQueryTree,
+              new Vars({ base_id: req.user.base_id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
 
           let pids: number[] = [];
           // group context and target queries since all are findOne
@@ -466,8 +517,8 @@ function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): unknown {
 
   switch (expr.kind) {
     case "alias": {
-      const [name, ...path] = expr.namePath;
-      return contextVars.get(name, path);
+      // FIXME: cardinality
+      return _.castArray(contextVars.collect(expr.namePath))[0];
     }
     case "function": {
       return executeTypedFunction(expr, contextVars);

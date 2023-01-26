@@ -1,10 +1,12 @@
 auth model Operator {
   field name { type text }
+  relation boxes { from Box, through owner }
 }
 
 model Box {
   field name { type text, unique }
   field is_public { type boolean }
+  reference owner { to Operator }
   relation items { from Item, through box }
 }
 
@@ -20,14 +22,14 @@ entrypoint Boxes {
 
   list endpoint {}
   get endpoint {
-      authorize { box.is_public }
+      authorize { box.is_public or @auth.id is box.owner.id }
   }
 
   entrypoint Items {
     target relation items as item
     identify with name
 
-    authorize { box.is_public }
+    authorize { box.is_public or @auth.id is box.owner.id }
 
     get endpoint {
       authorize { item.is_public }

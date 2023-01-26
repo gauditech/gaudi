@@ -470,12 +470,13 @@ function typedFunctionFromParts(
   def: Definition,
   name: string,
   args: ExpSpec[],
-  namePath: string[]
+  namePath: string[],
+  context: VarContext = {}
 ): TypedExprDef {
   return {
     kind: "function",
     name: name as FunctionName, // FIXME proper validation
-    args: args.map((arg) => composeExpression(def, arg, namePath)),
+    args: args.map((arg) => composeExpression(def, arg, namePath, context)),
   };
 }
 
@@ -501,14 +502,15 @@ export function composeExpression(
         def,
         "not",
         [exp.exp, { kind: "literal", literal: true }],
-        namePath
+        namePath,
+        context
       );
     }
     case "binary": {
-      return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath);
+      return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath, context);
     }
     case "function": {
-      return typedFunctionFromParts(def, exp.name, exp.args, namePath);
+      return typedFunctionFromParts(def, exp.name, exp.args, namePath, context);
     }
   }
 }

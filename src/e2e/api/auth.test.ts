@@ -16,7 +16,13 @@ describe("Auth", () => {
     config,
     loadBlueprint(path.join(__dirname, "auth.gaudi")),
     [
-      { model: "Operator", data: [{ id: 1, name: "First" }] },
+      {
+        model: "Operator",
+        data: [
+          { id: 1, name: "First" },
+          { id: 2, name: "Second" },
+        ],
+      },
       {
         model: "Operator__AuthLocal",
         // password: 1234
@@ -27,13 +33,19 @@ describe("Auth", () => {
             username: "first",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
+          {
+            id: 2,
+            base_id: 2,
+            username: "second",
+            password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
+          },
         ],
       },
       {
         model: "Box",
         data: [
-          { id: 1, name: "public", is_public: true },
-          { id: 2, name: "private", is_public: false },
+          { id: 1, owner_id: 1, name: "public", is_public: true },
+          { id: 2, owner_id: 1, name: "private", is_public: false },
         ],
       },
       {
@@ -52,6 +64,13 @@ describe("Auth", () => {
     const loginResponse = await request(getServer())
       .post("/auth/login")
       .send({ username: "first", password: "1234" });
+    return loginResponse.body.token;
+  }
+
+  async function loginTestUser2() {
+    const loginResponse = await request(getServer())
+      .post("/auth/login")
+      .send({ username: "second", password: "1234" });
     return loginResponse.body.token;
   }
 
@@ -107,11 +126,24 @@ describe("Auth", () => {
       expect(getResponse.statusCode).toBe(200);
     });
 
-    it("Fail pivate", async () => {
+    it("Success pivate owned", async () => {
       const token = await loginTestUser();
       const getResponse = await request(getServer())
         .get("/box/private")
         .set("Authorization", "bearer " + token);
+      expect(getResponse.statusCode).toBe(200);
+    });
+
+    it("Fail private", async () => {
+      const token = await loginTestUser2();
+      const getResponse = await request(getServer())
+        .get("/box/private")
+        .set("Authorization", "bearer " + token);
+      expect(getResponse.statusCode).toBe(401);
+    });
+
+    it("Fail private no auth", async () => {
+      const getResponse = await request(getServer()).get("/box/private");
       expect(getResponse.statusCode).toBe(401);
     });
 
@@ -139,12 +171,12 @@ describe("Auth", () => {
       expect(getResponse.statusCode).toBe(401);
     });
 
-    it("Fail private > public", async () => {
+    it("Success private owned > public", async () => {
       const token = await loginTestUser();
       const getResponse = await request(getServer())
         .get("/box/private/items/public")
         .set("Authorization", "bearer " + token);
-      expect(getResponse.statusCode).toBe(401);
+      expect(getResponse.statusCode).toBe(200);
     });
   });
 });

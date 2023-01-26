@@ -1770,6 +1770,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
 
 exports[`Endpoint queries chained nested query 1`] = `
 {
+  "authQueryTree": undefined,
   "parentContextQueryTrees": [
     {
       "alias": "$target_0",
@@ -2191,6 +2192,7 @@ WHERE
 
 exports[`Endpoint queries nested query 1`] = `
 {
+  "authQueryTree": undefined,
   "parentContextQueryTrees": [
     {
       "alias": "$target_0",
