@@ -50,12 +50,28 @@ describe("compose models", () => {
       `"Relation Baz.foos is pointing to a reference referencing a model Foo"`
     );
   });
-  it("detect infinite loop when resolving", () => {
+
+  it("correctly fail when not able to resolve a ref", () => {
     const bp = `
-    model Org { reference no { to Unknown } }
+    model Org { reference no { to UnknownModel } }
     `;
-    expect(() => compose(compile(parse(bp)))).toThrowError("infinite-loop");
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Couldn't resolve the spec. The following refs are unresolved: UnknownModel"`
+    );
   });
+
+  it("correctly fail when circular dependency is found", () => {
+    const bp = `
+    model Org {
+      computed foo { bar + 1 }
+      computed bar { foo - 1 }
+    }
+    `;
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Couldn't resolve the spec. The following refs are unresolved: Org.bar, Org.foo"`
+    );
+  });
+
   it("parses validators", () => {
     const bp = `
     model Org {

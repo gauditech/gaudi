@@ -5,6 +5,7 @@ export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
+  populators: PopulatorDef[];
 };
 
 export type ModelDef = {
@@ -435,8 +436,41 @@ export type FieldSetterReferenceInput = {
   // required: boolean;
 };
 
+export type PopulatorDef = {
+  name: string;
+  populates: PopulateDef[];
+};
+
+export type PopulateDef = {
+  name: string;
+  target: TargetDef;
+  actions: ActionDef[];
+  populates: PopulateDef[];
+  repeater: RepeaterDef;
+};
+
+export type PopulateTargetDef = {
+  kind: "model" | "reference" | "relation"; // TODO: can we add "query" here?
+  name: string;
+  namePath: string[];
+  refKey: string;
+  retType: string;
+  alias: string;
+};
+
+export type RepeaterDef = { alias?: string; start: number; end: number };
+
+// TODO: this is very much alike to `FieldSetter` def
+export type PopulateSetter = LiteralValueDef | FieldSetterReferenceValue | FieldSetterHook;
+// TODO: add populator hints
+
 export type FieldSetterChangesetReference = {
   kind: "changeset-reference";
+  referenceName: string;
+};
+
+export type FieldSetterContextReference = {
+  kind: "context-reference";
   referenceName: string;
 };
 
@@ -453,7 +487,8 @@ export type FieldSetter =
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
-  | FieldSetterHook;
+  | FieldSetterHook
+  | FieldSetterContextReference;
 
 export type AliasDef = {
   kind: "alias";

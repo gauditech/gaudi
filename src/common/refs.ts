@@ -40,6 +40,14 @@ export type Ref<T extends RefKind> = T extends "model"
   ? ModelHookDef
   : never;
 
+export class UnknownRefKeyError extends Error {
+  refKey: string;
+  constructor(refKey: string) {
+    super(`Unknown refkey: ${refKey}`);
+    this.refKey = refKey;
+  }
+}
+
 function getAnyRef(
   def: Pick<Definition, "models">,
   modelNameOrRefKey: string,
@@ -67,7 +75,7 @@ function getAnyRef(
   }
 
   // nothing found
-  throw ["unknown-refkey", refKey];
+  throw new UnknownRefKeyError(refKey);
 }
 
 export function getRef<T extends RefKind>(

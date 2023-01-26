@@ -5,6 +5,7 @@ import { WithContext } from "@src/common/error";
 export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
+  populators: PopulatorSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -123,6 +124,7 @@ export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; thro
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
 export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
 export type ActionAtomSpecInput = { kind: "input"; fieldSpec: InputFieldSpec };
+
 export type InputFieldSpec = {
   name: string;
   optional: boolean;
@@ -132,6 +134,34 @@ export type InputFieldSpec = {
 export type BaseHookSpec = WithContext<{
   name?: string;
   code: HookCode;
+}>;
+
+export type RepeaterSpec = WithContext<
+  | { kind: "fixed"; alias?: string; value: number }
+  | { kind: "range"; alias?: string; range: { start?: number; end?: number } }
+>;
+
+export type PopulatorSpec = WithContext<{
+  name: string;
+  populates: PopulateSpec[];
+}>;
+
+export type PopulateSpec = WithContext<{
+  name: string;
+  target: { kind: "model" | "relation"; identifier: string; alias?: string };
+  identify?: string;
+  setters: PopulateSetterSpec[];
+  populates: PopulateSpec[];
+  repeater?: RepeaterSpec;
+}>;
+
+export type PopulateSetterSpec = WithContext<{
+  kind: "set";
+  target: string;
+  set:
+    | { kind: "literal"; value: LiteralValue }
+    | { kind: "reference"; reference: string[] }
+    | { kind: "hook"; hook: ActionHookSpec };
 }>;
 
 export type FieldValidatorHookSpec = BaseHookSpec & {

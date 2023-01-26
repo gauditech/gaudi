@@ -3,7 +3,7 @@ import _ from "lodash";
 import { processSelect } from "./entrypoints";
 import { getTypedLiteralValue, getTypedPath } from "./utils";
 
-import { Ref, RefKind, getRef } from "@src/common/refs";
+import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
 import {
   getDirectChildren,
@@ -42,14 +42,15 @@ import {
 } from "@src/types/specification";
 
 export function composeModels(def: Definition, specs: ModelSpec[]): void {
-  // cache.clear();
+  const unresolvedRefs = new Set<string>();
   let needsExtraStep = true;
   function tryCall<T>(fn: () => T): T | null {
     try {
       return fn();
     } catch (e) {
-      if (Array.isArray(e) && e[0] === "unknown-refkey") {
+      if (e instanceof UnknownRefKeyError) {
         needsExtraStep = true;
+        unresolvedRefs.add(e.refKey);
         return null;
       } else {
         throw e;
@@ -57,6 +58,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     }
   }
   while (needsExtraStep) {
+    unresolvedRefs.clear();
     const resolvedCount = def.resolveOrder.length;
     needsExtraStep = false;
     // ensure model uniqueness
@@ -87,7 +89,11 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     });
     if (def.resolveOrder.length === resolvedCount && needsExtraStep) {
       // whole iteration has passed, nothing has changed, but not everything's defined
-      throw "infinite-loop";
+      throw new Error(
+        `Couldn't resolve the spec. The following refs are unresolved: ${Array.from(
+          unresolvedRefs.values()
+        ).join(", ")}`
+      );
     }
   }
 }

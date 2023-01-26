@@ -46,10 +46,7 @@ export async function executeActions(
     } else if (actionKind === "delete-one") {
       const targetId = resolveTargetId(ctx, action.targetPath);
 
-      console.log("PRE DEL");
-
       await deleteData(dbConn, dbModel, targetId);
-      console.log("POST DEL");
     } else {
       assertUnreachable(actionKind);
     }
