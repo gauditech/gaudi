@@ -41,7 +41,7 @@ import {
 } from "@src/types/specification";
 
 export function composeModels(def: Definition, specs: ModelSpec[]): void {
-  // cache.clear();
+  const unresolvedRefs = new Set<string>();
   let needsExtraStep = true;
   function tryCall<T>(fn: () => T): T | null {
     try {
@@ -49,6 +49,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     } catch (e) {
       if (e instanceof UnknownRefKeyError) {
         needsExtraStep = true;
+        unresolvedRefs.add(e.refKey);
         return null;
       } else {
         throw e;
@@ -56,6 +57,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     }
   }
   while (needsExtraStep) {
+    unresolvedRefs.clear();
     const resolvedCount = def.resolveOrder.length;
     needsExtraStep = false;
     // ensure model uniqueness
@@ -86,7 +88,11 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     });
     if (def.resolveOrder.length === resolvedCount && needsExtraStep) {
       // whole iteration has passed, nothing has changed, but not everything's defined
-      throw new Error(`Couldn't resolve the spec`);
+      throw new Error(
+        `Couldn't resolve the spec. The following refs are unresolved: ${Array.from(
+          unresolvedRefs.values()
+        ).join(", ")}`
+      );
     }
   }
 }
