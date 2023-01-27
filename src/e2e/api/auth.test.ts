@@ -96,7 +96,7 @@ describe("Auth", () => {
       const logoutResponse = await request(getServer())
         .post("/auth/logout")
         .set("Authorization", "bearer " + token);
-      expect(logoutResponse.statusCode).toBe(200);
+      expect(logoutResponse.statusCode).toBe(204);
 
       const listResponse3 = await request(getServer())
         .get("/box")

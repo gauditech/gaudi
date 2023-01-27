@@ -79,18 +79,19 @@ export function buildAuthLogoutHandler(def: Definition): EndpointConfig {
     path: "/auth/logout",
     method: "post",
     handlers: [
-      authenticationHandler(def, { allowAnonymous: false }),
+      authenticationHandler(def, { allowAnonymous: true }),
       async (req: Request, resp: Response) => {
         try {
           if (!req.isAuthenticated()) {
-            throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Not authenticated");
+            resp.sendStatus(204);
+            return;
           }
 
           const token = req.user.token;
           const dbConn = getAppContext(req).dbConn;
           await dbConn.delete().from(getAuthDbName(def, "accessToken")).where({ token });
 
-          resp.sendStatus(200);
+          resp.sendStatus(204);
         } catch (err: unknown) {
           errorResponse(err);
         }
