@@ -62,8 +62,6 @@ export async function buildChangeset(
         ensureNot(referenceIdResult, undefined);
         return referenceIdResult.value;
       }
-      case "context-reference":
-        return actionContext.vars.get(setter.referenceName);
       default: {
         return assertUnreachable(setter);
       }

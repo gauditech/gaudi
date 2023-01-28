@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
+import { ensureEqual } from "@src/common/utils";
 import { LiteralValue } from "@src/types/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 
@@ -21,13 +22,14 @@ export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
 }
 
 export type TypedPathItemModel = { kind: "model"; name: string; refKey: string };
+export type TypedPathItemContext = { kind: "context"; model: TypedPathItemModel; name: string };
+
 export type TypedPathItemField = { kind: "field"; name: string; refKey: string };
 export type TypedPathItemReference = { kind: "reference"; name: string; refKey: string };
 export type TypedPathItemRelation = { kind: "relation"; name: string; refKey: string };
 export type TypedPathItemQuery = { kind: "query"; name: string; refKey: string };
 export type TypedPathItemAggregate = { kind: "aggregate"; name: string; refKey: string };
 export type TypedPathItemComputed = { kind: "computed"; name: string; refKey: string };
-export type TypedPathItemContext = { kind: "context"; model: TypedPathItemModel; name: string };
 
 export type TypedPathItem =
   | TypedPathItemContext
@@ -55,19 +57,44 @@ export type TypedPath = {
   leaf: TypedPathItemField | TypedPathItemComputed | TypedPathItemAggregate | null;
 };
 
-export type VarContext = Record<string, ContextRecord>;
-type ContextRecord = { modelName: string };
+export type TypedIterator = {
+  name: string;
+  leaf: "start" | "end" | "current" | null;
+};
+
+export type VarContext = Record<string, ContextRecord | undefined>;
+type ContextRecord = { kind: "record"; modelName: string } | { kind: "iterator" };
+
+export function getTypedIterator(def: Definition, path: string[], ctx: VarContext): TypedIterator {
+  if (path[0] in ctx) {
+    // we can either reference the whole iterator, which is path === path[0], or some of the fixed fields
+    if (path.length === 1) {
+      return { name: path[0], leaf: null };
+    }
+    ensureEqual(path.length, 2);
+    ensureEqual(
+      ["start", "end", "current"].includes(path[1]),
+      true,
+      `Path ${path[1]} is not valid in iterator`
+    );
+    return { name: path[0], leaf: path[1] as never };
+  } else {
+    throw new Error(`Iterator with name ${path[0]} is not in the context`);
+  }
+}
 
 export function getTypedPath(def: Definition, path: string[], ctx: VarContext): TypedPath {
   if (_.isEmpty(path)) {
     throw new Error("Path is empty");
   }
   const start = _.first(path)!;
-  const isCtx = start in ctx;
-  const startModel = getRef.model(def, isCtx ? ctx[start].modelName : start);
+  const maybeCtx = ctx[start];
+  const ctxModel: string | null = maybeCtx?.kind === "record" ? maybeCtx.modelName : null;
+
+  const startModel = getRef.model(def, ctxModel || start);
 
   let source: TypedPathItemContext | TypedPathItemModel;
-  if (isCtx) {
+  if (ctxModel) {
     source = {
       kind: "context",
       model: { kind: "model", name: startModel.name, refKey: startModel.refKey },
