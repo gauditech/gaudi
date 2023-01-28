@@ -216,6 +216,11 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
     (item): item is SelectAggregateItem => item.kind === "aggregate"
   );
 
+  const orderBy = q.kind === "query" ? q.orderBy ?? [] : q.query.orderBy ?? [];
+  const orderByPaths = orderBy.flatMap((ordering) =>
+    collectPathsFromExp(def, expandExpression(def, ordering.exp))
+  );
+
   const allPaths = [
     [...fromPath, "id"],
     ...collectPathsFromExp(def, expandExpression(def, filter)),
@@ -236,6 +241,7 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
       return collectPathsFromExp(def, newExp);
     }),
     ...aggregates.map((a) => a.namePath),
+    ...orderByPaths,
   ];
   return uniqueNamePaths(allPaths);
 }
