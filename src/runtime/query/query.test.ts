@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { QueryTree } from "./build";
+import { QueryTree, queryTreeFromParts } from "./build";
 import { EndpointQueries, buildEndpointQueries } from "./endpointQueries";
 import { queryToString } from "./stringify";
 
@@ -150,6 +150,67 @@ describe("Endpoint queries", () => {
       expect(endpoint.target).toMatchSnapshot();
       expect(endpoint.parentContext).toMatchSnapshot();
     });
+  });
+});
+
+describe("Orderby, limit and offset", () => {
+  it("supports orderby, limit and offset in non-batching query", () => {
+    const bp = `
+    model Org {
+      relation repos { from Repo, through org }
+      query recent_repos {
+        from repos
+        order by id desc
+        limit 10, offset 5
+      }
+    }
+    model Repo {
+      reference org { to Org }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const q = def.models[0].queries[0];
+
+    expect(queryToString(def, q)).toMatchSnapshot();
+  });
+  it("supports orderby, limit and offset in batching query", () => {
+    const bp = `
+    model Org {
+      relation repos { from Repo, through org }
+      query recent_repos {
+        from repos
+        order by id desc
+        limit 10, offset 5
+      }
+    }
+    model Repo {
+      reference org { to Org }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const qt = queryTreeFromParts(def, "test", ["Org"], undefined, [
+      {
+        kind: "query",
+        alias: "recent_repos",
+        name: "recent_repos",
+        namePath: ["Org", "recent_repos"],
+        select: [
+          {
+            kind: "field",
+            alias: "id",
+            name: "id",
+            namePath: ["Org", "recent_repos", "id"],
+            refKey: "Repo.id",
+          },
+        ],
+      },
+    ]);
+    expect(extractQueryTree(qt)).toMatchSnapshot();
+    expect(
+      extractQueryTree(qt)
+        .map((q) => queryToString(def, q))
+        .join("\n\n\n")
+    ).toMatchSnapshot();
   });
 });
 

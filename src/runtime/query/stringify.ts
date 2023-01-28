@@ -18,6 +18,7 @@ import {
   Definition,
   ModelDef,
   QueryDef,
+  QueryOrderByAtomDef,
   ReferenceDef,
   RelationDef,
   SelectAggregateItem,
@@ -29,7 +30,7 @@ import {
 } from "@src/types/definition";
 
 // FIXME this should accept Queryable
-export function queryToString(def: Definition, q: QueryDef): string {
+export function queryToString(def: Definition, q: QueryDef, isBatching = false): string {
   const expandedFilter = expandExpression(def, q.filter);
 
   const paths = collectPaths(def, q);
@@ -41,27 +42,79 @@ export function queryToString(def: Definition, q: QueryDef): string {
     .map((s) => nameToSelectable(def, [model.refKey, s]))
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
 
-  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j));
+  function hasBatchingExpr(exp: TypedExprDef): boolean {
+    if (exp === undefined) {
+      return false;
+    }
+    switch (exp.kind) {
+      case "alias":
+      case "literal": {
+        return false;
+      }
+      case "variable": {
+        return exp.name === "@context_ids";
+      }
+      case "function": {
+        // returns `true` if any of the args is `true`
+        return exp.args.map((a) => hasBatchingExpr(a)).some(_.identity);
+      }
+    }
+  }
+  const innerBatching = hasBatchingExpr(q.filter);
+
+  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j, innerBatching));
   const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
   const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
 
-  const qstr = source`
+  const offset = q.offset ?? 0;
+  if (q.limit && isBatching) {
+    return source`
+    SELECT * FROM 
+      (SELECT ${selectableToString(def, selectable)},
+        ROW_NUMBER() OVER ( PARTITION BY "${model.name}"."id" ${orderByToString(
+      def,
+      q.orderBy
+    )}) AS "__row_number"
+        FROM ${refToTableSqlFragment(def, model, innerBatching)}
+        AS ${namePathToAlias([model.name])}
+        ${aggrJoins}
+        ${joins}
+        ${where}) as topn
+    WHERE topn."__row_number" <= ${q.limit + offset} AND topn."__row_number" > ${offset}
+    `;
+  } else {
+    const qstr = source`
       SELECT ${selectableToString(def, selectable)}
-      FROM ${refToTableSqlFragment(def, model)}
+      FROM ${refToTableSqlFragment(def, model, innerBatching)}
       AS ${namePathToAlias([model.name])}
       ${aggrJoins}
       ${joins}
-      ${where}`;
+      ${where}
+      ${orderByToString(def, q.orderBy)}
+      ${limitToString(q.limit, offset)}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
+  }
+}
+
+function orderByToString(def: Definition, orderBy: QueryOrderByAtomDef[] | undefined): string {
+  if (!orderBy?.length) return "";
+  return `ORDER BY ${orderBy
+    .map((atom) => `${expressionToString(def, atom.exp)} ${atom.direction}`)
+    .join(", ")}`;
+}
+
+function limitToString(limit: number | undefined, offset: number): string {
+  return limit ? `LIMIT ${limit} OFFSET ${offset}` : "";
 }
 
 function joinToString(
   def: Definition,
   sourceModel: ModelDef,
   sourceNamePath: string[],
-  join: Join
+  join: Join,
+  isBatching: boolean
 ): string {
   const namePath = [...sourceNamePath, join.relname];
   const ref = getRef(def, sourceModel.refKey, join.relname, ["reference", "relation", "query"]);
@@ -83,11 +136,11 @@ function joinToString(
 
   return source`
   ${join.scope.toUpperCase()}
-  JOIN ${refToTableSqlFragment(def, ref)}
+  JOIN ${refToTableSqlFragment(def, ref, isBatching)}
   AS ${namePathToAlias(namePath)}
   ON ${expressionToString(def, joinFilter)}
   ${aggregateJoins.join("\n")}
-  ${join.joins.map((j) => joinToString(def, model, namePath, j))}
+  ${join.joins.map((j) => joinToString(def, model, namePath, j, isBatching))}
 `;
 }
 
@@ -163,6 +216,11 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
     (item): item is SelectAggregateItem => item.kind === "aggregate"
   );
 
+  const orderBy = q.kind === "query" ? q.orderBy ?? [] : q.query.orderBy ?? [];
+  const orderByPaths = orderBy.flatMap((ordering) =>
+    collectPathsFromExp(def, expandExpression(def, ordering.exp))
+  );
+
   const allPaths = [
     [...fromPath, "id"],
     ...collectPathsFromExp(def, expandExpression(def, filter)),
@@ -183,6 +241,7 @@ function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
       return collectPathsFromExp(def, newExp);
     }),
     ...aggregates.map((a) => a.namePath),
+    ...orderByPaths,
   ];
   return uniqueNamePaths(allPaths);
 }
@@ -281,7 +340,8 @@ export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[
 
 function refToTableSqlFragment(
   def: Definition,
-  ref: ModelDef | ReferenceDef | RelationDef | QueryDef
+  ref: ModelDef | ReferenceDef | RelationDef | QueryDef,
+  isBatching: boolean
 ): string {
   const targetModel = getTargetModel(def, ref.refKey);
 
@@ -307,7 +367,7 @@ function refToTableSqlFragment(
         })
       );
       return `(
-          ${queryToString(def, { ...query, select: [...fields, conn] })})`;
+          ${queryToString(def, { ...query, select: [...fields, conn] }, isBatching)})`;
     }
     default: {
       assertUnreachable(ref);
@@ -344,7 +404,7 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
     .map((s) => nameToSelectable(def, [model.refKey, s]))
     .filter((s): s is SelectAggregateItem => s.kind === "aggregate");
 
-  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j));
+  const joins = joinPlan.joins.map((j) => joinToString(def, model, [model.name], j, false));
   const filterWhere = expandedFilter
     ? `FILTER(WHERE ${expressionToString(def, expandedFilter)})`
     : "";
@@ -355,7 +415,7 @@ function aggregateToString(def: Definition, aggregate: AggregateDef): string {
   (SELECT
     ${namePathToAlias([model.name])}.id,
     ${aggregate.aggrFnName}(${aggrFieldExpr}) ${filterWhere} AS "result"
-  FROM ${refToTableSqlFragment(def, model)}
+  FROM ${refToTableSqlFragment(def, model, false)}
 
   AS ${namePathToAlias([model.name])}
   ${joins}

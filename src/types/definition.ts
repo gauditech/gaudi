@@ -75,8 +75,12 @@ export type QueryDef = {
   // unique: boolean;
   filter: TypedExprDef;
   select: SelectDef;
-  // count?: true;
+  orderBy: QueryOrderByAtomDef[] | undefined;
+  limit: number | undefined;
+  offset: number | undefined;
 };
+
+export type QueryOrderByAtomDef = { exp: TypedExprDef; direction: "asc" | "desc" };
 
 export type AggregateDef = {
   kind: "aggregate";
