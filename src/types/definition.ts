@@ -413,7 +413,6 @@ export type ChangesetOperationDef = { name: string; setter: FieldSetter };
 
 export type FieldSetterReferenceValue = {
   kind: "reference-value";
-  type: FieldDef["type"];
   target: { alias: string; access: string[] };
 };
 
@@ -465,12 +464,6 @@ export type FieldSetterChangesetReference = {
   referenceName: string;
 };
 
-export type FieldSetterIteratorReference = {
-  kind: "iterator-reference";
-  name: string;
-  leaf: "start" | "end" | "current" | null;
-};
-
 export type FieldSetterHook = {
   kind: "fieldset-hook";
   code: HookCode;
@@ -484,8 +477,7 @@ export type FieldSetter =
   | FieldSetterInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
-  | FieldSetterHook
-  | FieldSetterIteratorReference;
+  | FieldSetterHook;
 
 export type AliasDef = {
   kind: "alias";

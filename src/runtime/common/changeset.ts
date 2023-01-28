@@ -32,10 +32,6 @@ export function buildChangeset(
       case "reference-value": {
         return actionContext.vars.get(setter.target.alias, setter.target.access);
       }
-      case "iterator-reference": {
-        // FIXME convert this into "reference-value" when type system supports objects
-        return actionContext.vars.get(setter.name, _.compact([setter.leaf]));
-      }
       case "fieldset-hook": {
         const args = buildChangeset(setter.args, actionContext, changeset);
         return executeHook(setter.code, args);

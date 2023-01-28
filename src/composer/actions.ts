@@ -225,8 +225,11 @@ function composeSingleAction(
                 return {
                   name: atom.target,
                   setter: {
-                    kind: "iterator-reference",
-                    ...maybeIterator.result,
+                    kind: "reference-value",
+                    target: {
+                      alias: maybeIterator.result.name,
+                      access: _.compact([maybeIterator.result.leaf]),
+                    },
                   },
                 };
               }
@@ -261,12 +264,10 @@ function composeSingleAction(
             const typedPath = maybeTypedPath.result;
             const namePath = typedPath.nodes.map((p) => p.name);
             const access = [...namePath, typedPath.leaf.name];
-            const field = getRef.field(def, typedPath.leaf.refKey);
             return {
               name: atom.target,
               setter: {
                 kind: "reference-value",
-                type: field.type,
                 target: { alias: path[0], access },
               },
             };

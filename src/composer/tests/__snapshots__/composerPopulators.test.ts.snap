@@ -124,7 +124,6 @@ exports[`populator composer succeeds for nested iterations 1`] = `
                       ],
                       "alias": "org",
                     },
-                    "type": "integer",
                   },
                 },
                 {
@@ -260,7 +259,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                       ],
                       "alias": "org",
                     },
-                    "type": "integer",
                   },
                 },
                 {
@@ -273,7 +271,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                       ],
                       "alias": "org",
                     },
-                    "type": "text",
                   },
                 },
               ],
@@ -323,7 +320,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                           ],
                           "alias": "repo",
                         },
-                        "type": "integer",
                       },
                     },
                     {
@@ -336,7 +332,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                           ],
                           "alias": "repo",
                         },
-                        "type": "text",
                       },
                     },
                   ],
@@ -638,9 +633,13 @@ exports[`populator composer succeeds with iterator variable in the context 1`] =
             {
               "name": "index",
               "setter": {
-                "kind": "iterator-reference",
-                "leaf": "current",
-                "name": "iter",
+                "kind": "reference-value",
+                "target": {
+                  "access": [
+                    "current",
+                  ],
+                  "alias": "iter",
+                },
               },
             },
             {
@@ -650,9 +649,11 @@ exports[`populator composer succeeds with iterator variable in the context 1`] =
                   {
                     "name": "iter",
                     "setter": {
-                      "kind": "iterator-reference",
-                      "leaf": null,
-                      "name": "iter",
+                      "kind": "reference-value",
+                      "target": {
+                        "access": [],
+                        "alias": "iter",
+                      },
                     },
                   },
                 ],
