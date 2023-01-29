@@ -113,24 +113,30 @@ export type AuthenticationOptions = {
 export function authenticationHandler(def: Definition, options?: AuthenticationOptions) {
   const passportInstance = configurePassport(def);
 
-  return (req: Request, resp: Response, next: NextFunction) => {
-    passportInstance.authenticate("bearer", { session: false }, (err, user) => {
-      try {
-        if (err) {
-          return next(err);
-        }
+  return async (req: Request, resp: Response, next: NextFunction) => {
+    // return promise to make this handler async since passport's `authenticate` is synchronous
+    await new Promise((resolve, reject) => {
+      passportInstance.authenticate("bearer", { session: false }, (err, user) => {
+        try {
+          if (err) {
+            reject(err);
+          }
 
-        // allow anonymous access
-        if (!user && !(options?.allowAnonymous ?? false)) {
-          throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
-        }
+          // allow anonymous access
+          if (!user && !(options?.allowAnonymous ?? false)) {
+            throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
+          }
 
-        req.user = user;
-        next();
-      } catch (err: unknown) {
-        errorResponse(err);
-      }
-    })(req, resp, next);
+          // share user with other handlers
+          req.user = user;
+
+          resolve(user); // this just resolves promise with some value (nobody will read this)
+        } catch (err: unknown) {
+          errorResponse(err);
+          reject(err);
+        }
+      })(req, resp, next);
+    });
   };
 }
 

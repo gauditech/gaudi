@@ -51,7 +51,12 @@ export function flattenEndpoints(entrypoints: EntrypointDef[]): EndpointDef[] {
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
   app[epConfig.method](
     pathPrefix + epConfig.path,
-    ...epConfig.handlers.map((handler) => endpointGuardHandler(handler))
+    endpointGuardHandler(async (req, resp, next) => {
+      // we have to manually chain (await) our handlers since express' `next` can't do it for us (it's sync)
+      for (const h of epConfig.handlers) {
+        await h(req, resp, next);
+      }
+    })
   );
 }
 
@@ -83,16 +88,17 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
       authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
+        let tx;
         try {
           console.log("AUTH USER", req.user);
-          const dbConn = getAppContext(req).dbConn;
+          tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
             const results = await executeQueryTree(
-              dbConn,
+              tx,
               def,
               queries.authQueryTree,
               new Vars({ base_id: req.user.base_id }),
@@ -106,7 +112,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           let pids: number[] = [];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
             pids = [result.id];
@@ -122,15 +128,19 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
            */
           const targetId = contextVars.get(endpoint.target.alias, ["id"]);
           const responseResults = await executeQueryTree(
-            dbConn,
+            tx,
             def,
             queries.responseQueryTree,
             pathParamVars,
             [targetId]
           );
 
+          await tx.commit();
+
           resp.json(findOne(responseResults));
         } catch (err) {
+          await tx?.rollback();
+
           errorResponse(err);
         }
       },
@@ -151,16 +161,17 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
       authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
+        let tx;
         try {
           console.log("AUTH USER", req.user);
-          const dbConn = getAppContext(req).dbConn;
+          tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
             const results = await executeQueryTree(
-              dbConn,
+              tx,
               def,
               queries.authQueryTree,
               new Vars({ base_id: req.user.base_id }),
@@ -172,7 +183,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
             pids = [result.id];
@@ -182,7 +193,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           // fetch target query (list, so no findOne here)
           const tQt = queries.targetQueryTree;
-          const results = await executeQueryTree(dbConn, def, tQt, pathParamVars, pids);
+          const results = await executeQueryTree(tx, def, tQt, pathParamVars, pids);
           contextVars.set(tQt.alias, results);
 
           // FIXME run custom actions
@@ -196,15 +207,19 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
           }
           const responseResults = await executeQueryTree(
-            dbConn,
+            tx,
             def,
             queries.responseQueryTree,
             pathParamVars,
             parentIds
           );
 
+          await tx.commit();
+
           resp.json(responseResults);
         } catch (err) {
+          await tx?.rollback();
+
           errorResponse(err);
         }
       },
@@ -225,16 +240,17 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
       authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
+        let tx;
         try {
           console.log("AUTH USER", req.user);
-          const dbConn = getAppContext(req).dbConn;
+          tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
             const results = await executeQueryTree(
-              dbConn,
+              tx,
               def,
               queries.authQueryTree,
               new Vars({ base_id: req.user.base_id }),
@@ -246,7 +262,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
             pids = [result.id];
@@ -258,14 +274,14 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           console.log("CTX PARAMS", pathParamVars);
           console.log("BODY", body);
 
-          const referenceIds = await fetchReferenceIds(def, dbConn, endpoint.actions, body);
+          const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
             def,
-            dbConn,
+            tx,
             { input: validationResult, vars: contextVars, referenceIds },
             endpoint.actions
           );
@@ -281,14 +297,19 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           // actions may have modified the record. We can only reliably identify it via ID collected before
           // actions were executed.
           const responseResults = await executeQueryTree(
-            dbConn,
+            tx,
             def,
             queries.responseQueryTree,
             new Vars(),
             [targetId]
           );
+
+          await tx.commit();
+
           resp.json(findOne(responseResults));
         } catch (err) {
+          await tx?.rollback();
+
           errorResponse(err);
         }
       },
@@ -309,16 +330,17 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
       authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
+        let tx;
         try {
           console.log("AUTH USER", req.user);
-          const dbConn = getAppContext(req).dbConn;
+          tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
             const results = await executeQueryTree(
-              dbConn,
+              tx,
               def,
               queries.authQueryTree,
               new Vars({ base_id: req.user.base_id }),
@@ -333,7 +355,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           // FIXME implement "SELECT FOR UPDATE"
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
             pids = [result.id];
@@ -346,14 +368,14 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           console.log("BODY", body);
 
           console.log("FIELDSET", endpoint.fieldset);
-          const referenceIds = await fetchReferenceIds(def, dbConn, endpoint.actions, body);
+          const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
             def,
-            dbConn,
+            tx,
             { input: validationResult, vars: contextVars, referenceIds },
             endpoint.actions
           );
@@ -370,14 +392,19 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
            * actions were executed.
            */
           const responseResults = await executeQueryTree(
-            dbConn,
+            tx,
             def,
             queries.responseQueryTree,
             new Vars(),
             [targetId]
           );
+
+          await tx.commit();
+
           resp.json(findOne(responseResults));
         } catch (err) {
+          await tx?.rollback();
+
           errorResponse(err);
         }
       },
@@ -398,16 +425,17 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
       authenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
+        let tx;
         try {
           console.log("AUTH USER", req.user);
-          const dbConn = getAppContext(req).dbConn;
+          tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
             const results = await executeQueryTree(
-              dbConn,
+              tx,
               def,
               queries.authQueryTree,
               new Vars({ base_id: req.user.base_id }),
@@ -422,7 +450,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
           // FIXME implement "SELECT FOR UPDATE"
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(dbConn, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
             pids = [result.id];
@@ -431,10 +459,14 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
           authorizeEndpoint(endpoint, contextVars);
 
           const target = contextVars.get(endpoint.target.alias);
-          await deleteData(def, dbConn, endpoint, target.id);
+          await deleteData(def, tx, endpoint, target.id);
+
+          await tx.commit();
 
           resp.sendStatus(200);
         } catch (err) {
+          await tx?.rollback();
+
           errorResponse(err);
         }
       },
