@@ -1,5 +1,43 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[` 1`] = `
+{
+  "filter": {
+    "args": [
+      {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "is_public",
+        ],
+      },
+      {
+        "kind": "literal",
+        "type": "boolean",
+        "value": true,
+      },
+    ],
+    "kind": "function",
+    "name": "is",
+  },
+  "fromPath": [
+    "Org",
+    "repos",
+    "issues",
+  ],
+  "kind": "query",
+  "limit": undefined,
+  "modelRefKey": "Org",
+  "name": "issues",
+  "offset": undefined,
+  "orderBy": undefined,
+  "refKey": "Org.issues",
+  "retType": "Issue",
+  "select": [],
+}
+`;
+
 exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
 [
   {
