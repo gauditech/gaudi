@@ -34,7 +34,7 @@ parseArguments(engineConfig);
 
 function parseArguments(config: EngineConfig) {
   yargs(hideBin(process.argv))
-    .scriptName("gaudi-cli")
+    .usage("$0 <command> [arguments]")
     .command({
       command: "build",
       describe:
@@ -74,7 +74,7 @@ function parseArguments(config: EngineConfig) {
     })
     .command({
       command: "db",
-      describe: "Make changes to DB. This is a no-op grouping command. See help for details.",
+      describe: "Executes a database command. Run 'gaudi-cli db' for more info.",
       handler: () => {
         // handler is required but this a noop
       },
@@ -129,12 +129,34 @@ function parseArguments(config: EngineConfig) {
               dbDeployCommandHandler(args, config);
             },
           })
-          .demandCommand(),
+          // fallback to help message
+          .command({
+            command: "*",
+            handler() {
+              yargs.showHelp();
+            },
+          }),
     })
+
+    // fallback to help message
+    .command({
+      command: "*",
+      handler() {
+        yargs.showHelp();
+      },
+    })
+
+    .example([
+      ["$0 init <project-name>", "Initialize new project"],
+      ["$0 dev", "Run Gaudi in dev mode"],
+      ["$0 db populate -p <populator-name>", "Populate database using named populator"],
+      ["$0 start", "Start project"],
+    ])
+
+    .epilog("See Gaudi docs for more info")
 
     .help()
     .alias("help", "h")
-    .demandCommand()
     .strict()
     .parse();
 }
