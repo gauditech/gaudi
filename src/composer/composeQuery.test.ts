@@ -29,4 +29,22 @@ describe("compose model queries", () => {
 
     expect(def.models[0].queries).toMatchSnapshot();
   });
+
+  it("order and limit", () => {
+    const bp = `
+    model Org {
+      relation repos { from Repo, through org }
+      query recent_repos {
+        from repos
+        order by id desc
+        limit 5
+      }
+    }
+    model Repo {
+      reference org { to Org }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    expect(def.models[0].queries[0]).toMatchSnapshot();
+  });
 });

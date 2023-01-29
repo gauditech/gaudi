@@ -78,7 +78,7 @@ export async function executeQueryTree(
     }
 
     // for each entry in results, take their arg results and execute hook
-    results.forEach((result) => {
+    for (const result of results) {
       const args = Object.fromEntries(
         hook.args.map((arg) => [
           arg.name,
@@ -91,8 +91,8 @@ export async function executeQueryTree(
         ])
       );
 
-      result[hook.name] = executeHook(hook.code, args);
-    });
+      result[hook.name] = await executeHook(hook.code, args);
+    }
   }
 
   return results;

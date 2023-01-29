@@ -56,6 +56,7 @@ Gaudi {
     | "filter" OptionalBraces<QueryExp>             -- filter
     | "order" "by" NonemptyListOf<QueryOrder, ",">  -- order_by
     | "limit" integer                               -- limit
+    | "offset" integer                              -- offset
     | "select" SelectBody                           -- select
     | AggregateFn                                   -- aggregate
 

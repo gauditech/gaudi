@@ -375,7 +375,6 @@ exports[`entrypoint composes basic example 1`] = `
                         ],
                         "alias": "$target_0",
                       },
-                      "type": "integer",
                     },
                   },
                 ],

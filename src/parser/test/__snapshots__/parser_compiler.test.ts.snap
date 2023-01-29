@@ -1201,6 +1201,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           },
           "limit": undefined,
           "name": "active_students",
+          "offset": undefined,
           "orderBy": undefined,
           "select": undefined,
         },
@@ -1276,6 +1277,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           },
           "limit": undefined,
           "name": "good_students",
+          "offset": undefined,
           "orderBy": undefined,
           "select": undefined,
         },
@@ -1294,6 +1296,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           },
           "limit": undefined,
           "name": "good_students_count",
+          "offset": undefined,
           "orderBy": undefined,
           "select": undefined,
         },
@@ -1335,6 +1338,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           },
           "limit": 10,
           "name": "good_students_alt",
+          "offset": undefined,
           "orderBy": [
             {
               "field": [

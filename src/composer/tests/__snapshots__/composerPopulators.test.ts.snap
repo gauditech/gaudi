@@ -124,7 +124,6 @@ exports[`populator composer succeeds for nested iterations 1`] = `
                       ],
                       "alias": "org",
                     },
-                    "type": "integer",
                   },
                 },
                 {
@@ -260,7 +259,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                       ],
                       "alias": "org",
                     },
-                    "type": "integer",
                   },
                 },
                 {
@@ -273,7 +271,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                       ],
                       "alias": "org",
                     },
-                    "type": "text",
                   },
                 },
               ],
@@ -323,7 +320,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                           ],
                           "alias": "repo",
                         },
-                        "type": "integer",
                       },
                     },
                     {
@@ -336,7 +332,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                           ],
                           "alias": "repo",
                         },
-                        "type": "text",
                       },
                     },
                   ],
@@ -603,6 +598,180 @@ exports[`populator composer succeeds for simple populator 1`] = `
       "populates": [],
       "repeater": {
         "end": 1,
+        "start": 1,
+      },
+      "target": {
+        "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+}
+`;
+
+exports[`populator composer succeeds with iterator variables in the context 1`] = `
+{
+  "name": "Dev",
+  "populates": [
+    {
+      "actions": [
+        {
+          "alias": "org",
+          "changeset": [
+            {
+              "name": "index",
+              "setter": {
+                "kind": "reference-value",
+                "target": {
+                  "access": [
+                    "current",
+                  ],
+                  "alias": "oIter",
+                },
+              },
+            },
+            {
+              "name": "name",
+              "setter": {
+                "args": [
+                  {
+                    "name": "oIter",
+                    "setter": {
+                      "kind": "reference-value",
+                      "target": {
+                        "access": [],
+                        "alias": "oIter",
+                      },
+                    },
+                  },
+                ],
+                "code": {
+                  "inline": ""Org " + oIter.current",
+                  "kind": "inline",
+                },
+                "kind": "fieldset-hook",
+              },
+            },
+            {
+              "name": "name2",
+              "setter": {
+                "kind": "changeset-reference",
+                "referenceName": "name",
+              },
+            },
+          ],
+          "kind": "create-one",
+          "model": "Org",
+          "select": [
+            {
+              "alias": "id",
+              "kind": "field",
+              "name": "id",
+              "namePath": [
+                "org",
+                "id",
+              ],
+              "refKey": "Org.id",
+            },
+          ],
+          "targetPath": [
+            "org",
+          ],
+        },
+      ],
+      "name": "Orgs",
+      "populates": [
+        {
+          "actions": [
+            {
+              "alias": "repo",
+              "changeset": [
+                {
+                  "name": "org_id",
+                  "setter": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "id",
+                      ],
+                      "alias": "org",
+                    },
+                  },
+                },
+                {
+                  "name": "index",
+                  "setter": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "current",
+                      ],
+                      "alias": "rIter",
+                    },
+                  },
+                },
+                {
+                  "name": "org_index",
+                  "setter": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "current",
+                      ],
+                      "alias": "oIter",
+                    },
+                  },
+                },
+              ],
+              "kind": "create-one",
+              "model": "Repo",
+              "select": [],
+              "targetPath": [
+                "repo",
+              ],
+            },
+          ],
+          "name": "Repos",
+          "populates": [],
+          "repeater": {
+            "alias": "rIter",
+            "end": 5,
+            "start": 1,
+          },
+          "target": {
+            "alias": "repo",
+            "identifyWith": {
+              "name": "id",
+              "paramName": "repo_id",
+              "refKey": "Repo.id",
+              "type": "integer",
+            },
+            "kind": "relation",
+            "name": "repos",
+            "namePath": [
+              "Org",
+              "repos",
+            ],
+            "refKey": "Org.repos",
+            "retType": "Repo",
+          },
+        },
+      ],
+      "repeater": {
+        "alias": "oIter",
+        "end": 10,
         "start": 1,
       },
       "target": {
