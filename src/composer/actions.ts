@@ -49,7 +49,7 @@ export function composeActionBlock(
     ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
   }
 
-  const targetsCtx = getInitialTargetsContext(targets, endpointKind);
+  const targetsCtx = getInitialContext(targets, endpointKind);
 
   /**
    * Ensure no overlap between target context and iterator context.
@@ -134,7 +134,7 @@ export function composeActionBlock(
  * until it's created by an action, while `update` sees is immediately, as it already exists
  * in the database.
  */
-function getInitialTargetsContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
+function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
   const parentContext: VarContext = _.fromPairs(
     _.initial(targets).map((t): [string, VarContext[string]] => [
       t.alias,
