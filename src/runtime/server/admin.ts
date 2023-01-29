@@ -76,6 +76,8 @@ function getEndpointForModel(model: ModelDef, target: TargetWithSelectDef): GetE
     parentContext: [],
     target,
     response: modelToSelect(model),
+    authorize: undefined,
+    authSelect: [],
   };
 }
 
@@ -85,6 +87,8 @@ function listEnpointForModel(model: ModelDef, target: TargetWithSelectDef): List
     parentContext: [],
     target: _.omit(target, "identifyWith"),
     response: modelToSelect(model),
+    authorize: undefined,
+    authSelect: [],
   };
 }
 
@@ -102,6 +106,8 @@ function createEndpointForModel(
     actions,
     fieldset: fieldsetFromActions(def, actions),
     response: modelToSelect(model),
+    authorize: undefined,
+    authSelect: [],
   };
 }
 
@@ -119,6 +125,8 @@ function updateEndpointForModel(
     actions,
     fieldset: fieldsetFromActions(def, actions),
     response: modelToSelect(model),
+    authorize: undefined,
+    authSelect: [],
   };
 }
 
@@ -129,6 +137,8 @@ function deleteEndpointForModel(model: ModelDef, target: TargetWithSelectDef): D
     target,
     actions: [],
     response: undefined,
+    authorize: undefined,
+    authSelect: [],
   };
 }
 
