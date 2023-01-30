@@ -1,5 +1,7 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
+import { fnNameToFunction } from "./arithmetics";
+
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
@@ -141,46 +143,6 @@ export async function buildChangeset(
   }
 
   return changeset;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function fnNameToFunction(name: FunctionName): (...args: any[]) => unknown {
-  switch (name) {
-    case "+":
-      return _.add;
-    case "-":
-      return _.subtract;
-    case "*":
-      return _.multiply;
-    case "/":
-      return _.divide;
-    case "<":
-      return _.lt;
-    case ">":
-      return _.gt;
-    case "<=":
-      return _.lte;
-    case ">=":
-      return _.gte;
-    case "is":
-      return _.isEqual;
-    case "is not":
-      return (a: unknown, b: unknown) => !_.isEqual(a, b);
-    case "and":
-      return (a: unknown, b: unknown) => a && b;
-    case "or":
-      return (a: unknown, b: unknown) => a || b;
-    case "in":
-      return _.includes;
-    case "not in":
-      return (a: unknown[], v: unknown) => !_.includes(a, v);
-    case "concat":
-      return (a: unknown[]) => a.join("");
-    case "length":
-      return (value: string) => value.length;
-    default:
-      return assertUnreachable(name);
-  }
 }
 
 /**
