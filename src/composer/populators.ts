@@ -18,14 +18,7 @@ import {
   PopulatorDef,
   RepeaterDef,
 } from "@src/types/definition";
-import {
-  ActionAtomSpec,
-  ActionAtomSpecSet,
-  ActionSpec,
-  PopulateSpec,
-  PopulatorSpec,
-  RepeaterSpec,
-} from "@src/types/specification";
+import { ActionSpec, PopulateSpec, PopulatorSpec, RepeaterSpec } from "@src/types/specification";
 
 export function composePopulators(def: Definition, populators: PopulatorSpec[]): void {
   def.populators = populators.map((p) => processPopulator(def, p));
@@ -104,30 +97,13 @@ function composeAction(
 
   const targetPath = undefined;
   const alias = undefined;
-  const actionAtoms = populate.setters.map((s): ActionAtomSpecSet => {
-    switch (s.set.kind) {
-      case "hook": {
-        return { kind: "set", set: { kind: "hook", hook: s.set.hook }, target: s.target };
-      }
-      case "literal": {
-        return { kind: "set", set: { kind: "expression", exp: s.set }, target: s.target };
-      }
-      case "reference": {
-        return {
-          kind: "set",
-          set: { kind: "expression", exp: { kind: "identifier", identifier: s.set.reference } },
-          target: s.target,
-        };
-      }
-    }
-  });
 
   const actionSpec: ActionSpec = {
     kind: "create",
     // TODO: add default targetPath, alias
     targetPath,
     alias,
-    actionAtoms,
+    actionAtoms: populate.setters,
   };
 
   return composeActionBlock(def, [actionSpec], targets, "create", ctx);

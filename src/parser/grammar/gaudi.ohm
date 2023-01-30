@@ -248,17 +248,12 @@ Gaudi {
     = "populate" identifier "{" NonemptyNewlineBody<PopulateBody, ";"> "}"
 
   PopulateBody
-    = "target" ("model" | "relation") IdentifierWithAs -- target
-    | "identify" "with" identifier -- identify
-    | "repeat" Repeater -- repeat
-    | "set" identifier PopulateSetterValue -- setter
-    | Populate -- populate
-
-  PopulateSetterValue
-    = literal -- literal
-    | Hook -- hook
-    | IdentifierPath -- reference
-    // TODO: hints
+    = "target" ("model" | "relation") IdentifierWithAs    -- target
+    | "identify" "with" identifier                        -- identify
+    | "repeat" Repeater                                   -- repeat
+    | "set" identifier Hook                               -- set_hook
+    | "set" identifier QueryExp                           -- set_expression
+    | Populate                                            -- populate
 
   Repeater
    = RepeaterBody "as" identifier -- aliased

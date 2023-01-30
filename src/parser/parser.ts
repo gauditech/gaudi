@@ -23,7 +23,6 @@ import {
   ModelAST,
   PopulateAST,
   PopulateBodyAST,
-  PopulateSetterValueAST,
   PopulatorAST,
   QueryAST,
   QueryBodyAST,
@@ -515,33 +514,19 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  PopulateBody_setter(this, _identify, identifier, target): PopulateBodyAST {
+  PopulateBody_set_hook(this, _set, identifier, hook): PopulateBodyAST {
     return {
       kind: "set",
       target: identifier.parse(),
-      set: target.parse(),
+      set: { kind: "hook", hook: hook.parse() },
       interval: this.source,
     };
   },
-  PopulateSetterValue_literal(this, value): PopulateSetterValueAST {
+  PopulateBody_set_expression(this, _set, identifier, exp): PopulateBodyAST {
     return {
-      kind: "literal",
-      literal: value.parse(),
-      // interval: this.source
-    };
-  },
-  PopulateSetterValue_reference(this, reference): PopulateSetterValueAST {
-    return {
-      kind: "reference",
-      reference: reference.parse(),
-      interval: this.source,
-    };
-  },
-  PopulateSetterValue_hook(this, hook): PopulateSetterValueAST {
-    return {
-      kind: "hook",
-      hook: hook.parse(),
-      interval: this.source,
+      kind: "set",
+      target: identifier.parse(),
+      set: { kind: "expression", exp: exp.parse() },
     };
   },
   PopulateBody_populate(this, populate): PopulateBodyAST {

@@ -206,15 +206,13 @@ export type PopulateBodyAST = WithContext<
   | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
   | { kind: "identify"; identifier: string }
   | { kind: "repeat"; repeat: RepeaterAST }
-  | { kind: "set"; target: string; set: PopulateSetterValueAST }
+  | {
+      kind: "set";
+      target: string;
+      set: // TODO: hints
+      { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
+    }
   | { kind: "populate"; populate: PopulateAST }
-  // TODO: hints
->;
-
-export type PopulateSetterValueAST = WithContext<
-  | { kind: "literal"; literal: LiteralValue }
-  | { kind: "reference"; reference: string[] }
-  | { kind: "hook"; hook: HookAST }
 >;
 
 export type RepeaterAST = WithContext<{

@@ -519,7 +519,9 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
       }
     } else if (kind === "set") {
       const set =
-        p.set.kind === "hook" ? { kind: p.set.kind, hook: compileActionHook(p.set.hook) } : p.set;
+        p.set.kind === "hook"
+          ? { kind: p.set.kind, hook: compileActionHook(p.set.hook) }
+          : { kind: p.set.kind, exp: compileQueryExp(p.set.exp) };
 
       setters.push({ ...p, set });
     } else if (kind === "populate") {
