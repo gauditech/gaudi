@@ -140,14 +140,8 @@ populator Dev {
     // org
     set name "Organization 1"
     set slug "org-1"
-    set description hook {
-        arg slug slug
-        inline `"Description of " + slug`
-    }
-    set optOut hook {
-        arg slug slug
-        inline `"Opt out from org " + slug`
-    }
+    set description "Description of org-1"
+    set optOut null
   }
 
   // org without repos and users
@@ -170,10 +164,7 @@ populator Dev {
         target relation repos as repo
 
         // fields
-        set name hook {
-            arg orgSlug org.slug
-            inline `"Repo 1 at " + orgSlug`
-        }
+        set name concat("Repo 1 at ", org.slug)
         set slug hook {
             arg orgSlug org.slug
             inline `"repo-1-" + orgSlug`
@@ -213,18 +204,18 @@ populator Dev {
     populate Repos {
         target relation repos as repo
 
-        repeat { start 1, end 3 } as iter
+        repeat { start 1, end 3 } as riter
 
         // fields
         set name hook {
-            arg iter iter
+            arg riter riter
             arg orgSlug org.slug
-            inline `"Repo " + iter.current + " at " + orgSlug`
+            inline `"Repo " + riter.current + " at " + orgSlug`
         }
         set slug hook {
-            arg iter iter
+            arg riter riter
             arg orgSlug org.slug
-            inline `"repo-" + iter.current + "-" + orgSlug`
+            inline `"repo-" + riter.current + "-" + orgSlug`
         }
         set description hook {
             arg slug slug

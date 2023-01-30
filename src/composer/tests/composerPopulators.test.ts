@@ -4,7 +4,7 @@ describe("populator composer", () => {
   it("succeeds for simple populator", () => {
     const bp = `
     model Org {
-      field is_new { type boolean }
+      field slug { type text }
       field name { type text }
       field description { type text }
     }
@@ -13,8 +13,8 @@ describe("populator composer", () => {
       populate Orgs {
         target model Org as org
 
-        set is_new true // boolean literal setter
-        set name "test name" // string literal setter
+        set slug "custom-org" // literal setter
+        set name concat("test name ", slug) // arithmetics setter
         set description hook { // hook setter
           arg name name // (translates to) changeset reference setter
           inline \`"Description of" + name\`
