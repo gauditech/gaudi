@@ -2,11 +2,14 @@ import { BinaryOperator } from "./ast";
 import { HookCode } from "./specification";
 
 export type Definition = {
+  auth?: AuthDef;
   models: ModelDef[];
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
   populators: PopulatorDef[];
 };
+
+export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
 
 export type ModelDef = {
   kind: "model";
@@ -172,6 +175,8 @@ export type ListEndpointDef = {
   kind: "list";
   parentContext: TargetWithSelectDef[];
   target: Omit<TargetWithSelectDef, "identifyWith">;
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
   response: SelectDef;
   // actions: ActionDef[];
 };
@@ -180,6 +185,8 @@ export type GetEndpointDef = {
   kind: "get";
   parentContext: TargetWithSelectDef[];
   target: TargetWithSelectDef;
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
   response: SelectDef;
   // actions: ActionDef[];
 };
@@ -188,6 +195,8 @@ export type CreateEndpointDef = {
   kind: "create";
   parentContext: TargetWithSelectDef[];
   target: Omit<TargetWithSelectDef, "identifyWith">;
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
   response: SelectDef;
   fieldset: FieldsetDef;
   actions: ActionDef[];
@@ -197,6 +206,8 @@ export type UpdateEndpointDef = {
   kind: "update";
   parentContext: TargetWithSelectDef[];
   target: TargetWithSelectDef;
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
   response: SelectDef;
   fieldset: FieldsetDef;
   actions: ActionDef[];
@@ -207,6 +218,8 @@ export type DeleteEndpointDef = {
   parentContext: TargetWithSelectDef[];
   target: TargetWithSelectDef;
   actions: ActionDef[];
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
   response: undefined;
 };
 

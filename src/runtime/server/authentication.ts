@@ -5,10 +5,12 @@ import { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-http-bearer";
 
+import { getRef } from "@src/common/refs";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { EndpointConfig } from "@src/runtime/server/types";
+import { Definition } from "@src/types/definition";
 
 const TOKEN_SIZE = 32;
 const TOKEN_EXPIRY_TIME = 1 * 60 * 60 * 1000; // 1h
@@ -17,14 +19,26 @@ const BCRYPT_SALT_ROUNDS = 10;
 // ---------- Endpoints
 
 /** Function that returns list of all authentication endpoints. */
-export function buildEndpoints(): EndpointConfig[] {
-  return [buildLocalAuthLoginHandler(), buildAuthLogoutHandler()];
+export function buildEndpoints(def: Definition): EndpointConfig[] {
+  if (!def.auth) return [];
+  return [buildLocalAuthLoginHandler(def), buildAuthLogoutHandler(def)];
+}
+
+function getAuthDbName(def: Definition, model: "base" | "local" | "accessToken") {
+  switch (model) {
+    case "base":
+      return getRef.model(def, def.auth!.baseRefKey).dbname;
+    case "local":
+      return getRef.model(def, def.auth!.localRefKey).dbname;
+    case "accessToken":
+      return getRef.model(def, def.auth!.accessTokenRefKey).dbname;
+  }
 }
 
 /**
  * Endpoint that allows users to auth via local user/pass
  */
-export function buildLocalAuthLoginHandler(): EndpointConfig {
+export function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
   return {
     path: "/auth/login",
     method: "post",
@@ -39,10 +53,10 @@ export function buildLocalAuthLoginHandler(): EndpointConfig {
           const password = body.password;
           // console.log(`Creds: ${username}:${password}`);
 
-          const result = await authenticateUser(dbConn, username, password);
+          const result = await authenticateUser(dbConn, def, username, password);
 
           if (result) {
-            const token = await createUserAccessToken(dbConn, result.id);
+            const token = await createUserAccessToken(dbConn, def, result.base_id);
 
             // return created token
             resp.status(200).send({ token });
@@ -60,19 +74,24 @@ export function buildLocalAuthLoginHandler(): EndpointConfig {
 /**
  * Endpoint that allows local logout
  */
-export function buildAuthLogoutHandler(): EndpointConfig {
+export function buildAuthLogoutHandler(def: Definition): EndpointConfig {
   return {
     path: "/auth/logout",
     method: "post",
     handlers: [
-      async (_req: Request, resp: Response) => {
+      authenticationHandler(def, { allowAnonymous: true }),
+      async (req: Request, resp: Response) => {
         try {
-          // TODO: do something eg. remove token, cookie, ...
+          if (!req.isAuthenticated()) {
+            resp.sendStatus(204);
+            return;
+          }
 
-          // we don't have access to token here so we can't delete/expire it
-          // maybe we could add it to request in passport `verify` fn where eg. `req.user = { id, token }`
+          const token = req.user.token;
+          const dbConn = getAppContext(req).dbConn;
+          await dbConn.delete().from(getAuthDbName(def, "accessToken")).where({ token });
 
-          resp.sendStatus(200);
+          resp.sendStatus(204);
         } catch (err: unknown) {
           errorResponse(err);
         }
@@ -91,34 +110,50 @@ export type AuthenticationOptions = {
  * Create authentication request handler
  *
  */
-export function authenticationHandler(options?: AuthenticationOptions) {
-  const passportIntance = configurePassport();
+export function authenticationHandler(def: Definition, options?: AuthenticationOptions) {
+  const passportInstance = configurePassport(def);
 
-  return (req: Request, resp: Response, next: NextFunction) => {
-    passportIntance.authenticate("bearer", { session: false }, (err, user) => {
-      try {
-        if (err) {
-          return next(err);
+  return async (req: Request, resp: Response, next: NextFunction) => {
+    // return promise to make this handler async since passport's `authenticate` is synchronous
+    await new Promise((resolve, reject) => {
+      passportInstance.authenticate("bearer", { session: false }, (err, user) => {
+        try {
+          if (err) {
+            reject(err);
+          }
+
+          // allow anonymous access
+          if (!user && !(options?.allowAnonymous ?? false)) {
+            throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
+          }
+
+          // share user with other handlers
+          req.user = user;
+
+          resolve(user); // this just resolves promise with some value (nobody will read this)
+        } catch (err: unknown) {
+          errorResponse(err);
+          reject(err);
         }
-
-        // allow anonymous access
-        if (!user && !(options?.allowAnonymous ?? false)) {
-          throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
-        }
-
-        req.user = user;
-        next();
-      } catch (err: unknown) {
-        errorResponse(err);
-      }
-    })(req, resp, next);
+      })(req, resp, next);
+    });
   };
 }
 
 // ---------- Passport middleware config
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface User {
+      base_id: number;
+      token: string;
+    }
+  }
+}
+
 let PASSPORT: passport.Authenticator | undefined;
-function configurePassport(): passport.Authenticator {
+function configurePassport(def: Definition): passport.Authenticator {
   if (PASSPORT == null) {
     PASSPORT = new passport.Passport();
   }
@@ -132,11 +167,11 @@ function configurePassport(): passport.Authenticator {
           const dbConn = getAppContext(req).dbConn;
 
           if (token) {
-            const result = await resolveUserFromToken(dbConn, token);
+            const result = await resolveUserFromToken(dbConn, def, token);
 
             if (result) {
               // this result will appear on "request" object as "user" property
-              done(null, result);
+              done(null, { base_id: result.base_id, token });
             } else {
               done(null, false);
             }
@@ -157,16 +192,19 @@ function configurePassport(): passport.Authenticator {
 
 async function resolveUserFromToken(
   dbConn: DbConn,
+  def: Definition,
   token: string
-): Promise<{ id: string } | undefined> {
-  const result = await dbConn.from("useraccesstoken").where({ token });
-  // console.log("RESULTS", result);
+): Promise<{ base_id: number } | undefined> {
+  const result = await dbConn
+    .select("base_id", "token", "expirydate")
+    .from(getAuthDbName(def, "accessToken"))
+    .where({ token });
 
   if (result.length == 1) {
     const row = result[0];
 
     if (verifyTokenValidity(row.token, row.expirydate)) {
-      return { id: row.user_id };
+      return { base_id: row.base_id };
     } else {
       console.log("Token has expired");
     }
@@ -179,10 +217,14 @@ async function resolveUserFromToken(
 
 async function authenticateUser(
   dbConn: DbConn,
+  def: Definition,
   username: string,
   password: string
-): Promise<{ id: number } | undefined> {
-  const result = await dbConn.select("*").from("userauthlocal").where({ username });
+): Promise<{ base_id: number } | undefined> {
+  const result = await dbConn
+    .select("password", "base_id")
+    .from(getAuthDbName(def, "local"))
+    .where({ username });
   // console.log("RESULTS", result);
 
   if (result.length === 1) {
@@ -192,7 +234,7 @@ async function authenticateUser(
 
     if (passwordsMatching) {
       return {
-        id: row.user_id,
+        base_id: row.base_id,
       };
     } else {
       console.log("Passwords do not match");
@@ -205,14 +247,18 @@ async function authenticateUser(
 }
 
 /** Create user's access token. */
-async function createUserAccessToken(dbConn: DbConn, userId: number): Promise<string> {
+async function createUserAccessToken(
+  dbConn: DbConn,
+  def: Definition,
+  base_id: number
+): Promise<string> {
   const newToken = generateAccessToken();
   const newExpiryDate = new Date(Date.now() + TOKEN_EXPIRY_TIME).toISOString();
 
   // insert fresh token
   await dbConn
-    .insert({ user_id: userId, token: newToken, expirydate: newExpiryDate })
-    .into("useraccesstoken");
+    .insert({ base_id, token: newToken, expirydate: newExpiryDate })
+    .into(getAuthDbName(def, "accessToken"));
 
   return newToken;
 }

@@ -8,6 +8,7 @@ import {
   transformSelectPath,
 } from "./build";
 
+import { getRef } from "@src/common/refs";
 import { Definition, EndpointDef, TargetDef, TypedExprDef } from "@src/types/definition";
 
 /**
@@ -15,12 +16,28 @@ import { Definition, EndpointDef, TargetDef, TypedExprDef } from "@src/types/def
  */
 
 export type EndpointQueries = {
+  authQueryTree?: QueryTree;
   parentContextQueryTrees: QueryTree[];
   targetQueryTree: QueryTree;
   responseQueryTree: QueryTree;
 };
 
 export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
+  let authQueryTree;
+  if (def.auth) {
+    const authModel = getRef.model(def, def.auth.baseRefKey);
+    const filter: TypedExprDef = {
+      kind: "function",
+      name: "is",
+      args: [
+        { kind: "alias", namePath: [authModel.refKey, "id"] },
+        { kind: "variable", name: "base_id" },
+      ],
+    };
+    const query = queryFromParts(def, "@auth", [authModel.name], filter, endpoint.authSelect);
+    authQueryTree = buildQueryTree(def, query);
+  }
+
   const parentContextQueryTrees = endpoint.parentContext.map((target, index) => {
     const parentTarget = index === 0 ? null : endpoint.parentContext[index - 1];
     const namePath = parentTarget ? [parentTarget.retType, target.name] : [target.retType];
@@ -59,7 +76,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
   // response query
   const responseQueryTree = buildResponseQueryTree(def, endpoint);
 
-  return { parentContextQueryTrees, targetQueryTree, responseQueryTree };
+  return { authQueryTree, parentContextQueryTrees, targetQueryTree, responseQueryTree };
 }
 
 /**

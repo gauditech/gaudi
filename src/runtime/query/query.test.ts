@@ -214,6 +214,29 @@ describe("Orderby, limit and offset", () => {
   });
 });
 
+describe("Query aliases", () => {
+  const bp = `
+  model Org {
+    relation repos { from Repo, through org }
+    query issues {
+      from repos.issues as r.i
+      filter { r.is_public is true }
+    }
+  }
+  model Repo {
+    reference org { to Org }
+    field is_public { type boolean }
+    relation issues { from Issue, through repo }
+  }
+  model Issue {
+    reference repo { to Repo }
+  }
+  `;
+  const def = compose(compile(parse(bp)));
+  const q = def.models[0].queries[0];
+  expect(q).toMatchSnapshot();
+});
+
 function extractEndpointQueries(q: EndpointQueries): QueryDef[] {
   const allTrees = [...q.parentContextQueryTrees, q.targetQueryTree, q.responseQueryTree];
   return allTrees.flatMap(extractQueryTree);

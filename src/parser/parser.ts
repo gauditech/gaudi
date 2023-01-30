@@ -44,9 +44,10 @@ semantics.addOperation("parse()", {
   Definition(definitions) {
     return definitions.parse();
   },
-  Model(this, _model, identifierAs, _parenL, body, _parenR): ModelAST {
+  Model(this, auth, _model, identifierAs, _parenL, body, _parenR): ModelAST {
+    const isAuth = auth.numChildren > 0;
     const [name, alias] = identifierAs.parse();
-    return { kind: "model", name, alias, body: body.parse(), interval: this.source };
+    return { kind: "model", name, alias, body: body.parse(), isAuth, interval: this.source };
   },
   Field(this, _field, identifier, _parenL, body, _parenR): FieldAST {
     return {
@@ -262,6 +263,9 @@ semantics.addOperation("parse()", {
   EntrypointBody_response(this, _response, body): EntrypointBodyAST {
     return { kind: "response", select: body.parse(), interval: this.source };
   },
+  EntrypointBody_authorize(this, _authorize, _braceL, body, _braceR): EntrypointBodyAST {
+    return { kind: "authorize", expression: body.parse(), interval: this.source };
+  },
   EntrypointBody_endpoint(this, endpoint): EntrypointBodyAST {
     return { kind: "endpoint", endpoint: endpoint.parse() };
   },
@@ -289,6 +293,9 @@ semantics.addOperation("parse()", {
   },
   EndpointBody_action(this, _action, _braceL, body, _braceR): EndpointBodyAST {
     return { kind: "action", body: body.parse(), interval: this.source };
+  },
+  EndpointBody_authorize(this, _authorize, _braceL, body, _braceR): EndpointBodyAST {
+    return { kind: "authorize", expression: body.parse(), interval: this.source };
   },
   Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
     return {

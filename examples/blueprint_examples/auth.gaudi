@@ -1,0 +1,42 @@
+model Operator {
+  field full_name { type text }
+  field is_active { type boolean }
+}
+
+auth {
+  base model Operator
+  method emailPassword {
+    provider console // TODO handle environment input
+  }
+  method google {}
+}
+
+model Org {
+  reference owner Operator
+}
+
+auth entrypoint {
+  method emailPassword
+
+  register endpoint {
+    action {
+      create @auth {
+        set is_active false
+      }
+      create Org as org {
+        set owner @auth
+      }
+    }
+  }
+  login endpoint {}
+  logout endpoint {}
+  verify email endpoint {}
+  request email verification endpoint {}
+  request password reset endpoint {}
+  submit password reset endpoint {}
+  update password endpoint {}
+  update email endpoint {}
+  delete endpoint {}
+  status endpoint {}
+  refresh auth token endpoint {}
+}

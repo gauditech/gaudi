@@ -9,6 +9,7 @@ export type ModelAST = WithContext<{
   name: string;
   alias?: string;
   body: ModelBodyAST[];
+  isAuth: boolean;
 }>;
 
 export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST | HookAST;
@@ -98,6 +99,7 @@ export type EntrypointBodyAST = WithContext<
   | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
   | { kind: "identify"; identifier: string }
   | { kind: "response"; select: SelectAST }
+  | { kind: "authorize"; expression: ExpAST }
   | { kind: "endpoint"; endpoint: EndpointAST }
   | { kind: "entrypoint"; entrypoint: EntrypointAST }
 >;
@@ -113,7 +115,9 @@ export type EndpointAST = WithContext<{
 
 export type EndpointType = "list" | "get" | "create" | "update" | "delete";
 
-export type EndpointBodyAST = WithContext<{ kind: "action"; body: ActionBodyAST[] }>;
+export type EndpointBodyAST = WithContext<
+  { kind: "action"; body: ActionBodyAST[] } | { kind: "authorize"; expression: ExpAST }
+>;
 
 export type ActionKindAST = "create" | "update" | "delete";
 

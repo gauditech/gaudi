@@ -28,8 +28,8 @@ function collect(vars: Record<string, any>, path: string[]): any {
   }
   const [name, ...rest] = path;
   if (_.isArray(vars)) {
-    return vars.flatMap((v) => collect(v[name], rest));
+    return _.compact(vars.flatMap((v) => collect(_.get(v, name), rest)));
   } else {
-    return collect(vars[name], rest);
+    return collect(_.get(vars, name), rest);
   }
 }

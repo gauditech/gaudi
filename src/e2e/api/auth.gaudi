@@ -1,0 +1,49 @@
+auth model Operator {
+  field name { type text }
+  relation boxes { from Box, through owner }
+}
+
+model Box {
+  field name { type text, unique }
+  field is_public { type boolean }
+  reference owner { to Operator }
+  relation items { from Item, through box }
+}
+
+model Item {
+  field name { type text }
+  field is_public { type boolean }
+  reference box { to Box }
+}
+
+entrypoint Boxes {
+  target model Box as box
+  identify with name
+
+  list endpoint {
+    // user must be logged in
+    authorize { @auth.id }
+  }
+  get endpoint {
+    authorize { box.is_public or @auth.id is box.owner.id }
+  }
+  create endpoint {
+    authorize { @auth.id }
+    action {
+      create {
+        set owner_id @auth.id
+      }
+    }
+  }
+
+  entrypoint Items {
+    target relation items as item
+    identify with name
+
+    authorize { box.is_public or @auth.id is box.owner.id }
+
+    get endpoint {
+      authorize { item.is_public }
+    }
+  }
+}

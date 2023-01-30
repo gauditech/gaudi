@@ -258,6 +258,7 @@ function compileModel(model: ModelAST): ModelSpec {
 
   return {
     name: model.name,
+    isAuth: model.isAuth,
     alias: model.alias,
     fields,
     references,
@@ -325,20 +326,26 @@ function compileAction(action: ActionBodyAST): ActionSpec {
 
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
   let action: ActionSpec[] | undefined;
+  let authorize: ExpSpec | undefined;
 
   endpoint.body.map((b) => {
     if (b.kind === "action") {
       action = b.body.map(compileAction);
+    } else if (b.kind === "authorize") {
+      authorize = compileQueryExp(b.expression);
+    } else {
+      assertUnreachable(b);
     }
   });
 
-  return { type: endpoint.type, action, interval: endpoint.interval };
+  return { type: endpoint.type, action, authorize, interval: endpoint.interval };
 }
 
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   let target: EntrypointSpec["target"] | undefined;
   let identify: string | undefined;
   let response: EntrypointSpec["response"] | undefined;
+  let authorize: ExpSpec | undefined;
   const endpoints: EndpointSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
 
@@ -353,6 +360,10 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
       endpoints.push(compileEndpoint(b.endpoint));
     } else if (b.kind === "entrypoint") {
       entrypoints.push(compileEntrypoint(b.entrypoint));
+    } else if (b.kind === "authorize") {
+      authorize = compileQueryExp(b.expression);
+    } else {
+      assertUnreachable(b);
     }
   });
 
@@ -365,6 +376,7 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
     target,
     identify,
     response,
+    authorize,
     endpoints,
     entrypoints,
     interval: entrypoint.interval,
@@ -456,6 +468,16 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
   });
 
   return { ...baseHook, name, args };
+}
+
+function checkMaxOneAuthModel(models: ModelSpec[]) {
+  const authModels = models.filter((m) => m.isAuth);
+  if (authModels.length > 1) {
+    throw new CompilerError(
+      "Default `auth model` already defined! There can be maximum of 1 `auth model`",
+      authModels[1]
+    );
+  }
 }
 
 function compilePopulator(populator: PopulatorAST): PopulatorSpec {
@@ -562,6 +584,8 @@ export function compile(input: AST): Specification {
       assertUnreachable(kind);
     }
   });
+
+  checkMaxOneAuthModel(models);
 
   return { models, entrypoints, populators };
 }
