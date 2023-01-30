@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+import { VarContext } from "./utils";
+
 import { getRef } from "@src/common/refs";
 import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
@@ -32,14 +34,15 @@ export function composePopulators(def: Definition, populators: PopulatorSpec[]):
 function processPopulator(def: Definition, populator: PopulatorSpec): PopulatorDef {
   return {
     name: populator.name,
-    populates: populator.populates.map((p) => processPopulate(def, [], p)),
+    populates: populator.populates.map((p) => processPopulate(def, [], p, {} as VarContext)),
   };
 }
 
 function processPopulate(
   def: Definition,
   parents: TargetContext[],
-  populateSpec: PopulateSpec
+  populateSpec: PopulateSpec,
+  ctx: VarContext
 ): PopulateDef {
   const name = populateSpec.name;
   const target = calculateTarget(
@@ -54,9 +57,14 @@ function processPopulate(
   const currentContext = { target, model: targetModel };
   const targetParents: TargetContext[] = [...parents, currentContext];
 
-  const rawActions = composeAction(def, populateSpec, targetParents);
+  const thisCtx = updateCtx(ctx, populateSpec.repeater);
+
+  const rawActions = composeAction(def, populateSpec, targetParents, thisCtx);
   checkActionChangeset(rawActions);
-  const populates = populateSpec.populates.map((p) => processPopulate(def, targetParents, p));
+
+  const populates = populateSpec.populates.map((p) =>
+    processPopulate(def, targetParents, p, thisCtx)
+  );
   const subactions = populates.flatMap((p) => p.actions);
 
   // collect deps from this AND subpopupulates' actions
@@ -74,10 +82,23 @@ function processPopulate(
   };
 }
 
+function updateCtx(ctx: VarContext, repeater: PopulateSpec["repeater"]): VarContext {
+  if (!repeater?.alias) {
+    return ctx;
+  }
+  const alias = repeater.alias;
+  if (alias in ctx) {
+    throw new Error(`Shadowing iterator names is not allowed: ${alias}`);
+  } else {
+    return { ...ctx, [alias]: { kind: "iterator" } };
+  }
+}
+
 function composeAction(
   def: Definition,
   populate: PopulateSpec,
-  parents: TargetContext[]
+  parents: TargetContext[],
+  ctx: VarContext
 ): ActionDef[] {
   const targets = parents.map((p) => p.target);
 
@@ -109,7 +130,7 @@ function composeAction(
     actionAtoms,
   };
 
-  return composeActionBlock(def, [actionSpec], targets, "create");
+  return composeActionBlock(def, [actionSpec], targets, "create", ctx);
 }
 
 /**

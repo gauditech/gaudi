@@ -133,6 +133,9 @@ semantics.addOperation("parse()", {
   QueryBody_limit(this, _limit, limit): QueryBodyAST {
     return { kind: "limit", limit: limit.parse(), interval: this.source };
   },
+  QueryBody_offset(this, _offset, offset): QueryBodyAST {
+    return { kind: "offset", offset: offset.parse(), interval: this.source };
+  },
   QueryBody_select(this, _select, select): QueryBodyAST {
     return { kind: "select", select: select.parse(), interval: this.source };
   },

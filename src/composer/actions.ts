@@ -1,7 +1,13 @@
 import _ from "lodash";
 
 import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
-import { VarContext, getTypedLiteralValue, getTypedPath, getTypedPathWithLeaf } from "./utils";
+import {
+  VarContext,
+  getTypedIterator,
+  getTypedLiteralValue,
+  getTypedPath,
+  getTypedPathWithLeaf,
+} from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
@@ -33,25 +39,47 @@ export function composeActionBlock(
   def: Definition,
   specs: ActionSpec[],
   targets: TargetDef[],
-  endpointKind: EndpointType
+  endpointKind: EndpointType,
+  /*
+   * NOTE: `iteratorCtx` is used by populator only
+   * TODO we should add support for iterators in actions
+   */
+  iteratorCtx: VarContext = {}
 ): ActionDef[] {
   // we currently only allow create and update
   if (["create", "update"].indexOf(endpointKind) < 0) {
     ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
   }
 
-  const initialContext = getInitialContext(targets, endpointKind);
+  const targetsCtx = getInitialContext(targets, endpointKind);
+
+  /**
+   * Ensure no overlap between target context and iterator context.
+   * Current target may not be in the context, but we can't reuse the alias, so we take aliases
+   * directly from `targets` rather than from the `targetsCtx` keys.
+   */
+  const targetAliases = targets.map((t) => t.alias);
+  ensureEqual(
+    _.intersection(targetAliases, _.keys(iteratorCtx)).length,
+    0,
+    `Overlap between iterator context and targets context: ${_.intersection(
+      targetAliases,
+      _.keys(iteratorCtx)
+    ).join(", ")}`
+  );
+  const initialCtx = _.merge(targetsCtx, iteratorCtx);
+
   // Collect actions from the spec, updating the context during the pass through.
   const [ctx, actions] = specs.reduce(
     (acc, atom) => {
       const [currentCtx, actions] = acc;
       const action = composeSingleAction(def, atom, currentCtx, targets, endpointKind);
       if (action.kind !== "delete-one" && action.alias) {
-        currentCtx[action.alias] = { modelName: action.model };
+        currentCtx[action.alias] = { kind: "record", modelName: action.model };
       }
       return [currentCtx, [...actions, action]];
     },
-    [initialContext, []] as [VarContext, ActionDef[]]
+    [initialCtx, []] as [VarContext, ActionDef[]]
   );
 
   // Create a default context action if not specified in blueprint.
@@ -110,7 +138,10 @@ export function composeActionBlock(
  */
 function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): VarContext {
   const parentContext: VarContext = _.fromPairs(
-    _.initial(targets).map((t): [string, VarContext[string]] => [t.alias, { modelName: t.retType }])
+    _.initial(targets).map((t): [string, VarContext[string]] => [
+      t.alias,
+      { kind: "record", modelName: t.retType },
+    ])
   );
   switch (endpointKind) {
     case "create":
@@ -121,7 +152,10 @@ function getInitialContext(targets: TargetDef[], endpointKind: EndpointType): Va
     case "delete":
     case "get": {
       const thisTarget = _.last(targets)!;
-      return { ...parentContext, [thisTarget.alias]: { modelName: thisTarget.retType } };
+      return {
+        ...parentContext,
+        [thisTarget.alias]: { kind: "record", modelName: thisTarget.retType },
+      };
     }
   }
 }
@@ -169,37 +203,50 @@ function composeSingleAction(
         switch (maybeTypedPath.kind) {
           case "error": {
             /**
-             * Is this a computed "sibling" call?
-             * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+             * Check if path is an iterator.
              */
-            if (path[0] === simpleSpec.alias) {
-              ensureEqual(path.length, 2);
-            } else {
-              ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
-            }
-            const siblingName = _.last(path)!;
-            // check if sibling name is defined in the changeset
-            const siblingOp = _.find(changeset, { name: siblingName });
-            if (siblingOp) {
-              return { kind: "changeset-reference", referenceName: siblingName };
-            } else {
-              // fallback to resolving reference from context
-              /*
-               * NOTE: fallbacking to context-reference is dangerous because it will swallow any invalid reference and we will not know it until runtime
-               * we should check  expected references and still fallback to throwing exception
-               */
-              return { kind: "context-reference", referenceName: siblingName };
-              // throw ["unresolved", path];
+
+            const maybeIterator = safeInvoke(() => getTypedIterator(def, path, ctx));
+            switch (maybeIterator.kind) {
+              case "success": {
+                return {
+                  kind: "reference-value",
+                  target: {
+                    alias: maybeIterator.result.name,
+                    access: _.compact([maybeIterator.result.leaf]),
+                  },
+                };
+              }
+              case "error": {
+                /**
+                 * Is this a computed "sibling" call?
+                 * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+                 */
+                if (path[0] === simpleSpec.alias) {
+                  ensureEqual(path.length, 2);
+                } else {
+                  ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
+                }
+                const siblingName = _.last(path)!;
+                // check if sibling name is defined in the changeset
+                const siblingOp = _.find(changeset, { name: siblingName });
+                if (siblingOp) {
+                  return { kind: "changeset-reference", referenceName: siblingName };
+                } else {
+                  throw ["unresolved", path];
+                }
+              }
+              default: {
+                return assertUnreachable(maybeIterator);
+              }
             }
           }
           case "success": {
             const typedPath = maybeTypedPath.result;
             const namePath = typedPath.nodes.map((p) => p.name);
             const access = [...namePath, typedPath.leaf.name];
-            const field = getRef.field(def, typedPath.leaf.refKey);
             return {
               kind: "reference-value",
-              type: field.type,
               target: { alias: path[0], access },
             };
           }
@@ -293,7 +340,6 @@ function composeSingleAction(
   const changeset: ChangesetDef = [];
   let keyCount = changeset.length;
   let shouldRetry = true;
-  // eslint-disable-next-line no-constant-condition
   while (shouldRetry) {
     shouldRetry = false;
     simpleSpec.actionAtoms.forEach((atom) => {
@@ -408,10 +454,11 @@ function findChangesetModel(
     // Check if model.
     try {
       return getRef.model(def, path[0]);
-      // eslint-disable-next-line no-empty
-    } catch (e) {}
-    // Not a model, check if initialization of a default target.ß
-    const inCtx = path[0] in ctx;
+    } catch (e) {
+      // noop
+    }
+    // Not a model, check if initialization of a default target.
+    const inCtx = path[0] in ctx && ctx[path[0]]?.kind === "record";
     if (!inCtx) {
       if (path[0] === target.alias) {
         return getRef.model(def, target.retType);
