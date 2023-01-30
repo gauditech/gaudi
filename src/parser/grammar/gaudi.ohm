@@ -11,7 +11,7 @@ Gaudi {
   // Model grammar
   // ********************
 
-  Model = "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
+  Model = "auth"? "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
 
   ModelBody
     = Field
@@ -115,6 +115,7 @@ Gaudi {
     = "target" ("model" | "relation") IdentifierWithAs -- target
     | "identify" "with" identifier -- identify
     | "response" SelectBody -- response
+    | "authorize" "{" QueryExp "}" -- authorize
     | Endpoint -- endpoint
     | Entrypoint -- entrypoint
 
@@ -134,6 +135,7 @@ Gaudi {
 
   EndpointBody
     = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
+    | "authorize" "{" QueryExp "}" -- authorize
 
 
   ActionKind = "create" | "update" | "delete"

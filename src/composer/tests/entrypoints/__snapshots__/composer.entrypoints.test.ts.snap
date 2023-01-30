@@ -42,6 +42,8 @@ exports[`entrypoint composes basic example 1`] = `
   {
     "endpoints": [
       {
+        "authSelect": [],
+        "authorize": undefined,
         "kind": "list",
         "parentContext": [],
         "response": [
@@ -89,6 +91,8 @@ exports[`entrypoint composes basic example 1`] = `
         },
       },
       {
+        "authSelect": [],
+        "authorize": undefined,
         "kind": "get",
         "parentContext": [],
         "response": [
@@ -146,6 +150,8 @@ exports[`entrypoint composes basic example 1`] = `
       {
         "endpoints": [
           {
+            "authSelect": [],
+            "authorize": undefined,
             "kind": "list",
             "parentContext": [
               {
@@ -241,6 +247,8 @@ exports[`entrypoint composes basic example 1`] = `
             },
           },
           {
+            "authSelect": [],
+            "authorize": undefined,
             "kind": "get",
             "parentContext": [
               {
@@ -378,6 +386,8 @@ exports[`entrypoint composes basic example 1`] = `
                 ],
               },
             ],
+            "authSelect": [],
+            "authorize": undefined,
             "fieldset": {
               "kind": "record",
               "nullable": false,

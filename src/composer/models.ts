@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { processSelect } from "./entrypoints";
-import { getTypedLiteralValue, getTypedPath } from "./utils";
+import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
@@ -135,7 +135,80 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
   model.fields.push(idField);
   def.models.push(model);
   def.resolveOrder.push(model.refKey);
+
+  if (spec.isAuth && !def.auth) {
+    defineAuthModel(def, model);
+  }
+
   return model;
+}
+
+function defineAuthModel(def: Definition, baseModel: ModelDef) {
+  const localModel = defineModel(def, {
+    name: baseModel.name + "__AuthLocal",
+    isAuth: false,
+    fields: [],
+    references: [],
+    relations: [],
+    queries: [],
+    computeds: [],
+    hooks: [],
+  });
+  const localReference = defineReference(def, localModel, {
+    name: "base",
+    toModel: baseModel.name,
+    // FIXME: fix unique references in prisma generation
+    //unique: true,
+  });
+  defineField(def, localModel, {
+    name: "username",
+    type: "text",
+    unique: true,
+  });
+  defineField(def, localModel, {
+    name: "password",
+    type: "text",
+  });
+  defineRelation(def, baseModel, {
+    name: "authLocal",
+    fromModel: localModel.name,
+    through: localReference.name,
+  });
+
+  const accessTokenModel = defineModel(def, {
+    name: baseModel.name + "__AuthAccessToken",
+    isAuth: false,
+    fields: [],
+    references: [],
+    relations: [],
+    queries: [],
+    computeds: [],
+    hooks: [],
+  });
+  const accessTokenReference = defineReference(def, accessTokenModel, {
+    name: "base",
+    toModel: baseModel.name,
+  });
+  defineField(def, accessTokenModel, {
+    name: "token",
+    type: "text",
+    unique: true,
+  });
+  defineField(def, accessTokenModel, {
+    name: "expiryDate",
+    type: "text",
+  });
+  defineRelation(def, baseModel, {
+    name: "authAccessTokens",
+    fromModel: accessTokenModel.name,
+    through: accessTokenReference.name,
+  });
+
+  def.auth = {
+    baseRefKey: baseModel.refKey,
+    localRefKey: localModel.refKey,
+    accessTokenRefKey: accessTokenModel.refKey,
+  };
 }
 
 function constructIdField(mdef: ModelDef): FieldDef {
@@ -420,16 +493,22 @@ function typedFunctionFromParts(
   def: Definition,
   name: string,
   args: ExpSpec[],
-  namePath: string[]
+  namePath: string[],
+  context: VarContext = {}
 ): TypedExprDef {
   return {
     kind: "function",
     name: name as FunctionName, // FIXME proper validation
-    args: args.map((arg) => composeExpression(def, arg, namePath)),
+    args: args.map((arg) => composeExpression(def, arg, namePath, context)),
   };
 }
 
-function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): TypedExprDef {
+export function composeExpression(
+  def: Definition,
+  exp: ExpSpec,
+  namePath: string[],
+  context: VarContext = {}
+): TypedExprDef {
   switch (exp.kind) {
     case "literal": {
       return getTypedLiteralValue(exp.literal);
@@ -437,7 +516,7 @@ function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): T
     case "identifier": {
       const np = [...namePath, ...exp.identifier];
       // ensure everything resolves
-      getTypedPath(def, np, {});
+      getTypedPath(def, np, context);
       return { kind: "alias", namePath: np };
     }
     // everything else composes to a function
@@ -446,14 +525,15 @@ function composeExpression(def: Definition, exp: ExpSpec, namePath: string[]): T
         def,
         "not",
         [exp.exp, { kind: "literal", literal: true }],
-        namePath
+        namePath,
+        context
       );
     }
     case "binary": {
-      return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath);
+      return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath, context);
     }
     case "function": {
-      return typedFunctionFromParts(def, exp.name, exp.args, namePath);
+      return typedFunctionFromParts(def, exp.name, exp.args, namePath, context);
     }
   }
 }

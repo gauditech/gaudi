@@ -10,6 +10,7 @@ export type Specification = {
 
 export type ModelSpec = WithContext<{
   name: string;
+  isAuth: boolean;
   alias?: string;
   fields: FieldSpec[];
   references: ReferenceSpec[];
@@ -82,6 +83,7 @@ export type EntrypointSpec = WithContext<{
   target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
   response?: SelectAST;
+  authorize?: ExpSpec;
   endpoints: EndpointSpec[];
   entrypoints: EntrypointSpec[];
 }>;
@@ -89,6 +91,7 @@ export type EntrypointSpec = WithContext<{
 export type EndpointSpec = WithContext<{
   type: EndpointType;
   action?: ActionSpec[];
+  authorize?: ExpSpec;
 }>;
 
 export type ActionSpec = WithContext<{

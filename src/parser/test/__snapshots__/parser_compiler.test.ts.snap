@@ -166,6 +166,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
         "endIdx": 278,
         "startIdx": 0,
       },
+      "isAuth": false,
       "name": "Vehicle",
       "queries": [],
       "references": [],
@@ -226,6 +227,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
         "endIdx": 156,
         "startIdx": 0,
       },
+      "isAuth": false,
       "name": "Vehicle",
       "queries": [],
       "references": [],
@@ -240,9 +242,11 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
 {
   "entrypoints": [
     {
+      "authorize": undefined,
       "endpoints": [
         {
           "action": undefined,
+          "authorize": undefined,
           "interval": {
             "endIdx": 133,
             "startIdx": 117,
@@ -251,6 +255,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         },
         {
           "action": undefined,
+          "authorize": undefined,
           "interval": {
             "endIdx": 151,
             "startIdx": 136,
@@ -259,6 +264,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
         },
         {
           "action": undefined,
+          "authorize": undefined,
           "interval": {
             "endIdx": 172,
             "startIdx": 154,
@@ -432,6 +438,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
               ],
             },
           ],
+          "authorize": undefined,
           "interval": {
             "endIdx": 643,
             "startIdx": 175,
@@ -441,9 +448,11 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "entrypoints": [
         {
+          "authorize": undefined,
           "endpoints": [
             {
               "action": undefined,
+              "authorize": undefined,
               "interval": {
                 "endIdx": 716,
                 "startIdx": 698,
@@ -580,6 +589,7 @@ exports[`parser blueprint test/git.gaudi 1`] = `
         "endIdx": 276,
         "startIdx": 83,
       },
+      "isAuth": false,
       "name": "Org",
       "queries": [],
       "references": [],
@@ -641,6 +651,7 @@ exports[`parser blueprint test/git.gaudi 1`] = `
         "endIdx": 415,
         "startIdx": 278,
       },
+      "isAuth": false,
       "name": "Repo",
       "queries": [],
       "references": [
@@ -666,6 +677,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
 {
   "entrypoints": [
     {
+      "authorize": undefined,
       "endpoints": [
         {
           "action": [
@@ -708,6 +720,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
               "targetPath": undefined,
             },
           ],
+          "authorize": undefined,
           "interval": {
             "endIdx": 576,
             "startIdx": 406,
@@ -808,6 +821,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         "endIdx": 359,
         "startIdx": 0,
       },
+      "isAuth": false,
       "name": "User",
       "queries": [],
       "references": [],
@@ -831,6 +845,7 @@ exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
         "endIdx": 56,
         "startIdx": 0,
       },
+      "isAuth": false,
       "name": "Vehicle",
       "queries": [],
       "references": [
@@ -869,6 +884,7 @@ exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
         "endIdx": 98,
         "startIdx": 57,
       },
+      "isAuth": false,
       "name": "Make",
       "queries": [],
       "references": [],
@@ -1126,6 +1142,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         "endIdx": 462,
         "startIdx": 0,
       },
+      "isAuth": false,
       "name": "Class",
       "queries": [
         {
@@ -1453,6 +1470,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         "endIdx": 690,
         "startIdx": 464,
       },
+      "isAuth": false,
       "name": "Student",
       "queries": [],
       "references": [
@@ -1547,6 +1565,7 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
         "endIdx": 138,
         "startIdx": 0,
       },
+      "isAuth": false,
       "name": "User",
       "queries": [],
       "references": [],
