@@ -6,6 +6,7 @@ import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
 import {
+  NamePath,
   getDirectChildren,
   getFilterPaths,
   queryFromParts,
@@ -434,8 +435,26 @@ function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): Query
   if (qspec.aggregate) {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
+  if (qspec.fromAlias) {
+    ensureEqual(
+      (qspec.fromAlias ?? []).length,
+      qspec.fromModel.length,
+      `alias ${qspec.fromAlias} should be the same length as from ${qspec.fromModel}`
+    );
+  }
+
   const fromPath = [mdef.name, ...qspec.fromModel];
-  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath);
+
+  /**
+   *  For each alias in qspec, assign a NamePath. For example,
+   * `from repos.issues as r.i` produces the following `aliases`:
+   * { r: ["Org", "repos"], i: ["Org", "repos", "issues"] }
+   */
+  const aliases = (qspec.fromAlias ?? []).reduce((acc, curr, index) => {
+    return _.assign(acc, { [curr]: _.take(fromPath, index + 2) });
+  }, {} as Record<string, NamePath>);
+
+  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, {}, aliases);
 
   const filterPaths = getFilterPaths(filter);
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
@@ -493,31 +512,41 @@ function typedFunctionFromParts(
   def: Definition,
   name: string,
   args: ExpSpec[],
-  namePath: string[],
-  context: VarContext = {}
+  namespace: string[],
+  context: VarContext = {},
+  aliases: Record<string, NamePath> = {}
 ): TypedExprDef {
   return {
     kind: "function",
     name: name as FunctionName, // FIXME proper validation
-    args: args.map((arg) => composeExpression(def, arg, namePath, context)),
+    args: args.map((arg) => composeExpression(def, arg, namespace, context, aliases)),
   };
 }
 
 export function composeExpression(
   def: Definition,
   exp: ExpSpec,
-  namePath: string[],
-  context: VarContext = {}
+  namespace: string[],
+  context: VarContext = {},
+  aliases: Record<string, NamePath> = {}
 ): TypedExprDef {
   switch (exp.kind) {
     case "literal": {
       return getTypedLiteralValue(exp.literal);
     }
     case "identifier": {
-      const np = [...namePath, ...exp.identifier];
+      /**
+       * If identifier starts with a known alias, replace the first element (_.tail drops the first one)
+       * with it's NamePath.
+       */
+      const expandedNamePath =
+        exp.identifier[0] in aliases
+          ? [...aliases[exp.identifier[0]], ..._.tail(exp.identifier)]
+          : [...namespace, ...exp.identifier];
+
       // ensure everything resolves
-      getTypedPath(def, np, context);
-      return { kind: "alias", namePath: np };
+      getTypedPath(def, expandedNamePath, context);
+      return { kind: "alias", namePath: expandedNamePath };
     }
     // everything else composes to a function
     case "unary": {
@@ -525,15 +554,23 @@ export function composeExpression(
         def,
         "not",
         [exp.exp, { kind: "literal", literal: true }],
-        namePath,
-        context
+        namespace,
+        context,
+        aliases
       );
     }
     case "binary": {
-      return typedFunctionFromParts(def, exp.operator, [exp.lhs, exp.rhs], namePath, context);
+      return typedFunctionFromParts(
+        def,
+        exp.operator,
+        [exp.lhs, exp.rhs],
+        namespace,
+        context,
+        aliases
+      );
     }
     case "function": {
-      return typedFunctionFromParts(def, exp.name, exp.args, namePath, context);
+      return typedFunctionFromParts(def, exp.name, exp.args, namespace, context, aliases);
     }
   }
 }
