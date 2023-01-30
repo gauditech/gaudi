@@ -1,11 +1,11 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { fnNameToFunction } from "./arithmetics";
+import { executeArithmetics } from "./arithmetics";
 
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
-import { ChangesetDef, FieldDef, FieldSetter, FunctionName } from "@src/types/definition";
+import { ChangesetDef, FieldDef, FieldSetter } from "@src/types/definition";
 
 type Changeset = Record<string, unknown>;
 
@@ -66,60 +66,7 @@ export async function buildChangeset(
         return referenceIdResult.value;
       }
       case "function": {
-        switch (setter.name) {
-          case "+":
-          case "-":
-          case "*":
-          case "/":
-          case ">":
-          case "<":
-          case ">=":
-          case "<=": {
-            ensureEqual(setter.args.length, 2);
-            const val1 = await getValue(setter.args[0]);
-            const val2 = await getValue(setter.args[1]);
-
-            return fnNameToFunction(setter.name)(val1, val2);
-          }
-          case "and":
-          case "or": {
-            ensureEqual(setter.args.length, 2);
-            const val1 = await getValue(setter.args[0]);
-            const val2 = await getValue(setter.args[1]);
-
-            return fnNameToFunction(setter.name)(val1, val2);
-          }
-          case "is":
-          case "is not":
-          case "in":
-          case "not in": {
-            ensureEqual(setter.args.length, 2);
-            const val1 = await getValue(setter.args[0]);
-            const val2 = await getValue(setter.args[1]);
-
-            return fnNameToFunction(setter.name)(val1, val2);
-          }
-          case "concat": {
-            const vals = await Promise.all(
-              setter.args.map(async (arg) => {
-                const value = await getValue(arg);
-
-                return value;
-              })
-            );
-
-            return fnNameToFunction(setter.name)(vals);
-          }
-          case "length": {
-            ensureEqual(setter.args.length, 1);
-            const val = await getValue(setter.args[0]);
-
-            return fnNameToFunction(setter.name)(val);
-          }
-          default: {
-            return assertUnreachable(setter.name);
-          }
-        }
+        return executeArithmetics(setter, (s) => getValue(s));
       }
       case "context-reference":
         return actionContext.vars.get(setter.referenceName);

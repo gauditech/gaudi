@@ -1,7 +1,7 @@
 import _ from "lodash";
 
-import { assertUnreachable } from "@src/common/utils";
-import { FunctionName, TypedExprDef } from "@src/types/definition";
+import { assertUnreachable, ensureEqual } from "@src/common/utils";
+import { FunctionName } from "@src/types/definition";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknown {
@@ -43,7 +43,67 @@ export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknow
   }
 }
 
-// export async function evaluateExpression(
-//   exp: TypedExprDef,
-//   getValue: (name: string) => Promise<unknown>
-// ): unknown {}
+interface ITyped<T> {
+  name: FunctionName;
+  args: T[];
+}
+
+export async function executeArithmetics<T>(
+  func: ITyped<T>,
+  getValue: (name: T) => Promise<unknown>
+): Promise<unknown> {
+  switch (func.name) {
+    case "+":
+    case "-":
+    case "*":
+    case "/":
+    case ">":
+    case "<":
+    case ">=":
+    case "<=": {
+      ensureEqual(func.args.length, 2);
+      const val1 = await getValue(func.args[0]);
+      const val2 = await getValue(func.args[1]);
+
+      return fnNameToFunction(func.name)(val1, val2);
+    }
+    case "and":
+    case "or": {
+      ensureEqual(func.args.length, 2);
+      const val1 = await getValue(func.args[0]);
+      const val2 = await getValue(func.args[1]);
+
+      return fnNameToFunction(func.name)(val1, val2);
+    }
+    case "is":
+    case "is not":
+    case "in":
+    case "not in": {
+      ensureEqual(func.args.length, 2);
+      const val1 = await getValue(func.args[0]);
+      const val2 = await getValue(func.args[1]);
+
+      return fnNameToFunction(func.name)(val1, val2);
+    }
+    case "concat": {
+      const vals = await Promise.all(
+        func.args.map(async (arg) => {
+          const value = await getValue(arg);
+
+          return value;
+        })
+      );
+
+      return fnNameToFunction(func.name)(vals);
+    }
+    case "length": {
+      ensureEqual(func.args.length, 1);
+      const val = await getValue(func.args[0]);
+
+      return fnNameToFunction(func.name)(val);
+    }
+    default: {
+      return assertUnreachable(func.name);
+    }
+  }
+}
