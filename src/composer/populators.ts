@@ -101,14 +101,13 @@ function composeAction(
 
   const targetPath = undefined;
   const alias = undefined;
-  const actionAtoms = populate.setters.map((s) => s);
 
   const actionSpec: ActionSpec = {
     kind: "create",
     // TODO: add default targetPath, alias
     targetPath,
     alias,
-    actionAtoms,
+    actionAtoms: populate.setters,
   };
 
   return composeActionBlock(def, [actionSpec], targets, "create", ctx);

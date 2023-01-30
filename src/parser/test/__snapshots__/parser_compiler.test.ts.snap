@@ -341,46 +341,108 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             {
               "actionAtoms": [
                 {
-                  "interval": {
-                    "endIdx": 464,
-                    "startIdx": 440,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "reference",
-                    "reference": [
-                      "item",
-                      "bar",
-                      "baz",
-                      "x",
-                      "y",
-                    ],
+                    "exp": {
+                      "identifier": [
+                        "item",
+                        "bar",
+                        "baz",
+                        "x",
+                        "y",
+                      ],
+                      "interval": {
+                        "endIdx": 464,
+                        "startIdx": 448,
+                      },
+                      "kind": "identifier",
+                    },
+                    "kind": "expression",
                   },
                   "target": "bar",
                 },
                 {
-                  "interval": {
-                    "endIdx": 483,
-                    "startIdx": 473,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": 10,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 483,
+                        "startIdx": 481,
+                      },
+                      "kind": "literal",
+                      "literal": 10,
+                    },
+                    "kind": "expression",
                   },
                   "target": "foo",
                 },
                 {
-                  "interval": {
-                    "endIdx": 504,
-                    "startIdx": 492,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": null,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 504,
+                        "startIdx": 500,
+                      },
+                      "kind": "literal",
+                      "literal": null,
+                    },
+                    "kind": "expression",
                   },
                   "target": "baz",
+                },
+                {
+                  "kind": "set",
+                  "set": {
+                    "exp": {
+                      "interval": {
+                        "endIdx": 532,
+                        "startIdx": 521,
+                      },
+                      "kind": "binary",
+                      "lhs": {
+                        "identifier": [
+                          "c",
+                        ],
+                        "interval": {
+                          "endIdx": 522,
+                          "startIdx": 521,
+                        },
+                        "kind": "identifier",
+                      },
+                      "operator": "*",
+                      "rhs": {
+                        "interval": {
+                          "endIdx": 531,
+                          "startIdx": 526,
+                        },
+                        "kind": "binary",
+                        "lhs": {
+                          "identifier": [
+                            "a",
+                          ],
+                          "interval": {
+                            "endIdx": 527,
+                            "startIdx": 526,
+                          },
+                          "kind": "identifier",
+                        },
+                        "operator": "-",
+                        "rhs": {
+                          "identifier": [
+                            "b",
+                          ],
+                          "interval": {
+                            "endIdx": 531,
+                            "startIdx": 530,
+                          },
+                          "kind": "identifier",
+                        },
+                      },
+                    },
+                    "kind": "expression",
+                  },
+                  "target": "bar",
                 },
                 {
                   "fields": "*",
@@ -440,7 +502,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           ],
           "authorize": undefined,
           "interval": {
-            "endIdx": 643,
+            "endIdx": 671,
             "startIdx": 175,
           },
           "type": "create",
@@ -454,8 +516,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
               "action": undefined,
               "authorize": undefined,
               "interval": {
-                "endIdx": 716,
-                "startIdx": 698,
+                "endIdx": 744,
+                "startIdx": 726,
               },
               "type": "create",
             },
@@ -463,8 +525,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 720,
-            "startIdx": 646,
+            "endIdx": 748,
+            "startIdx": 674,
           },
           "name": "Review",
           "response": undefined,
@@ -477,7 +539,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 722,
+        "endIdx": 750,
         "startIdx": 0,
       },
       "name": "ItemEntry",
@@ -693,10 +755,17 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                     "hook": {
                       "args": {
                         "second": {
-                          "kind": "reference",
-                          "reference": [
-                            "fieldTwo",
-                          ],
+                          "exp": {
+                            "identifier": [
+                              "fieldTwo",
+                            ],
+                            "interval": {
+                              "endIdx": 509,
+                              "startIdx": 501,
+                            },
+                            "kind": "identifier",
+                          },
+                          "kind": "expression",
                         },
                       },
                       "code": {
@@ -921,50 +990,62 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               },
               "setters": [
                 {
-                  "interval": {
-                    "endIdx": 322,
-                    "startIdx": 306,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": 2,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 322,
+                        "startIdx": 321,
+                      },
+                      "kind": "literal",
+                      "literal": 2,
+                    },
+                    "kind": "expression",
                   },
                   "target": "numberProp",
                 },
                 {
-                  "interval": {
-                    "endIdx": 350,
-                    "startIdx": 329,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": "fred",
+                    "exp": {
+                      "interval": {
+                        "endIdx": 350,
+                        "startIdx": 344,
+                      },
+                      "kind": "literal",
+                      "literal": "fred",
+                    },
+                    "kind": "expression",
                   },
                   "target": "stringProp",
                 },
                 {
-                  "interval": {
-                    "endIdx": 375,
-                    "startIdx": 357,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": false,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 375,
+                        "startIdx": 370,
+                      },
+                      "kind": "literal",
+                      "literal": false,
+                    },
+                    "kind": "expression",
                   },
                   "target": "boolProp",
                 },
                 {
-                  "interval": {
-                    "endIdx": 399,
-                    "startIdx": 382,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": null,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 399,
+                        "startIdx": 395,
+                      },
+                      "kind": "literal",
+                      "literal": null,
+                    },
+                    "kind": "expression",
                   },
                   "target": "nullProp",
                 },
@@ -982,26 +1063,32 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
               "repeater": undefined,
               "setters": [
                 {
-                  "interval": {
-                    "endIdx": 516,
-                    "startIdx": 500,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": 3,
+                    "exp": {
+                      "interval": {
+                        "endIdx": 516,
+                        "startIdx": 515,
+                      },
+                      "kind": "literal",
+                      "literal": 3,
+                    },
+                    "kind": "expression",
                   },
                   "target": "numberProp",
                 },
                 {
-                  "interval": {
-                    "endIdx": 543,
-                    "startIdx": 523,
-                  },
                   "kind": "set",
                   "set": {
-                    "kind": "literal",
-                    "value": "foo",
+                    "exp": {
+                      "interval": {
+                        "endIdx": 543,
+                        "startIdx": 538,
+                      },
+                      "kind": "literal",
+                      "literal": "foo",
+                    },
+                    "kind": "expression",
                   },
                   "target": "stringProp",
                 },
@@ -1020,50 +1107,62 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
           },
           "setters": [
             {
-              "interval": {
-                "endIdx": 116,
-                "startIdx": 100,
-              },
               "kind": "set",
               "set": {
-                "kind": "literal",
-                "value": 1,
+                "exp": {
+                  "interval": {
+                    "endIdx": 116,
+                    "startIdx": 115,
+                  },
+                  "kind": "literal",
+                  "literal": 1,
+                },
+                "kind": "expression",
               },
               "target": "numberProp",
             },
             {
-              "interval": {
-                "endIdx": 142,
-                "startIdx": 121,
-              },
               "kind": "set",
               "set": {
-                "kind": "literal",
-                "value": "asdf",
+                "exp": {
+                  "interval": {
+                    "endIdx": 142,
+                    "startIdx": 136,
+                  },
+                  "kind": "literal",
+                  "literal": "asdf",
+                },
+                "kind": "expression",
               },
               "target": "stringProp",
             },
             {
-              "interval": {
-                "endIdx": 164,
-                "startIdx": 147,
-              },
               "kind": "set",
               "set": {
-                "kind": "literal",
-                "value": true,
+                "exp": {
+                  "interval": {
+                    "endIdx": 164,
+                    "startIdx": 160,
+                  },
+                  "kind": "literal",
+                  "literal": true,
+                },
+                "kind": "expression",
               },
               "target": "boolProp",
             },
             {
-              "interval": {
-                "endIdx": 186,
-                "startIdx": 169,
-              },
               "kind": "set",
               "set": {
-                "kind": "literal",
-                "value": null,
+                "exp": {
+                  "interval": {
+                    "endIdx": 186,
+                    "startIdx": 182,
+                  },
+                  "kind": "literal",
+                  "literal": null,
+                },
+                "kind": "expression",
               },
               "target": "nullProp",
             },

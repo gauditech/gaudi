@@ -132,10 +132,7 @@ export type ActionAtomBodyAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set:
-        | { kind: "hook"; hook: HookAST }
-        | { kind: "literal"; value: LiteralValue }
-        | { kind: "reference"; reference: string[] };
+      set: { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
     }
   | { kind: "reference"; target: string; through: string }
   | { kind: "input"; fields: InputFieldAST[] }
@@ -168,10 +165,7 @@ export type HookBodyAST = WithContext<
 >;
 
 export type HookArgValueAST = WithContext<
-  | { kind: "query"; query: HookQueryAST }
-  | { kind: "literal"; literal: LiteralValue }
-  | { kind: "reference"; reference: string[] }
-  | { kind: "default" }
+  { kind: "query"; query: HookQueryAST } | { kind: "expression"; exp: ExpAST } | { kind: "default" }
 >;
 
 export type HookQueryAST = WithContext<{
@@ -216,15 +210,13 @@ export type PopulateBodyAST = WithContext<
   | { kind: "target"; target: { kind: "model" | "relation"; identifier: string; alias?: string } }
   | { kind: "identify"; identifier: string }
   | { kind: "repeat"; repeat: RepeaterAST }
-  | { kind: "set"; target: string; set: PopulateSetterValueAST }
+  | {
+      kind: "set";
+      target: string;
+      set: // TODO: hints
+      { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
+    }
   | { kind: "populate"; populate: PopulateAST }
-  // TODO: hints
->;
-
-export type PopulateSetterValueAST = WithContext<
-  | { kind: "literal"; value: LiteralValue }
-  | { kind: "reference"; reference: string[] }
-  | { kind: "hook"; hook: HookAST }
 >;
 
 export type RepeaterAST = WithContext<{

@@ -1,6 +1,8 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { assertUnreachable, ensureNot } from "@src/common/utils";
+import { executeArithmetics } from "./arithmetics";
+
+import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
 import { ChangesetDef, FieldDef, FieldSetter } from "@src/types/definition";
@@ -52,6 +54,7 @@ export async function buildChangeset(
         if (setter.referenceName in changeset) {
           return changeset[setter.referenceName];
         } else {
+          ensureEqual(setter.referenceName in changesetContext, true);
           return changesetContext[setter.referenceName];
         }
       }
@@ -62,6 +65,12 @@ export async function buildChangeset(
         ensureNot(referenceIdResult, undefined);
         return referenceIdResult.value;
       }
+      case "function": {
+        return executeArithmetics(setter, (s) => getValue(s));
+      }
+      case "context-reference":
+        return actionContext.vars.get(setter.referenceName);
+
       default: {
         return assertUnreachable(setter);
       }

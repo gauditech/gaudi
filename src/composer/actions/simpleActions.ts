@@ -78,25 +78,34 @@ export function simplifyActionSpec(
   const setters = atoms
     .filter((a): a is ActionAtomSpecSet => a.kind === "set")
     .map((a): ActionAtomSpecSet => {
-      /*
-       * Convert every reference setter to a field setter
-       */
       const ref = getRef(def, model.name, a.target, ["field", "reference"]);
-      switch (ref.kind) {
-        case "reference": {
-          ensureEqual(a.set.kind, "reference" as const); // reference setters can only target aliases
+      if (ref.kind === "field") {
+        return a;
+      }
+
+      switch (a.set.kind) {
+        case "hook": {
+          throw new Error(`Hooks can't target models' reference properties, must target fields`);
+        }
+        case "expression": {
+          // we don't support arithmetics on reference properties
+          const identifierExp = a.set.exp;
+          ensureEqual(identifierExp.kind, "identifier" as const);
+          /*
+           * Convert a reference setter to a field setter
+           */
           return {
             ...a,
-            kind: "set",
             target: `${a.target}_id`,
-            set: { kind: "reference", reference: [...a.set.reference, "id"] },
+            set: {
+              ...a.set,
+              exp: {
+                ...identifierExp,
+                identifier: [...identifierExp.identifier, "id"],
+              },
+            },
           };
         }
-        case "field": {
-          return a;
-        }
-        default:
-          assertUnreachable(ref);
       }
     });
 

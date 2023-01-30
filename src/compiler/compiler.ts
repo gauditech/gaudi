@@ -280,9 +280,17 @@ function compileAction(action: ActionBodyAST): ActionSpec {
       case "reference":
         return a;
       case "set": {
-        const set =
-          a.set.kind === "hook" ? { kind: a.set.kind, hook: compileActionHook(a.set.hook) } : a.set;
-        return { ...a, set };
+        switch (a.set.kind) {
+          case "hook": {
+            return { ...a, set: { kind: "hook", hook: compileActionHook(a.set.hook) } };
+          }
+          case "expression": {
+            return { ...a, set: { kind: "expression", exp: compileQueryExp(a.set.exp) } };
+          }
+          default: {
+            return assertUnreachable(a.set);
+          }
+        }
       }
       case "input": {
         const fields = a.fields.map((f): InputFieldSpec => {
@@ -451,10 +459,8 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
 
   hook.body.forEach((b) => {
     if (b.kind === "arg") {
-      if (b.value.kind === "literal") {
-        args[b.name] = { kind: "literal", value: b.value.literal };
-      } else if (b.value.kind === "reference") {
-        args[b.name] = { kind: "reference", reference: b.value.reference };
+      if (b.value.kind === "expression") {
+        args[b.name] = { kind: "expression", exp: compileQueryExp(b.value.exp) };
       } else {
         throw new CompilerError("Invalid `hook` type for this context", b);
       }
@@ -535,7 +541,9 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
       }
     } else if (kind === "set") {
       const set =
-        p.set.kind === "hook" ? { kind: p.set.kind, hook: compileActionHook(p.set.hook) } : p.set;
+        p.set.kind === "hook"
+          ? { kind: p.set.kind, hook: compileActionHook(p.set.hook) }
+          : { kind: p.set.kind, exp: compileQueryExp(p.set.exp) };
 
       setters.push({ ...p, set });
     } else if (kind === "populate") {

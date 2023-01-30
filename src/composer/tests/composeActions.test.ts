@@ -217,6 +217,29 @@ describe("custom actions", () => {
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
+  it("succeeds with arithmetic expressions in setters", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      field description { type text }
+      field descLength { type integer }
+    }
+    entrypoint Orgs {
+      target model Org as org
+      create endpoint {
+        action {
+          create {
+            set name "new name"
+            set description concat(name, " is great")
+            set descLength length(description) + 1
+          }
+        }
+      }
+    }`;
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
+  });
   it("fails when input and reference are on the same field", () => {
     const bp = `
     model Org {

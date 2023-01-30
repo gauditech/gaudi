@@ -23,10 +23,12 @@ import {
   ChangesetDef,
   ChangesetOperationDef,
   Definition,
+  FieldSetter,
+  FunctionName,
   ModelDef,
   TargetDef,
 } from "@src/types/definition";
-import { ActionAtomSpecSet, ActionSpec } from "@src/types/specification";
+import { ActionAtomSpecSet, ActionSpec, ExpSpec } from "@src/types/specification";
 
 /**
  * Composes the custom actions block for an endpoint. Adds a default action
@@ -199,28 +201,13 @@ function composeSingleAction(
   const specWithParentSetter = assignParentContextSetter(def, spec, ctx, targets);
   const simpleSpec = simplifyActionSpec(def, specWithParentSetter, target.alias, model);
 
-  function toFieldSetter(atom: ActionAtomSpecSet, changeset: ChangesetDef): ChangesetOperationDef {
-    switch (atom.set.kind) {
-      case "hook": {
-        const args = _.chain(atom.set.hook.args)
-          .toPairs()
-          .map(([name, arg]) => toFieldSetter({ kind: "set", target: name, set: arg }, changeset))
-          .value();
-        return {
-          name: atom.target,
-          setter: { kind: "fieldset-hook", code: atom.set.hook.code, args },
-        };
-      }
+  function expandSetterExpression(exp: ExpSpec, changeset: ChangesetDef): FieldSetter {
+    switch (exp.kind) {
       case "literal": {
-        const typedVal = getTypedLiteralValue(atom.set.value);
-        return { name: atom.target, setter: typedVal };
+        return getTypedLiteralValue(exp.literal);
       }
-      case "reference": {
-        /**
-         * Reference can be an alias or a computed/function.
-         * Currently, we don't support complex computeds so it will resolve to one of the known kinds of setters.
-         */
-        const path = atom.set.reference;
+      case "identifier": {
+        const path = exp.identifier;
 
         const maybeTypedPath = safeInvoke(() => getTypedPathWithLeaf(def, path, ctx));
         switch (maybeTypedPath.kind) {
@@ -233,13 +220,10 @@ function composeSingleAction(
             switch (maybeIterator.kind) {
               case "success": {
                 return {
-                  name: atom.target,
-                  setter: {
-                    kind: "reference-value",
-                    target: {
-                      alias: maybeIterator.result.name,
-                      access: _.compact([maybeIterator.result.leaf]),
-                    },
+                  kind: "reference-value",
+                  target: {
+                    alias: maybeIterator.result.name,
+                    access: _.compact([maybeIterator.result.leaf]),
                   },
                 };
               }
@@ -257,10 +241,7 @@ function composeSingleAction(
                 // check if sibling name is defined in the changeset
                 const siblingOp = _.find(changeset, { name: siblingName });
                 if (siblingOp) {
-                  return {
-                    name: atom.target,
-                    setter: { kind: "changeset-reference", referenceName: siblingName },
-                  };
+                  return { kind: "changeset-reference", referenceName: siblingName };
                 } else {
                   throw ["unresolved", path];
                 }
@@ -275,14 +256,58 @@ function composeSingleAction(
             const namePath = typedPath.nodes.map((p) => p.name);
             const access = [...namePath, typedPath.leaf.name];
             return {
-              name: atom.target,
-              setter: {
-                kind: "reference-value",
-                target: { alias: path[0], access },
-              },
+              kind: "reference-value",
+              target: { alias: path[0], access },
             };
           }
+          default: {
+            return assertUnreachable(maybeTypedPath);
+          }
         }
+      }
+      case "unary": {
+        return {
+          kind: "function",
+          name: exp.operator as FunctionName, // FIXME proper validation
+          args: [expandSetterExpression(exp.exp, changeset)],
+        };
+      }
+      case "binary": {
+        return {
+          kind: "function",
+          name: exp.operator as FunctionName, // FIXME proper validation
+          args: [
+            expandSetterExpression(exp.lhs, changeset),
+            expandSetterExpression(exp.rhs, changeset),
+          ],
+        };
+      }
+      case "function": {
+        return {
+          kind: "function",
+          name: exp.name as FunctionName, // FIXME proper validation
+          args: exp.args.map((a) => expandSetterExpression(a, changeset)),
+        };
+      }
+    }
+  }
+
+  function toFieldSetter(atom: ActionAtomSpecSet, changeset: ChangesetDef): ChangesetOperationDef {
+    switch (atom.set.kind) {
+      case "hook": {
+        const args = _.chain(atom.set.hook.args)
+          .toPairs()
+          .map(([name, arg]) => toFieldSetter({ kind: "set", target: name, set: arg }, changeset))
+          .value();
+        return {
+          name: atom.target,
+          setter: { kind: "fieldset-hook", code: atom.set.hook.code, args },
+        };
+      }
+      case "expression": {
+        const exp = atom.set.exp;
+        const setter = expandSetterExpression(exp, changeset);
+        return { name: atom.target, setter };
       }
     }
   }
@@ -528,8 +553,11 @@ function assignParentContextSetter(
       kind: "set",
       target: reference.name,
       set: {
-        kind: "reference",
-        reference: parentNamePath,
+        kind: "expression",
+        exp: {
+          kind: "identifier",
+          identifier: parentNamePath,
+        },
       },
     };
   }

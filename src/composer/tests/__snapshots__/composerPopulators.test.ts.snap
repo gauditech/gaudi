@@ -551,19 +551,29 @@ exports[`populator composer succeeds for simple populator 1`] = `
           "alias": "org",
           "changeset": [
             {
-              "name": "is_new",
+              "name": "slug",
               "setter": {
                 "kind": "literal",
-                "type": "boolean",
-                "value": true,
+                "type": "text",
+                "value": "custom-org",
               },
             },
             {
               "name": "name",
               "setter": {
-                "kind": "literal",
-                "type": "text",
-                "value": "test name",
+                "args": [
+                  {
+                    "kind": "literal",
+                    "type": "text",
+                    "value": "test name ",
+                  },
+                  {
+                    "kind": "changeset-reference",
+                    "referenceName": "slug",
+                  },
+                ],
+                "kind": "function",
+                "name": "concat",
               },
             },
             {

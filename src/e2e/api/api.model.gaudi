@@ -108,17 +108,17 @@ entrypoint Orgs {
 
     entrypoint Issues {
       target relation issues as issue
-      response { id, title, repo, comments }
+      response { id, title, repo, number, comments }
 
       get endpoint {}
       create endpoint {
         action {
           create issue as issue {
-            set number repo.latest_num
+            set number repo.latest_num + 1
           }
 
           update repo as repo2 {
-            set latest_num 1
+            set latest_num repo.latest_num + 1
           }
 
           create issue.comments as c {}
