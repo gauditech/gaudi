@@ -125,7 +125,7 @@ describe("Auth", () => {
       expect(getResponse.statusCode).toBe(200);
     });
 
-    it("Success pivate owned", async () => {
+    it("Success private owned", async () => {
       const token = await loginTestUser();
       const getResponse = await request(getServer())
         .get("/box/private")

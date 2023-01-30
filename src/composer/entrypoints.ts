@@ -183,11 +183,7 @@ function processEndpoints(
     const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
     const actionDeps = collectActionDeps(def, rawActions);
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
-    const authorizeContext = getInitialContext(
-      def,
-      parents.map(({ target }) => target),
-      endSpec.type
-    );
+    const authorizeContext = getInitialContext(def, targets, endSpec.type);
     const currentAuthorize = endSpec.authorize
       ? composeExpression(def, endSpec.authorize, [], authorizeContext)
       : undefined;
