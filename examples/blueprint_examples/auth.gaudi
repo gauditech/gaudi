@@ -8,11 +8,30 @@ auth {
   method emailPassword {
     provider console // TODO handle environment input
   }
-  method google {}
+  method auth0 {}
+  method local {}
 }
 
 model Org {
   reference owner Operator
+}
+
+auth entrypoint {
+  method local
+
+  register endpoint {}
+  login endpoint {}
+  logout endpoint {}
+  update password endpoint {}
+  delete endpoint {}
+  status endpoint {}
+  refresh auth token endpoint {}
+}
+
+auth entrypoint {
+  method auth0
+
+  ???
 }
 
 auth entrypoint {
