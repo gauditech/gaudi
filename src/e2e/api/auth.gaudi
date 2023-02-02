@@ -1,4 +1,8 @@
-auth model Operator {
+auth {
+  method basic {}
+}
+
+model Operator {
   field name { type text }
   relation boxes { from Box, through owner }
 }

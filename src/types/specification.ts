@@ -187,6 +187,7 @@ export const AUTH_TARGET_MODEL_NAME = "AuthUser";
 export type AuthenticatorSpec = WithContext<{
   name?: string;
   targetModelName: string;
+  accessTokenModelName: string;
   method: AuthenticatorMethodSpec;
 }>;
 

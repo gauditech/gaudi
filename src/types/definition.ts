@@ -2,15 +2,12 @@ import { BinaryOperator } from "./ast";
 import { HookCode } from "./specification";
 
 export type Definition = {
-  auth?: AuthDef;
   models: ModelDef[];
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
   populators: PopulatorDef[];
   authenticator?: AuthenticatorDef;
 };
-
-export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
 
 export type ModelDef = {
   kind: "model";
@@ -516,11 +513,12 @@ export type FieldSetter =
 
 export type AuthenticatorDef = {
   name: string;
-  targetModel: AuthenticatorTargetModelDef;
+  targetModel: AuthenticatorNamedModelDef;
+  accessTokenModel: AuthenticatorNamedModelDef;
   method: AuthenticatorMethodDef;
 };
 
-export type AuthenticatorTargetModelDef = {
+export type AuthenticatorNamedModelDef = {
   name: string;
   refKey: string;
 };

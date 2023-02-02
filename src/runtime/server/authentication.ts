@@ -20,19 +20,9 @@ const BCRYPT_SALT_ROUNDS = 10;
 
 /** Function that returns list of all authentication endpoints. */
 export function buildEndpoints(def: Definition): EndpointConfig[] {
-  if (!def.auth) return [];
-  return [buildLocalAuthLoginHandler(def), buildAuthLogoutHandler(def)];
-}
+  if (!def.authenticator) return [];
 
-function getAuthDbName(def: Definition, model: "base" | "local" | "accessToken") {
-  switch (model) {
-    case "base":
-      return getRef.model(def, def.auth!.baseRefKey).dbname;
-    case "local":
-      return getRef.model(def, def.auth!.localRefKey).dbname;
-    case "accessToken":
-      return getRef.model(def, def.auth!.accessTokenRefKey).dbname;
-  }
+  return [buildLocalAuthLoginHandler(def), buildAuthLogoutHandler(def)];
 }
 
 /**
@@ -56,7 +46,7 @@ export function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
           const result = await authenticateUser(dbConn, def, username, password);
 
           if (result) {
-            const token = await createUserAccessToken(dbConn, def, result.base_id);
+            const token = await createUserAccessToken(dbConn, def, result.id);
 
             // return created token
             resp.status(200).send({ token });
@@ -146,7 +136,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface User {
-      base_id: number;
+      id: number;
       token: string;
     }
   }
@@ -171,7 +161,7 @@ function configurePassport(def: Definition): passport.Authenticator {
 
             if (result) {
               // this result will appear on "request" object as "user" property
-              done(null, { base_id: result.base_id, token });
+              done(null, { id: result.id, token });
             } else {
               done(null, false);
             }
@@ -194,9 +184,9 @@ async function resolveUserFromToken(
   dbConn: DbConn,
   def: Definition,
   token: string
-): Promise<{ base_id: number } | undefined> {
+): Promise<{ id: number } | undefined> {
   const result = await dbConn
-    .select("base_id", "token", "expirydate")
+    .select("id", "token", "expirydate")
     .from(getAuthDbName(def, "accessToken"))
     .where({ token });
 
@@ -204,7 +194,7 @@ async function resolveUserFromToken(
     const row = result[0];
 
     if (verifyTokenValidity(row.token, row.expirydate)) {
-      return { base_id: row.base_id };
+      return { id: row.id };
     } else {
       console.log("Token has expired");
     }
@@ -220,11 +210,12 @@ async function authenticateUser(
   def: Definition,
   username: string,
   password: string
-): Promise<{ base_id: number } | undefined> {
+): Promise<{ id: number } | undefined> {
   const result = await dbConn
-    .select("password", "base_id")
-    .from(getAuthDbName(def, "local"))
-    .where({ username });
+    .select("password", "id")
+    .from(getAuthDbName(def, "target"))
+    // email serves as username in auth target model
+    .where({ email: username });
   // console.log("RESULTS", result);
 
   if (result.length === 1) {
@@ -234,10 +225,10 @@ async function authenticateUser(
 
     if (passwordsMatching) {
       return {
-        base_id: row.base_id,
+        id: row.id,
       };
     } else {
-      console.log("Passwords do not match");
+      console.log("Authentication failed: passwords do not match");
     }
   } else {
     console.log(`Username "${username}" not found`);
@@ -247,17 +238,13 @@ async function authenticateUser(
 }
 
 /** Create user's access token. */
-async function createUserAccessToken(
-  dbConn: DbConn,
-  def: Definition,
-  base_id: number
-): Promise<string> {
+async function createUserAccessToken(dbConn: DbConn, def: Definition, id: number): Promise<string> {
   const newToken = generateAccessToken();
   const newExpiryDate = new Date(Date.now() + TOKEN_EXPIRY_TIME).toISOString();
 
   // insert fresh token
   await dbConn
-    .insert({ base_id, token: newToken, expirydate: newExpiryDate })
+    .insert({ id, token: newToken, expirydate: newExpiryDate })
     .into(getAuthDbName(def, "accessToken"));
 
   return newToken;
@@ -302,4 +289,18 @@ export function hashPassword(password: string): Promise<string> {
 /** Verify that clear text password matches the hashed one. */
 export function verifyPassword(clearPassword: string, hashedPassword: string): Promise<boolean> {
   return compare(clearPassword, hashedPassword);
+}
+
+/** Resolve authenticator models by type */
+function getAuthDbName(def: Definition, model: "target" | "accessToken") {
+  if (def.authenticator == null) {
+    throw new Error("Cannot authenticate user. Authenticator not defined.");
+  }
+
+  switch (model) {
+    case "target":
+      return getRef.model(def, def.authenticator.targetModel.refKey).dbname;
+    case "accessToken":
+      return getRef.model(def, def.authenticator.accessTokenModel.refKey).dbname;
+  }
 }

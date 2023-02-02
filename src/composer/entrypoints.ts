@@ -536,11 +536,13 @@ export function wrapActionsWithSelect(
 }
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
-  if (!def.auth) return [];
+  if (!def.authenticator) return [];
+
   const paths = uniqueNamePaths(
     deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access)
   );
-  const model = getRef.model(def, def.auth.baseRefKey);
+  const model = getRef.model(def, def.authenticator.targetModel.refKey);
+
   return pathsToSelectDef(def, model, paths, [model.name]);
 }
 

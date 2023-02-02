@@ -3,6 +3,7 @@
 exports[`parser blueprint test/authenticator.gaudi 1`] = `
 {
   "authenticator": {
+    "accessTokenModelName": "AuthUserAccessToken",
     "method": {
       "kind": "basic",
     },
@@ -33,7 +34,13 @@ exports[`parser blueprint test/authenticator.gaudi 1`] = `
       "name": "AuthUser",
       "queries": [],
       "references": [],
-      "relations": [],
+      "relations": [
+        {
+          "fromModel": "AuthUserAccessToken",
+          "name": "tokens",
+          "through": "target",
+        },
+      ],
     },
     {
       "computeds": [],

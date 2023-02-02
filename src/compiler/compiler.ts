@@ -580,6 +580,7 @@ function compileAuthenticator(
   const name = authenticator.name;
   // this is not exposed in blueprint yet
   const targetModelName = AUTH_TARGET_MODEL_NAME;
+  const accessTokenModelName = `${targetModelName}AccessToken`;
   const method = compileAuthenticatorMethod(authenticator.body);
 
   if (method == null) {
@@ -611,7 +612,13 @@ function compileAuthenticator(
         },
       ],
       references: [],
-      relations: [],
+      relations: [
+        {
+          name: "tokens",
+          fromModel: accessTokenModelName,
+          through: "target",
+        },
+      ],
       queries: [],
       computeds: [],
       hooks: [],
@@ -619,7 +626,7 @@ function compileAuthenticator(
     // access token model
     // maybe this will have to renamed/moved when we have other auth methods
     {
-      name: `${targetModelName}AccessToken`,
+      name: accessTokenModelName,
       isAuth: false,
       fields: [
         {
@@ -641,7 +648,7 @@ function compileAuthenticator(
   ];
   models.push(...authModelSpec);
 
-  return { name, targetModelName, method };
+  return { name, targetModelName, accessTokenModelName, method };
 }
 
 function compileAuthenticatorMethod(

@@ -147,12 +147,14 @@ export function getInitialContext(
       { kind: "record", modelName: t.retType },
     ])
   );
-  if (def.auth) {
+
+  if (def.authenticator) {
     parentContext["@auth"] = {
       kind: "record",
-      modelName: getRef.model(def, def.auth.baseRefKey).name,
+      modelName: getRef.model(def, def.authenticator.targetModel.refKey).name,
     };
   }
+
   switch (endpointKind) {
     case "create":
     case "list": {

@@ -101,7 +101,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.id }),
               []
             );
             const result = findOne(results);
@@ -174,7 +174,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.id }),
               []
             );
             const result = findOne(results);
@@ -253,7 +253,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.id }),
               []
             );
             const result = findOne(results);
@@ -343,7 +343,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.id }),
               []
             );
             const result = findOne(results);
@@ -438,7 +438,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.id }),
               []
             );
             const result = findOne(results);

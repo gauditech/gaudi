@@ -17,21 +17,18 @@ describe("Auth", () => {
     loadBlueprint(path.join(__dirname, "auth.gaudi")),
     [
       {
-        model: "Operator",
-        data: [{ name: "First" }, { name: "Second" }],
-      },
-      {
-        model: "Operator__AuthLocal",
-        // password: 1234
+        model: "AuthUser",
         data: [
           {
-            base_id: 1,
-            username: "first",
+            id: 1,
+            name: "First Operator",
+            email: "first@example.com",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
           {
-            base_id: 2,
-            username: "second",
+            id: 2,
+            name: "Secodn Operator",
+            email: "second@example.com",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
         ],
@@ -58,14 +55,14 @@ describe("Auth", () => {
   async function loginTestUser() {
     const loginResponse = await request(getServer())
       .post("/auth/login")
-      .send({ username: "first", password: "1234" });
+      .send({ email: "first", password: "1234" });
     return loginResponse.body.token;
   }
 
   async function loginTestUser2() {
     const loginResponse = await request(getServer())
       .post("/auth/login")
-      .send({ username: "second", password: "1234" });
+      .send({ email: "second", password: "1234" });
     return loginResponse.body.token;
   }
 

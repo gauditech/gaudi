@@ -2,6 +2,10 @@
 
 exports[`authenticator composer succeeds for simple authenticator 1`] = `
 {
+  "accessTokenModel": {
+    "name": "AuthUserAccessToken",
+    "refKey": "AuthUserAccessToken",
+  },
   "method": {
     "kind": "basic",
   },
@@ -79,7 +83,20 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
     "queries": [],
     "refKey": "AuthUser",
     "references": [],
-    "relations": [],
+    "relations": [
+      {
+        "fromModel": "AuthUserAccessToken",
+        "fromModelRefKey": "AuthUserAccessToken",
+        "kind": "relation",
+        "modelRefKey": "AuthUser",
+        "name": "tokens",
+        "nullable": false,
+        "refKey": "AuthUser.tokens",
+        "through": "target",
+        "throughRefKey": "AuthUserAccessToken.target",
+        "unique": false,
+      },
+    ],
   },
   {
     "aggregates": [],

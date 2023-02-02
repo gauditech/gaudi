@@ -24,14 +24,14 @@ export type EndpointQueries = {
 
 export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
   let authQueryTree;
-  if (def.auth) {
-    const authModel = getRef.model(def, def.auth.baseRefKey);
+  if (def.authenticator) {
+    const authModel = getRef.model(def, def.authenticator.targetModel.refKey);
     const filter: TypedExprDef = {
       kind: "function",
       name: "is",
       args: [
         { kind: "alias", namePath: [authModel.refKey, "id"] },
-        { kind: "variable", name: "base_id" },
+        { kind: "variable", name: "id" },
       ],
     };
     const query = queryFromParts(def, "@auth", [authModel.name], filter, endpoint.authSelect);
