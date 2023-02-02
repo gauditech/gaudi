@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Populator), ";">
+    = NewlineBody<(Model | Entrypoint | Populator | Authenticator), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -267,4 +267,17 @@ Gaudi {
 
   RepeaterRangeAtom
     = ("start" | "end") integer -- limits
+
+
+  // ********************
+  // Authenticator grammar
+  // ********************
+
+  Authenticator = "auth" "{" NonemptyNewlineBody<AuthenticatorBodyAtom, ","> "}"
+
+  AuthenticatorBodyAtom
+   = "method" "basic" "{" NewlineBody<AuthenticatorBasicMethodBodyAtom, ","> "}" -- methodBasic
+
+  AuthenticatorBasicMethodBodyAtom
+   = -- empty
 }

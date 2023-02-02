@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST;
+export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST | AuthenticatorAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -193,7 +193,7 @@ export type BinaryOperator =
 
 export type UnaryOperator = "not";
 
-// ----- Populators
+// ---------- Populator
 
 export type PopulatorAST = WithContext<{
   kind: "populator";
@@ -229,3 +229,23 @@ export type RepeaterAtomAST = WithContext<
   | { kind: "start"; value: number }
   | { kind: "end"; value: number }
 >;
+
+// ---------- authenticator
+
+export type AuthenticatorAST = WithContext<{
+  kind: "authenticator";
+  name?: string;
+  body: AuthenticatorBodyAtomAST[];
+}>;
+
+export type AuthenticatorBodyAtomAST = WithContext<AuthenticatorMethodBodyAtomAST>;
+
+export type AuthenticatorMethodBodyAtomAST = {
+  kind: "method";
+  methodKind: "basic";
+  body: AuthenticatorBasicMethodBodyAtomAST[];
+} /* | { ... } add other auth methods */;
+
+export type AuthenticatorBasicMethodBodyAtomAST =
+  WithContext<never /* never is just a placeholder for an empty arr since we currently don't have anything to put in here */>;
+/* | { ... } add other basic method atoms */

@@ -1,7 +1,73 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`parser blueprint test/authenticator.gaudi 1`] = `
+{
+  "authenticator": {
+    "method": {
+      "kind": "basic",
+    },
+    "name": undefined,
+    "targetModelName": "AuthUser",
+  },
+  "entrypoints": [],
+  "models": [
+    {
+      "computeds": [],
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "unique": true,
+        },
+        {
+          "name": "password",
+          "type": "text",
+        },
+      ],
+      "hooks": [],
+      "isAuth": false,
+      "name": "AuthUser",
+      "queries": [],
+      "references": [],
+      "relations": [],
+    },
+    {
+      "computeds": [],
+      "fields": [
+        {
+          "name": "token",
+          "type": "text",
+          "unique": true,
+        },
+        {
+          "name": "expiryDate",
+          "type": "text",
+        },
+      ],
+      "hooks": [],
+      "isAuth": false,
+      "name": "AuthUserAccessToken",
+      "queries": [],
+      "references": [
+        {
+          "name": "target",
+          "toModel": "AuthUser",
+        },
+      ],
+      "relations": [],
+    },
+  ],
+  "populators": [],
+}
+`;
+
 exports[`parser blueprint test/computed.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [],
   "models": [
     {
@@ -179,6 +245,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
 
 exports[`parser blueprint test/default.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [],
   "models": [
     {
@@ -240,6 +307,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
 
 exports[`parser blueprint test/entrypoint.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [
     {
       "authorize": undefined,
@@ -591,6 +659,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
 
 exports[`parser blueprint test/git.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [],
   "models": [
     {
@@ -737,6 +806,7 @@ exports[`parser blueprint test/git.gaudi 1`] = `
 
 exports[`parser blueprint test/hook.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [
     {
       "authorize": undefined,
@@ -903,6 +973,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
 
 exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [],
   "models": [
     {
@@ -966,6 +1037,7 @@ exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
 
 exports[`parser blueprint test/populator.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [],
   "models": [],
   "populators": [
@@ -1217,6 +1289,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
 
 exports[`parser blueprint test/query.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [],
   "models": [
     {
@@ -1593,6 +1666,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
 
 exports[`parser blueprint test/validators.gaudi 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [],
   "models": [
     {

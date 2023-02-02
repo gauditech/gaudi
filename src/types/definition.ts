@@ -7,6 +7,7 @@ export type Definition = {
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
   populators: PopulatorDef[];
+  authenticator?: AuthenticatorDef;
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -448,6 +449,8 @@ export type FieldSetterReferenceInput = {
   // required: boolean;
 };
 
+// ---------- populator
+
 export type PopulatorDef = {
   name: string;
   populates: PopulateDef[];
@@ -470,11 +473,11 @@ export type PopulateTargetDef = {
   alias: string;
 };
 
-export type RepeaterDef = { alias?: string; start: number; end: number };
-
 // TODO: this is very much alike to `FieldSetter` def
 export type PopulateSetter = LiteralValueDef | FieldSetterReferenceValue | FieldSetterHook;
 // TODO: add populator hints
+
+export type RepeaterDef = { alias?: string; start: number; end: number };
 
 export type FieldSetterChangesetReference = {
   kind: "changeset-reference";
@@ -508,3 +511,20 @@ export type FieldSetter =
   | FieldSetterHook
   | FieldSetterFunction
   | FieldSetterContextReference;
+
+// ---------- authenticator
+
+export type AuthenticatorDef = {
+  name: string;
+  targetModel: AuthenticatorTargetModelDef;
+  method: AuthenticatorMethodDef;
+};
+
+export type AuthenticatorTargetModelDef = {
+  name: string;
+  refKey: string;
+};
+
+export type AuthenticatorMethodDef = {
+  kind: "basic";
+};

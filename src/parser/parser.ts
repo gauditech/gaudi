@@ -4,6 +4,8 @@ import {
   ActionAtomBodyAST,
   ActionBodyAST,
   ActionKindAST,
+  AuthenticatorAST,
+  AuthenticatorBodyAtomAST,
   BinaryOperator,
   ComputedAST,
   EndpointAST,
@@ -483,6 +485,8 @@ semantics.addOperation("parse()", {
     return [head.parse(), ...tail.children.map((c) => c.parse())];
   },
 
+  // ---------- populator
+
   Populator(this, _populator, identifier, _braceL, body, _braceR): PopulatorAST {
     return {
       kind: "populator",
@@ -543,6 +547,9 @@ semantics.addOperation("parse()", {
       // interval: this.source
     };
   },
+
+  // --------- repeater
+
   Repeater_aliased(this, body, _as, alias): RepeaterAST {
     return {
       alias: alias.parse(),
@@ -573,6 +580,33 @@ semantics.addOperation("parse()", {
       kind: boundary.sourceString as "start" | "end",
       value: interval.parse(),
     };
+  },
+
+  // ----------- authenticator
+
+  Authenticator(this, _keyword, _braceL, body, _braceR): AuthenticatorAST {
+    return {
+      kind: "authenticator",
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+  AuthenticatorBodyAtom_methodBasic(
+    this,
+    _keyword,
+    _basic,
+    _braceL,
+    body,
+    _braceR
+  ): AuthenticatorBodyAtomAST {
+    return {
+      kind: "method",
+      methodKind: "basic",
+      body: body.parse(),
+    };
+  },
+  AuthenticatorBasicMethodBodyAtom_empty(this) {
+    return [];
   },
 });
 

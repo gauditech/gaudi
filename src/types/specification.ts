@@ -6,6 +6,7 @@ export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
+  authenticator?: AuthenticatorSpec;
 };
 
 export type ModelSpec = WithContext<{
@@ -144,6 +145,8 @@ export type RepeaterSpec = WithContext<
   | { kind: "range"; alias?: string; range: { start?: number; end?: number } }
 >;
 
+// ---------- populator
+
 export type PopulatorSpec = WithContext<{
   name: string;
   populates: PopulateSpec[];
@@ -176,3 +179,17 @@ export type ModelHookSpec = BaseHookSpec & {
 export type ActionHookSpec = BaseHookSpec & {
   args: Record<string, { kind: "expression"; exp: ExpSpec }>;
 };
+
+// ---------- authenticator
+
+export const AUTH_TARGET_MODEL_NAME = "AuthUser";
+
+export type AuthenticatorSpec = WithContext<{
+  name?: string;
+  targetModelName: string;
+  method: AuthenticatorMethodSpec;
+}>;
+
+export type AuthenticatorMethodSpec = WithContext<{
+  kind: "basic";
+}>;
