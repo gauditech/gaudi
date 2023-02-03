@@ -12,7 +12,7 @@ import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { compile, compose, parse } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
 import { importHooks } from "@src/runtime/hooks";
-import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authentication";
+import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authentication/endpoints";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";

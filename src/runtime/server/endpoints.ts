@@ -13,7 +13,7 @@ import { executeActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
 import { executeQueryTree } from "@src/runtime/query/exec";
-import { authenticationHandler } from "@src/runtime/server/authentication";
+import { buildAuthenticationHandler } from "@src/runtime/server/authentication/endpoints";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
@@ -85,7 +85,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
     method: "get",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -158,7 +158,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     method: "get",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -237,7 +237,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
     method: "post",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -327,7 +327,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
     method: "patch",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -422,7 +422,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
     method: "delete",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -477,7 +477,10 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
-export function extractPathParams(path: EndpointPath, sourceMap: Record<string, string>): any {
+export function extractPathParams(
+  path: EndpointPath,
+  sourceMap: Record<string, string>
+): Record<string, unknown> {
   const paramPairs = path.fragments
     .filter((frag): frag is PathFragmentIdentifier => frag.kind === "identifier")
     .map((frag): [string, string | number] => [

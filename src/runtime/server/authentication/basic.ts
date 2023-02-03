@@ -20,15 +20,13 @@ const BCRYPT_SALT_ROUNDS = 10;
 
 /** Function that returns list of all authentication endpoints. */
 export function buildEndpoints(def: Definition): EndpointConfig[] {
-  if (!def.authenticator) return [];
-
   return [buildLocalAuthLoginHandler(def), buildAuthLogoutHandler(def)];
 }
 
 /**
  * Endpoint that allows users to auth via local user/pass
  */
-export function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
+function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
   return {
     path: "/auth/login",
     method: "post",
@@ -64,12 +62,12 @@ export function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
 /**
  * Endpoint that allows local logout
  */
-export function buildAuthLogoutHandler(def: Definition): EndpointConfig {
+function buildAuthLogoutHandler(def: Definition): EndpointConfig {
   return {
     path: "/auth/logout",
     method: "post",
     handlers: [
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       async (req: Request, resp: Response) => {
         try {
           if (!req.isAuthenticated()) {
@@ -90,7 +88,7 @@ export function buildAuthLogoutHandler(def: Definition): EndpointConfig {
   };
 }
 
-// ---------- Authentication request handler
+// ---------- Request handlers
 
 export type AuthenticationOptions = {
   allowAnonymous?: boolean;
@@ -98,9 +96,8 @@ export type AuthenticationOptions = {
 
 /**
  * Create authentication request handler
- *
  */
-export function authenticationHandler(def: Definition, options?: AuthenticationOptions) {
+export function buildAuthenticationHandler(def: Definition, options?: AuthenticationOptions) {
   const passportInstance = configurePassport(def);
 
   return async (req: Request, resp: Response, next: NextFunction) => {
