@@ -20,13 +20,11 @@ describe("Auth", () => {
         model: "AuthUser",
         data: [
           {
-            id: 1,
             name: "First Operator",
             username: "first@example.com",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
           {
-            id: 2,
             name: "Secodn Operator",
             username: "second@example.com",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
@@ -190,6 +188,50 @@ describe("Auth", () => {
         .post("/box")
         .send({ name: "another box", is_public: false });
       expect(getResponse.statusCode).toBe(401);
+    });
+
+    it("should register and login new user", async () => {
+      const registerResponse = await request(getServer())
+        .post("/auth/register")
+        .send({ name: "some name", username: "somename@example.com", password: "some password" });
+      expect(registerResponse.statusCode).toBe(201);
+      expect(registerResponse.body).toMatchInlineSnapshot(`
+        {
+          "id": 3,
+          "name": "some name",
+          "username": "somename@example.com",
+        }
+      `);
+
+      // login is tested fully in another test, this just confirmation that login works for new user
+      const loginResponse = await request(getServer())
+        .post("/auth/login")
+        .send({ username: "somename@example.com", password: "some password" });
+      expect(loginResponse.statusCode).toBe(200);
+    });
+
+    it("should fail when creating user with invalid parameters", async () => {
+      const registerResponse = await request(getServer())
+        .post("/auth/register")
+        .send({ name: "", username: "", password: "" });
+
+      expect(registerResponse.statusCode).toBe(400);
+      expect(registerResponse.body).toMatchSnapshot();
+    });
+
+    it("should fail when creating user with existing username", async () => {
+      const data = {
+        name: "some name",
+        username: "somename@example.com",
+        password: "some password",
+      };
+
+      await request(getServer()).post("/auth/register").send(data);
+
+      const reregisterReponse = await request(getServer()).post("/auth/register").send(data);
+
+      expect(reregisterReponse.statusCode).toBe(400);
+      expect(reregisterReponse.body).toMatchSnapshot();
     });
   });
 });

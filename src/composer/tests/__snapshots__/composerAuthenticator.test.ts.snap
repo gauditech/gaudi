@@ -83,7 +83,18 @@ exports[`authenticator composer resolves @auth model reference 1`] = `
         "refKey": "AuthUser.name",
         "type": "text",
         "unique": false,
-        "validators": [],
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 1,
+              },
+            ],
+            "inputType": "text",
+            "name": "minLength",
+          },
+        ],
       },
       {
         "dbname": "username",
@@ -96,7 +107,18 @@ exports[`authenticator composer resolves @auth model reference 1`] = `
         "refKey": "AuthUser.username",
         "type": "text",
         "unique": true,
-        "validators": [],
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 8,
+              },
+            ],
+            "inputType": "text",
+            "name": "minLength",
+          },
+        ],
       },
       {
         "dbname": "password",
@@ -109,7 +131,18 @@ exports[`authenticator composer resolves @auth model reference 1`] = `
         "refKey": "AuthUser.password",
         "type": "text",
         "unique": false,
-        "validators": [],
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 8,
+              },
+            ],
+            "inputType": "text",
+            "name": "minLength",
+          },
+        ],
       },
     ],
     "hooks": [],
@@ -274,7 +307,18 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUser.name",
         "type": "text",
         "unique": false,
-        "validators": [],
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 1,
+              },
+            ],
+            "inputType": "text",
+            "name": "minLength",
+          },
+        ],
       },
       {
         "dbname": "username",
@@ -287,7 +331,18 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUser.username",
         "type": "text",
         "unique": true,
-        "validators": [],
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 8,
+              },
+            ],
+            "inputType": "text",
+            "name": "minLength",
+          },
+        ],
       },
       {
         "dbname": "password",
@@ -300,7 +355,18 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUser.password",
         "type": "text",
         "unique": false,
-        "validators": [],
+        "validators": [
+          {
+            "args": [
+              {
+                "type": "integer",
+                "value": 8,
+              },
+            ],
+            "inputType": "text",
+            "name": "minLength",
+          },
+        ],
       },
     ],
     "hooks": [],

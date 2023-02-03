@@ -598,6 +598,7 @@ function compileAuthenticator(
         {
           name: "name",
           type: "text",
+          validators: [{ kind: "builtin", name: "min", args: [1] }],
         },
         // this is used as username so it must be unique
         // if we had parallel auth methods this probably couldn't be unique anymore
@@ -605,10 +606,12 @@ function compileAuthenticator(
           name: "username",
           type: "text",
           unique: true,
+          validators: [{ kind: "builtin", name: "min", args: [8] }],
         },
         {
           name: "password",
           type: "text",
+          validators: [{ kind: "builtin", name: "min", args: [8] }],
         },
       ],
       references: [],

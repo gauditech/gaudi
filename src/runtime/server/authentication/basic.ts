@@ -2,15 +2,28 @@ import crypto from "crypto";
 
 import { compare, hash } from "bcrypt";
 import { NextFunction, Request, Response } from "express";
+import _ from "lodash";
 import passport from "passport";
 import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-http-bearer";
 
-import { getRef } from "@src/common/refs";
+import { dataToFieldDbnames, getRef } from "@src/common/refs";
+import { assertUnreachable } from "@src/common/utils";
+import {
+  createRecordValidationErrorFromCustom,
+  createRecordValidationErrorFromValidationError,
+  validateEndpointFieldset,
+} from "@src/runtime/common/validation";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { EndpointConfig } from "@src/runtime/server/types";
-import { Definition } from "@src/types/definition";
+import {
+  AuthenticatorDef,
+  Definition,
+  FieldsetDef,
+  FieldsetFieldDef,
+  FieldsetRecordDef,
+} from "@src/types/definition";
 
 const TOKEN_SIZE = 32;
 const TOKEN_EXPIRY_TIME = 1 * 60 * 60 * 1000; // 1h
@@ -20,13 +33,17 @@ const BCRYPT_SALT_ROUNDS = 10;
 
 /** Function that returns list of all authentication endpoints. */
 export function buildEndpoints(def: Definition, pathPrefix = ""): EndpointConfig[] {
-  return [buildLocalAuthLoginHandler(def, pathPrefix), buildAuthLogoutHandler(def, pathPrefix)];
+  return [
+    buildLocalAuthLoginEndpoint(def, pathPrefix),
+    buildAuthLogoutEndpoint(def, pathPrefix),
+    buildRegistrationEndpoint(def, pathPrefix),
+  ];
 }
 
 /**
  * Endpoint that allows users to auth via local user/pass
  */
-function buildLocalAuthLoginHandler(def: Definition, pathPrefix = ""): EndpointConfig {
+function buildLocalAuthLoginEndpoint(def: Definition, pathPrefix = ""): EndpointConfig {
   return {
     path: `${pathPrefix}/login`,
     method: "post",
@@ -62,7 +79,7 @@ function buildLocalAuthLoginHandler(def: Definition, pathPrefix = ""): EndpointC
 /**
  * Endpoint that allows local logout
  */
-function buildAuthLogoutHandler(def: Definition, pathPrefix = ""): EndpointConfig {
+function buildAuthLogoutEndpoint(def: Definition, pathPrefix = ""): EndpointConfig {
   return {
     path: `${pathPrefix}/logout`,
     method: "post",
@@ -80,6 +97,37 @@ function buildAuthLogoutHandler(def: Definition, pathPrefix = ""): EndpointConfi
           await dbConn.delete().from(getAuthDbName(def, "ACCESS_TOKEN_MODEL")).where({ token });
 
           resp.sendStatus(204);
+        } catch (err: unknown) {
+          errorResponse(err);
+        }
+      },
+    ],
+  };
+}
+
+/**
+ * Endpoint for registering local users
+ */
+function buildRegistrationEndpoint(def: Definition, pathPrefix = ""): EndpointConfig {
+  return {
+    path: `${pathPrefix}/register`,
+    method: "post",
+    handlers: [
+      async (req: Request, resp: Response) => {
+        try {
+          const dbConn = getAppContext(req).dbConn;
+
+          const body = req.body;
+
+          const name = body.name;
+          const username = body.username;
+          const password = body.password;
+          // console.log(`Creds: ${username}:${password}`);
+
+          const user = await createAuthUser(dbConn, def, { name, username, password });
+
+          // return created token
+          resp.status(201).send(user);
         } catch (err: unknown) {
           errorResponse(err);
         }
@@ -245,6 +293,98 @@ async function createUserAccessToken(dbConn: DbConn, def: Definition, id: number
   return newToken;
 }
 
+/** Create user's access token. */
+type UserCreateBody = {
+  name: string;
+  username: string;
+  password: string;
+};
+
+async function createAuthUser(
+  dbConn: DbConn,
+  def: Definition,
+  body: Record<string, unknown>
+): Promise<{ id: number; name: string; username: string }> {
+  const inputBody = await validateNewUser(def, body);
+
+  // check if username is already taken
+  const existingUser = resolveUsername(def, dbConn, inputBody.username);
+  if (existingUser != null) {
+    throw new BusinessError(
+      "ERROR_CODE_VALIDATION",
+      "Validation error",
+      createRecordValidationErrorFromCustom([
+        {
+          name: "username",
+          value: inputBody.username,
+          errorMessage: `Username "${inputBody.username}" already exists`,
+          errorType: "",
+        },
+      ])
+    );
+  }
+
+  const hashedPassword = await hashPassword(inputBody.password);
+  const user: UserCreateBody = {
+    name: inputBody.name,
+    username: inputBody.username.toLowerCase(),
+    password: hashedPassword,
+  };
+
+  // insert new user
+  const result = await dbConn
+    .insert(dataToFieldDbnames(getRef.model(def, def.authenticator!.targetModel.refKey), user))
+    .into(getAuthDbName(def, "TARGET_MODEL"))
+    .returning(["id", "name", "username"]);
+
+  if (!result.length) throw new Error("Error inserting user");
+
+  return result[0];
+}
+
+async function validateNewUser(
+  def: Definition,
+  body: Record<string, unknown>
+): Promise<UserCreateBody> {
+  ensureAuthenticator(def.authenticator);
+
+  // we cannot build custom actions/endpoints/fieldsets from blueprint so we have to build fieldset manually
+  const model = getRef.model(def, def.authenticator.targetModel.refKey);
+  const fieldset: FieldsetRecordDef = {
+    kind: "record",
+    record: _.fromPairs(
+      model.fields
+        // remove identifier field
+        .filter((f) => f.name !== "id")
+        .map((f) => [
+          f.name,
+          {
+            kind: "field",
+            type: f.type,
+            nullable: f.nullable,
+            required: true,
+            validators: f.validators,
+          },
+        ])
+    ),
+    nullable: false,
+  };
+
+  return validateEndpointFieldset(fieldset, body);
+}
+
+async function resolveUsername(
+  def: Definition,
+  dbConn: DbConn,
+  username: string
+): Promise<{ id: number } | undefined> {
+  const result = await dbConn
+    .select("id")
+    .from(getAuthDbName(def, "TARGET_MODEL"))
+    .whereRaw("LOWER(username) = ?", username.toLowerCase());
+  return result.length > 0 ? result[0] : undefined;
+}
+
 // ---------- Utils
 
 /** Check if token is valid */
@@ -288,14 +428,18 @@ export function verifyPassword(clearPassword: string, hashedPassword: string): P
 
 /** Resolve authenticator models by type */
 function getAuthDbName(def: Definition, model: "TARGET_MODEL" | "ACCESS_TOKEN_MODEL") {
-  if (def.authenticator == null) {
-    throw new Error("Cannot authenticate user. Authenticator not defined.");
-  }
+  ensureAuthenticator(def.authenticator);
 
   switch (model) {
     case "TARGET_MODEL":
       return getRef.model(def, def.authenticator.targetModel.refKey).dbname;
     case "ACCESS_TOKEN_MODEL":
       return getRef.model(def, def.authenticator.accessTokenModel.refKey).dbname;
+    default:
+      assertUnreachable(model);
   }
+}
+
+function ensureAuthenticator<T>(auth: T | undefined | null): asserts auth is NonNullable<T> {
+  if (auth === null || auth === undefined) throw new Error("Authenticator not defined.");
 }

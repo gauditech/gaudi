@@ -18,15 +18,42 @@ exports[`parser blueprint test/authenticator.gaudi 1`] = `
         {
           "name": "name",
           "type": "text",
+          "validators": [
+            {
+              "args": [
+                1,
+              ],
+              "kind": "builtin",
+              "name": "min",
+            },
+          ],
         },
         {
           "name": "username",
           "type": "text",
           "unique": true,
+          "validators": [
+            {
+              "args": [
+                8,
+              ],
+              "kind": "builtin",
+              "name": "min",
+            },
+          ],
         },
         {
           "name": "password",
           "type": "text",
+          "validators": [
+            {
+              "args": [
+                8,
+              ],
+              "kind": "builtin",
+              "name": "min",
+            },
+          ],
         },
       ],
       "hooks": [],

@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Auth Login and Logout should fail when creating user with existing username 1`] = `
+{
+  "code": "ERROR_CODE_VALIDATION",
+  "data": {
+    "errors": [
+      "Username somename@example.com already exists",
+    ],
+    "inner": [
+      {
+        "errors": [
+          "Username somename@example.com already exists",
+        ],
+        "inner": [],
+        "message": "Username somename@example.com already exists",
+        "name": "ValidationError",
+        "params": {
+          "originalValue": "somename@example.com",
+          "path": "username",
+          "value": "somename@example.com",
+        },
+        "path": "username",
+        "type": "",
+        "value": "somename@example.com",
+      },
+    ],
+    "value": {
+      "username": "somename@example.com",
+    },
+  },
+  "message": "Validation error",
+}
+`;
+
+exports[`Auth Login and Logout should fail when creating user with invalid parameters 1`] = `
+{
+  "code": "ERROR_CODE_VALIDATION",
+  "data": {
+    "errors": [
+      "username must be at least 8 characters",
+      "name must be at least 1 characters",
+      "password must be at least 8 characters",
+    ],
+    "inner": [
+      {
+        "errors": [
+          "username must be at least 8 characters",
+        ],
+        "inner": [],
+        "message": "username must be at least 8 characters",
+        "name": "ValidationError",
+        "params": {
+          "min": 8,
+          "originalValue": "",
+          "path": "username",
+          "value": "",
+        },
+        "path": "username",
+        "type": "min",
+        "value": "",
+      },
+      {
+        "errors": [
+          "name must be at least 1 characters",
+        ],
+        "inner": [],
+        "message": "name must be at least 1 characters",
+        "name": "ValidationError",
+        "params": {
+          "min": 1,
+          "originalValue": "",
+          "path": "name",
+          "value": "",
+        },
+        "path": "name",
+        "type": "min",
+        "value": "",
+      },
+      {
+        "errors": [
+          "password must be at least 8 characters",
+        ],
+        "inner": [],
+        "message": "password must be at least 8 characters",
+        "name": "ValidationError",
+        "params": {
+          "min": 8,
+          "originalValue": "",
+          "path": "password",
+          "value": "",
+        },
+        "path": "password",
+        "type": "min",
+        "value": "",
+      },
+    ],
+    "value": {
+      "name": "",
+      "password": "",
+      "username": "",
+    },
+  },
+  "message": "Validation error",
+}
+`;

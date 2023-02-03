@@ -1,3 +1,4 @@
+import _ from "lodash";
 import {
   AnySchema,
   BaseSchema,
@@ -39,7 +40,7 @@ export async function validateEndpointFieldset<R = Record<string, unknown>>(
       throw new BusinessError(
         "ERROR_CODE_VALIDATION",
         "Validation error",
-        createRecordValidationError(err)
+        createRecordValidationErrorFromValidationError(err)
       );
     } else {
       throw err;
@@ -52,7 +53,9 @@ export type RecordValidationError = Pick<
   "value" | "path" | "type" | "errors" | "params" | "inner"
 >;
 
-export function createRecordValidationError(error: ValidationError): RecordValidationError {
+export function createRecordValidationErrorFromValidationError(
+  error: ValidationError
+): RecordValidationError {
   return {
     value: error.value,
     path: error.path,
@@ -68,6 +71,38 @@ export async function validateRecord(record: unknown, schema: AnySchema) {
     abortEarly: false, // report ALL errors, not just the first one
     context: {},
   });
+}
+
+export type ValidationFieldError = {
+  name: string;
+  value: string;
+  errorMessage: string;
+  // usually this is validator type but for manual input it can be anything, for now
+  errorType: string;
+};
+
+/** Manually create validation error structure */
+export function createRecordValidationErrorFromCustom(
+  errors: ValidationFieldError[]
+): RecordValidationError {
+  return {
+    value: _.fromPairs(errors.map((e) => [e.name, e.value])),
+    errors: errors.map((e) => e.errorMessage),
+    inner: errors.map((e) => ({
+      value: e.value,
+      path: e.name,
+      type: e.errorType,
+      errors: [e.errorMessage],
+      params: {
+        value: e.value,
+        originalValue: e.value,
+        path: e.name,
+      },
+      inner: [],
+      name: "ValidationError",
+      message: e.errorMessage,
+    })),
+  };
 }
 
 // ---------- fieldset validation builder
