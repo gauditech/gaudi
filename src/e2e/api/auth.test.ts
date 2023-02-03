@@ -22,13 +22,13 @@ describe("Auth", () => {
           {
             id: 1,
             name: "First Operator",
-            email: "first@example.com",
+            username: "first@example.com",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
           {
             id: 2,
             name: "Secodn Operator",
-            email: "second@example.com",
+            username: "second@example.com",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
         ],
@@ -55,14 +55,14 @@ describe("Auth", () => {
   async function loginTestUser() {
     const loginResponse = await request(getServer())
       .post("/auth/login")
-      .send({ email: "first@example.com", password: "1234" });
+      .send({ username: "first@example.com", password: "1234" });
     return loginResponse.body.token;
   }
 
   async function loginTestUser2() {
     const loginResponse = await request(getServer())
       .post("/auth/login")
-      .send({ email: "second@example.com", password: "1234" });
+      .send({ username: "second@example.com", password: "1234" });
     return loginResponse.body.token;
   }
 
@@ -80,7 +80,7 @@ describe("Auth", () => {
 
       const loginResponse = await request(getServer())
         .post("/auth/login")
-        .send({ email: "first@example.com", password: "1234" });
+        .send({ username: "first@example.com", password: "1234" });
       expect(loginResponse.statusCode).toBe(200);
       const token = loginResponse.body.token;
       expect(token.length).toBe(43);
@@ -104,14 +104,14 @@ describe("Auth", () => {
     it("Wrong Login password", async () => {
       const loginResponse = await request(getServer())
         .post("/auth/login")
-        .send({ email: "first@example.com", password: "wrong password" });
+        .send({ username: "first@example.com", password: "wrong password" });
       expect(loginResponse.statusCode).toBe(401);
     });
 
     it("Wrong Login username", async () => {
       const loginResponse = await request(getServer())
         .post("/auth/login")
-        .send({ email: "wrong username", password: "1234" });
+        .send({ username: "wrong username", password: "1234" });
       expect(loginResponse.statusCode).toBe(401);
     });
     it("Success public", async () => {

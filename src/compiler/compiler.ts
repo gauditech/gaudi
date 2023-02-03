@@ -602,7 +602,7 @@ function compileAuthenticator(
         // this is used as username so it must be unique
         // if we had parallel auth methods this probably couldn't be unique anymore
         {
-          name: "email",
+          name: "username",
           type: "text",
           unique: true,
         },

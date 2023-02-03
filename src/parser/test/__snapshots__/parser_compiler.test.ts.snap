@@ -20,7 +20,7 @@ exports[`parser blueprint test/authenticator.gaudi 1`] = `
           "type": "text",
         },
         {
-          "name": "email",
+          "name": "username",
           "type": "text",
           "unique": true,
         },

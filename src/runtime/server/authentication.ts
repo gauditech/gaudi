@@ -39,7 +39,7 @@ export function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
 
           const body = req.body;
 
-          const username = body.email;
+          const username = body.username;
           const password = body.password;
           // console.log(`Creds: ${username}:${password}`);
 
@@ -214,8 +214,7 @@ async function authenticateUser(
   const result = await dbConn
     .select("password", "id")
     .from(getAuthDbName(def, "TARGET_MODEL"))
-    // email serves as username in auth target model
-    .where({ email: username });
+    .where({ username });
 
   if (result.length === 1) {
     const row = result[0];
