@@ -19,16 +19,16 @@ const BCRYPT_SALT_ROUNDS = 10;
 // ---------- Endpoints
 
 /** Function that returns list of all authentication endpoints. */
-export function buildEndpoints(def: Definition): EndpointConfig[] {
-  return [buildLocalAuthLoginHandler(def), buildAuthLogoutHandler(def)];
+export function buildEndpoints(def: Definition, pathPrefix = ""): EndpointConfig[] {
+  return [buildLocalAuthLoginHandler(def, pathPrefix), buildAuthLogoutHandler(def, pathPrefix)];
 }
 
 /**
  * Endpoint that allows users to auth via local user/pass
  */
-function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
+function buildLocalAuthLoginHandler(def: Definition, pathPrefix = ""): EndpointConfig {
   return {
-    path: "/auth/login",
+    path: `${pathPrefix}/login`,
     method: "post",
     handlers: [
       async (req: Request, resp: Response) => {
@@ -62,9 +62,9 @@ function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
 /**
  * Endpoint that allows local logout
  */
-function buildAuthLogoutHandler(def: Definition): EndpointConfig {
+function buildAuthLogoutHandler(def: Definition, pathPrefix = ""): EndpointConfig {
   return {
-    path: "/auth/logout",
+    path: `${pathPrefix}/logout`,
     method: "post",
     handlers: [
       buildAuthenticationHandler(def, { allowAnonymous: true }),

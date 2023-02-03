@@ -14,9 +14,10 @@ export function buildEndpoints(def: Definition): EndpointConfig[] {
 
   const endpoints: EndpointConfig[] = [];
 
+  const pathPrefix = `/${def.authenticator.name.toLowerCase()}`;
   const methodKind = def.authenticator.method.kind;
   if (methodKind === "basic") {
-    endpoints.push(...buildBasicEndpoints(def));
+    endpoints.push(...buildBasicEndpoints(def, pathPrefix));
   } else {
     assertUnreachable(methodKind);
   }
