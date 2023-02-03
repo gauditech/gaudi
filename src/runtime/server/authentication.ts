@@ -39,7 +39,7 @@ export function buildLocalAuthLoginHandler(def: Definition): EndpointConfig {
 
           const body = req.body;
 
-          const username = body.username;
+          const username = body.email;
           const password = body.password;
           // console.log(`Creds: ${username}:${password}`);
 
@@ -79,7 +79,7 @@ export function buildAuthLogoutHandler(def: Definition): EndpointConfig {
 
           const token = req.user.token;
           const dbConn = getAppContext(req).dbConn;
-          await dbConn.delete().from(getAuthDbName(def, "accessToken")).where({ token });
+          await dbConn.delete().from(getAuthDbName(def, "ACCESS_TOKEN_MODEL")).where({ token });
 
           resp.sendStatus(204);
         } catch (err: unknown) {
@@ -186,15 +186,15 @@ async function resolveUserFromToken(
   token: string
 ): Promise<{ id: number } | undefined> {
   const result = await dbConn
-    .select("id", "token", "expirydate")
-    .from(getAuthDbName(def, "accessToken"))
+    .select("target_id", "token", "expirydate")
+    .from(getAuthDbName(def, "ACCESS_TOKEN_MODEL"))
     .where({ token });
 
   if (result.length == 1) {
     const row = result[0];
 
     if (verifyTokenValidity(row.token, row.expirydate)) {
-      return { id: row.id };
+      return { id: row.target_id };
     } else {
       console.log("Token has expired");
     }
@@ -213,10 +213,9 @@ async function authenticateUser(
 ): Promise<{ id: number } | undefined> {
   const result = await dbConn
     .select("password", "id")
-    .from(getAuthDbName(def, "target"))
+    .from(getAuthDbName(def, "TARGET_MODEL"))
     // email serves as username in auth target model
     .where({ email: username });
-  // console.log("RESULTS", result);
 
   if (result.length === 1) {
     const row = result[0];
@@ -244,8 +243,8 @@ async function createUserAccessToken(dbConn: DbConn, def: Definition, id: number
 
   // insert fresh token
   await dbConn
-    .insert({ id, token: newToken, expirydate: newExpiryDate })
-    .into(getAuthDbName(def, "accessToken"));
+    .insert({ target_id: id, token: newToken, expirydate: newExpiryDate })
+    .into(getAuthDbName(def, "ACCESS_TOKEN_MODEL"));
 
   return newToken;
 }
@@ -292,15 +291,15 @@ export function verifyPassword(clearPassword: string, hashedPassword: string): P
 }
 
 /** Resolve authenticator models by type */
-function getAuthDbName(def: Definition, model: "target" | "accessToken") {
+function getAuthDbName(def: Definition, model: "TARGET_MODEL" | "ACCESS_TOKEN_MODEL") {
   if (def.authenticator == null) {
     throw new Error("Cannot authenticate user. Authenticator not defined.");
   }
 
   switch (model) {
-    case "target":
+    case "TARGET_MODEL":
       return getRef.model(def, def.authenticator.targetModel.refKey).dbname;
-    case "accessToken":
+    case "ACCESS_TOKEN_MODEL":
       return getRef.model(def, def.authenticator.accessTokenModel.refKey).dbname;
   }
 }

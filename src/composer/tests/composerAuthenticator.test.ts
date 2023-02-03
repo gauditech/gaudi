@@ -38,4 +38,21 @@ describe("authenticator composer", () => {
       `"Items not unique!"`
     );
   });
+
+  it("resolves @auth model reference", () => {
+    const bp = `
+      model UserProfile {
+        reference user { to @auth }
+      }
+
+      auth {
+        method basic {}
+      }
+    `;
+
+    const def = compose(compile(parse(bp)));
+
+    // check authenticator's models
+    expect(def.models).toMatchSnapshot();
+  });
 });

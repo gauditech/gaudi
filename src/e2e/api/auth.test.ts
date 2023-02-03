@@ -55,14 +55,14 @@ describe("Auth", () => {
   async function loginTestUser() {
     const loginResponse = await request(getServer())
       .post("/auth/login")
-      .send({ email: "first", password: "1234" });
+      .send({ email: "first@example.com", password: "1234" });
     return loginResponse.body.token;
   }
 
   async function loginTestUser2() {
     const loginResponse = await request(getServer())
       .post("/auth/login")
-      .send({ email: "second", password: "1234" });
+      .send({ email: "second@example.com", password: "1234" });
     return loginResponse.body.token;
   }
 
@@ -80,7 +80,7 @@ describe("Auth", () => {
 
       const loginResponse = await request(getServer())
         .post("/auth/login")
-        .send({ username: "first", password: "1234" });
+        .send({ email: "first@example.com", password: "1234" });
       expect(loginResponse.statusCode).toBe(200);
       const token = loginResponse.body.token;
       expect(token.length).toBe(43);
@@ -104,14 +104,14 @@ describe("Auth", () => {
     it("Wrong Login password", async () => {
       const loginResponse = await request(getServer())
         .post("/auth/login")
-        .send({ username: "first", password: "wrong password" });
+        .send({ email: "first@example.com", password: "wrong password" });
       expect(loginResponse.statusCode).toBe(401);
     });
 
     it("Wrong Login username", async () => {
       const loginResponse = await request(getServer())
         .post("/auth/login")
-        .send({ username: "wrong username", password: "1234" });
+        .send({ email: "wrong username", password: "1234" });
       expect(loginResponse.statusCode).toBe(401);
     });
     it("Success public", async () => {
@@ -169,6 +169,7 @@ describe("Auth", () => {
 
     it("Success private owned > public", async () => {
       const token = await loginTestUser();
+
       const getResponse = await request(getServer())
         .get("/box/private/items/public")
         .set("Authorization", "bearer " + token);
