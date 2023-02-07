@@ -20,6 +20,7 @@
     "test": "npm run build:grammar && jest --testPathIgnorePatterns='<rootDir>/src/e2e/'",
     "test:watch": "npm test -- --watch",
     "test:api": "jest ./src/e2e/api",
+    "test:newparser": "jest ./src/newparser",
     "test:api:watch": "npm run test:api -- --watch",
     "// --- other": "",
     "clean": "rimraf ./dist"
@@ -74,6 +75,7 @@
   "dependencies": {
     "@sinonjs/fake-timers": "^10.0.2",
     "bcrypt": "^5.1.0",
+    "chevrotain": "^10.4.2",
     "chokidar": "^3.5.3",
     "common-tags": "^1.8.2",
     "copyfiles": "^2.4.1",
