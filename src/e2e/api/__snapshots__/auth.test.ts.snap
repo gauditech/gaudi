@@ -5,28 +5,28 @@ exports[`Auth Login and Logout should fail when creating user with existing user
   "code": "ERROR_CODE_VALIDATION",
   "data": {
     "errors": [
-      "Username somename@example.com already exists",
+      "Username "somename2@example.com" already exists",
     ],
     "inner": [
       {
         "errors": [
-          "Username somename@example.com already exists",
+          "Username "somename2@example.com" already exists",
         ],
         "inner": [],
-        "message": "Username somename@example.com already exists",
+        "message": "Username "somename2@example.com" already exists",
         "name": "ValidationError",
         "params": {
-          "originalValue": "somename@example.com",
+          "originalValue": "somename2@example.com",
           "path": "username",
-          "value": "somename@example.com",
+          "value": "somename2@example.com",
         },
         "path": "username",
         "type": "",
-        "value": "somename@example.com",
+        "value": "somename2@example.com",
       },
     ],
     "value": {
-      "username": "somename@example.com",
+      "username": "somename2@example.com",
     },
   },
   "message": "Validation error",
@@ -41,6 +41,7 @@ exports[`Auth Login and Logout should fail when creating user with invalid param
       "username must be at least 8 characters",
       "name must be at least 1 characters",
       "password must be at least 8 characters",
+      "userProfile.displayName must be defined",
     ],
     "inner": [
       {
@@ -94,10 +95,24 @@ exports[`Auth Login and Logout should fail when creating user with invalid param
         "type": "min",
         "value": "",
       },
+      {
+        "errors": [
+          "userProfile.displayName must be defined",
+        ],
+        "inner": [],
+        "message": "userProfile.displayName must be defined",
+        "name": "ValidationError",
+        "params": {
+          "path": "userProfile.displayName",
+        },
+        "path": "userProfile.displayName",
+        "type": "defined",
+      },
     ],
     "value": {
       "name": "",
       "password": "",
+      "userProfile": {},
       "username": "",
     },
   },

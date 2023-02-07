@@ -190,10 +190,17 @@ describe("Auth", () => {
       expect(getResponse.statusCode).toBe(401);
     });
 
+    // --- user registration
+
     it("should register and login new user", async () => {
       const registerResponse = await request(getServer())
         .post("/auth/register")
-        .send({ name: "some name", username: "somename@example.com", password: "some password" });
+        .send({
+          name: "some name",
+          username: "somename@example.com",
+          password: "some password",
+          userProfile: { displayName: "Profile Display Name" },
+        });
       expect(registerResponse.statusCode).toBe(201);
       expect(registerResponse.body).toMatchInlineSnapshot(`
         {
@@ -222,8 +229,9 @@ describe("Auth", () => {
     it("should fail when creating user with existing username", async () => {
       const data = {
         name: "some name",
-        username: "somename@example.com",
+        username: "somename2@example.com",
         password: "some password",
+        userProfile: { displayName: "Profile Display Name" },
       };
 
       await request(getServer()).post("/auth/register").send(data);
@@ -232,6 +240,39 @@ describe("Auth", () => {
 
       expect(reregisterReponse.statusCode).toBe(400);
       expect(reregisterReponse.body).toMatchSnapshot();
+    });
+
+    it("should execute authenticator method actions", async () => {
+      const data = {
+        name: "some name",
+        username: "somename3@example.com",
+        password: "some password",
+        userProfile: { displayName: "Profile Display Name" },
+      };
+
+      const response = await request(getServer()).post("/auth/register").send(data);
+
+      expect(response.statusCode).toBe(201);
+      expect(response.body).toMatchInlineSnapshot(`
+        {
+          "id": 5,
+          "name": "some name",
+          "username": "somename3@example.com",
+        }
+      `);
+
+      const responseUserProfile = await request(getServer())
+        .get(`/user_profile/${response.body.id}`)
+        .send(data);
+
+      expect(responseUserProfile.statusCode).toBe(200);
+      expect(responseUserProfile.body).toMatchInlineSnapshot(`
+        {
+          "displayName": "Profile Display Name",
+          "id": 3,
+          "user_id": 5,
+        }
+      `);
     });
   });
 });

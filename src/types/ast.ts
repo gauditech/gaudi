@@ -246,6 +246,10 @@ export type AuthenticatorMethodBodyAtomAST = {
   body: AuthenticatorBasicMethodBodyAtomAST[];
 } /* | { ... } add other auth methods */;
 
-export type AuthenticatorBasicMethodBodyAtomAST =
-  WithContext<never /* never is just a placeholder for an empty arr since we currently don't have anything to put in here */>;
+export type AuthenticatorBasicMethodBodyAtomAST = WithContext<AuthenticatorBasicEventActionAST>;
 /* | { ... } add other basic method atoms */
+
+export type AuthenticatorBasicEventActionAST = {
+  kind: "event-action";
+  body: { event: "register"; body: ActionBodyAST[] };
+};

@@ -5,7 +5,7 @@ import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
-import { composeAuthenticator } from "@src/composer/authenticator";
+import { composeAuthenticatorModel } from "@src/composer/authenticator";
 import {
   NamePath,
   getDirectChildren,
@@ -394,7 +394,7 @@ function defineAuthenticator(
   // authenticator already defined
   if (def.authenticator) return def.authenticator;
 
-  composeAuthenticator(def, spec);
+  composeAuthenticatorModel(def, spec);
 
   // authenticator doesn't have refKey but this should be unique enough
   def.resolveOrder.push("@auth");

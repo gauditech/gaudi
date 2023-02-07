@@ -55,4 +55,49 @@ describe("authenticator composer", () => {
     // check authenticator's models
     expect(def.models).toMatchSnapshot();
   });
+
+  it("succeeds for basic method actions", () => {
+    const bp = `
+      model UserProfile {
+        field displayName { type text }
+        reference user { to @auth }
+      }
+
+      auth {
+        method basic {
+          onRegisterAction {
+            create UserProfile as userProfile {
+              set displayName @auth.username
+              set user @auth
+            }
+          }
+        }
+      }
+    `;
+
+    const def = compose(compile(parse(bp)));
+
+    // check authenticator's models
+    expect(def.models).toMatchSnapshot();
+    // check authenticator struct
+    expect(def.authenticator).toMatchSnapshot();
+  });
+
+  it("fails if authenticator custom event action has target's alias '@auth'", () => {
+    const bp = `
+      model UserProfile {}
+
+      auth {
+        method basic {
+          onRegisterAction {
+            create UserProfile as @auth {}
+          }
+        }
+      }
+    `;
+
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Custom authenticator event action cannot have the same alias as the main target: @auth"`
+    );
+  });
 });

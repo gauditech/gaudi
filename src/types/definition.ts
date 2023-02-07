@@ -1,5 +1,9 @@
-import { BinaryOperator } from "./ast";
-import { HookCode } from "./specification";
+import { BinaryOperator } from "@src/types/ast";
+import {
+  AuthenticatorBasicMethodActionEvents,
+  AuthenticatorBasicMethodEventActionSpec,
+  HookCode,
+} from "@src/types/specification";
 
 export type Definition = {
   models: ModelDef[];
@@ -523,6 +527,18 @@ export type AuthenticatorNamedModelDef = {
   refKey: string;
 };
 
-export type AuthenticatorMethodDef = {
+export type AuthenticatorMethodDef = AuthenticatorBasicMethodDef;
+
+export type AuthenticatorBasicMethodDef = {
   kind: "basic";
+  endpoints?: {
+    register: CreateEndpointDef;
+  };
+};
+export type AuthenticatorBasicMethodEventActionDef =
+  EventActionDef<AuthenticatorBasicMethodActionEvents>;
+
+export type EventActionDef<E> = {
+  event: E;
+  actions: ActionDef[];
 };

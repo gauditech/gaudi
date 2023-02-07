@@ -279,5 +279,5 @@ Gaudi {
    = "method" "basic" "{" NewlineBody<AuthenticatorBasicMethodBodyAtom, ","> "}" -- methodBasic
 
   AuthenticatorBasicMethodBodyAtom
-   = -- empty
+   = "on"("Register")"Action" "{" NonemptyNewlineBody<ActionBody, ";"> "}" -- eventActions
 }

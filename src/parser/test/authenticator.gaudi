@@ -1,4 +1,10 @@
 
 auth {
-  method basic {}
+  method basic {
+    onRegisterAction {
+      create UserProfile {
+        set displayName @auth.username
+      }
+    }
+  }
 }

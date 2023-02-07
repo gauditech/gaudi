@@ -191,6 +191,17 @@ export type AuthenticatorSpec = WithContext<{
   method: AuthenticatorMethodSpec;
 }>;
 
-export type AuthenticatorMethodSpec = WithContext<{
+export type AuthenticatorMethodSpec = WithContext<AuthenticatorBasicMethodSpec>;
+
+export type AuthenticatorBasicMethodSpec = {
   kind: "basic";
-}>;
+  eventActions: AuthenticatorBasicMethodEventActionSpec[];
+};
+export type AuthenticatorBasicMethodActionEvents = "register";
+export type AuthenticatorBasicMethodEventActionSpec =
+  EventActionSpec<AuthenticatorBasicMethodActionEvents>;
+
+export type EventActionSpec<E> = {
+  event: E;
+  actions: ActionSpec[];
+};

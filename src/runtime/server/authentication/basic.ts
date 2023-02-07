@@ -8,21 +8,28 @@ import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-
 
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { executeActions } from "@src/runtime/common/action";
+import {
+  assignNoReferenceValidators,
+  fetchReferenceIds,
+} from "@src/runtime/common/constraintValidation";
 import {
   createRecordValidationErrorFromCustom,
-  createRecordValidationErrorFromValidationError,
   validateEndpointFieldset,
 } from "@src/runtime/common/validation";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { EndpointConfig } from "@src/runtime/server/types";
+import { Vars } from "@src/runtime/server/vars";
 import {
-  AuthenticatorDef,
+  ActionDef,
+  CreateEndpointDef,
+  CreateOneAction,
   Definition,
-  FieldsetDef,
-  FieldsetFieldDef,
-  FieldsetRecordDef,
+  EndpointDef,
+  UpdateEndpointDef,
+  UpdateOneAction,
 } from "@src/types/definition";
 
 const TOKEN_SIZE = 32;
@@ -114,21 +121,44 @@ function buildRegistrationEndpoint(def: Definition, pathPrefix = ""): EndpointCo
     method: "post",
     handlers: [
       async (req: Request, resp: Response) => {
+        let tx;
         try {
-          const dbConn = getAppContext(req).dbConn;
+          const endpoint = def.authenticator?.method.endpoints?.register;
+          if (endpoint == null) {
+            throw new Error("Registration endpoint definition not found in authenticator");
+          }
+
+          // remove placeholder actions instead of which we'll execute user registration action
+          const epActions = filterPlaceholderActions(endpoint);
+
+          tx = await getAppContext(req).dbConn.transaction();
+          const contextVars = new Vars();
 
           const body = req.body;
+          console.log("BODY", body);
 
-          const name = body.name;
-          const username = body.username;
-          const password = body.password;
-          // console.log(`Creds: ${username}:${password}`);
+          const referenceIds = await fetchReferenceIds(def, tx, epActions, body);
+          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
+          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          console.log("Validation result", validationResult);
 
-          const user = await createAuthUser(dbConn, def, { name, username, password });
+          const user = await createAuthUser(tx, def, body);
+          contextVars.set("@auth", user);
+
+          await executeActions(
+            def,
+            tx,
+            { input: validationResult, vars: contextVars, referenceIds },
+            epActions
+          );
+
+          await tx.commit();
 
           // return created token
           resp.status(201).send(user);
-        } catch (err: unknown) {
+        } catch (err) {
+          await tx?.rollback();
+
           errorResponse(err);
         }
       },
@@ -303,12 +333,11 @@ type UserCreateBody = {
 async function createAuthUser(
   dbConn: DbConn,
   def: Definition,
-  body: Record<string, unknown>
+  body: Record<string, any>
 ): Promise<{ id: number; name: string; username: string }> {
-  const inputBody = await validateNewUser(def, body);
-
   // check if username is already taken
-  const existingUser = resolveUsername(def, dbConn, inputBody.username);
+  // TODO: could we turn this into a validator
+  const existingUser = await resolveUsername(def, dbConn, body.username);
   if (existingUser != null) {
     throw new BusinessError(
       "ERROR_CODE_VALIDATION",
@@ -316,18 +345,18 @@ async function createAuthUser(
       createRecordValidationErrorFromCustom([
         {
           name: "username",
-          value: inputBody.username,
-          errorMessage: `Username "${inputBody.username}" already exists`,
+          value: body.username,
+          errorMessage: `Username "${body.username}" already exists`,
           errorType: "",
         },
       ])
     );
   }
 
-  const hashedPassword = await hashPassword(inputBody.password);
+  const hashedPassword = await hashPassword(body.password);
   const user: UserCreateBody = {
-    name: inputBody.name,
-    username: inputBody.username.toLowerCase(),
+    name: body.name,
+    username: body.username,
     password: hashedPassword,
   };
 
@@ -342,37 +371,6 @@ async function createAuthUser(
   return result[0];
 }
 
-async function validateNewUser(
-  def: Definition,
-  body: Record<string, unknown>
-): Promise<UserCreateBody> {
-  ensureAuthenticator(def.authenticator);
-
-  // we cannot build custom actions/endpoints/fieldsets from blueprint so we have to build fieldset manually
-  const model = getRef.model(def, def.authenticator.targetModel.refKey);
-  const fieldset: FieldsetRecordDef = {
-    kind: "record",
-    record: _.fromPairs(
-      model.fields
-        // remove identifier field
-        .filter((f) => f.name !== "id")
-        .map((f) => [
-          f.name,
-          {
-            kind: "field",
-            type: f.type,
-            nullable: f.nullable,
-            required: true,
-            validators: f.validators,
-          },
-        ])
-    ),
-    nullable: false,
-  };
-
-  return validateEndpointFieldset(fieldset, body);
-}
-
 async function resolveUsername(
   def: Definition,
   dbConn: DbConn,
@@ -382,6 +380,7 @@ async function resolveUsername(
     .select("id")
     .from(getAuthDbName(def, "TARGET_MODEL"))
     .whereRaw("LOWER(username) = ?", username.toLowerCase());
+
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -408,6 +407,7 @@ function parseDate(expiryDate: string): Date | undefined {
   if (parsed.toISOString() === expiryDate) {
     return parsed;
   }
+
   return;
 }
 
@@ -438,6 +438,25 @@ function getAuthDbName(def: Definition, model: "TARGET_MODEL" | "ACCESS_TOKEN_MO
     default:
       assertUnreachable(model);
   }
+}
+
+/**
+ * Filter out placeholder actions from endpoint
+ *
+ * Default create and update actions are always created with endpoint
+ * Since basic auth is implemented using custom actions whic cannot be represented through blueprint
+ * these default actions need to be removed and specific auth action will be executed instead and
+ * before other method custom event actions-
+ *
+ * TODO: remove filtering defualt auth actions once custom (hook) actions are supported
+ */
+function filterPlaceholderActions(endpoint: EndpointDef): ActionDef[] {
+  if (endpoint.kind !== "create" && endpoint.kind !== "update") return [];
+
+  // default action has the same alias as ep target
+  return endpoint.actions.filter(
+    (a) => (a.kind !== "create-one" && a.kind !== "update-one") || a.alias !== endpoint.target.alias
+  );
 }
 
 function ensureAuthenticator<T>(auth: T | undefined | null): asserts auth is NonNullable<T> {

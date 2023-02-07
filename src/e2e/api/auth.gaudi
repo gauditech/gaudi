@@ -1,5 +1,16 @@
 auth {
-  method basic {}
+  method basic {
+    onRegisterAction {
+      create UserProfile as userProfile {
+        set user @auth
+      }
+    }
+  }
+}
+
+model UserProfile {
+  field displayName { type text }
+  reference user { to @auth }
 }
 
 model Box {
@@ -45,4 +56,11 @@ entrypoint Boxes {
       authorize { item.is_public }
     }
   }
+}
+
+entrypoint UserProfiles {
+  target model UserProfile
+  identify with user_id
+
+  get endpoint {}
 }

@@ -5,6 +5,40 @@ exports[`parser blueprint test/authenticator.gaudi 1`] = `
   "authenticator": {
     "accessTokenModelName": "AuthUserAccessToken",
     "method": {
+      "eventActions": [
+        {
+          "actions": [
+            {
+              "actionAtoms": [
+                {
+                  "kind": "set",
+                  "set": {
+                    "exp": {
+                      "identifier": [
+                        "@auth",
+                        "username",
+                      ],
+                      "interval": {
+                        "endIdx": 113,
+                        "startIdx": 99,
+                      },
+                      "kind": "identifier",
+                    },
+                    "kind": "expression",
+                  },
+                  "target": "displayName",
+                },
+              ],
+              "alias": undefined,
+              "kind": "create",
+              "targetPath": [
+                "UserProfile",
+              ],
+            },
+          ],
+          "event": "register",
+        },
+      ],
       "kind": "basic",
     },
     "name": undefined,

@@ -5,6 +5,7 @@ import {
   ActionBodyAST,
   ActionKindAST,
   AuthenticatorAST,
+  AuthenticatorBasicEventActionAST,
   AuthenticatorBodyAtomAST,
   BinaryOperator,
   ComputedAST,
@@ -605,8 +606,23 @@ semantics.addOperation("parse()", {
       body: body.parse(),
     };
   },
-  AuthenticatorBasicMethodBodyAtom_empty(this) {
-    return [];
+  AuthenticatorBasicMethodBodyAtom_eventActions(
+    this,
+    _on,
+    event,
+    _action,
+    _braceL,
+    body,
+    _braceR
+  ): AuthenticatorBasicEventActionAST {
+    return {
+      kind: "event-action",
+      body: {
+        event:
+          event.sourceString.toLowerCase() as AuthenticatorBasicEventActionAST["body"]["event"],
+        body: body.parse(),
+      },
+    };
   },
 });
 

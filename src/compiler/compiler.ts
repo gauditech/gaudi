@@ -29,6 +29,7 @@ import {
   ActionAtomSpec,
   ActionHookSpec,
   ActionSpec,
+  AuthenticatorBasicMethodEventActionSpec,
   AuthenticatorMethodSpec,
   AuthenticatorSpec,
   BaseHookSpec,
@@ -668,8 +669,15 @@ function compileAuthenticatorMethod(
   const method = methodAtom[0];
   const methodKind = method.methodKind;
   if (methodKind === "basic") {
+    const eventActions: AuthenticatorBasicMethodEventActionSpec[] = method.body
+      .filter((a) => a.kind === "event-action")
+      .map((ea) => ({
+        event: ea.body.event,
+        actions: ea.body.body.map(compileAction),
+      }));
+
     // add here basic method's config properties
-    return { kind: "basic" };
+    return { kind: "basic", eventActions };
   } else {
     assertUnreachable(methodKind);
   }
