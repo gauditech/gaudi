@@ -47,7 +47,7 @@ import {
   SourcePos,
   UnnamedHook,
   Validator,
-} from "./parserd";
+} from "./parsed";
 
 function getSourcePos(token: IToken): SourcePos {
   return { start: token.startOffset, end: token.endOffset ?? token.startOffset };
