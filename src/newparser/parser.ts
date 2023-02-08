@@ -1,4 +1,11 @@
-import { EmbeddedActionsParser, IToken, ParserMethod, TokenType } from "chevrotain";
+import {
+  EmbeddedActionsParser,
+  ILexingError,
+  IRecognitionException,
+  IToken,
+  ParserMethod,
+  TokenType,
+} from "chevrotain";
 
 import * as L from "./lexer";
 import {
@@ -10,6 +17,7 @@ import {
   ActionAtomSet,
   ActionType,
   AggregateType,
+  BinaryOperator,
   Computed,
   Definition,
   Endpoint,
@@ -49,11 +57,17 @@ import {
   Validator,
 } from "./parsed";
 
-function getSourcePos(token: IToken): SourcePos {
-  return { start: token.startOffset, end: token.endOffset ?? token.startOffset };
+function getSourcePos(...tokens: IToken[]): SourcePos {
+  const positions = tokens.map((t) => ({
+    start: t.startOffset,
+    end: t.endOffset ?? t.startOffset,
+  }));
+  const start = Math.min(...positions.map(({ start }) => start));
+  const end = Math.max(...positions.map(({ end }) => end));
+  return { start, end };
 }
 
-export class GaudiParser extends EmbeddedActionsParser {
+class GaudiParser extends EmbeddedActionsParser {
   constructor() {
     super(L.GaudiTokens);
     this.performSelfAnalysis();
@@ -76,7 +90,7 @@ export class GaudiParser extends EmbeddedActionsParser {
   model = this.RULE("model", (): Model => {
     const atoms: ModelAtom[] = [];
 
-    this.CONSUME(L.Model);
+    const keyword = getSourcePos(this.CONSUME(L.Model));
     const name = this.SUBRULE(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
@@ -90,13 +104,13 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "model", name, atoms };
+    return { kind: "model", name, atoms, keyword };
   });
 
   field = this.RULE("field", (): Field => {
     const atoms: FieldAtom[] = [];
 
-    this.CONSUME(L.Field);
+    const keyword = getSourcePos(this.CONSUME(L.Field));
     const name = this.SUBRULE1(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
@@ -105,22 +119,28 @@ export class GaudiParser extends EmbeddedActionsParser {
         this.OR([
           {
             ALT: () => {
-              this.CONSUME(L.Type);
+              const keyword = getSourcePos(this.CONSUME(L.Type));
               const identifier = this.SUBRULE2(this.identifier);
-              atoms.push({ kind: "type", identifier });
+              atoms.push({ kind: "type", identifier, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Default);
+              const keyword = getSourcePos(this.CONSUME(L.Default));
               const literal = this.SUBRULE(this.literal);
-              atoms.push({ kind: "default", literal });
+              atoms.push({ kind: "default", literal, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Unique);
-              atoms.push({ kind: "unique" });
+              const keyword = getSourcePos(this.CONSUME(L.Unique));
+              atoms.push({ kind: "unique", keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getSourcePos(this.CONSUME(L.Nullable));
+              atoms.push({ kind: "nullable", keyword });
             },
           },
           {
@@ -133,7 +153,7 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "field", name, atoms };
+    return { kind: "field", name, atoms, keyword };
   });
 
   fieldValidators = this.RULE("fieldValidators", (): Validator[] => {
@@ -165,7 +185,7 @@ export class GaudiParser extends EmbeddedActionsParser {
   reference = this.RULE("reference", (): Reference => {
     const atoms: ReferenceAtom[] = [];
 
-    this.CONSUME(L.Reference);
+    const keyword = getSourcePos(this.CONSUME(L.Reference));
     const name = this.SUBRULE1(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
@@ -174,21 +194,21 @@ export class GaudiParser extends EmbeddedActionsParser {
         this.OR([
           {
             ALT: () => {
-              this.CONSUME(L.To);
+              const keyword = getSourcePos(this.CONSUME(L.To));
               const identifier = this.SUBRULE2(this.identifier);
-              atoms.push({ kind: "to", identifier });
+              atoms.push({ kind: "to", identifier, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Nullable);
-              atoms.push({ kind: "nullable" });
+              const keyword = getSourcePos(this.CONSUME(L.Nullable));
+              atoms.push({ kind: "nullable", keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Unique);
-              atoms.push({ kind: "unique" });
+              const keyword = getSourcePos(this.CONSUME(L.Unique));
+              atoms.push({ kind: "unique", keyword });
             },
           },
         ]);
@@ -196,13 +216,13 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "reference", name, atoms };
+    return { kind: "reference", name, atoms, keyword };
   });
 
   relation = this.RULE("relation", (): Relation => {
     const atoms: RelationAtom[] = [];
 
-    this.CONSUME(L.Relation);
+    const keyword = getSourcePos(this.CONSUME(L.Relation));
     const name = this.SUBRULE1(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
@@ -211,16 +231,16 @@ export class GaudiParser extends EmbeddedActionsParser {
         this.OR([
           {
             ALT: () => {
-              this.CONSUME(L.From);
+              const keyword = getSourcePos(this.CONSUME(L.From));
               const identifier = this.SUBRULE2(this.identifier);
-              atoms.push({ kind: "from", identifier });
+              atoms.push({ kind: "from", identifier, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Through);
+              const keyword = getSourcePos(this.CONSUME(L.Through));
               const identifier = this.SUBRULE3(this.identifier);
-              atoms.push({ kind: "through", identifier });
+              atoms.push({ kind: "through", identifier, keyword });
             },
           },
         ]);
@@ -228,22 +248,23 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "relation", name, atoms };
+    return { kind: "relation", name, atoms, keyword };
   });
 
   computed = this.RULE("computed", (): Computed => {
-    this.CONSUME(L.Computed);
+    const keyword = getSourcePos(this.CONSUME(L.Computed));
     const name = this.SUBRULE1(this.identifier);
     this.CONSUME(L.LCurly);
     const expr = this.SUBRULE(this.expr);
     this.CONSUME(L.RCurly);
 
-    return { kind: "computed", name, expr };
+    return { kind: "computed", name, expr, keyword };
   });
 
   query = this.RULE("query", (): Query => {
     const atoms: QueryAtom[] = [];
 
+    const keyword = getSourcePos(this.CONSUME(L.Query));
     const name = this.SUBRULE(this.identifier);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -251,45 +272,46 @@ export class GaudiParser extends EmbeddedActionsParser {
         this.OR1([
           {
             ALT: () => {
-              this.CONSUME(L.From);
+              const keyword = getSourcePos(this.CONSUME(L.From));
               const identifier = this.SUBRULE(this.identifierPath);
-              atoms.push({ kind: "from", identifier });
+              atoms.push({ kind: "from", identifier, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Filter);
+              const keyword = getSourcePos(this.CONSUME(L.Filter));
               const expr = this.SUBRULE(this.expr);
-              atoms.push({ kind: "filter", expr });
+              atoms.push({ kind: "filter", expr, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Order);
-              this.CONSUME(L.By);
+              const order = this.CONSUME(L.Order);
+              const by = this.CONSUME(L.By);
+              const keyword = getSourcePos(order, by);
               const orderBy = this.SUBRULE(this.orderBy);
-              atoms.push({ kind: "orderBy", orderBy });
+              atoms.push({ kind: "orderBy", orderBy, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Limit);
+              const keyword = getSourcePos(this.CONSUME(L.Limit));
               const value = parseInt(this.CONSUME1(L.Integer).image);
-              atoms.push({ kind: "limit", value });
+              atoms.push({ kind: "limit", value, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Offset);
+              const keyword = getSourcePos(this.CONSUME(L.Offset));
               const value = parseInt(this.CONSUME2(L.Integer).image);
-              atoms.push({ kind: "offset", value });
+              atoms.push({ kind: "offset", value, keyword });
             },
           },
           {
             ALT: () => {
-              this.CONSUME(L.Select);
+              const keyword = getSourcePos(this.CONSUME(L.Select));
               const select = this.SUBRULE(this.select);
-              atoms.push({ kind: "select", select });
+              atoms.push({ kind: "select", select, keyword });
             },
           },
           {
@@ -298,15 +320,16 @@ export class GaudiParser extends EmbeddedActionsParser {
                 { ALT: () => this.CONSUME(L.Count) },
                 { ALT: () => this.CONSUME(L.Sum) },
               ]);
+              const keyword = getSourcePos(aggregateToken);
               const aggregate = aggregateToken.image as AggregateType;
-              atoms.push({ kind: "aggregate", aggregate });
+              atoms.push({ kind: "aggregate", aggregate, keyword });
             },
           },
         ]);
       },
     });
 
-    return { kind: "query", name, atoms };
+    return { kind: "query", name, atoms, keyword };
   });
 
   orderBy = this.RULE("orderBy", (): OrderBy => {
@@ -320,8 +343,13 @@ export class GaudiParser extends EmbeddedActionsParser {
         const orderToken = this.OPTION(() =>
           this.OR([{ ALT: () => this.CONSUME(L.Asc) }, { ALT: () => this.CONSUME(L.Desc) }])
         );
-        const order = orderToken?.image as OrderType | undefined;
-        orderBy.push({ identifier, order });
+        if (orderToken) {
+          const order = orderToken.image as OrderType;
+          const keyword = getSourcePos(orderToken);
+          orderBy.push({ identifier, order, keyword });
+        } else {
+          orderBy.push({ identifier });
+        }
       },
     });
     this.CONSUME(L.LCurly);
@@ -332,55 +360,56 @@ export class GaudiParser extends EmbeddedActionsParser {
   entrypoint = this.RULE("entrypoint", (): Entrypoint => {
     const atoms: EntrypointAtom[] = [];
 
-    this.CONSUME(L.Entrypoint);
+    const keyword = getSourcePos(this.CONSUME(L.Entrypoint));
     this.SUBRULE1(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
         {
           ALT: () => {
-            this.CONSUME(L.Target);
+            const keyword = getSourcePos(this.CONSUME(L.Target));
             const identifier = this.SUBRULE(this.identifierAs);
-            atoms.push({ kind: "target", identifier });
+            atoms.push({ kind: "target", identifier, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Identify);
-            this.CONSUME(L.With);
+            const identify = this.CONSUME(L.Identify);
+            const with_ = this.CONSUME(L.With);
+            const keyword = getSourcePos(identify, with_);
             const identifier = this.SUBRULE2(this.identifier);
-            atoms.push({ kind: "identify", identifier });
+            atoms.push({ kind: "identifyWith", identifier, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Response);
+            const keyword = getSourcePos(this.CONSUME(L.Response));
             const select = this.SUBRULE(this.select);
-            atoms.push({ kind: "response", select });
+            atoms.push({ kind: "response", select, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Authorize);
+            const keyword = getSourcePos(this.CONSUME(L.Authorize));
             const expr = this.SUBRULE(this.expr);
-            atoms.push({ kind: "authorize", expr });
+            atoms.push({ kind: "authorize", expr, keyword });
           },
         },
         {
           ALT: () => {
-            atoms.push({ kind: "endpoints", endpoint: this.SUBRULE(this.endpoint) });
+            atoms.push({ kind: "endpoints", endpoint: this.SUBRULE(this.endpoint), keyword });
           },
         },
         {
           ALT: () => {
-            atoms.push({ kind: "entrypoints", entrypoint: this.SUBRULE(this.entrypoint) });
+            atoms.push({ kind: "entrypoints", entrypoint: this.SUBRULE(this.entrypoint), keyword });
           },
         },
       ]);
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "entrypoint", atoms };
+    return { kind: "entrypoint", atoms, keyword };
   });
 
   endpoint = this.RULE("endpoint", (): Endpoint => {
@@ -393,34 +422,34 @@ export class GaudiParser extends EmbeddedActionsParser {
       { ALT: () => this.CONSUME(L.Delete) },
     ]);
     const type = typeToken.image as EndpointType;
-    this.CONSUME(L.Endpoint);
+    const keyword = getSourcePos(this.CONSUME(L.Endpoint));
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR2([
         {
           ALT: () => {
+            const keyword = getSourcePos(this.CONSUME(L.Action));
             const actions = this.SUBRULE(this.actions);
-            atoms.push({ kind: "action", actions });
+            atoms.push({ kind: "action", actions, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Authorize);
+            const keyword = getSourcePos(this.CONSUME(L.Authorize));
             const expr = this.SUBRULE(this.expr);
-            atoms.push({ kind: "authorize", expr });
+            atoms.push({ kind: "authorize", expr, keyword });
           },
         },
       ]);
     });
     this.CONSUME(L.RCurly);
 
-    return { type, atoms };
+    return { type, atoms, keyword };
   });
 
   actions = this.RULE("actions", (): Action[] => {
     const actions: Action[] = [];
 
-    this.CONSUME(L.Action);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       actions.push(this.SUBRULE(this.action));
@@ -433,12 +462,13 @@ export class GaudiParser extends EmbeddedActionsParser {
   action = this.RULE("action", (): Action => {
     const atoms: ActionAtom[] = [];
 
-    const typeToken = this.OR1([
+    const token = this.OR1([
       { ALT: () => this.CONSUME(L.Create) },
       { ALT: () => this.CONSUME(L.Update) },
       { ALT: () => this.CONSUME(L.Delete) },
     ]);
-    const kind = typeToken.image as ActionType;
+    const keyword = getSourcePos(token);
+    const kind = token.image as ActionType;
     const target = this.OPTION(() => this.SUBRULE(this.identifierPathAs));
 
     this.CONSUME(L.LCurly);
@@ -452,31 +482,31 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind, target, atoms };
+    return { kind, target, atoms, keyword };
   });
 
   actionAtomSet = this.RULE("actionAtomSet", (): ActionAtomSet => {
-    this.CONSUME(L.Set);
+    const keyword = getSourcePos(this.CONSUME(L.Set));
     const target = this.SUBRULE(this.identifier);
     const set = this.OR([
       { ALT: () => this.SUBRULE(this.unnamedHook) },
       { ALT: () => this.SUBRULE(this.expr) },
     ]);
 
-    return { kind: "set", target, set };
+    return { kind: "set", target, set, keyword };
   });
 
   actionAtomReference = this.RULE("actionAtomReference", (): ActionAtomReferenceThrough => {
-    this.CONSUME(L.Reference);
+    const keyword = getSourcePos(this.CONSUME(L.Reference));
     const target = this.SUBRULE1(this.identifier);
     this.CONSUME(L.Through);
     const through = this.SUBRULE2(this.identifier);
 
-    return { kind: "referenceThrough", target, through };
+    return { kind: "referenceThrough", target, through, keyword };
   });
 
   actionAtomDeny = this.RULE("actionAtomDeny", (): ActionAtomDeny => {
-    this.CONSUME(L.Deny);
+    const keyword = getSourcePos(this.CONSUME(L.Deny));
     const fields = this.OR([
       {
         ALT: (): ActionAtomDeny["fields"] => {
@@ -500,13 +530,13 @@ export class GaudiParser extends EmbeddedActionsParser {
       },
     ]);
 
-    return { kind: "deny", fields };
+    return { kind: "deny", fields, keyword };
   });
 
   actionAtomInput = this.RULE("actionAtomInput", (): ActionAtomInput => {
     const fields: ActionAtomInput["fields"] = [];
 
-    this.CONSUME(L.Input);
+    const keyword = getSourcePos(this.CONSUME(L.Input));
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -518,7 +548,7 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "input", fields };
+    return { kind: "input", fields, keyword };
   });
 
   inputAtoms = this.RULE("inputAtoms", (): InputAtom[] => {
@@ -533,22 +563,22 @@ export class GaudiParser extends EmbeddedActionsParser {
           this.OR([
             {
               ALT: () => {
-                this.CONSUME(L.Optional);
-                atoms.push({ kind: "optional" });
+                const keyword = getSourcePos(this.CONSUME(L.Optional));
+                atoms.push({ kind: "optional", keyword });
               },
             },
             {
               ALT: () => {
-                this.CONSUME1(L.Default);
+                const keyword = getSourcePos(this.CONSUME1(L.Default));
                 const value = this.SUBRULE(this.literal);
-                atoms.push({ kind: "default_literal", value });
+                atoms.push({ kind: "default_literal", value, keyword });
               },
             },
             {
               ALT: () => {
-                this.CONSUME2(L.Default);
+                const keyword = getSourcePos(this.CONSUME2(L.Default));
                 const value = this.SUBRULE(this.identifierPath);
-                atoms.push({ kind: "default_reference", value });
+                atoms.push({ kind: "default_reference", value, keyword });
               },
             },
           ]),
@@ -562,7 +592,7 @@ export class GaudiParser extends EmbeddedActionsParser {
   populator = this.RULE("populator", (): Populator => {
     const atoms: Populate[] = [];
 
-    this.CONSUME(L.Populator);
+    const keyword = getSourcePos(this.CONSUME(L.Populator));
     const name = this.SUBRULE(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
@@ -570,36 +600,36 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "populator", name, atoms };
+    return { kind: "populator", name, atoms, keyword };
   });
 
   populate = this.RULE("populate", (): Populate => {
     const atoms: PopulateAtom[] = [];
 
-    this.CONSUME(L.Populate);
+    const keyword = getSourcePos(this.CONSUME(L.Populate));
     this.SUBRULE1(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
         {
           ALT: () => {
-            this.CONSUME(L.Target);
+            const keyword = getSourcePos(this.CONSUME(L.Target));
             const identifier = this.SUBRULE(this.identifierAs);
-            atoms.push({ kind: "target", identifier });
+            atoms.push({ kind: "target", identifier, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Identify);
+            const keyword = getSourcePos(this.CONSUME(L.Identify));
             const identifier = this.SUBRULE2(this.identifier);
-            atoms.push({ kind: "identify", identifier });
+            atoms.push({ kind: "identify", identifier, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Repeat);
+            const keyword = getSourcePos(this.CONSUME(L.Repeat));
             const repeater = this.SUBRULE(this.repeater);
-            atoms.push({ kind: "repeat", repeater });
+            atoms.push({ kind: "repeat", repeater, keyword });
           },
         },
         {
@@ -617,7 +647,7 @@ export class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "populate", atoms };
+    return { kind: "populate", atoms, keyword };
   });
 
   repeater = this.RULE("repeater", (): Repeater => {
@@ -634,13 +664,14 @@ export class GaudiParser extends EmbeddedActionsParser {
           this.MANY_SEP({
             SEP: L.Comma,
             DEF: () => {
-              const kindToken = this.OR2([
+              const token = this.OR2([
                 { ALT: () => this.CONSUME(L.Start) },
                 { ALT: () => this.CONSUME(L.End) },
               ]);
-              const kind = kindToken.image as "start" | "end";
+              const keyword = getSourcePos(token);
+              const kind = token.image as "start" | "end";
               const value = parseInt(this.CONSUME2(L.Integer).image);
-              atoms.push({ kind, value });
+              atoms.push({ kind, value, keyword });
             },
           });
           return { kind: "body", atoms };
@@ -650,16 +681,16 @@ export class GaudiParser extends EmbeddedActionsParser {
   });
 
   unnamedHook = this.RULE("unnamedHook", (): UnnamedHook => {
-    this.CONSUME(L.Hook);
+    const keyword = getSourcePos(this.CONSUME(L.Hook));
     const atoms = this.SUBRULE(this.hookAtoms);
-    return { kind: "hook", atoms };
+    return { kind: "hook", atoms, keyword };
   });
 
   hook = this.RULE("hook", (): Hook => {
-    this.CONSUME(L.Hook);
+    const keyword = getSourcePos(this.CONSUME(L.Hook));
     const name = this.SUBRULE(this.identifier);
     const atoms = this.SUBRULE(this.hookAtoms);
-    return { kind: "hook", name, atoms };
+    return { kind: "hook", name, atoms, keyword };
   });
 
   hookAtoms = this.RULE("hookAtoms", (): HookAtom[] => {
@@ -670,34 +701,35 @@ export class GaudiParser extends EmbeddedActionsParser {
       this.OR([
         {
           ALT: () => {
-            this.CONSUME(L.Default);
-            this.CONSUME1(L.Arg);
+            const default_ = this.CONSUME(L.Default);
+            const arg = this.CONSUME1(L.Arg);
+            const keyword = getSourcePos(default_, arg);
             const name = this.SUBRULE2(this.identifier);
-            atoms.push({ kind: "default_arg", name });
+            atoms.push({ kind: "default_arg", name, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME2(L.Arg);
+            const keyword = getSourcePos(this.CONSUME2(L.Arg));
             const name = this.SUBRULE3(this.identifier);
             const expr = this.SUBRULE(this.expr);
-            atoms.push({ kind: "arg_expr", name, expr });
+            atoms.push({ kind: "arg_expr", name, expr, keyword });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Source);
+            const keyword = getSourcePos(this.CONSUME(L.Source));
             const name = this.SUBRULE4(this.identifier);
-            this.CONSUME(L.From);
+            const keywordFrom = getSourcePos(this.CONSUME(L.From));
             const file = this.CONSUME1(L.String).image;
-            atoms.push({ kind: "source", name, file });
+            atoms.push({ kind: "source", name, file, keyword, keywordFrom });
           },
         },
         {
           ALT: () => {
-            this.CONSUME(L.Inline);
+            const keyword = getSourcePos(this.CONSUME(L.Inline));
             const code = this.CONSUME2(L.String).image;
-            atoms.push({ kind: "inline", code });
+            atoms.push({ kind: "inline", code, keyword });
           },
         },
       ]);
@@ -767,9 +799,9 @@ export class GaudiParser extends EmbeddedActionsParser {
   });
 
   notExpr = this.RULE("notExpr", (): Expr => {
-    this.CONSUME(L.Not);
+    const keyword = getSourcePos(this.CONSUME(L.Not));
     const expr = this.SUBRULE(this.primaryExpr);
-    return { kind: "unary", operator: "not", expr };
+    return { kind: "unary", operator: "not", expr, keyword };
   });
 
   mulExpr = this.GENERATE_BINARY_OPERATOR_RULE("mulExpr", [L.Mul, L.Div], this.primaryExpr);
@@ -786,11 +818,12 @@ export class GaudiParser extends EmbeddedActionsParser {
     next: ParserMethod<[], Expr>
   ): ParserMethod<[], Expr> {
     return this.RULE(name, (): Expr => {
-      const lhs = this.SUBRULE1(next);
+      let lhs = this.SUBRULE1(next);
       this.MANY(() => {
         const operator = this.OR(operators.map((op) => ({ ALT: () => this.CONSUME(op) })));
+        const keyword = getSourcePos(operator);
         const rhs = this.SUBRULE2(next);
-        return { kind: "binary", operator: operator.image, lhs, rhs };
+        lhs = { kind: "binary", operator: operator.image as BinaryOperator, lhs, rhs, keyword };
       });
       return lhs;
     });
@@ -877,4 +910,37 @@ export class GaudiParser extends EmbeddedActionsParser {
   });
 }
 
-export const parser = new GaudiParser();
+const parser = new GaudiParser();
+
+export type ParseResult =
+  | {
+      success: true;
+      ast: Definition;
+    }
+  | {
+      success: false;
+      ast: Definition;
+      lexerErrors?: ILexingError[];
+      parserErrors?: IRecognitionException[];
+    };
+
+export function parse(source: string): ParseResult {
+  const lexerResult = L.GaudiLexer.tokenize(source);
+  parser.input = lexerResult.tokens;
+
+  let lexerErrors;
+  let parserErrors;
+  if (lexerResult.errors.length > 0) {
+    lexerErrors = lexerResult.errors;
+  } else if (parser.errors.length > 0) {
+    parserErrors = parser.errors;
+  }
+
+  const ast = parser.definition();
+
+  if (lexerErrors || parserErrors) {
+    return { success: false, ast, lexerErrors, parserErrors };
+  } else {
+    return { success: true, ast };
+  }
+}
