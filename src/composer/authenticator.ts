@@ -6,7 +6,7 @@ import { composeActionBlock } from "@src/composer/actions";
 import { fieldsetFromActions } from "@src/composer/entrypoints";
 import {
   ActionDef,
-  AuthenticatorDef,
+  AuthenticatorBasicMethodEndpoints,
   AuthenticatorMethodDef,
   AuthenticatorNamedModelDef,
   CreateEndpointDef,
@@ -101,7 +101,6 @@ export function createAuthenticatorModelSpec(
 
 /**
  * Compose authenticator block.
- * This is needs to be composed BEFORE other models.
  */
 export function composeAuthenticator(def: Definition, spec: AuthenticatorSpec | undefined): void {
   if (spec == undefined) {
@@ -123,11 +122,7 @@ export function composeAuthenticator(def: Definition, spec: AuthenticatorSpec | 
 
   const kind = def.authenticator.method.kind;
   if (kind === "basic") {
-    def.authenticator.method.endpoints = createBasicMethodEndpoints(
-      def,
-      def.authenticator,
-      spec.method
-    );
+    def.authenticator.method.endpoints = createBasicMethodEndpoints(def, targetModel, spec.method);
   } else {
     assertUnreachable(kind);
   }
@@ -159,10 +154,10 @@ function composeMethod(
 
 function createBasicMethodEndpoints(
   def: Definition,
-  authenticator: AuthenticatorDef,
+  targetModel: AuthenticatorNamedModelDef,
   methodSpec: AuthenticatorBasicMethodSpec
-) {
-  const model: ModelDef = getRef.model(def, authenticator.targetModel.refKey);
+): AuthenticatorBasicMethodEndpoints {
+  const model: ModelDef = getRef.model(def, targetModel.refKey);
   const target: TargetWithSelectDef = {
     kind: "model",
     refKey: model.name,

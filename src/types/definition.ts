@@ -527,11 +527,14 @@ export type AuthenticatorMethodDef = AuthenticatorBasicMethodDef;
 
 export type AuthenticatorBasicMethodDef = {
   kind: "basic";
-  endpoints?: {
-    register: CreateEndpointDef;
-    updatePassword: UpdateEndpointDef;
-  };
+  endpoints?: AuthenticatorBasicMethodEndpoints;
 };
+
+export type AuthenticatorBasicMethodEndpoints = {
+  register: CreateEndpointDef;
+  updatePassword: UpdateEndpointDef;
+};
+
 export type AuthenticatorBasicMethodEventActionDef =
   EventActionDef<AuthenticatorBasicMethodActionEvents>;
 
