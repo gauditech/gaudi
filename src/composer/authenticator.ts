@@ -5,16 +5,20 @@ import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
 import { fieldsetFromActions } from "@src/composer/entrypoints";
 import {
+  ActionDef,
   AuthenticatorDef,
   AuthenticatorMethodDef,
   AuthenticatorNamedModelDef,
   CreateEndpointDef,
   Definition,
+  FieldDef,
+  FieldsetDef,
+  FieldsetFieldDef,
   ModelDef,
   TargetWithSelectDef,
+  UpdateEndpointDef,
 } from "@src/types/definition";
 import {
-  ActionSpec,
   AuthenticatorBasicMethodSpec,
   AuthenticatorMethodSpec,
   AuthenticatorSpec,
@@ -99,8 +103,8 @@ function createBasicMethodEndpoints(
 ) {
   const model: ModelDef = getRef.model(def, authenticator.targetModel.refKey);
   const target: TargetWithSelectDef = {
-    refKey: "N/A",
     kind: "model",
+    refKey: model.name,
     name: model.name,
     alias: "@auth",
     retType: model.name,
@@ -114,46 +118,126 @@ function createBasicMethodEndpoints(
     select: [],
   };
 
-  // ensure custom actions are not aliased the same as target, that alias is reserved for main (default) action
-  const sameAliasAction = methodSpec.eventActions.find((ea) =>
-    ea.actions.find((a) => a.alias === target.alias)
-  );
-
-  // target's alias is reserved for default action
-  ensureEqual(
-    sameAliasAction,
-    undefined,
-    `Custom authenticator event action cannot have the same alias as the main target: ${target.alias}`
-  );
-
   return {
-    register: createEndpoint(
-      def,
-      target,
-      methodSpec.eventActions.filter((ea) => ea.event === "register").flatMap((ea) => ea.actions)
-    ),
+    register: createRegisterEndpoint(def, target, methodSpec),
+    updatePassword: createUpdatePasswordEndpoint(def, target, methodSpec),
   };
 }
 
-function createEndpoint(
+function createRegisterEndpoint(
   def: Definition,
   target: TargetWithSelectDef,
-  actionSpecs: ActionSpec[]
-): CreateEndpointDef {
-  // default action is added by default and here (in auth entrypoint) it is used as placeholder
-  // since all authenticator actions are default, they cannot yet(!) be expressed through blueprint
-  // thus, runtime removes that default action, and executes it's own action before executing other 
-  // custom event actions defined through blueprint
-  const actions = composeActionBlock(def, actionSpecs, [target], "create");
+  methodSpec: AuthenticatorBasicMethodSpec
+) {
+  const methodActionSpecs = methodSpec.eventActions
+    .filter((ea) => ea.event === "register")
+    .flatMap((ea) => ea.actions);
 
+  // see auth method runtime for details on handling actions
+  // skip creating default action - we hav emanual action in runtime endpoint
+  const actions = composeActionBlock(def, methodActionSpecs, [target], "create", {}, false);
+
+  // create fieldset
+  const fieldset = fieldsetFromActions(def, actions);
+  ensureEqual(fieldset.kind, "record" as const); // not sure what to do if main fieldset is "field"?
+
+  // --- add fields for manual endpoint action
+  const targetModel = getRef.model(def, target.name);
+  targetModel.fields
+    // sending ID is not allowed
+    .filter((f) => f.name !== "id")
+    .forEach((f) => {
+      fieldset.record[f.name] = fieldsetFromField(f);
+    });
+
+  return composeCreateEndpoint(def, target, fieldset, actions);
+}
+
+function createUpdatePasswordEndpoint(
+  def: Definition,
+  target: TargetWithSelectDef,
+  methodSpec: AuthenticatorBasicMethodSpec
+) {
+  const methodActionSpecs = methodSpec.eventActions
+    .filter((ea) => ea.event === "update-password")
+    .flatMap((ea) => ea.actions);
+
+  // see auth method runtime for details on handling actions
+  // skip creating default action - we hav emanual action in runtime endpoint
+  const actions = composeActionBlock(def, methodActionSpecs, [target], "update", {}, false);
+
+  // create fieldset
+  const fieldset = fieldsetFromActions(def, actions);
+  ensureEqual(fieldset.kind, "record" as const); // not sure what to do if main fieldset is "field"?
+
+  // --- add fields for manual endpoint action
+  // new password for update
+  fieldset.record["password"] = fieldsetFromField(getRef.field(def, target.name, "password"));
+  // current password for security
+  // this field does not exist on model (aka. virtual field) which are not supported yet which is why we have to inject it manually
+  fieldset.record["currentPassword"] = {
+    ...fieldset.record["password"],
+    // override validators since this only for checking, not writing
+    validators: [],
+  };
+
+  return composeUpdateEndpoint(def, target, fieldset, actions);
+}
+
+function composeCreateEndpoint(
+  def: Definition,
+  target: TargetWithSelectDef,
+  fieldset: FieldsetDef,
+  actions: ActionDef[]
+): CreateEndpointDef {
   return {
     kind: "create",
     parentContext: [],
     target: _.omit(target, "identifyWith"),
     actions,
-    fieldset: fieldsetFromActions(def, actions),
+    fieldset,
     response: [],
     authorize: undefined,
     authSelect: [],
+  };
+}
+
+function composeUpdateEndpoint(
+  def: Definition,
+  target: TargetWithSelectDef,
+  fieldset: FieldsetDef,
+  actions: ActionDef[]
+): UpdateEndpointDef {
+  const model = getRef.model(def, target.refKey);
+  const usernameField = getRef.field(def, model.name, "username");
+
+  return {
+    kind: "update",
+    parentContext: [],
+    target,
+    actions,
+    fieldset,
+    response: [],
+    authorize: undefined,
+    authSelect: [
+      // force "username" to be fetched in @auth dependency
+      {
+        refKey: usernameField.refKey,
+        kind: "field",
+        alias: usernameField.name,
+        name: usernameField.name,
+        namePath: [model.name, usernameField.name],
+      },
+    ],
+  };
+}
+
+function fieldsetFromField(field: FieldDef): FieldsetFieldDef {
+  return {
+    kind: "field",
+    type: field.type,
+    nullable: field.nullable,
+    required: true,
+    validators: field.validators,
   };
 }

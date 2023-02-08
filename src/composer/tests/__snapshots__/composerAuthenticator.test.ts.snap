@@ -260,278 +260,6 @@ exports[`authenticator composer resolves @auth model reference 1`] = `
 `;
 
 exports[`authenticator composer succeeds for basic method actions 1`] = `
-[
-  {
-    "aggregates": [],
-    "computeds": [],
-    "dbname": "userprofile",
-    "fields": [
-      {
-        "dbname": "id",
-        "dbtype": "serial",
-        "kind": "field",
-        "modelRefKey": "UserProfile",
-        "name": "id",
-        "nullable": false,
-        "primary": true,
-        "refKey": "UserProfile.id",
-        "type": "integer",
-        "unique": true,
-        "validators": [],
-      },
-      {
-        "dbname": "displayname",
-        "dbtype": "text",
-        "kind": "field",
-        "modelRefKey": "UserProfile",
-        "name": "displayName",
-        "nullable": false,
-        "primary": false,
-        "refKey": "UserProfile.displayName",
-        "type": "text",
-        "unique": false,
-        "validators": [],
-      },
-      {
-        "dbname": "user_id",
-        "dbtype": "integer",
-        "kind": "field",
-        "modelRefKey": "UserProfile",
-        "name": "user_id",
-        "nullable": false,
-        "primary": false,
-        "refKey": "UserProfile.user_id",
-        "type": "integer",
-        "unique": false,
-        "validators": [],
-      },
-    ],
-    "hooks": [],
-    "kind": "model",
-    "name": "UserProfile",
-    "queries": [],
-    "refKey": "UserProfile",
-    "references": [
-      {
-        "fieldRefKey": "UserProfile.user_id",
-        "kind": "reference",
-        "modelRefKey": "UserProfile",
-        "name": "user",
-        "nullable": false,
-        "refKey": "UserProfile.user",
-        "toModelFieldRefKey": "AuthUser.id",
-        "toModelRefKey": "AuthUser",
-        "unique": false,
-      },
-    ],
-    "relations": [],
-  },
-  {
-    "aggregates": [],
-    "computeds": [],
-    "dbname": "authuser",
-    "fields": [
-      {
-        "dbname": "id",
-        "dbtype": "serial",
-        "kind": "field",
-        "modelRefKey": "AuthUser",
-        "name": "id",
-        "nullable": false,
-        "primary": true,
-        "refKey": "AuthUser.id",
-        "type": "integer",
-        "unique": true,
-        "validators": [],
-      },
-      {
-        "dbname": "name",
-        "dbtype": "text",
-        "kind": "field",
-        "modelRefKey": "AuthUser",
-        "name": "name",
-        "nullable": false,
-        "primary": false,
-        "refKey": "AuthUser.name",
-        "type": "text",
-        "unique": false,
-        "validators": [
-          {
-            "args": [
-              {
-                "type": "integer",
-                "value": 1,
-              },
-            ],
-            "inputType": "text",
-            "name": "minLength",
-          },
-        ],
-      },
-      {
-        "dbname": "username",
-        "dbtype": "text",
-        "kind": "field",
-        "modelRefKey": "AuthUser",
-        "name": "username",
-        "nullable": false,
-        "primary": false,
-        "refKey": "AuthUser.username",
-        "type": "text",
-        "unique": true,
-        "validators": [
-          {
-            "args": [
-              {
-                "type": "integer",
-                "value": 8,
-              },
-            ],
-            "inputType": "text",
-            "name": "minLength",
-          },
-        ],
-      },
-      {
-        "dbname": "password",
-        "dbtype": "text",
-        "kind": "field",
-        "modelRefKey": "AuthUser",
-        "name": "password",
-        "nullable": false,
-        "primary": false,
-        "refKey": "AuthUser.password",
-        "type": "text",
-        "unique": false,
-        "validators": [
-          {
-            "args": [
-              {
-                "type": "integer",
-                "value": 8,
-              },
-            ],
-            "inputType": "text",
-            "name": "minLength",
-          },
-        ],
-      },
-    ],
-    "hooks": [],
-    "kind": "model",
-    "name": "AuthUser",
-    "queries": [],
-    "refKey": "AuthUser",
-    "references": [],
-    "relations": [
-      {
-        "fromModel": "UserProfile",
-        "fromModelRefKey": "UserProfile",
-        "kind": "relation",
-        "modelRefKey": "AuthUser",
-        "name": "userprofileuser",
-        "nullable": false,
-        "refKey": "AuthUser.userprofileuser",
-        "through": "user",
-        "throughRefKey": "UserProfile.user",
-        "unique": false,
-      },
-      {
-        "fromModel": "AuthUserAccessToken",
-        "fromModelRefKey": "AuthUserAccessToken",
-        "kind": "relation",
-        "modelRefKey": "AuthUser",
-        "name": "tokens",
-        "nullable": false,
-        "refKey": "AuthUser.tokens",
-        "through": "target",
-        "throughRefKey": "AuthUserAccessToken.target",
-        "unique": false,
-      },
-    ],
-  },
-  {
-    "aggregates": [],
-    "computeds": [],
-    "dbname": "authuseraccesstoken",
-    "fields": [
-      {
-        "dbname": "id",
-        "dbtype": "serial",
-        "kind": "field",
-        "modelRefKey": "AuthUserAccessToken",
-        "name": "id",
-        "nullable": false,
-        "primary": true,
-        "refKey": "AuthUserAccessToken.id",
-        "type": "integer",
-        "unique": true,
-        "validators": [],
-      },
-      {
-        "dbname": "token",
-        "dbtype": "text",
-        "kind": "field",
-        "modelRefKey": "AuthUserAccessToken",
-        "name": "token",
-        "nullable": false,
-        "primary": false,
-        "refKey": "AuthUserAccessToken.token",
-        "type": "text",
-        "unique": true,
-        "validators": [],
-      },
-      {
-        "dbname": "expirydate",
-        "dbtype": "text",
-        "kind": "field",
-        "modelRefKey": "AuthUserAccessToken",
-        "name": "expiryDate",
-        "nullable": false,
-        "primary": false,
-        "refKey": "AuthUserAccessToken.expiryDate",
-        "type": "text",
-        "unique": false,
-        "validators": [],
-      },
-      {
-        "dbname": "target_id",
-        "dbtype": "integer",
-        "kind": "field",
-        "modelRefKey": "AuthUserAccessToken",
-        "name": "target_id",
-        "nullable": false,
-        "primary": false,
-        "refKey": "AuthUserAccessToken.target_id",
-        "type": "integer",
-        "unique": false,
-        "validators": [],
-      },
-    ],
-    "hooks": [],
-    "kind": "model",
-    "name": "AuthUserAccessToken",
-    "queries": [],
-    "refKey": "AuthUserAccessToken",
-    "references": [
-      {
-        "fieldRefKey": "AuthUserAccessToken.target_id",
-        "kind": "reference",
-        "modelRefKey": "AuthUserAccessToken",
-        "name": "target",
-        "nullable": false,
-        "refKey": "AuthUserAccessToken.target",
-        "toModelFieldRefKey": "AuthUser.id",
-        "toModelRefKey": "AuthUser",
-        "unique": false,
-      },
-    ],
-    "relations": [],
-  },
-]
-`;
-
-exports[`authenticator composer succeeds for basic method actions 2`] = `
 {
   "accessTokenModel": {
     "name": "AuthUserAccessToken",
@@ -541,50 +269,6 @@ exports[`authenticator composer succeeds for basic method actions 2`] = `
     "endpoints": {
       "register": {
         "actions": [
-          {
-            "alias": "@auth",
-            "changeset": [
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-            ],
-            "kind": "create-one",
-            "model": "AuthUser",
-            "select": [],
-            "targetPath": [
-              "@auth",
-            ],
-          },
           {
             "alias": "userProfile",
             "changeset": [
@@ -693,7 +377,74 @@ exports[`authenticator composer succeeds for basic method actions 2`] = `
           "namePath": [
             "AuthUser",
           ],
-          "refKey": "N/A",
+          "refKey": "AuthUser",
+          "retType": "AuthUser",
+          "select": [],
+        },
+      },
+      "updatePassword": {
+        "actions": [],
+        "authSelect": [
+          {
+            "alias": "username",
+            "kind": "field",
+            "name": "username",
+            "namePath": [
+              "AuthUser",
+              "username",
+            ],
+            "refKey": "AuthUser.username",
+          },
+        ],
+        "authorize": undefined,
+        "fieldset": {
+          "kind": "record",
+          "nullable": false,
+          "record": {
+            "currentPassword": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
+            },
+            "password": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [
+                {
+                  "args": [
+                    {
+                      "type": "integer",
+                      "value": 8,
+                    },
+                  ],
+                  "inputType": "text",
+                  "name": "minLength",
+                },
+              ],
+            },
+          },
+        },
+        "kind": "update",
+        "parentContext": [],
+        "response": [],
+        "target": {
+          "alias": "@auth",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "id",
+            "refKey": "AuthUser.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "AuthUser",
+          "namePath": [
+            "AuthUser",
+          ],
+          "refKey": "AuthUser",
           "retType": "AuthUser",
           "select": [],
         },
@@ -718,52 +469,7 @@ exports[`authenticator composer succeeds for simple authenticator 1`] = `
   "method": {
     "endpoints": {
       "register": {
-        "actions": [
-          {
-            "alias": "@auth",
-            "changeset": [
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-            ],
-            "kind": "create-one",
-            "model": "AuthUser",
-            "select": [],
-            "targetPath": [
-              "@auth",
-            ],
-          },
-        ],
+        "actions": [],
         "authSelect": [],
         "authorize": undefined,
         "fieldset": {
@@ -836,7 +542,74 @@ exports[`authenticator composer succeeds for simple authenticator 1`] = `
           "namePath": [
             "AuthUser",
           ],
-          "refKey": "N/A",
+          "refKey": "AuthUser",
+          "retType": "AuthUser",
+          "select": [],
+        },
+      },
+      "updatePassword": {
+        "actions": [],
+        "authSelect": [
+          {
+            "alias": "username",
+            "kind": "field",
+            "name": "username",
+            "namePath": [
+              "AuthUser",
+              "username",
+            ],
+            "refKey": "AuthUser.username",
+          },
+        ],
+        "authorize": undefined,
+        "fieldset": {
+          "kind": "record",
+          "nullable": false,
+          "record": {
+            "currentPassword": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
+            },
+            "password": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [
+                {
+                  "args": [
+                    {
+                      "type": "integer",
+                      "value": 8,
+                    },
+                  ],
+                  "inputType": "text",
+                  "name": "minLength",
+                },
+              ],
+            },
+          },
+        },
+        "kind": "update",
+        "parentContext": [],
+        "response": [],
+        "target": {
+          "alias": "@auth",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "id",
+            "refKey": "AuthUser.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "AuthUser",
+          "namePath": [
+            "AuthUser",
+          ],
+          "refKey": "AuthUser",
           "retType": "AuthUser",
           "select": [],
         },

@@ -249,7 +249,9 @@ export type AuthenticatorMethodBodyAtomAST = {
 export type AuthenticatorBasicMethodBodyAtomAST = WithContext<AuthenticatorBasicEventActionAST>;
 /* | { ... } add other basic method atoms */
 
+export type AuthenticatorBasicMethodActionEvents = "register" | "update-password";
+
 export type AuthenticatorBasicEventActionAST = {
   kind: "event-action";
-  body: { event: "register"; body: ActionBodyAST[] };
+  body: { event: AuthenticatorBasicMethodActionEvents; body: ActionBodyAST[] };
 };

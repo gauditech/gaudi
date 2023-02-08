@@ -6,9 +6,10 @@ import _ from "lodash";
 import passport from "passport";
 import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-http-bearer";
 
+import { buildEndpointPath } from "@src/builder/query";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { assertUnreachable } from "@src/common/utils";
-import { executeActions } from "@src/runtime/common/action";
+import { assertUnreachable, ensureNot } from "@src/common/utils";
+import { ActionContext, executeActions } from "@src/runtime/common/action";
 import {
   assignNoReferenceValidators,
   fetchReferenceIds,
@@ -17,20 +18,14 @@ import {
   createRecordValidationErrorFromCustom,
   validateEndpointFieldset,
 } from "@src/runtime/common/validation";
+import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
+import { executeQueryTree } from "@src/runtime/query/exec";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
 import { EndpointConfig } from "@src/runtime/server/types";
 import { Vars } from "@src/runtime/server/vars";
-import {
-  ActionDef,
-  CreateEndpointDef,
-  CreateOneAction,
-  Definition,
-  EndpointDef,
-  UpdateEndpointDef,
-  UpdateOneAction,
-} from "@src/types/definition";
+import { CreateEndpointDef, Definition, UpdateEndpointDef } from "@src/types/definition";
 
 const TOKEN_SIZE = 32;
 const TOKEN_EXPIRY_TIME = 1 * 60 * 60 * 1000; // 1h
@@ -44,6 +39,7 @@ export function buildEndpoints(def: Definition, pathPrefix = ""): EndpointConfig
     buildLocalAuthLoginEndpoint(def, pathPrefix),
     buildAuthLogoutEndpoint(def, pathPrefix),
     buildRegistrationEndpoint(def, pathPrefix),
+    buildUpdatePasswordEndpoint(def, pathPrefix),
   ];
 }
 
@@ -115,47 +111,168 @@ function buildAuthLogoutEndpoint(def: Definition, pathPrefix = ""): EndpointConf
 /**
  * Endpoint for registering local users
  */
+
 function buildRegistrationEndpoint(def: Definition, pathPrefix = ""): EndpointConfig {
+  const endpoint = def.authenticator?.method.endpoints?.register;
+  if (endpoint == null) {
+    throw new Error("Registration endpoint definition not found in authenticator");
+  }
+
+  return buildCustomCreateEndpoint(def, `${pathPrefix}/register`, endpoint, (def, dbConn, ctx) => {
+    return createAuthUser(dbConn, def, ctx.input);
+  });
+}
+
+/**
+ * Update local users' passwords
+ */
+
+function buildUpdatePasswordEndpoint(def: Definition, pathPrefix = ""): EndpointConfig {
+  const endpoint = def.authenticator?.method.endpoints?.updatePassword;
+  if (endpoint == null) {
+    throw new Error("Update password endpoint definition not found in authenticator");
+  }
+
+  return buildCustomUpdateEndpoint(
+    def,
+    `${pathPrefix}/updatePassword`,
+    endpoint,
+    async (def, dbConn, ctx) => {
+      const user = ctx.vars.get("@auth");
+
+      const username = user.username;
+      const newPassword = (ctx.input.password as string) ?? "";
+      const currentPassword = (ctx.input.currentPassword as string) ?? "";
+
+      // verify old credentials before storing the new ones
+      const result = await authenticateUser(dbConn, def, username, currentPassword);
+      if (result == null) {
+        throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
+      }
+
+      return updateAuthUserPassword(def, dbConn, user.id, newPassword);
+    }
+  );
+}
+
+// ---------- Custom endpoint builders
+
+export type CustomActionHandler = (
+  def: Definition,
+  dbConn: DbConn,
+  ctx: ActionContext
+) => Promise<unknown>;
+
+function buildCustomCreateEndpoint(
+  def: Definition,
+  path: string,
+  endpoint: CreateEndpointDef,
+  customActionHandler: CustomActionHandler
+): EndpointConfig {
+  const queries = buildEndpointQueries(def, endpoint);
+
   return {
-    path: `${pathPrefix}/register`,
+    path,
     method: "post",
     handlers: [
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          const endpoint = def.authenticator?.method.endpoints?.register;
-          if (endpoint == null) {
-            throw new Error("Registration endpoint definition not found in authenticator");
-          }
-
-          // remove placeholder actions instead of which we'll execute user registration action
-          const epActions = filterPlaceholderActions(endpoint);
-
+          console.log("AUTH USER", req.user);
           tx = await getAppContext(req).dbConn.transaction();
           const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              tx,
+              def,
+              queries.authQueryTree,
+              new Vars({ id: req.user.id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
 
           const body = req.body;
           console.log("BODY", body);
 
-          const referenceIds = await fetchReferenceIds(def, tx, epActions, body);
+          console.log("FIELDSET", endpoint.fieldset);
+          const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
           const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          const user = await createAuthUser(tx, def, body);
-          contextVars.set("@auth", user);
+          const ctx = { input: validationResult, vars: contextVars, referenceIds };
 
-          await executeActions(
-            def,
-            tx,
-            { input: validationResult, vars: contextVars, referenceIds },
-            epActions
-          );
+          const result = await customActionHandler(def, tx, ctx);
+          contextVars.set(endpoint.target.alias, result);
+
+          await executeActions(def, tx, ctx, endpoint.actions);
 
           await tx.commit();
 
-          // return created token
-          resp.status(201).send(user);
+          resp.json(result);
+        } catch (err) {
+          await tx?.rollback();
+
+          errorResponse(err);
+        }
+      },
+    ],
+  };
+}
+function buildCustomUpdateEndpoint(
+  def: Definition,
+  path: string,
+  endpoint: UpdateEndpointDef,
+  customActionHandler: CustomActionHandler
+): EndpointConfig {
+  const queries = buildEndpointQueries(def, endpoint);
+
+  return {
+    path,
+    method: "patch",
+    handlers: [
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      async (req: Request, resp: Response) => {
+        let tx;
+        try {
+          console.log("AUTH USER", req.user);
+          tx = await getAppContext(req).dbConn.transaction();
+          const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              tx,
+              def,
+              queries.authQueryTree,
+              new Vars({ id: req.user.id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
+
+          const body = req.body;
+          console.log("BODY", body);
+
+          const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
+          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
+          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          console.log("Validation result", validationResult);
+
+          const ctx = { input: validationResult, vars: contextVars, referenceIds };
+
+          const result = await customActionHandler(def, tx, ctx);
+          contextVars.set(endpoint.target.alias, result);
+
+          await executeActions(def, tx, ctx, endpoint.actions);
+
+          await tx.commit();
+
+          resp.json(result);
         } catch (err) {
           await tx?.rollback();
 
@@ -228,7 +345,6 @@ function configurePassport(def: Definition): passport.Authenticator {
       { passReqToCallback: true },
       async (req, token, done) => {
         try {
-          console.log(`Verifying user access token: ${token}`);
           const dbConn = getAppContext(req).dbConn;
 
           if (token) {
@@ -237,12 +353,13 @@ function configurePassport(def: Definition): passport.Authenticator {
             if (result) {
               // this result will appear on "request" object as "user" property
               done(null, { id: result.id, token });
-            } else {
-              done(null, false);
+              return;
             }
-          } else {
-            done(null, false);
           }
+
+          console.log(`User access token not verified`);
+
+          done(null, false);
         } catch (err: unknown) {
           done(err);
         }
@@ -335,6 +452,8 @@ async function createAuthUser(
   def: Definition,
   body: Record<string, any>
 ): Promise<{ id: number; name: string; username: string }> {
+  ensureNot(def.authenticator, undefined, "Authenticator not defined.");
+
   // check if username is already taken
   // TODO: could we turn this into a validator
   const existingUser = await resolveUsername(def, dbConn, body.username);
@@ -362,8 +481,33 @@ async function createAuthUser(
 
   // insert new user
   const result = await dbConn
-    .insert(dataToFieldDbnames(getRef.model(def, def.authenticator!.targetModel.refKey), user))
+    .insert(dataToFieldDbnames(getRef.model(def, def.authenticator.targetModel.refKey), user))
     .into(getAuthDbName(def, "TARGET_MODEL"))
+    .returning(["id", "name", "username"]);
+
+  if (!result.length) throw new Error("Error inserting user");
+
+  return result[0];
+}
+
+async function updateAuthUserPassword(
+  def: Definition,
+  dbConn: DbConn,
+  userId: number,
+  password: string
+) {
+  ensureNot(def.authenticator, undefined, "Authenticator not defined.");
+
+  const hashedPassword = await hashPassword(password);
+
+  // insert new user
+  const result = await dbConn(getAuthDbName(def, "TARGET_MODEL"))
+    .update(
+      dataToFieldDbnames(getRef.model(def, def.authenticator.targetModel.refKey), {
+        password: hashedPassword,
+      })
+    )
+    .where({ id: userId })
     .returning(["id", "name", "username"]);
 
   if (!result.length) throw new Error("Error inserting user");
@@ -428,7 +572,7 @@ export function verifyPassword(clearPassword: string, hashedPassword: string): P
 
 /** Resolve authenticator models by type */
 function getAuthDbName(def: Definition, model: "TARGET_MODEL" | "ACCESS_TOKEN_MODEL") {
-  ensureAuthenticator(def.authenticator);
+  ensureNot(def.authenticator, undefined, "Authenticator not defined.");
 
   switch (model) {
     case "TARGET_MODEL":
@@ -440,25 +584,15 @@ function getAuthDbName(def: Definition, model: "TARGET_MODEL" | "ACCESS_TOKEN_MO
   }
 }
 
-/**
- * Filter out placeholder actions from endpoint
- *
- * Default create and update actions are always created with endpoint
- * Since basic auth is implemented using custom actions whic cannot be represented through blueprint
- * these default actions need to be removed and specific auth action will be executed instead and
- * before other method custom event actions-
- *
- * TODO: remove filtering defualt auth actions once custom (hook) actions are supported
- */
-function filterPlaceholderActions(endpoint: EndpointDef): ActionDef[] {
-  if (endpoint.kind !== "create" && endpoint.kind !== "update") return [];
+/** Return only one resulting row. If result contains 0 or more than 1 row, throw error. */
+// TODO: extract this and the one from endpoints.ts to some utils file
+function findOne<T>(result: T[]): T {
+  if (result.length === 0) {
+    throw new BusinessError("ERROR_CODE_RESOURCE_NOT_FOUND", "Resource not found");
+  }
+  if (result.length > 1) {
+    throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Internal error");
+  }
 
-  // default action has the same alias as ep target
-  return endpoint.actions.filter(
-    (a) => (a.kind !== "create-one" && a.kind !== "update-one") || a.alias !== endpoint.target.alias
-  );
-}
-
-function ensureAuthenticator<T>(auth: T | undefined | null): asserts auth is NonNullable<T> {
-  if (auth === null || auth === undefined) throw new Error("Authenticator not defined.");
+  return result[0];
 }

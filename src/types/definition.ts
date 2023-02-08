@@ -1,9 +1,5 @@
-import { BinaryOperator } from "@src/types/ast";
-import {
-  AuthenticatorBasicMethodActionEvents,
-  AuthenticatorBasicMethodEventActionSpec,
-  HookCode,
-} from "@src/types/specification";
+import { AuthenticatorBasicMethodActionEvents, BinaryOperator } from "@src/types/ast";
+import { HookCode } from "@src/types/specification";
 
 export type Definition = {
   models: ModelDef[];
@@ -533,6 +529,7 @@ export type AuthenticatorBasicMethodDef = {
   kind: "basic";
   endpoints?: {
     register: CreateEndpointDef;
+    updatePassword: UpdateEndpointDef;
   };
 };
 export type AuthenticatorBasicMethodEventActionDef =

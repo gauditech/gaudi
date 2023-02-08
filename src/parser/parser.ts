@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import grammar from "@src/parser/grammar/gaudi.ohm-bundle";
 import {
   AST,
@@ -6,6 +8,7 @@ import {
   ActionKindAST,
   AuthenticatorAST,
   AuthenticatorBasicEventActionAST,
+  AuthenticatorBasicMethodActionEvents,
   AuthenticatorBodyAtomAST,
   BinaryOperator,
   ComputedAST,
@@ -618,8 +621,7 @@ semantics.addOperation("parse()", {
     return {
       kind: "event-action",
       body: {
-        event:
-          event.sourceString.toLowerCase() as AuthenticatorBasicEventActionAST["body"]["event"],
+        event: _.kebabCase(event.sourceString) as AuthenticatorBasicMethodActionEvents,
         body: body.parse(),
       },
     };

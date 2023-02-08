@@ -1,6 +1,54 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Auth Login and Logout should fail when creating user with existing username 1`] = `
+exports[`Auth Login and Logout update password Validates request data 1`] = `
+{
+  "code": "ERROR_CODE_VALIDATION",
+  "data": {
+    "errors": [
+      "password must be at least 8 characters",
+      "currentPassword must be defined",
+    ],
+    "inner": [
+      {
+        "errors": [
+          "password must be at least 8 characters",
+        ],
+        "inner": [],
+        "message": "password must be at least 8 characters",
+        "name": "ValidationError",
+        "params": {
+          "min": 8,
+          "originalValue": "",
+          "path": "password",
+          "value": "",
+        },
+        "path": "password",
+        "type": "min",
+        "value": "",
+      },
+      {
+        "errors": [
+          "currentPassword must be defined",
+        ],
+        "inner": [],
+        "message": "currentPassword must be defined",
+        "name": "ValidationError",
+        "params": {
+          "path": "currentPassword",
+        },
+        "path": "currentPassword",
+        "type": "defined",
+      },
+    ],
+    "value": {
+      "password": "",
+    },
+  },
+  "message": "Validation error",
+}
+`;
+
+exports[`Auth Login and Logout user registration should fail when creating user with existing username 1`] = `
 {
   "code": "ERROR_CODE_VALIDATION",
   "data": {
@@ -33,17 +81,30 @@ exports[`Auth Login and Logout should fail when creating user with existing user
 }
 `;
 
-exports[`Auth Login and Logout should fail when creating user with invalid parameters 1`] = `
+exports[`Auth Login and Logout user registration should fail when creating user with invalid parameters 1`] = `
 {
   "code": "ERROR_CODE_VALIDATION",
   "data": {
     "errors": [
+      "userProfile.displayName must be defined",
       "username must be at least 8 characters",
       "name must be at least 1 characters",
       "password must be at least 8 characters",
-      "userProfile.displayName must be defined",
     ],
     "inner": [
+      {
+        "errors": [
+          "userProfile.displayName must be defined",
+        ],
+        "inner": [],
+        "message": "userProfile.displayName must be defined",
+        "name": "ValidationError",
+        "params": {
+          "path": "userProfile.displayName",
+        },
+        "path": "userProfile.displayName",
+        "type": "defined",
+      },
       {
         "errors": [
           "username must be at least 8 characters",
@@ -94,19 +155,6 @@ exports[`Auth Login and Logout should fail when creating user with invalid param
         "path": "password",
         "type": "min",
         "value": "",
-      },
-      {
-        "errors": [
-          "userProfile.displayName must be defined",
-        ],
-        "inner": [],
-        "message": "userProfile.displayName must be defined",
-        "name": "ValidationError",
-        "params": {
-          "path": "userProfile.displayName",
-        },
-        "path": "userProfile.displayName",
-        "type": "defined",
       },
     ],
     "value": {

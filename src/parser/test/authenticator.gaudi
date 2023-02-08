@@ -6,5 +6,10 @@ auth {
         set displayName @auth.username
       }
     }
+    onUpdatePasswordAction {
+      create AuditLog {
+        set displayName @auth.username
+      }
+    }
   }
 }

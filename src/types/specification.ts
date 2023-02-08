@@ -1,4 +1,11 @@
-import { BinaryOperator, EndpointType, LiteralValue, SelectAST, UnaryOperator } from "./ast";
+import {
+  AuthenticatorBasicMethodActionEvents,
+  BinaryOperator,
+  EndpointType,
+  LiteralValue,
+  SelectAST,
+  UnaryOperator,
+} from "./ast";
 
 import { WithContext } from "@src/common/error";
 
@@ -197,7 +204,6 @@ export type AuthenticatorBasicMethodSpec = {
   kind: "basic";
   eventActions: AuthenticatorBasicMethodEventActionSpec[];
 };
-export type AuthenticatorBasicMethodActionEvents = "register";
 export type AuthenticatorBasicMethodEventActionSpec =
   EventActionSpec<AuthenticatorBasicMethodActionEvents>;
 

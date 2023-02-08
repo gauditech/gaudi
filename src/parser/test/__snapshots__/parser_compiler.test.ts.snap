@@ -38,6 +38,38 @@ exports[`parser blueprint test/authenticator.gaudi 1`] = `
           ],
           "event": "register",
         },
+        {
+          "actions": [
+            {
+              "actionAtoms": [
+                {
+                  "kind": "set",
+                  "set": {
+                    "exp": {
+                      "identifier": [
+                        "@auth",
+                        "username",
+                      ],
+                      "interval": {
+                        "endIdx": 219,
+                        "startIdx": 205,
+                      },
+                      "kind": "identifier",
+                    },
+                    "kind": "expression",
+                  },
+                  "target": "displayName",
+                },
+              ],
+              "alias": undefined,
+              "kind": "create",
+              "targetPath": [
+                "AuditLog",
+              ],
+            },
+          ],
+          "event": "update-password",
+        },
       ],
       "kind": "basic",
     },

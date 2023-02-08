@@ -50,18 +50,19 @@ describe("Auth", () => {
     ]
   );
 
-  async function loginTestUser() {
+  async function loginUser(username: string, password: string) {
     const loginResponse = await request(getServer())
       .post("/auth/login")
-      .send({ username: "first@example.com", password: "1234" });
+      .send({ username, password });
     return loginResponse.body.token;
   }
 
+  async function loginTestUser() {
+    return await loginUser("first@example.com", "1234");
+  }
+
   async function loginTestUser2() {
-    const loginResponse = await request(getServer())
-      .post("/auth/login")
-      .send({ username: "second@example.com", password: "1234" });
-    return loginResponse.body.token;
+    return await loginUser("second@example.com", "1234");
   }
 
   describe("Login and Logout", () => {
@@ -192,87 +193,189 @@ describe("Auth", () => {
 
     // --- user registration
 
-    it("should register and login new user", async () => {
-      const registerResponse = await request(getServer())
-        .post("/auth/register")
-        .send({
+    describe("user registration", () => {
+      it("should register and login new user", async () => {
+        const registerResponse = await request(getServer())
+          .post("/auth/register")
+          .send({
+            name: "some name",
+            username: "somename@example.com",
+            password: "some password",
+            userProfile: { displayName: "Profile Display Name" },
+          });
+        expect(registerResponse.statusCode).toBe(200);
+        expect(registerResponse.body).toMatchInlineSnapshot(`
+          {
+            "id": 3,
+            "name": "some name",
+            "username": "somename@example.com",
+          }
+        `);
+
+        // login is tested fully in another test, this just confirmation that login works for new user
+        const loginResponse = await request(getServer())
+          .post("/auth/login")
+          .send({ username: "somename@example.com", password: "some password" });
+        expect(loginResponse.statusCode).toBe(200);
+      });
+
+      it("should fail when creating user with invalid parameters", async () => {
+        const registerResponse = await request(getServer())
+          .post("/auth/register")
+          .send({ name: "", username: "", password: "" });
+
+        expect(registerResponse.statusCode).toBe(400);
+        expect(registerResponse.body).toMatchSnapshot();
+      });
+
+      it("should fail when creating user with existing username", async () => {
+        const data = {
           name: "some name",
-          username: "somename@example.com",
+          username: "somename2@example.com",
           password: "some password",
           userProfile: { displayName: "Profile Display Name" },
-        });
-      expect(registerResponse.statusCode).toBe(201);
-      expect(registerResponse.body).toMatchInlineSnapshot(`
-        {
-          "id": 3,
-          "name": "some name",
-          "username": "somename@example.com",
-        }
-      `);
+        };
 
-      // login is tested fully in another test, this just confirmation that login works for new user
-      const loginResponse = await request(getServer())
-        .post("/auth/login")
-        .send({ username: "somename@example.com", password: "some password" });
-      expect(loginResponse.statusCode).toBe(200);
+        await request(getServer()).post("/auth/register").send(data);
+
+        const reregisterReponse = await request(getServer()).post("/auth/register").send(data);
+
+        expect(reregisterReponse.statusCode).toBe(400);
+        expect(reregisterReponse.body).toMatchSnapshot();
+      });
+
+      it("should execute authenticator method actions", async () => {
+        const data = {
+          name: "some name",
+          username: "somename3@example.com",
+          password: "some password",
+          userProfile: { displayName: "Profile Display Name" },
+        };
+
+        const response = await request(getServer()).post("/auth/register").send(data);
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toMatchInlineSnapshot(`
+          {
+            "id": 5,
+            "name": "some name",
+            "username": "somename3@example.com",
+          }
+        `);
+
+        const responseUserProfile = await request(getServer())
+          .get(`/user_profile/${response.body.id}`)
+          .send(data);
+
+        expect(responseUserProfile.statusCode).toBe(200);
+        expect(responseUserProfile.body).toMatchInlineSnapshot(`
+          {
+            "displayName": "Profile Display Name",
+            "id": 3,
+            "user_id": 5,
+          }
+        `);
+      });
     });
 
-    it("should fail when creating user with invalid parameters", async () => {
-      const registerResponse = await request(getServer())
-        .post("/auth/register")
-        .send({ name: "", username: "", password: "" });
+    // ---------- update password
 
-      expect(registerResponse.statusCode).toBe(400);
-      expect(registerResponse.body).toMatchSnapshot();
-    });
+    describe("update password", () => {
+      async function updatePassword(token: string, newPassword: string, currentPassword: string) {
+        return await request(getServer())
+          .patch("/auth/updatePassword")
+          .set("Authorization", "bearer " + token)
+          .send({ password: newPassword, currentPassword });
+      }
 
-    it("should fail when creating user with existing username", async () => {
-      const data = {
-        name: "some name",
-        username: "somename2@example.com",
-        password: "some password",
-        userProfile: { displayName: "Profile Display Name" },
-      };
+      it("Success changing user password", async () => {
+        const data = {
+          name: "full name",
+          username: "somename4@example.com",
+          password: "12345678",
+          userProfile: { displayName: "Profile Display Name 4" },
+        };
+        const newPassword = "123456789";
 
-      await request(getServer()).post("/auth/register").send(data);
+        // create new user - don't change default test users to avoid conflicting with other tests
+        const registerResponse = await request(getServer()).post("/auth/register").send(data);
 
-      const reregisterReponse = await request(getServer()).post("/auth/register").send(data);
+        expect(registerResponse.statusCode).toBe(200);
 
-      expect(reregisterReponse.statusCode).toBe(400);
-      expect(reregisterReponse.body).toMatchSnapshot();
-    });
+        // login user with default creds
+        const token = await loginUser(data.username, data.password);
 
-    it("should execute authenticator method actions", async () => {
-      const data = {
-        name: "some name",
-        username: "somename3@example.com",
-        password: "some password",
-        userProfile: { displayName: "Profile Display Name" },
-      };
+        // update user's password
+        const updateResponse = await updatePassword(token, newPassword, data.password);
 
-      const response = await request(getServer()).post("/auth/register").send(data);
+        expect(updateResponse.statusCode).toBe(200);
+        expect(updateResponse.body).toMatchInlineSnapshot(`
+          {
+            "id": 6,
+            "name": "full name",
+            "username": "somename4@example.com",
+          }
+        `);
 
-      expect(response.statusCode).toBe(201);
-      expect(response.body).toMatchInlineSnapshot(`
-        {
-          "id": 5,
-          "name": "some name",
-          "username": "somename3@example.com",
-        }
-      `);
+        // relogin with new credentials
+        const loginResponse = await request(getServer())
+          .post("/auth/login")
+          .send({ username: data.username, password: newPassword });
 
-      const responseUserProfile = await request(getServer())
-        .get(`/user_profile/${response.body.id}`)
-        .send(data);
+        expect(loginResponse.statusCode).toBe(200);
+      });
 
-      expect(responseUserProfile.statusCode).toBe(200);
-      expect(responseUserProfile.body).toMatchInlineSnapshot(`
-        {
-          "displayName": "Profile Display Name",
-          "id": 3,
-          "user_id": 5,
-        }
-      `);
+      it("Fails if old password is not given", async () => {
+        const data = {
+          name: "full name",
+          username: "somename5@example.com",
+          password: "12345678",
+          userProfile: { displayName: "Profile Display Name 4" },
+        };
+        const newPassword = "123456789";
+
+        // create new user - don't change default test users to avoid conflicting with other tests
+        const registerResponse = await request(getServer()).post("/auth/register").send(data);
+
+        expect(registerResponse.statusCode).toBe(200);
+
+        // login user with default creds
+        const token = await loginUser(data.username, data.password);
+
+        // update user's password
+        const updateResponse = await request(getServer())
+          .patch("/auth/updatePassword")
+          .set("Authorization", "bearer " + token)
+          .send({ password: newPassword, currentPassword: "invalid_password" }); // current password is missing
+
+        expect(updateResponse.statusCode).toBe(401);
+      });
+
+      it("Validates request data", async () => {
+        const data = {
+          name: "full name",
+          username: "somename6@example.com",
+          password: "12345678",
+          userProfile: { displayName: "Profile Display Name 4" },
+        };
+
+        // create new user - don't change default test users to avoid conflicting with other tests
+        const registerResponse = await request(getServer()).post("/auth/register").send(data);
+
+        expect(registerResponse.statusCode).toBe(200);
+
+        // login user with default creds
+        const token = await loginUser(data.username, data.password);
+
+        // send invalid data
+        const updateResponse = await request(getServer())
+          .patch("/auth/updatePassword")
+          .set("Authorization", "bearer " + token)
+          .send({ password: "" }); // current password is missing
+
+        expect(updateResponse.statusCode).toBe(400);
+        expect(updateResponse.body).toMatchSnapshot();
+      });
     });
   });
 });

@@ -44,7 +44,14 @@ export function composeActionBlock(
    * NOTE: `iteratorCtx` is used by populator only
    * TODO we should add support for iterators in actions
    */
-  iteratorCtx: VarContext = {}
+  iteratorCtx: VarContext = {},
+
+  /*
+   * inject automatic default action
+   * we don't need it when we execute manual action in runtime endpoint
+   * this should be removed once we support proper custom/hook actions
+   */
+  injectDefaultAction = true
 ): ActionDef[] {
   // we currently only allow create and update
   if (["create", "update"].indexOf(endpointKind) < 0) {
@@ -93,40 +100,44 @@ export function composeActionBlock(
     throw new Error(`Multiple default action definitions`);
   } else {
     ensureEqual(defaultActions.length, 0);
-    switch (endpointKind) {
-      case "get":
-      case "list": {
-        // No action here, since selecting the records from the db is not an `ActionDef`.
-        return actions;
-      }
-      default: {
-        /**
-         * Make custom default action and insert at the beginning.
-         *
-         *
-         * NOTE for `create`, this inserts default action at the beginning,
-         *      however we didn't account for that in the `initialContext` so
-         *      other actions can't reference the alias unless in this case.
-         *      We could improve it, but it would require us to know if user defined
-         *      a default target action some time later - in order to be able to decide
-         *      if user is referencing a default target alias before it's initialisation
-         *      or after.
-         */
-        const action: ActionDef = composeSingleAction(
-          def,
-          {
-            kind: endpointKind,
-            alias: undefined,
-            targetPath: undefined,
-            actionAtoms: [],
-          },
-          ctx,
-          targets,
-          endpointKind
-        );
-        return [action, ...actions];
+    if (injectDefaultAction) {
+      switch (endpointKind) {
+        case "get":
+        case "list": {
+          // No action here, since selecting the records from the db is not an `ActionDef`.
+          return actions;
+        }
+        default: {
+          /**
+           * Make custom default action and insert at the beginning.
+           *
+           *
+           * NOTE for `create`, this inserts default action at the beginning,
+           *      however we didn't account for that in the `initialContext` so
+           *      other actions can't reference the alias unless in this case.
+           *      We could improve it, but it would require us to know if user defined
+           *      a default target action some time later - in order to be able to decide
+           *      if user is referencing a default target alias before it's initialisation
+           *      or after.
+           */
+          const action: ActionDef = composeSingleAction(
+            def,
+            {
+              kind: endpointKind,
+              alias: undefined,
+              targetPath: undefined,
+              actionAtoms: [],
+            },
+            ctx,
+            targets,
+            endpointKind
+          );
+          return [action, ...actions];
+        }
       }
     }
+
+    return actions;
   }
 }
 
