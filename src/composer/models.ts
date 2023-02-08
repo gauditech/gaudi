@@ -5,7 +5,7 @@ import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
-import { composeAuthenticatorModel } from "@src/composer/authenticator";
+import { createAuthenticatorModelSpec } from "@src/composer/authenticator";
 import {
   NamePath,
   getDirectChildren,
@@ -16,7 +16,6 @@ import {
 import { LiteralValue } from "@src/types/ast";
 import {
   AggregateDef,
-  AuthenticatorDef,
   ComputedDef,
   ConstantDef,
   Definition,
@@ -92,7 +91,9 @@ export function composeModels(
       const mdef = defineModel(def, mspec);
       mspec.fields.forEach((hspec) => defineField(def, mdef, hspec));
       mspec.computeds.forEach((cspec) => tryCall(() => defineComputed(def, mdef, cspec)));
-      mspec.references.forEach((rspec) => tryCall(() => defineReference(def, mdef, rspec)));
+      mspec.references.forEach((rspec) =>
+        tryCall(() => defineReference(def, mdef, rspec, authenticatorSpec))
+      );
       mspec.relations.forEach((rspec) => tryCall(() => defineRelation(def, mdef, rspec)));
       mspec.queries
         .filter((qspec) => !qspec.aggregate)
@@ -101,8 +102,6 @@ export function composeModels(
         .filter((qspec) => qspec.aggregate)
         .forEach((qspec) => tryCall(() => defineAggregate(def, mdef, qspec)));
       mspec.hooks.forEach((hspec) => tryCall(() => defineModelHook(def, mdef, hspec)));
-
-      tryCall(() => defineAuthenticator(def, authenticatorSpec));
 
       return mdef;
     });
@@ -257,12 +256,17 @@ function literalToConstantDef(literal: LiteralValue): ConstantDef {
   throw new Error(`Can't detect literal type from ${literal} : ${typeof literal}`);
 }
 
-function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
+function defineReference(
+  def: Definition,
+  mdef: ModelDef,
+  rspec: ReferenceSpec,
+  authenticatorSpec: AuthenticatorSpec | undefined
+): ReferenceDef {
   const refKey = `${mdef.refKey}.${rspec.name}`;
   const ex = getDefinition(def, refKey, "reference");
   if (ex) return ex;
 
-  const refToModelName = resolveReferenceModelName(def, rspec);
+  const refToModelName = resolveReferenceModelName(def, rspec, authenticatorSpec);
 
   getDefinition(def, refToModelName, "model", true);
 
@@ -300,7 +304,7 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
   mdef.references.push(ref);
   def.resolveOrder.push(f.refKey);
 
-  defineImplicitRelation(def, mdef, rspec, ref);
+  defineImplicitRelation(def, mdef, rspec, ref, authenticatorSpec);
 
   return ref;
 }
@@ -383,23 +387,6 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
   mdef.hooks.push(h);
   def.resolveOrder.push(h.refKey);
   return h;
-}
-
-function defineAuthenticator(
-  def: Definition,
-  spec: AuthenticatorSpec | undefined
-): AuthenticatorDef | undefined {
-  // no authenticator
-  if (spec == null) return spec;
-  // authenticator already defined
-  if (def.authenticator) return def.authenticator;
-
-  composeAuthenticatorModel(def, spec);
-
-  // authenticator doesn't have refKey but this should be unique enough
-  def.resolveOrder.push("@auth");
-
-  return def.authenticator;
 }
 
 function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
@@ -567,15 +554,19 @@ function constructDbType(type: FieldDef["type"]): FieldDef["dbtype"] {
  * Detect if reference points to implicit model (eg. @auth) and resolve model name it actually points to.
  * Otherwise just return original ref name.
  */
-function resolveReferenceModelName(def: Definition, referenceSpec: ReferenceSpec): string {
+function resolveReferenceModelName(
+  def: Definition,
+  referenceSpec: ReferenceSpec,
+  authenticatorSpec: AuthenticatorSpec | undefined
+): string {
   const toModel = referenceSpec.toModel;
   if (toModel === "@auth") {
     // if authenticator hasn't been resolved, simply return original value let it go another round
-    if (def.authenticator == null) {
+    if (authenticatorSpec == null) {
       return toModel;
     }
 
-    return getRef.model(def, def.authenticator.targetModel.name).name;
+    return getRef.model(def, authenticatorSpec.targetModelName).name;
   } else {
     // if reference model is not recognized simply return it and let it resolve on it's own
     return toModel;
@@ -590,12 +581,13 @@ function defineImplicitRelation(
   def: Definition,
   refModel: ModelDef,
   refSpec: ReferenceSpec,
-  refDef: ReferenceDef
+  refDef: ReferenceDef,
+  authenticatorSpec: AuthenticatorSpec | undefined
 ) {
   if (refSpec.toModel === "@auth") {
-    if (def.authenticator == null) return;
+    if (authenticatorSpec == null) return;
 
-    const authTargetModel = getRef.model(def, def.authenticator.targetModel.name);
+    const authTargetModel = getRef.model(def, authenticatorSpec.targetModelName);
 
     const relSpec: RelationSpec = {
       // TODO: nicer rel name

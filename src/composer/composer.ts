@@ -1,18 +1,23 @@
 import { composeEntrypoints } from "./entrypoints";
 import { composeModels } from "./models";
 
-import { composeAuthenticatorEntrypoint } from "@src/composer/authenticator";
+import { composeAuthenticator, createAuthenticatorModelSpec } from "@src/composer/authenticator";
 import { composePopulators } from "@src/composer/populators";
 import { Definition } from "@src/types/definition";
-import { Specification } from "@src/types/specification";
+import { ModelSpec, Specification } from "@src/types/specification";
 
 export function compose(input: Specification): Definition {
   // let's start with empty definition
   // sub-composers are expected to mutate it
   const def: Definition = { models: [], entrypoints: [], resolveOrder: [], populators: [] };
 
-  composeModels(def, input.models, input.authenticator);
-  composeAuthenticatorEntrypoint(def, input.authenticator);
+  // collect models injected from other sources together with main models
+  const models: ModelSpec[] = [
+    ...input.models,
+    ...createAuthenticatorModelSpec(input.authenticator),
+  ];
+  composeModels(def, models, input.authenticator);
+  composeAuthenticator(def, input.authenticator);
   composeEntrypoints(def, input.entrypoints);
   composePopulators(def, input.populators);
 

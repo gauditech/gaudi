@@ -574,10 +574,7 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
   };
 }
 
-function compileAuthenticator(
-  authenticator: AuthenticatorAST,
-  models: ModelSpec[]
-): AuthenticatorSpec {
+function compileAuthenticator(authenticator: AuthenticatorAST): AuthenticatorSpec {
   const name = authenticator.name;
   // this is not exposed in blueprint yet
   const targetModelName = AUTH_TARGET_MODEL_NAME;
@@ -587,70 +584,6 @@ function compileAuthenticator(
   if (method == null) {
     throw new CompilerError("Authenticator method is required.");
   }
-
-  // --- inject authenticator's models
-  // do this here to allow model composer to have all models available for resolving
-  const authModelSpec: ModelSpec[] = [
-    // target model
-    {
-      name: targetModelName,
-      isAuth: false,
-      fields: [
-        {
-          name: "name",
-          type: "text",
-          validators: [{ kind: "builtin", name: "min", args: [1] }],
-        },
-        // this is used as username so it must be unique
-        // if we had parallel auth methods this probably couldn't be unique anymore
-        {
-          name: "username",
-          type: "text",
-          unique: true,
-          validators: [{ kind: "builtin", name: "min", args: [8] }],
-        },
-        {
-          name: "password",
-          type: "text",
-          validators: [{ kind: "builtin", name: "min", args: [8] }],
-        },
-      ],
-      references: [],
-      relations: [
-        {
-          name: "tokens",
-          fromModel: accessTokenModelName,
-          through: "target",
-        },
-      ],
-      queries: [],
-      computeds: [],
-      hooks: [],
-    },
-    // access token model
-    // maybe this will have to renamed/moved when we have other auth methods
-    {
-      name: accessTokenModelName,
-      isAuth: false,
-      fields: [
-        {
-          name: "token",
-          type: "text",
-          unique: true,
-        },
-        {
-          name: "expiryDate",
-          type: "text",
-        },
-      ],
-      references: [{ name: "target", toModel: targetModelName }],
-      relations: [],
-      queries: [],
-      computeds: [],
-      hooks: [],
-    },
-  ];
-  models.push(...authModelSpec);
 
   return { name, targetModelName, accessTokenModelName, method };
 }
@@ -698,7 +631,7 @@ export function compile(input: AST): Specification {
     } else if (kind === "populator") {
       populators.push(compilePopulator(definition));
     } else if (kind === "authenticator") {
-      authenticator = compileAuthenticator(definition, models);
+      authenticator = compileAuthenticator(definition);
     } else {
       assertUnreachable(kind);
     }

@@ -22,16 +22,90 @@ import {
   AuthenticatorBasicMethodSpec,
   AuthenticatorMethodSpec,
   AuthenticatorSpec,
+  ModelSpec,
 } from "@src/types/specification";
 
 /**
- * Compose only authenticator models.
- * This is needs to be composed separately together with other models.
+ * Create authenticator model specs.
+ * This is needs to be composed together with other models.
  */
-export function composeAuthenticatorModel(
-  def: Definition,
-  spec: AuthenticatorSpec | undefined
-): void {
+export function createAuthenticatorModelSpec(
+  authenticatorSpec: AuthenticatorSpec | undefined
+): ModelSpec[] {
+  if (authenticatorSpec == null) {
+    return [];
+  }
+
+  const targetModelName = authenticatorSpec.targetModelName;
+  const accessTokenModelName = authenticatorSpec.accessTokenModelName;
+
+  return [
+    // target model
+    {
+      name: targetModelName,
+      isAuth: false,
+      fields: [
+        {
+          name: "name",
+          type: "text",
+          validators: [{ kind: "builtin", name: "min", args: [1] }],
+        },
+        // this is used as username so it must be unique
+        // if we had parallel auth methods this probably couldn't be unique anymore
+        {
+          name: "username",
+          type: "text",
+          unique: true,
+          validators: [{ kind: "builtin", name: "min", args: [8] }],
+        },
+        {
+          name: "password",
+          type: "text",
+          validators: [{ kind: "builtin", name: "min", args: [8] }],
+        },
+      ],
+      references: [],
+      relations: [
+        {
+          name: "tokens",
+          fromModel: accessTokenModelName,
+          through: "target",
+        },
+      ],
+      queries: [],
+      computeds: [],
+      hooks: [],
+    },
+    // access token model
+    // maybe this will have to renamed/moved when we have other auth methods
+    {
+      name: accessTokenModelName,
+      isAuth: false,
+      fields: [
+        {
+          name: "token",
+          type: "text",
+          unique: true,
+        },
+        {
+          name: "expiryDate",
+          type: "text",
+        },
+      ],
+      references: [{ name: "target", toModel: targetModelName }],
+      relations: [],
+      queries: [],
+      computeds: [],
+      hooks: [],
+    },
+  ];
+}
+
+/**
+ * Compose authenticator block.
+ * This is needs to be composed BEFORE other models.
+ */
+export function composeAuthenticator(def: Definition, spec: AuthenticatorSpec | undefined): void {
   if (spec == undefined) {
     return;
   }
@@ -48,17 +122,6 @@ export function composeAuthenticatorModel(
     accessTokenModel,
     method,
   };
-}
-
-/**
- * Compose only authenticator entrypoints and actions.
- * Authenticator and all models should have already been composed by now.
- */
-export function composeAuthenticatorEntrypoint(
-  def: Definition,
-  spec: AuthenticatorSpec | undefined
-): void {
-  if (def.authenticator == null || spec == null) return;
 
   const kind = def.authenticator.method.kind;
   if (kind === "basic") {
