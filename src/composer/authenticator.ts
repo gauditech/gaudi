@@ -43,7 +43,6 @@ export function createAuthenticatorModelSpec(
     // target model
     {
       name: targetModelName,
-      isAuth: false,
       fields: [
         {
           name: "name",
@@ -80,7 +79,6 @@ export function createAuthenticatorModelSpec(
     // maybe this will have to renamed/moved when we have other auth methods
     {
       name: accessTokenModelName,
-      isAuth: false,
       fields: [
         {
           name: "token",

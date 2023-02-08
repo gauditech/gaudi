@@ -265,7 +265,6 @@ function compileModel(model: ModelAST): ModelSpec {
 
   return {
     name: model.name,
-    isAuth: model.isAuth,
     alias: model.alias,
     fields,
     references,
@@ -477,16 +476,6 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
   return { ...baseHook, name, args };
 }
 
-function checkMaxOneAuthModel(models: ModelSpec[]) {
-  const authModels = models.filter((m) => m.isAuth);
-  if (authModels.length > 1) {
-    throw new CompilerError(
-      "Default `auth model` already defined! There can be maximum of 1 `auth model`",
-      authModels[1]
-    );
-  }
-}
-
 function compilePopulator(populator: PopulatorAST): PopulatorSpec {
   const name = populator.name;
   const populates = populator.body.map(compilePopulate);
@@ -636,8 +625,6 @@ export function compile(input: AST): Specification {
       assertUnreachable(kind);
     }
   });
-
-  checkMaxOneAuthModel(models);
 
   return { models, entrypoints, populators, authenticator };
 }

@@ -50,10 +50,9 @@ semantics.addOperation("parse()", {
   Definition(definitions) {
     return definitions.parse();
   },
-  Model(this, auth, _model, identifierAs, _parenL, body, _parenR): ModelAST {
-    const isAuth = auth.numChildren > 0;
+  Model(this, _model, identifierAs, _parenL, body, _parenR): ModelAST {
     const [name, alias] = identifierAs.parse();
-    return { kind: "model", name, alias, body: body.parse(), isAuth, interval: this.source };
+    return { kind: "model", name, alias, body: body.parse(), interval: this.source };
   },
   Field(this, _field, identifier, _parenL, body, _parenR): FieldAST {
     return {

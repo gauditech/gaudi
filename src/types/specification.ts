@@ -18,7 +18,6 @@ export type Specification = {
 
 export type ModelSpec = WithContext<{
   name: string;
-  isAuth: boolean;
   alias?: string;
   fields: FieldSpec[];
   references: ReferenceSpec[];
