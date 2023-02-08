@@ -68,7 +68,6 @@ export class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => definition.push(this.SUBRULE(this.entrypoint)) },
         { ALT: () => definition.push(this.SUBRULE(this.populator)) },
       ]);
-      this.CONSUME(L.SemiColon);
     });
 
     return definition;
@@ -88,7 +87,6 @@ export class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => atoms.push(this.SUBRULE(this.computed)) },
         { ALT: () => atoms.push(this.SUBRULE(this.hook)) },
       ]);
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 
@@ -379,7 +377,6 @@ export class GaudiParser extends EmbeddedActionsParser {
           },
         },
       ]);
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 
@@ -414,7 +411,6 @@ export class GaudiParser extends EmbeddedActionsParser {
           },
         },
       ]);
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 
@@ -428,7 +424,6 @@ export class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       actions.push(this.SUBRULE(this.action));
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 
@@ -454,7 +449,6 @@ export class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomDeny)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInput)) },
       ]);
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 
@@ -573,7 +567,6 @@ export class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       atoms.push(this.SUBRULE(this.populate));
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 
@@ -621,7 +614,6 @@ export class GaudiParser extends EmbeddedActionsParser {
           },
         },
       ]);
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 
@@ -709,7 +701,6 @@ export class GaudiParser extends EmbeddedActionsParser {
           },
         },
       ]);
-      this.CONSUME(L.SemiColon);
     });
     this.CONSUME(L.RCurly);
 

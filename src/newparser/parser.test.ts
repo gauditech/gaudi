@@ -24,6 +24,6 @@ describe("parser", () => {
       throw `${parser.errors[0].message}`;
     }
 
-    console.dir(result, { depth: 10 });
+    console.dir(result, { depth: 32 });
   });
 });

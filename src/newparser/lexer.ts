@@ -8,7 +8,6 @@ const WhiteSpace = createToken({
 const Comment = createToken({ name: "Comment", pattern: /\/\/.*/, group: Lexer.SKIPPED });
 
 export const Comma = createToken({ name: "Comma", pattern: "," });
-export const SemiColon = createToken({ name: "SemiColon", pattern: ";" });
 
 export const LCurly = createToken({ name: "LCurly", pattern: "{" });
 export const RCurly = createToken({ name: "RCurly", pattern: "}" });
@@ -129,7 +128,6 @@ export const GaudiTokens = [
   WhiteSpace,
   Comment,
   Comma,
-  SemiColon,
   LCurly,
   RCurly,
   LRound,

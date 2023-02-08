@@ -4,125 +4,125 @@ model Org {
     type text,
     validate {
       hook {
-        default arg name;
-        source noUnicode from "hooks.js";
+        default arg name
+        source noUnicode from "hooks.js"
       }
     }
-  };
+  }
   field slug {
     type text,
     unique,
     validate {
       hook {
-        default arg slug;
-        inline "!/\s/.test(slug)";
+        default arg slug
+        inline "!/\s/.test(slug)"
       }
     }
-  };
-  field description { type text };
+  }
+  field description { type text }
 
-  relation repos { from Repo, through org };
+  relation repos { from Repo, through org }
 
-  computed summary { concat(name, "", description) };
+  computed summary { concat(name, "", description) }
 
   hook nameAndDesc {
-    arg name name;
-    arg description description;
-    inline "name + \": \" + description";
-  };
-};
+    arg name name
+    arg description description
+    inline "name + \": \" + description"
+  }
+}
 
 
 model Repo {
-  reference org { to Org };
+  reference org { to Org }
 
-  field name { type text };
-  field slug { type text, unique };
-  field description { type text };
-  field is_public { type boolean, default true };
-  field latest_num { type integer };
+  field name { type text }
+  field slug { type text, unique }
+  field description { type text }
+  field is_public { type boolean, default true }
+  field latest_num { type integer }
 
-  relation issues { from Issue, through repo };
-};
+  relation issues { from Issue, through repo }
+}
 
 
 model Issue {
-  reference repo { to Repo };
+  reference repo { to Repo }
 
-  field number { type text };
-  field title { type text };
+  field number { type text }
+  field title { type text }
 
-  relation comments { from Comment, through issue };
-};
+  relation comments { from Comment, through issue }
+}
 
 model Comment {
-  reference issue { to Issue };
-  field body { type text };
-};
+  reference issue { to Issue }
+  field body { type text }
+}
 
 // ----- entrypoints
 
 entrypoint Orgs {
-  target Org as org;
-  identify with slug;
-  response { name, slug, description, summary, nameAndDesc };
+  target Org as org
+  identify with slug
+  response { name, slug, description, summary, nameAndDesc }
 
-  get endpoint {};
-  list endpoint {};
+  get endpoint {}
+  list endpoint {}
   create endpoint {
     action {
-      create org {};
-    };
-  };
+      create org {}
+    }
+  }
   update endpoint {
     action {
-      update org {};
-    };
-  };
-  delete endpoint {};
+      update org {}
+    }
+  }
+  delete endpoint {}
 
   entrypoint Repos {
-    target repos as repo;
-    response { id, slug, description, org_id };
+    target repos as repo
+    response { id, slug, description, org_id }
 
-    get endpoint {};
-    list endpoint {};
+    get endpoint {}
+    list endpoint {}
     create endpoint {
       action {
         create repo {
-          set latest_num 0;
+          set latest_num 0
           set slug hook {
-            arg org org.name;
-            source randomSlug from "hooks.js";
-          };
-        };
-      };
-    };
+            arg org org.name
+            source randomSlug from "hooks.js"
+          }
+        }
+      }
+    }
     update endpoint {
       action {
-        update repo {};
-      };
-    };
-    delete endpoint {};
+        update repo {}
+      }
+    }
+    delete endpoint {}
 
     entrypoint Issues {
-      target issues as issue;
-      response { id, title, repo, number, comments };
+      target issues as issue
+      response { id, title, repo, number, comments }
 
-      get endpoint {};
+      get endpoint {}
       create endpoint {
         action {
           create issue as issue {
-            set number repo.latest_num + 1;
-          };
+            set number repo.latest_num + 1
+          }
 
           update repo as repo2 {
-            set latest_num repo.latest_num + 1;
-          };
+            set latest_num repo.latest_num + 1
+          }
 
-          create issue.comments as c {};
-        };
-      };
-    };
-  };
-};
+          create issue.comments as c {}
+        }
+      }
+    }
+  }
+}
