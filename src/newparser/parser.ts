@@ -517,8 +517,8 @@ class GaudiParser extends EmbeddedActionsParser {
     const fields = this.OR([
       {
         ALT: (): ActionAtomDeny["fields"] => {
-          this.CONSUME(L.Mul);
-          return "*";
+          const keyword = getTokenData(this.CONSUME(L.Mul));
+          return { kind: "all", keyword };
         },
       },
       {
@@ -532,7 +532,7 @@ class GaudiParser extends EmbeddedActionsParser {
           });
           this.CONSUME(L.RCurly);
 
-          return fields;
+          return { kind: "list", fields };
         },
       },
     ]);
@@ -848,13 +848,13 @@ class GaudiParser extends EmbeddedActionsParser {
 
   integer = this.RULE("integer", (): IntegerLiteral => {
     const t = this.CONSUME(L.Integer);
-    const value = this.ACTION(()=>parseInt(t.image));
+    const value = this.ACTION(() => parseInt(t.image));
     const token = getTokenData(t);
     return { kind: "integer", value, token };
   });
   float = this.RULE("float", (): FloatLiteral => {
     const t = this.CONSUME(L.Float);
-    const value = this.ACTION(()=>parseFloat(t.image));
+    const value = this.ACTION(() => parseFloat(t.image));
     const token = getTokenData(t);
     return { kind: "float", value, token };
   });

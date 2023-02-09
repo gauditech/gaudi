@@ -103,7 +103,10 @@ export type ActionAtomReferenceThrough = WithKeyword<{
   target: Identifier;
   through: Identifier;
 }>;
-export type ActionAtomDeny = WithKeyword<{ kind: "deny"; fields: "*" | Identifier[] }>;
+export type ActionAtomDeny = WithKeyword<{
+  kind: "deny";
+  fields: WithKeyword<{ kind: "all" }> | { kind: "list"; fields: Identifier[] };
+}>;
 export type ActionAtomInput = WithKeyword<{
   kind: "input";
   fields: { field: Identifier; atoms: InputAtom[] }[];
