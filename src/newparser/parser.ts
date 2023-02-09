@@ -848,13 +848,13 @@ class GaudiParser extends EmbeddedActionsParser {
 
   integer = this.RULE("integer", (): IntegerLiteral => {
     const t = this.CONSUME(L.Integer);
-    const value = parseInt(t.image);
+    const value = this.ACTION(()=>parseInt(t.image));
     const token = getTokenData(t);
     return { kind: "integer", value, token };
   });
   float = this.RULE("float", (): FloatLiteral => {
     const t = this.CONSUME(L.Float);
-    const value = parseFloat(t.image);
+    const value = this.ACTION(()=>parseFloat(t.image));
     const token = getTokenData(t);
     return { kind: "float", value, token };
   });
@@ -871,7 +871,7 @@ class GaudiParser extends EmbeddedActionsParser {
   });
   string = this.RULE("string", (): StringLiteral => {
     const t = this.CONSUME(L.String);
-    const value = JSON.parse(t.image);
+    const value = this.ACTION(() => JSON.parse(t.image));
     const token = getTokenData(t);
     return { kind: "string", value, token };
   });
