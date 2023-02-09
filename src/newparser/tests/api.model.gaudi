@@ -15,7 +15,7 @@ model Org {
     validate {
       hook {
         default arg slug
-        inline "!/\s/.test(slug)"
+        inline "!/\\s/.test(slug)"
       }
     }
   }

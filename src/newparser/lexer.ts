@@ -18,9 +18,11 @@ export const Dot = createToken({ name: "Dot", pattern: "." });
 
 export const Integer = createToken({ name: "Integer", pattern: /\d+/ });
 export const Float = createToken({ name: "Float", pattern: /(\d+\.\d*)|\.\d+/ });
+
+// https://github.com/Chevrotain/chevrotain/blob/master/examples/grammars/json/json.js
 export const String = createToken({
   name: "String",
-  pattern: /(["'])((\\{2})*|(.*?[^\\](\\{2})*))\1/,
+  pattern: /"(?:[^\\"]|\\(?:[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/,
 });
 
 export const Identifier = createToken({ name: "Identifier", pattern: Lexer.NA });
@@ -209,4 +211,4 @@ export const GaudiTokens = [
   Identifier,
 ];
 
-export const GaudiLexer = new Lexer(Object.values(GaudiTokens));
+export const lexer = new Lexer(Object.values(GaudiTokens));
