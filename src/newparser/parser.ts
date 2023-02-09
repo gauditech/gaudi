@@ -151,8 +151,12 @@ class GaudiParser extends EmbeddedActionsParser {
           },
           {
             ALT: () => {
-              this.CONSUME(L.Validate);
-              this.SUBRULE(this.fieldValidators);
+              const keyword = getTokenData(this.CONSUME(L.Validate));
+              atoms.push({
+                kind: "validate",
+                validators: this.SUBRULE(this.fieldValidators),
+                keyword,
+              });
             },
           },
         ]),
@@ -897,8 +901,8 @@ class GaudiParser extends EmbeddedActionsParser {
     const identifier = this.SUBRULE1(this.identifier);
 
     const as = this.OPTION(() => {
-      this.CONSUME(L.As);
-      return this.SUBRULE2(this.identifier);
+      const keyword = getTokenData(this.CONSUME(L.As));
+      return { identifier: this.SUBRULE2(this.identifier), keyword };
     });
 
     return { identifier, as };
@@ -908,8 +912,8 @@ class GaudiParser extends EmbeddedActionsParser {
     const identifierPath = this.SUBRULE(this.identifierPath);
 
     const as = this.OPTION(() => {
-      this.CONSUME(L.As);
-      return this.SUBRULE2(this.identifier);
+      const keyword = getTokenData(this.CONSUME(L.As));
+      return { identifier: this.SUBRULE2(this.identifier), keyword };
     });
 
     return { identifierPath, as };
@@ -925,7 +929,7 @@ export type ParseResult =
     }
   | {
       success: false;
-      ast: Definition;
+      ast?: Definition;
       lexerErrors?: ILexingError[];
       parserErrors?: IRecognitionException[];
     };

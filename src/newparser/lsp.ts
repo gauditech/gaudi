@@ -125,7 +125,7 @@ function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
 function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
   function addToken(token: TokenData, tokenType: TokenTypes, tokenModifiers: TokenModifiers = 0) {
     const { character, line } = document.positionAt(token.start);
-    const length = token.end - token.start;
+    const length = token.end - token.start + 1;
 
     builder.push(line, character, length, tokenType, tokenModifiers);
   }
@@ -496,7 +496,10 @@ function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
 
   function buildIdentifierAs({ identifier, as }: IdentifierAs) {
     buildIdentifier(identifier);
-    if (as) buildIdentifier(as);
+    if (as) {
+      buildKeyword(as.keyword);
+      buildIdentifier(as.identifier);
+    }
   }
 
   function buildIdentifierPath(identifierPath: IdentifierPath) {
@@ -505,7 +508,10 @@ function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
 
   function buildIdentifierPathAs({ identifierPath, as }: IdentifierPathAs) {
     buildIdentifierPath(identifierPath);
-    if (as) buildIdentifier(as);
+    if (as) {
+      buildKeyword(as.keyword);
+      buildIdentifier(as.identifier);
+    }
   }
 
   function buildKeyword(keyword: TokenData) {
@@ -518,7 +524,7 @@ function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
 
   const source = document.getText();
   const { ast } = parse(source);
-  buildDefinition(ast);
+  if (ast) buildDefinition(ast);
 }
 
 connection.languages.semanticTokens.on((params) => {

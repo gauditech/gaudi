@@ -177,7 +177,10 @@ export type NullLiteral = { kind: "null"; value: null; token: TokenData };
 export type StringLiteral = { kind: "string"; value: string; token: TokenData };
 export type Identifier = { text: string; token: TokenData };
 export type IdentifierPath = Identifier[];
-export type IdentifierAs = { identifier: Identifier; as?: Identifier };
-export type IdentifierPathAs = { identifierPath: Identifier[]; as?: Identifier };
+export type IdentifierAs = { identifier: Identifier; as?: WithKeyword<{ identifier: Identifier }> };
+export type IdentifierPathAs = {
+  identifierPath: Identifier[];
+  as?: WithKeyword<{ identifier: Identifier }>;
+};
 export type TokenData = { start: number; end: number };
 export type WithKeyword<O extends Record<string, unknown>> = { keyword: TokenData } & O;
