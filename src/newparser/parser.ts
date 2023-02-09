@@ -371,7 +371,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: EntrypointAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Entrypoint));
-    this.SUBRULE1(this.identifier);
+    const name = this.SUBRULE1(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
@@ -419,7 +419,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "entrypoint", atoms, keyword };
+    return { kind: "entrypoint", name, atoms, keyword };
   });
 
   endpoint = this.RULE("endpoint", (): Endpoint => {

@@ -61,6 +61,7 @@ export type Computed = WithKeyword<{
 }>;
 export type Entrypoint = WithKeyword<{
   kind: "entrypoint";
+  name: Identifier;
   atoms: EntrypointAtom[];
 }>;
 export type EntrypointAtom =

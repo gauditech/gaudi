@@ -261,8 +261,9 @@ function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
       .exhaustive();
   }
 
-  function buildEntrypoint({ keyword, atoms }: Entrypoint) {
+  function buildEntrypoint({ keyword, name, atoms }: Entrypoint) {
     buildKeyword(keyword);
+    buildIdentifier(name);
     atoms.forEach((a) =>
       match(a)
         .with({ kind: "target" }, ({ keyword, identifier }) => {
@@ -287,7 +288,8 @@ function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
     );
   }
 
-  function buildEndpoint({ keyword, atoms }: Endpoint) {
+  function buildEndpoint({ keywordType, keyword, atoms }: Endpoint) {
+    buildKeyword(keywordType);
     buildKeyword(keyword);
     atoms.forEach((a) =>
       match(a)
