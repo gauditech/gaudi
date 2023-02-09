@@ -496,8 +496,8 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = getTokenData(this.CONSUME(L.Set));
     const target = this.SUBRULE(this.identifier);
     const set = this.OR([
-      { ALT: () => this.SUBRULE(this.unnamedHook) },
-      { ALT: () => this.SUBRULE(this.expr) },
+      { ALT: (): ActionAtomSet["set"] => this.SUBRULE(this.unnamedHook) },
+      { ALT: (): ActionAtomSet["set"] => ({ kind: "expr", expr: this.SUBRULE(this.expr) }) },
     ]);
 
     return { kind: "set", target, set, keyword };

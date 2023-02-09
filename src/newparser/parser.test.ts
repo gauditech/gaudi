@@ -7,12 +7,12 @@ const folder = "./src/newparser/tests";
 const sources = fs.readdirSync(folder);
 
 describe("parser", () => {
-  test.each(sources)("blueprint tests/%s", (sourceFilename) => {
+  test.each(sources)("parse tests/%s", (sourceFilename) => {
     const sourcePath = path.join(folder, sourceFilename);
-    const blueprint = fs.readFileSync(sourcePath).toString();
+    const source = fs.readFileSync(sourcePath).toString();
 
-    const parsed = parse(blueprint);
+    const result = parse(source);
 
-    console.dir(parsed, { depth: 32 });
+    console.dir(result, { depth: 32 });
   });
 });

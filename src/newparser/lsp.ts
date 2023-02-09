@@ -123,7 +123,7 @@ function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
 }
 
 function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
-  function addToken(token: TokenData, tokenType: number, tokenModifiers = 0) {
+  function addToken(token: TokenData, tokenType: TokenTypes, tokenModifiers: TokenModifiers = 0) {
     const { character, line } = document.positionAt(token.start);
     const length = token.end - token.start;
 
