@@ -1,12 +1,4 @@
 import { match } from "ts-pattern";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import {
-  ProposedFeatures,
-  SemanticTokensBuilder,
-  TextDocumentSyncKind,
-  TextDocuments,
-  createConnection,
-} from "vscode-languageserver/node";
 
 import {
   Action,
@@ -38,19 +30,9 @@ import {
   TokenData,
   UnnamedHook,
   Validator,
-} from "./parsed";
-import { parse } from "./parser";
+} from "../parsed";
 
-const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
-const documents = new TextDocuments(TextDocument);
-
-documents.listen(connection);
-
-documents.onWillSave((_event) => {
-  connection.console.log("On Will save received");
-});
-
-enum TokenTypes {
+export enum TokenTypes {
   namespace = 0,
   type = 1,
   class = 2,
@@ -76,7 +58,7 @@ enum TokenTypes {
   decorator = 22,
 }
 
-enum TokenModifiers {
+export enum TokenModifiers {
   declaration = 1,
   definition = 2,
   readonly = 4,
@@ -89,47 +71,10 @@ enum TokenModifiers {
   defaultLibrary = 512,
 }
 
-connection.onInitialize((params) => {
-  return {
-    capabilities: {
-      textDocumentSync: TextDocumentSyncKind.Full,
-      semanticTokensProvider: {
-        documentSelector: ["gaudi"],
-        legend: {
-          tokenTypes: params.capabilities.textDocument!.semanticTokens!.tokenTypes,
-          tokenModifiers: params.capabilities.textDocument!.semanticTokens!.tokenModifiers,
-        },
-        range: false,
-        full: {
-          delta: false,
-        },
-      },
-    },
-  };
-});
-
-const tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
-documents.onDidClose((event) => {
-  tokenBuilders.delete(event.document.uri);
-});
-function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
-  let result = tokenBuilders.get(document.uri);
-  if (result !== undefined) {
-    return result;
-  }
-  result = new SemanticTokensBuilder();
-  tokenBuilders.set(document.uri, result);
-  return result;
-}
-
-function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
-  function addToken(token: TokenData, tokenType: TokenTypes, tokenModifiers: TokenModifiers = 0) {
-    const { character, line } = document.positionAt(token.start);
-    const length = token.end - token.start + 1;
-
-    builder.push(line, character, length, tokenType, tokenModifiers);
-  }
-
+export function buildTokens(
+  definition: Definition,
+  push: (token: TokenData, tokenType: TokenTypes, tokenModifiers?: TokenModifiers) => void
+) {
   function buildDefinition(definition: Definition) {
     definition.forEach((d) => {
       match(d)
@@ -477,23 +422,17 @@ function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
 
   function buildLiteral(literal: Literal) {
     match(literal)
-      .with({ kind: "integer" }, { kind: "float" }, ({ token }) =>
-        addToken(token, TokenTypes.number)
-      )
+      .with({ kind: "integer" }, { kind: "float" }, ({ token }) => push(token, TokenTypes.number))
       .with({ kind: "boolean" }, { kind: "null" }, ({ token }) =>
-        addToken(
-          token,
-          TokenTypes.variable,
-          TokenModifiers.defaultLibrary | TokenModifiers.readonly
-        )
+        push(token, TokenTypes.variable, TokenModifiers.defaultLibrary | TokenModifiers.readonly)
       )
-      .with({ kind: "string" }, ({ token }) => addToken(token, TokenTypes.string))
+      .with({ kind: "string" }, ({ token }) => push(token, TokenTypes.string))
       .exhaustive();
-    return addToken(literal.token, TokenTypes.variable);
+    return push(literal.token, TokenTypes.variable);
   }
 
   function buildIdentifier(identifier: Identifier) {
-    return addToken(identifier.token, TokenTypes.variable);
+    return push(identifier.token, TokenTypes.variable);
   }
 
   function buildIdentifierAs({ identifier, as }: IdentifierAs) {
@@ -517,26 +456,12 @@ function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
   }
 
   function buildKeyword(keyword: TokenData) {
-    return addToken(keyword, TokenTypes.keyword);
+    return push(keyword, TokenTypes.keyword);
   }
 
   function buildOperator(operator: TokenData) {
-    return addToken(operator, TokenTypes.operator);
+    return push(operator, TokenTypes.operator);
   }
 
-  const source = document.getText();
-  const { ast } = parse(source);
-  if (ast) buildDefinition(ast);
+  buildDefinition(definition);
 }
-
-connection.languages.semanticTokens.on((params) => {
-  const document = documents.get(params.textDocument.uri);
-  if (document === undefined) {
-    return { data: [] };
-  }
-  const builder = getTokenBuilder(document);
-  buildTokens(builder, document);
-  return builder.build();
-});
-
-connection.listen();
