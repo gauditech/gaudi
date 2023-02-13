@@ -28,6 +28,16 @@ entrypoint ItemEntry {
       }
     }
   }
+  custom endpoint {
+    cardinality one
+    method PATCH
+    path "customPath"
+
+    action {
+      update {}
+    }
+  }
+
   entrypoint Review {
     target relation reviews
     create endpoint {}

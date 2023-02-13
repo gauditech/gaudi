@@ -4,7 +4,7 @@ import { composeActionBlock, getInitialContext } from "./actions";
 import { composeExpression } from "./models";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual } from "@src/common/utils";
+import { assertUnreachable, ensureEqual, ensureExists, ensureUnique } from "@src/common/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -12,6 +12,8 @@ import {
   Definition,
   DeleteOneAction,
   EndpointDef,
+  EndpointHttpMethod,
+  EndpointType,
   EntrypointDef,
   FieldSetterReferenceValue,
   FieldsetDef,
@@ -23,7 +25,7 @@ import {
   TargetWithSelectDef,
   TypedExprDef,
 } from "@src/types/definition";
-import { EntrypointSpec } from "@src/types/specification";
+import { EndpointSpec, EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
@@ -179,11 +181,19 @@ function processEndpoints(
   const parentAuthorizes = parents.map((p) => p.authorize.expr);
   const parentAuthorizeDeps = parents.flatMap((p) => p.authorize.deps);
 
+  // ensure there are no duplicate endpoint paths on the same method
+  ensureUnique(
+    entrySpec.endpoints.filter((e) => e.type === "custom").map((ep) => `${ep.method}-${ep.path}`),
+    `Custom endpoint paths with the same HTTP method must be unique in one entrypoint ("${entrySpec.name}")`
+  );
+
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
+    const endpointType = mapEndpointSpecToDefType(endSpec);
+    const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endpointType);
     const actionDeps = collectActionDeps(def, rawActions);
+
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
-    const authorizeContext = getInitialContext(def, targets, endSpec.type);
+    const authorizeContext = getInitialContext(def, targets, endpointType);
     const currentAuthorize = endSpec.authorize
       ? composeExpression(def, endSpec.authorize, [], authorizeContext)
       : undefined;
@@ -199,7 +209,7 @@ function processEndpoints(
     const target = _.last(targetsWithSelect)!;
     const authSelect = getAuthSelect(def, selectDeps);
 
-    switch (endSpec.type) {
+    switch (endpointType) {
       case "get": {
         return {
           kind: "get",
@@ -259,8 +269,80 @@ function processEndpoints(
           response: undefined,
         };
       }
+      case "custom-one": {
+        ensureExists(endSpec.path, `Property "path" is required for custom endpoints`);
+        ensureExists(endSpec.method, `Property "method" is required for custom endpoints`);
+
+        const fieldset = isMethodWithFieldset(endSpec.method)
+          ? fieldsetFromActions(def, actions)
+          : undefined;
+
+        return {
+          kind: "custom-one",
+          method: endSpec.method,
+          path: endSpec.path,
+          actions,
+          parentContext,
+          target,
+          authSelect,
+          authorize,
+          fieldset,
+          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+        };
+      }
+      case "custom-many": {
+        ensureExists(endSpec.path, `Property "path" is required for custom endpoints`);
+        ensureExists(endSpec.method, `Property "method" is required for custom endpoints`);
+
+        const fieldset = isMethodWithFieldset(endSpec.method)
+          ? fieldsetFromActions(def, actions)
+          : undefined;
+
+        return {
+          kind: "custom-many",
+          method: endSpec.method,
+          path: endSpec.path,
+          actions,
+          parentContext,
+          target: _.omit(target, "identifyWith"),
+          authSelect,
+          authorize,
+          fieldset,
+          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+        };
+      }
+      default: {
+        assertUnreachable(endpointType);
+      }
     }
   });
+}
+
+function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
+  switch (method) {
+    case "GET":
+    case "DELETE":
+      return false;
+    case "POST":
+    case "PATCH":
+      return true;
+    default:
+      assertUnreachable(method);
+  }
+}
+
+function mapEndpointSpecToDefType(endSpec: EndpointSpec): EndpointType {
+  if (endSpec.type === "custom") {
+    ensureExists(endSpec.cardinality, `Property "cardinality" is required for custom endpoints`);
+
+    if (endSpec.cardinality === "one") {
+      return "custom-one";
+    } else {
+      return "custom-many";
+    }
+  } else {
+    return endSpec.type;
+  }
 }
 
 export function processSelect(
@@ -524,15 +606,19 @@ export function wrapActionsWithSelect(
   actions: ActionDef[],
   deps: SelectDep[]
 ): ActionDef[] {
-  return actions
-    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
-    .map((a): ActionDef => {
-      const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
-      const model = getRef.model(def, a.model);
+  return (
+    actions
+      // .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+      .map((a): ActionDef => {
+        if (a.kind === "delete-one") return a;
 
-      const select = pathsToSelectDef(def, model, paths, [a.alias]);
-      return { ...a, select };
-    });
+        const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
+        const model = getRef.model(def, a.model);
+
+        const select = pathsToSelectDef(def, model, paths, [a.alias]);
+        return { ...a, select };
+      })
+  );
 }
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {

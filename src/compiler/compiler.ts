@@ -7,6 +7,8 @@ import {
   ActionBodyAST,
   ComputedAST,
   EndpointAST,
+  EndpointCardinality,
+  EndpointMethod,
   EntrypointAST,
   ExpAST,
   FieldAST,
@@ -327,18 +329,35 @@ function compileAction(action: ActionBodyAST): ActionSpec {
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
   let action: ActionSpec[] | undefined;
   let authorize: ExpSpec | undefined;
+  let cardinality: EndpointCardinality | undefined;
+  let method: EndpointMethod | undefined;
+  let path: string | undefined;
 
   endpoint.body.map((b) => {
     if (b.kind === "action") {
       action = b.body.map(compileAction);
     } else if (b.kind === "authorize") {
       authorize = compileQueryExp(b.expression);
+    } else if (b.kind === "cardinality") {
+      cardinality = b.value;
+    } else if (b.kind === "method") {
+      method = b.value;
+    } else if (b.kind === "path") {
+      path = b.value;
     } else {
       assertUnreachable(b);
     }
   });
 
-  return { type: endpoint.type, action, authorize, interval: endpoint.interval };
+  return {
+    type: endpoint.type,
+    action,
+    authorize,
+    cardinality,
+    method,
+    path,
+    interval: endpoint.interval,
+  };
 }
 
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {

@@ -109,14 +109,20 @@ export type SelectAST = WithContext<{
 }>;
 
 export type EndpointAST = WithContext<{
-  type: EndpointType;
+  type: EndpointTypeAST;
   body: EndpointBodyAST[];
 }>;
 
-export type EndpointType = "list" | "get" | "create" | "update" | "delete";
+export type EndpointTypeAST = "list" | "get" | "create" | "update" | "delete" | "custom";
+export type EndpointCardinality = "one" | "many";
+export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 export type EndpointBodyAST = WithContext<
-  { kind: "action"; body: ActionBodyAST[] } | { kind: "authorize"; expression: ExpAST }
+  | { kind: "action"; body: ActionBodyAST[] }
+  | { kind: "authorize"; expression: ExpAST }
+  | { kind: "cardinality"; value: EndpointCardinality }
+  | { kind: "path"; value: string }
+  | { kind: "method"; value: EndpointMethod }
 >;
 
 export type ActionKindAST = "create" | "update" | "delete";

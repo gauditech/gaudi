@@ -8,7 +8,9 @@ import {
   ComputedAST,
   EndpointAST,
   EndpointBodyAST,
-  EndpointType,
+  EndpointCardinality,
+  EndpointMethod,
+  EndpointTypeAST,
   EntrypointAST,
   EntrypointBodyAST,
   ExpAST,
@@ -288,8 +290,8 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  EndpointType(endpointType): EndpointType {
-    return endpointType.sourceString as EndpointType;
+  EndpointType(endpointType): EndpointTypeAST {
+    return endpointType.sourceString as EndpointTypeAST;
   },
   EndpointBody_action(this, _action, _braceL, body, _braceR): EndpointBodyAST {
     return { kind: "action", body: body.parse(), interval: this.source };
@@ -297,6 +299,21 @@ semantics.addOperation("parse()", {
   EndpointBody_authorize(this, _authorize, _braceL, body, _braceR): EndpointBodyAST {
     return { kind: "authorize", expression: body.parse(), interval: this.source };
   },
+
+  EndpointBody_cardinality(this, _cardinality, value): EndpointBodyAST {
+    return {
+      kind: "cardinality",
+      value: value.sourceString as EndpointCardinality,
+      interval: this.source,
+    };
+  },
+  EndpointBody_method(this, _cardinality, value): EndpointBodyAST {
+    return { kind: "method", value: value.sourceString as EndpointMethod, interval: this.source };
+  },
+  EndpointBody_path(this, _cardinality, value): EndpointBodyAST {
+    return { kind: "path", value: value.parse(), interval: this.source };
+  },
+
   Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
     return {
       kind: "hook",

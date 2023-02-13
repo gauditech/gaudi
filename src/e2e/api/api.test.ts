@@ -26,6 +26,8 @@ describe("API endpoints", () => {
       await destroy();
     });
 
+    // --- regular endpoints
+
     it("get", async () => {
       const response = await request(getServer()).get("/org/org1");
 
@@ -78,6 +80,63 @@ describe("API endpoints", () => {
 
       const getResp = await request(getServer()).get("/org/org3");
       expect(getResp.statusCode).toBe(404);
+    });
+
+    // --- custom endpoints
+
+    it("custom get", async () => {
+      const postResp = await request(getServer()).get("/org/org2/customGet").send();
+
+      // custom endpoint return empty body so we can check only status
+      expect(postResp.statusCode).toBe(204);
+    });
+
+    it("custom create", async () => {
+      const data = {
+        name: "Org Custom NEW",
+        slug: "orgCustomNEW",
+        description: "Org custom NEW description",
+      };
+      const postResp = await request(getServer()).post("/org/customCreate").send(data);
+
+      expect(postResp.statusCode).toBe(204);
+
+      // check via standard endpoint
+      const getResp = await request(getServer()).get("/org/orgCustomNEW");
+
+      expect(getResp.statusCode).toBe(200);
+      expect(getResp.body).toMatchSnapshot();
+    });
+
+    it("custom update", async () => {
+      const data = {
+        slug: "org2",
+        name: "Org custom 2A",
+        description: "Org custom 2A description",
+      };
+
+      const patchResp = await request(getServer()).patch("/org/org2/customUpdate").send(data);
+      expect(patchResp.statusCode).toBe(204);
+
+      const getResp = await request(getServer()).get("/org/org2");
+      expect(getResp.statusCode).toBe(200);
+      expect(getResp.body).toMatchSnapshot();
+    });
+
+    // TODO: fix delete actions
+    it("custom delete", async () => {
+      const patchResp = await request(getServer()).delete("/org/org4/customDelete");
+      expect(patchResp.statusCode).toBe(204);
+
+      const getResp = await request(getServer()).get("/org/org4");
+      expect(getResp.statusCode).toBe(404);
+    });
+
+    it("custom list", async () => {
+      const postResp = await request(getServer()).get("/org/customList").send();
+
+      // custom endpoint return empty body so we can check only status
+      expect(postResp.statusCode).toBe(204);
     });
   });
 

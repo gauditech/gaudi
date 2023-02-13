@@ -180,6 +180,334 @@ exports[`custom actions correctly sets parent context 1`] = `
 ]
 `;
 
+exports[`custom actions creates actions in custom endpoint 1`] = `
+[
+  {
+    "actions": [],
+    "authSelect": [],
+    "authorize": undefined,
+    "fieldset": undefined,
+    "kind": "custom-one",
+    "method": "GET",
+    "parentContext": [],
+    "path": "customGet",
+    "response": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+        "refKey": "Org.name",
+      },
+    ],
+    "target": {
+      "alias": "org",
+      "identifyWith": {
+        "name": "id",
+        "paramName": "org_id",
+        "refKey": "Org.id",
+        "type": "integer",
+      },
+      "kind": "model",
+      "name": "Org",
+      "namePath": [
+        "Org",
+      ],
+      "refKey": "Org",
+      "retType": "Org",
+      "select": [],
+    },
+  },
+  {
+    "actions": [
+      {
+        "alias": "$org",
+        "changeset": [
+          {
+            "name": "name",
+            "setter": {
+              "fieldsetAccess": [
+                "name",
+              ],
+              "kind": "fieldset-input",
+              "required": false,
+              "type": "text",
+            },
+          },
+        ],
+        "filter": undefined,
+        "kind": "update-one",
+        "model": "Org",
+        "select": [],
+        "targetPath": [
+          "org",
+        ],
+      },
+    ],
+    "authSelect": [],
+    "authorize": undefined,
+    "fieldset": {
+      "kind": "record",
+      "nullable": false,
+      "record": {
+        "name": {
+          "kind": "field",
+          "nullable": false,
+          "required": false,
+          "type": "text",
+          "validators": [],
+        },
+      },
+    },
+    "kind": "custom-one",
+    "method": "PATCH",
+    "parentContext": [],
+    "path": "customUpdate",
+    "response": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+        "refKey": "Org.name",
+      },
+    ],
+    "target": {
+      "alias": "org",
+      "identifyWith": {
+        "name": "id",
+        "paramName": "org_id",
+        "refKey": "Org.id",
+        "type": "integer",
+      },
+      "kind": "model",
+      "name": "Org",
+      "namePath": [
+        "Org",
+      ],
+      "refKey": "Org",
+      "retType": "Org",
+      "select": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+          "refKey": "Org.id",
+        },
+      ],
+    },
+  },
+  {
+    "actions": [
+      {
+        "kind": "delete-one",
+        "model": "Org",
+        "targetPath": [
+          "org",
+        ],
+      },
+    ],
+    "authSelect": [],
+    "authorize": undefined,
+    "fieldset": undefined,
+    "kind": "custom-one",
+    "method": "DELETE",
+    "parentContext": [],
+    "path": "customDelete",
+    "response": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+        "refKey": "Org.name",
+      },
+    ],
+    "target": {
+      "alias": "org",
+      "identifyWith": {
+        "name": "id",
+        "paramName": "org_id",
+        "refKey": "Org.id",
+        "type": "integer",
+      },
+      "kind": "model",
+      "name": "Org",
+      "namePath": [
+        "Org",
+      ],
+      "refKey": "Org",
+      "retType": "Org",
+      "select": [],
+    },
+  },
+  {
+    "actions": [],
+    "authSelect": [],
+    "authorize": undefined,
+    "fieldset": undefined,
+    "kind": "custom-many",
+    "method": "GET",
+    "parentContext": [],
+    "path": "customList",
+    "response": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+        "refKey": "Org.name",
+      },
+    ],
+    "target": {
+      "alias": "org",
+      "kind": "model",
+      "name": "Org",
+      "namePath": [
+        "Org",
+      ],
+      "refKey": "Org",
+      "retType": "Org",
+      "select": [],
+    },
+  },
+  {
+    "actions": [
+      {
+        "alias": "org",
+        "changeset": [
+          {
+            "name": "name",
+            "setter": {
+              "fieldsetAccess": [
+                "name",
+              ],
+              "kind": "fieldset-input",
+              "required": true,
+              "type": "text",
+            },
+          },
+        ],
+        "kind": "create-one",
+        "model": "Org",
+        "select": [],
+        "targetPath": [
+          "org",
+        ],
+      },
+    ],
+    "authSelect": [],
+    "authorize": undefined,
+    "fieldset": {
+      "kind": "record",
+      "nullable": false,
+      "record": {
+        "name": {
+          "kind": "field",
+          "nullable": false,
+          "required": true,
+          "type": "text",
+          "validators": [],
+        },
+      },
+    },
+    "kind": "custom-many",
+    "method": "POST",
+    "parentContext": [],
+    "path": "customCreate",
+    "response": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+        "refKey": "Org.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+        "refKey": "Org.name",
+      },
+    ],
+    "target": {
+      "alias": "org",
+      "kind": "model",
+      "name": "Org",
+      "namePath": [
+        "Org",
+      ],
+      "refKey": "Org",
+      "retType": "Org",
+      "select": [],
+    },
+  },
+]
+`;
+
 exports[`custom actions sets default action if not given 1`] = `
 [
   {

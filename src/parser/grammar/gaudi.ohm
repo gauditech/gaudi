@@ -132,10 +132,22 @@ Gaudi {
     | "create"
     | "update"
     | "delete"
+    | "custom"
+
+  EndpointMethod
+   = "GET"
+   | "POST"
+   | "PATCH"
+   | "DELETE"
+
+  EndpointCardinality = "one" | "many"
 
   EndpointBody
     = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
     | "authorize" "{" QueryExp "}" -- authorize
+    | "cardinality" EndpointCardinality -- cardinality
+    | "method" EndpointMethod -- method
+    | "path" string -- path
 
 
   ActionKind = "create" | "update" | "delete"

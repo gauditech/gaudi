@@ -10,15 +10,15 @@ export function ensureFind<T>(
   return r;
 }
 
-export function ensureUnique(items: string[]): void {
+export function ensureUnique(items: string[], message?: string): void {
   if (items.length > new Set(items).size) {
-    throw new Error(`Items not unique!`);
+    throw new Error(message ?? `Items not unique!`);
   }
 }
 
-export function ensureExists<I>(item: I | null | undefined): asserts item is I {
+export function ensureExists<I>(item: I | null | undefined, message?: string): asserts item is I {
   if (item === null || item === undefined) {
-    throw new Error(`Expected a value, found ${item}`);
+    throw new Error(message ?? `Expected a value, found ${item}`);
   }
 }
 
