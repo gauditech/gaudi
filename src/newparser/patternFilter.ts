@@ -40,14 +40,22 @@ export function kindFilter<
   ) as any;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type Narrowable2 = string | number | boolean | symbol | object | undefined | void | null | {};
-export function kindFilter2<
-  i extends { kind: Narrowable2 },
-  k2 extends i["kind"],
-  k extends Pattern<k2>
->(input: i[], kind: k): MatchedValue<i, InvertPattern<{ kind: k }>>[] {
-  return input.filter((i) =>
+export function patternFind<i, p extends Pattern<ShallowNarrowed<i>>>(
+  input: i[],
+  pattern: p
+): MatchedValue<i, InvertPattern<p>> | undefined {
+  return input.find((i) =>
+    match(i)
+      .with(pattern as any, () => true)
+      .otherwise(() => false)
+  ) as any;
+}
+
+export function kindFind<
+  i extends { kind: unknown },
+  k extends Pattern<ShallowNarrowed<i["kind"]>>
+>(input: i[], kind: k): MatchedValue<i, InvertPattern<{ kind: k }>> | undefined {
+  return input.find((i) =>
     match(i.kind)
       .with(kind, () => true)
       .otherwise(() => false)
