@@ -180,6 +180,7 @@ Gaudi {
   | "returns" identifier                -- return_type
   | "source" identifier "from" string   -- source
   | "inline" multiLineString            -- inline
+  | "runtime" identifier                -- executionRuntime
 
   HookQuery
     = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"

@@ -765,8 +765,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
               "actionAtoms": [
                 {
                   "interval": {
-                    "endIdx": 558,
-                    "startIdx": 460,
+                    "endIdx": 584,
+                    "startIdx": 486,
                   },
                   "kind": "set",
                   "set": {
@@ -778,8 +778,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                               "fieldTwo",
                             ],
                             "interval": {
-                              "endIdx": 509,
-                              "startIdx": 501,
+                              "endIdx": 535,
+                              "startIdx": 527,
                             },
                             "kind": "identifier",
                           },
@@ -789,11 +789,12 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                       "code": {
                         "file": "customHook",
                         "kind": "source",
+                        "runtimeName": undefined,
                         "target": "foo",
                       },
                       "interval": {
-                        "endIdx": 558,
-                        "startIdx": 473,
+                        "endIdx": 584,
+                        "startIdx": 499,
                       },
                       "name": undefined,
                     },
@@ -809,8 +810,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
           ],
           "authorize": undefined,
           "interval": {
-            "endIdx": 576,
-            "startIdx": 406,
+            "endIdx": 602,
+            "startIdx": 432,
           },
           "type": "create",
         },
@@ -818,8 +819,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       "entrypoints": [],
       "identify": undefined,
       "interval": {
-        "endIdx": 578,
-        "startIdx": 361,
+        "endIdx": 604,
+        "startIdx": 387,
       },
       "name": "UserEntry",
       "response": undefined,
@@ -838,7 +839,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 165,
+            "endIdx": 191,
             "startIdx": 15,
           },
           "name": "fieldOne",
@@ -852,16 +853,17 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                 "code": {
                   "file": "customValidateHook",
                   "kind": "source",
+                  "runtimeName": "MyRuntime",
                   "target": "foo",
                 },
                 "interval": {
-                  "endIdx": 155,
+                  "endIdx": 181,
                   "startIdx": 67,
                 },
                 "name": undefined,
               },
               "interval": {
-                "endIdx": 155,
+                "endIdx": 181,
                 "startIdx": 67,
               },
               "kind": "hook",
@@ -871,8 +873,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 357,
-            "startIdx": 168,
+            "endIdx": 383,
+            "startIdx": 194,
           },
           "name": "fieldTwo",
           "nullable": undefined,
@@ -889,14 +891,14 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                   "kind": "inline",
                 },
                 "interval": {
-                  "endIdx": 347,
-                  "startIdx": 220,
+                  "endIdx": 373,
+                  "startIdx": 246,
                 },
                 "name": undefined,
               },
               "interval": {
-                "endIdx": 347,
-                "startIdx": 220,
+                "endIdx": 373,
+                "startIdx": 246,
               },
               "kind": "hook",
             },
@@ -905,7 +907,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       ],
       "hooks": [],
       "interval": {
-        "endIdx": 359,
+        "endIdx": 385,
         "startIdx": 0,
       },
       "isAuth": false,

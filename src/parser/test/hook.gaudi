@@ -4,6 +4,7 @@ model User {
     validate {
       hook {
         default arg fieldOne
+        runtime MyRuntime
         source foo from "customValidateHook"
       }
     }

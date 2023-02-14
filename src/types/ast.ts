@@ -162,6 +162,7 @@ export type HookBodyAST = WithContext<
   | { kind: "returnType"; type: string }
   | { kind: "source"; target: string; file: string }
   | { kind: "inline"; inline: string }
+  | { kind: "execution-runtime"; name: string }
 >;
 
 export type HookArgValueAST = WithContext<

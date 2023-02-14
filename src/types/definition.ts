@@ -511,7 +511,7 @@ export type FieldSetter =
 
 export type HookCodeDef =
   | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string };
+  | { kind: "source"; target: string; file: string; runtimeName?: string };
 
 export type ExecutionRuntimeDef = {
   name: string;

@@ -388,17 +388,24 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
 function compileBaseHook(hook: HookAST): BaseHookSpec {
   const name = hook.name;
   let code: HookCodeSpec | undefined;
+  let runtimeName: string | undefined;
 
   hook.body.forEach((b) => {
     if (b.kind === "inline") {
       code = { kind: "inline", inline: b.inline };
     } else if (b.kind === "source") {
       code = { kind: "source", target: b.target, file: b.file };
+    } else if (b.kind === "execution-runtime") {
+      runtimeName = b.name;
     }
   });
 
   if (!code) {
     throw new CompilerError("'hook' needs to have 'source' or 'inline'", hook);
+  }
+
+  if (code.kind === "source") {
+    code.runtimeName = runtimeName;
   }
 
   return {

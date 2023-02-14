@@ -16,10 +16,11 @@ export function compose(input: Specification): Definition {
     populators: [],
     runtimes: [],
   };
+  // runtimes can be composed first because they don't have external deps
+  composeExecutionRuntimes(def, input.runtimes);
   composeModels(def, input.models);
   composeEntrypoints(def, input.entrypoints);
   composePopulators(def, input.populators);
-  composeExecutionRuntimes(def, input.runtimes);
 
   return def;
 }

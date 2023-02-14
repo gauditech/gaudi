@@ -19,4 +19,20 @@ describe("execution runtime composer", () => {
 
     expect(runtimes).toMatchSnapshot();
   });
+
+  it("fails on duplicate runtime names", () => {
+    const bp = `
+       runtime DuplicateRuntime {
+        sourcePath "./some/path/to/file1.js"
+      }
+
+      runtime DuplicateRuntime {
+        sourcePath "./some/path/to/file2.js"
+      }
+    `;
+
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Execution runtime names must be unique"`
+    );
+  });
 });

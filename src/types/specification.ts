@@ -113,7 +113,7 @@ export type ActionAtomSpec = WithContext<
 
 export type HookCodeSpec =
   | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string };
+  | { kind: "source"; target: string; file: string; runtimeName?: string };
 
 export type ActionAtomSpecSetHook = { kind: "hook"; hook: ActionHookSpec };
 export type ActionAtomSpecSetExp = { kind: "expression"; exp: ExpSpec };

@@ -5,6 +5,7 @@ import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
+import { composeHookCode } from "@src/composer/hooks";
 import {
   NamePath,
   getDirectChildren,
@@ -246,7 +247,7 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
     primary: false,
     unique: !!fspec.unique,
     nullable: !!fspec.nullable,
-    validators: validatorSpecsToDefs(type, fspec.validators),
+    validators: validatorSpecsToDefs(def, type, fspec.validators),
   };
   mdef.fields.push(f);
   def.resolveOrder.push(f.refKey);
@@ -271,6 +272,7 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
 }
 
 function validatorSpecsToDefs(
+  def: Definition,
   fieldType: FieldDef["type"],
   vspecs: FieldSpec["validators"]
 ): ValidatorDef[] {
@@ -278,7 +280,7 @@ function validatorSpecsToDefs(
 
   return vspecs.map((vspec): ValidatorDef => {
     if (vspec.kind === "hook") {
-      return { name: "hook", code: vspec.hook.code, arg: vspec.hook.arg };
+      return { name: "hook", code: composeHookCode(def, vspec.hook.code), arg: vspec.hook.arg };
     }
 
     const name = vspec.name;
@@ -424,7 +426,7 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
     refKey,
     name: hspec.name,
     args,
-    code: hspec.code,
+    code: composeHookCode(def, hspec.code),
   };
   mdef.hooks.push(h);
   def.resolveOrder.push(h.refKey);

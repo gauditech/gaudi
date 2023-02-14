@@ -351,6 +351,13 @@ semantics.addOperation("parse()", {
   HookBody_inline(this, _inline, inlineString): HookBodyAST {
     return { kind: "inline", inline: inlineString.parse(), interval: this.source };
   },
+  HookBody_executionRuntime(this, _runtime, name): HookBodyAST {
+    return {
+      kind: "execution-runtime",
+      name: name.parse(),
+      interval: this.source,
+    };
+  },
   HookQuery(this, _query, _parenL, body, _parenR): HookQueryAST {
     return {
       kind: "query",
