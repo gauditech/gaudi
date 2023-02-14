@@ -90,7 +90,7 @@ exports[`API endpoints Org update 1`] = `
 
 exports[`API endpoints Repo create 1`] = `
 {
-  "description": "Repo 6 description",
+  "description": "Description: Repo 6 description",
   "id": 6,
   "org_id": 1,
   "slug": "org_1-W5JU1e0Kj1Kv",

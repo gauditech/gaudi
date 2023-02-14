@@ -107,7 +107,7 @@ describe("API endpoints", () => {
       const data = {
         name: "Repo 6",
         slug: "repo6",
-        description: "Repo 6 description",
+        raw_description: "Repo 6 description",
         is_public: true,
       };
       const postResp = await request(getServer()).post("/org/org1/repos").send(data);
