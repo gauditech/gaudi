@@ -1,5 +1,4 @@
 import { BinaryOperator } from "./ast";
-import { HookCode } from "./specification";
 
 export type Definition = {
   auth?: AuthDef;
@@ -108,7 +107,7 @@ export type ModelHookDef = {
   refKey: string;
   name: string;
   args: { name: string; query: QueryDef }[];
-  code: HookCode;
+  code: HookCodeDef;
 };
 
 type NaiveType = {
@@ -270,7 +269,7 @@ export type SelectHookItem = {
   alias: string;
   namePath: string[];
   args: { name: string; query: QueryDef }[];
-  code: HookCode;
+  code: HookCodeDef;
 };
 
 export type DeepSelectItem = {
@@ -381,7 +380,7 @@ export interface IsTextEqual extends IValidatorDef {
 export interface HookValidator {
   name: "hook";
   arg?: string;
-  code: HookCode;
+  code: HookCodeDef;
 }
 export interface NoReferenceValidator {
   name: "noReference";
@@ -494,7 +493,7 @@ export type FieldSetterContextReference = {
 
 export type FieldSetterHook = {
   kind: "fieldset-hook";
-  code: HookCode;
+  code: HookCodeDef;
   args: ChangesetDef;
 };
 
@@ -508,3 +507,7 @@ export type FieldSetter =
   | FieldSetterHook
   | FieldSetterFunction
   | FieldSetterContextReference;
+
+export type HookCodeDef =
+  | { kind: "inline"; inline: string }
+  | { kind: "source"; target: string; file: string };

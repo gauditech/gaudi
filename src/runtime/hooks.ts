@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-import { HookCode } from "@src/types/specification";
+import { HookCodeDef } from "@src/types/definition";
 
 export type HookModules = Record<string, Record<string, (...args: unknown[]) => unknown>>;
 
@@ -41,7 +41,7 @@ function loadFileAsModule(filepath: string) {
   return require(absolute);
 }
 
-export async function executeHook(code: HookCode, args: Record<string, unknown>) {
+export async function executeHook(code: HookCodeDef, args: Record<string, unknown>) {
   switch (code.kind) {
     case "inline": {
       // order of args must be consistent

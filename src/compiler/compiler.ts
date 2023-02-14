@@ -32,7 +32,7 @@ import {
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
-  HookCode,
+  HookCodeSpec,
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,
@@ -385,7 +385,7 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
 
 function compileBaseHook(hook: HookAST): BaseHookSpec {
   const name = hook.name;
-  let code: HookCode | undefined;
+  let code: HookCodeSpec | undefined;
 
   hook.body.forEach((b) => {
     if (b.kind === "inline") {

@@ -110,7 +110,7 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecInput
 >;
 
-export type HookCode =
+export type HookCodeSpec =
   | { kind: "inline"; inline: string }
   | { kind: "source"; target: string; file: string };
 
@@ -136,7 +136,7 @@ export type InputFieldSpec = {
 
 export type BaseHookSpec = WithContext<{
   name?: string;
-  code: HookCode;
+  code: HookCodeSpec;
 }>;
 
 export type RepeaterSpec = WithContext<

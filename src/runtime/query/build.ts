@@ -7,6 +7,7 @@ import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
   Definition,
+  HookCodeDef,
   ModelDef,
   QueryDef,
   QueryOrderByAtomDef,
@@ -16,7 +17,6 @@ import {
   SelectableItem,
   TypedExprDef,
 } from "@src/types/definition";
-import { HookCode } from "@src/types/specification";
 
 // FIXME introduce Queryable with SelectableItem[]?
 export type QueryTree = {
@@ -26,7 +26,7 @@ export type QueryTree = {
   hooks: {
     name: string;
     args: { name: string; query: QueryTree }[];
-    code: HookCode;
+    code: HookCodeDef;
   }[];
   related: QueryTree[];
 };
