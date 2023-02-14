@@ -181,10 +181,10 @@ function processEndpoints(
   const parentAuthorizes = parents.map((p) => p.authorize.expr);
   const parentAuthorizeDeps = parents.flatMap((p) => p.authorize.deps);
 
-  // ensure there are no duplicate endpoint paths on the same method
+  // ensure there are no duplicate custom endpoint paths on the same method
   ensureUnique(
     entrySpec.endpoints.filter((e) => e.type === "custom").map((ep) => `${ep.method}-${ep.path}`),
-    `Custom endpoint paths with the same HTTP method must be unique in one entrypoint ("${entrySpec.name}")`
+    `Custom endpoints on the same HTTP method must have unique paths in one entrypoint ("${entrySpec.name}")`
   );
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {

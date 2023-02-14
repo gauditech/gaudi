@@ -495,7 +495,7 @@ describe("custom actions", () => {
       `;
 
     expect(() => compose(compile(parse(bp)))).toThrowError(
-      `Custom endpoint paths with the same HTTP method must be unique in one entrypoint ("Orgs")`
+      `Custom endpoints on the same HTTP method must have unique paths in one entrypoint ("Orgs")`
     );
   });
 });
