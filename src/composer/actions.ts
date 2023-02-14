@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
+import { composeValidators, validateType } from "./models";
 import {
   VarContext,
   getTypedIterator,
@@ -317,6 +318,19 @@ function composeSingleAction(
     fieldsetNamespace: string[]
   ): ChangesetOperationDef {
     switch (atom.kind) {
+      case "virtual-input": {
+        return {
+          name: atom.name,
+          setter: {
+            kind: "fieldset-virtual-input",
+            type: validateType(atom.type),
+            required: !atom.optional,
+            nullable: atom.nullable,
+            fieldsetAccess: [...fieldsetNamespace, atom.name],
+            validators: composeValidators(validateType(atom.type), atom.validators),
+          },
+        };
+      }
       case "input": {
         const field = getRef.field(def, model.name, atom.fieldSpec.name);
         return {

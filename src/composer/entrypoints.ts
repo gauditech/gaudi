@@ -180,7 +180,7 @@ function processEndpoints(
   const parentAuthorizeDeps = parents.flatMap((p) => p.authorize.deps);
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
+    const rawActions = composeActionBlock(def, endSpec.actions ?? [], targets, endSpec.type);
     const actionDeps = collectActionDeps(def, rawActions);
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
     const authorizeContext = getInitialContext(def, targets, endSpec.type);
