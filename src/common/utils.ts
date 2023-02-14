@@ -10,9 +10,9 @@ export function ensureFind<T>(
   return r;
 }
 
-export function ensureUnique(items: string[]): void {
+export function ensureUnique(items: string[], message?: string): void {
   if (items.length > new Set(items).size) {
-    throw new Error(`Items not unique!`);
+    throw new Error(message ?? `Items not unique!`);
   }
 }
 
