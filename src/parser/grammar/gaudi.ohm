@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Populator), ";">
+    = NewlineBody<(Model | Entrypoint | Populator | ExecutionRuntime), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -267,4 +267,15 @@ Gaudi {
 
   RepeaterRangeAtom
     = ("start" | "end") integer -- limits
+
+
+  // ********************
+  // Execution Runtime
+  // ********************
+
+  ExecutionRuntime
+   = "runtime" identifier "{" NonemptyNewlineBody<ExecutionRuntimeBody, ","> "}"
+
+  ExecutionRuntimeBody
+   = "sourcePath" string -- sourcePath
 }

@@ -16,9 +16,9 @@ export function ensureUnique(items: string[]): void {
   }
 }
 
-export function ensureExists<I>(item: I | null | undefined): asserts item is I {
+export function ensureExists<I>(item: I | null | undefined, message?: string): asserts item is I {
   if (item === null || item === undefined) {
-    throw new Error(`Expected a value, found ${item}`);
+    throw new Error(message ?? `Expected a value, found ${item}`);
   }
 }
 

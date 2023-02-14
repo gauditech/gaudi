@@ -6,6 +6,7 @@ export type Definition = {
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
   populators: PopulatorDef[];
+  runtimes: ExecutionRuntimeDef[];
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -511,3 +512,11 @@ export type FieldSetter =
 export type HookCodeDef =
   | { kind: "inline"; inline: string }
   | { kind: "source"; target: string; file: string };
+
+export type ExecutionRuntimeDef = {
+  name: string;
+  type: RuntimeEngineType;
+  sourcePath: string;
+};
+
+export type RuntimeEngineType = "node";

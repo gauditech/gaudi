@@ -1,0 +1,4 @@
+
+runtime MyRuntime {
+  sourcePath "some/path/to/file.js"
+}

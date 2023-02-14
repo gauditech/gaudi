@@ -11,6 +11,8 @@ import {
   EndpointType,
   EntrypointAST,
   EntrypointBodyAST,
+  ExecutionRuntimeAST,
+  ExecutionRuntimeBodyAtomAST,
   ExpAST,
   FieldAST,
   FieldBodyAST,
@@ -37,6 +39,17 @@ import {
   SelectAST,
   ValidatorAST,
 } from "@src/types/ast";
+
+export function parse(input: string): AST {
+  const m = grammar.match(input);
+  if (!m.succeeded()) {
+    throw Error(m.message);
+  }
+
+  const ast: AST = semantics(m).parse();
+
+  return ast;
+}
 
 const semantics = grammar.createSemantics();
 
@@ -574,15 +587,22 @@ semantics.addOperation("parse()", {
       value: interval.parse(),
     };
   },
+
+  // ----- Execution Runtime
+
+  ExecutionRuntime(this, _runtime, name, _lbrace, body, _rbrace): ExecutionRuntimeAST {
+    return {
+      kind: "execution-runtime",
+      name: name.sourceString,
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+
+  ExecutionRuntimeBody_sourcePath(this, _hookPath, value): ExecutionRuntimeBodyAtomAST {
+    return {
+      kind: "sourcePath",
+      value: value.sourceString,
+    };
+  },
 });
-
-export function parse(input: string): AST {
-  const m = grammar.match(input);
-  if (!m.succeeded()) {
-    throw Error(m.message);
-  }
-
-  const ast: AST = semantics(m).parse();
-
-  return ast;
-}

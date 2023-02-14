@@ -1,13 +1,14 @@
 import _ from "lodash";
 
 import { CompilerError } from "@src/common/error";
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureExists } from "@src/common/utils";
 import {
   AST,
   ActionBodyAST,
   ComputedAST,
   EndpointAST,
   EntrypointAST,
+  ExecutionRuntimeAST,
   ExpAST,
   FieldAST,
   HookAST,
@@ -29,6 +30,7 @@ import {
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
+  ExecutionRuntimeSpec,
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
@@ -567,10 +569,29 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
   };
 }
 
+function compileExecutionRuntime(runtime: ExecutionRuntimeAST): ExecutionRuntimeSpec {
+  const name = runtime.name;
+  let hookPath: string | undefined;
+
+  runtime.body.forEach((atom) => {
+    if (atom.kind === "sourcePath") {
+      hookPath = atom.value;
+    } else {
+      assertUnreachable(atom.kind);
+    }
+  });
+
+  ensureExists(name, "Runtime name cannot be empty");
+  ensureExists(hookPath, "Runtime hook path cannot be empty");
+
+  return { name, sourcePath: hookPath };
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
   const populators: PopulatorSpec[] = [];
+  const runtimes: ExecutionRuntimeSpec[] = [];
 
   input.map((definition) => {
     const kind = definition.kind;
@@ -580,6 +601,8 @@ export function compile(input: AST): Specification {
       entrypoints.push(compileEntrypoint(definition));
     } else if (kind === "populator") {
       populators.push(compilePopulator(definition));
+    } else if (kind === "execution-runtime") {
+      runtimes.push(compileExecutionRuntime(definition));
     } else {
       assertUnreachable(kind);
     }
@@ -587,5 +610,5 @@ export function compile(input: AST): Specification {
 
   checkMaxOneAuthModel(models);
 
-  return { models, entrypoints, populators };
+  return { models, entrypoints, populators, runtimes };
 }

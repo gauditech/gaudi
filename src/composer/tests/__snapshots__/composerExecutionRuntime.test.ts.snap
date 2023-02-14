@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`execution runtime composer compose execution runtime 1`] = `
+[
+  {
+    "name": "MyRuntime1",
+    "sourcePath": ""./some/path/to/file1.js"",
+    "type": "node",
+  },
+  {
+    "name": "MyRuntime2",
+    "sourcePath": ""./some/path/to/file2.js"",
+    "type": "node",
+  },
+]
+`;

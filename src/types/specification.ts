@@ -6,6 +6,7 @@ export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
+  runtimes: ExecutionRuntimeSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -176,3 +177,10 @@ export type ModelHookSpec = BaseHookSpec & {
 export type ActionHookSpec = BaseHookSpec & {
   args: Record<string, { kind: "expression"; exp: ExpSpec }>;
 };
+
+// ----- Execution Runtime
+
+export type ExecutionRuntimeSpec = WithContext<{
+  name: string;
+  sourcePath: string;
+}>;
