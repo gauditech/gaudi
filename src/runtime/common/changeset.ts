@@ -36,7 +36,7 @@ export async function buildChangeset(
       }
       case "fieldset-hook": {
         const args = await buildChangeset(setter.args, actionContext, changeset);
-        return await executeHook(setter.code, args);
+        return await executeHook(setter.hook, args);
       }
       case "changeset-reference": {
         /**

@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-import { HookCodeDef } from "@src/types/definition";
+import { HookDef } from "@src/types/definition";
 
 export type HookModules = Record<string, Record<string, (...args: unknown[]) => unknown>>;
 
@@ -41,8 +41,8 @@ function loadFileAsModule(filepath: string) {
   return require(absolute);
 }
 
-export async function executeHook(code: HookCodeDef, args: Record<string, unknown>) {
-  switch (code.kind) {
+export async function executeHook(hook: HookDef, args: Record<string, unknown>) {
+  switch (hook.code.kind) {
     case "inline": {
       // order of args must be consistent
       const argNames = Object.entries(args).map(([name, _value]) => name);
@@ -52,7 +52,7 @@ export async function executeHook(code: HookCodeDef, args: Record<string, unknow
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
         "'use strict'",
         // hook fn body
-        `return ${code.inline}`,
+        `return ${hook.code.inline}`,
       ].join("\n");
 
       // dynamically create new function
@@ -67,12 +67,12 @@ export async function executeHook(code: HookCodeDef, args: Record<string, unknow
     }
     case "source": {
       //
-      const hook = modules[code.file][code.target];
-      if (hook == null) {
-        throw new Error(`Hook "${code.target}" in file "${code.file}" not found`);
+      const hookFn = modules[hook.code.file][hook.code.target];
+      if (hookFn == null) {
+        throw new Error(`Hook "${hook.code.target}" in file "${hook.code.file}" not found`);
       }
 
-      return hook(args);
+      return hookFn(args);
     }
   }
 }

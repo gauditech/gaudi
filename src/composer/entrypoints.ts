@@ -311,7 +311,7 @@ export function processSelect(
           alias: name,
           namePath: [...namePath, name],
           args: ref.args,
-          code: ref.code,
+          hook: ref.hook,
         };
       } else if (ref.kind === "computed") {
         return {

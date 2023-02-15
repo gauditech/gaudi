@@ -17,7 +17,7 @@ import {
   ensureThrow,
   safeInvoke,
 } from "@src/common/utils";
-import { composeHookCode } from "@src/composer/hooks";
+import { composeHook } from "@src/composer/hooks";
 import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
@@ -302,7 +302,7 @@ function composeSingleAction(
           .value();
         return {
           name: atom.target,
-          setter: { kind: "fieldset-hook", code: composeHookCode(def, atom.set.hook.code), args },
+          setter: { kind: "fieldset-hook", hook: composeHook(def, atom.set.hook), args },
         };
       }
       case "expression": {

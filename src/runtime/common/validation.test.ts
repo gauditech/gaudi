@@ -250,7 +250,15 @@ describe("runtime", () => {
               {
                 name: "hook",
                 arg: "value",
-                code: { kind: "inline", inline: "value === 'expected text'" },
+                hook: {
+                  runtime: {
+                    name: "TestRuntime",
+                    default: true,
+                    sourcePath: "./test/hooks",
+                    type: "node",
+                  },
+                  code: { kind: "inline", inline: "value === 'expected text'" },
+                },
               },
             ],
           },

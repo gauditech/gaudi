@@ -3,6 +3,8 @@ import path from "path";
 import { executeHook, importHooks } from "@src/runtime/hooks";
 
 describe("hooks", () => {
+  const hooksPath = path.join(__dirname, "./test/hooks");
+
   /*
    * Using math division as a test operation:
    *  - tests multiple arguments
@@ -11,10 +13,13 @@ describe("hooks", () => {
 
   describe("external hooks", () => {
     it("should resolve static value", async () => {
-      await importHooks(path.join(__dirname, "./test/hooks"));
+      await importHooks(hooksPath);
 
       const result = await executeHook(
-        { kind: "source", target: "divideStatic", file: "hooks.js" },
+        {
+          runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },
+          code: { kind: "source", target: "divideStatic", file: "hooks.js" },
+        },
         { x: 6, y: 2 }
       );
 
@@ -22,10 +27,13 @@ describe("hooks", () => {
     });
 
     it("should resolve promise value", async () => {
-      await importHooks(path.join(__dirname, "./test/hooks"));
+      await importHooks(hooksPath);
 
       const result = await executeHook(
-        { kind: "source", target: "divideAsync", file: "hooks.js" },
+        {
+          runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },
+          code: { kind: "source", target: "divideAsync", file: "hooks.js" },
+        },
         { x: 6, y: 2 }
       );
 
@@ -35,14 +43,27 @@ describe("hooks", () => {
 
   describe("inline hooks", () => {
     it("should resolve static value", async () => {
-      const result = await executeHook({ kind: "inline", inline: "x / y" }, { x: 6, y: 2 });
+      await importHooks(hooksPath);
+
+      const result = await executeHook(
+        {
+          runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },
+          code: { kind: "inline", inline: "x / y" },
+        },
+        { x: 6, y: 2 }
+      );
 
       expect(result).toBe(3);
     });
 
     it("should resolve promise value", async () => {
+      await importHooks(hooksPath);
+
       const result = await executeHook(
-        { kind: "inline", inline: "Promise.resolve(x / y)" },
+        {
+          runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },
+          code: { kind: "inline", inline: "Promise.resolve(x / y)" },
+        },
         { x: 6, y: 2 }
       );
 

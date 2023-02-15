@@ -790,7 +790,6 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                       "code": {
                         "file": "customHook",
                         "kind": "source",
-                        "runtimeName": undefined,
                         "target": "foo",
                       },
                       "interval": {
@@ -798,6 +797,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                         "startIdx": 499,
                       },
                       "name": undefined,
+                      "runtimeName": undefined,
                     },
                     "kind": "hook",
                   },
@@ -854,7 +854,6 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                 "code": {
                   "file": "customValidateHook",
                   "kind": "source",
-                  "runtimeName": "MyRuntime",
                   "target": "foo",
                 },
                 "interval": {
@@ -862,6 +861,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                   "startIdx": 67,
                 },
                 "name": undefined,
+                "runtimeName": "MyRuntime",
               },
               "interval": {
                 "endIdx": 181,
@@ -896,6 +896,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                   "startIdx": 246,
                 },
                 "name": undefined,
+                "runtimeName": undefined,
               },
               "interval": {
                 "endIdx": 373,

@@ -3,6 +3,10 @@ import { compile, compose, parse } from "@src/index";
 describe("populator composer", () => {
   it("succeeds for simple populator", () => {
     const bp = `
+    runtime MyRuntime {
+      sourcePath "./some/path"
+    }
+
     model Org {
       field slug { type text }
       field name { type text }
@@ -189,6 +193,10 @@ describe("populator composer", () => {
 
   it("succeeds with iterator variables in the context", () => {
     const bp = `
+      runtime MyRuntime {
+        sourcePath "./some/path"
+      }
+
       model Org {
         field name { type text }
         field name2 { type text }

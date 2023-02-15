@@ -4,6 +4,7 @@ import {
   AggregateDef,
   ComputedDef,
   Definition,
+  ExecutionRuntimeDef,
   FieldDef,
   ModelDef,
   ModelHookDef,
@@ -197,6 +198,13 @@ export function getTargetModel(def: Definition, refKey: string): ModelDef {
     default:
       throw new Error(`Kind ${prop.kind} not supported`);
   }
+}
+
+export function getExecutionRuntime(def: Definition, name: string): ExecutionRuntimeDef {
+  const runtime = def.runtimes.find((r) => r.name === name);
+  if (runtime == null) throw new Error(`Execution runtime not found ${name}`);
+
+  return runtime;
 }
 
 /**

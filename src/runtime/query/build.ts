@@ -7,7 +7,7 @@ import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import {
   DeepSelectItem,
   Definition,
-  HookCodeDef,
+  HookDef,
   ModelDef,
   QueryDef,
   QueryOrderByAtomDef,
@@ -26,7 +26,7 @@ export type QueryTree = {
   hooks: {
     name: string;
     args: { name: string; query: QueryTree }[];
-    code: HookCodeDef;
+    hook: HookDef;
   }[];
   related: QueryTree[];
 };
@@ -197,7 +197,7 @@ export function getFilterPaths(filter: TypedExprDef): string[][] {
 
 export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
-  const hooks = selectToHooks(q.select).map(({ name, args, code }) => ({
+  const hooks = selectToHooks(q.select).map(({ name, args, hook }) => ({
     name,
     args: args.map(({ name, query }) => {
       // apply a batching filter
@@ -211,7 +211,7 @@ export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
         query: buildQueryTree(def, { ...query, filter, select }),
       };
     }),
-    code,
+    hook,
   }));
   const model = getRef.model(def, query.retType);
 

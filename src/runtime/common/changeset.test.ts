@@ -65,9 +65,17 @@ describe("runtime", () => {
               { name: "x", setter: { kind: "literal", type: "integer", value: 6 } },
               { name: "y", setter: { kind: "literal", type: "integer", value: 2 } },
             ],
-            code: {
-              kind: "inline",
-              inline: "x / y",
+            hook: {
+              runtime: {
+                name: "TestRuntime",
+                default: true,
+                sourcePath: "./test/hooks",
+                type: "node",
+              },
+              code: {
+                kind: "inline",
+                inline: "x / y",
+              },
             },
           },
         },

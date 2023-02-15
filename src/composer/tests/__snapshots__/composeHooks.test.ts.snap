@@ -14,9 +14,17 @@ exports[`compose hooks composes inline hooks 1`] = `
                   "name": "name",
                   "setter": {
                     "args": [],
-                    "code": {
-                      "inline": ""test name"",
-                      "kind": "inline",
+                    "hook": {
+                      "code": {
+                        "inline": ""test name"",
+                        "kind": "inline",
+                      },
+                      "runtime": {
+                        "default": true,
+                        "name": "MyRuntime",
+                        "sourcePath": ""some/path/to/file"",
+                        "type": "node",
+                      },
                     },
                     "kind": "fieldset-hook",
                   },
@@ -127,9 +135,17 @@ exports[`compose hooks composes inline hooks 1`] = `
           "validators": [
             {
               "arg": "name",
-              "code": {
-                "inline": ""test name"",
-                "kind": "inline",
+              "hook": {
+                "code": {
+                  "inline": ""test name"",
+                  "kind": "inline",
+                },
+                "runtime": {
+                  "default": true,
+                  "name": "MyRuntime",
+                  "sourcePath": ""some/path/to/file"",
+                  "type": "node",
+                },
               },
               "name": "hook",
             },
@@ -139,9 +155,17 @@ exports[`compose hooks composes inline hooks 1`] = `
       "hooks": [
         {
           "args": [],
-          "code": {
-            "inline": ""some description"",
-            "kind": "inline",
+          "hook": {
+            "code": {
+              "inline": ""some description"",
+              "kind": "inline",
+            },
+            "runtime": {
+              "default": true,
+              "name": "MyRuntime",
+              "sourcePath": ""some/path/to/file"",
+              "type": "node",
+            },
           },
           "kind": "model-hook",
           "name": "description",
@@ -193,11 +217,18 @@ exports[`compose hooks composes source hooks 1`] = `
                   "name": "name",
                   "setter": {
                     "args": [],
-                    "code": {
-                      "file": "hooks.js",
-                      "kind": "source",
-                      "runtimeName": "MyRuntime",
-                      "target": "someHook",
+                    "hook": {
+                      "code": {
+                        "file": "hooks.js",
+                        "kind": "source",
+                        "target": "someHook",
+                      },
+                      "runtime": {
+                        "default": true,
+                        "name": "MyRuntime",
+                        "sourcePath": ""some/path/to/file"",
+                        "type": "node",
+                      },
                     },
                     "kind": "fieldset-hook",
                   },
@@ -308,11 +339,18 @@ exports[`compose hooks composes source hooks 1`] = `
           "validators": [
             {
               "arg": "name",
-              "code": {
-                "file": "githubc.js",
-                "kind": "source",
-                "runtimeName": "MyRuntime",
-                "target": "someHook",
+              "hook": {
+                "code": {
+                  "file": "githubc.js",
+                  "kind": "source",
+                  "target": "someHook",
+                },
+                "runtime": {
+                  "default": true,
+                  "name": "MyRuntime",
+                  "sourcePath": ""some/path/to/file"",
+                  "type": "node",
+                },
               },
               "name": "hook",
             },
@@ -322,11 +360,18 @@ exports[`compose hooks composes source hooks 1`] = `
       "hooks": [
         {
           "args": [],
-          "code": {
-            "file": "githubc.js",
-            "kind": "source",
-            "runtimeName": "MyRuntime",
-            "target": "someHook",
+          "hook": {
+            "code": {
+              "file": "githubc.js",
+              "kind": "source",
+              "target": "someHook",
+            },
+            "runtime": {
+              "default": true,
+              "name": "MyRuntime",
+              "sourcePath": ""some/path/to/file"",
+              "type": "node",
+            },
           },
           "kind": "model-hook",
           "name": "description",
@@ -374,11 +419,18 @@ exports[`compose hooks defaults to the first execution runtime when hook runtime
           "name": "name",
           "setter": {
             "args": [],
-            "code": {
-              "file": "hooks.js",
-              "kind": "source",
-              "runtimeName": undefined,
-              "target": "randomSlug",
+            "hook": {
+              "code": {
+                "file": "hooks.js",
+                "kind": "source",
+                "target": "randomSlug",
+              },
+              "runtime": {
+                "default": true,
+                "name": "MyRuntime",
+                "sourcePath": ""some/path/to/file"",
+                "type": "node",
+              },
             },
             "kind": "fieldset-hook",
           },

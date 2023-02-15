@@ -113,7 +113,7 @@ export type ActionAtomSpec = WithContext<
 
 export type HookCodeSpec =
   | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string; runtimeName?: string };
+  | { kind: "source"; target: string; file: string };
 
 export type ActionAtomSpecSetHook = { kind: "hook"; hook: ActionHookSpec };
 export type ActionAtomSpecSetExp = { kind: "expression"; exp: ExpSpec };
@@ -135,8 +135,9 @@ export type InputFieldSpec = {
   default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 
-export type BaseHookSpec = WithContext<{
+export type HookSpec = WithContext<{
   name?: string;
+  runtimeName?: string;
   code: HookCodeSpec;
 }>;
 
@@ -165,16 +166,16 @@ export type PopulateSetterSpec = WithContext<{
   set: { kind: "hook"; hook: ActionHookSpec } | { kind: "expression"; exp: ExpSpec };
 }>;
 
-export type FieldValidatorHookSpec = BaseHookSpec & {
+export type FieldValidatorHookSpec = HookSpec & {
   arg?: string;
 };
 
-export type ModelHookSpec = BaseHookSpec & {
+export type ModelHookSpec = HookSpec & {
   name: string;
   args: { name: string; query: QuerySpec }[];
 };
 
-export type ActionHookSpec = BaseHookSpec & {
+export type ActionHookSpec = HookSpec & {
   args: Record<string, { kind: "expression"; exp: ExpSpec }>;
 };
 

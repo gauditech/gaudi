@@ -5,7 +5,7 @@ import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
 
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureEqual, ensureUnique } from "@src/common/utils";
-import { composeHookCode } from "@src/composer/hooks";
+import { composeHook } from "@src/composer/hooks";
 import {
   NamePath,
   getDirectChildren,
@@ -280,7 +280,7 @@ function validatorSpecsToDefs(
 
   return vspecs.map((vspec): ValidatorDef => {
     if (vspec.kind === "hook") {
-      return { name: "hook", code: composeHookCode(def, vspec.hook.code), arg: vspec.hook.arg };
+      return { name: "hook", hook: composeHook(def, vspec.hook), arg: vspec.hook.arg };
     }
 
     const name = vspec.name;
@@ -426,7 +426,7 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
     refKey,
     name: hspec.name,
     args,
-    code: composeHookCode(def, hspec.code),
+    hook: composeHook(def, hspec),
   };
   mdef.hooks.push(h);
   def.resolveOrder.push(h.refKey);

@@ -108,7 +108,7 @@ export type ModelHookDef = {
   refKey: string;
   name: string;
   args: { name: string; query: QueryDef }[];
-  code: HookCodeDef;
+  hook: HookDef;
 };
 
 type NaiveType = {
@@ -270,7 +270,7 @@ export type SelectHookItem = {
   alias: string;
   namePath: string[];
   args: { name: string; query: QueryDef }[];
-  code: HookCodeDef;
+  hook: HookDef;
 };
 
 export type DeepSelectItem = {
@@ -381,7 +381,7 @@ export interface IsTextEqual extends IValidatorDef {
 export interface HookValidator {
   name: "hook";
   arg?: string;
-  code: HookCodeDef;
+  hook: HookDef;
 }
 export interface NoReferenceValidator {
   name: "noReference";
@@ -494,7 +494,7 @@ export type FieldSetterContextReference = {
 
 export type FieldSetterHook = {
   kind: "fieldset-hook";
-  code: HookCodeDef;
+  hook: HookDef;
   args: ChangesetDef;
 };
 
@@ -509,9 +509,14 @@ export type FieldSetter =
   | FieldSetterFunction
   | FieldSetterContextReference;
 
+export type HookDef = {
+  runtime: ExecutionRuntimeDef;
+  code: HookCodeDef;
+};
+
 export type HookCodeDef =
   | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string; runtimeName?: string };
+  | { kind: "source"; target: string; file: string };
 
 export type ExecutionRuntimeDef = {
   name: string;

@@ -26,7 +26,6 @@ import {
   ActionAtomSpec,
   ActionHookSpec,
   ActionSpec,
-  BaseHookSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
@@ -35,6 +34,7 @@ import {
   FieldSpec,
   FieldValidatorHookSpec,
   HookCodeSpec,
+  HookSpec,
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,
@@ -385,7 +385,7 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   };
 }
 
-function compileBaseHook(hook: HookAST): BaseHookSpec {
+function compileBaseHook(hook: HookAST): HookSpec {
   const name = hook.name;
   let code: HookCodeSpec | undefined;
   let runtimeName: string | undefined;
@@ -404,12 +404,9 @@ function compileBaseHook(hook: HookAST): BaseHookSpec {
     throw new CompilerError("'hook' needs to have 'source' or 'inline'", hook);
   }
 
-  if (code.kind === "source") {
-    code.runtimeName = runtimeName;
-  }
-
   return {
     name,
+    runtimeName,
     code,
     interval: hook.interval,
   };
