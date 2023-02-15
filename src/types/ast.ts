@@ -239,4 +239,6 @@ export type ExecutionRuntimeAST = WithContext<{
   body: ExecutionRuntimeBodyAtomAST[];
 }>;
 
-export type ExecutionRuntimeBodyAtomAST = WithContext<{ kind: "sourcePath"; value: string }>;
+export type ExecutionRuntimeBodyAtomAST = WithContext<
+  { kind: "sourcePath"; value: string } | { kind: "default" }
+>;

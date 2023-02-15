@@ -182,5 +182,6 @@ export type ActionHookSpec = BaseHookSpec & {
 
 export type ExecutionRuntimeSpec = WithContext<{
   name: string;
+  default?: boolean;
   sourcePath: string;
 }>;

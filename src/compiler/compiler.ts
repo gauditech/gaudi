@@ -578,20 +578,24 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
 
 function compileExecutionRuntime(runtime: ExecutionRuntimeAST): ExecutionRuntimeSpec {
   const name = runtime.name;
-  let hookPath: string | undefined;
+  let sourcePath: string | undefined;
+  let isDefault: boolean | undefined;
 
   runtime.body.forEach((atom) => {
-    if (atom.kind === "sourcePath") {
-      hookPath = atom.value;
+    const kind = atom.kind;
+    if (kind === "sourcePath") {
+      sourcePath = atom.value;
+    } else if (kind === "default") {
+      isDefault = true;
     } else {
-      assertUnreachable(atom.kind);
+      assertUnreachable(kind);
     }
   });
 
   ensureExists(name, "Runtime name cannot be empty");
-  ensureExists(hookPath, "Runtime hook path cannot be empty");
+  ensureExists(sourcePath, "Runtime source path cannot be empty");
 
-  return { name, sourcePath: hookPath };
+  return { name, default: isDefault, sourcePath };
 }
 
 export function compile(input: AST): Specification {

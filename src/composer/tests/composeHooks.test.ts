@@ -87,6 +87,34 @@ describe("compose hooks", () => {
     expect(result).toMatchSnapshot();
   });
 
+  it("defaults to the first execution runtime when hook runtime is empty", () => {
+    const bp = `
+      runtime MyRuntime {
+        sourcePath "some/path/to/file"
+      }
+
+      model Org { field name { type text } }
+
+      entrypoint Orgs {
+        target model Org as org
+        create endpoint {
+          action {
+            create {
+              set name hook {
+                source randomSlug from "hooks.js"
+              }
+            }
+          }
+        }
+      }
+  
+    `;
+
+    const result = compose(compile(parse(bp)));
+
+    expect(result.entrypoints[0].endpoints[0]).toMatchSnapshot();
+  });
+
   it("fails on invalid runtime name", () => {
     const bp = `
       runtime MyRuntime {

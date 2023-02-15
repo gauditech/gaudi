@@ -612,4 +612,10 @@ semantics.addOperation("parse()", {
       value: value.sourceString,
     };
   },
+
+  ExecutionRuntimeBody_default(this, _hookPath): ExecutionRuntimeBodyAtomAST {
+    return {
+      kind: "default",
+    };
+  },
 });

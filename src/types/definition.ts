@@ -516,6 +516,7 @@ export type HookCodeDef =
 export type ExecutionRuntimeDef = {
   name: string;
   type: RuntimeEngineType;
+  default: boolean;
   sourcePath: string;
 };
 

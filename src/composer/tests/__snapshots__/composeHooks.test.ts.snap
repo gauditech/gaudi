@@ -164,8 +164,15 @@ exports[`compose hooks composes inline hooks 1`] = `
   ],
   "runtimes": [
     {
+      "default": true,
       "name": "MyRuntime",
       "sourcePath": ""some/path/to/file"",
+      "type": "node",
+    },
+    {
+      "default": false,
+      "name": "$GAUDI_INTERNAL",
+      "sourcePath": "/home/hkasabasic/work/workspaces/gaudi/gaudi/src/composer/hooks",
       "type": "node",
     },
   ],
@@ -342,10 +349,90 @@ exports[`compose hooks composes source hooks 1`] = `
   ],
   "runtimes": [
     {
+      "default": true,
       "name": "MyRuntime",
       "sourcePath": ""some/path/to/file"",
       "type": "node",
     },
+    {
+      "default": false,
+      "name": "$GAUDI_INTERNAL",
+      "sourcePath": "/home/hkasabasic/work/workspaces/gaudi/gaudi/src/composer/hooks",
+      "type": "node",
+    },
   ],
+}
+`;
+
+exports[`compose hooks defaults to the first execution runtime when hook runtime is empty 1`] = `
+{
+  "actions": [
+    {
+      "alias": "org",
+      "changeset": [
+        {
+          "name": "name",
+          "setter": {
+            "args": [],
+            "code": {
+              "file": "hooks.js",
+              "kind": "source",
+              "runtimeName": undefined,
+              "target": "randomSlug",
+            },
+            "kind": "fieldset-hook",
+          },
+        },
+      ],
+      "kind": "create-one",
+      "model": "Org",
+      "select": [],
+      "targetPath": [
+        "org",
+      ],
+    },
+  ],
+  "authSelect": [],
+  "authorize": undefined,
+  "fieldset": {
+    "kind": "record",
+    "nullable": false,
+    "record": {},
+  },
+  "kind": "create",
+  "parentContext": [],
+  "response": [
+    {
+      "alias": "id",
+      "kind": "field",
+      "name": "id",
+      "namePath": [
+        "Org",
+        "id",
+      ],
+      "refKey": "Org.id",
+    },
+    {
+      "alias": "name",
+      "kind": "field",
+      "name": "name",
+      "namePath": [
+        "Org",
+        "name",
+      ],
+      "refKey": "Org.name",
+    },
+  ],
+  "target": {
+    "alias": "org",
+    "kind": "model",
+    "name": "Org",
+    "namePath": [
+      "Org",
+    ],
+    "refKey": "Org",
+    "retType": "Org",
+    "select": [],
+  },
 }
 `;

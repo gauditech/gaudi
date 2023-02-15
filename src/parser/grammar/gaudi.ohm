@@ -278,5 +278,6 @@ Gaudi {
    = "runtime" identifier "{" NonemptyNewlineBody<ExecutionRuntimeBody, ","> "}"
 
   ExecutionRuntimeBody
-   = "sourcePath" string -- sourcePath
+   = "sourcePath" string  -- sourcePath
+   | "default"            -- default
 }

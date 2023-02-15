@@ -599,6 +599,7 @@ exports[`parser blueprint test/executionRuntimes.gaudi 1`] = `
   "populators": [],
   "runtimes": [
     {
+      "default": true,
       "name": "MyRuntime",
       "sourcePath": ""some/path/to/file.js"",
     },
