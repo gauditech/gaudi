@@ -244,7 +244,7 @@ export type CustomOneEndpointDef = {
   authSelect: SelectDef;
   authorize: TypedExprDef;
   fieldset?: FieldsetDef;
-  response: SelectDef;
+  response: undefined;
 };
 
 export type CustomManyEndpointDef = {
@@ -257,7 +257,7 @@ export type CustomManyEndpointDef = {
   authSelect: SelectDef;
   authorize: TypedExprDef;
   fieldset?: FieldsetDef;
-  response: SelectDef;
+  response: undefined;
 };
 
 export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;

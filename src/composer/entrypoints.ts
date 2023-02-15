@@ -287,7 +287,7 @@ function processEndpoints(
           authSelect,
           authorize,
           fieldset,
-          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+          response: undefined,
         };
       }
       case "custom-many": {
@@ -308,7 +308,7 @@ function processEndpoints(
           authSelect,
           authorize,
           fieldset,
-          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+          response: undefined,
         };
       }
       default: {
