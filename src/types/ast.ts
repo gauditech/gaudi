@@ -1,5 +1,3 @@
-import { FieldType } from "./definition";
-
 import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
