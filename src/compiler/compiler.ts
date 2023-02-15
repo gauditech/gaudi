@@ -20,9 +20,13 @@ import {
   ReferenceAST,
   RelationAST,
   ValidatorAST,
+  VirtualInputAST,
+  VirtualInputAtomASTType,
+  VirtualInputAtomASTValidator,
 } from "@src/types/ast";
 import {
   ActionAtomSpec,
+  ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
   BaseHookSpec,
@@ -66,6 +70,7 @@ function compileField(field: FieldAST): FieldSpec {
     } else if (b.kind === "default") {
       default_ = b.default;
     } else if (b.kind === "validate") {
+      // FIXME multiple `validate` blocks override the previous ones
       validators = b.validators.map(compileValidator);
     }
   });
@@ -271,7 +276,7 @@ function compileModel(model: ModelAST): ModelSpec {
 }
 
 function compileAction(action: ActionBodyAST): ActionSpec {
-  const atoms = action.body.map((a): ActionAtomSpec => {
+  const atoms = action.atoms.map((a): ActionAtomSpec => {
     switch (a.kind) {
       case "action": {
         return { kind: "action", body: compileAction(a.body) };
@@ -291,6 +296,9 @@ function compileAction(action: ActionBodyAST): ActionSpec {
             return assertUnreachable(a.set);
           }
         }
+      }
+      case "virtual-input": {
+        return compileVirtualInput(a);
       }
       case "input": {
         const fields = a.fields.map((f): InputFieldSpec => {
@@ -324,13 +332,34 @@ function compileAction(action: ActionBodyAST): ActionSpec {
   return { kind: action.kind, targetPath: action.target, actionAtoms: atoms, alias: action.alias };
 }
 
+function compileVirtualInput(input: VirtualInputAST): ActionAtomSpecVirtualInput {
+  const validators = input.atoms
+    .filter((a): a is VirtualInputAtomASTValidator => a.kind === "validate")
+    .flatMap((validate) => validate.validators)
+    .map(_.unary(compileValidator));
+
+  const type = input.atoms.find((a): a is VirtualInputAtomASTType => a.kind === "type");
+  if (type === undefined) {
+    throw new CompilerError(`Virtual field must specify it's type`, input);
+  }
+
+  return {
+    kind: "virtual-input",
+    name: input.name,
+    type: type.type,
+    nullable: !!input.atoms.find((a) => a.kind === "nullable"),
+    optional: !!input.atoms.find((a) => a.kind === "optional"),
+    validators,
+  };
+}
+
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
-  let action: ActionSpec[] | undefined;
+  let actions: ActionSpec[] = [];
   let authorize: ExpSpec | undefined;
 
   endpoint.body.map((b) => {
-    if (b.kind === "action") {
-      action = b.body.map(compileAction);
+    if (b.kind === "action-block") {
+      actions = b.atoms.map(compileAction);
     } else if (b.kind === "authorize") {
       authorize = compileQueryExp(b.expression);
     } else {
@@ -338,7 +367,7 @@ function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
     }
   });
 
-  return { type: endpoint.type, action, authorize, interval: endpoint.interval };
+  return { type: endpoint.type, actions, authorize, interval: endpoint.interval };
 }
 
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {

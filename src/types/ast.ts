@@ -116,7 +116,7 @@ export type EndpointAST = WithContext<{
 export type EndpointType = "list" | "get" | "create" | "update" | "delete";
 
 export type EndpointBodyAST = WithContext<
-  { kind: "action"; body: ActionBodyAST[] } | { kind: "authorize"; expression: ExpAST }
+  { kind: "action-block"; atoms: ActionBodyAST[] } | { kind: "authorize"; expression: ExpAST }
 >;
 
 export type ActionKindAST = "create" | "update" | "delete";
@@ -125,16 +125,33 @@ export type ActionBodyAST = WithContext<{
   kind: ActionKindAST;
   target?: string[];
   alias?: string;
-  body: ActionAtomBodyAST[];
+  atoms: ActionAtomAST[];
 }>;
 
-export type ActionAtomBodyAST = WithContext<
+export type VirtualInputAST = WithContext<{
+  kind: "virtual-input";
+  name: string;
+  atoms: VirtualInputAtomAST[];
+}>;
+
+export type VirtualInputAtomAST = WithContext<
+  | { kind: "optional" }
+  | { kind: "nullable" }
+  | VirtualInputAtomASTType
+  | VirtualInputAtomASTValidator
+>;
+
+export type VirtualInputAtomASTType = { kind: "type"; type: string };
+export type VirtualInputAtomASTValidator = { kind: "validate"; validators: ValidatorAST[] };
+
+export type ActionAtomAST = WithContext<
   | {
       kind: "set";
       target: string;
       set: { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
     }
   | { kind: "reference"; target: string; through: string }
+  | VirtualInputAST
   | { kind: "input"; fields: InputFieldAST[] }
   | { kind: "action"; body: ActionBodyAST }
   | { kind: "deny"; fields: "*" | string[] }

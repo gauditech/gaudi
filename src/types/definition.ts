@@ -435,10 +435,20 @@ export type FieldSetterReferenceValue = {
 
 export type FieldSetterInput = {
   kind: "fieldset-input";
-  type: FieldDef["type"];
+  type: FieldType;
   fieldsetAccess: string[];
   required: boolean;
-  default?: LiteralValueDef | FieldSetterReferenceValue;
+  // FIXME implement default
+  // default?: LiteralValueDef | FieldSetterReferenceValue;
+};
+
+export type FieldSetterVirtualInput = {
+  kind: "fieldset-virtual-input";
+  type: FieldType;
+  fieldsetAccess: string[];
+  required: boolean;
+  nullable: boolean;
+  validators: ValidatorDef[];
 };
 
 export type FieldSetterReferenceInput = {
@@ -503,6 +513,7 @@ export type FieldSetter =
   | LiteralValueDef
   | FieldSetterReferenceValue
   | FieldSetterInput
+  | FieldSetterVirtualInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
   | FieldSetterHook

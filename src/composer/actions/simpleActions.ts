@@ -9,6 +9,7 @@ import {
   ActionAtomSpecInputList,
   ActionAtomSpecRefThrough,
   ActionAtomSpecSet,
+  ActionAtomSpecVirtualInput,
   ActionSpec,
 } from "@src/types/specification";
 
@@ -20,7 +21,11 @@ export interface SimpleActionSpec extends ActionSpec {
   actionAtoms: SimpleActionAtoms[];
 }
 
-export type SimpleActionAtoms = ActionAtomSpecInput | ActionAtomSpecRefThrough | ActionAtomSpecSet;
+export type SimpleActionAtoms =
+  | ActionAtomSpecVirtualInput
+  | ActionAtomSpecInput
+  | ActionAtomSpecRefThrough
+  | ActionAtomSpecSet;
 
 export function simplifyActionSpec(
   def: Definition,
@@ -50,6 +55,10 @@ export function simplifyActionSpec(
       }
     }
   }
+
+  const virtualInputs = atoms.filter(
+    (atom): atom is ActionAtomSpecVirtualInput => atom.kind === "virtual-input"
+  );
 
   const inputs = atoms
     .filter(
@@ -136,6 +145,7 @@ export function simplifyActionSpec(
    * ensure no duplicate fields
    */
   const allFieldNames = [
+    ...virtualInputs.map((i) => i.name),
     ...inputs.flatMap((f) => f.fieldSpec.name),
     ...refInputs.map((r) => `${r.target}_id`),
     ...setters.map((s) => s.target),
@@ -175,6 +185,7 @@ export function simplifyActionSpec(
   }
 
   const simplifiedAtoms: SimpleActionAtoms[] = [
+    ...virtualInputs,
     ...inputs,
     ...refInputs,
     ...implicitInputs,

@@ -134,8 +134,14 @@ Gaudi {
     | "delete"
 
   EndpointBody
-    = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
-    | "authorize" "{" QueryExp "}" -- authorize
+    = "action" "{" NewlineBody<ActionBody, ";"> "}"       -- action_block
+    | "authorize" "{" QueryExp "}"                        -- authorize
+
+  VirtualInputBody
+    = "type" identifier                                       -- type
+    | "nullable"                                              -- nullable
+    | "optional"                                              -- optional
+    | "validate" "{" NonemptyNewlineBody<Validator, ","> "}"  -- validate
 
 
   ActionKind = "create" | "update" | "delete"
@@ -146,12 +152,13 @@ Gaudi {
 
 
   ActionAtomBody
-    = "set" identifier Hook                               -- set_hook
-    | "set" identifier QueryExp                           -- set_expression
-    | "reference" identifier "through" identifier         -- reference
-    | "input" "{" NewlineBody<ActionInputAtom, ","> "}"   -- input
-    | "deny" DenyList                                     -- deny
-    | ActionBody                                          -- nested_action
+    = "set" identifier Hook                                                         -- set_hook
+    | "set" identifier QueryExp                                                     -- set_expression
+    | "reference" identifier "through" identifier                                   -- reference
+    | "virtual input" identifier "{" NonemptyNewlineBody<VirtualInputBody, ","> "}" -- virtual_input
+    | "input" "{" NewlineBody<ActionInputAtom, ","> "}"                             -- input
+    | "deny" DenyList                                                               -- deny
+    | ActionBody                                                                    -- nested_action
 
   ActionInputAtom
     = identifier "{" NewlineBody<ActionInputOpt, ","> "}" -- field_with_opts

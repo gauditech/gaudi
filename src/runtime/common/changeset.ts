@@ -25,6 +25,7 @@ export async function buildChangeset(
       case "literal": {
         return formatFieldValue(setter.value, setter.type);
       }
+      case "fieldset-virtual-input":
       case "fieldset-input": {
         return formatFieldValue(
           getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
@@ -85,6 +86,17 @@ export async function buildChangeset(
       }
       default: {
         changeset[name] = await getValue(setter);
+      }
+    }
+  }
+
+  /**
+   * Remove all the virtual fields' values from the changeset.
+   */
+  for (const { name, setter } of actionChangsetDefinition) {
+    switch (setter.kind) {
+      case "fieldset-virtual-input": {
+        delete changeset[name];
       }
     }
   }
