@@ -587,67 +587,7 @@ exports[`entrypoint composes basic example 1`] = `
               },
             ],
             "path": "somePath",
-            "response": [
-              {
-                "alias": "id",
-                "kind": "field",
-                "name": "id",
-                "namePath": [
-                  "Org",
-                  "repos",
-                  "id",
-                ],
-                "refKey": "Repo.id",
-              },
-              {
-                "alias": "org",
-                "kind": "reference",
-                "name": "org",
-                "namePath": [
-                  "Org",
-                  "repos",
-                  "org",
-                ],
-                "select": [
-                  {
-                    "alias": "id",
-                    "kind": "field",
-                    "name": "id",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "id",
-                    ],
-                    "refKey": "Org.id",
-                  },
-                  {
-                    "alias": "slug",
-                    "kind": "field",
-                    "name": "slug",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "slug",
-                    ],
-                    "refKey": "Org.slug",
-                  },
-                  {
-                    "alias": "name",
-                    "kind": "field",
-                    "name": "name",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "name",
-                    ],
-                    "refKey": "Org.name",
-                  },
-                ],
-              },
-            ],
+            "response": undefined,
             "target": {
               "alias": "repo",
               "identifyWith": {

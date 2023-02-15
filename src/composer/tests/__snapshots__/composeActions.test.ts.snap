@@ -191,28 +191,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "GET",
     "parentContext": [],
     "path": "customGet",
-    "response": [
-      {
-        "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
-      },
-      {
-        "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Org",
-          "name",
-        ],
-        "refKey": "Org.name",
-      },
-    ],
+    "response": undefined,
     "target": {
       "alias": "org",
       "identifyWith": {
@@ -276,28 +255,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "PATCH",
     "parentContext": [],
     "path": "customUpdate",
-    "response": [
-      {
-        "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
-      },
-      {
-        "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Org",
-          "name",
-        ],
-        "refKey": "Org.name",
-      },
-    ],
+    "response": undefined,
     "target": {
       "alias": "org",
       "identifyWith": {
@@ -344,28 +302,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "DELETE",
     "parentContext": [],
     "path": "customDelete",
-    "response": [
-      {
-        "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
-      },
-      {
-        "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Org",
-          "name",
-        ],
-        "refKey": "Org.name",
-      },
-    ],
+    "response": undefined,
     "target": {
       "alias": "org",
       "identifyWith": {
@@ -393,28 +330,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "GET",
     "parentContext": [],
     "path": "customList",
-    "response": [
-      {
-        "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
-      },
-      {
-        "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Org",
-          "name",
-        ],
-        "refKey": "Org.name",
-      },
-    ],
+    "response": undefined,
     "target": {
       "alias": "org",
       "kind": "model",
@@ -471,28 +387,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "POST",
     "parentContext": [],
     "path": "customCreate",
-    "response": [
-      {
-        "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
-      },
-      {
-        "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Org",
-          "name",
-        ],
-        "refKey": "Org.name",
-      },
-    ],
+    "response": undefined,
     "target": {
       "alias": "org",
       "kind": "model",

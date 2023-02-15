@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { compile, compose, parse } from "@src/index";
 import { ActionKindAST, EndpointBodyAST, EndpointCardinality } from "@src/types/ast";
-import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
+import { CreateEndpointDef, EndpointType, UpdateEndpointDef } from "@src/types/definition";
 
 describe("custom actions", () => {
   it("succeeds for basic composite create", () => {
@@ -405,33 +405,57 @@ describe("custom actions", () => {
     expect(endpoints).toMatchSnapshot();
   });
 
-  // --- test missing custom endpoint properties
+  // --- test missing/unallowed endpoint properties
   _.chain<EndpointBodyAST["kind"][]>(["cardinality", "method", "path"])
     .forEach((property) => {
       it(`fails when "${property}" property is missing in custom endpoint`, () => {
         const bp = `
-      model Org { field name { type text } }
-      model Log {}
-  
-      entrypoint Orgs {
-        target model Org as org
-        custom endpoint {
-          // in each iteration skip one property
-          ${property === "cardinality" ? "" : "cardinality many"}
-          ${property === "method" ? "" : "method POST"}
-          ${property === "path" ? "" : 'path "somePath"'}
-  
-          action {
-            create Log as log {}
+          model Org { field name { type text } }
+          model Log {}
+      
+          entrypoint Orgs {
+            target model Org as org
+            custom endpoint {
+              // in each iteration skip one property
+              ${property === "cardinality" ? "" : "cardinality many"}
+              ${property === "method" ? "" : "method POST"}
+              ${property === "path" ? "" : 'path "somePath"'}
+      
+              action {
+                create Log as log {}
+              }
+            }
           }
-        }
-      }
-      `;
+        `;
 
         expect(() => compose(compile(parse(bp)))).toThrowError(
           `Property "${property}" is required for custom endpoints`
         );
       });
+
+      _.chain<EndpointType[]>(["get", "list", "create", "update", "delete"])
+        .forEach((epType) => {
+          it(`fails when "${property}" property is used in "${epType}" endpoint`, () => {
+            const bp = `
+              model Org {}
+          
+              entrypoint Orgs {
+                target model Org
+                ${epType} endpoint {
+                  // show one property in each iteration
+                  ${property === "cardinality" ? "cardinality many" : ""}
+                  ${property === "method" ? "method POST" : ""}
+                  ${property === "path" ? 'path "somePath"' : ""}
+                }
+              }
+            `;
+
+            expect(() => compose(compile(parse(bp)))).toThrowError(
+              `Property "${property}" is not allowed for "${epType}" endpoints`
+            );
+          });
+        })
+        .value();
     })
     .value();
 

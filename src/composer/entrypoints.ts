@@ -4,7 +4,13 @@ import { composeActionBlock, getInitialContext } from "./actions";
 import { composeExpression } from "./models";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual, ensureExists, ensureUnique } from "@src/common/utils";
+import {
+  assertUnreachable,
+  ensureEmpty,
+  ensureEqual,
+  ensureExists,
+  ensureUnique,
+} from "@src/common/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -211,6 +217,12 @@ function processEndpoints(
 
     switch (endpointType) {
       case "get": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         return {
           kind: "get",
           authSelect,
@@ -222,6 +234,12 @@ function processEndpoints(
         };
       }
       case "list": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         return {
           kind: "list",
           authSelect,
@@ -233,6 +251,12 @@ function processEndpoints(
         };
       }
       case "create": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "create",
@@ -246,6 +270,12 @@ function processEndpoints(
         };
       }
       case "update": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "update",
@@ -259,6 +289,12 @@ function processEndpoints(
         };
       }
       case "delete": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         return {
           kind: "delete",
           actions,
@@ -337,10 +373,17 @@ function mapEndpointSpecToDefType(endSpec: EndpointSpec): EndpointType {
 
     if (endSpec.cardinality === "one") {
       return "custom-one";
-    } else {
+    } else if (endSpec.cardinality === "many") {
       return "custom-many";
+    } else {
+      assertUnreachable(endSpec.cardinality);
     }
   } else {
+    ensureEmpty(
+      endSpec.cardinality,
+      `Property "cardinality" is not allowed for "${endSpec.type}" endpoints`
+    );
+
     return endSpec.type;
   }
 }
