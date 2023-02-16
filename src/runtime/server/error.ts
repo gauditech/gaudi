@@ -61,7 +61,7 @@ export function errorResponse(cause: unknown) {
     };
 
     // log business error - currently all logged as "log/info"
-    console.info(`${body.code}: ${body.message}`);
+    console.info(`${body.code}: ${body.message}`, cause.data ?? "");
 
     if (cause.code === "ERROR_CODE_VALIDATION") {
       throw new HttpResponseError(400, body);

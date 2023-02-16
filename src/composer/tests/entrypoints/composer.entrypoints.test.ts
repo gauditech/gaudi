@@ -30,6 +30,16 @@ describe("entrypoint", () => {
         list endpoint {}
         get endpoint {}
         create endpoint {}
+
+        custom endpoint {
+          cardinality one
+          method PATCH
+          path "somePath"
+
+          action {
+            update {}
+          }
+        }
       }
     }
     `;

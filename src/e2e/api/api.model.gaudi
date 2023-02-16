@@ -63,11 +63,51 @@ model Comment {
 
 // ----- entrypoints
 
+// Orgs
 entrypoint Orgs {
   target model Org as org
   identify with slug
   response { name, slug, description, summary, nameAndDesc }
 
+  // custom-one endpoints
+  custom endpoint {
+    cardinality one
+    method GET
+    path "customGet"
+  }
+  custom endpoint {
+    cardinality one
+    method PATCH
+    path "customUpdate"
+    action {
+      update {}
+    }
+  }
+  custom endpoint {
+    cardinality one
+    method DELETE
+    path "customDelete"
+    action {
+      delete {}
+    }
+  }
+
+  // custom-many endpoints
+  custom endpoint {
+    cardinality many
+    method GET
+    path "customList"
+  }
+  custom endpoint {
+    cardinality many
+    method POST
+    path "customCreate"
+    action {
+      create {}
+    }
+  }
+
+  // regular endpoints
   get endpoint {}
   list endpoint {}
   create endpoint {
@@ -82,6 +122,8 @@ entrypoint Orgs {
   }
   delete endpoint {}
 
+
+  // --- Repos
   entrypoint Repos {
     target relation repos as repo
     response { id, slug, description, org_id }
@@ -108,6 +150,7 @@ entrypoint Orgs {
     }
     delete endpoint {}
 
+    // Issues
     entrypoint Issues {
       target relation issues as issue
       response { id, title, repo, number, comments }

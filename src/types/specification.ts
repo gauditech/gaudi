@@ -1,4 +1,12 @@
-import { BinaryOperator, EndpointType, LiteralValue, SelectAST, UnaryOperator } from "./ast";
+import {
+  BinaryOperator,
+  EndpointCardinality,
+  EndpointMethod,
+  EndpointTypeAST,
+  LiteralValue,
+  SelectAST,
+  UnaryOperator,
+} from "./ast";
 
 import { WithContext } from "@src/common/error";
 
@@ -89,9 +97,12 @@ export type EntrypointSpec = WithContext<{
 }>;
 
 export type EndpointSpec = WithContext<{
-  type: EndpointType;
+  type: EndpointTypeAST;
   actions?: ActionSpec[];
   authorize?: ExpSpec;
+  cardinality?: EndpointCardinality;
+  method?: EndpointMethod;
+  path?: string;
 }>;
 
 export type ActionSpec = WithContext<{

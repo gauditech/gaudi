@@ -163,13 +163,24 @@ export type TargetDef = {
 
 export type TargetWithSelectDef = TargetDef & { select: SelectDef };
 
+export type EndpointType =
+  | "list"
+  | "get"
+  | "create"
+  | "update"
+  | "delete"
+  | "custom-one"
+  | "custom-many";
+export type EndpointHttpMethod = "GET" | "POST" | /*"PUT" |*/ "PATCH" | "DELETE";
+
 export type EndpointDef =
   | CreateEndpointDef
   | ListEndpointDef
   | GetEndpointDef
   | UpdateEndpointDef
-  | DeleteEndpointDef;
-// | CustomEndpointDef;
+  | DeleteEndpointDef
+  | CustomOneEndpointDef
+  | CustomManyEndpointDef;
 
 export type ListEndpointDef = {
   kind: "list";
@@ -223,15 +234,30 @@ export type DeleteEndpointDef = {
   response: undefined;
 };
 
-type CustomEndpointDef = {
-  kind: "custom";
+export type CustomOneEndpointDef = {
+  kind: "custom-one";
   parentContext: TargetWithSelectDef[];
-  target: null;
-  method: "post" | "get" | "put" | "delete";
+  target: TargetWithSelectDef;
+  method: EndpointHttpMethod;
+  path: string;
   actions: ActionDef[];
-  respondWith: {
-    // TODO
-  };
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
+  fieldset?: FieldsetDef;
+  response: undefined;
+};
+
+export type CustomManyEndpointDef = {
+  kind: "custom-many";
+  parentContext: TargetWithSelectDef[];
+  target: Omit<TargetWithSelectDef, "identifyWith">;
+  method: EndpointHttpMethod;
+  path: string;
+  actions: ActionDef[];
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
+  fieldset?: FieldsetDef;
+  response: undefined;
 };
 
 export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
