@@ -18,6 +18,7 @@ import {
   ensureThrow,
   safeInvoke,
 } from "@src/common/utils";
+import { composeHook } from "@src/composer/hooks";
 import {
   ActionDef,
   ChangesetDef,
@@ -312,7 +313,7 @@ function composeSingleAction(
           .value();
         return {
           name: atom.target,
-          setter: { kind: "fieldset-hook", code: atom.set.hook.code, args },
+          setter: { kind: "fieldset-hook", hook: composeHook(def, atom.set.hook), args },
         };
       }
       case "expression": {
@@ -337,7 +338,7 @@ function composeSingleAction(
             required: !atom.optional,
             nullable: atom.nullable,
             fieldsetAccess: [...fieldsetNamespace, atom.name],
-            validators: composeValidators(validateType(atom.type), atom.validators),
+            validators: composeValidators(def, validateType(atom.type), atom.validators),
           },
         };
       }

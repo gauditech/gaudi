@@ -13,6 +13,8 @@ import {
   EndpointTypeAST,
   EntrypointAST,
   EntrypointBodyAST,
+  ExecutionRuntimeAST,
+  ExecutionRuntimeBodyAtomAST,
   ExpAST,
   FieldAST,
   FieldBodyAST,
@@ -40,6 +42,17 @@ import {
   ValidatorAST,
   VirtualInputAtomAST,
 } from "@src/types/ast";
+
+export function parse(input: string): AST {
+  const m = grammar.match(input);
+  if (!m.succeeded()) {
+    throw Error(m.message);
+  }
+
+  const ast: AST = semantics(m).parse();
+
+  return ast;
+}
 
 const semantics = grammar.createSemantics();
 
@@ -356,6 +369,13 @@ semantics.addOperation("parse()", {
   HookBody_inline(this, _inline, inlineString): HookBodyAST {
     return { kind: "inline", inline: inlineString.parse(), interval: this.source };
   },
+  HookBody_executionRuntime(this, _runtime, name): HookBodyAST {
+    return {
+      kind: "execution-runtime",
+      name: name.parse(),
+      interval: this.source,
+    };
+  },
   HookQuery(this, _query, _parenL, body, _parenR): HookQueryAST {
     return {
       kind: "query",
@@ -612,15 +632,28 @@ semantics.addOperation("parse()", {
       value: interval.parse(),
     };
   },
+
+  // ----- Execution Runtime
+
+  ExecutionRuntime(this, _runtime, name, _lbrace, body, _rbrace): ExecutionRuntimeAST {
+    return {
+      kind: "execution-runtime",
+      name: name.sourceString,
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+
+  ExecutionRuntimeBody_sourcePath(this, _hookPath, value): ExecutionRuntimeBodyAtomAST {
+    return {
+      kind: "sourcePath",
+      value: value.parse(),
+    };
+  },
+
+  ExecutionRuntimeBody_default(this, _hookPath): ExecutionRuntimeBodyAtomAST {
+    return {
+      kind: "default",
+    };
+  },
 });
-
-export function parse(input: string): AST {
-  const m = grammar.match(input);
-  if (!m.succeeded()) {
-    throw Error(m.message);
-  }
-
-  const ast: AST = semantics(m).parse();
-
-  return ast;
-}

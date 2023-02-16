@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST;
+export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST | ExecutionRuntimeAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -185,6 +185,7 @@ export type HookBodyAST = WithContext<
   | { kind: "returnType"; type: string }
   | { kind: "source"; target: string; file: string }
   | { kind: "inline"; inline: string }
+  | { kind: "execution-runtime"; name: string }
 >;
 
 export type HookArgValueAST = WithContext<
@@ -251,4 +252,16 @@ export type RepeaterAtomAST = WithContext<
   | { kind: "fixed"; value: number }
   | { kind: "start"; value: number }
   | { kind: "end"; value: number }
+>;
+
+// ----- Execution Runtime
+
+export type ExecutionRuntimeAST = WithContext<{
+  kind: "execution-runtime";
+  name: string;
+  body: ExecutionRuntimeBodyAtomAST[];
+}>;
+
+export type ExecutionRuntimeBodyAtomAST = WithContext<
+  { kind: "sourcePath"; value: string } | { kind: "default" }
 >;

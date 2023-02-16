@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { CompilerError } from "@src/common/error";
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureExists } from "@src/common/utils";
 import {
   AST,
   ActionBodyAST,
@@ -10,6 +10,7 @@ import {
   EndpointCardinality,
   EndpointMethod,
   EntrypointAST,
+  ExecutionRuntimeAST,
   ExpAST,
   FieldAST,
   HookAST,
@@ -31,14 +32,15 @@ import {
   ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
-  BaseHookSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
+  ExecutionRuntimeSpec,
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
-  HookCode,
+  HookCodeSpec,
+  HookSpec,
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,
@@ -431,15 +433,18 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   };
 }
 
-function compileBaseHook(hook: HookAST): BaseHookSpec {
+function compileBaseHook(hook: HookAST): HookSpec {
   const name = hook.name;
-  let code: HookCode | undefined;
+  let code: HookCodeSpec | undefined;
+  let runtimeName: string | undefined;
 
   hook.body.forEach((b) => {
     if (b.kind === "inline") {
       code = { kind: "inline", inline: b.inline };
     } else if (b.kind === "source") {
       code = { kind: "source", target: b.target, file: b.file };
+    } else if (b.kind === "execution-runtime") {
+      runtimeName = b.name;
     }
   });
 
@@ -449,6 +454,7 @@ function compileBaseHook(hook: HookAST): BaseHookSpec {
 
   return {
     name,
+    runtimeName,
     code,
     interval: hook.interval,
   };
@@ -615,10 +621,33 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
   };
 }
 
+function compileExecutionRuntime(runtime: ExecutionRuntimeAST): ExecutionRuntimeSpec {
+  const name = runtime.name;
+  let sourcePath: string | undefined;
+  let isDefault: boolean | undefined;
+
+  runtime.body.forEach((atom) => {
+    const kind = atom.kind;
+    if (kind === "sourcePath") {
+      sourcePath = atom.value;
+    } else if (kind === "default") {
+      isDefault = true;
+    } else {
+      assertUnreachable(kind);
+    }
+  });
+
+  ensureExists(name, "Runtime name cannot be empty");
+  ensureExists(sourcePath, "Runtime source path cannot be empty");
+
+  return { name, default: isDefault, sourcePath };
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
   const populators: PopulatorSpec[] = [];
+  const runtimes: ExecutionRuntimeSpec[] = [];
 
   input.map((definition) => {
     const kind = definition.kind;
@@ -628,6 +657,8 @@ export function compile(input: AST): Specification {
       entrypoints.push(compileEntrypoint(definition));
     } else if (kind === "populator") {
       populators.push(compilePopulator(definition));
+    } else if (kind === "execution-runtime") {
+      runtimes.push(compileExecutionRuntime(definition));
     } else {
       assertUnreachable(kind);
     }
@@ -635,5 +666,5 @@ export function compile(input: AST): Specification {
 
   checkMaxOneAuthModel(models);
 
-  return { models, entrypoints, populators };
+  return { models, entrypoints, populators, runtimes };
 }

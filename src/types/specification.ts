@@ -14,6 +14,7 @@ export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
+  runtimes: ExecutionRuntimeSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -122,7 +123,7 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecInputList
 >;
 
-export type HookCode =
+export type HookCodeSpec =
   | { kind: "inline"; inline: string }
   | { kind: "source"; target: string; file: string };
 
@@ -153,9 +154,10 @@ export type InputFieldSpec = {
   default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 
-export type BaseHookSpec = WithContext<{
+export type HookSpec = WithContext<{
   name?: string;
-  code: HookCode;
+  runtimeName?: string;
+  code: HookCodeSpec;
 }>;
 
 export type RepeaterSpec = WithContext<
@@ -183,15 +185,23 @@ export type PopulateSetterSpec = WithContext<{
   set: { kind: "hook"; hook: ActionHookSpec } | { kind: "expression"; exp: ExpSpec };
 }>;
 
-export type FieldValidatorHookSpec = BaseHookSpec & {
+export type FieldValidatorHookSpec = HookSpec & {
   arg?: string;
 };
 
-export type ModelHookSpec = BaseHookSpec & {
+export type ModelHookSpec = HookSpec & {
   name: string;
   args: { name: string; query: QuerySpec }[];
 };
 
-export type ActionHookSpec = BaseHookSpec & {
+export type ActionHookSpec = HookSpec & {
   args: Record<string, { kind: "expression"; exp: ExpSpec }>;
 };
+
+// ----- Execution Runtime
+
+export type ExecutionRuntimeSpec = WithContext<{
+  name: string;
+  default?: boolean;
+  sourcePath: string;
+}>;

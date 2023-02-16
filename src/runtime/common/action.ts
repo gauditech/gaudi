@@ -28,14 +28,14 @@ export async function executeActions(
 
     const actionKind = action.kind;
     if (actionKind === "create-one") {
-      const changesetData = await buildChangeset(action.changeset, ctx);
+      const changesetData = await buildChangeset(def, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, changesetData);
 
       const id = await insertData(dbConn, dbModel, dbData);
       const deps = await fetchActionDeps(def, dbConn, action, id);
       deps && ctx.vars.set(action.alias, deps[0]);
     } else if (actionKind === "update-one") {
-      const changesetData = await buildChangeset(action.changeset, ctx);
+      const changesetData = await buildChangeset(def, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, changesetData);
 
       const targetId = resolveTargetId(ctx, action.targetPath);
