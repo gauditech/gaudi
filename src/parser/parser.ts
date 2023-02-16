@@ -609,7 +609,7 @@ semantics.addOperation("parse()", {
   ExecutionRuntimeBody_sourcePath(this, _hookPath, value): ExecutionRuntimeBodyAtomAST {
     return {
       kind: "sourcePath",
-      value: value.sourceString,
+      value: value.parse(),
     };
   },
 

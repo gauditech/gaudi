@@ -22,7 +22,7 @@ exports[`compose hooks composes inline hooks 1`] = `
                       "runtime": {
                         "default": true,
                         "name": "MyRuntime",
-                        "sourcePath": ""some/path/to/file"",
+                        "sourcePath": "some/path/to/file",
                         "type": "node",
                       },
                     },
@@ -143,7 +143,7 @@ exports[`compose hooks composes inline hooks 1`] = `
                 "runtime": {
                   "default": true,
                   "name": "MyRuntime",
-                  "sourcePath": ""some/path/to/file"",
+                  "sourcePath": "some/path/to/file",
                   "type": "node",
                 },
               },
@@ -163,7 +163,7 @@ exports[`compose hooks composes inline hooks 1`] = `
             "runtime": {
               "default": true,
               "name": "MyRuntime",
-              "sourcePath": ""some/path/to/file"",
+              "sourcePath": "some/path/to/file",
               "type": "node",
             },
           },
@@ -190,7 +190,7 @@ exports[`compose hooks composes inline hooks 1`] = `
     {
       "default": true,
       "name": "MyRuntime",
-      "sourcePath": ""some/path/to/file"",
+      "sourcePath": "some/path/to/file",
       "type": "node",
     },
     {
@@ -226,7 +226,7 @@ exports[`compose hooks composes source hooks 1`] = `
                       "runtime": {
                         "default": true,
                         "name": "MyRuntime",
-                        "sourcePath": ""some/path/to/file"",
+                        "sourcePath": "some/path/to/file",
                         "type": "node",
                       },
                     },
@@ -348,7 +348,7 @@ exports[`compose hooks composes source hooks 1`] = `
                 "runtime": {
                   "default": true,
                   "name": "MyRuntime",
-                  "sourcePath": ""some/path/to/file"",
+                  "sourcePath": "some/path/to/file",
                   "type": "node",
                 },
               },
@@ -369,7 +369,7 @@ exports[`compose hooks composes source hooks 1`] = `
             "runtime": {
               "default": true,
               "name": "MyRuntime",
-              "sourcePath": ""some/path/to/file"",
+              "sourcePath": "some/path/to/file",
               "type": "node",
             },
           },
@@ -396,7 +396,7 @@ exports[`compose hooks composes source hooks 1`] = `
     {
       "default": true,
       "name": "MyRuntime",
-      "sourcePath": ""some/path/to/file"",
+      "sourcePath": "some/path/to/file",
       "type": "node",
     },
     {
@@ -428,7 +428,7 @@ exports[`compose hooks defaults to the first execution runtime when hook runtime
               "runtime": {
                 "default": true,
                 "name": "MyRuntime",
-                "sourcePath": ""some/path/to/file"",
+                "sourcePath": "some/path/to/file",
                 "type": "node",
               },
             },

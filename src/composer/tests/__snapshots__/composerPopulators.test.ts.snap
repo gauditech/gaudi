@@ -596,7 +596,7 @@ exports[`populator composer succeeds for simple populator 1`] = `
                   "runtime": {
                     "default": true,
                     "name": "MyRuntime",
-                    "sourcePath": ""./some/path"",
+                    "sourcePath": "./some/path",
                     "type": "node",
                   },
                 },
@@ -683,7 +683,7 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
                   "runtime": {
                     "default": true,
                     "name": "MyRuntime",
-                    "sourcePath": ""./some/path"",
+                    "sourcePath": "./some/path",
                     "type": "node",
                   },
                 },
