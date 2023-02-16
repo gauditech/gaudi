@@ -143,7 +143,7 @@ describe("hooks", () => {
       const result = await executeHook(
         {
           runtime: internalExecRuntime,
-          code: { kind: "source", file: "index.js", target: "echo" },
+          code: { kind: "source", file: "hooks/index.js", target: "echo" },
         },
         { value: "ASDF" }
       );

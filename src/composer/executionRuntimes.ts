@@ -29,7 +29,7 @@ function composeInternalExecutionRuntime(def: Definition): ExecutionRuntimeDef {
   return composeRuntime(def, {
     name: getInternalExecutionRuntimeName(),
     default: false,
-    sourcePath: "./hook",
+    sourcePath: "./internalExecutionRuntime",
   });
 }
 
