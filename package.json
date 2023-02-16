@@ -17,7 +17,7 @@
     "dev:copy-static": "chokidar ./src/package.json  --debounce 100 --initial --command \"npm run build:copy-static\"",
     "dev:docs": "npm start --prefix web -- --no-open",
     "// --- test": "",
-    "test": "npm run build:grammar && jest --testPathIgnorePatterns='<rootDir>/src/e2e/'",
+    "test": "jest --testPathIgnorePatterns='<rootDir>/src/e2e/'",
     "test:watch": "npm test -- --watch",
     "test:api": "jest ./src/e2e/api",
     "test:api:watch": "npm run test:api -- --watch",
