@@ -1,5 +1,8 @@
+import _ from "lodash";
+
 import { compile, compose, parse } from "@src/index";
-import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
+import { ActionKindAST, EndpointBodyAST, EndpointCardinality } from "@src/types/ast";
+import { CreateEndpointDef, EndpointType, UpdateEndpointDef } from "@src/types/definition";
 
 describe("custom actions", () => {
   it("succeeds for basic composite create", () => {
@@ -264,6 +267,27 @@ describe("custom actions", () => {
       `"Found duplicates: [extras_id]"`
     );
   });
+  it("succeeds when virtual input is defined and referenced", () => {
+    const bp = `
+    model Org { field name { type text } }
+
+    entrypoint Orgs {
+      target model Org as org
+      create endpoint {
+        action {
+          create org {
+            virtual input iname { type text, validate { min 4 } }
+            set name concat("Mr/Mrs ", iname)
+          }
+        }
+      }
+    }
+    `;
+
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
+  });
   it("fails when there's an input and deny for the same field", () => {
     const bp = `
     model Org {
@@ -346,4 +370,177 @@ describe("custom actions", () => {
   );
   it.todo("gives proper error when nested cycle is detected");
   // create user { create profile { create user {} } }
+
+  it("creates actions in custom endpoint", () => {
+    const bp = `
+    model Org { field name { type text } }
+    model Log {}
+
+    entrypoint Orgs {
+      target model Org as org
+
+      custom endpoint {
+        cardinality one
+        method GET
+        path "customGet"
+      }
+      custom endpoint {
+        cardinality one
+        method PATCH
+        path "customUpdate"
+
+        action {
+          update {}
+        }
+      }
+      custom endpoint {
+        cardinality one
+        method DELETE
+        path "customDelete"
+
+        action {
+          delete {}
+        }
+      }
+
+      custom endpoint {
+        cardinality many
+        method GET
+        path "customList"
+      }
+      custom endpoint {
+        cardinality many
+        method POST
+        path "customCreate"
+
+        action {
+          create {}
+        }
+      }
+    }
+    `;
+
+    const def = compose(compile(parse(bp)));
+    const endpoints = def.entrypoints[0].endpoints;
+
+    expect(endpoints).toMatchSnapshot();
+  });
+
+  // --- test missing/unallowed endpoint properties
+  _.chain<EndpointBodyAST["kind"][]>(["cardinality", "method", "path"])
+    .forEach((property) => {
+      it(`fails when "${property}" property is missing in custom endpoint`, () => {
+        const bp = `
+          model Org { field name { type text } }
+          model Log {}
+      
+          entrypoint Orgs {
+            target model Org as org
+            custom endpoint {
+              // in each iteration skip one property
+              ${property === "cardinality" ? "" : "cardinality many"}
+              ${property === "method" ? "" : "method POST"}
+              ${property === "path" ? "" : 'path "somePath"'}
+      
+              action {
+                create Log as log {}
+              }
+            }
+          }
+        `;
+
+        expect(() => compose(compile(parse(bp)))).toThrowError(
+          `Property "${property}" is required for custom endpoints`
+        );
+      });
+
+      _.chain<EndpointType[]>(["get", "list", "create", "update", "delete"])
+        .forEach((epType) => {
+          it(`fails when "${property}" property is used in "${epType}" endpoint`, () => {
+            const bp = `
+              model Org {}
+          
+              entrypoint Orgs {
+                target model Org
+                ${epType} endpoint {
+                  // show one property in each iteration
+                  ${property === "cardinality" ? "cardinality many" : ""}
+                  ${property === "method" ? "method POST" : ""}
+                  ${property === "path" ? 'path "somePath"' : ""}
+                }
+              }
+            `;
+
+            expect(() => compose(compile(parse(bp)))).toThrowError(
+              `Property "${property}" is not allowed for "${epType}" endpoints`
+            );
+          });
+        })
+        .value();
+    })
+    .value();
+
+  // --- test invalid action types in custom endpoints
+  _.chain<[EndpointCardinality, ActionKindAST[]]>([
+    ["one", ["create"]],
+    ["many", ["update", "delete"]],
+  ])
+    .map(([cardinality, actions]) => {
+      console.log("endpoint", cardinality);
+
+      return _.map(actions, (a): [EndpointCardinality, ActionKindAST] => [cardinality, a]);
+    })
+    .flatMap()
+    .forEach(([cardinality, action]) => {
+      it(`fails when creating "${cardinality}" endpoint with unallowed action "${action}"`, () => {
+        const bp = `
+        model Org {}
+        model Log {}
+
+        entrypoint Orgs {
+          target model Org as org
+          custom endpoint {
+            cardinality ${cardinality}
+            method POST
+            path "somePath"
+
+            action {
+              ${action} org {}
+            }
+          }
+        }
+        `;
+
+        expect(() => compose(compile(parse(bp)))).toThrowError(
+          `"custom-${cardinality}" endpoint does not allow "${action}" action`
+        );
+      });
+    })
+    .value();
+
+  it(`fails on duplicate endpoint paths`, () => {
+    const bp = `
+      model Org {}
+
+      entrypoint Orgs {
+        target model Org as org
+
+        custom endpoint {
+          cardinality many
+          method POST
+          path "someDuplicatePath"
+        }
+
+        custom endpoint {
+          cardinality many
+          method POST
+          path "someDuplicatePath"
+        }
+      }
+      `;
+
+    expect(() => compose(compile(parse(bp)))).toThrowError(
+      `Custom endpoints on the same HTTP method must have unique paths in one entrypoint ("Orgs")`
+    );
+  });
 });

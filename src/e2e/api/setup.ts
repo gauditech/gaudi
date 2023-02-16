@@ -15,7 +15,7 @@ import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authen
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
-import { bindAppContextHandler, errorHandler } from "@src/runtime/server/middleware";
+import { bindAppContextHandler, errorHandler, requestLogger } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
@@ -232,6 +232,7 @@ async function createAppServer(
   app.use(bindAppContextHandler(app, ctx));
 
   app.use(json());
+  app.use(requestLogger);
 
   configure(app);
 

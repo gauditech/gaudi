@@ -1,4 +1,12 @@
-import { BinaryOperator, EndpointType, LiteralValue, SelectAST, UnaryOperator } from "./ast";
+import {
+  BinaryOperator,
+  EndpointCardinality,
+  EndpointMethod,
+  EndpointTypeAST,
+  LiteralValue,
+  SelectAST,
+  UnaryOperator,
+} from "./ast";
 
 import { WithContext } from "@src/common/error";
 
@@ -90,9 +98,12 @@ export type EntrypointSpec = WithContext<{
 }>;
 
 export type EndpointSpec = WithContext<{
-  type: EndpointType;
-  action?: ActionSpec[];
+  type: EndpointTypeAST;
+  actions?: ActionSpec[];
   authorize?: ExpSpec;
+  cardinality?: EndpointCardinality;
+  method?: EndpointMethod;
+  path?: string;
 }>;
 
 export type ActionSpec = WithContext<{
@@ -107,8 +118,9 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecRefThrough
   | ActionAtomSpecAction
   | ActionAtomSpecDeny
-  | ActionAtomSpecInputList
+  | ActionAtomSpecVirtualInput
   | ActionAtomSpecInput
+  | ActionAtomSpecInputList
 >;
 
 export type HookCodeSpec =
@@ -126,9 +138,16 @@ export type ActionAtomSpecSet = {
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
-export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
+export type ActionAtomSpecVirtualInput = {
+  kind: "virtual-input";
+  name: string;
+  type: string;
+  nullable: boolean;
+  optional: boolean;
+  validators: ValidatorSpec[];
+};
 export type ActionAtomSpecInput = { kind: "input"; fieldSpec: InputFieldSpec };
-
+export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
 export type InputFieldSpec = {
   name: string;
   optional: boolean;

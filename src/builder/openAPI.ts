@@ -96,7 +96,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
 
   const paths = endpoints.reduce((paths, endpoint) => {
     const endpointPath = buildEndpointPath(endpoint);
-    const method = buildEndpointMethod(endpoint);
+    const method = buildEndpointHttpMethod(endpoint);
 
     const path =
       pathPrefix +
@@ -169,7 +169,7 @@ function extractEndpoints(entrypoint: EntrypointDef): EndpointDef[] {
   return [...entrypoint.endpoints, ...nestedEndpoints];
 }
 
-function buildEndpointMethod(endpoint: EndpointDef): OpenAPIV3.HttpMethods {
+function buildEndpointHttpMethod(endpoint: EndpointDef): OpenAPIV3.HttpMethods {
   switch (endpoint.kind) {
     case "list":
       return OpenAPIV3.HttpMethods.GET;
@@ -181,5 +181,9 @@ function buildEndpointMethod(endpoint: EndpointDef): OpenAPIV3.HttpMethods {
       return OpenAPIV3.HttpMethods.PATCH;
     case "delete":
       return OpenAPIV3.HttpMethods.DELETE;
+    default: {
+      const method = endpoint.method;
+      return OpenAPIV3.HttpMethods[method];
+    }
   }
 }

@@ -247,7 +247,7 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
     primary: false,
     unique: !!fspec.unique,
     nullable: !!fspec.nullable,
-    validators: validatorSpecsToDefs(def, type, fspec.validators),
+    validators: composeValidators(def, type, fspec.validators),
   };
   mdef.fields.push(f);
   def.resolveOrder.push(f.refKey);
@@ -271,7 +271,7 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
   return c;
 }
 
-function validatorSpecsToDefs(
+export function composeValidators(
   def: Definition,
   fieldType: FieldDef["type"],
   vspecs: FieldSpec["validators"]
@@ -577,7 +577,7 @@ export function composeExpression(
   }
 }
 
-function validateType(type: string): FieldDef["type"] {
+export function validateType(type: string): FieldDef["type"] {
   switch (type) {
     case "integer":
       return "integer";

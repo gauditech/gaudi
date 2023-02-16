@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
+import { composeValidators, validateType } from "./models";
 import {
   VarContext,
   getTypedIterator,
@@ -18,12 +19,13 @@ import {
   safeInvoke,
 } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
-import { EndpointType } from "@src/types/ast";
 import {
   ActionDef,
   ChangesetDef,
   ChangesetOperationDef,
   Definition,
+  EndpointDef,
+  EndpointType,
   FieldSetter,
   FunctionName,
   ModelDef,
@@ -47,8 +49,8 @@ export function composeActionBlock(
    */
   iteratorCtx: VarContext = {}
 ): ActionDef[] {
-  // we currently only allow create and update
-  if (["create", "update"].indexOf(endpointKind) < 0) {
+  // we currently allow actions only on create, update and custom endpoints
+  if (["create", "update", "custom-one", "custom-many"].indexOf(endpointKind) < 0) {
     ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
   }
 
@@ -100,6 +102,10 @@ export function composeActionBlock(
         // No action here, since selecting the records from the db is not an `ActionDef`.
         return actions;
       }
+      case "custom-one":
+      case "custom-many":
+        // no default action here since it's a "custom" endpoint
+        return actions;
       default: {
         /**
          * Make custom default action and insert at the beginning.
@@ -125,6 +131,7 @@ export function composeActionBlock(
           targets,
           endpointKind
         );
+
         return [action, ...actions];
       }
     }
@@ -148,20 +155,24 @@ export function getInitialContext(
       { kind: "record", modelName: t.retType },
     ])
   );
+
   if (def.auth) {
     parentContext["@auth"] = {
       kind: "record",
       modelName: getRef.model(def, def.auth.baseRefKey).name,
     };
   }
+
   switch (endpointKind) {
     case "create":
-    case "list": {
+    case "list":
+    case "custom-many": {
       return parentContext;
     }
     case "update":
     case "delete":
-    case "get": {
+    case "get":
+    case "custom-one": {
       const thisTarget = _.last(targets)!;
       return {
         ...parentContext,
@@ -318,6 +329,19 @@ function composeSingleAction(
     fieldsetNamespace: string[]
   ): ChangesetOperationDef {
     switch (atom.kind) {
+      case "virtual-input": {
+        return {
+          name: atom.name,
+          setter: {
+            kind: "fieldset-virtual-input",
+            type: validateType(atom.type),
+            required: !atom.optional,
+            nullable: atom.nullable,
+            fieldsetAccess: [...fieldsetNamespace, atom.name],
+            validators: composeValidators(def, validateType(atom.type), atom.validators),
+          },
+        };
+      }
       case "input": {
         const field = getRef.field(def, model.name, atom.fieldSpec.name);
         return {
@@ -392,11 +416,24 @@ function ensureCorrectDefaultAction(
   target: TargetDef,
   endpointKind: EndpointType
 ) {
-  if (spec.kind !== endpointKind) {
-    throw new Error(
-      `Mismatching context action: overriding ${endpointKind} endpoint with a ${spec.kind} action`
-    );
+  // --- check endpoint action types
+  // custom endpoint action types depend on their cardinality
+  if (endpointKind === "custom-one" || endpointKind === "custom-many") {
+    if (endpointKind === "custom-many" && !(spec.kind === "create")) {
+      throw new Error(`"custom-many" endpoint does not allow "${spec.kind}" action`);
+    }
+    if (endpointKind === "custom-one" && !(spec.kind === "update" || spec.kind === "delete")) {
+      throw new Error(`"custom-one" endpoint does not allow "${spec.kind}" action`);
+    }
+  } else {
+    // standard endpoint action types' cardinality is implicit and reflects on allowed default action type
+    if (spec.kind !== endpointKind) {
+      throw new Error(
+        `Mismatching context action: overriding ${endpointKind} endpoint with a ${spec.kind} action`
+      );
+    }
   }
+
   if (spec.kind === "create") {
     if (spec.alias && spec.alias !== target.alias) {
       throw new Error(

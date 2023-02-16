@@ -32,11 +32,24 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
       alias: target.identifyWith.paramName,
     },
   ]);
+
   const targetNs: PathFragment = { kind: "namespace", name: _.snakeCase(endpoint.target.name) };
+  // custom endpoint add their own suffix
+  const customPathSuffix: PathFragment[] =
+    endpoint.kind === "custom-one" || endpoint.kind === "custom-many"
+      ? [
+          {
+            kind: "namespace",
+            name: encodeURIComponent(endpoint.path),
+          },
+        ]
+      : [];
+
   switch (endpoint.kind) {
     case "get":
     case "update":
-    case "delete": {
+    case "delete":
+    case "custom-one": {
       return [
         ...contextFragments,
         targetNs,
@@ -45,11 +58,13 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
           type: endpoint.target.identifyWith.type,
           alias: endpoint.target.identifyWith.paramName,
         },
+        ...customPathSuffix,
       ];
     }
     case "create":
-    case "list": {
-      return [...contextFragments, targetNs];
+    case "list":
+    case "custom-many": {
+      return [...contextFragments, targetNs, ...customPathSuffix];
     }
   }
 }

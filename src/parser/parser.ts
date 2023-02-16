@@ -1,14 +1,16 @@
 import grammar from "@src/parser/grammar/gaudi.ohm-bundle";
 import {
   AST,
-  ActionAtomBodyAST,
+  ActionAtomAST,
   ActionBodyAST,
   ActionKindAST,
   BinaryOperator,
   ComputedAST,
   EndpointAST,
   EndpointBodyAST,
-  EndpointType,
+  EndpointCardinality,
+  EndpointMethod,
+  EndpointTypeAST,
   EntrypointAST,
   EntrypointBodyAST,
   ExecutionRuntimeAST,
@@ -38,6 +40,7 @@ import {
   RepeaterAtomAST,
   SelectAST,
   ValidatorAST,
+  VirtualInputAtomAST,
 } from "@src/types/ast";
 
 export function parse(input: string): AST {
@@ -301,15 +304,30 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  EndpointType(endpointType): EndpointType {
-    return endpointType.sourceString as EndpointType;
+  EndpointType(endpointType): EndpointTypeAST {
+    return endpointType.sourceString as EndpointTypeAST;
   },
-  EndpointBody_action(this, _action, _braceL, body, _braceR): EndpointBodyAST {
-    return { kind: "action", body: body.parse(), interval: this.source };
+  EndpointBody_action_block(this, _action, _braceL, body, _braceR): EndpointBodyAST {
+    return { kind: "action-block", atoms: body.parse(), interval: this.source };
   },
   EndpointBody_authorize(this, _authorize, _braceL, body, _braceR): EndpointBodyAST {
     return { kind: "authorize", expression: body.parse(), interval: this.source };
   },
+
+  EndpointBody_cardinality(this, _cardinality, value): EndpointBodyAST {
+    return {
+      kind: "cardinality",
+      value: value.sourceString as EndpointCardinality,
+      interval: this.source,
+    };
+  },
+  EndpointBody_method(this, _cardinality, value): EndpointBodyAST {
+    return { kind: "method", value: value.sourceString as EndpointMethod, interval: this.source };
+  },
+  EndpointBody_path(this, _cardinality, value): EndpointBodyAST {
+    return { kind: "path", value: value.parse(), interval: this.source };
+  },
+
   Hook(this, _hook, identifier, _braceL, body, _braceR): HookAST {
     return {
       kind: "hook",
@@ -368,7 +386,7 @@ semantics.addOperation("parse()", {
   ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
     return {
       kind: kind.sourceString as ActionKindAST,
-      body: body.parse(),
+      atoms: body.parse(),
       interval: this.source,
     };
   },
@@ -376,7 +394,7 @@ semantics.addOperation("parse()", {
     return {
       kind: kind.sourceString as ActionKindAST,
       target: name.parse(),
-      body: body.parse(),
+      atoms: body.parse(),
       interval: this.source,
     };
   },
@@ -385,11 +403,11 @@ semantics.addOperation("parse()", {
       kind: kind.sourceString as ActionKindAST,
       target: name.parse(),
       alias: alias.parse(),
-      body: body.parse(),
+      atoms: body.parse(),
       interval: this.source,
     };
   },
-  ActionAtomBody_set_hook(this, _set, identifier, hook): ActionAtomBodyAST {
+  ActionAtomBody_set_hook(this, _set, identifier, hook): ActionAtomAST {
     return {
       kind: "set",
       target: identifier.parse(),
@@ -397,14 +415,14 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionAtomBody_set_expression(this, _set, identifier, exp): ActionAtomBodyAST {
+  ActionAtomBody_set_expression(this, _set, identifier, exp): ActionAtomAST {
     return {
       kind: "set",
       target: identifier.parse(),
       set: { kind: "expression", exp: exp.parse() },
     };
   },
-  ActionAtomBody_reference(this, _reference, identifier, _through, through): ActionAtomBodyAST {
+  ActionAtomBody_reference(this, _reference, identifier, _through, through): ActionAtomAST {
     return {
       kind: "reference",
       target: identifier.parse(),
@@ -412,7 +430,7 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionAtomBody_input(this, _input, _braceL, atoms, _braceR): ActionAtomBodyAST {
+  ActionAtomBody_input(this, _input, _braceL, atoms, _braceR): ActionAtomAST {
     return {
       kind: "input",
       fields: atoms.parse(),
@@ -424,11 +442,31 @@ semantics.addOperation("parse()", {
       fields: body.parse(),
     };
   },
-  ActionAtomBody_nested_action(this, action): ActionAtomBodyAST {
+  ActionAtomBody_nested_action(this, action): ActionAtomAST {
     return {
       kind: "action",
       body: action.parse(),
     };
+  },
+  ActionAtomBody_virtual_input(this, _kw, identifier, _bL, body, _bR): ActionAtomAST {
+    return {
+      kind: "virtual-input",
+      name: identifier.parse(),
+      atoms: body.parse(),
+      interval: this.source,
+    };
+  },
+  VirtualInputBody_type(this, _type, type): VirtualInputAtomAST {
+    return { kind: "type", type: type.parse() };
+  },
+  VirtualInputBody_optional(this, _kw): VirtualInputAtomAST {
+    return { kind: "optional" };
+  },
+  VirtualInputBody_nullable(this, _nullable): VirtualInputAtomAST {
+    return { kind: "nullable" };
+  },
+  VirtualInputBody_validate(this, _keyword, _bL, validator, _bR): VirtualInputAtomAST {
+    return { kind: "validate", validators: validator.parse() };
   },
   ActionInputAtom_field(this, name): InputFieldAST {
     return { name: name.parse(), opts: [] };

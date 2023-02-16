@@ -22,6 +22,13 @@ export function ensureExists<I>(item: I | null | undefined, message?: string): a
   }
 }
 
+export function ensureEmpty<I>(item: I | null | undefined, message?: string): asserts item is I {
+  if (item !== null && item !== undefined) {
+    throw new Error(message ?? `Value is not empty, found ${item}`);
+  }
+}
+
+
 export function ensureEqual<T, Tx extends T>(a: T, b: Tx, message?: string): asserts a is Tx {
   if (a === b) return;
   throw new Error(message ?? "Not equal");

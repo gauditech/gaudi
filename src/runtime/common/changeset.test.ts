@@ -45,6 +45,17 @@ describe("runtime", () => {
           },
         },
         {
+          name: "virtual_input_prop",
+          setter: {
+            fieldsetAccess: ["virtual_input_prop"],
+            kind: "fieldset-virtual-input",
+            type: "text",
+            required: false,
+            nullable: false,
+            validators: [],
+          },
+        },
+        {
           name: "input_value_copy",
           setter: {
             kind: "changeset-reference",
@@ -81,6 +92,7 @@ describe("runtime", () => {
       const context: ActionContext = {
         input: {
           input_prop: "input value",
+          virtual_input_prop: "virtual input value",
         },
         vars: new Vars(),
         referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
