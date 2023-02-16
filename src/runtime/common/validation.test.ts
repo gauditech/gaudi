@@ -254,7 +254,7 @@ describe("runtime", () => {
                   runtime: {
                     name: "TestRuntime",
                     default: true,
-                    sourcePath: "./test/hooks",
+                    sourcePath: "./src/runtime/test/hooks",
                     type: "node",
                   },
                   code: { kind: "inline", inline: "value === 'expected text'" },

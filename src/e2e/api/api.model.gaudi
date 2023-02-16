@@ -1,3 +1,6 @@
+runtime MyRuntime {
+  sourcePath "./src/e2e/api/hooks"
+}
 
 model Org {
   field name {

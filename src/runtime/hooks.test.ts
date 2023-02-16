@@ -1,9 +1,7 @@
-import path from "path";
-
-import { executeHook, importHooks } from "@src/runtime/hooks";
+import { executeHook } from "@src/runtime/hooks";
 
 describe("hooks", () => {
-  const hooksPath = path.join(__dirname, "./test/hooks");
+  const hooksPath = "./src/runtime/test/hooks";
 
   /*
    * Using math division as a test operation:
@@ -13,8 +11,6 @@ describe("hooks", () => {
 
   describe("external hooks", () => {
     it("should resolve static value", async () => {
-      await importHooks(hooksPath);
-
       const result = await executeHook(
         {
           runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },
@@ -27,8 +23,6 @@ describe("hooks", () => {
     });
 
     it("should resolve promise value", async () => {
-      await importHooks(hooksPath);
-
       const result = await executeHook(
         {
           runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },
@@ -43,8 +37,6 @@ describe("hooks", () => {
 
   describe("inline hooks", () => {
     it("should resolve static value", async () => {
-      await importHooks(hooksPath);
-
       const result = await executeHook(
         {
           runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },
@@ -57,8 +49,6 @@ describe("hooks", () => {
     });
 
     it("should resolve promise value", async () => {
-      await importHooks(hooksPath);
-
       const result = await executeHook(
         {
           runtime: { name: "TestRuntime", default: true, sourcePath: hooksPath, type: "node" },

@@ -1,3 +1,7 @@
+runtime MyRuntime {
+  sourcePath "./src/e2e/api/hooks"
+}
+
 auth model Operator {
   field name { type text }
   relation boxes { from Box, through owner }
