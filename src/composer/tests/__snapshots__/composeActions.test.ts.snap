@@ -582,6 +582,64 @@ exports[`custom actions succeeds for basic update with a deny rule 1`] = `
 ]
 `;
 
+exports[`custom actions succeeds when virtual input is defined and referenced 1`] = `
+[
+  {
+    "alias": "org",
+    "changeset": [
+      {
+        "name": "iname",
+        "setter": {
+          "fieldsetAccess": [
+            "iname",
+          ],
+          "kind": "fieldset-virtual-input",
+          "nullable": false,
+          "required": true,
+          "type": "text",
+          "validators": [
+            {
+              "args": [
+                {
+                  "type": "integer",
+                  "value": 4,
+                },
+              ],
+              "inputType": "text",
+              "name": "minLength",
+            },
+          ],
+        },
+      },
+      {
+        "name": "name",
+        "setter": {
+          "args": [
+            {
+              "kind": "literal",
+              "type": "text",
+              "value": "Mr/Mrs ",
+            },
+            {
+              "kind": "changeset-reference",
+              "referenceName": "iname",
+            },
+          ],
+          "kind": "function",
+          "name": "concat",
+        },
+      },
+    ],
+    "kind": "create-one",
+    "model": "Org",
+    "select": [],
+    "targetPath": [
+      "org",
+    ],
+  },
+]
+`;
+
 exports[`custom actions succeeds with arithmetic expressions in setters 1`] = `
 [
   {

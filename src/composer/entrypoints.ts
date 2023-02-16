@@ -195,7 +195,7 @@ function processEndpoints(
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const endpointType = mapEndpointSpecToDefType(endSpec);
-    const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endpointType);
+    const rawActions = composeActionBlock(def, endSpec.actions ?? [], targets, endpointType);
     const actionDeps = collectActionDeps(def, rawActions);
 
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);

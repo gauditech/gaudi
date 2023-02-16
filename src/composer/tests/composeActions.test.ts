@@ -267,6 +267,27 @@ describe("custom actions", () => {
       `"Found duplicates: [extras_id]"`
     );
   });
+  it("succeeds when virtual input is defined and referenced", () => {
+    const bp = `
+    model Org { field name { type text } }
+
+    entrypoint Orgs {
+      target model Org as org
+      create endpoint {
+        action {
+          create org {
+            virtual input iname { type text, validate { min 4 } }
+            set name concat("Mr/Mrs ", iname)
+          }
+        }
+      }
+    }
+    `;
+
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+    expect(endpoint.actions).toMatchSnapshot();
+  });
   it("fails when there's an input and deny for the same field", () => {
     const bp = `
     model Org {

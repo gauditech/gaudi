@@ -8,7 +8,9 @@ entrypoint ItemEntry {
   create endpoint {
     action {
 
+
       create {
+        virtual input password { type text, optional, nullable, validate { min 3 } }
         reference plan through name
       }
       create item {}
