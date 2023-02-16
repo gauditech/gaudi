@@ -1,8 +1,13 @@
+import { ensureExists } from "@src/common/utils";
 import { compile } from "@src/compiler/compiler";
 import { compose } from "@src/composer/composer";
+import {
+  composeExecutionRuntimes,
+  getInternalExecutionRuntimeName,
+} from "@src/composer/executionRuntimes";
 import { parse } from "@src/parser/parser";
 import { executeHook } from "@src/runtime/hooks";
-import { CreateEndpointDef, ExecutionRuntimeDef } from "@src/types/definition";
+import { CreateEndpointDef, Definition, ExecutionRuntimeDef } from "@src/types/definition";
 
 describe("hooks", () => {
   const execRuntime: ExecutionRuntimeDef = {
@@ -118,6 +123,32 @@ describe("hooks", () => {
         ?.actions.at(0);
 
       expect(action).toMatchSnapshot();
+    });
+
+    it("should run hook from internal exec runtime", async () => {
+      const def: Definition = {
+        entrypoints: [],
+        models: [],
+        populators: [],
+        resolveOrder: [],
+        runtimes: [],
+      };
+      composeExecutionRuntimes(def, []);
+
+      const internalExecRuntime: ExecutionRuntimeDef | undefined = def.runtimes.find(
+        (r) => r.name === getInternalExecutionRuntimeName()
+      );
+      ensureExists(internalExecRuntime);
+
+      const result = await executeHook(
+        {
+          runtime: internalExecRuntime,
+          code: { kind: "source", file: "index.js", target: "echo" },
+        },
+        { value: "ASDF" }
+      );
+
+      expect(result).toBe("ASDF");
     });
   });
 });

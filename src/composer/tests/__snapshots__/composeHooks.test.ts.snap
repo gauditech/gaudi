@@ -196,7 +196,7 @@ exports[`compose hooks composes inline hooks 1`] = `
     {
       "default": false,
       "name": "$GAUDI_INTERNAL",
-      "sourcePath": "/home/hkasabasic/work/workspaces/gaudi/gaudi/src/composer/hooks",
+      "sourcePath": "./hook",
       "type": "node",
     },
   ],
@@ -402,7 +402,7 @@ exports[`compose hooks composes source hooks 1`] = `
     {
       "default": false,
       "name": "$GAUDI_INTERNAL",
-      "sourcePath": "/home/hkasabasic/work/workspaces/gaudi/gaudi/src/composer/hooks",
+      "sourcePath": "./hook",
       "type": "node",
     },
   ],

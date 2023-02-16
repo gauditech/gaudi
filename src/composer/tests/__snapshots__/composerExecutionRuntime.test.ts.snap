@@ -17,7 +17,7 @@ exports[`execution runtime composer composes multiple execution runtimes 1`] = `
   {
     "default": false,
     "name": "$GAUDI_INTERNAL",
-    "sourcePath": "/home/hkasabasic/work/workspaces/gaudi/gaudi/src/composer/hooks",
+    "sourcePath": "./hook",
     "type": "node",
   },
 ]
@@ -34,7 +34,7 @@ exports[`execution runtime composer composes single execution runtime 1`] = `
   {
     "default": false,
     "name": "$GAUDI_INTERNAL",
-    "sourcePath": "/home/hkasabasic/work/workspaces/gaudi/gaudi/src/composer/hooks",
+    "sourcePath": "./hook",
     "type": "node",
   },
 ]
@@ -51,7 +51,7 @@ exports[`execution runtime composer makes a single runtime the default one 1`] =
   {
     "default": false,
     "name": "$GAUDI_INTERNAL",
-    "sourcePath": "/home/hkasabasic/work/workspaces/gaudi/gaudi/src/composer/hooks",
+    "sourcePath": "./hook",
     "type": "node",
   },
 ]

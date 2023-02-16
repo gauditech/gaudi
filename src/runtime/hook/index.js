@@ -1,4 +1,4 @@
-/** Returns given value. To be used for testing. */
-export function echo({ value }) {
+/** Returns given value. Can be used for testing. */
+module.exports.echo = function ({ value }) {
   return value;
-}
+};

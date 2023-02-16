@@ -1,6 +1,4 @@
-import path from "path";
-
-import { ensureEqual, ensureUnique } from "@src/common/utils";
+import { ensureUnique } from "@src/common/utils";
 import { Definition, ExecutionRuntimeDef } from "@src/types/definition";
 import { ExecutionRuntimeSpec } from "@src/types/specification";
 
@@ -14,13 +12,7 @@ export function composeExecutionRuntimes(def: Definition, runtimes: ExecutionRun
   processDefaultRuntime(def);
 
   // inject gaudi internal runtime
-  def.runtimes.push(
-    composeRuntime(def, {
-      name: getInternalExecutionRuntimeName(),
-      default: false,
-      sourcePath: path.join(__dirname, "hooks"),
-    })
-  );
+  def.runtimes.push(composeInternalExecutionRuntime(def));
 
   // check for duplicate names
   ensureUnique(
@@ -31,6 +23,14 @@ export function composeExecutionRuntimes(def: Definition, runtimes: ExecutionRun
 
 export function getInternalExecutionRuntimeName(): string {
   return EXECUTION_RUNTIME_GAUDI_INTERNAL;
+}
+
+function composeInternalExecutionRuntime(def: Definition): ExecutionRuntimeDef {
+  return composeRuntime(def, {
+    name: getInternalExecutionRuntimeName(),
+    default: false,
+    sourcePath: "./hook",
+  });
 }
 
 function composeRuntime(def: Definition, runtime: ExecutionRuntimeSpec): ExecutionRuntimeDef {

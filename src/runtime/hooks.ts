@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 import { ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition";
 
 export type ExecutionRuntimeClient = {
@@ -34,9 +35,10 @@ const HOOKS_FILES_PATTERN = /.+\.[tj]s$/;
 export async function createLocalExecutionRuntime(
   runtime: ExecutionRuntimeDef
 ): Promise<ExecutionRuntimeClient> {
-  // TODO: verify hook path
   const modules: HookModules = {};
-  await importHooks(runtime.sourcePath, modules);
+
+  const sourcePath = resolveSourcePath(runtime.name, runtime.sourcePath);
+  await importHooks(sourcePath, modules);
 
   return {
     runtimeName: runtime.name,
@@ -76,6 +78,26 @@ export async function createLocalExecutionRuntime(
       }
     },
   };
+}
+
+/**
+ * Resolves absolute source folder path.
+ *
+ * If sources path is already absolute it is returned as umchanged.
+ *
+ * Relative paths are resolved with different base path:
+ *  - internal exec runtimes are resolved using `__dirname` as base path
+ *  - user defined exec runtimes are resolved using current process working folder
+ */
+function resolveSourcePath(name: string, sourcePath: string): string {
+  if (path.isAbsolute(sourcePath)) return sourcePath;
+
+  const internalExecRuntimes = [getInternalExecutionRuntimeName()];
+  if (internalExecRuntimes.includes(name)) {
+    return path.resolve(__dirname, sourcePath);
+  } else {
+    return path.resolve(sourcePath);
+  }
 }
 
 async function importHooks(sourcePath: string, modules: HookModules) {
