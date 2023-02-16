@@ -1,12 +1,11 @@
 import { getExecutionRuntime } from "@src/common/refs";
 import { assertUnreachable, ensureExists } from "@src/common/utils";
-import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 import { Definition, HookDef } from "@src/types/definition";
 import { HookSpec } from "@src/types/specification";
 
 export function composeHook(def: Definition, hookSpec: HookSpec): HookDef {
   // default runtime must exist
-  const defaultRuntimeName = getDefaultExecutionRuntimeName(def);
+  const defaultRuntimeName = def.runtimes.filter((r) => r.default).shift()?.name;
   ensureExists(defaultRuntimeName, `Default execution runtime cannot be empty`);
 
   // runtime name, if not given, default to the first runtime
@@ -20,16 +19,4 @@ export function composeHook(def: Definition, hookSpec: HookSpec): HookDef {
   } else {
     assertUnreachable(kind);
   }
-}
-
-function getDefaultExecutionRuntimeName(def: Definition): string | undefined {
-  // currently, runtime name defaults to the first one (if any)
-  const defaultRuntimeName = def.runtimes
-    // internal runtime cannot be default
-    .filter((r) => r.name !== getInternalExecutionRuntimeName())
-    // TODO: use "default" property once it is added
-    .slice(0, 1)
-    .shift()?.name;
-
-  return defaultRuntimeName;
 }
