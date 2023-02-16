@@ -67,8 +67,12 @@ export async function createLocalExecutionRuntime(
           return hookFn(...argValues);
         }
         case "source": {
-          //
-          const hook = modules[code.file][code.target];
+          const hookFile = modules[code.file];
+          if (hookFile == null) {
+            throw new Error(`Hook file "${code.file}" not found`);
+          }
+
+          const hook = hookFile[code.target];
           if (hook == null) {
             throw new Error(`Hook "${code.target}" in file "${code.file}" not found`);
           }
