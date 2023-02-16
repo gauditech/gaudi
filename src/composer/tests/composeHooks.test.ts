@@ -87,9 +87,14 @@ describe("compose hooks", () => {
     expect(result).toMatchSnapshot();
   });
 
-  it("defaults to the first execution runtime when hook runtime is empty", () => {
+  it("defaults to the default execution runtime when hook runtime is empty", () => {
     const bp = `
       runtime MyRuntime {
+        default
+        sourcePath "some/path/to/file"
+      }
+
+      runtime MyRuntime2 {
         sourcePath "some/path/to/file"
       }
 

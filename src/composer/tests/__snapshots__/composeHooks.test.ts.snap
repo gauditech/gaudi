@@ -409,7 +409,7 @@ exports[`compose hooks composes source hooks 1`] = `
 }
 `;
 
-exports[`compose hooks defaults to the first execution runtime when hook runtime is empty 1`] = `
+exports[`compose hooks defaults to the default execution runtime when hook runtime is empty 1`] = `
 {
   "actions": [
     {
