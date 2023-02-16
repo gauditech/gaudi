@@ -140,7 +140,6 @@ GAUDI_ENGINE_OUTPUT_PATH=./dist
 
 GAUDI_RUNTIME_DEFINITION_PATH=./dist/definition.json
 GAUDI_RUNTIME_OUTPUT_PATH=./dist
-GAUDI_RUNTIME_HOOK_PATH=./dist/hooks
 GAUDI_RUNTIME_SERVER_HOST=localhost
 GAUDI_RUNTIME_SERVER_PORT=3001
 `;
@@ -225,8 +224,7 @@ Project can be configured through \`.env\` file. Available configuration options
 
 #### **Runtime configuration**
 * \`GAUDI_RUNTIME_DEFINITION_PATH\` [_"./dist/definition.json"_] - path to Gaudi definition file
-* \`GAUDI_RUNTIME_OUTPUT_PATH\` [_"./dist"_] - path to folder where Gaudi runtime will output it's files 
-* \`GAUDI_RUNTIME_HOOK_PATH\` [_"./dist/hooks"_] - folder where Gaudi runtime will find hooks files
+* \`GAUDI_RUNTIME_OUTPUT_PATH\` [_"./dist"_] - path to folder where Gaudi runtime will output it's files
 * \`GAUDI_RUNTIME_SERVER_HOST\` [_"localhost"_] - Gaudi runtime app host name
 * \`GAUDI_RUNTIME_SERVER_PORT\` [_3001_] - Gaudi runtime app port
 
