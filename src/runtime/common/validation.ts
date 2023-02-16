@@ -16,6 +16,7 @@ import { executeHook } from "../hooks";
 import { assertUnreachable } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
 import {
+  Definition,
   FieldsetDef,
   FieldsetFieldDef,
   FieldsetRecordDef,
@@ -25,11 +26,12 @@ import {
 // ----- validation&transformation
 
 export async function validateEndpointFieldset<R = Record<string, unknown>>(
+  def: Definition,
   fieldset: FieldsetDef,
   data: Record<string, unknown>
 ): Promise<R> {
   try {
-    const validationSchema = buildFieldsetValidationSchema(fieldset);
+    const validationSchema = buildFieldsetValidationSchema(def, fieldset);
     return await validateRecord(data, validationSchema);
   } catch (err: unknown) {
     if (err instanceof ValidationError) {
@@ -72,23 +74,23 @@ export async function validateRecord(record: unknown, schema: AnySchema) {
 
 // ---------- fieldset validation builder
 
-export function buildFieldsetValidationSchema(fieldset: FieldsetDef): AnySchema {
+export function buildFieldsetValidationSchema(def: Definition, fieldset: FieldsetDef): AnySchema {
   if (fieldset.kind !== "record") throw new Error('Root fieldset must be of kind "record".');
 
-  return buildObjectValidationSchema(fieldset);
+  return buildObjectValidationSchema(def, fieldset);
 }
 
-function processFields(field: FieldsetDef): AnySchema {
+function processFields(def: Definition, field: FieldsetDef): AnySchema {
   if (field.kind === "field") {
-    return buildFieldValidationSchema(field);
+    return buildFieldValidationSchema(def, field);
   } else {
-    return buildObjectValidationSchema(field);
+    return buildObjectValidationSchema(def, field);
   }
 }
 
-function buildObjectValidationSchema(field: FieldsetRecordDef): AnySchema {
+function buildObjectValidationSchema(def: Definition, field: FieldsetRecordDef): AnySchema {
   const fieldSchemas = Object.fromEntries(
-    Object.entries(field.record).map(([name, value]) => [name, processFields(value)])
+    Object.entries(field.record).map(([name, value]) => [name, processFields(def, value)])
   );
 
   if (!field.nullable) object(fieldSchemas).required();
@@ -96,7 +98,7 @@ function buildObjectValidationSchema(field: FieldsetRecordDef): AnySchema {
   return object(fieldSchemas).optional();
 }
 
-function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
+function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): AnySchema {
   if (field.type === "text") {
     // start with nullable because it's the only way to
     let s = string();
@@ -121,7 +123,7 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
-        s = buildHookSchema(v, s);
+        s = buildHookSchema(def, v, s);
       } else if (v.name === "noReference") {
         s = buildNoReferenceSchema(s);
       }
@@ -149,7 +151,7 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
         s = s.equals([v.args[0].value]) as NumberSchema;
       } else if (v.name === "hook") {
-        s = buildHookSchema(v, s);
+        s = buildHookSchema(def, v, s);
       } else if (v.name === "noReference") {
         s = buildNoReferenceSchema(s);
       }
@@ -171,7 +173,7 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
         // TODO: s.equals returns BaseSchema which doesn't fit BooleanSchema
         s = s.equals([v.args[0].value]) as BooleanSchema;
       } else if (v.name === "hook") {
-        s = buildHookSchema(v, s);
+        s = buildHookSchema(def, v, s);
       } else if (v.name === "noReference") {
         s = buildNoReferenceSchema(s);
       }
@@ -183,10 +185,14 @@ function buildFieldValidationSchema(field: FieldsetFieldDef): AnySchema {
   }
 }
 
-function buildHookSchema<S extends BaseSchema>(validator: HookValidator, schema: S): S {
+function buildHookSchema<S extends BaseSchema>(
+  def: Definition,
+  validator: HookValidator,
+  schema: S
+): S {
   const arg = validator.arg;
   const testFn = async (value: unknown) => {
-    return await executeHook<boolean>(validator.hook, arg ? { [arg]: value } : {});
+    return await executeHook<boolean>(def, validator.hook, arg ? { [arg]: value } : {});
   };
   return schema.test(testFn);
 }

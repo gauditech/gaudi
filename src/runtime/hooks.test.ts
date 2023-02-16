@@ -1,21 +1,12 @@
-import { ensureExists } from "@src/common/utils";
 import { compile } from "@src/compiler/compiler";
 import { compose } from "@src/composer/composer";
-import {
-  composeExecutionRuntimes,
-  getInternalExecutionRuntimeName,
-} from "@src/composer/executionRuntimes";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 import { parse } from "@src/parser/parser";
 import { executeHook } from "@src/runtime/hooks";
-import { CreateEndpointDef, Definition, ExecutionRuntimeDef } from "@src/types/definition";
+import { CreateEndpointDef, Definition } from "@src/types/definition";
 
 describe("hooks", () => {
-  const execRuntime: ExecutionRuntimeDef = {
-    name: "TestRuntime",
-    default: true,
-    sourcePath: "./src/runtime/test/hooks",
-    type: "node",
-  };
+  const def = createTestDefinition();
 
   /*
    * Using math division as a test operation:
@@ -26,8 +17,9 @@ describe("hooks", () => {
   describe("external hooks", () => {
     it("should resolve static value", async () => {
       const result = await executeHook(
+        def,
         {
-          runtime: execRuntime,
+          runtimeName: "TestRuntime",
           code: { kind: "source", target: "divideStatic", file: "hooks.js" },
         },
         { x: 6, y: 2 }
@@ -38,8 +30,9 @@ describe("hooks", () => {
 
     it("should resolve promise value", async () => {
       const result = await executeHook(
+        def,
         {
-          runtime: execRuntime,
+          runtimeName: "TestRuntime",
           code: { kind: "source", target: "divideAsync", file: "hooks.js" },
         },
         { x: 6, y: 2 }
@@ -52,8 +45,9 @@ describe("hooks", () => {
   describe("inline hooks", () => {
     it("should resolve static value", async () => {
       const result = await executeHook(
+        def,
         {
-          runtime: execRuntime,
+          runtimeName: "TestRuntime",
           code: { kind: "inline", inline: "x / y" },
         },
         { x: 6, y: 2 }
@@ -64,8 +58,9 @@ describe("hooks", () => {
 
     it("should resolve promise value", async () => {
       const result = await executeHook(
+        def,
         {
-          runtime: execRuntime,
+          runtimeName: "TestRuntime",
           code: { kind: "inline", inline: "Promise.resolve(x / y)" },
         },
         { x: 6, y: 2 }
@@ -126,23 +121,12 @@ describe("hooks", () => {
     });
 
     it("should run hook from internal exec runtime", async () => {
-      const def: Definition = {
-        entrypoints: [],
-        models: [],
-        populators: [],
-        resolveOrder: [],
-        runtimes: [],
-      };
-      composeExecutionRuntimes(def, []);
-
-      const internalExecRuntime: ExecutionRuntimeDef | undefined = def.runtimes.find(
-        (r) => r.name === getInternalExecutionRuntimeName()
-      );
-      ensureExists(internalExecRuntime);
+      const def = createTestDefinition();
 
       const result = await executeHook(
+        def,
         {
-          runtime: internalExecRuntime,
+          runtimeName: getInternalExecutionRuntimeName(),
           code: { kind: "source", file: "hooks/index.js", target: "echo" },
         },
         { value: "ASDF" }
@@ -152,3 +136,23 @@ describe("hooks", () => {
     });
   });
 });
+
+/**
+ * Creates test definition struct
+ */
+function createTestDefinition(): Definition {
+  const def = compose({
+    entrypoints: [],
+    models: [],
+    populators: [],
+    runtimes: [
+      {
+        name: "TestRuntime",
+        default: true,
+        sourcePath: "./src/runtime/test/hooks",
+      },
+    ],
+  });
+
+  return def;
+}

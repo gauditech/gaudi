@@ -9,13 +9,15 @@ export function composeHook(def: Definition, hookSpec: HookSpec): HookDef {
   ensureExists(defaultRuntimeName, `Default execution runtime cannot be empty`);
 
   // runtime name, if not given, default to the first runtime
-  const runtime = getExecutionRuntime(def, hookSpec.runtimeName ?? defaultRuntimeName);
+  const runtimeName = hookSpec.runtimeName ?? defaultRuntimeName;
+  // make sure it exists
+  getExecutionRuntime(def, runtimeName);
 
   const kind = hookSpec.code.kind;
   if (kind === "source") {
-    return { runtime, code: { ...hookSpec.code } };
+    return { runtimeName, code: { ...hookSpec.code } };
   } else if (kind === "inline") {
-    return { runtime, code: { ...hookSpec.code } };
+    return { runtimeName, code: { ...hookSpec.code } };
   } else {
     assertUnreachable(kind);
   }

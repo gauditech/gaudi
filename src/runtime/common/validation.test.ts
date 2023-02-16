@@ -1,9 +1,10 @@
+import { compose } from "@src/composer/composer";
 import {
   buildFieldsetValidationSchema,
   validateEndpointFieldset,
 } from "@src/runtime/common/validation";
 import { BusinessError } from "@src/runtime/server/error";
-import { FieldsetDef } from "@src/types/definition";
+import { Definition, FieldsetDef } from "@src/types/definition";
 
 describe("runtime", () => {
   describe("validation", () => {
@@ -164,7 +165,7 @@ describe("runtime", () => {
         },
       };
 
-      expect(buildFieldsetValidationSchema(fieldset)).toMatchSnapshot();
+      expect(buildFieldsetValidationSchema(createTestDefinition(), fieldset)).toMatchSnapshot();
     });
 
     // TODO: test validation exceptions (flat, nested?), (input params)
@@ -251,12 +252,7 @@ describe("runtime", () => {
                 name: "hook",
                 arg: "value",
                 hook: {
-                  runtime: {
-                    name: "TestRuntime",
-                    default: true,
-                    sourcePath: "./src/runtime/test/hooks",
-                    type: "node",
-                  },
+                  runtimeName: "TestRuntime",
                   code: { kind: "inline", inline: "value === 'expected text'" },
                 },
               },
@@ -337,7 +333,7 @@ describe("runtime", () => {
 
       let thrownError;
       try {
-        await validateEndpointFieldset(fieldset, data);
+        await validateEndpointFieldset(createTestDefinition(), fieldset, data);
       } catch (err) {
         const endpointError = err as BusinessError;
         thrownError = JSON.stringify({
@@ -350,3 +346,22 @@ describe("runtime", () => {
     });
   });
 });
+
+/**
+ * Creates dummy definition struct
+ */
+function createTestDefinition(): Definition {
+  const def = compose({
+    entrypoints: [],
+    models: [],
+    populators: [],
+    runtimes: [
+      {
+        name: "TestRuntime",
+        sourcePath: "./src/runtime/test/hooks",
+      },
+    ],
+  });
+
+  return def;
+}

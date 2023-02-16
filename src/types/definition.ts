@@ -510,7 +510,7 @@ export type FieldSetter =
   | FieldSetterContextReference;
 
 export type HookDef = {
-  runtime: ExecutionRuntimeDef;
+  runtimeName: string;
   code: HookCodeDef;
 };
 

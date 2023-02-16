@@ -1,8 +1,9 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+import { getExecutionRuntime } from "@src/common/refs";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition";
+import { Definition, ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition";
 
 export type ExecutionRuntimeClient = {
   runtimeName: string;
@@ -11,8 +12,13 @@ export type ExecutionRuntimeClient = {
 
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 
-export async function executeHook<T>(hook: HookDef, args: Record<string, unknown>): Promise<T> {
-  return (await createExecutionRuntime(hook.runtime)).executeHook<T>(hook.code, args);
+export async function executeHook<T>(
+  def: Definition,
+  hook: HookDef,
+  args: Record<string, unknown>
+): Promise<T> {
+  const execRuntime = getExecutionRuntime(def, hook.runtimeName);
+  return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook.code, args);
 }
 
 async function createExecutionRuntime(

@@ -276,7 +276,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
@@ -370,7 +370,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           console.log("FIELDSET", endpoint.fieldset);
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
