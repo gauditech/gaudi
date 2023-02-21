@@ -15,6 +15,7 @@ export const LRound = createToken({ name: "LRound", pattern: "(" });
 export const RRound = createToken({ name: "RRound", pattern: ")" });
 
 export const Dot = createToken({ name: "Dot", pattern: "." });
+export const Colon = createToken({ name: "Colon", pattern: ":" });
 
 export const Integer = createToken({ name: "Integer", pattern: /\d+/ });
 export const Float = createToken({ name: "Float", pattern: /(\d+\.\d*)|\.\d+/ });
@@ -135,6 +136,7 @@ export const GaudiTokens = [
   LRound,
   RRound,
   Dot,
+  Colon,
   Mul,
   Div,
   Add,
