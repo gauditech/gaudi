@@ -442,6 +442,12 @@ semantics.addOperation("parse()", {
       fields: body.parse(),
     };
   },
+  ActionAtomBody_hook(this, body): ActionAtomAST {
+    return {
+      kind: "hook",
+      hook: body.parse(),
+    };
+  },
   ActionAtomBody_nested_action(this, action): ActionAtomAST {
     return {
       kind: "action",

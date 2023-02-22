@@ -14,7 +14,7 @@ import { Vars } from "./vars";
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
-import { executeActions } from "@src/runtime/common/action";
+import { executeEndpointActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
 import { executeQueryTree } from "@src/runtime/query/exec";
@@ -291,10 +291,15 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          await executeActions(
+          await executeEndpointActions(
             def,
             tx,
-            { input: validationResult, vars: contextVars, referenceIds },
+            {
+              input: validationResult,
+              vars: contextVars,
+              referenceIds,
+            },
+            { request: req, response: resp },
             endpoint.actions
           );
 
@@ -385,10 +390,15 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          await executeActions(
+          await executeEndpointActions(
             def,
             tx,
-            { input: validationResult, vars: contextVars, referenceIds },
+            {
+              input: validationResult,
+              vars: contextVars,
+              referenceIds,
+            },
+            { request: req, response: resp },
             endpoint.actions
           );
 
@@ -554,7 +564,7 @@ export function buildCustomOneEndpoint(
           }
 
           if (endpoint.actions.length > 0) {
-            await executeActions(
+            await executeEndpointActions(
               def,
               tx,
               {
@@ -562,6 +572,7 @@ export function buildCustomOneEndpoint(
                 vars: contextVars,
                 referenceIds: referenceIds as ValidReferenceIdResult[],
               },
+              { request: req, response: resp },
               endpoint.actions
             );
           }
@@ -646,7 +657,7 @@ export function buildCustomManyEndpoint(
           }
 
           if (endpoint.actions.length > 0) {
-            await executeActions(
+            await executeEndpointActions(
               def,
               tx,
               {
@@ -654,6 +665,7 @@ export function buildCustomManyEndpoint(
                 vars: contextVars,
                 referenceIds: referenceIds as ValidReferenceIdResult[],
               },
+              { request: req, response: resp },
               endpoint.actions
             );
           }

@@ -419,7 +419,7 @@ type IntConst = { type: "integer"; value: number };
 type TextConst = { type: "text"; value: string };
 type NullConst = { type: "null"; value: null };
 
-export type ActionDef = CreateOneAction | UpdateOneAction | DeleteOneAction;
+export type ActionDef = CreateOneAction | UpdateOneAction | DeleteOneAction | ExecuteHookAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -449,6 +449,17 @@ export type DeleteOneAction = {
 type DeleteManyAction = {
   kind: "delete-many";
   filter: TypedExprDef;
+};
+
+export type ExecuteHookAction = {
+  kind: "execute-hook";
+  changeset: ChangesetDef;
+  hook: ActionHookDef;
+};
+
+export type ActionHookDef = {
+  hook: HookDef;
+  args: ChangesetDef;
 };
 
 export type ChangesetDef = ChangesetOperationDef[];

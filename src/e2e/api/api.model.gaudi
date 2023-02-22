@@ -72,7 +72,45 @@ entrypoint Orgs {
   identify with slug
   response { name, slug, description, summary, nameAndDesc }
 
-  // custom-one endpoints
+  // custom endpoints
+  // register BEFORE other endpoints
+
+  custom endpoint {
+    cardinality one
+    method POST
+    path "customOneAction"
+    action {
+      execute {
+        virtual input counter { type integer }
+        hook {
+          arg name name
+          arg counter counter
+          runtime MyRuntime
+          source customAction from "hooks.js"
+        }
+      }
+    }
+  }
+
+  custom endpoint {
+    cardinality many
+    method PATCH
+    path "customManyAction"
+    action {
+      execute {
+        virtual input counter { type integer }
+        hook {
+          arg name name
+          arg counter counter
+          runtime MyRuntime
+          source customAction from "hooks.js"
+        }
+      }
+    }
+  }
+
+  // --- custom-one endpoints
+
   custom endpoint {
     cardinality one
     method GET
@@ -95,7 +133,8 @@ entrypoint Orgs {
     }
   }
 
-  // custom-many endpoints
+  // --- custom-many endpoints
+
   custom endpoint {
     cardinality many
     method GET
@@ -110,7 +149,8 @@ entrypoint Orgs {
     }
   }
 
-  // regular endpoints
+  // --- regular endpoints
+
   get endpoint {}
   list endpoint {}
   create endpoint {

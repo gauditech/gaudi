@@ -161,6 +161,7 @@ export type ActionAtomAST = WithContext<
   | { kind: "input"; fields: InputFieldAST[] }
   | { kind: "action"; body: ActionBodyAST }
   | { kind: "deny"; fields: "*" | string[] }
+  | { kind: "hook"; hook: HookAST }
 >;
 
 export type InputFieldAST = WithContext<{

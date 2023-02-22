@@ -1,5 +1,98 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`compose hooks composes action hooks 1`] = `
+[
+  {
+    "actions": [
+      {
+        "changeset": [
+          {
+            "name": "termsOfUse",
+            "setter": {
+              "fieldsetAccess": [
+                "termsOfUse",
+              ],
+              "kind": "fieldset-virtual-input",
+              "nullable": false,
+              "required": true,
+              "type": "boolean",
+              "validators": [],
+            },
+          },
+          {
+            "name": "name",
+            "setter": {
+              "fieldsetAccess": [
+                "name",
+              ],
+              "kind": "fieldset-input",
+              "required": true,
+              "type": "text",
+            },
+          },
+        ],
+        "hook": {
+          "args": [
+            {
+              "name": "name",
+              "setter": {
+                "kind": "changeset-reference",
+                "referenceName": "name",
+              },
+            },
+            {
+              "name": "terms",
+              "setter": {
+                "kind": "changeset-reference",
+                "referenceName": "termsOfUse",
+              },
+            },
+          ],
+          "hook": {
+            "code": {
+              "file": "hooks.js",
+              "kind": "source",
+              "target": "someHook",
+            },
+            "runtimeName": "MyRuntime",
+          },
+        },
+        "kind": "execute-hook",
+      },
+    ],
+    "authSelect": [],
+    "authorize": undefined,
+    "fieldset": {
+      "kind": "record",
+      "nullable": false,
+      "record": {},
+    },
+    "kind": "custom-one",
+    "method": "POST",
+    "parentContext": [],
+    "path": "somePath",
+    "response": undefined,
+    "target": {
+      "alias": "org",
+      "identifyWith": {
+        "name": "id",
+        "paramName": "org_id",
+        "refKey": "Org.id",
+        "type": "integer",
+      },
+      "kind": "model",
+      "name": "Org",
+      "namePath": [
+        "Org",
+      ],
+      "refKey": "Org",
+      "retType": "Org",
+      "select": [],
+    },
+  },
+]
+`;
+
 exports[`compose hooks composes inline hooks 1`] = `
 {
   "entrypoints": [

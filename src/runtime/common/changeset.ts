@@ -11,6 +11,10 @@ type Changeset = Record<string, unknown>;
 
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
+ * 
+ * This changeset allows for virtual/transient fields to remain in final changeset.
+ * This can tipically be used when we want to leave some non-model based fields
+ * in the changeset. For example in hooks.
  */
 export async function buildChangeset(
   def: Definition,
@@ -56,7 +60,11 @@ export async function buildChangeset(
         if (setter.referenceName in changeset) {
           return changeset[setter.referenceName];
         } else {
-          ensureEqual(setter.referenceName in changesetContext, true);
+          ensureEqual(
+            setter.referenceName in changesetContext,
+            true,
+            `Reference "${setter.referenceName}" not found in changeset context`
+          );
           return changesetContext[setter.referenceName];
         }
       }
@@ -91,10 +99,28 @@ export async function buildChangeset(
     }
   }
 
+  return changeset;
+}
+
+/**
+ * Build strict result record from given action changeset rules and give context (source) inputs.
+ *
+ * Being strict means that any virtual (transient) fields (eg. "virtual-input") are removed from changeset
+ * This is mostly used eg. for actions that wor with pure changesets defined on model.
+ */
+export async function buildStrictChangeset(
+  def: Definition,
+  actionChangesetDef: ChangesetDef,
+  actionContext: ActionContext,
+  // `changesetContext` is used for hooks, to be able to pass the "parent context" changeset
+  changesetContext: Changeset = {}
+): Promise<Changeset> {
+  const changeset = await buildChangeset(def, actionChangesetDef, actionContext, changesetContext);
+
   /**
    * Remove all the virtual fields' values from the changeset.
    */
-  for (const { name, setter } of actionChangsetDefinition) {
+  for (const { name, setter } of actionChangesetDef) {
     switch (setter.kind) {
       case "fieldset-virtual-input": {
         delete changeset[name];

@@ -10,10 +10,12 @@ import {
   getTypedPathWithLeaf,
 } from "./utils";
 
+import { kindFilter } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
   assertUnreachable,
   ensureEqual,
+  ensureExists,
   ensureNot,
   ensureThrow,
   safeInvoke,
@@ -21,10 +23,10 @@ import {
 import { composeHook } from "@src/composer/hooks";
 import {
   ActionDef,
+  ActionHookDef,
   ChangesetDef,
   ChangesetOperationDef,
   Definition,
-  EndpointDef,
   EndpointType,
   FieldSetter,
   FunctionName,
@@ -50,7 +52,7 @@ export function composeActionBlock(
   iteratorCtx: VarContext = {}
 ): ActionDef[] {
   // we currently allow actions only on create, update and custom endpoints
-  if (["create", "update", "custom-one", "custom-many"].indexOf(endpointKind) < 0) {
+  if (!_.includes<EndpointType>(["create", "update", "custom-one", "custom-many"], endpointKind)) {
     ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
   }
 
@@ -77,7 +79,7 @@ export function composeActionBlock(
     (acc, atom) => {
       const [currentCtx, actions] = acc;
       const action = composeSingleAction(def, atom, currentCtx, targets, endpointKind);
-      if (action.kind !== "delete-one" && action.alias) {
+      if (action.kind !== "delete-one" && action.kind !== "execute-hook" && action.alias) {
         currentCtx[action.alias] = { kind: "record", modelName: action.model };
       }
       return [currentCtx, [...actions, action]];
@@ -200,6 +202,8 @@ function composeSingleAction(
   // Overwriting a default action
   if (actionTargetScope === "target") {
     ensureCorrectDefaultAction(spec, target, endpointKind);
+  } else if (actionTargetScope === "none") {
+    // there is no alias for "none" scope action
   } else {
     ensureNot(spec.alias, undefined, `Custom action must have an alias`);
     // ensure alias doesn't reuse an existing name
@@ -380,7 +384,7 @@ function composeSingleAction(
     simpleSpec.actionAtoms.forEach((atom) => {
       const result = safeInvoke(() => {
         const fieldsetNamespace =
-          actionTargetScope === "target"
+          actionTargetScope === "target" || actionTargetScope === "none"
             ? _.compact([simpleSpec.blueprintAlias])
             : [simpleSpec.alias];
         const op = atomToChangesetOperation(atom, fieldsetNamespace);
@@ -399,11 +403,29 @@ function composeSingleAction(
     }
     keyCount = changeset.length;
   }
-
   // TODO ensure changeset has covered every non-optional field in the model!
 
+  // compose action hook (if available) - only in "execute"s
+  const hookSpecs = kindFilter(spec.actionAtoms, "hook");
+  let actionHook: ActionHookDef | undefined;
+  if (hookSpecs.length > 0) {
+    ensureEqual(hookSpecs.length, 1, "Max one hook per action is allowed");
+    ensureEqual(spec.kind, "execute", 'Hooks are allowed only in "execute" action types');
+
+    const hookSpec = hookSpecs[0].hook;
+
+    actionHook = {
+      args: _.chain(hookSpec.args)
+        .toPairs()
+        .map(([name, arg]) => toFieldSetter({ kind: "set", target: name, set: arg }, changeset))
+        .value(),
+
+      hook: composeHook(def, hookSpec),
+    };
+  }
+
   // Build the desired `ActionDef`.
-  return actionFromParts(simpleSpec, actionTargetScope, target, model, changeset);
+  return actionFromParts(simpleSpec, actionTargetScope, target, model, changeset, actionHook);
 }
 
 /**
@@ -419,10 +441,16 @@ function ensureCorrectDefaultAction(
   // --- check endpoint action types
   // custom endpoint action types depend on their cardinality
   if (endpointKind === "custom-one" || endpointKind === "custom-many") {
-    if (endpointKind === "custom-many" && !(spec.kind === "create")) {
+    if (
+      endpointKind === "custom-many" &&
+      !_.includes<ActionSpec["kind"]>(["create", "execute"], spec.kind)
+    ) {
       throw new Error(`"custom-many" endpoint does not allow "${spec.kind}" action`);
     }
-    if (endpointKind === "custom-one" && !(spec.kind === "update" || spec.kind === "delete")) {
+    if (
+      endpointKind === "custom-one" &&
+      !_.includes<ActionSpec["kind"]>(["update", "delete", "execute"], spec.kind)
+    ) {
       throw new Error(`"custom-one" endpoint does not allow "${spec.kind}" action`);
     }
   } else {
@@ -456,8 +484,10 @@ function ensureCorrectDefaultAction(
  *    eg. `create {}` or `create item` or `update item as updatedItem`
  * - `context-path`, targets an object related to an object already in context
  *    eg. `create object.items` or `update item.object`
+ * - `none` - no specific target
+ *    eg. custom hook actions which only do some low level stuff (eg. setting HTTP headers)
  */
-type ActionTargetScope = "model" | "target" | "context-path";
+type ActionTargetScope = "model" | "target" | "context-path" | "none";
 function getActionTargetScope(
   def: Definition,
   spec: ActionSpec,
@@ -466,6 +496,11 @@ function getActionTargetScope(
 ): ActionTargetScope {
   const path = spec.targetPath;
   if (!path) {
+    // execute action can only have explicit target
+    if (spec.kind === "execute") {
+      return "none";
+    }
+
     return "target";
   }
   if (path.length === 1) {
@@ -555,6 +590,7 @@ function assignParentContextSetter(
   const actionScope = getActionTargetScope(def, spec, target.alias, ctx);
   switch (actionScope) {
     case "model":
+    case "none":
       return spec;
     case "target": {
       if (targets.length < 2) {
@@ -609,7 +645,8 @@ function actionFromParts(
   targetKind: ActionTargetScope,
   target: TargetDef,
   model: ModelDef,
-  changeset: ChangesetDef
+  changeset: ChangesetDef,
+  hook?: ActionHookDef
 ): ActionDef {
   // FIXME come up with an alias in case of nested actions
   const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias!;
@@ -643,6 +680,15 @@ function actionFromParts(
         kind: "delete-one",
         model: model.name,
         targetPath: spec.targetPath ?? [target.alias],
+      };
+    }
+    case "execute": {
+      ensureExists(hook, 'Missing hook from "execute" action spec');
+
+      return {
+        kind: "execute-hook",
+        changeset,
+        hook,
       };
     }
   }

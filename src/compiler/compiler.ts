@@ -285,6 +285,9 @@ function compileAction(action: ActionBodyAST): ActionSpec {
       case "action": {
         return { kind: "action", body: compileAction(a.body) };
       }
+      case "hook": {
+        return { kind: "hook", hook: compileActionHook(a.hook) };
+      }
       case "deny":
       case "reference":
         return a;

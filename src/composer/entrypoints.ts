@@ -21,6 +21,7 @@ import {
   EndpointHttpMethod,
   EndpointType,
   EntrypointDef,
+  ExecuteHookAction,
   FieldSetterReferenceValue,
   FieldsetDef,
   FieldsetFieldDef,
@@ -210,6 +211,7 @@ function processEndpoints(
     });
     const authorizeDeps = collectAuthorizeDeps(def, currentAuthorize);
     const selectDeps = [...actionDeps, ...parentAuthorizeDeps, ...authorizeDeps];
+
     const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
     const parentContext = _.initial(targetsWithSelect);
     const target = _.last(targetsWithSelect)!;
@@ -470,7 +472,11 @@ export function processSelect(
 
 export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
   const fieldsetWithPaths = actions
-    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+    // filter out actions without fieldset
+    .filter(
+      (a): a is Exclude<ActionDef, DeleteOneAction | ExecuteHookAction> =>
+        a.kind !== "delete-one" && a.kind !== "execute-hook"
+    )
     .flatMap((action) => {
       return _.chain(action.changeset)
         .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
@@ -556,6 +562,7 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
   const nonDeleteActions = actions.filter(
     (a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one"
   );
+
   const targetPaths = _.chain(nonDeleteActions)
     .flatMap((a) => {
       switch (a.kind) {
@@ -578,9 +585,18 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     })
     .compact()
     .value();
-  // collect all targets
-  const setterTargets = nonDeleteActions.flatMap((a) => {
-    return a.changeset.flatMap(({ setter: operation }) => {
+
+  // --- collect changeset targets
+  // action changeset
+  const actionChangesets = nonDeleteActions.flatMap((a) => a.changeset);
+  // hooks changeset
+  const actionHookChangesets = _.chain(actions)
+    .filter((a): a is ExecuteHookAction => a.kind === "execute-hook")
+    .flatMap((a) => a.hook.args)
+    .value();
+  // collect targets
+  const setterTargets = [...actionChangesets, ...actionHookChangesets].flatMap(
+    ({ setter: operation }) => {
       switch (operation.kind) {
         case "reference-value": {
           return [operation.target];
@@ -594,8 +610,9 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
           return [];
         }
       }
-    });
-  });
+    }
+  );
+
   return [...setterTargets, ...targetPaths];
 }
 
@@ -653,7 +670,7 @@ export function wrapActionsWithSelect(
     actions
       // .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
       .map((a): ActionDef => {
-        if (a.kind === "delete-one") return a;
+        if (a.kind === "delete-one" || a.kind === "execute-hook") return a;
 
         const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
         const model = getRef.model(def, a.model);

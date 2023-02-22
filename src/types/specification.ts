@@ -107,7 +107,7 @@ export type EndpointSpec = WithContext<{
 }>;
 
 export type ActionSpec = WithContext<{
-  kind: "create" | "update" | "delete";
+  kind: "create" | "update" | "delete" | "execute";
   targetPath: string[] | undefined;
   alias: string | undefined;
   actionAtoms: ActionAtomSpec[];
@@ -121,6 +121,7 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecVirtualInput
   | ActionAtomSpecInput
   | ActionAtomSpecInputList
+  | ActionAtomSpecHook
 >;
 
 export type HookCodeSpec =
@@ -135,6 +136,7 @@ export type ActionAtomSpecSet = {
   target: string;
   set: ActionAtomSpecSetHook | ActionAtomSpecSetExp;
 };
+export type ActionAtomSpecHook = { kind: "hook"; hook: ActionHookSpec };
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };

@@ -157,7 +157,7 @@ Gaudi {
     | "validate" "{" NonemptyNewlineBody<Validator, ","> "}"  -- validate
 
 
-  ActionKind = "create" | "update" | "delete"
+  ActionKind = "create" | "update" | "delete" | "execute"
   ActionBody
     = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                     -- default
     | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                      -- named
@@ -171,6 +171,7 @@ Gaudi {
     | "virtual input" identifier "{" NonemptyNewlineBody<VirtualInputBody, ","> "}" -- virtual_input
     | "input" "{" NewlineBody<ActionInputAtom, ","> "}"                             -- input
     | "deny" DenyList                                                               -- deny
+    | Hook                                                                          -- hook
     | ActionBody                                                                    -- nested_action
 
   ActionInputAtom

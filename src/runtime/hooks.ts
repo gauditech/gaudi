@@ -1,17 +1,20 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+import { Request, Response } from "express";
+
 import { getExecutionRuntime } from "@src/common/refs";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 import { Definition, ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition";
 
-export type ExecutionRuntimeClient = {
-  runtimeName: string;
-  executeHook: <T>(hook: HookCodeDef, args: Record<string, unknown>) => T;
-};
-
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 
+/**
+ * Executes hook.
+ *
+ * This is used in model/validator/setter hooks which all work
+ * with gaudi-controlled arguments.
+ */
 export async function executeHook<T>(
   def: Definition,
   hook: HookDef,
@@ -19,6 +22,26 @@ export async function executeHook<T>(
 ): Promise<T> {
   const execRuntime = getExecutionRuntime(def, hook.runtimeName);
   return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook.code, args);
+}
+
+/**
+ * Executes action hook.
+ *
+ * Action hooks are used to provide action implementation. They can receive gaudi-controlled
+ * arguments but also, they need access to low level abstractions and that's why they
+ * receive other objects like eg. request/response.
+ */
+export async function executeActionHook<T>(
+  def: Definition,
+  hook: HookDef,
+  args: Record<string, unknown>,
+  ctx: {
+    request: Request;
+    response: Response;
+  }
+): Promise<T> {
+  const execRuntime = getExecutionRuntime(def, hook.runtimeName);
+  return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook.code, args, ctx);
 }
 
 async function createExecutionRuntime(
@@ -34,7 +57,18 @@ async function createExecutionRuntime(
 
 // ---------- Local execution runtime
 
-export type HookModules = Record<string, Record<string, (_: unknown) => unknown>>;
+export type HookActionContext = { request: Request; response: Response };
+export type HookFunction = (args: Record<string, unknown>, ctx?: HookActionContext) => unknown;
+export type HookModules = Record<string, Record<string, HookFunction>>;
+
+export type ExecutionRuntimeClient = {
+  runtimeName: string;
+  executeHook: <T>(
+    hook: HookCodeDef,
+    args: Record<string, unknown>,
+    ctx?: HookActionContext
+  ) => Promise<T>;
+};
 
 const HOOKS_FILES_PATTERN = /.+\.[tj]s$/;
 
@@ -48,7 +82,7 @@ export async function createLocalExecutionRuntime(
 
   return {
     runtimeName: runtime.name,
-    executeHook(code, args) {
+    executeHook(code, args, ctx) {
       switch (code.kind) {
         case "inline": {
           // order of args must be consistent
@@ -83,7 +117,7 @@ export async function createLocalExecutionRuntime(
             throw new Error(`Hook "${code.target}" in file "${code.file}" not found`);
           }
 
-          return hook(args);
+          return hook(args, ctx);
         }
       }
     },

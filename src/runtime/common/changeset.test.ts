@@ -3,6 +3,7 @@ import { getTypedLiteralValue } from "@src/composer/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
+  buildStrictChangeset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
@@ -100,6 +101,40 @@ describe("runtime", () => {
 
       expect(await buildChangeset(createTestDefinition(), data, context)).toMatchSnapshot();
     });
+
+    it("build strict action changeset object", async () => {
+      const data: ChangesetDef = [
+        // lept field
+        {
+          name: "input_prop",
+          setter: { kind: "literal", value: "just value", type: "text" },
+        },
+        // removed virtual/transient fileds
+        {
+          name: "virtual_input_prop",
+          setter: {
+            fieldsetAccess: ["virtual_input_prop"],
+            kind: "fieldset-virtual-input",
+            type: "text",
+            required: false,
+            nullable: false,
+            validators: [],
+          },
+        },
+      ];
+
+      const context: ActionContext = {
+        input: {
+          input_prop: "input value",
+          virtual_input_prop: "virtual input value",
+        },
+        vars: new Vars(),
+        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
+      };
+
+      expect(await buildStrictChangeset(createTestDefinition(), data, context)).toMatchSnapshot();
+    });
+
     it("calculate changeset arithmetic operations", async () => {
       const mkRef = (referenceName: string): FieldSetterChangesetReference => ({
         kind: "changeset-reference",
