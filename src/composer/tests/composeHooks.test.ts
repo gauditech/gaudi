@@ -46,7 +46,7 @@ describe("compose hooks", () => {
     expect(result).toMatchSnapshot();
   });
 
-  it("composes inline hooks", () => {
+  it("inline hooks", () => {
     const bp = `
       runtime MyRuntime {
         sourcePath "some/path/to/file"
@@ -147,7 +147,7 @@ describe("compose hooks", () => {
     );
   });
 
-  it("composes action hooks", () => {
+  it("action hook", () => {
     const bp = `
       runtime MyRuntime {
         sourcePath "some/path/to/file"
@@ -158,7 +158,7 @@ describe("compose hooks", () => {
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target model Org
 
         custom endpoint {
           path "somePath"
@@ -174,6 +174,7 @@ describe("compose hooks", () => {
                 // test hook args
                 arg name name
                 arg terms termsOfUse
+
                 runtime MyRuntime
                 source someHook from "hooks.js"
               }
@@ -185,5 +186,38 @@ describe("compose hooks", () => {
     const result = compose(compile(parse(bp)));
 
     expect(result.entrypoints[0].endpoints).toMatchSnapshot();
+  });
+
+  it("fails on inline action hook", () => {
+    const bp = `
+      runtime MyRuntime {
+        sourcePath "some/path/to/file"
+      }
+
+      model Org {}
+
+      entrypoint Orgs {
+        target model Org
+
+        custom endpoint {
+          path "somePath"
+          method POST
+          cardinality one
+
+          action {
+            execute {
+              hook {
+                runtime MyRuntime
+                inline \`"some return value"\`
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+      `"Inline hooks cannot be used for "execute" actions"`
+    );
   });
 });

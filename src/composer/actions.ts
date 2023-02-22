@@ -414,6 +414,8 @@ function composeSingleAction(
 
     const hookSpec = hookSpecs[0].hook;
 
+    ensureNot(hookSpec.code.kind, "inline", 'Inline hooks cannot be used for "execute" actions');
+
     actionHook = {
       args: _.chain(hookSpec.args)
         .toPairs()
