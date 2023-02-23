@@ -718,7 +718,7 @@ function pathsToSelectDef(
         //   Org.name is a field, can't access foo.bar
         if (relatedPaths.length) {
           throw new Error(
-            `Path ${[...namespace, name].join(".")} is a field, can't access ${relatedPaths.join(
+            `Path ${[...namespace, name].join(".")} is a leaf, can't access ${relatedPaths.join(
               "."
             )}`
           );
