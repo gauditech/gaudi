@@ -50,6 +50,8 @@ exports[`entrypoint collects dependencies 1`] = `
     "id",
     "name",
     "desc",
+    "repoCount",
+    "coef",
   ],
   "repoSelect": [
     "id",

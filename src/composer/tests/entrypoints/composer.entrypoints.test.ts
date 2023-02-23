@@ -68,6 +68,9 @@ describe("entrypoint", () => {
       field desc { type text }
 
       relation repos { from Repo, through org }
+
+      query repoCount { from repos, count }
+      computed coef { 2 }
     }
     model Repo {
       reference org { to Org }
@@ -81,6 +84,7 @@ describe("entrypoint", () => {
 
       field source { type text }
       field orgDesc { type text }
+      field orgCoef { type integer }
     }
 
     entrypoint O {
@@ -93,6 +97,7 @@ describe("entrypoint", () => {
             create repo.issues as i {
               set source concat(org.name, repo.name)
               set orgDesc org.desc
+              set orgCoef org.repoCount * org.coef
             }
           }
         }
