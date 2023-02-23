@@ -217,6 +217,18 @@ function processEndpoints(
     const target = _.last(targetsWithSelect)!;
     const authSelect = getAuthSelect(def, selectDeps);
 
+    // should endpoint respond - only if something else (eg. action) does not send response before
+    const respondingActions = actions.filter((a) => a.kind === "execute-hook" && a.responds);
+    if (respondingActions.length > 0) {
+      // only one
+      ensureEqual(
+        respondingActions.length,
+        1,
+        'At most one action in entrypoint can have "responds" attribute'
+      );
+    }
+    const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
+
     switch (endpointType) {
       case "get": {
         ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
@@ -326,6 +338,7 @@ function processEndpoints(
           authorize,
           fieldset,
           response: undefined,
+          responds,
         };
       }
       case "custom-many": {
@@ -347,6 +360,7 @@ function processEndpoints(
           authorize,
           fieldset,
           response: undefined,
+          responds,
         };
       }
       default: {

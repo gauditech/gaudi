@@ -122,6 +122,7 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecInput
   | ActionAtomSpecInputList
   | ActionAtomSpecHook
+  | ActionAtomSpecResponds
 >;
 
 export type HookCodeSpec =
@@ -155,6 +156,7 @@ export type InputFieldSpec = {
   optional: boolean;
   default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
+export type ActionAtomSpecResponds = { kind: "responds" };
 
 export type HookSpec = WithContext<{
   name?: string;

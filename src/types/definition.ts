@@ -245,6 +245,7 @@ export type CustomOneEndpointDef = {
   authorize: TypedExprDef;
   fieldset?: FieldsetDef;
   response: undefined;
+  responds: boolean;
 };
 
 export type CustomManyEndpointDef = {
@@ -258,6 +259,7 @@ export type CustomManyEndpointDef = {
   authorize: TypedExprDef;
   fieldset?: FieldsetDef;
   response: undefined;
+  responds: boolean;
 };
 
 export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
@@ -455,6 +457,7 @@ export type ExecuteHookAction = {
   kind: "execute-hook";
   changeset: ChangesetDef;
   hook: ActionHookDef;
+  responds: boolean;
 };
 
 export type ActionHookDef = {

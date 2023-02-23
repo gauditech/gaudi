@@ -21,3 +21,9 @@ module.exports.customAction = function(args, ctx) {
   // return args via HTTP header
   ctx.response.set('Gaudi-Test-body', JSON.stringify(args))
 }
+
+/** Custom action that sends entire response */
+module.exports.customActionResponds = function(args, ctx) {
+  // send entire response
+  ctx.response.json(args)
+}

@@ -140,10 +140,7 @@ describe("API endpoints", () => {
     });
 
     it("custom one action", async () => {
-      const data = {
-        name: "Org Custom One",
-        counter: 1,
-      };
+      const data = { name: "Org Custom One", counter: 1 };
       const postResp = await request(getServer()).post("/org/org1/customOneAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
@@ -151,14 +148,39 @@ describe("API endpoints", () => {
     });
 
     it("custom many action", async () => {
-      const data = {
-        name: "Org Custom Many",
-        counter: 1,
-      };
+      const data = { name: "Org Custom Many", counter: 1 };
       const postResp = await request(getServer()).patch("/org/customManyAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
       expect(postResp.get("Gaudi-Test-body")).toBe(JSON.stringify(data));
+    });
+
+    it("custom one endpoint - action responds", async () => {
+      const data = { name: "Org Custom One", counter: 1 };
+      const postResp = await request(getServer())
+        .post("/org/org1/customOneActionResponds")
+        .send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchInlineSnapshot(`
+        {
+          "counter": 1,
+          "name": "Org Custom One",
+        }
+      `);
+    });
+
+    it("custom many endpoint - action responds", async () => {
+      const data = { name: "Org Custom Many", counter: 1 };
+      const postResp = await request(getServer()).patch("/org/customManyActionResponds").send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchInlineSnapshot(`
+        {
+          "counter": 1,
+          "name": "Org Custom Many",
+        }
+      `);
     });
   });
 

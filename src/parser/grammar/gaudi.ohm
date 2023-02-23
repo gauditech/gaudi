@@ -171,6 +171,7 @@ Gaudi {
     | "virtual input" identifier "{" NonemptyNewlineBody<VirtualInputBody, ","> "}" -- virtual_input
     | "input" "{" NewlineBody<ActionInputAtom, ","> "}"                             -- input
     | "deny" DenyList                                                               -- deny
+    | "responds"                                                                    -- responds
     | Hook                                                                          -- hook
     | ActionBody                                                                    -- nested_action
 

@@ -878,6 +878,9 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
             {
               "actionAtoms": [
                 {
+                  "kind": "responds",
+                },
+                {
                   "hook": {
                     "args": {
                       "name": {
@@ -886,8 +889,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                             "name",
                           ],
                           "interval": {
-                            "endIdx": 743,
-                            "startIdx": 739,
+                            "endIdx": 760,
+                            "startIdx": 756,
                           },
                           "kind": "identifier",
                         },
@@ -900,8 +903,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                       "target": "foo",
                     },
                     "interval": {
-                      "endIdx": 821,
-                      "startIdx": 713,
+                      "endIdx": 838,
+                      "startIdx": 730,
                     },
                     "name": undefined,
                     "runtimeName": "MyRuntime",
@@ -917,7 +920,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
           "authorize": undefined,
           "cardinality": "one",
           "interval": {
-            "endIdx": 839,
+            "endIdx": 856,
             "startIdx": 601,
           },
           "method": "POST",
@@ -928,7 +931,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       "entrypoints": [],
       "identify": undefined,
       "interval": {
-        "endIdx": 841,
+        "endIdx": 858,
         "startIdx": 381,
       },
       "name": "UserEntry",

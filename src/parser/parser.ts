@@ -462,6 +462,11 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
+  ActionAtomBody_responds(this, _responds): ActionAtomAST {
+    return {
+      kind: "responds",
+    };
+  },
   VirtualInputBody_type(this, _type, type): VirtualInputAtomAST {
     return { kind: "type", type: type.parse() };
   },

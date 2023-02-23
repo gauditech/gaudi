@@ -426,8 +426,34 @@ function composeSingleAction(
     };
   }
 
+  // action responds
+  const respondsAtoms = kindFilter(spec.actionAtoms, "responds");
+  if (respondsAtoms.length > 0) {
+    // in custom endpoint
+    ensureEqual(
+      _.includes<EndpointType>(["custom-one", "custom-many"], endpointKind),
+      true,
+      `Actions with "responds" keyword are allowed only in "custom-one" and "custom-many" endpoints, not in "${endpointKind}"`
+    );
+    // in execute action
+    ensureEqual(
+      simpleSpec.kind,
+      "execute",
+      'Keyword "responds" is allowed only on "execute" actions'
+    );
+  }
+  const responds = respondsAtoms.length > 0;
+
   // Build the desired `ActionDef`.
-  return actionFromParts(simpleSpec, actionTargetScope, target, model, changeset, actionHook);
+  return actionFromParts(
+    simpleSpec,
+    actionTargetScope,
+    target,
+    model,
+    changeset,
+    actionHook,
+    responds
+  );
 }
 
 /**
@@ -648,7 +674,8 @@ function actionFromParts(
   target: TargetDef,
   model: ModelDef,
   changeset: ChangesetDef,
-  hook?: ActionHookDef
+  hook: ActionHookDef | undefined,
+  responds: boolean
 ): ActionDef {
   // FIXME come up with an alias in case of nested actions
   const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias!;
@@ -691,6 +718,7 @@ function actionFromParts(
         kind: "execute-hook",
         changeset,
         hook,
+        responds,
       };
     }
   }

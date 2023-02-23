@@ -43,6 +43,7 @@ entrypoint UserEntry {
 
     action {
       execute {
+        responds
         hook {
           arg name name
           runtime MyRuntime

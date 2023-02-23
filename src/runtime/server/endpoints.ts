@@ -579,7 +579,9 @@ export function buildCustomOneEndpoint(
 
           await tx.commit();
 
-          resp.sendStatus(204);
+          if (endpoint.responds) {
+            resp.sendStatus(204);
+          }
         } catch (err) {
           await tx?.rollback();
 
@@ -672,7 +674,9 @@ export function buildCustomManyEndpoint(
 
           await tx.commit();
 
-          resp.sendStatus(204);
+          if (endpoint.responds) {
+            resp.sendStatus(204);
+          }
         } catch (err) {
           await tx?.rollback();
 

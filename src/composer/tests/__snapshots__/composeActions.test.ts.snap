@@ -191,6 +191,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "GET",
     "parentContext": [],
     "path": "customGet",
+    "responds": true,
     "response": undefined,
     "target": {
       "alias": "org",
@@ -255,6 +256,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "PATCH",
     "parentContext": [],
     "path": "customUpdate",
+    "responds": true,
     "response": undefined,
     "target": {
       "alias": "org",
@@ -302,6 +304,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "DELETE",
     "parentContext": [],
     "path": "customDelete",
+    "responds": true,
     "response": undefined,
     "target": {
       "alias": "org",
@@ -330,6 +333,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "GET",
     "parentContext": [],
     "path": "customList",
+    "responds": true,
     "response": undefined,
     "target": {
       "alias": "org",
@@ -387,6 +391,7 @@ exports[`custom actions creates actions in custom endpoint 1`] = `
     "method": "POST",
     "parentContext": [],
     "path": "customCreate",
+    "responds": true,
     "response": undefined,
     "target": {
       "alias": "org",

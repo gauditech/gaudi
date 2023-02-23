@@ -162,6 +162,7 @@ export type ActionAtomAST = WithContext<
   | { kind: "action"; body: ActionBodyAST }
   | { kind: "deny"; fields: "*" | string[] }
   | { kind: "hook"; hook: HookAST }
+  | { kind: "responds" }
 >;
 
 export type InputFieldAST = WithContext<{

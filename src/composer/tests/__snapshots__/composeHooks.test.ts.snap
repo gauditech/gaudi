@@ -58,6 +58,7 @@ exports[`compose hooks action hook 1`] = `
           },
         },
         "kind": "execute-hook",
+        "responds": false,
       },
     ],
     "authSelect": [],
@@ -71,6 +72,7 @@ exports[`compose hooks action hook 1`] = `
     "method": "POST",
     "parentContext": [],
     "path": "somePath",
+    "responds": true,
     "response": undefined,
     "target": {
       "alias": "$target_0",

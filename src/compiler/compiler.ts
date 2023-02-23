@@ -334,6 +334,11 @@ function compileAction(action: ActionBodyAST): ActionSpec {
         });
         return { kind: "input-list", fields };
       }
+      case "responds": {
+        return {
+          kind: "responds",
+        };
+      }
     }
   });
   return { kind: action.kind, targetPath: action.target, actionAtoms: atoms, alias: action.alias };
