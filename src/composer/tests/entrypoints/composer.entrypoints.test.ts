@@ -61,4 +61,52 @@ describe("entrypoint", () => {
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.fieldset).toMatchSnapshot();
   });
+  it("collects dependencies", () => {
+    const bp = `
+    model Org {
+      field name { type text }
+      field desc { type text }
+
+      relation repos { from Repo, through org }
+    }
+    model Repo {
+      reference org { to Org }
+
+      field name { type text }
+
+      relation issues { from Issue, through repo}
+    }
+    model Issue {
+      reference repo { to Repo }
+
+      field source { type text }
+      field orgDesc { type text }
+    }
+
+    entrypoint O {
+      target model Org as org
+      entrypoint R {
+        target relation repos as repo
+        create endpoint {
+          action {
+            create {}
+            create repo.issues as i {
+              set source concat(org.name, repo.name)
+              set orgDesc org.desc
+            }
+          }
+        }
+      }
+    }
+    `;
+
+    const def = compose(compile(parse(bp)));
+    const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
+    const orgSelect = endpoint.parentContext[0].select.map((s) => s.alias);
+    const repoSelect = endpoint.target.select.map((s) => s.alias);
+    const actionSelects = endpoint.actions.map((a) =>
+      ("select" in a ? a.select : null)?.map((a) => a && a.alias)
+    );
+    expect({ orgSelect, repoSelect, actionSelects }).toMatchSnapshot();
+  });
 });

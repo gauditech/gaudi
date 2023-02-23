@@ -21,6 +21,7 @@ import {
   EndpointHttpMethod,
   EndpointType,
   EntrypointDef,
+  FieldSetter,
   FieldSetterReferenceValue,
   FieldsetDef,
   FieldsetFieldDef,
@@ -579,23 +580,28 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     .compact()
     .value();
   // collect all targets
-  const setterTargets = nonDeleteActions.flatMap((a) => {
-    return a.changeset.flatMap(({ setter: operation }) => {
-      switch (operation.kind) {
-        case "reference-value": {
-          return [operation.target];
-        }
-        case "fieldset-hook": {
-          return operation.args.flatMap(({ setter: operation }) =>
-            operation.kind === "reference-value" ? [operation.target] : []
-          );
-        }
-        default: {
-          return [];
-        }
+
+  function collectReferenceValues(setter: FieldSetter): FieldSetterReferenceValue[] {
+    switch (setter.kind) {
+      case "reference-value": {
+        return [setter];
       }
-    });
+      case "function": {
+        return setter.args.flatMap((setter) => collectReferenceValues(setter));
+      }
+      case "fieldset-hook": {
+        return setter.args.flatMap(({ setter }) => collectReferenceValues(setter));
+      }
+      default: {
+        return [];
+      }
+    }
+  }
+
+  const referenceValues = nonDeleteActions.flatMap((a) => {
+    return a.changeset.flatMap(({ setter }) => collectReferenceValues(setter));
   });
+  const setterTargets = referenceValues.map((rv) => rv.target);
   return [...setterTargets, ...targetPaths];
 }
 
