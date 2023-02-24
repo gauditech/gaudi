@@ -21,6 +21,7 @@ import {
   EndpointHttpMethod,
   EndpointType,
   EntrypointDef,
+  FieldSetter,
   FieldSetterReferenceValue,
   FieldsetDef,
   FieldsetFieldDef,
@@ -579,23 +580,28 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     .compact()
     .value();
   // collect all targets
-  const setterTargets = nonDeleteActions.flatMap((a) => {
-    return a.changeset.flatMap(({ setter: operation }) => {
-      switch (operation.kind) {
-        case "reference-value": {
-          return [operation.target];
-        }
-        case "fieldset-hook": {
-          return operation.args.flatMap(({ setter: operation }) =>
-            operation.kind === "reference-value" ? [operation.target] : []
-          );
-        }
-        default: {
-          return [];
-        }
+
+  function collectReferenceValues(setter: FieldSetter): FieldSetterReferenceValue[] {
+    switch (setter.kind) {
+      case "reference-value": {
+        return [setter];
       }
-    });
+      case "function": {
+        return setter.args.flatMap((setter) => collectReferenceValues(setter));
+      }
+      case "fieldset-hook": {
+        return setter.args.flatMap(({ setter }) => collectReferenceValues(setter));
+      }
+      default: {
+        return [];
+      }
+    }
+  }
+
+  const referenceValues = nonDeleteActions.flatMap((a) => {
+    return a.changeset.flatMap(({ setter }) => collectReferenceValues(setter));
   });
+  const setterTargets = referenceValues.map((rv) => rv.target);
   return [...setterTargets, ...targetPaths];
 }
 
@@ -630,11 +636,11 @@ function wrapTargetsWithSelect(
   deps: SelectDep[]
 ): TargetWithSelectDef[] {
   return targets.map((target) => {
-    const paths = uniqueNamePaths(
+    const targetPaths = uniqueNamePaths(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
-    const model = getRef.model(def, target.retType);
-    const select = pathsToSelectDef(def, model, paths, target.namePath);
+    const targetModel = getRef.model(def, target.retType);
+    const select = pathsToSelectDef(def, targetModel, targetPaths, target.namePath);
     return { ...target, select };
   });
 }
@@ -673,6 +679,10 @@ function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
   return pathsToSelectDef(def, model, paths, [model.name]);
 }
 
+/**
+ * Accepts a model, paths related to a model, model namespace in a query,
+ * and constructs SelectDef for the paths given.
+ */
 function pathsToSelectDef(
   def: Definition,
   model: ModelDef,
@@ -683,21 +693,38 @@ function pathsToSelectDef(
     .map((p) => p[0])
     .uniq()
     .value();
+
   return direct.map((name): SelectItem => {
     // what is name?
-    const ref = getRef(def, model.name, name, ["query", "reference", "relation", "field"]);
+    const ref = getRef(def, model.name, name, [
+      "query",
+      "reference",
+      "relation",
+      "field",
+      "aggregate",
+      "computed",
+    ]);
     const relatedPaths = paths
       .filter((p) => p[0] === name)
       .map(_.tail)
       .filter((p) => p.length > 0);
+
     switch (ref.kind) {
-      case "field": {
-        // ensure leaf
+      case "field":
+      case "computed":
+      case "aggregate": {
+        // ensure the ref is the leaf of the path
+        // For a path Org.name.foo.bar, example error would be:
+        //   Org.name is a field, can't access foo.bar
         if (relatedPaths.length) {
-          throw new Error(`Field path is not root!`);
+          throw new Error(
+            `Path ${[...namespace, name].join(".")} is a leaf, can't access ${relatedPaths.join(
+              "."
+            )}`
+          );
         }
         return {
-          kind: "field",
+          kind: ref.kind,
           alias: name,
           name,
           refKey: ref.refKey,
