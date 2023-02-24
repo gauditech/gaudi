@@ -7,6 +7,7 @@ export type Definition = {
   resolveOrder: string[];
   populators: PopulatorDef[];
   runtimes: ExecutionRuntimeDef[];
+  authenticator?: AuthenticatorDef;
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -577,3 +578,23 @@ export type ExecutionRuntimeDef = {
 };
 
 export type RuntimeEngineType = "node";
+
+// ---------- authenticator
+
+export type AuthenticatorDef = {
+  name: string;
+  targetModel: AuthenticatorNamedModelDef;
+  accessTokenModel: AuthenticatorNamedModelDef;
+  method: AuthenticatorMethodDef;
+};
+
+export type AuthenticatorNamedModelDef = {
+  name: string;
+  refKey: string;
+};
+
+export type AuthenticatorMethodDef = AuthenticatorBasicMethodDef;
+
+export type AuthenticatorBasicMethodDef = {
+  kind: "basic";
+};

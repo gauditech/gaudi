@@ -15,11 +15,11 @@ export type Specification = {
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
   runtimes: ExecutionRuntimeSpec[];
+  authenticator?: AuthenticatorSpec;
 };
 
 export type ModelSpec = WithContext<{
   name: string;
-  isAuth: boolean;
   alias?: string;
   fields: FieldSpec[];
   references: ReferenceSpec[];
@@ -209,3 +209,20 @@ export type ExecutionRuntimeSpec = WithContext<{
   default?: boolean;
   sourcePath: string;
 }>;
+
+// ---------- authenticator
+
+export const AUTH_TARGET_MODEL_NAME = "AuthUser";
+
+export type AuthenticatorSpec = WithContext<{
+  name?: string;
+  targetModelName: string;
+  accessTokenModelName: string;
+  method: AuthenticatorMethodSpec;
+}>;
+
+export type AuthenticatorMethodSpec = WithContext<AuthenticatorBasicMethodSpec>;
+
+export type AuthenticatorBasicMethodSpec = {
+  kind: "basic";
+};

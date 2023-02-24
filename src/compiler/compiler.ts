@@ -5,6 +5,9 @@ import { assertUnreachable, ensureExists } from "@src/common/utils";
 import {
   AST,
   ActionBodyAST,
+  AuthenticatorAST,
+  AuthenticatorBodyAtomAST,
+  AuthenticatorMethodBodyAtomAST,
   ComputedAST,
   EndpointAST,
   EndpointCardinality,
@@ -28,10 +31,13 @@ import {
   VirtualInputAtomASTValidator,
 } from "@src/types/ast";
 import {
+  AUTH_TARGET_MODEL_NAME,
   ActionAtomSpec,
   ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
+  AuthenticatorMethodSpec,
+  AuthenticatorSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
@@ -267,7 +273,6 @@ function compileModel(model: ModelAST): ModelSpec {
 
   return {
     name: model.name,
-    isAuth: model.isAuth,
     alias: model.alias,
     fields,
     references,
@@ -532,16 +537,6 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
   return { ...baseHook, name, args };
 }
 
-function checkMaxOneAuthModel(models: ModelSpec[]) {
-  const authModels = models.filter((m) => m.isAuth);
-  if (authModels.length > 1) {
-    throw new CompilerError(
-      "Default `auth model` already defined! There can be maximum of 1 `auth model`",
-      authModels[1]
-    );
-  }
-}
-
 function compilePopulator(populator: PopulatorAST): PopulatorSpec {
   const name = populator.name;
   const populates = populator.body.map(compilePopulate);
@@ -651,11 +646,49 @@ function compileExecutionRuntime(runtime: ExecutionRuntimeAST): ExecutionRuntime
   return { name, default: isDefault, sourcePath };
 }
 
+// ----- authenticator
+
+function compileAuthenticator(authenticator: AuthenticatorAST): AuthenticatorSpec {
+  const name = authenticator.name;
+  // this is not exposed in blueprint yet
+  const targetModelName = AUTH_TARGET_MODEL_NAME;
+  const accessTokenModelName = `${targetModelName}AccessToken`;
+  const method = compileAuthenticatorMethod(authenticator.body);
+
+  if (method == null) {
+    throw new CompilerError("Authenticator method is required.");
+  }
+
+  return { name, targetModelName, accessTokenModelName, method };
+}
+
+function compileAuthenticatorMethod(
+  atoms: AuthenticatorBodyAtomAST[]
+): AuthenticatorMethodSpec | undefined {
+  const methodAtom = atoms.filter((a): a is AuthenticatorMethodBodyAtomAST => a.kind === "method");
+  if (methodAtom.length == 0) {
+    return;
+  }
+  if (methodAtom.length > 1) {
+    throw new CompilerError(`Max 1 authenticator method is allowed but ${methodAtom.length} given`);
+  }
+
+  const method = methodAtom[0];
+  const methodKind = method.methodKind;
+  if (methodKind === "basic") {
+    // add here basic method's config properties
+    return { kind: "basic" };
+  } else {
+    assertUnreachable(methodKind);
+  }
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
   const populators: PopulatorSpec[] = [];
   const runtimes: ExecutionRuntimeSpec[] = [];
+  let authenticator: AuthenticatorSpec | undefined = undefined;
 
   input.map((definition) => {
     const kind = definition.kind;
@@ -667,12 +700,12 @@ export function compile(input: AST): Specification {
       populators.push(compilePopulator(definition));
     } else if (kind === "execution-runtime") {
       runtimes.push(compileExecutionRuntime(definition));
+    } else if (kind === "authenticator") {
+      authenticator = compileAuthenticator(definition);
     } else {
       assertUnreachable(kind);
     }
   });
 
-  checkMaxOneAuthModel(models);
-
-  return { models, entrypoints, populators, runtimes };
+  return { models, entrypoints, populators, runtimes, authenticator };
 }

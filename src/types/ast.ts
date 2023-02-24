@@ -2,14 +2,18 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST | ExecutionRuntimeAST;
+export type DefinitionAST =
+  | ModelAST
+  | EntrypointAST
+  | PopulatorAST
+  | ExecutionRuntimeAST
+  | AuthenticatorAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
   name: string;
   alias?: string;
   body: ModelBodyAST[];
-  isAuth: boolean;
 }>;
 
 export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST | HookAST;
@@ -267,3 +271,23 @@ export type ExecutionRuntimeAST = WithContext<{
 export type ExecutionRuntimeBodyAtomAST = WithContext<
   { kind: "sourcePath"; value: string } | { kind: "default" }
 >;
+
+// ---------- authenticator
+
+export type AuthenticatorAST = WithContext<{
+  kind: "authenticator";
+  name?: string;
+  body: AuthenticatorBodyAtomAST[];
+}>;
+
+export type AuthenticatorBodyAtomAST = WithContext<AuthenticatorMethodBodyAtomAST>;
+
+export type AuthenticatorMethodBodyAtomAST = {
+  kind: "method";
+  methodKind: "basic";
+  body: AuthenticatorBasicMethodBodyAtomAST[];
+} /* | { ... } add other auth methods */;
+
+export type AuthenticatorBasicMethodBodyAtomAST =
+  WithContext<never /* never is just a placeholder for an empty arr since we currently don't have anything to put in here */>;
+/* | { ... } add other basic method atoms */

@@ -28,7 +28,6 @@ export function ensureEmpty<I>(item: I | null | undefined, message?: string): as
   }
 }
 
-
 export function ensureEqual<T, Tx extends T>(a: T, b: Tx, message?: string): asserts a is Tx {
   if (a === b) return;
   throw new Error(message ?? "Not equal");
@@ -67,6 +66,11 @@ export function concatKeys(map: Record<string, boolean>, delimiter = " "): strin
     .filter(([_key, value]) => value)
     .map(([key, _value]) => key)
     .join(delimiter);
+}
+
+/** Take an array, remove empty items, concatenate and flatten others into a single array. */
+export function compactArr<T>(...parts: (T | T[] | undefined | null)[]): T[] {
+  return parts.filter((part): part is T[] => part != null).flat();
 }
 
 function isLetter(char: string) {
