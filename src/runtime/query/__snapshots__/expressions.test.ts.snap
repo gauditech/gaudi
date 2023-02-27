@@ -118,12 +118,15 @@ WHERE
   (
     (
       (
-        char_length("Org.repos"."name") = 4
-        OR concat("Org.repos"."name", "Org.repos"."name") = 'foofoo'
+        (
+          char_length("Org.repos"."name") = 4
+          OR concat("Org.repos"."name", "Org.repos"."name") = 'foofoo'
+        )
+        OR lower("Org.repos"."name") = lower('FOO')
       )
-      OR lower("Org.repos"."name") = lower('FOO')
+      OR upper("Org.repos"."name") = upper('BAR')
     )
-    OR upper("Org.repos"."name") = upper('BAR')
+    OR now() > 123456789
   )"
 `;
 

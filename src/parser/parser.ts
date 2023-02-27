@@ -547,6 +547,9 @@ semantics.addOperation("parse()", {
   NonemptyListOf(this, head, _seperator, tail) {
     return [head.parse(), ...tail.children.map((c) => c.parse())];
   },
+  EmptyListOf() {
+    return [];
+  },
 
   Populator(this, _populator, identifier, _braceL, body, _braceR): PopulatorAST {
     return {

@@ -248,6 +248,7 @@ describe("Expression functions to queries", () => {
           or concat(name, name) is "foofoo"
           or lower(name) is lower("FOO")
           or upper(name) is upper("BAR")
+          or now() > 123456789
         }
       }
     }

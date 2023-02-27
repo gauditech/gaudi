@@ -42,6 +42,8 @@ export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknow
       return (value: string) => value.toLowerCase();
     case "upper":
       return (value: string) => value.toUpperCase();
+    case "now":
+      return () => Date.now();
     default:
       return assertUnreachable(name);
   }
@@ -107,6 +109,11 @@ export async function executeArithmetics<T>(
       const val = await getValue(func.args[0]);
 
       return fnNameToFunction(func.name)(val);
+    }
+    case "now": {
+      ensureEqual(func.args.length, 0);
+
+      return fnNameToFunction(func.name)();
     }
     default: {
       return assertUnreachable(func.name);

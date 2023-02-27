@@ -39,6 +39,7 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
   "minus": 5,
   "multiply": 12,
   "not in": "TODO",
+  "now": 1677513237728,
   "or": true,
   "plus": 6,
   "upper": "FOO1",

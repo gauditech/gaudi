@@ -22,6 +22,15 @@ import {
 
 describe("runtime", () => {
   describe("changeset", () => {
+    // mock Date to prevent changing snaps on each run
+    const OriginalDate = Date.now;
+    beforeAll(() => {
+      global.Date.now = jest.fn(() => new Date(1677513237728).getTime());
+    });
+    afterAll(() => {
+      global.Date.now = OriginalDate;
+    });
+
     it("build action changeset object", async () => {
       const data: ChangesetDef = [
         {
@@ -184,6 +193,7 @@ describe("runtime", () => {
         { name: "length", setter: mkFn("length", [mkRef("foo")]) },
         { name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
         { name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
+        { name: "now", setter: mkFn("now", []) },
       ];
       const context: ActionContext = {
         input: {},

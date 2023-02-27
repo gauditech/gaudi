@@ -544,6 +544,9 @@ function functionToString(def: Definition, exp: TypedFunction): string {
     case "upper": {
       return stringifyFn("upper", exp.args);
     }
+    case "now": {
+      return stringifyFn("now", exp.args);
+    }
     default:
       assertUnreachable(exp.name);
   }
