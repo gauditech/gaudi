@@ -143,7 +143,7 @@ Gaudi {
   EndpointCardinality = "one" | "many"
 
   EndpointBody
-    = "action" "{" NewlineBody<ActionBody, ";"> "}"     -- action_block
+    = "action" "{" NewlineBody<ActionBlockAtom, ";"> "}"     -- action_block
     | "authorize" "{" QueryExp "}"                      -- authorize
     | "cardinality" EndpointCardinality                 -- cardinality
     | "method" EndpointMethod                           -- method
@@ -157,7 +157,26 @@ Gaudi {
     | "validate" "{" NonemptyNewlineBody<Validator, ","> "}"  -- validate
 
 
+  ActionBlockAtom = ActionBody | QueryActionBody
+
+  QueryActionBody
+  = QueryActionKind "query" "{" NewlineBody<QueryActionAtom, ","> "}"
+
+  QueryActionKind = "update" | "delete"
+
+  QueryActionAtom
+  = "from" OptionalAs<IdentifierPath, IdentifierPath>    -- from
+  | "filter" OptionalBraces<QueryExp>                    -- filter
+  | "set" identifier Hook                                -- set_hook
+  | "set" identifier QueryExp                            -- set_expression
+
+
+  OptionalAs<Rule, As>
+  = Rule "as" As        -- with
+  | Rule                -- without
+
   ActionKind = "create" | "update" | "delete"
+
   ActionBody
     = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                     -- default
     | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                      -- named

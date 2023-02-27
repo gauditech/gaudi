@@ -25,10 +25,13 @@ import {
   InputFieldAST,
   InputFieldOptAST,
   ModelAST,
+  OptionalAs,
   PopulateAST,
   PopulateBodyAST,
   PopulatorAST,
   QueryAST,
+  QueryActionAtomAST,
+  QueryActionBodyAST,
   QueryBodyAST,
   QueryOrderAST,
   ReferenceAST,
@@ -382,6 +385,54 @@ semantics.addOperation("parse()", {
       body: body.parse(),
       interval: this.source,
     };
+  },
+  QueryActionBody(this, kind, _kw, _bL, body, _bR): QueryActionBodyAST {
+    return {
+      kind: kind.parse() as "update" | "delete",
+      alias: undefined,
+      atoms: body.parse(),
+      interval: this.source,
+    };
+  },
+  QueryActionAtom_from(this, _kw, aliasedIdentifier): QueryActionAtomAST {
+    const from = aliasedIdentifier.parse() as OptionalAs<string[], string[]>;
+    return {
+      kind: "from",
+      from: from.rule,
+      alias: from.as,
+      interval: this.source,
+    };
+  },
+  QueryActionAtom_filter(this, _kw, exp): QueryActionAtomAST {
+    return { kind: "filter", exp: exp.parse(), interval: this.source };
+  },
+  QueryActionAtom_set_hook(this, _kw, identifier, hook): QueryActionAtomAST {
+    return {
+      kind: "set",
+      target: identifier.parse(),
+      set: {
+        kind: "hook",
+        hook: hook.parse(),
+      },
+      interval: this.source,
+    };
+  },
+  QueryActionAtom_set_expression(this, _kw, identifier, exp): QueryActionAtomAST {
+    return {
+      kind: "set",
+      target: identifier.parse(),
+      set: { kind: "expression", exp: exp.parse() },
+      interval: this.source,
+    };
+  },
+  OptionalAs_with(this, rule, _asKw, as): OptionalAs<unknown, unknown> {
+    return {
+      rule: rule.parse(),
+      as: as.parse(),
+    };
+  },
+  OptionalAs_without(this, rule): OptionalAs<unknown, undefined> {
+    return { rule: rule.parse() };
   },
   ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
     return {

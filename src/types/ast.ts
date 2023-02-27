@@ -125,6 +125,27 @@ export type EndpointBodyAST = WithContext<
   | { kind: "method"; value: EndpointMethod }
 >;
 
+export type QueryActionBodyAST = WithContext<{
+  kind: "update" | "delete";
+  alias?: string;
+  atoms: QueryActionAtomAST[];
+}>;
+
+export type QueryActionAtomAST = WithContext<
+  | { kind: "from"; from: string[]; alias?: string[] }
+  | { kind: "filter"; exp: ExpAST }
+  | {
+      kind: "set";
+      target: string;
+      set: { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
+    }
+>;
+
+export type OptionalAs<Rule, As> = {
+  rule: Rule;
+  as?: As;
+};
+
 export type ActionKindAST = "create" | "update" | "delete";
 
 export type ActionBodyAST = WithContext<{

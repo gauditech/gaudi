@@ -1,0 +1,9 @@
+entrypoint EP {
+  create endpoint {
+    update query {
+      from org.repos as o.r
+      filter o.is_active
+      set name r.name + ":new"
+    }
+  }
+}
