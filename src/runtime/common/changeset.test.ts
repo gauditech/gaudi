@@ -1,3 +1,5 @@
+import bcrypt, { hash } from "bcrypt";
+
 import { compose } from "@src/composer/composer";
 import { getTypedLiteralValue } from "@src/composer/utils";
 import { ActionContext } from "@src/runtime/common/action";
@@ -23,12 +25,22 @@ import {
 describe("runtime", () => {
   describe("changeset", () => {
     // mock Date to prevent changing snaps on each run
-    const OriginalDate = Date.now;
+    const originalBcryptHash = hash;
+
     beforeAll(() => {
-      global.Date.now = jest.fn(() => new Date(1677513237728).getTime());
+      // mock `Date.now`
+      const fixedTimestamp = 1677513237728;
+      jest.spyOn(Date, "now").mockImplementation(() => fixedTimestamp);
+
+      // mock `bcrypt.hash`
+      const fixedSalt = "$2a$10$rNj8LXd0g..DWYMzvq4DrO"; // this was generated manually by callin `bcrypt.getSaltSync(10)`
+      jest.spyOn(bcrypt, "hash").mockImplementation(async (pass, _salt) => {
+        // call with fixed mock to get consistent results
+        return await originalBcryptHash(pass, fixedSalt);
+      });
     });
     afterAll(() => {
-      global.Date.now = OriginalDate;
+      jest.restoreAllMocks();
     });
 
     it("build action changeset object", async () => {
@@ -194,6 +206,28 @@ describe("runtime", () => {
         { name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
         { name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
         { name: "now", setter: mkFn("now", []) },
+        {
+          name: "cryptoHash",
+          setter: mkFn("cryptoHash", [
+            getTypedLiteralValue("1234567890"),
+            getTypedLiteralValue(10),
+          ]),
+        },
+        {
+          name: "cryptoCompare",
+          setter: mkFn("cryptoCompare", [
+            getTypedLiteralValue("1234567890"),
+            getTypedLiteralValue("$2b$10$yvIRy64TPxhnvXWcV0IReeFux.3uDoiR/H5bu5YsEqIkGroqk7To."),
+          ]),
+        },
+        // invalid password
+        {
+          name: "cryptoCompareFailed",
+          setter: mkFn("cryptoCompare", [
+            getTypedLiteralValue("1234567890"),
+            getTypedLiteralValue("invalid hash"),
+          ]),
+        },
       ];
       const context: ActionContext = {
         input: {},

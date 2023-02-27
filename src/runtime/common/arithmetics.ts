@@ -1,3 +1,4 @@
+import { compare, hash } from "bcrypt";
 import _ from "lodash";
 
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
@@ -44,6 +45,15 @@ export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknow
       return (value: string) => value.toUpperCase();
     case "now":
       return () => Date.now();
+    case "cryptoCompare": {
+      return (clearPassword, hashedPassword) => compare(clearPassword, hashedPassword);
+    }
+    case "cryptoHash": {
+      return (password, saltRounds) => {
+        console.log("ARGS", password, saltRounds);
+        return hash(password, saltRounds);
+      };
+    }
     default:
       return assertUnreachable(name);
   }
@@ -101,6 +111,21 @@ export async function executeArithmetics<T>(
       );
 
       return fnNameToFunction(func.name)(vals);
+    }
+    // variable-arg functions
+    case "cryptoHash":
+    case "cryptoCompare": {
+      ensureEqual(func.args.length, 2);
+
+      const vals = await Promise.all(
+        func.args.map(async (arg) => {
+          const value = await getValue(arg);
+
+          return value;
+        })
+      );
+
+      return fnNameToFunction(func.name)(...vals);
     }
     case "length":
     case "lower":

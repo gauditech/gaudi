@@ -132,7 +132,9 @@ export type FunctionName =
   | "concat"
   | "lower"
   | "upper"
-  | "now";
+  | "now"
+  | "cryptoHash"
+  | "cryptoCompare";
 
 export type TypedFunction = {
   kind: "function";

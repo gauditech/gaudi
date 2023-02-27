@@ -547,6 +547,9 @@ function functionToString(def: Definition, exp: TypedFunction): string {
     case "now": {
       return stringifyFn("now", exp.args);
     }
+    case "cryptoCompare":
+    case "cryptoHash":
+      throw new Error(`Expression "${exp.name}" cannot be used in queries.`);
     default:
       assertUnreachable(exp.name);
   }
