@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`authenticator composer resolves @auth model reference 1`] = `
+exports[`authenticator composer resolves authenticator model reference 1`] = `
 [
   {
     "aggregates": [],

@@ -1,4 +1,5 @@
 import { compile, compose, parse } from "@src/index";
+import { CustomOneEndpointDef } from "@src/types/definition";
 import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
 
 describe("authenticator composer", () => {
@@ -61,8 +62,7 @@ describe("authenticator composer", () => {
     );
   });
 
-
-  it("resolves @auth model reference", () => {
+  it("resolves authenticator model reference", () => {
     const bp = `
       model UserProfile {
         reference user { to AuthUser }

@@ -549,6 +549,11 @@ export type FieldSetterHook = {
   args: ChangesetDef;
 };
 
+export type FieldSetterQuery = {
+  kind: "query";
+  query: QueryDef;
+};
+
 export type FieldSetter =
   // TODO add composite expression setter
   | LiteralValueDef
@@ -559,7 +564,8 @@ export type FieldSetter =
   | FieldSetterChangesetReference
   | FieldSetterHook
   | FieldSetterFunction
-  | FieldSetterContextReference;
+  | FieldSetterContextReference
+  | FieldSetterQuery;
 
 export type HookDef = {
   runtimeName: string;

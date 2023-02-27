@@ -131,11 +131,12 @@ export type HookCodeSpec =
 
 export type ActionAtomSpecSetHook = { kind: "hook"; hook: ActionHookSpec };
 export type ActionAtomSpecSetExp = { kind: "expression"; exp: ExpSpec };
+export type ActionAtomSpecSetQuery = { kind: "query"; query: QuerySpec };
 
 export type ActionAtomSpecSet = {
   kind: "set";
   target: string;
-  set: ActionAtomSpecSetHook | ActionAtomSpecSetExp;
+  set: ActionAtomSpecSetHook | ActionAtomSpecSetExp | ActionAtomSpecSetQuery;
 };
 export type ActionAtomSpecHook = { kind: "hook"; hook: ActionHookSpec };
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
@@ -199,7 +200,7 @@ export type ModelHookSpec = HookSpec & {
 };
 
 export type ActionHookSpec = HookSpec & {
-  args: Record<string, { kind: "expression"; exp: ExpSpec }>;
+  args: Record<string, { kind: "expression"; exp: ExpSpec } | { kind: "query"; query: QuerySpec }>;
 };
 
 // ----- Execution Runtime

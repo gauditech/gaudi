@@ -1,19 +1,12 @@
 import _ from "lodash";
 
 import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
-import { composeValidators, validateType } from "./models";
-import {
-  VarContext,
-  getTypedIterator,
-  getTypedLiteralValue,
-  getTypedPath,
-  getTypedPathWithLeaf,
-} from "./utils";
 
 import { kindFilter } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
   assertUnreachable,
+  ensureEmpty,
   ensureEqual,
   ensureExists,
   ensureNot,
@@ -21,6 +14,15 @@ import {
   safeInvoke,
 } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
+import { composeValidators, validateType } from "@src/composer/models";
+import { composeQuery } from "@src/composer/query";
+import {
+  VarContext,
+  getTypedIterator,
+  getTypedLiteralValue,
+  getTypedPath,
+  getTypedPathWithLeaf,
+} from "@src/composer/utils";
 import {
   ActionDef,
   ActionHookDef,
@@ -31,9 +33,10 @@ import {
   FieldSetter,
   FunctionName,
   ModelDef,
+  QueryDef,
   TargetDef,
 } from "@src/types/definition";
-import { ActionAtomSpecSet, ActionSpec, ExpSpec } from "@src/types/specification";
+import { ActionAtomSpecSet, ActionSpec, ExpSpec, QuerySpec } from "@src/types/specification";
 
 /**
  * Composes the custom actions block for an endpoint. Adds a default action
@@ -324,6 +327,12 @@ function composeSingleAction(
         const exp = atom.set.exp;
         const setter = expandSetterExpression(exp, changeset);
         return { name: atom.target, setter };
+      }
+      case "query": {
+        return {
+          name: atom.target,
+          setter: { kind: "query", query: queryFromSpec(def, atom.set.query) },
+        };
       }
     }
   }
@@ -722,4 +731,15 @@ function actionFromParts(
       };
     }
   }
+}
+
+export function queryFromSpec(def: Definition, qspec: QuerySpec): QueryDef {
+  ensureEmpty(qspec.aggregate, "Aggregates are not yet supported in action queries");
+
+  const pathPrefix = _.first(qspec.fromModel);
+  ensureExists(pathPrefix, `Action query "fromModel" path is empty ${qspec.fromModel}`);
+
+  const fromModel = getRef.model(def, pathPrefix);
+
+  return composeQuery(def, fromModel, qspec);
 }

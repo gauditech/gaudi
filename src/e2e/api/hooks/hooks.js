@@ -16,7 +16,7 @@ module.exports.randomSlug = function ({ org }) {
 // ----- actions
 
 module.exports.customAction = function(args, ctx) {
-  // console.log('[EXEC] customAction: ', args, typeof ctx.request, typeof ctx.response)
+  console.log('[EXEC] customAction: ', args)
 
   // return args via HTTP header
   ctx.response.set('Gaudi-Test-body', JSON.stringify(args))
@@ -24,6 +24,8 @@ module.exports.customAction = function(args, ctx) {
 
 /** Custom action that sends entire response */
 module.exports.customActionResponds = function(args, ctx) {
+  console.log('[EXEC] customActionResponds: ', args)
+
   // send entire response
   ctx.response.json(args)
 }

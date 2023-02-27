@@ -9,6 +9,7 @@ import {
   getFieldsetProperty,
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
+import { mockQueryExecutor } from "@src/runtime/common/testUtils";
 import { Vars } from "@src/runtime/server/vars";
 import {
   ChangesetDef,
@@ -99,7 +100,9 @@ describe("runtime", () => {
         referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
-      expect(await buildChangeset(createTestDefinition(), data, context)).toMatchSnapshot();
+      expect(
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), data, context)
+      ).toMatchSnapshot();
     });
 
     it("build strict action changeset object", async () => {
@@ -132,7 +135,9 @@ describe("runtime", () => {
         referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
-      expect(await buildStrictChangeset(createTestDefinition(), data, context)).toMatchSnapshot();
+      expect(
+        await buildStrictChangeset(createTestDefinition(), mockQueryExecutor(), data, context)
+      ).toMatchSnapshot();
     });
 
     it("calculate changeset arithmetic operations", async () => {
@@ -183,7 +188,9 @@ describe("runtime", () => {
         vars: new Vars(),
         referenceIds: [],
       };
-      expect(await buildChangeset(createTestDefinition(), changeset, context)).toMatchSnapshot();
+      expect(
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), changeset, context)
+      ).toMatchSnapshot();
     });
   });
 

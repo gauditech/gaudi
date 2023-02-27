@@ -195,13 +195,10 @@ export type HookBodyAST = WithContext<
 >;
 
 export type HookArgValueAST = WithContext<
-  { kind: "query"; query: HookQueryAST } | { kind: "expression"; exp: ExpAST } | { kind: "default" }
+  | { kind: "query"; body: QueryBodyAST[] }
+  | { kind: "expression"; exp: ExpAST }
+  | { kind: "default" }
 >;
-
-export type HookQueryAST = WithContext<{
-  kind: "query";
-  body: QueryBodyAST[];
-}>;
 
 export type LiteralValue = null | boolean | number | string;
 

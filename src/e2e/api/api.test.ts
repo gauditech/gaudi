@@ -182,6 +182,24 @@ describe("API endpoints", () => {
         }
       `);
     });
+
+    it("custom one endpoint - action with query", async () => {
+      const data = { name: "Org Custom Query One", userId: 2 };
+      const postResp = await request(getServer()).post("/org/org1/customOneQueryAction").send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchInlineSnapshot(`
+        {
+          "name": "Org Custom Query One",
+          "user": [
+            {
+              "id": 1,
+              "name": "Org 1",
+            },
+          ],
+        }
+      `);
+    });
   });
 
   describe("Repo", () => {

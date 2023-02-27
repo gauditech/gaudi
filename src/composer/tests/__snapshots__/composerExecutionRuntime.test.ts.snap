@@ -16,7 +16,7 @@ exports[`execution runtime composer composes multiple execution runtimes 1`] = `
   },
   {
     "default": false,
-    "name": "$GAUDI_INTERNAL",
+    "name": "@GAUDI_INTERNAL",
     "sourcePath": "./internalExecutionRuntime",
     "type": "node",
   },
@@ -33,7 +33,7 @@ exports[`execution runtime composer composes single execution runtime 1`] = `
   },
   {
     "default": false,
-    "name": "$GAUDI_INTERNAL",
+    "name": "@GAUDI_INTERNAL",
     "sourcePath": "./internalExecutionRuntime",
     "type": "node",
   },
@@ -50,7 +50,7 @@ exports[`execution runtime composer makes a single runtime the default one 1`] =
   },
   {
     "default": false,
-    "name": "$GAUDI_INTERNAL",
+    "name": "@GAUDI_INTERNAL",
     "sourcePath": "./internalExecutionRuntime",
     "type": "node",
   },

@@ -510,7 +510,7 @@ function compileModelHook(hook: HookAST): ModelHookSpec {
       // hook query has a generated name with pattern -> HOOK_NAME:ARG_NAME
       // placeholder name, not actually used FIXME
       const queryName = `${name}:${b.name}`;
-      const query = compileQuery({ ...b.value.query, name: queryName }, []);
+      const query = compileQuery({ ...b.value, name: queryName }, []);
       args.push({ name: b.name, query });
     }
   });
@@ -528,6 +528,8 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
     if (b.kind === "arg") {
       if (b.value.kind === "expression") {
         args[b.name] = { kind: "expression", exp: compileQueryExp(b.value.exp) };
+      } else if (b.value.kind === "query") {
+        args[b.name] = { kind: "query", query: compileQuery({ ...b.value, name: b.name }) };
       } else {
         throw new CompilerError("Invalid `hook` type for this context", b);
       }

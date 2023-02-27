@@ -2,7 +2,7 @@ import { ensureUnique } from "@src/common/utils";
 import { Definition, ExecutionRuntimeDef } from "@src/types/definition";
 import { ExecutionRuntimeSpec } from "@src/types/specification";
 
-const EXECUTION_RUNTIME_GAUDI_INTERNAL = "$GAUDI_INTERNAL";
+const EXECUTION_RUNTIME_GAUDI_INTERNAL = "@GAUDI_INTERNAL";
 
 export function composeExecutionRuntimes(def: Definition, runtimes: ExecutionRuntimeSpec[]): void {
   def.runtimes = runtimes.map((p) => composeRuntime(def, p));

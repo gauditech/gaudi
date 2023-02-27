@@ -1,18 +1,9 @@
 import _ from "lodash";
 
-import { processSelect } from "./entrypoints";
-import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
-
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
-import { ensureEqual, ensureUnique } from "@src/common/utils";
+import { ensureUnique } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
-import {
-  NamePath,
-  getDirectChildren,
-  getFilterPaths,
-  queryFromParts,
-  uniqueNamePaths,
-} from "@src/runtime/query/build";
+import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query";
 import { LiteralValue } from "@src/types/ast";
 import {
   AggregateDef,
@@ -20,21 +11,17 @@ import {
   ConstantDef,
   Definition,
   FieldDef,
-  FunctionName,
   IValidatorDef,
   ModelDef,
   ModelHookDef,
   QueryDef,
-  QueryOrderByAtomDef,
   ReferenceDef,
   RelationDef,
-  TypedExprDef,
   ValidatorDef,
   ValidatorDefinition,
 } from "@src/types/definition";
 import {
   ComputedSpec,
-  ExpSpec,
   FieldSpec,
   ModelHookSpec,
   ModelSpec,
@@ -361,148 +348,12 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
   return h;
 }
 
-function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
-  if (qspec.aggregate) {
-    throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
-  }
-  if (qspec.fromAlias) {
-    ensureEqual(
-      (qspec.fromAlias ?? []).length,
-      qspec.fromModel.length,
-      `alias ${qspec.fromAlias} should be the same length as from ${qspec.fromModel}`
-    );
-  }
-
-  const fromPath = [mdef.name, ...qspec.fromModel];
-
-  /**
-   *  For each alias in qspec, assign a NamePath. For example,
-   * `from repos.issues as r.i` produces the following `aliases`:
-   * { r: ["Org", "repos"], i: ["Org", "repos", "issues"] }
-   */
-  const aliases = (qspec.fromAlias ?? []).reduce((acc, curr, index) => {
-    return _.assign(acc, { [curr]: _.take(fromPath, index + 2) });
-  }, {} as Record<string, NamePath>);
-
-  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, {}, aliases);
-
-  const filterPaths = getFilterPaths(filter);
-  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
-  const direct = getDirectChildren(paths);
-  ensureEqual(direct.length, 1);
-  const targetModel = getRef.model(def, direct[0]);
-  const select = processSelect(def, targetModel, qspec.select, fromPath);
-
-  const orderBy = qspec.orderBy?.map(
-    ({ field, order }): QueryOrderByAtomDef => ({
-      exp: { kind: "alias", namePath: [...fromPath, ...field] },
-      direction: order ?? "asc",
-    })
-  );
-
-  return queryFromParts(
-    def,
-    qspec.name,
-    fromPath,
-    filter,
-    select,
-    orderBy,
-    qspec.limit,
-    qspec.offset
-  );
+export function queryFromSpec(def: Definition, model: ModelDef, qspec: QuerySpec): QueryDef {
+  return composeQuery(def, model, qspec);
 }
 
 function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
-  const aggregate = qspec.aggregate?.name;
-  if (!aggregate) {
-    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
-  }
-  if (qspec.select) {
-    throw new Error(`Aggregate query can't have a select`);
-  }
-  const qdef = queryFromSpec(def, mdef, { ...qspec, aggregate: undefined });
-  const { refKey } = qdef;
-  const query = _.omit(qdef, ["refKey", "name", "select"]);
-
-  if (aggregate !== "sum" && aggregate !== "count") {
-    throw new Error(`Unknown aggregate function ${aggregate}`);
-  }
-
-  return {
-    refKey,
-    kind: "aggregate",
-    aggrFnName: aggregate,
-    targetPath: [mdef.refKey, "id"],
-    name: qspec.name,
-    query,
-  };
-}
-
-function typedFunctionFromParts(
-  def: Definition,
-  name: string,
-  args: ExpSpec[],
-  namespace: string[],
-  context: VarContext = {},
-  aliases: Record<string, NamePath> = {}
-): TypedExprDef {
-  return {
-    kind: "function",
-    name: name as FunctionName, // FIXME proper validation
-    args: args.map((arg) => composeExpression(def, arg, namespace, context, aliases)),
-  };
-}
-
-export function composeExpression(
-  def: Definition,
-  exp: ExpSpec,
-  namespace: string[],
-  context: VarContext = {},
-  aliases: Record<string, NamePath> = {}
-): TypedExprDef {
-  switch (exp.kind) {
-    case "literal": {
-      return getTypedLiteralValue(exp.literal);
-    }
-    case "identifier": {
-      /**
-       * If identifier starts with a known alias, replace the first element (_.tail drops the first one)
-       * with it's NamePath.
-       */
-      const expandedNamePath =
-        exp.identifier[0] in aliases
-          ? [...aliases[exp.identifier[0]], ..._.tail(exp.identifier)]
-          : [...namespace, ...exp.identifier];
-
-      // ensure everything resolves
-      getTypedPath(def, expandedNamePath, context);
-      return { kind: "alias", namePath: expandedNamePath };
-    }
-    // everything else composes to a function
-    case "unary": {
-      return typedFunctionFromParts(
-        def,
-        "not",
-        [exp.exp, { kind: "literal", literal: true }],
-        namespace,
-        context,
-        aliases
-      );
-    }
-    case "binary": {
-      return typedFunctionFromParts(
-        def,
-        exp.operator,
-        [exp.lhs, exp.rhs],
-        namespace,
-        context,
-        aliases
-      );
-    }
-    case "function": {
-      return typedFunctionFromParts(def, exp.name, exp.args, namespace, context, aliases);
-    }
-  }
+  return composeAggregate(def, mdef, qspec);
 }
 
 export function validateType(type: string): FieldDef["type"] {

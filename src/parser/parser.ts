@@ -23,7 +23,6 @@ import {
   FieldTag,
   HookAST,
   HookBodyAST,
-  HookQueryAST,
   InputFieldAST,
   InputFieldOptAST,
   ModelAST,
@@ -349,7 +348,7 @@ semantics.addOperation("parse()", {
     return {
       kind: "arg",
       name: identifier.parse(),
-      value: { kind: "query", query: query.parse() },
+      value: { kind: "query", body: query.parse() },
       interval: this.source,
     };
   },
@@ -377,12 +376,8 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  HookQuery(this, _query, _parenL, body, _parenR): HookQueryAST {
-    return {
-      kind: "query",
-      body: body.parse(),
-      interval: this.source,
-    };
+  HookQuery(this, _query, _parenL, body, _parenR): QueryBodyAST {
+    return body.parse();
   },
   ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
     return {

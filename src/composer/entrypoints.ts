@@ -1,8 +1,5 @@
 import _ from "lodash";
 
-import { composeActionBlock, getInitialContext } from "./actions";
-import { composeExpression } from "./models";
-
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
   assertUnreachable,
@@ -11,6 +8,8 @@ import {
   ensureExists,
   ensureUnique,
 } from "@src/common/utils";
+import { composeActionBlock, getInitialContext } from "@src/composer/actions";
+import { composeExpression } from "@src/composer/query";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {

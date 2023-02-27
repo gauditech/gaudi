@@ -1,5 +1,5 @@
 import { applyFilterIdInContext, queryTreeFromParts, transformSelectPath } from "../query/build";
-import { executeQueryTree } from "../query/exec";
+import { createQueryExecutor, executeQueryTree } from "../query/exec";
 
 import { ValidReferenceIdResult } from "./constraintValidation";
 
@@ -42,13 +42,15 @@ async function _internalExecuteActions(
   epCtx: HookActionContext | undefined,
   actions: ActionDef[]
 ) {
+  const qx = createQueryExecutor(dbConn);
+
   for (const action of actions) {
     const actionKind = action.kind;
     if (actionKind === "create-one") {
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildStrictChangeset(def, action.changeset, ctx);
+      const actionChangeset = await buildStrictChangeset(def, qx, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const id = await insertData(dbConn, dbModel, dbData);
@@ -58,7 +60,7 @@ async function _internalExecuteActions(
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildStrictChangeset(def, action.changeset, ctx);
+      const actionChangeset = await buildStrictChangeset(def, qx, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const targetId = resolveTargetId(ctx, action.targetPath);
@@ -76,8 +78,8 @@ async function _internalExecuteActions(
     } else if (actionKind === "execute-hook") {
       ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
 
-      const actionChangeset = await buildChangeset(def, action.changeset, ctx);
-      const argsChangeset = await buildChangeset(def, action.hook.args, ctx, actionChangeset);
+      const actionChangeset = await buildChangeset(def, qx, action.changeset, ctx);
+      const argsChangeset = await buildChangeset(def, qx, action.hook.args, ctx, actionChangeset);
 
       await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
     } else {

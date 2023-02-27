@@ -95,6 +95,97 @@ exports[`compose hooks action hook 1`] = `
 ]
 `;
 
+exports[`compose hooks composes action hook 1`] = `
+{
+  "changeset": [
+    {
+      "name": "name",
+      "setter": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": true,
+        "type": "text",
+      },
+    },
+  ],
+  "hook": {
+    "args": [
+      {
+        "name": "user",
+        "setter": {
+          "kind": "query",
+          "query": {
+            "filter": {
+              "args": [
+                {
+                  "kind": "alias",
+                  "namePath": [
+                    "Org",
+                    "id",
+                  ],
+                },
+                {
+                  "kind": "literal",
+                  "type": "integer",
+                  "value": 1,
+                },
+              ],
+              "kind": "function",
+              "name": "is",
+            },
+            "fromPath": [
+              "Org",
+            ],
+            "kind": "query",
+            "limit": undefined,
+            "modelRefKey": "Org",
+            "name": "user",
+            "offset": undefined,
+            "orderBy": undefined,
+            "refKey": "N/A",
+            "retType": "Org",
+            "select": [
+              {
+                "alias": "id",
+                "kind": "field",
+                "name": "id",
+                "namePath": [
+                  "Org",
+                  "id",
+                ],
+                "refKey": "Org.id",
+              },
+              {
+                "alias": "name",
+                "kind": "field",
+                "name": "name",
+                "namePath": [
+                  "Org",
+                  "name",
+                ],
+                "refKey": "Org.name",
+              },
+            ],
+          },
+        },
+      },
+    ],
+    "hook": {
+      "code": {
+        "file": "hooks/auth",
+        "kind": "source",
+        "target": "login",
+      },
+      "runtimeName": "@GAUDI_INTERNAL",
+    },
+  },
+  "kind": "execute-hook",
+  "responds": false,
+}
+`;
+
 exports[`compose hooks composes source hooks 1`] = `
 {
   "entrypoints": [
@@ -278,7 +369,7 @@ exports[`compose hooks composes source hooks 1`] = `
     },
     {
       "default": false,
-      "name": "$GAUDI_INTERNAL",
+      "name": "@GAUDI_INTERNAL",
       "sourcePath": "./internalExecutionRuntime",
       "type": "node",
     },
@@ -541,7 +632,7 @@ exports[`compose hooks inline hooks 1`] = `
     },
     {
       "default": false,
-      "name": "$GAUDI_INTERNAL",
+      "name": "@GAUDI_INTERNAL",
       "sourcePath": "./internalExecutionRuntime",
       "type": "node",
     },

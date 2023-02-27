@@ -87,6 +87,10 @@ export function simplifyActionSpec(
   const setters = atoms
     .filter((a): a is ActionAtomSpecSet => a.kind === "set")
     .map((a): ActionAtomSpecSet => {
+      if (a.set.kind === "query") {
+        return a;
+      }
+
       const ref = getRef(def, model.name, a.target, ["field", "reference"]);
       if (ref.kind === "field") {
         return a;

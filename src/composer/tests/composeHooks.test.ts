@@ -1,6 +1,7 @@
 import { compile } from "@src/compiler/compiler";
 import { compose } from "@src/composer/composer";
 import { parse } from "@src/parser/parser";
+import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose hooks", () => {
   it("composes source hooks", () => {
@@ -219,5 +220,38 @@ describe("compose hooks", () => {
     expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
       `"Inline hooks cannot be used for "execute" actions"`
     );
+  });
+
+  it("composes action hook", () => {
+    const bp = `
+      model Org { field name { type text} }
+
+      entrypoint Org {
+        target model Org
+ 
+        // login
+        custom endpoint {
+          path "somePath"
+          method POST
+          cardinality one
+      
+          action {
+            execute {
+              hook {
+                // action arg hook
+                arg user query { from Org, filter id is 1, select { id, name }} 
+
+                runtime @GAUDI_INTERNAL
+                source login from "hooks/auth"
+              }
+            }
+          }
+        }
+      }
+    `;
+    const def = compose(compile(parse(bp)));
+    const action = (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
+
+    expect(action).toMatchSnapshot();
   });
 });
