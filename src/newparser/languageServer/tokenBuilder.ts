@@ -30,7 +30,7 @@ import {
   TokenData,
   UnnamedHook,
   Validator,
-} from "../parsed";
+} from "../ast/ast";
 
 export enum TokenTypes {
   namespace = 0,

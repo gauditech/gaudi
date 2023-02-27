@@ -7,7 +7,7 @@ import {
   createConnection,
 } from "vscode-languageserver/node";
 
-import { TokenData } from "../parsed";
+import { TokenData } from "../ast/ast";
 import { parse } from "../parser";
 
 import { TokenModifiers, TokenTypes, buildTokens } from "./tokenBuilder";

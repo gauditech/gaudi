@@ -1,4 +1,4 @@
-import { TokenData } from "./parsed";
+import { TokenData } from "./ast/ast";
 
 export enum ErrorCode {
   // Check form Errors
@@ -17,6 +17,9 @@ export enum ErrorCode {
   CantResolveModelAtom,
   CantResolveExpressionReference,
   SelectCantNest,
+  // Type Errors
+  UnexpectedType,
+  UnexpectedFieldType,
 }
 
 function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>) {
@@ -49,6 +52,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve expression reference`;
     case ErrorCode.SelectCantNest:
       return `Can't can't write nested select for this reference`;
+    case ErrorCode.UnexpectedType:
+      return `Unexpected type`;
+    case ErrorCode.UnexpectedFieldType:
+      return `Field type must be a non null primitive type`;
   }
 }
 

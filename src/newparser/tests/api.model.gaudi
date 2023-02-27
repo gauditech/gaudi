@@ -1,7 +1,7 @@
 
 model Org {
   field name {
-    type text,
+    type string,
     validate {
       hook {
         default arg name
@@ -10,7 +10,7 @@ model Org {
     }
   }
   field slug {
-    type text,
+    type string,
     unique,
     validate {
       hook {
@@ -19,7 +19,7 @@ model Org {
       }
     }
   }
-  field description { type text }
+  field description { type string }
 
   relation repos { from Repo, through org }
 
@@ -36,9 +36,9 @@ model Org {
 model Repo {
   reference org { to Org }
 
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
+  field name { type string }
+  field slug { type string, unique }
+  field description { type string }
   field is_public { type boolean, default true }
   field latest_num { type integer }
 
@@ -49,15 +49,15 @@ model Repo {
 model Issue {
   reference repo { to Repo }
 
-  field number { type text }
-  field title { type text }
+  field number { type string }
+  field title { type string }
 
   relation comments { from Comment, through issue }
 }
 
 model Comment {
   reference issue { to Issue }
-  field body { type text }
+  field body { type string }
 }
 
 // ----- entrypoints

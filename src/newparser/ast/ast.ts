@@ -1,3 +1,5 @@
+import { Type } from "./type";
+
 export type Definition = (Model | Entrypoint | Populator)[];
 
 export type Model = WithKeyword<{
@@ -10,8 +12,10 @@ export type ModelAtom = Field | Reference | Relation | Query | Computed | ModelH
 export type Field = WithKeyword<{
   kind: "field";
   name: Identifier;
-  ref: RefModelAtom<"field">;
+  ref: Ref;
+  type: Type;
   atoms: FieldAtom[];
+  resolved?: true;
 }>;
 export type FieldAtom = WithKeyword<
   | { kind: "type"; identifier: Identifier }
@@ -27,36 +31,40 @@ export type Validator =
 export type Reference = WithKeyword<{
   kind: "reference";
   name: Identifier;
-  ref: RefModelAtom<"reference">;
+  ref: Ref;
+  type: Type;
   atoms: ReferenceAtom[];
+  resolved?: true;
 }>;
 export type ReferenceAtom = WithKeyword<
-  { kind: "to"; identifier: Identifier; ref: RefModel } | { kind: "nullable" } | { kind: "unique" }
+  { kind: "to"; identifier: IdentifierRef } | { kind: "nullable" } | { kind: "unique" }
 >;
 
 export type Relation = WithKeyword<{
   kind: "relation";
   name: Identifier;
-  ref: RefModelAtom<"relation">;
+  ref: Ref;
+  type: Type;
   atoms: RelationAtom[];
+  resolved?: true;
 }>;
 export type RelationAtom = WithKeyword<
-  | { kind: "from"; identifier: Identifier; ref: RefModel }
-  | { kind: "through"; identifier: Identifier; ref: RefModelAtom<"reference"> }
+  { kind: "from"; identifier: IdentifierRef } | { kind: "through"; identifier: IdentifierRef }
 >;
 
 export type Query = WithKeyword<{
   kind: "query";
   name: Identifier;
-  ref: RefModelAtom<"query">;
+  ref: Ref;
+  type: Type;
   atoms: QueryAtom[];
+  resolved?: true;
 }>;
 export type QueryAtom = WithKeyword<
   | {
       kind: "from";
-      identifierPath: IdentifierPath;
-      as?: WithKeyword<{ identifier: IdentifierPath }>;
-      refs: RefModelAtom<"reference" | "relation" | "query">[];
+      identifierPath: IdentifierRef[];
+      as?: WithKeyword<{ identifierPath: IdentifierRef[] }>;
     }
   | { kind: "filter"; expr: Expr<Db> }
   | { kind: "orderBy"; orderBy: OrderBy }
@@ -65,15 +73,13 @@ export type QueryAtom = WithKeyword<
   | { kind: "select"; select: Select }
   | { kind: "aggregate"; aggregate: AggregateType }
 >;
-export type AggregateType = "count" | "sum";
+export type AggregateType = "count" | "sum" | "one" | "first";
 export type OrderBy = (
   | {
-      identifierPath: IdentifierPath;
-      refs: RefModelAtomDb[];
+      identifierPath: IdentifierRef[];
     }
   | WithKeyword<{
-      identifierPath: IdentifierPath;
-      refs: RefModelAtomDb[];
+      identifierPath: IdentifierRef[];
       order: OrderType;
     }>
 )[];
@@ -82,8 +88,10 @@ export type OrderType = "count" | "sum";
 export type Computed = WithKeyword<{
   kind: "computed";
   name: Identifier;
-  ref: RefModelAtom<"computed">;
+  ref: Ref;
+  type: Type;
   expr: Expr<Db>;
+  resolved?: true;
 }>;
 
 export type Entrypoint = WithKeyword<{
@@ -93,8 +101,12 @@ export type Entrypoint = WithKeyword<{
 }>;
 export type EntrypointAtom =
   | WithKeyword<
-      | { kind: "target"; identifier: IdentifierAs; ref: RefModel | RefModelAtom<"relation"> }
-      | { kind: "identifyWith"; identifier: Identifier; ref: RefModelAtom<"field"> }
+      | {
+          kind: "target";
+          identifier: IdentifierRef;
+          as?: WithKeyword<{ identifier: IdentifierRef }>;
+        }
+      | { kind: "identifyWith"; identifier: IdentifierRef }
       | { kind: "response"; select: Select }
       | { kind: "authorize"; expr: Expr<Code> }
     >
@@ -114,8 +126,8 @@ export type EndpointAtom = WithKeyword<
 
 export type Action = WithKeyword<{
   kind: ActionType;
-  target?: IdentifierPathAs;
-  refs: RefEndpointContext[];
+  target?: IdentifierRef[];
+  as?: WithKeyword<{ identifier: IdentifierRef }>;
   atoms: ActionAtom[];
 }>;
 export type ActionType = "create" | "update" | "delete";
@@ -127,16 +139,13 @@ export type ActionAtom =
   | ActionAtomInput;
 export type ActionAtomSet = WithKeyword<{
   kind: "set";
-  target: Identifier;
-  ref: RefModelAtom<"field" | "reference">;
+  target: IdentifierRef;
   set: ActionFieldHook | { kind: "expr"; expr: Expr<Code> };
 }>;
 export type ActionAtomReferenceThrough = WithKeyword<{
   kind: "referenceThrough";
-  target: Identifier;
-  targetRef: RefModelAtom<"reference">;
-  through: Identifier;
-  throughRef: RefModelAtom<"field">;
+  target: IdentifierRef;
+  through: IdentifierRef;
 }>;
 export type ActionAtomDeny = WithKeyword<{
   kind: "deny";
@@ -144,14 +153,13 @@ export type ActionAtomDeny = WithKeyword<{
     | WithKeyword<{ kind: "all" }>
     | {
         kind: "list";
-        fields: { identifier: Identifier; ref: RefModelAtom<"field" | "reference"> }[];
+        fields: IdentifierRef[];
       };
 }>;
 export type ActionAtomInput = WithKeyword<{
   kind: "input";
   fields: {
-    field: Identifier;
-    ref: RefModelAtom<"field" | "reference">;
+    field: IdentifierRef;
     atoms: InputAtom[];
   }[];
 }>;
@@ -165,8 +173,11 @@ export type Populator = WithKeyword<{
 export type Populate = WithKeyword<{ kind: "populate"; atoms: PopulateAtom[] }>;
 export type PopulateAtom =
   | WithKeyword<
-      | { kind: "target"; identifier: IdentifierAs; ref: RefModel | RefModelAtom<"relation"> }
-      | { kind: "identify"; identifier: Identifier; ref: RefModelAtom<"field"> }
+      | {
+          kind: "target";
+          identifier: IdentifierRef;
+          as?: WithKeyword<{ identifier: IdentifierRef }>;
+        }
       | { kind: "repeat"; repeater: Repeater }
     >
   | ActionAtomSet
@@ -190,21 +201,21 @@ export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
     | { kind: "inline"; code: StringLiteral }
   >[];
 }>;
-export type ModelHook = Hook<true, false> & { ref: RefModelAtom<"hook"> };
+export type ModelHook = Hook<true, false> & { ref: Ref; type: Type; resolved?: true };
 export type FieldValidationHook = Hook<false, true>;
 export type ActionFieldHook = Hook<false, false>;
 
 export type Select = {
-  name: Identifier;
-  identifierPath?: IdentifierPath;
-  refs: RefModelAtom[];
+  target:
+    | { kind: "short"; name: IdentifierRef }
+    | { kind: "long"; name: Identifier; identifierPath: IdentifierRef[] };
   select?: Select;
 }[];
 
 export type Db = "db";
 export type Code = "code";
 export type ExprKind = Db | Code;
-export type Expr<kind extends ExprKind> =
+export type Expr<kind extends ExprKind> = (
   | WithKeyword<{
       kind: "binary";
       operator: BinaryOperator;
@@ -213,13 +224,10 @@ export type Expr<kind extends ExprKind> =
     }>
   | { kind: "group"; expr: Expr<kind> }
   | WithKeyword<{ kind: "unary"; operator: UnaryOperator; expr: Expr<kind> }>
-  | {
-      kind: "identifierPath";
-      identifierPath: IdentifierPath;
-      refs: (kind extends Db ? RefModelAtomDb : RefEndpointContext)[];
-    }
+  | { kind: "path"; path: IdentifierRef[] }
   | { kind: "literal"; literal: Literal }
-  | { kind: "function"; name: Identifier; args: Expr<kind>[] };
+  | { kind: "function"; name: Identifier; args: Expr<kind>[] }
+) & { type: Type };
 export type BinaryOperator =
   | "or"
   | "and"
@@ -244,31 +252,21 @@ export type BooleanLiteral = { kind: "boolean"; value: boolean; token: TokenData
 export type NullLiteral = { kind: "null"; value: null; token: TokenData };
 export type StringLiteral = { kind: "string"; value: string; token: TokenData };
 
-export type RefBase<r> = { kind: "unresolved"; error?: true } | r;
-
-export type RefModel = RefBase<{ kind: "model"; model: string }>;
-export type RefModelAtom<k extends ModelAtom["kind"] = ModelAtom["kind"]> = RefBase<{
+export type RefUnresolved = { kind: "unresolved" };
+export type RefModel = { kind: "model"; model: string };
+export type RefModelAtom = {
   kind: "modelAtom";
-  atomKind: k;
+  atomKind: ModelAtom["kind"];
+  name: string;
   model: string;
-  atom: string;
-  nextModel: k extends "reference" | "relation" | "query" ? string : undefined;
-}>;
-export type RefModelAtomDb = RefModelAtom<
-  "field" | "reference" | "relation" | "query" | "computed"
->;
+};
+export type RefContext = { kind: "runtime"; path: string[] };
+export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;
 
-export type RefAuth = RefBase<{ kind: "auth"; path: string[] }>;
-export type RefInput = RefBase<{ kind: "input"; path: string[] }>;
-export type RefEndpointContext = RefModel | RefModelAtom | RefAuth | RefInput;
+export const unresolvedRef: Ref = { kind: "unresolved" };
 
 export type Identifier = { text: string; token: TokenData };
-export type IdentifierPath = Identifier[];
-export type IdentifierAs = { identifier: Identifier; as?: WithKeyword<{ identifier: Identifier }> };
-export type IdentifierPathAs = {
-  identifierPath: Identifier[];
-  as?: WithKeyword<{ identifier: Identifier }>;
-};
+export type IdentifierRef = { identifier: Identifier; ref: Ref; type: Type };
 
 export type TokenData = { start: number; end: number };
 

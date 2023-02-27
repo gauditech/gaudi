@@ -1,43 +1,48 @@
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { CompilerError, ErrorCode } from "./compilerError";
 import {
   Action,
   ActionAtomSet,
   ActionFieldHook,
+  BinaryOperator,
   Computed,
   Definition,
   Endpoint,
   Entrypoint,
   Expr,
+  ExprKind,
   Field,
   FieldValidationHook,
-  Identifier,
-  IdentifierPath,
+  IdentifierRef,
   Model,
   ModelAtom,
   ModelHook,
   Populate,
   Populator,
   Query,
-  RefBase,
-  RefEndpointContext,
-  RefModel,
-  RefModelAtom,
-  RefModelAtomDb,
   Reference,
   Relation,
   Select,
+  UnaryOperator,
   Validator,
-} from "./parsed";
+} from "./ast/ast";
+import {
+  Type,
+  TypeCardinality,
+  TypeCategory,
+  addTypeModifier,
+  getBaseType,
+  getTypeCardinality,
+  hasTypeModifier,
+  isExpectedType,
+  primitiveTypes,
+  removeTypeModifier,
+  unknownType,
+} from "./ast/type";
+import { CompilerError, ErrorCode } from "./compilerError";
 
 import { kindFilter, kindFind, patternFind } from "@src/common/patternFilter";
-
-const refError = { kind: "unresolved", error: true } as const;
-function isRefResolved<r extends { kind: string }>(ref: RefBase<r>): boolean {
-  return ref.kind === "unresolved" ? "error" in ref && ref.error === true : true;
-}
 
 type ScopeDb =
   | { kind: "querySimple"; model: string | undefined }
@@ -69,7 +74,9 @@ export function resolve(definition: Definition) {
   }
 
   function resolveModelAtom(model: Model, atom: ModelAtom) {
-    if (isRefResolved(atom.ref)) return;
+    if (atom.resolved) return;
+    atom.resolved = true;
+
     match(atom)
       .with({ kind: "field" }, (field) => resolveField(model, field))
       .with({ kind: "reference" }, (reference) => resolveReference(model, reference))
@@ -88,10 +95,25 @@ export function resolve(definition: Definition) {
     field.ref = {
       kind: "modelAtom",
       atomKind: "field",
+      name: field.name.text,
       model: model.name.text,
-      atom: field.name.text,
-      nextModel: undefined,
     };
+
+    let type = unknownType;
+    const typeAtom = kindFind(field.atoms, "type");
+    if (typeAtom) {
+      const typeText = typeAtom.identifier.text;
+      if (typeText !== "null" && _.includes(primitiveTypes, typeText)) {
+        type = { kind: "primitive", primitiveKind: typeText } as Type;
+      } else {
+        errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
+      }
+    }
+    const nullable = kindFind(field.atoms, "nullable");
+    if (nullable) type = addTypeModifier(type, "nullable");
+    const unique = kindFind(field.atoms, "unique");
+    if (unique) type = addTypeModifier(type, "unique");
+    field.type = type;
   }
 
   function resolveValidator(validator: Validator) {
@@ -104,62 +126,77 @@ export function resolve(definition: Definition) {
 
   function resolveReference(model: Model, reference: Reference) {
     const to = kindFind(reference.atoms, "to");
-    if (to) to.ref = getRefModel(to.identifier);
-
-    if (to?.ref.kind !== "model") {
-      reference.ref = refError;
-      return;
-    }
+    if (to) resolveModelRef(to.identifier);
 
     reference.ref = {
       kind: "modelAtom",
       atomKind: "reference",
+      name: reference.name.text,
       model: model.name.text,
-      atom: reference.name.text,
-      nextModel: to.ref.model,
     };
+
+    if (to?.identifier.ref.kind === "model") {
+      let type: Type = { kind: "model", model: to.identifier.ref.model };
+      const nullable = kindFind(reference.atoms, "nullable");
+      if (nullable) type = addTypeModifier(type, "nullable");
+      const unique = kindFind(reference.atoms, "unique");
+      if (unique) type = addTypeModifier(type, "unique");
+      reference.type = type;
+    }
   }
 
   function resolveRelation(model: Model, relation: Relation) {
     const from = kindFind(relation.atoms, "from");
-    if (from) from.ref = getRefModel(from.identifier);
-    const fromModel = from?.ref.kind === "model" ? from.ref.model : undefined;
+    if (from) resolveModelRef(from.identifier);
+    const fromModel = from?.identifier.ref.kind === "model" ? from.identifier.ref.model : undefined;
 
     const through = kindFind(relation.atoms, "through");
-    if (through) through.ref = getRefModelAtom(fromModel, through.identifier, "reference");
-
-    if (from?.ref.kind !== "model" || through?.ref.kind !== "modelAtom") {
-      relation.ref = refError;
-      return;
-    }
+    if (through) resolveModelAtomRef(through.identifier, fromModel, "reference");
 
     relation.ref = {
       kind: "modelAtom",
       atomKind: "relation",
+      name: relation.name.text,
       model: model.name.text,
-      atom: relation.name.text,
-      nextModel: from.ref.model,
     };
+
+    if (from?.identifier.ref.kind === "model") {
+      const type: Type = { kind: "model", model: from.identifier.ref.model };
+      const isOne = through ? hasTypeModifier(through.identifier.type, "unique") : false;
+      relation.type = addTypeModifier(type, isOne ? "nullable" : "collection");
+    }
   }
 
   function resolveQuery(model: Model, query: Query) {
     let currentModel: string | undefined;
     let scope: ScopeDb = { kind: "querySimple", model: undefined };
+    let cardinality = "one" as TypeCardinality;
 
     const from = kindFind(query.atoms, "from");
     if (from) {
       currentModel = model.name.text;
-      from.refs = from.identifierPath.map((i) => {
-        const ref = getRefModelAtom(currentModel, i, "reference", "relation", "query");
-        currentModel = ref.kind === "modelAtom" ? ref.nextModel : undefined;
-        return ref;
+      from.identifierPath.map((identifier) => {
+        resolveModelAtomRef(identifier, currentModel, "reference", "relation", "query");
+
+        const baseType = getBaseType(identifier.type);
+        currentModel = baseType.kind === "model" ? baseType.model : undefined;
+        cardinality = getTypeCardinality(identifier.type, cardinality);
+        identifier.type = removeTypeModifier(
+          removeTypeModifier(identifier.type, "nullable"),
+          "collection"
+        );
+
+        return identifier;
       });
 
       if (from.as) {
-        const models = from.as.identifier.map((identifier, i) => {
-          const ref = from.refs[i];
-          const model = ref.kind === "unresolved" ? undefined : ref.nextModel;
-          return { model, as: identifier.text };
+        const models = from.as.identifierPath.map((as, i) => {
+          const target = from.identifierPath[i];
+          as.ref = target.ref;
+          as.type = target.type;
+          const baseType = getBaseType(as.type);
+          const model = baseType.kind === "model" ? baseType.model : undefined;
+          return { model, as: as.identifier.text };
         });
         scope = { kind: "queryAlias", models };
       } else {
@@ -172,26 +209,23 @@ export function resolve(definition: Definition) {
 
     const orderBy = kindFind(query.atoms, "orderBy");
     if (orderBy) {
-      orderBy.orderBy.forEach((orderBy) => {
-        orderBy.refs = resolveIdentifierPath(orderBy.identifierPath, scope);
-      });
+      orderBy.orderBy.forEach((orderBy) => resolveIdentifierRefPath(orderBy.identifierPath, scope));
     }
 
     const select = kindFind(query.atoms, "select");
     if (select) resolveSelect(select.select, currentModel, scope);
 
-    if (!currentModel) {
-      query.ref = refError;
-      return;
-    }
-
     query.ref = {
       kind: "modelAtom",
       atomKind: "query",
+      name: query.name.text,
       model: model.name.text,
-      atom: query.name.text,
-      nextModel: currentModel,
     };
+
+    if (currentModel) {
+      const baseType: Type = { kind: "model", model: currentModel };
+      query.type = cardinality === "one" ? baseType : addTypeModifier(baseType, cardinality);
+    }
   }
 
   function resolveComputed(model: Model, computed: Computed) {
@@ -204,10 +238,11 @@ export function resolve(definition: Definition) {
     computed.ref = {
       kind: "modelAtom",
       atomKind: "computed",
+      name: computed.name.text,
       model: model.name.text,
-      atom: computed.name.text,
-      nextModel: undefined,
     };
+
+    computed.type = computed.expr.type;
   }
 
   // passing null as a parent model means this is root model, while undefined means it is unresolved
@@ -221,21 +256,23 @@ export function resolve(definition: Definition) {
     const target = kindFind(entrypoint.atoms, "target");
     if (target) {
       if (parentModel === null) {
-        const modelRef = getRefModel(target.identifier.identifier);
-        currentModel = modelRef.kind === "model" ? modelRef.model : undefined;
+        resolveModelRef(target.identifier);
+        currentModel =
+          target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
       } else {
-        const relationRef = getRefModelAtom(parentModel, target.identifier.identifier, "relation");
-        currentModel = relationRef.kind === "modelAtom" ? relationRef.nextModel : undefined;
+        resolveModelAtomRef(target.identifier, parentModel, "relation");
+        const baseType = getBaseType(target.identifier.type);
+        currentModel = baseType.kind === "model" ? baseType.model : undefined;
       }
-      if (target.identifier.as) {
-        scope.models.push({ model: currentModel, as: target.identifier.as.identifier.text });
+      if (target.as) {
+        target.as.identifier.ref = target.identifier.ref;
+        target.as.identifier.type = target.identifier.type;
+        scope.models.push({ model: currentModel, as: target.as.identifier.identifier.text });
       }
     }
 
     const identifyWith = kindFind(entrypoint.atoms, "identifyWith");
-    if (identifyWith) {
-      identifyWith.ref = getRefModelAtom(currentModel, identifyWith.identifier, "field");
-    }
+    if (identifyWith) resolveModelAtomRef(identifyWith.identifier, currentModel, "field");
 
     const response = kindFind(entrypoint.atoms, "response");
     if (response) resolveSelect(response.select, currentModel, scope);
@@ -267,49 +304,37 @@ export function resolve(definition: Definition) {
   function resolveAction(action: Action, parentModel: string | undefined, scope: ScopeCode) {
     let currentModel: string | undefined = parentModel;
     if (action.target) {
-      action.refs = resolveIdentifierPath(action.target.identifierPath, scope);
-      const targetRef = action.refs.at(-1);
-      currentModel =
-        targetRef?.kind === "model"
-          ? targetRef.model
-          : targetRef?.kind === "modelAtom"
-          ? targetRef.nextModel
-          : undefined;
-      if (action.target.as) {
-        scope.models.push({ model: currentModel, as: action.target.as.identifier.text });
+      resolveIdentifierRefPath(action.target, scope);
+      const lastTarget = action.target.at(-1);
+      const baseType = lastTarget ? getBaseType(lastTarget.type) : undefined;
+      currentModel = baseType?.kind === "model" ? baseType.model : undefined;
+      if (lastTarget && action.as) {
+        action.as.identifier.ref = lastTarget.ref;
+        action.as.identifier.type = lastTarget.type;
+        scope.models.push({ model: currentModel, as: action.as.identifier.identifier.text });
       }
     }
 
     action.atoms.forEach((a) =>
       match(a)
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
-        .with({ kind: "referenceThrough" }, (referenceThrough) => {
-          referenceThrough.targetRef = getRefModelAtom(
-            currentModel,
-            referenceThrough.target,
-            "reference"
-          );
-          const refModel =
-            referenceThrough.targetRef.kind === "modelAtom"
-              ? referenceThrough.targetRef.nextModel
-              : undefined;
-          referenceThrough.throughRef = getRefModelAtom(
-            refModel,
-            referenceThrough.through,
-            "field"
-          );
+        .with({ kind: "referenceThrough" }, ({ target, through }) => {
+          resolveModelAtomRef(target, currentModel, "reference");
+          const baseType = getBaseType(target.type);
+          const refModel = baseType.kind === "model" ? baseType.model : undefined;
+          resolveModelAtomRef(through, refModel, "field");
         })
-        .with({ kind: "deny" }, (deny) => {
-          if (deny.fields.kind === "list") {
-            deny.fields.fields.forEach((field) => {
-              field.ref = getRefModelAtom(currentModel, field.identifier);
-            });
+        .with({ kind: "deny" }, ({ fields }) => {
+          if (fields.kind === "list") {
+            fields.fields.forEach((field) =>
+              resolveModelAtomRef(field, currentModel, "field", "reference", "relation")
+            );
           }
         })
-        .with({ kind: "input" }, (input) => {
-          input.fields.forEach((field) => {
-            field.ref = getRefModelAtom(currentModel, field.field);
-            kindFilter(field.atoms, "default").map(({ value }) => resolveExpression(value, scope));
+        .with({ kind: "input" }, ({ fields }) => {
+          fields.forEach(({ field, atoms }) => {
+            resolveModelAtomRef(field, currentModel, "field", "reference", "relation");
+            kindFilter(atoms, "default").map(({ value }) => resolveExpression(value, scope));
           });
         })
         .exhaustive()
@@ -317,7 +342,7 @@ export function resolve(definition: Definition) {
   }
 
   function resolveActionAtomSet(set: ActionAtomSet, model: string | undefined, scope: ScopeCode) {
-    set.ref = getRefModelAtom(model, set.target, "field", "reference");
+    resolveModelAtomRef(set.target, model, "field", "reference");
     match(set.set)
       .with({ kind: "hook" }, (hook) => resolveActionFieldHook(hook, scope))
       .with({ kind: "expr" }, ({ expr }) => resolveExpression(expr, scope))
@@ -337,23 +362,22 @@ export function resolve(definition: Definition) {
   ) {
     let currentModel: string | undefined;
 
-    const from = kindFind(populate.atoms, "target");
-    if (from) {
+    const target = kindFind(populate.atoms, "target");
+    if (target) {
       if (parentModel === null) {
-        const modelRef = getRefModel(from.identifier.identifier);
-        currentModel = modelRef.kind === "model" ? modelRef.model : undefined;
+        resolveModelRef(target.identifier);
+        currentModel =
+          target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
       } else {
-        const relationRef = getRefModelAtom(parentModel, from.identifier.identifier, "relation");
-        currentModel = relationRef.kind === "modelAtom" ? relationRef.nextModel : undefined;
+        resolveModelAtomRef(target.identifier, parentModel, "relation");
+        const baseType = getBaseType(target.identifier.type);
+        currentModel = baseType.kind === "model" ? baseType.model : undefined;
       }
-      if (from.identifier.as) {
-        scope.models.push({ model: currentModel, as: from.identifier.as.identifier.text });
+      if (target.as) {
+        target.as.identifier.ref = target.identifier.ref;
+        target.as.identifier.type = target.identifier.type;
+        scope.models.push({ model: currentModel, as: target.as.identifier.identifier.text });
       }
-    }
-
-    const identifyWith = kindFind(populate.atoms, "identify");
-    if (identifyWith) {
-      identifyWith.ref = getRefModelAtom(currentModel, identifyWith.identifier, "field");
     }
 
     kindFilter(populate.atoms, "set").forEach((set) =>
@@ -369,9 +393,8 @@ export function resolve(definition: Definition) {
     hook.ref = {
       kind: "modelAtom",
       atomKind: "hook",
+      name: hook.name.text,
       model: model.name.text,
-      atom: hook.name.text,
-      nextModel: undefined,
     };
   }
 
@@ -384,29 +407,36 @@ export function resolve(definition: Definition) {
   }
 
   function resolveSelect(select: Select, model: string | undefined, scope: Scope) {
-    select.forEach((s) => {
-      if (s.identifierPath) {
-        s.refs = resolveIdentifierPath(s.identifierPath, scope);
+    select.forEach(({ target, select }) => {
+      let nestedModel: string | undefined;
+      if (target.kind === "short") {
+        resolveIdentifierRefPathForModel([target.name], model, "model");
+        const baseType = getBaseType(target.name.type);
+        nestedModel = baseType.kind === "model" ? baseType.model : undefined;
       } else {
-        s.refs = resolveIdentifierPathForModel(model, [s.name], "model");
+        resolveIdentifierRefPath(target.identifierPath, scope);
+        const lastType = target.identifierPath.at(-1)?.type;
+        const baseType = lastType ? getBaseType(lastType) : undefined;
+        nestedModel = baseType?.kind === "model" ? baseType.model : undefined;
       }
-      const nested = s.select;
-      if (nested) {
-        const lastRef = s.refs.at(-1);
-        const nestedModel = lastRef?.kind === "modelAtom" ? lastRef.nextModel : undefined;
+      if (select) {
         if (!nestedModel) {
-          const errorToken = s.identifierPath ? s.identifierPath.at(-1)!.token : s.name.token;
+          const errorToken =
+            target.kind === "short"
+              ? target.name.identifier.token
+              : target.identifierPath.at(-1)!.identifier.token;
           errors.push(new CompilerError(errorToken, ErrorCode.SelectCantNest));
           return;
         }
+        const as = target.kind === "short" ? target.name.identifier.text : target.name.text;
         const nestedScope: Scope =
           scope.kind === "querySimple"
             ? { kind: "querySimple", model: nestedModel }
             : {
                 kind: "queryAlias",
-                models: [...scope.models, { model: nestedModel, as: s.name.text }],
+                models: [...scope.models, { model: nestedModel, as }],
               };
-        resolveSelect(nested, nestedModel, nestedScope);
+        resolveSelect(select, nestedModel, nestedScope);
       }
     });
   }
@@ -416,14 +446,22 @@ export function resolve(definition: Definition) {
     scope: s
   ) {
     match(expr)
-      .with({ kind: "binary" }, ({ lhs, rhs }) => {
-        resolveExpression(lhs, scope);
-        resolveExpression(rhs, scope);
+      .with({ kind: "binary" }, (binary) => {
+        resolveExpression(binary.lhs, scope);
+        resolveExpression(binary.rhs, scope);
+        binary.type = getBinaryOperatorType(binary.operator, binary.lhs, binary.rhs);
       })
-      .with({ kind: "group" }, ({ expr }) => resolveExpression(expr, scope))
-      .with({ kind: "unary" }, ({ expr }) => resolveExpression(expr, scope))
-      .with({ kind: "identifierPath" }, (identifierPath) => {
-        identifierPath.refs = resolveIdentifierPath(identifierPath.identifierPath, scope);
+      .with({ kind: "group" }, (group) => {
+        resolveExpression(group.expr, scope);
+        group.type = group.expr.type;
+      })
+      .with({ kind: "unary" }, (unary) => {
+        resolveExpression(unary, scope);
+        unary.type = getUnaryOperatorType(unary.operator, unary.expr);
+      })
+      .with({ kind: "path" }, (path) => {
+        resolveIdentifierRefPath(path.path, scope);
+        path.type = path.path.at(-1)?.type ?? unknownType;
       })
       .with({ kind: "literal" }, (_literal) => {
         // TODO: do nothing?
@@ -434,95 +472,191 @@ export function resolve(definition: Definition) {
       .exhaustive();
   }
 
-  function resolveIdentifierPath<
-    s extends Scope,
-    r extends s extends ScopeDb ? RefModelAtomDb : RefEndpointContext
-  >(path: IdentifierPath, scope: Scope): r[] {
+  function resolveIdentifierRefPath(path: IdentifierRef[], scope: Scope) {
     switch (scope.kind) {
       case "entrypoint": {
-        const [modelIdentifier, ...identifiers] = path;
+        const [modelIdentifier, ...tail] = path;
 
         let model: string | undefined;
-        if (modelIdentifier.text === "@auth") {
+        if (modelIdentifier.identifier.text === "@auth") {
           model = "@auth";
         } else {
-          model = scope.models.find((model) => model.as === modelIdentifier.text)?.model;
+          model = scope.models.find((model) => model.as === modelIdentifier.identifier.text)?.model;
         }
         if (!model) {
-          errors.push(new CompilerError(modelIdentifier.token, ErrorCode.CantResolveModel));
+          errors.push(
+            new CompilerError(modelIdentifier.identifier.token, ErrorCode.CantResolveModel)
+          );
+        } else {
+          modelIdentifier.ref = { kind: "model", model };
+          modelIdentifier.type = { kind: "model", model };
         }
-
-        const modelRef = model ? { kind: "model", model } : refError;
-        return [
-          modelRef as r,
-          ...(resolveIdentifierPathForModel(model, identifiers, "entrypoint") as r[]),
-        ];
+        resolveIdentifierRefPathForModel(tail, model, "entrypoint");
+        break;
       }
       case "queryAlias": {
-        const [modelIdentifier, ...identifiers] = path;
-        const model = scope.models.find((model) => model.as === modelIdentifier.text)?.model;
+        const [modelIdentifier, ...tail] = path;
+        const model = scope.models.find(
+          (model) => model.as === modelIdentifier.identifier.text
+        )?.model;
         if (!model) {
-          errors.push(new CompilerError(modelIdentifier.token, ErrorCode.CantResolveModel));
+          errors.push(
+            new CompilerError(modelIdentifier.identifier.token, ErrorCode.CantResolveModel)
+          );
+        } else {
+          modelIdentifier.ref = { kind: "model", model };
+          modelIdentifier.type = { kind: "model", model };
         }
-        return resolveIdentifierPathForModel(model, identifiers, "db") as r[];
+        resolveIdentifierRefPathForModel(tail, model, "db");
+        break;
       }
       case "querySimple": {
-        return resolveIdentifierPathForModel(scope.model, path, "db") as r[];
+        resolveIdentifierRefPathForModel(path, scope.model, "db");
+        break;
       }
     }
   }
 
-  function resolveIdentifierPathForModel<
-    e extends "db" | "model" | "entrypoint",
-    r extends e extends "db"
-      ? RefModelAtomDb
-      : e extends "model"
-      ? RefModelAtom
-      : RefEndpointContext
-  >(model: string | undefined, path: IdentifierPath, environment: e): r[] {
+  function resolveIdentifierRefPathForModel(
+    path: IdentifierRef[],
+    model: string | undefined,
+    environment: "db" | "model" | "entrypoint"
+  ) {
     let currentModel = model;
-    return path.map((i) => {
+    path.forEach((identifier) => {
       const kinds: ModelAtom["kind"][] =
         environment === "db"
           ? ["field", "reference", "relation", "query", "computed"]
           : ["field", "reference", "relation", "query", "computed", "hook"];
-      const ref = getRefModelAtom(currentModel, i, ...kinds) as r;
-      currentModel = ref.kind === "modelAtom" ? ref.nextModel : undefined;
-      return ref;
+      resolveModelAtomRef(identifier, currentModel, ...kinds);
+      const baseType = getBaseType(identifier.type);
+      currentModel = baseType.kind === "model" ? baseType.model : undefined;
     });
   }
 
-  function getRefModel(identifier: Identifier): RefModel {
-    const model = findModel(identifier.text);
+  function resolveModelRef(identifier: IdentifierRef) {
+    const model = findModel(identifier.identifier.text);
     if (!model) {
-      errors.push(new CompilerError(identifier.token, ErrorCode.CantResolveModel));
+      errors.push(new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModel));
+    } else {
+      identifier.ref = { kind: "model", model: model.name.text };
+      identifier.type = { kind: "model", model: model.name.text };
     }
-    return model ? { kind: "model", model: model.name.text } : refError;
   }
 
-  function getRefModelAtom<k extends ModelAtom["kind"]>(
+  function resolveModelAtomRef(
+    identifier: IdentifierRef,
     modelName: string | undefined,
-    identifier: Identifier,
-    ...kinds: k[]
-  ): RefModelAtom<k> {
-    if (!modelName) return refError;
+    ...kinds: ModelAtom["kind"][]
+  ) {
+    if (!modelName) return;
     const model = findModel(modelName);
-    if (!model) return refError;
-    const atom = patternFind(model.atoms, { name: { text: identifier.text } });
+    if (!model) return;
+    const atom = patternFind(model.atoms, { name: { text: identifier.identifier.text } });
 
     for (const kind of kinds) {
       if (kind === atom?.kind) {
         resolveModelAtom(model, atom);
-        return atom.ref as RefModelAtom<k>;
+        identifier.ref = atom.ref;
+        identifier.type = atom.type;
+        return;
       }
     }
 
-    errors.push(new CompilerError(identifier.token, ErrorCode.CantResolveModelAtom));
-    return refError;
+    errors.push(new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom));
   }
 
   function findModel(name: string): Model | undefined {
     return patternFind(models, { name: { text: name } });
+  }
+
+  function getBinaryOperatorType(
+    op: BinaryOperator,
+    lhs: Expr<ExprKind>,
+    rhs: Expr<ExprKind>
+  ): Type {
+    const booleanType: Type = { kind: "primitive", primitiveKind: "boolean" };
+    const integerType: Type = { kind: "primitive", primitiveKind: "integer" };
+    const floatType: Type = { kind: "primitive", primitiveKind: "float" };
+
+    switch (op) {
+      case "or":
+      case "and": {
+        checkExpectedType(lhs.type, booleanType);
+        checkExpectedType(rhs.type, booleanType);
+        return booleanType;
+      }
+      case "is":
+      case "is not": {
+        checkExpectedType(rhs.type, lhs.type);
+        return booleanType;
+      }
+      case "in":
+      case "not in": {
+        checkExpectedType(rhs.type, addTypeModifier(lhs.type, "collection"));
+        return booleanType;
+      }
+      case "<":
+      case "<=":
+      case ">":
+      case ">=": {
+        checkExpectedType(lhs.type, "comparable");
+        checkExpectedType(rhs.type, "comparable");
+        if (isExpectedType(lhs.type, "number")) {
+          checkExpectedType(rhs.type, "number");
+        } else {
+          checkExpectedType(rhs.type, lhs.type);
+        }
+        return booleanType;
+      }
+      case "+": {
+        checkExpectedType(lhs.type, "addable");
+        checkExpectedType(rhs.type, "addable");
+        if (isExpectedType(lhs.type, "number")) {
+          checkExpectedType(rhs.type, "number");
+          if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
+            return floatType;
+          } else {
+            return integerType;
+          }
+        } else {
+          checkExpectedType(rhs.type, lhs.type);
+        }
+        return booleanType;
+      }
+      case "-":
+      case "*": {
+        checkExpectedType(lhs.type, "number");
+        checkExpectedType(rhs.type, "number");
+        if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
+          return floatType;
+        } else {
+          return integerType;
+        }
+      }
+      case "/": {
+        checkExpectedType(lhs.type, "number");
+        checkExpectedType(rhs.type, "number");
+        return floatType;
+      }
+    }
+  }
+
+  function getUnaryOperatorType(op: UnaryOperator, expr: Expr<ExprKind>): Type {
+    const booleanType: Type = { kind: "primitive", primitiveKind: "boolean" };
+
+    switch (op) {
+      case "not": {
+        checkExpectedType(expr.type, booleanType);
+        return booleanType;
+      }
+    }
+  }
+
+  function checkExpectedType(type: Type, expected: Type | TypeCategory) {
+    if (!isExpectedType(type, expected)) {
+      //errors.push(new CompilerError(tok, ErrorCode.UnexpectedType));
+    }
   }
 
   resolveDefinition(definition);

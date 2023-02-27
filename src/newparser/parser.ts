@@ -7,7 +7,6 @@ import {
   TokenType,
 } from "chevrotain";
 
-import * as L from "./lexer";
 import {
   Action,
   ActionAtom,
@@ -36,9 +35,7 @@ import {
   FloatLiteral,
   Hook,
   Identifier,
-  IdentifierAs,
-  IdentifierPath,
-  IdentifierPathAs,
+  IdentifierRef,
   InputAtom,
   IntegerLiteral,
   Literal,
@@ -53,7 +50,6 @@ import {
   Populator,
   Query,
   QueryAtom,
-  RefModelAtom,
   Reference,
   ReferenceAtom,
   Relation,
@@ -64,7 +60,10 @@ import {
   StringLiteral,
   TokenData,
   Validator,
-} from "./parsed";
+  unresolvedRef,
+} from "./ast/ast";
+import { unknownType } from "./ast/type";
+import * as L from "./lexer";
 
 function getTokenData(...tokens: IToken[]): TokenData {
   const positions = tokens.map((t) => ({
@@ -113,7 +112,8 @@ class GaudiParser extends EmbeddedActionsParser {
           ALT: () => {
             const modelHook = this.SUBRULE(this.modelHook);
             this.ACTION(() => {
-              modelHook.ref = { kind: "unresolved" };
+              modelHook.ref = unresolvedRef;
+              modelHook.type = unknownType;
             });
             atoms.push(modelHook);
           },
@@ -175,7 +175,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "field", name, ref: { kind: "unresolved" }, atoms, keyword };
+    return { kind: "field", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
   });
 
   fieldValidators = this.RULE("fieldValidators", (): Validator[] => {
@@ -217,8 +217,8 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = getTokenData(this.CONSUME(L.To));
-              const identifier = this.SUBRULE2(this.identifier);
-              atoms.push({ kind: "to", identifier, ref: { kind: "unresolved" }, keyword });
+              const identifier = this.SUBRULE2(this.identifierRef);
+              atoms.push({ kind: "to", identifier, keyword });
             },
           },
           {
@@ -238,7 +238,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "reference", name, ref: { kind: "unresolved" }, atoms, keyword };
+    return { kind: "reference", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
   });
 
   relation = this.RULE("relation", (): Relation => {
@@ -254,15 +254,15 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = getTokenData(this.CONSUME(L.From));
-              const identifier = this.SUBRULE2(this.identifier);
-              atoms.push({ kind: "from", identifier, ref: { kind: "unresolved" }, keyword });
+              const identifier = this.SUBRULE2(this.identifierRef);
+              atoms.push({ kind: "from", identifier, keyword });
             },
           },
           {
             ALT: () => {
               const keyword = getTokenData(this.CONSUME(L.Through));
-              const identifier = this.SUBRULE3(this.identifier);
-              atoms.push({ kind: "through", identifier, ref: { kind: "unresolved" }, keyword });
+              const identifier = this.SUBRULE3(this.identifierRef);
+              atoms.push({ kind: "through", identifier, keyword });
             },
           },
         ]);
@@ -270,7 +270,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "relation", name, ref: { kind: "unresolved" }, atoms, keyword };
+    return { kind: "relation", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
   });
 
   computed = this.RULE("computed", (): Computed => {
@@ -280,7 +280,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const expr = this.SUBRULE(this.expr) as Expr<Db>;
     this.CONSUME(L.RCurly);
 
-    return { kind: "computed", name, ref: { kind: "unresolved" }, expr, keyword };
+    return { kind: "computed", name, ref: unresolvedRef, type: unknownType, expr, keyword };
   });
 
   query = this.RULE("query", (): Query => {
@@ -295,17 +295,16 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = getTokenData(this.CONSUME(L.From));
-              const identifierPath = this.SUBRULE1(this.identifierPath);
+              const identifierPath = this.SUBRULE1(this.identifierRefPath);
               const as = this.OPTION(() => {
                 const keyword = getTokenData(this.CONSUME(L.As));
-                const identifier = this.SUBRULE2(this.identifierPath);
-                return { keyword, identifier };
+                const identifierPath = this.SUBRULE2(this.identifierRefPath);
+                return { keyword, identifierPath };
               });
               atoms.push({
                 kind: "from",
                 identifierPath,
                 as,
-                refs: this.ACTION(() => identifierPath.map(() => ({ kind: "unresolved" }))),
                 keyword,
               });
             },
@@ -362,7 +361,7 @@ class GaudiParser extends EmbeddedActionsParser {
       },
     });
 
-    return { kind: "query", name, ref: { kind: "unresolved" }, atoms, keyword };
+    return { kind: "query", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
   });
 
   orderBy = this.RULE("orderBy", (): OrderBy => {
@@ -372,17 +371,16 @@ class GaudiParser extends EmbeddedActionsParser {
     this.MANY_SEP({
       SEP: L.Comma,
       DEF: () => {
-        const identifierPath = this.SUBRULE(this.identifierPath);
-        const refs = this.ACTION(() => identifierPath.map(() => ({ kind: "unresolved" } as const)));
+        const identifierPath = this.SUBRULE(this.identifierRefPath);
         const orderToken = this.OPTION(() =>
           this.OR([{ ALT: () => this.CONSUME(L.Asc) }, { ALT: () => this.CONSUME(L.Desc) }])
         );
         if (orderToken) {
           const order = orderToken.image as OrderType;
           const keyword = getTokenData(orderToken);
-          orderBy.push({ identifierPath, refs, order, keyword });
+          orderBy.push({ identifierPath, order, keyword });
         } else {
-          orderBy.push({ identifierPath, refs });
+          orderBy.push({ identifierPath });
         }
       },
     });
@@ -402,8 +400,13 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Target));
-            const identifier = this.SUBRULE(this.identifierAs);
-            atoms.push({ kind: "target", identifier, ref: { kind: "unresolved" }, keyword });
+            const identifier = this.SUBRULE1(this.identifierRef);
+            const as = this.OPTION(() => {
+              const keyword = getTokenData(this.CONSUME(L.As));
+              const identifier = this.SUBRULE2(this.identifierRef);
+              return { keyword, identifier };
+            });
+            atoms.push({ kind: "target", identifier, as, keyword });
           },
         },
         {
@@ -411,8 +414,8 @@ class GaudiParser extends EmbeddedActionsParser {
             const identify = this.CONSUME(L.Identify);
             const with_ = this.CONSUME(L.With);
             const keyword = getTokenData(identify, with_);
-            const identifier = this.SUBRULE2(this.identifier);
-            atoms.push({ kind: "identifyWith", identifier, ref: { kind: "unresolved" }, keyword });
+            const identifier = this.SUBRULE3(this.identifierRef);
+            atoms.push({ kind: "identifyWith", identifier, keyword });
           },
         },
         {
@@ -504,7 +507,15 @@ class GaudiParser extends EmbeddedActionsParser {
     ]);
     const keyword = getTokenData(token);
     const kind = token.image as ActionType;
-    const target = this.OPTION(() => this.SUBRULE(this.identifierPathAs));
+    const target = this.OPTION1(() => {
+      const target = this.SUBRULE(this.identifierRefPath);
+      const as = this.OPTION2(() => {
+        const keyword = getTokenData(this.CONSUME(L.As));
+        const identifier = this.SUBRULE(this.identifierRef);
+        return { keyword, identifier };
+      });
+      return { target, as };
+    });
 
     this.CONSUME(L.LCurly);
     this.MANY(() => {
@@ -517,62 +528,51 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    const refs = this.ACTION(() =>
-      target ? target.identifierPath.map(() => ({ kind: "unresolved" } as const)) : []
-    );
-    return { kind, target, refs, atoms, keyword };
+    return { kind, target: target?.target, as: target?.as, atoms, keyword };
   });
 
   actionAtomSet = this.RULE("actionAtomSet", (): ActionAtomSet => {
     const keyword = getTokenData(this.CONSUME(L.Set));
-    const target = this.SUBRULE(this.identifier);
-    const set = this.OR([
-      { ALT: (): ActionAtomSet["set"] => this.SUBRULE(this.actionFieldHook) },
-      {
-        ALT: (): ActionAtomSet["set"] => ({ kind: "expr", expr: this.SUBRULE(this.expr) }),
-      },
+    const target = this.SUBRULE(this.identifierRef);
+    const set = this.OR<ActionAtomSet["set"]>([
+      { ALT: () => this.SUBRULE(this.actionFieldHook) },
+      { ALT: () => ({ kind: "expr", expr: this.SUBRULE(this.expr) }) },
     ]);
 
-    return { kind: "set", target, ref: { kind: "unresolved" }, set, keyword };
+    return { kind: "set", target, set, keyword };
   });
 
   actionAtomReference = this.RULE("actionAtomReference", (): ActionAtomReferenceThrough => {
     const keyword = getTokenData(this.CONSUME(L.Reference));
-    const target = this.SUBRULE1(this.identifier);
+    const target = this.SUBRULE1(this.identifierRef);
     this.CONSUME(L.Through);
-    const through = this.SUBRULE2(this.identifier);
+    const through = this.SUBRULE2(this.identifierRef);
 
     return {
       kind: "referenceThrough",
       target,
-      targetRef: { kind: "unresolved" },
       through,
-      throughRef: { kind: "unresolved" },
       keyword,
     };
   });
 
   actionAtomDeny = this.RULE("actionAtomDeny", (): ActionAtomDeny => {
     const keyword = getTokenData(this.CONSUME(L.Deny));
-    const fields = this.OR([
+    const fields = this.OR<ActionAtomDeny["fields"]>([
       {
-        ALT: (): ActionAtomDeny["fields"] => {
+        ALT: () => {
           const keyword = getTokenData(this.CONSUME(L.Mul));
           return { kind: "all", keyword };
         },
       },
       {
-        ALT: (): ActionAtomDeny["fields"] => {
-          const fields: { identifier: Identifier; ref: { kind: "unresolved" } }[] = [];
+        ALT: () => {
+          const fields: IdentifierRef[] = [];
 
           this.CONSUME(L.LCurly);
           this.MANY_SEP({
             SEP: L.Comma,
-            DEF: () =>
-              fields.push({
-                identifier: this.SUBRULE(this.identifier),
-                ref: { kind: "unresolved" },
-              }),
+            DEF: () => fields.push(this.SUBRULE(this.identifierRef)),
           });
           this.CONSUME(L.RCurly);
 
@@ -592,9 +592,9 @@ class GaudiParser extends EmbeddedActionsParser {
     this.MANY_SEP({
       SEP: L.Comma,
       DEF: () => {
-        const field = this.SUBRULE(this.identifier);
+        const field = this.SUBRULE(this.identifierRef);
         const atoms = this.SUBRULE(this.inputAtoms);
-        fields.push({ field, ref: { kind: "unresolved" }, atoms });
+        fields.push({ field, atoms });
       },
     });
     this.CONSUME(L.RCurly);
@@ -658,15 +658,13 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Target));
-            const identifier = this.SUBRULE(this.identifierAs);
-            atoms.push({ kind: "target", identifier, ref: { kind: "unresolved" }, keyword });
-          },
-        },
-        {
-          ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Identify));
-            const identifier = this.SUBRULE2(this.identifier);
-            atoms.push({ kind: "identify", identifier, ref: { kind: "unresolved" }, keyword });
+            const identifier = this.SUBRULE(this.identifierRef);
+            const as = this.OPTION(() => {
+              const keyword = getTokenData(this.CONSUME(L.As));
+              const identifier = this.SUBRULE2(this.identifierRef);
+              return { keyword, identifier };
+            });
+            atoms.push({ kind: "target", identifier, as, keyword });
           },
         },
         {
@@ -695,15 +693,15 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   repeater = this.RULE("repeater", (): Repeater => {
-    return this.OR1([
+    return this.OR1<Repeater>([
       {
-        ALT: (): Repeater => {
+        ALT: () => {
           const value = this.SUBRULE1(this.integer);
           return { kind: "simple", value };
         },
       },
       {
-        ALT: (): Repeater => {
+        ALT: () => {
           const atoms: RepeaterAtom[] = [];
           this.MANY_SEP({
             SEP: L.Comma,
@@ -801,16 +799,24 @@ class GaudiParser extends EmbeddedActionsParser {
     this.MANY_SEP({
       SEP: L.Comma,
       DEF: () => {
-        const name = this.SUBRULE(this.identifier);
-        let refs: RefModelAtom[] = [{ kind: "unresolved" }];
-        let identifierPath: IdentifierPath | undefined;
-        this.OPTION1(() => {
-          this.CONSUME(L.Colon);
-          identifierPath = this.SUBRULE(this.identifierPath);
-          refs = this.ACTION(() => identifierPath!.map(() => ({ kind: "unresolved" })));
-        });
+        const target = this.OR<Select[number]["target"]>([
+          {
+            ALT: () => {
+              const name = this.SUBRULE(this.identifier);
+              const identifierPath = this.SUBRULE(this.identifierRefPath);
+              return { kind: "long", name, identifierPath };
+            },
+          },
+          {
+            ALT: () => {
+              const name = this.SUBRULE(this.identifierRef);
+              return { kind: "short", name };
+            },
+          },
+        ]);
+
         const nested = this.OPTION2(() => this.SUBRULE(this.select));
-        select.push({ name, identifierPath, refs, select: nested });
+        select.push({ target, select: nested });
       },
     });
     this.CONSUME(L.RCurly);
@@ -825,24 +831,15 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   primaryExpr = this.RULE("primaryExpr", (): Expr<ExprKind> => {
-    return this.OR([
-      { ALT: (): Expr<ExprKind> => this.SUBRULE(this.fnExpr) },
-      { ALT: (): Expr<ExprKind> => this.SUBRULE(this.groupExpr) },
-      { ALT: (): Expr<ExprKind> => this.SUBRULE(this.notExpr) },
+    return this.OR<Expr<ExprKind>>([
+      { ALT: () => this.SUBRULE(this.fnExpr) },
+      { ALT: () => this.SUBRULE(this.groupExpr) },
+      { ALT: () => this.SUBRULE(this.notExpr) },
+      { ALT: () => ({ kind: "literal", type: unknownType, literal: this.SUBRULE(this.literal) }) },
       {
-        ALT: (): Expr<ExprKind> => ({
-          kind: "literal",
-          literal: this.SUBRULE(this.literal),
-        }),
-      },
-      {
-        ALT: (): Expr<ExprKind> => {
-          const identifierPath = this.SUBRULE(this.identifierPath);
-          return {
-            kind: "identifierPath",
-            identifierPath,
-            refs: this.ACTION(() => identifierPath.map(() => ({ kind: "unresolved" }))),
-          };
+        ALT: () => {
+          const path = this.SUBRULE(this.identifierRefPath);
+          return { kind: "path", path, type: unknownType };
         },
       },
     ]);
@@ -859,20 +856,20 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RRound);
 
-    return { kind: "function", name, args };
+    return { kind: "function", name, args, type: unknownType };
   });
 
   groupExpr = this.RULE("groupExpr", (): Expr<ExprKind> => {
     this.CONSUME(L.LRound);
     const expr = this.SUBRULE(this.expr);
     this.CONSUME(L.RRound);
-    return { kind: "group", expr };
+    return { kind: "group", expr, type: unknownType };
   });
 
   notExpr = this.RULE("notExpr", (): Expr<ExprKind> => {
     const keyword = getTokenData(this.CONSUME(L.Not));
     const expr = this.SUBRULE(this.primaryExpr);
-    return { kind: "unary", operator: "not", expr, keyword };
+    return { kind: "unary", operator: "not", expr, keyword, type: unknownType };
   });
 
   mulExpr = this.GENERATE_BINARY_OPERATOR_RULE("mulExpr", [L.Mul, L.Div], this.primaryExpr);
@@ -894,7 +891,14 @@ class GaudiParser extends EmbeddedActionsParser {
         const operator = this.OR(operators.map((op) => ({ ALT: () => this.CONSUME(op) })));
         const keyword = getTokenData(operator);
         const rhs = this.SUBRULE2(next);
-        lhs = { kind: "binary", operator: operator.image as BinaryOperator, lhs, rhs, keyword };
+        lhs = {
+          kind: "binary",
+          operator: operator.image as BinaryOperator,
+          lhs,
+          rhs,
+          keyword,
+          type: unknownType,
+        };
       });
       return lhs;
     });
@@ -945,38 +949,21 @@ class GaudiParser extends EmbeddedActionsParser {
     return { text: token.image, token: getTokenData(token) };
   });
 
-  identifierPath = this.RULE("identifierPath", (): IdentifierPath => {
-    const identifiers: IdentifierPath = [];
+  identifierRef = this.RULE("identifierRef", (): IdentifierRef => {
+    const identifier = this.SUBRULE(this.identifier);
+    return { identifier, ref: unresolvedRef, type: unknownType };
+  });
 
-    identifiers.push(this.SUBRULE1(this.identifier));
+  identifierRefPath = this.RULE("identifierRefPath", (): IdentifierRef[] => {
+    const identifiers: IdentifierRef[] = [];
+
+    identifiers.push(this.SUBRULE1(this.identifierRef));
     this.MANY(() => {
       this.CONSUME(L.Dot);
-      identifiers.push(this.SUBRULE2(this.identifier));
+      identifiers.push(this.SUBRULE2(this.identifierRef));
     });
 
     return identifiers;
-  });
-
-  identifierAs = this.RULE("identifierAs", (): IdentifierAs => {
-    const identifier = this.SUBRULE1(this.identifier);
-
-    const as = this.OPTION(() => {
-      const keyword = getTokenData(this.CONSUME(L.As));
-      return { identifier: this.SUBRULE2(this.identifier), keyword };
-    });
-
-    return { identifier, as };
-  });
-
-  identifierPathAs = this.RULE("identifierPathAs", (): IdentifierPathAs => {
-    const identifierPath = this.SUBRULE(this.identifierPath);
-
-    const as = this.OPTION(() => {
-      const keyword = getTokenData(this.CONSUME(L.As));
-      return { identifier: this.SUBRULE2(this.identifier), keyword };
-    });
-
-    return { identifierPath, as };
   });
 }
 

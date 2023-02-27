@@ -1,6 +1,5 @@
 import { match } from "ts-pattern";
 
-import { CompilerError, ErrorCode } from "./compilerError";
 import {
   Action,
   Computed,
@@ -19,7 +18,8 @@ import {
   Select,
   TokenData,
   Validator,
-} from "./parsed";
+} from "./ast/ast";
+import { CompilerError, ErrorCode } from "./compilerError";
 
 import { kindFilter, kindFind } from "@src/common/patternFilter";
 
@@ -100,7 +100,7 @@ export function checkForm(definition: Definition) {
   }
 
   function checkComputed(_computed: Computed) {
-    // no need to check expression
+    // TODO: do nothing?
   }
 
   function checkEntrypoint(entrypoint: Entrypoint) {
@@ -130,16 +130,16 @@ export function checkForm(definition: Definition) {
       match(a)
         .with({ kind: "set" }, ({ target, set }) => {
           if (set.kind === "hook") checkHook(set);
-          return [target];
+          return [target.identifier];
         })
-        .with({ kind: "referenceThrough" }, ({ target }) => [target])
+        .with({ kind: "referenceThrough" }, ({ target }) => [target.identifier])
         .with({ kind: "deny" }, ({ fields }) =>
           fields.kind === "all" ? [] : fields.fields.map(({ identifier }) => identifier)
         )
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
             noDuplicateAtoms({ ...field, kind: "input" }, ["optional", "default"]);
-            return field.field;
+            return field.field.identifier;
           })
         )
         .exhaustive()
@@ -153,10 +153,10 @@ export function checkForm(definition: Definition) {
 
   function checkPopulate(populate: Populate) {
     containsAtoms(populate, ["target"]);
-    noDuplicateAtoms(populate, ["target", "identify", "populate"]);
+    noDuplicateAtoms(populate, ["target", "populate"]);
     const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
       if (set.kind === "hook") checkHook(set);
-      return target;
+      return target.identifier;
     });
     noDuplicateNames(setIdentifiers, ErrorCode.DuplicatePopulateSet);
     kindFilter(populate.atoms, "populate").forEach(checkPopulate);
@@ -180,9 +180,9 @@ export function checkForm(definition: Definition) {
   }
 
   function checkSelect(select: Select) {
-    const identifiers = select.map(({ name, select }) => {
+    const identifiers = select.map(({ target, select }) => {
       if (select) checkSelect(select);
-      return name;
+      return target.kind === "short" ? target.name.identifier : target.name;
     });
     noDuplicateNames(identifiers, ErrorCode.DuplicateSelectField);
   }
