@@ -126,7 +126,7 @@ export type LiteralValueDef =
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: NaiveType };
 type TypedVariable = { kind: "variable"; type?: NaiveType; name: string };
 
-export type FunctionName = BinaryOperator | "length" | "concat";
+export type FunctionName = BinaryOperator | "length" | "concat" | "lower" | "upper";
 
 export type TypedFunction = {
   kind: "function";

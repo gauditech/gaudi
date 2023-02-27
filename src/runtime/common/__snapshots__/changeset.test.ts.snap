@@ -33,6 +33,7 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
   "is not": true,
   "is_a": true,
   "length": 4,
+  "lower": "foo1",
   "lt": false,
   "lte": true,
   "minus": 5,
@@ -40,5 +41,6 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
   "not in": "TODO",
   "or": true,
   "plus": 6,
+  "upper": "FOO1",
 }
 `;

@@ -538,6 +538,12 @@ function functionToString(def: Definition, exp: TypedFunction): string {
     case "concat": {
       return stringifyFn("concat", exp.args);
     }
+    case "lower": {
+      return stringifyFn("lower", exp.args);
+    }
+    case "upper": {
+      return stringifyFn("upper", exp.args);
+    }
     default:
       assertUnreachable(exp.name);
   }

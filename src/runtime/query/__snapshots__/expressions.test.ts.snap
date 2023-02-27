@@ -109,6 +109,24 @@ FROM
   ) AS "Org.repo_count" ON "Org".id = "Org.repo_count".id"
 `;
 
+exports[`Expression functions to queries composes a query with expression functions 1`] = `
+"SELECT
+FROM
+  "org" AS "Org"
+  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+WHERE
+  (
+    (
+      (
+        char_length("Org.repos"."name") = 4
+        OR concat("Org.repos"."name", "Org.repos"."name") = 'foofoo'
+      )
+      OR lower("Org.repos"."name") = lower('FOO')
+    )
+    OR upper("Org.repos"."name") = upper('BAR')
+  )"
+`;
+
 exports[`Expressions to queries composes a complex filter expression 1`] = `
 {
   "filter": {

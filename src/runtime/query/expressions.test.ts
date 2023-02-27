@@ -234,3 +234,30 @@ describe("Expressions to queries", () => {
     expect(queryToString(def, q)).toMatchSnapshot();
   });
 });
+
+describe("Expression functions to queries", () => {
+  it("composes a query with expression functions", () => {
+    const bp = `
+    model Org {
+      relation repos { from Repo, through org }
+      query repo_fns {
+        from repos
+        filter {
+          // test SQL functions
+          length(name) is 4
+          or concat(name, name) is "foofoo"
+          or lower(name) is lower("FOO")
+          or upper(name) is upper("BAR")
+        }
+      }
+    }
+    model Repo {
+      reference org { to Org }
+      field name { type text }
+    }
+    `;
+    const def = compose(compile(parse(bp)));
+    const q = def.models[0].queries[0];
+    expect(queryToString(def, q)).toMatchSnapshot();
+  });
+});

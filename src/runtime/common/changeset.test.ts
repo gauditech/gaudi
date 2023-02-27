@@ -182,6 +182,8 @@ describe("runtime", () => {
           setter: mkFn("concat", [mkRef("foo"), getTypedLiteralValue(" "), mkRef("bar")]),
         },
         { name: "length", setter: mkFn("length", [mkRef("foo")]) },
+        { name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
+        { name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
       ];
       const context: ActionContext = {
         input: {},

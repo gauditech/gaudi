@@ -154,7 +154,7 @@ entrypoint Orgs {
         responds
         hook {
           arg name name
-          arg user query { from Org, filter {id is 1}, select {name} }
+          arg user query { from Org, filter {lower(name) is lower("Org 1")}, select {name} }
           source customActionResponds from "hooks.js"
         }
       }

@@ -38,6 +38,10 @@ export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknow
       return (a: unknown[]) => a.join("");
     case "length":
       return (value: string) => value.length;
+    case "lower":
+      return (value: string) => value.toLowerCase();
+    case "upper":
+      return (value: string) => value.toUpperCase();
     default:
       return assertUnreachable(name);
   }
@@ -96,7 +100,9 @@ export async function executeArithmetics<T>(
 
       return fnNameToFunction(func.name)(vals);
     }
-    case "length": {
+    case "length":
+    case "lower":
+    case "upper": {
       ensureEqual(func.args.length, 1);
       const val = await getValue(func.args[0]);
 
