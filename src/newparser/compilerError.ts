@@ -9,6 +9,7 @@ export enum ErrorCode {
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
+  QueryFromAliasWrongLength,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -38,6 +39,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate populate set field`;
     case ErrorCode.DuplicateHookArg:
       return `Duplicate hook argument`;
+    case ErrorCode.QueryFromAliasWrongLength:
+      return `Query from alias must have same length as definition`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain 'source' or 'inline' definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:

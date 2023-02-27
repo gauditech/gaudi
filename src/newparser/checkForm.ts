@@ -95,6 +95,18 @@ export function checkForm(definition: Definition) {
       "select",
     ]);
 
+    const from = kindFind(query.atoms, "from");
+    if (from && from.as) {
+      if (from.as.identifierPath.length !== from.identifierPath.length) {
+        errors.push(
+          new CompilerError(
+            from.as.identifierPath[0].identifier.token,
+            ErrorCode.QueryFromAliasWrongLength
+          )
+        );
+      }
+    }
+
     const select = kindFind(query.atoms, "select");
     if (select) checkSelect(select.select);
   }
