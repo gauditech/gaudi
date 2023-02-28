@@ -549,6 +549,7 @@ function functionToString(def: Definition, exp: TypedFunction): string {
     }
     case "cryptoCompare":
     case "cryptoHash":
+    case "cryptoToken":
       throw new Error(`Expression "${exp.name}" cannot be used in queries.`);
     default:
       assertUnreachable(exp.name);

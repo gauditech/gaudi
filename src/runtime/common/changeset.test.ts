@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import bcrypt, { hash } from "bcrypt";
 
 import { compose } from "@src/composer/composer";
@@ -37,6 +39,11 @@ describe("runtime", () => {
       jest.spyOn(bcrypt, "hash").mockImplementation(async (pass, _salt) => {
         // call with fixed mock to get consistent results
         return await originalBcryptHash(pass, fixedSalt);
+      });
+
+      // mock `crypto.randomBytes`
+      jest.spyOn(crypto, "randomBytes").mockImplementation((size: number) => {
+        return "x".repeat(size);
       });
     });
     afterAll(() => {
@@ -227,6 +234,10 @@ describe("runtime", () => {
             getTypedLiteralValue("1234567890"),
             getTypedLiteralValue("invalid hash"),
           ]),
+        },
+        {
+          name: "cryptoToken",
+          setter: mkFn("cryptoToken", [getTypedLiteralValue(32)]),
         },
       ];
       const context: ActionContext = {

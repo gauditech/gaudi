@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import { compare, hash } from "bcrypt";
 import _ from "lodash";
 
@@ -49,10 +51,10 @@ export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknow
       return (clearPassword, hashedPassword) => compare(clearPassword, hashedPassword);
     }
     case "cryptoHash": {
-      return (password, saltRounds) => {
-        console.log("ARGS", password, saltRounds);
-        return hash(password, saltRounds);
-      };
+      return (password, saltRounds) => hash(password, saltRounds);
+    }
+    case "cryptoToken": {
+      return (size) => crypto.randomBytes(size).toString("base64url");
     }
     default:
       return assertUnreachable(name);
@@ -112,7 +114,6 @@ export async function executeArithmetics<T>(
 
       return fnNameToFunction(func.name)(vals);
     }
-    // variable-arg functions
     case "cryptoHash":
     case "cryptoCompare": {
       ensureEqual(func.args.length, 2);
@@ -126,6 +127,12 @@ export async function executeArithmetics<T>(
       );
 
       return fnNameToFunction(func.name)(...vals);
+    }
+    case "cryptoToken": {
+      ensureEqual(func.args.length, 1);
+      const val = await getValue(func.args[0]);
+
+      return fnNameToFunction(func.name)(val);
     }
     case "length":
     case "lower":
