@@ -32,8 +32,8 @@ import {
   TypeCardinality,
   TypeCategory,
   addTypeModifier,
-  getBaseType,
   getTypeCardinality,
+  getTypeModel,
   hasTypeModifier,
   isExpectedType,
   primitiveTypes,
@@ -178,8 +178,7 @@ export function resolve(definition: Definition) {
       from.identifierPath.map((identifier) => {
         resolveModelAtomRef(identifier, currentModel, "reference", "relation", "query");
 
-        const baseType = getBaseType(identifier.type);
-        currentModel = baseType.kind === "model" ? baseType.model : undefined;
+        currentModel = getTypeModel(identifier.type);
         cardinality = getTypeCardinality(identifier.type, cardinality);
         identifier.type = removeTypeModifier(
           removeTypeModifier(identifier.type, "nullable"),
@@ -194,8 +193,7 @@ export function resolve(definition: Definition) {
           const target = from.identifierPath[i];
           as.ref = target.ref;
           as.type = target.type;
-          const baseType = getBaseType(as.type);
-          const model = baseType.kind === "model" ? baseType.model : undefined;
+          const model = getTypeModel(as.type);
           return { model, as: as.identifier.text };
         });
         scope = { kind: "queryAlias", models };
@@ -261,8 +259,7 @@ export function resolve(definition: Definition) {
           target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
       } else {
         resolveModelAtomRef(target.identifier, parentModel, "relation");
-        const baseType = getBaseType(target.identifier.type);
-        currentModel = baseType.kind === "model" ? baseType.model : undefined;
+        currentModel = getTypeModel(target.identifier.type);
       }
       if (target.as) {
         target.as.identifier.ref = target.identifier.ref;
@@ -306,8 +303,7 @@ export function resolve(definition: Definition) {
     if (action.target) {
       resolveIdentifierRefPath(action.target, scope);
       const lastTarget = action.target.at(-1);
-      const baseType = lastTarget ? getBaseType(lastTarget.type) : undefined;
-      currentModel = baseType?.kind === "model" ? baseType.model : undefined;
+      currentModel = getTypeModel(lastTarget?.type);
       if (lastTarget && action.as) {
         action.as.identifier.ref = lastTarget.ref;
         action.as.identifier.type = lastTarget.type;
@@ -320,9 +316,7 @@ export function resolve(definition: Definition) {
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
         .with({ kind: "referenceThrough" }, ({ target, through }) => {
           resolveModelAtomRef(target, currentModel, "reference");
-          const baseType = getBaseType(target.type);
-          const refModel = baseType.kind === "model" ? baseType.model : undefined;
-          resolveModelAtomRef(through, refModel, "field");
+          resolveModelAtomRef(through, getTypeModel(target.type), "field");
         })
         .with({ kind: "deny" }, ({ fields }) => {
           if (fields.kind === "list") {
@@ -370,8 +364,7 @@ export function resolve(definition: Definition) {
           target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
       } else {
         resolveModelAtomRef(target.identifier, parentModel, "relation");
-        const baseType = getBaseType(target.identifier.type);
-        currentModel = baseType.kind === "model" ? baseType.model : undefined;
+        currentModel = getTypeModel(target.identifier.type);
       }
       if (target.as) {
         target.as.identifier.ref = target.identifier.ref;
@@ -411,13 +404,10 @@ export function resolve(definition: Definition) {
       let nestedModel: string | undefined;
       if (target.kind === "short") {
         resolveIdentifierRefPathForModel([target.name], model, "model");
-        const baseType = getBaseType(target.name.type);
-        nestedModel = baseType.kind === "model" ? baseType.model : undefined;
+        nestedModel = getTypeModel(target.name.type);
       } else {
         resolveIdentifierRefPath(target.identifierPath, scope);
-        const lastType = target.identifierPath.at(-1)?.type;
-        const baseType = lastType ? getBaseType(lastType) : undefined;
-        nestedModel = baseType?.kind === "model" ? baseType.model : undefined;
+        nestedModel = getTypeModel(target.identifierPath.at(-1)?.type);
       }
       if (select) {
         if (!nestedModel) {
@@ -529,8 +519,7 @@ export function resolve(definition: Definition) {
           ? ["field", "reference", "relation", "query", "computed"]
           : ["field", "reference", "relation", "query", "computed", "hook"];
       resolveModelAtomRef(identifier, currentModel, ...kinds);
-      const baseType = getBaseType(identifier.type);
-      currentModel = baseType.kind === "model" ? baseType.model : undefined;
+      currentModel = getTypeModel(identifier.type);
     });
   }
 

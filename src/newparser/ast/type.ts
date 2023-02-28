@@ -67,14 +67,16 @@ export function hasTypeModifier(type: Type, modifier: TypeModifier): boolean {
   }
 }
 
-export function getBaseType(type: Type): AnyType | PrimitiveType | ModelType {
+export function getTypeModel(type?: Type): string | undefined {
+  if (!type) return undefined;
   switch (type.kind) {
     case "unknown":
-    case "model":
     case "primitive":
-      return type;
+      return undefined;
+    case "model":
+      return type.model;
     default:
-      return getBaseType(type.type);
+      return getTypeModel(type.type);
   }
 }
 
