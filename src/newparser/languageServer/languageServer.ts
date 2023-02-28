@@ -1,5 +1,11 @@
+import "../../common/setupAliases";
+
+import { createHash } from "crypto";
+
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
+  Diagnostic,
+  DiagnosticSeverity,
   ProposedFeatures,
   SemanticTokensBuilder,
   TextDocumentSyncKind,
@@ -7,8 +13,11 @@ import {
   createConnection,
 } from "vscode-languageserver/node";
 
-import { TokenData } from "../ast/ast";
+import { Definition, TokenData } from "../ast/ast";
+import { checkForm } from "../checkForm";
+import { CompilerError } from "../compilerError";
 import { parse } from "../parser";
+import { resolve } from "../resolver";
 
 import { TokenModifiers, TokenTypes, buildTokens } from "./tokenBuilder";
 
@@ -40,6 +49,65 @@ connection.onInitialize((params) => {
   };
 });
 
+type CompileResult = {
+  ast: Definition | undefined;
+  compilerErrors: CompilerError[];
+  success: boolean;
+};
+
+const compiledFiles: Map<string, { hash: string; result: CompileResult }> = new Map();
+
+function getFileHash(source: string): string {
+  const hash = createHash("sha256");
+  hash.update(source);
+  return hash.digest("hex");
+}
+
+function compile(document: TextDocument): CompileResult {
+  const source = document.getText();
+  const hash = getFileHash(source);
+  const previousCompilation = compiledFiles.get(document.uri);
+  if (previousCompilation?.hash === hash) {
+    return previousCompilation.result;
+  }
+
+  const { ast, success: parseSuccess } = parse(source);
+
+  const compilerErrors: CompilerError[] = [];
+
+  if (ast) {
+    compilerErrors.push(...checkForm(ast));
+    compilerErrors.push(...resolve(ast));
+  }
+
+  const success = parseSuccess && compilerErrors.length === 0;
+
+  const result = { ast, compilerErrors, success };
+  compiledFiles.set(document.uri, { hash, result });
+
+  return result;
+}
+
+documents.onDidChangeContent((change) => {
+  validateTextDocument(change.document);
+});
+
+async function validateTextDocument(document: TextDocument): Promise<void> {
+  const { compilerErrors } = compile(document);
+
+  const diagnostics: Diagnostic[] = compilerErrors.map((error) => ({
+    severity: DiagnosticSeverity.Error,
+    range: {
+      start: document.positionAt(error.errorPosition.start),
+      end: document.positionAt(error.errorPosition.end + 1),
+    },
+    message: error.message,
+    source: document.uri,
+  }));
+
+  connection.sendDiagnostics({ uri: document.uri, diagnostics });
+}
+
 const tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
 documents.onDidClose((event) => {
   tokenBuilders.delete(event.document.uri);
@@ -62,8 +130,7 @@ function buildSemanticTokens(builder: SemanticTokensBuilder, document: TextDocum
     builder.push(line, character, length, tokenType, tokenModifiers);
   }
 
-  const source = document.getText();
-  const { ast } = parse(source);
+  const { ast } = compile(document);
   if (ast) buildTokens(ast, addToken);
 }
 

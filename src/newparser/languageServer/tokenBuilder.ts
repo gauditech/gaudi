@@ -6,20 +6,20 @@ import {
   ActionAtomInput,
   ActionAtomReferenceThrough,
   ActionAtomSet,
+  ActionFieldHook,
   Computed,
   Definition,
   Endpoint,
   Entrypoint,
   Expr,
+  ExprKind,
   Field,
-  Hook,
-  HookAtom,
+  FieldValidationHook,
   Identifier,
-  IdentifierAs,
-  IdentifierPath,
-  IdentifierPathAs,
+  IdentifierRef,
   Literal,
   Model,
+  ModelHook,
   Populate,
   Populator,
   Query,
@@ -28,7 +28,6 @@ import {
   Repeater,
   Select,
   TokenData,
-  UnnamedHook,
   Validator,
 } from "../ast/ast";
 
@@ -87,7 +86,7 @@ export function buildTokens(
 
   function buildModel({ keyword, name, atoms }: Model) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.class);
     atoms.forEach((a) =>
       match(a)
         .with({ kind: "field" }, buildField)
@@ -95,19 +94,19 @@ export function buildTokens(
         .with({ kind: "relation" }, buildRelation)
         .with({ kind: "query" }, buildQuery)
         .with({ kind: "computed" }, buildComputed)
-        .with({ kind: "hook" }, buildHook)
+        .with({ kind: "hook" }, buildModelHook)
         .exhaustive()
     );
   }
 
   function buildField({ keyword, name, atoms }: Field) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.property);
     atoms.forEach((a) =>
       match(a)
         .with({ kind: "type" }, ({ keyword, identifier }) => {
           buildKeyword(keyword);
-          buildIdentifier(identifier);
+          buildType(identifier);
         })
         .with({ kind: "unique" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
@@ -125,12 +124,12 @@ export function buildTokens(
 
   function buildReference({ keyword, name, atoms }: Reference) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.property);
     atoms.forEach((a) =>
       match(a)
         .with({ kind: "to" }, ({ keyword, identifier }) => {
           buildKeyword(keyword);
-          buildIdentifier(identifier);
+          buildIdentifierRef(identifier);
         })
         .with({ kind: "unique" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
@@ -140,16 +139,16 @@ export function buildTokens(
 
   function buildRelation({ keyword, name, atoms }: Relation) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.property);
     atoms.forEach((a) =>
       match(a)
         .with({ kind: "from" }, ({ keyword, identifier }) => {
           buildKeyword(keyword);
-          buildIdentifier(identifier);
+          buildIdentifierRef(identifier);
         })
         .with({ kind: "through" }, ({ keyword, identifier }) => {
           buildKeyword(keyword);
-          buildIdentifier(identifier);
+          buildIdentifierRef(identifier);
         })
         .exhaustive()
     );
@@ -157,12 +156,16 @@ export function buildTokens(
 
   function buildQuery({ keyword, name, atoms }: Query) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.property);
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "from" }, ({ keyword, identifier }) => {
+        .with({ kind: "from" }, ({ keyword, identifierPath, as }) => {
           buildKeyword(keyword);
-          buildIdentifierPath(identifier);
+          buildIdentifierPath(identifierPath);
+          if (as) {
+            buildKeyword(as.keyword);
+            buildIdentifierPath(as.identifierPath);
+          }
         })
         .with({ kind: "filter" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
@@ -171,7 +174,7 @@ export function buildTokens(
         .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
           buildKeyword(keyword);
           orderBy.forEach((orderBy) => {
-            buildIdentifier(orderBy.identifier);
+            buildIdentifierPath(orderBy.identifierPath);
             if ("keyword" in orderBy) buildKeyword(orderBy.keyword);
           });
         })
@@ -192,32 +195,36 @@ export function buildTokens(
 
   function buildComputed({ keyword, name, expr }: Computed) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.property);
     buildExpr(expr);
   }
 
   function buildValidator(validator: Validator) {
     match(validator)
       .with({ kind: "builtin" }, ({ name, args }) => {
-        buildIdentifier(name);
+        push(name.token, TokenTypes.property);
         args.forEach(buildLiteral);
       })
-      .with({ kind: "hook" }, buildUnnamedHook)
+      .with({ kind: "hook" }, buildFieldValidationHook)
       .exhaustive();
   }
 
   function buildEntrypoint({ keyword, name, atoms }: Entrypoint) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.property);
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "target" }, ({ keyword, identifier }) => {
+        .with({ kind: "target" }, ({ keyword, identifier, as }) => {
           buildKeyword(keyword);
-          buildIdentifierAs(identifier);
+          buildIdentifierRef(identifier);
+          if (as) {
+            buildKeyword(as.keyword);
+            buildIdentifierRef(as.identifier);
+          }
         })
         .with({ kind: "identifyWith" }, ({ keyword, identifier }) => {
           buildKeyword(keyword);
-          buildIdentifier(identifier);
+          buildIdentifierRef(identifier);
         })
         .with({ kind: "response" }, ({ keyword, select }) => {
           buildKeyword(keyword);
@@ -250,9 +257,13 @@ export function buildTokens(
     );
   }
 
-  function buildAction({ keyword, target, atoms }: Action) {
+  function buildAction({ keyword, target, as, atoms }: Action) {
     buildKeyword(keyword);
-    if (target) buildIdentifierPathAs(target);
+    if (target) buildIdentifierPath(target);
+    if (as) {
+      buildKeyword(as.keyword);
+      buildIdentifierRef(as.identifier);
+    }
     atoms.forEach((a) =>
       match(a)
         .with({ kind: "set" }, buildActionAtomSet)
@@ -265,9 +276,9 @@ export function buildTokens(
 
   function buildActionAtomSet({ keyword, target, set }: ActionAtomSet) {
     buildKeyword(keyword);
-    buildIdentifier(target);
+    buildIdentifierRef(target);
     match(set)
-      .with({ kind: "hook" }, buildUnnamedHook)
+      .with({ kind: "hook" }, buildActionFieldHook)
       .with({ kind: "expr" }, ({ expr }) => buildExpr(expr))
       .exhaustive();
   }
@@ -278,34 +289,30 @@ export function buildTokens(
     through,
   }: ActionAtomReferenceThrough) {
     buildKeyword(keyword);
-    buildIdentifier(target);
-    buildIdentifier(through);
+    buildIdentifierRef(target);
+    buildIdentifierRef(through);
   }
 
   function buildActionAtomDeny({ keyword, fields }: ActionAtomDeny) {
     buildKeyword(keyword);
     match(fields)
       .with({ kind: "all" }, ({ keyword }) => buildKeyword(keyword))
-      .with({ kind: "list" }, ({ fields }) => fields.forEach(buildIdentifier))
+      .with({ kind: "list" }, ({ fields }) => fields.forEach(buildIdentifierRef))
       .exhaustive();
   }
 
   function buildActionAtomInput({ keyword, fields }: ActionAtomInput) {
     buildKeyword(keyword);
     fields.forEach(({ field, atoms }) => {
-      buildIdentifier(field);
+      buildIdentifierRef(field);
       atoms.forEach((a) =>
         match(a)
           .with({ kind: "optional" }, ({ keyword }) => {
             buildKeyword(keyword);
           })
-          .with({ kind: "default_literal" }, ({ keyword, value }) => {
+          .with({ kind: "default" }, ({ keyword, value }) => {
             buildKeyword(keyword);
-            buildLiteral(value);
-          })
-          .with({ kind: "default_reference" }, ({ keyword, value }) => {
-            buildKeyword(keyword);
-            buildIdentifierPath(value);
+            buildExpr(value);
           })
           .exhaustive()
       );
@@ -314,7 +321,7 @@ export function buildTokens(
 
   function buildPopulator({ keyword, name, atoms }: Populator) {
     buildKeyword(keyword);
-    buildIdentifier(name);
+    push(name.token, TokenTypes.variable);
     atoms.forEach((a) => match(a).with({ kind: "populate" }, buildPopulate).exhaustive());
   }
 
@@ -322,13 +329,13 @@ export function buildTokens(
     buildKeyword(keyword);
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "target" }, ({ keyword, identifier }) => {
+        .with({ kind: "target" }, ({ keyword, identifier, as }) => {
           buildKeyword(keyword);
-          buildIdentifierAs(identifier);
-        })
-        .with({ kind: "identify" }, ({ keyword, identifier }) => {
-          buildKeyword(keyword);
-          buildIdentifier(identifier);
+          buildIdentifierRef(identifier);
+          if (as) {
+            buildKeyword(as.keyword);
+            buildIdentifierRef(as.identifier);
+          }
         })
         .with({ kind: "repeat" }, ({ keyword, repeater }) => {
           buildKeyword(keyword);
@@ -352,31 +359,37 @@ export function buildTokens(
       .exhaustive();
   }
 
-  function buildUnnamedHook(hook: UnnamedHook) {
+  function buildModelHook(hook: ModelHook) {
+    buildKeyword(hook.keyword);
+    push(hook.name.token, TokenTypes.property);
+    hook.atoms.forEach(buildHookAtom);
+  }
+
+  function buildFieldValidationHook(hook: FieldValidationHook) {
+    buildKeyword(hook.keyword);
+    hook.atoms.forEach(buildHookAtom);
+  }
+  function buildActionFieldHook(hook: ActionFieldHook) {
     buildKeyword(hook.keyword);
     hook.atoms.forEach(buildHookAtom);
   }
 
-  function buildHook(hook: Hook) {
-    buildKeyword(hook.keyword);
-    buildIdentifier(hook.name);
-    hook.atoms.forEach(buildHookAtom);
-  }
-
-  function buildHookAtom(atom: HookAtom) {
+  function buildHookAtom(
+    atom: (ModelHook | FieldValidationHook | ActionFieldHook)["atoms"][number]
+  ) {
     match(atom)
       .with({ kind: "arg_expr" }, ({ keyword, name, expr }) => {
         buildKeyword(keyword);
-        buildIdentifier(name);
+        push(name.token, TokenTypes.property);
         buildExpr(expr);
       })
       .with({ kind: "default_arg" }, ({ keyword, name }) => {
         buildKeyword(keyword);
-        buildIdentifier(name);
+        push(name.token, TokenTypes.property);
       })
       .with({ kind: "source" }, ({ keyword, name, keywordFrom, file }) => {
         buildKeyword(keyword);
-        buildIdentifier(name);
+        push(name.token, TokenTypes.property);
         buildKeyword(keywordFrom);
         buildLiteral(file);
       })
@@ -388,13 +401,21 @@ export function buildTokens(
   }
 
   function buildSelect(select: Select) {
-    select.forEach(({ identifier, select }) => {
-      buildIdentifier(identifier);
+    select.forEach(({ target, select }) => {
+      switch (target.kind) {
+        case "short":
+          buildIdentifierRef(target.name);
+          break;
+        case "long":
+          push(target.name.token, TokenTypes.property);
+          buildIdentifierPath(target.identifierPath);
+          break;
+      }
       if (select) buildSelect(select);
     });
   }
 
-  function buildExpr(expr: Expr) {
+  function buildExpr(expr: Expr<ExprKind>) {
     match(expr)
       .with({ kind: "binary" }, ({ lhs, operator, keyword, rhs }) => {
         buildExpr(lhs);
@@ -411,10 +432,10 @@ export function buildTokens(
         buildKeyword(keyword);
         buildExpr(expr);
       })
-      .with({ kind: "identifierPath" }, ({ identifierPath }) => buildIdentifierPath(identifierPath))
+      .with({ kind: "path" }, ({ path }) => buildIdentifierPath(path))
       .with({ kind: "literal" }, ({ literal }) => buildLiteral(literal))
       .with({ kind: "function" }, ({ name, args }) => {
-        buildIdentifier(name);
+        push(name.token, TokenTypes.function);
         args.forEach(buildExpr);
       })
       .exhaustive();
@@ -431,28 +452,18 @@ export function buildTokens(
     return push(literal.token, TokenTypes.variable);
   }
 
-  function buildIdentifier(identifier: Identifier) {
-    return push(identifier.token, TokenTypes.variable);
+  function buildIdentifierRef(identifier: IdentifierRef) {
+    const isModel = identifier.ref.kind === "model";
+    const tokenType = isModel ? TokenTypes.class : TokenTypes.variable;
+    return push(identifier.identifier.token, tokenType);
   }
 
-  function buildIdentifierAs({ identifier, as }: IdentifierAs) {
-    buildIdentifier(identifier);
-    if (as) {
-      buildKeyword(as.keyword);
-      buildIdentifier(as.identifier);
-    }
+  function buildType(identifier: Identifier) {
+    return push(identifier.token, TokenTypes.type);
   }
 
-  function buildIdentifierPath(identifierPath: IdentifierPath) {
-    identifierPath.map(buildIdentifier);
-  }
-
-  function buildIdentifierPathAs({ identifierPath, as }: IdentifierPathAs) {
-    buildIdentifierPath(identifierPath);
-    if (as) {
-      buildKeyword(as.keyword);
-      buildIdentifier(as.identifier);
-    }
+  function buildIdentifierPath(path: IdentifierRef[]) {
+    path.map(buildIdentifierRef);
   }
 
   function buildKeyword(keyword: TokenData) {
