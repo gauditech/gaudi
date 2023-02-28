@@ -304,6 +304,9 @@ function compileAction(action: ActionBodyAST): ActionSpec {
           case "expression": {
             return { ...a, set: { kind: "expression", exp: compileQueryExp(a.set.exp) } };
           }
+          case "query": {
+            return { ...a, set: { kind: "query", query: compileQuery({ ...a.set, name: "" }) } };
+          }
           default: {
             return assertUnreachable(a.set);
           }

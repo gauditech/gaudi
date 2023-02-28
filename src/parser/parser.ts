@@ -418,6 +418,13 @@ semantics.addOperation("parse()", {
       set: { kind: "expression", exp: exp.parse() },
     };
   },
+  ActionAtomBody_set_query(this, _set, identifier, query): ActionAtomAST {
+    return {
+      kind: "set",
+      target: identifier.parse(),
+      set: { kind: "query", body: query.parse() },
+    };
+  },
   ActionAtomBody_reference(this, _reference, identifier, _through, through): ActionAtomAST {
     return {
       kind: "reference",

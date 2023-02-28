@@ -151,9 +151,11 @@ entrypoint Orgs {
     action {
       execute {
         virtual input userId { type integer }
+        set userSet query { from Org, filter {lower(name) is lower("Org 1")}, select {name} }
         responds
         hook {
           arg name name
+          arg userSet userSet
           arg user query { from Org, filter {lower(name) is lower("Org 1")}, select {name} }
           source customActionResponds from "hooks.js"
         }

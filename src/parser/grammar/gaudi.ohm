@@ -166,6 +166,7 @@ Gaudi {
 
   ActionAtomBody
     = "set" identifier Hook                                                         -- set_hook
+    | "set" identifier HookQuery                                                    -- set_query
     | "set" identifier QueryExp                                                     -- set_expression
     | "reference" identifier "through" identifier                                   -- reference
     | "virtual input" identifier "{" NonemptyNewlineBody<VirtualInputBody, ","> "}" -- virtual_input

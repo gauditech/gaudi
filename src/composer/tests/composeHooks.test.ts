@@ -234,9 +234,11 @@ describe("compose hooks", () => {
           path "somePath"
           method POST
           cardinality one
-      
+
           action {
             execute {
+              set user query { from Org, filter id is 1, select { id, name }} 
+
               hook {
                 // action arg hook
                 arg user query { from Org, filter id is 1, select { id, name }} 

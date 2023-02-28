@@ -188,17 +188,7 @@ describe("API endpoints", () => {
       const postResp = await request(getServer()).post("/org/org1/customOneQueryAction").send(data);
 
       expect(postResp.statusCode).toBe(200);
-      expect(postResp.body).toMatchInlineSnapshot(`
-        {
-          "name": "Org Custom Query One",
-          "user": [
-            {
-              "id": 1,
-              "name": "Org 1",
-            },
-          ],
-        }
-      `);
+      expect(postResp.body).toMatchSnapshot();
     });
   });
 

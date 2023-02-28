@@ -158,7 +158,10 @@ export type ActionAtomAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set: { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
+      set:
+        | { kind: "hook"; hook: HookAST }
+        | { kind: "expression"; exp: ExpAST }
+        | { kind: "query"; body: QueryBodyAST[] };
     }
   | { kind: "reference"; target: string; through: string }
   | VirtualInputAST
