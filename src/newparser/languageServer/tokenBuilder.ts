@@ -445,11 +445,10 @@ export function buildTokens(
     match(literal)
       .with({ kind: "integer" }, { kind: "float" }, ({ token }) => push(token, TokenTypes.number))
       .with({ kind: "boolean" }, { kind: "null" }, ({ token }) =>
-        push(token, TokenTypes.variable, TokenModifiers.defaultLibrary | TokenModifiers.readonly)
+        push(token, TokenTypes.variable, TokenModifiers.static | TokenModifiers.readonly)
       )
       .with({ kind: "string" }, ({ token }) => push(token, TokenTypes.string))
       .exhaustive();
-    return push(literal.token, TokenTypes.variable);
   }
 
   function buildIdentifierRef(identifier: IdentifierRef) {
