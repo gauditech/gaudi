@@ -541,7 +541,41 @@ export function resolve(definition: Definition) {
     if (!modelName) return;
     const model = findModel(modelName);
     if (!model) return;
-    const atom = patternFind(model.atoms, { name: { text: identifier.identifier.text } });
+
+    const targetName = identifier.identifier.text;
+    const atom = patternFind(model.atoms, { name: { text: targetName } });
+
+    // Id of a reference in model can be targeted
+    if (!atom && targetName.endsWith("_id") && kinds.includes("field")) {
+      const referenceAtom = patternFind(model.atoms, { name: { text: targetName.slice(0, -3) } });
+      if (referenceAtom?.kind === "reference") {
+        identifier.ref = {
+          kind: "modelAtom",
+          atomKind: "field",
+          model: modelName,
+          name: targetName,
+        };
+        identifier.type = {
+          kind: "primitive",
+          primitiveKind: "integer",
+        };
+        return;
+      }
+    }
+    // Model id can be targeted
+    if (!atom && targetName === "id" && kinds.includes("field")) {
+      identifier.ref = {
+        kind: "modelAtom",
+        atomKind: "field",
+        model: modelName,
+        name: targetName,
+      };
+      identifier.type = {
+        kind: "primitive",
+        primitiveKind: "integer",
+      };
+      return;
+    }
 
     for (const kind of kinds) {
       if (kind === atom?.kind) {
