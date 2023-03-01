@@ -6,7 +6,10 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   Diagnostic,
   DiagnosticSeverity,
+  ErrorCodes,
   ProposedFeatures,
+  ResponseError,
+  SemanticTokens,
   SemanticTokensBuilder,
   TextDocumentSyncKind,
   TextDocuments,
@@ -53,6 +56,7 @@ type CompileResult = {
   ast: Definition | undefined;
   compilerErrors: CompilerError[];
   success: boolean;
+  errorMessage: string;
 };
 
 const compiledFiles: Map<string, { hash: string; result: CompileResult }> = new Map();
@@ -71,7 +75,7 @@ function compile(document: TextDocument): CompileResult {
     return previousCompilation.result;
   }
 
-  const { ast, success: parseSuccess } = parse(source);
+  const { ast, success: parseSuccess, lexerErrors, parserErrors } = parse(source);
 
   const compilerErrors: CompilerError[] = [];
 
@@ -82,7 +86,12 @@ function compile(document: TextDocument): CompileResult {
 
   const success = parseSuccess && compilerErrors.length === 0;
 
-  const result = { ast, compilerErrors, success };
+  const result = {
+    ast,
+    compilerErrors,
+    success,
+    errorMessage: lexerErrors?.at(0)?.message ?? parserErrors?.at(0)?.message ?? "",
+  };
   compiledFiles.set(document.uri, { hash, result });
 
   return result;
@@ -108,21 +117,8 @@ async function validateTextDocument(document: TextDocument): Promise<void> {
   connection.sendDiagnostics({ uri: document.uri, diagnostics });
 }
 
-const tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
-documents.onDidClose((event) => {
-  tokenBuilders.delete(event.document.uri);
-});
-function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
-  let result = tokenBuilders.get(document.uri);
-  if (result !== undefined) {
-    return result;
-  }
-  result = new SemanticTokensBuilder();
-  tokenBuilders.set(document.uri, result);
-  return result;
-}
-
-function buildSemanticTokens(builder: SemanticTokensBuilder, document: TextDocument) {
+function buildSemanticTokens(document: TextDocument): SemanticTokens | ResponseError {
+  const builder = new SemanticTokensBuilder();
   function addToken(token: TokenData, tokenType: TokenTypes, tokenModifiers: TokenModifiers = 0) {
     const { character, line } = document.positionAt(token.start);
     const length = token.end - token.start + 1;
@@ -130,8 +126,13 @@ function buildSemanticTokens(builder: SemanticTokensBuilder, document: TextDocum
     builder.push(line, character, length, tokenType, tokenModifiers);
   }
 
-  const { ast } = compile(document);
-  if (ast) buildTokens(ast, addToken);
+  const { ast, errorMessage } = compile(document);
+  if (ast) {
+    buildTokens(ast, addToken);
+    return builder.build();
+  }
+
+  return new ResponseError<void>(ErrorCodes.ParseError, errorMessage);
 }
 
 connection.languages.semanticTokens.on((params) => {
@@ -139,9 +140,7 @@ connection.languages.semanticTokens.on((params) => {
   if (document === undefined) {
     return { data: [] };
   }
-  const builder = getTokenBuilder(document);
-  buildSemanticTokens(builder, document);
-  return builder.build();
+  return buildSemanticTokens(document);
 });
 
 connection.listen();

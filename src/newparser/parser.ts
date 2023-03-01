@@ -973,6 +973,8 @@ export type ParseResult =
   | {
       success: true;
       ast: Definition;
+      lexerErrors: undefined;
+      parserErrors: undefined;
     }
   | {
       success: false;
@@ -986,18 +988,19 @@ export function parse(source: string): ParseResult {
   parser.input = lexerResult.tokens;
 
   let lexerErrors;
-  let parserErrors;
   if (lexerResult.errors.length > 0) {
     lexerErrors = lexerResult.errors;
-  } else if (parser.errors.length > 0) {
-    parserErrors = parser.errors;
   }
 
   const ast = parser.definition();
+  let parserErrors;
+  if (parser.errors.length > 0) {
+    parserErrors = parser.errors;
+  }
 
   if (lexerErrors || parserErrors) {
     return { success: false, ast, lexerErrors, parserErrors };
   } else {
-    return { success: true, ast };
+    return { success: true, ast, lexerErrors: undefined, parserErrors: undefined };
   }
 }
