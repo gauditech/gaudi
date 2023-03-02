@@ -431,7 +431,12 @@ type IntConst = { type: "integer"; value: number };
 type TextConst = { type: "text"; value: string };
 type NullConst = { type: "null"; value: null };
 
-export type ActionDef = CreateOneAction | UpdateOneAction | DeleteOneAction | ExecuteHookAction;
+export type ActionDef =
+  | CreateOneAction
+  | UpdateOneAction
+  | DeleteOneAction
+  | ExecuteHookAction
+  | FetchOneAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -468,6 +473,14 @@ export type ExecuteHookAction = {
   changeset: ChangesetDef;
   hook: ActionHookDef;
   responds: boolean;
+};
+
+export type FetchOneAction = {
+  kind: "fetch-one";
+  alias: string;
+  model: string;
+  changeset: ChangesetDef;
+  query: QueryDef;
 };
 
 export type ActionHookDef = {

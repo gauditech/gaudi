@@ -488,7 +488,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
     // filter out actions without fieldset
     .filter(
       (a): a is Exclude<ActionDef, DeleteOneAction | ExecuteHookAction> =>
-        a.kind !== "delete-one" && a.kind !== "execute-hook"
+        a.kind !== "delete-one" && a.kind !== "execute-hook" && a.kind !== "fetch-one"
     )
     .flatMap((action) => {
       return _.chain(action.changeset)
@@ -681,9 +681,9 @@ export function wrapActionsWithSelect(
 ): ActionDef[] {
   return (
     actions
-      // .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
       .map((a): ActionDef => {
-        if (a.kind === "delete-one" || a.kind === "execute-hook") return a;
+        if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one")
+          return a;
 
         const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
         const model = getRef.model(def, a.model);

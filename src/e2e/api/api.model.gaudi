@@ -163,6 +163,27 @@ entrypoint Orgs {
     }
   }
 
+  // custom ep/action with action query
+  custom endpoint {
+    cardinality one
+    method POST
+    path "customFetchAction"
+    action {
+      fetch as fRepo {
+        query { from Repo, filter id is 1, select {slug}}
+      }
+      execute {
+        responds
+        hook {
+          arg name name
+          arg repoSlug fRepo.slug
+          source customActionResponds from "hooks.js"
+        }
+      }
+    }
+  }
+
+
 
   // --- custom-one endpoints
 

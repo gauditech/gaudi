@@ -190,6 +190,14 @@ describe("API endpoints", () => {
       expect(postResp.statusCode).toBe(200);
       expect(postResp.body).toMatchSnapshot();
     });
+
+    it("custom endpoint - fetch action", async () => {
+      const data = { name: "Fetch me org 1" };
+      const postResp = await request(getServer()).post("/org/org1/customFetchAction").send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchSnapshot();
+    });
   });
 
   describe("Repo", () => {

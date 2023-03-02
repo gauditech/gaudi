@@ -376,12 +376,20 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  HookQuery(this, _query, _parenL, body, _parenR): QueryBodyAST {
+  QueryAtom(this, _query, _parenL, body, _parenR): QueryBodyAST {
     return body.parse();
   },
   ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
     return {
       kind: kind.sourceString as ActionKindAST,
+      atoms: body.parse(),
+      interval: this.source,
+    };
+  },
+  ActionBody_aliased(this, kind, _as, alias, _braceL, body, _braceR): ActionBodyAST {
+    return {
+      kind: kind.sourceString as ActionKindAST,
+      alias: alias.parse(),
       atoms: body.parse(),
       interval: this.source,
     };
@@ -394,7 +402,7 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionBody_aliased(this, kind, name, _as, alias, _braceL, body, _braceR): ActionBodyAST {
+  ActionBody_named_aliased(this, kind, name, _as, alias, _braceL, body, _braceR): ActionBodyAST {
     return {
       kind: kind.sourceString as ActionKindAST,
       target: name.parse(),
@@ -449,6 +457,12 @@ semantics.addOperation("parse()", {
     return {
       kind: "hook",
       hook: body.parse(),
+    };
+  },
+  ActionAtomBody_query(this, body): ActionAtomAST {
+    return {
+      kind: "query",
+      body: body.parse(),
     };
   },
   ActionAtomBody_nested_action(this, action): ActionAtomAST {

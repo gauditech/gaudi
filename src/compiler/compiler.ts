@@ -293,6 +293,13 @@ function compileAction(action: ActionBodyAST): ActionSpec {
       case "hook": {
         return { kind: "hook", hook: compileActionHook(a.hook) };
       }
+      case "query": {
+        const qName = "$query"; // TODO: can we create a better naming for unnamed atoms?
+        return {
+          kind: "query",
+          query: compileQuery({ kind: "query", body: a.body, name: qName }),
+        };
+      }
       case "deny":
       case "reference":
         return a;
@@ -305,7 +312,10 @@ function compileAction(action: ActionBodyAST): ActionSpec {
             return { ...a, set: { kind: "expression", exp: compileQueryExp(a.set.exp) } };
           }
           case "query": {
-            return { ...a, set: { kind: "query", query: compileQuery({ ...a.set, name: "" }) } };
+            return {
+              ...a,
+              set: { kind: "query", query: compileQuery({ ...a.set, name: a.target }) },
+            };
           }
           default: {
             return assertUnreachable(a.set);

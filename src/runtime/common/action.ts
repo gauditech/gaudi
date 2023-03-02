@@ -75,6 +75,14 @@ async function _internalExecuteActions(
       const targetId = resolveTargetId(ctx, action.targetPath);
 
       await deleteData(dbConn, dbModel, targetId);
+    } else if (actionKind === "fetch-one") {
+      const changeset = await buildChangeset(def, qx, action.changeset, ctx);
+
+      // TODO: use executeQueryTree - how to cast to `QueryTree`?
+      const result = await qx.executeQuery(def, action.query, new Vars(changeset), []);
+      const resultOne = result[0]; // extract the first record since this is "fetch-ONE"
+
+      resultOne && ctx.vars.set(action.alias, resultOne);
     } else if (actionKind === "execute-hook") {
       ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
 

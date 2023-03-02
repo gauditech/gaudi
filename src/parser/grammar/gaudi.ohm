@@ -157,16 +157,17 @@ Gaudi {
     | "validate" "{" NonemptyNewlineBody<Validator, ","> "}"  -- validate
 
 
-  ActionKind = "create" | "update" | "delete" | "execute"
+  ActionKind = "create" | "update" | "delete" | "execute" | "fetch"
   ActionBody
-    = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                     -- default
-    | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                      -- named
-    | ActionKind IdentifierPath "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"      -- aliased
+    = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                 -- default
+    | ActionKind "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"                 -- aliased
+    | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                  -- named
+    | ActionKind IdentifierPath "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"  -- named_aliased
 
 
   ActionAtomBody
     = "set" identifier Hook                                                         -- set_hook
-    | "set" identifier HookQuery                                                    -- set_query
+    | "set" identifier QueryAtom                                                    -- set_query
     | "set" identifier QueryExp                                                     -- set_expression
     | "reference" identifier "through" identifier                                   -- reference
     | "virtual input" identifier "{" NonemptyNewlineBody<VirtualInputBody, ","> "}" -- virtual_input
@@ -174,6 +175,7 @@ Gaudi {
     | "deny" DenyList                                                               -- deny
     | "responds"                                                                    -- responds
     | Hook                                                                          -- hook
+    | QueryAtom                                                                     -- query
     | ActionBody                                                                    -- nested_action
 
   ActionInputAtom
@@ -198,14 +200,14 @@ Gaudi {
 
   HookBody
   = "default" "arg" identifier          -- argument_default
-  | "arg" identifier HookQuery          -- argument_query
+  | "arg" identifier QueryAtom          -- argument_query
   | "arg" identifier QueryExp           -- argument_expression
   | "returns" identifier                -- return_type
   | "source" identifier "from" string   -- source
   | "inline" multiLineString            -- inline
   | "runtime" identifier                -- executionRuntime
 
-  HookQuery
+  QueryAtom
     = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
   IdentifierPath = identifier ("." identifier)*

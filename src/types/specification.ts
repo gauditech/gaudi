@@ -107,7 +107,7 @@ export type EndpointSpec = WithContext<{
 }>;
 
 export type ActionSpec = WithContext<{
-  kind: "create" | "update" | "delete" | "execute";
+  kind: "create" | "update" | "delete" | "execute" | "fetch";
   targetPath: string[] | undefined;
   alias: string | undefined;
   actionAtoms: ActionAtomSpec[];
@@ -123,6 +123,7 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecInputList
   | ActionAtomSpecHook
   | ActionAtomSpecResponds
+  | ActionAtomSpecQuery
 >;
 
 export type HookCodeSpec =
@@ -158,6 +159,7 @@ export type InputFieldSpec = {
   default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 export type ActionAtomSpecResponds = { kind: "responds" };
+export type ActionAtomSpecQuery = { kind: "query"; query: QuerySpec };
 
 export type HookSpec = WithContext<{
   name?: string;

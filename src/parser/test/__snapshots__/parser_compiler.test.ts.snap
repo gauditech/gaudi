@@ -1372,7 +1372,200 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
 exports[`parser blueprint test/query.gaudi 1`] = `
 {
   "authenticator": undefined,
-  "entrypoints": [],
+  "entrypoints": [
+    {
+      "authorize": undefined,
+      "endpoints": [
+        {
+          "actions": [
+            {
+              "actionAtoms": [
+                {
+                  "kind": "query",
+                  "query": {
+                    "aggregate": undefined,
+                    "filter": {
+                      "interval": {
+                        "endIdx": 899,
+                        "startIdx": 892,
+                      },
+                      "kind": "binary",
+                      "lhs": {
+                        "identifier": [
+                          "id",
+                        ],
+                        "interval": {
+                          "endIdx": 894,
+                          "startIdx": 892,
+                        },
+                        "kind": "identifier",
+                      },
+                      "operator": "is",
+                      "rhs": {
+                        "interval": {
+                          "endIdx": 899,
+                          "startIdx": 898,
+                        },
+                        "kind": "literal",
+                        "literal": 1,
+                      },
+                    },
+                    "fromAlias": undefined,
+                    "fromModel": [
+                      "Class",
+                    ],
+                    "interval": undefined,
+                    "limit": undefined,
+                    "name": "$query",
+                    "offset": undefined,
+                    "orderBy": undefined,
+                    "select": undefined,
+                  },
+                },
+              ],
+              "alias": "fClass",
+              "kind": "fetch",
+              "targetPath": undefined,
+            },
+            {
+              "actionAtoms": [
+                {
+                  "kind": "set",
+                  "set": {
+                    "kind": "query",
+                    "query": {
+                      "aggregate": undefined,
+                      "filter": {
+                        "interval": {
+                          "endIdx": 1014,
+                          "startIdx": 1007,
+                        },
+                        "kind": "binary",
+                        "lhs": {
+                          "identifier": [
+                            "id",
+                          ],
+                          "interval": {
+                            "endIdx": 1009,
+                            "startIdx": 1007,
+                          },
+                          "kind": "identifier",
+                        },
+                        "operator": "is",
+                        "rhs": {
+                          "interval": {
+                            "endIdx": 1014,
+                            "startIdx": 1013,
+                          },
+                          "kind": "literal",
+                          "literal": 1,
+                        },
+                      },
+                      "fromAlias": undefined,
+                      "fromModel": [
+                        "Class",
+                      ],
+                      "interval": undefined,
+                      "limit": undefined,
+                      "name": "prop1",
+                      "offset": undefined,
+                      "orderBy": undefined,
+                      "select": undefined,
+                    },
+                  },
+                  "target": "prop1",
+                },
+                {
+                  "hook": {
+                    "args": {
+                      "prop2": {
+                        "kind": "query",
+                        "query": {
+                          "aggregate": undefined,
+                          "filter": {
+                            "interval": {
+                              "endIdx": 1113,
+                              "startIdx": 1106,
+                            },
+                            "kind": "binary",
+                            "lhs": {
+                              "identifier": [
+                                "id",
+                              ],
+                              "interval": {
+                                "endIdx": 1108,
+                                "startIdx": 1106,
+                              },
+                              "kind": "identifier",
+                            },
+                            "operator": "is",
+                            "rhs": {
+                              "interval": {
+                                "endIdx": 1113,
+                                "startIdx": 1112,
+                              },
+                              "kind": "literal",
+                              "literal": 1,
+                            },
+                          },
+                          "fromAlias": undefined,
+                          "fromModel": [
+                            "Class",
+                          ],
+                          "interval": undefined,
+                          "limit": undefined,
+                          "name": "prop2",
+                          "offset": undefined,
+                          "orderBy": undefined,
+                          "select": undefined,
+                        },
+                      },
+                    },
+                    "code": {
+                      "inline": "prop2",
+                      "kind": "inline",
+                    },
+                    "interval": {
+                      "endIdx": 1151,
+                      "startIdx": 1052,
+                    },
+                    "name": undefined,
+                    "runtimeName": undefined,
+                  },
+                  "kind": "hook",
+                },
+              ],
+              "alias": undefined,
+              "kind": "execute",
+              "targetPath": undefined,
+            },
+          ],
+          "authorize": undefined,
+          "cardinality": undefined,
+          "interval": {
+            "endIdx": 1169,
+            "startIdx": 756,
+          },
+          "method": undefined,
+          "path": undefined,
+          "type": "create",
+        },
+      ],
+      "entrypoints": [],
+      "identify": undefined,
+      "interval": {
+        "endIdx": 1171,
+        "startIdx": 716,
+      },
+      "name": "Ep",
+      "response": undefined,
+      "target": {
+        "alias": undefined,
+        "identifier": "Class",
+        "kind": "model",
+      },
+    },
+  ],
   "models": [
     {
       "alias": undefined,
@@ -1393,7 +1586,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
       ],
       "hooks": [],
       "interval": {
-        "endIdx": 462,
+        "endIdx": 486,
         "startIdx": 0,
       },
       "name": "Class",
@@ -1402,14 +1595,14 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           "aggregate": undefined,
           "filter": {
             "interval": {
-              "endIdx": 181,
-              "startIdx": 145,
+              "endIdx": 205,
+              "startIdx": 169,
             },
             "kind": "binary",
             "lhs": {
               "interval": {
-                "endIdx": 171,
-                "startIdx": 146,
+                "endIdx": 195,
+                "startIdx": 170,
               },
               "kind": "binary",
               "lhs": {
@@ -1417,8 +1610,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                   "is_active",
                 ],
                 "interval": {
-                  "endIdx": 155,
-                  "startIdx": 146,
+                  "endIdx": 179,
+                  "startIdx": 170,
                 },
                 "kind": "identifier",
               },
@@ -1428,8 +1621,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                   "is_registred",
                 ],
                 "interval": {
-                  "endIdx": 171,
-                  "startIdx": 159,
+                  "endIdx": 195,
+                  "startIdx": 183,
                 },
                 "kind": "identifier",
               },
@@ -1437,8 +1630,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
             "operator": "and",
             "rhs": {
               "interval": {
-                "endIdx": 181,
-                "startIdx": 177,
+                "endIdx": 205,
+                "startIdx": 201,
               },
               "kind": "literal",
               "literal": true,
@@ -1449,8 +1642,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
             "students",
           ],
           "interval": {
-            "endIdx": 183,
-            "startIdx": 99,
+            "endIdx": 207,
+            "startIdx": 123,
           },
           "limit": undefined,
           "name": "active_students",
@@ -1462,14 +1655,14 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           "aggregate": undefined,
           "filter": {
             "interval": {
-              "endIdx": 266,
-              "startIdx": 230,
+              "endIdx": 290,
+              "startIdx": 254,
             },
             "kind": "binary",
             "lhs": {
               "interval": {
-                "endIdx": 240,
-                "startIdx": 230,
+                "endIdx": 264,
+                "startIdx": 254,
               },
               "kind": "binary",
               "lhs": {
@@ -1477,16 +1670,16 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                   "grade",
                 ],
                 "interval": {
-                  "endIdx": 235,
-                  "startIdx": 230,
+                  "endIdx": 259,
+                  "startIdx": 254,
                 },
                 "kind": "identifier",
               },
               "operator": ">=",
               "rhs": {
                 "interval": {
-                  "endIdx": 240,
-                  "startIdx": 239,
+                  "endIdx": 264,
+                  "startIdx": 263,
                 },
                 "kind": "literal",
                 "literal": 3,
@@ -1495,8 +1688,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
             "operator": "or",
             "rhs": {
               "interval": {
-                "endIdx": 266,
-                "startIdx": 244,
+                "endIdx": 290,
+                "startIdx": 268,
               },
               "kind": "binary",
               "lhs": {
@@ -1504,16 +1697,16 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                   "behaviour",
                 ],
                 "interval": {
-                  "endIdx": 253,
-                  "startIdx": 244,
+                  "endIdx": 277,
+                  "startIdx": 268,
                 },
                 "kind": "identifier",
               },
               "operator": "is not",
               "rhs": {
                 "interval": {
-                  "endIdx": 266,
-                  "startIdx": 261,
+                  "endIdx": 290,
+                  "startIdx": 285,
                 },
                 "kind": "literal",
                 "literal": "bad",
@@ -1525,8 +1718,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
             "students",
           ],
           "interval": {
-            "endIdx": 268,
-            "startIdx": 186,
+            "endIdx": 292,
+            "startIdx": 210,
           },
           "limit": undefined,
           "name": "good_students",
@@ -1544,8 +1737,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
             "good_students",
           ],
           "interval": {
-            "endIdx": 326,
-            "startIdx": 271,
+            "endIdx": 350,
+            "startIdx": 295,
           },
           "limit": undefined,
           "name": "good_students_count",
@@ -1557,8 +1750,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
           "aggregate": undefined,
           "filter": {
             "interval": {
-              "endIdx": 402,
-              "startIdx": 392,
+              "endIdx": 426,
+              "startIdx": 416,
             },
             "kind": "binary",
             "lhs": {
@@ -1566,16 +1759,16 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                 "grade",
               ],
               "interval": {
-                "endIdx": 397,
-                "startIdx": 392,
+                "endIdx": 421,
+                "startIdx": 416,
               },
               "kind": "identifier",
             },
             "operator": ">=",
             "rhs": {
               "interval": {
-                "endIdx": 402,
-                "startIdx": 401,
+                "endIdx": 426,
+                "startIdx": 425,
               },
               "kind": "literal",
               "literal": 3,
@@ -1586,8 +1779,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
             "students",
           ],
           "interval": {
-            "endIdx": 460,
-            "startIdx": 329,
+            "endIdx": 484,
+            "startIdx": 353,
           },
           "limit": 10,
           "name": "good_students_alt",
@@ -1598,8 +1791,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                 "behaviour",
               ],
               "interval": {
-                "endIdx": 431,
-                "startIdx": 422,
+                "endIdx": 455,
+                "startIdx": 446,
               },
               "order": undefined,
             },
@@ -1608,8 +1801,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                 "grade",
               ],
               "interval": {
-                "endIdx": 443,
-                "startIdx": 433,
+                "endIdx": 467,
+                "startIdx": 457,
               },
               "order": "desc",
             },
@@ -1636,8 +1829,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         {
           "exp": {
             "interval": {
-              "endIdx": 686,
-              "startIdx": 671,
+              "endIdx": 710,
+              "startIdx": 695,
             },
             "kind": "binary",
             "lhs": {
@@ -1646,24 +1839,24 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                 "year",
               ],
               "interval": {
-                "endIdx": 681,
-                "startIdx": 671,
+                "endIdx": 705,
+                "startIdx": 695,
               },
               "kind": "identifier",
             },
             "operator": ">=",
             "rhs": {
               "interval": {
-                "endIdx": 686,
-                "startIdx": 685,
+                "endIdx": 710,
+                "startIdx": 709,
               },
               "kind": "literal",
               "literal": 4,
             },
           },
           "interval": {
-            "endIdx": 688,
-            "startIdx": 650,
+            "endIdx": 712,
+            "startIdx": 674,
           },
           "name": "is_senior",
         },
@@ -1672,8 +1865,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 514,
-            "startIdx": 482,
+            "endIdx": 538,
+            "startIdx": 506,
           },
           "name": "is_active",
           "nullable": undefined,
@@ -1684,8 +1877,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 552,
-            "startIdx": 517,
+            "endIdx": 576,
+            "startIdx": 541,
           },
           "name": "is_registred",
           "nullable": undefined,
@@ -1696,8 +1889,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 582,
-            "startIdx": 555,
+            "endIdx": 606,
+            "startIdx": 579,
           },
           "name": "grade",
           "nullable": undefined,
@@ -1708,8 +1901,8 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 614,
-            "startIdx": 585,
+            "endIdx": 638,
+            "startIdx": 609,
           },
           "name": "behaviour",
           "nullable": undefined,
@@ -1720,16 +1913,16 @@ exports[`parser blueprint test/query.gaudi 1`] = `
       ],
       "hooks": [],
       "interval": {
-        "endIdx": 690,
-        "startIdx": 464,
+        "endIdx": 714,
+        "startIdx": 488,
       },
       "name": "Student",
       "queries": [],
       "references": [
         {
           "interval": {
-            "endIdx": 646,
-            "startIdx": 618,
+            "endIdx": 670,
+            "startIdx": 642,
           },
           "name": "class",
           "nullable": undefined,

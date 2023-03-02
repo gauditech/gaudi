@@ -486,8 +486,6 @@ describe("custom actions", () => {
     ["many", ["update", "delete"]],
   ])
     .map(([cardinality, actions]) => {
-      console.log("endpoint", cardinality);
-
       return _.map(actions, (a): [EndpointCardinality, ActionKindAST] => [cardinality, a]);
     })
     .flatMap()

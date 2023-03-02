@@ -3,6 +3,7 @@ model Class {
 
   relation students { from Student, through class}
 
+  // test model queries
   query active_students { from students, filter (is_active or is_registred) and true }
   query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
   query good_students_count { from good_students, count }
@@ -25,4 +26,31 @@ model Student {
   reference class { to Class }
 
   computed is_senior { class.year >= 4 }
+}
+
+entrypoint Ep {
+  target model Class
+
+  create endpoint {
+    action {
+      // test query in fetch action
+      fetch as fClass {
+        query {
+          from Class, filter id is 1
+        }
+      }
+
+      // test setter query
+      execute {
+        set prop1 query { from Class, filter id is 1 }
+
+        // test arg query
+        hook {
+          arg prop2 query { from Class, filter id is 1 }
+
+          inline `prop2`
+        }
+      }
+    }
+  }
 }

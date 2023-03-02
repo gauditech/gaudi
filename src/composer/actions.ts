@@ -93,8 +93,11 @@ export function composeActionBlock(
   // Create a default context action if not specified in blueprint.
   const target = _.last(targets)!;
   const defaultActions = specs.filter(
-    (spec) => getActionTargetScope(def, spec, target.alias, ctx) === "target"
+    // action must target "target model" and not be "fetch" action since they don't change model
+    (spec) =>
+      getActionTargetScope(def, spec, target.alias, ctx) === "target" && spec.kind !== "fetch"
   );
+
   if (defaultActions.length === 1) {
     return actions;
   } else if (defaultActions.length > 1) {
@@ -198,7 +201,7 @@ function composeSingleAction(
   endpointKind: EndpointType
 ): ActionDef {
   const target = _.last(targets)!;
-  const model = findChangesetModel(def, ctx, spec.targetPath, target);
+  let model = findChangesetModel(def, ctx, spec.targetPath, target);
 
   // Targeting model, context-path or reimplementing a default action?
   const actionTargetScope = getActionTargetScope(def, spec, target.alias, ctx);
@@ -445,13 +448,23 @@ function composeSingleAction(
       `Actions with "responds" keyword are allowed only in "custom-one" and "custom-many" endpoints, not in "${endpointKind}"`
     );
     // in execute action
-    ensureEqual(
-      simpleSpec.kind,
-      "execute",
-      'Keyword "responds" is allowed only on "execute" actions'
-    );
+    ensureEqual(spec.kind, "execute", 'Keyword "responds" is allowed only on "execute" actions');
   }
   const responds = respondsAtoms.length > 0;
+
+  // compose action query
+  let actionQuery: QueryDef | undefined;
+  const queryAtoms = kindFilter(spec.actionAtoms, "query");
+  if (queryAtoms.length > 0) {
+    ensureEqual(queryAtoms.length, 1, "Max one query per action is allowed");
+
+    const querySpec = queryAtoms[0].query;
+
+    // fetch action's model is derived from it's query
+    model = getRef.model(def, querySpec.fromModel[0]);
+
+    actionQuery = composeQuery(def, model, querySpec);
+  }
 
   // Build the desired `ActionDef`.
   return actionFromParts(
@@ -461,7 +474,8 @@ function composeSingleAction(
     model,
     changeset,
     actionHook,
-    responds
+    responds,
+    actionQuery
   );
 }
 
@@ -480,13 +494,13 @@ function ensureCorrectDefaultAction(
   if (endpointKind === "custom-one" || endpointKind === "custom-many") {
     if (
       endpointKind === "custom-many" &&
-      !_.includes<ActionSpec["kind"]>(["create", "execute"], spec.kind)
+      !_.includes<ActionSpec["kind"]>(["create", "execute", "fetch"], spec.kind)
     ) {
       throw new Error(`"custom-many" endpoint does not allow "${spec.kind}" action`);
     }
     if (
       endpointKind === "custom-one" &&
-      !_.includes<ActionSpec["kind"]>(["update", "delete", "execute"], spec.kind)
+      !_.includes<ActionSpec["kind"]>(["update", "delete", "execute", "fetch"], spec.kind)
     ) {
       throw new Error(`"custom-one" endpoint does not allow "${spec.kind}" action`);
     }
@@ -533,8 +547,8 @@ function getActionTargetScope(
 ): ActionTargetScope {
   const path = spec.targetPath;
   if (!path) {
-    // execute action can only have explicit target
-    if (spec.kind === "execute") {
+    // action withut explicit target
+    if (spec.kind === "execute" || spec.kind === "fetch") {
       return "none";
     }
 
@@ -678,16 +692,17 @@ function assignParentContextSetter(
  * Constructs an `ActionDef`.
  */
 function actionFromParts(
-  spec: ActionSpec,
+  spec: SimpleActionSpec,
   targetKind: ActionTargetScope,
   target: TargetDef,
   model: ModelDef,
   changeset: ChangesetDef,
   hook: ActionHookDef | undefined,
-  responds: boolean
+  responds: boolean,
+  query: QueryDef | undefined
 ): ActionDef {
   // FIXME come up with an alias in case of nested actions
-  const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias!;
+  const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias;
 
   switch (spec.kind) {
     case "create": {
@@ -728,6 +743,17 @@ function actionFromParts(
         changeset,
         hook,
         responds,
+      };
+    }
+    case "fetch": {
+      ensureExists(query, `Query is required for "${spec.kind}" action`);
+
+      return {
+        kind: "fetch-one",
+        alias,
+        model: model.name,
+        changeset,
+        query,
       };
     }
   }

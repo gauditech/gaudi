@@ -48,6 +48,13 @@ exports[`API endpoints Org custom create 1`] = `
 }
 `;
 
+exports[`API endpoints Org custom endpoint - fetch action 1`] = `
+{
+  "name": "Fetch me org 1",
+  "repoSlug": "repo1",
+}
+`;
+
 exports[`API endpoints Org custom one endpoint - action with query 1`] = `
 {
   "name": "Org Custom Query One",
