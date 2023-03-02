@@ -2,7 +2,12 @@ import { Express, Request, Response } from "express";
 import _ from "lodash";
 
 import { executeArithmetics } from "../common/arithmetics";
-import { assignNoReferenceValidators, fetchReferenceIds } from "../common/constraintValidation";
+import {
+  ReferenceIdResult,
+  ValidReferenceIdResult,
+  assignNoReferenceValidators,
+  fetchReferenceIds,
+} from "../common/constraintValidation";
 
 import { Vars } from "./vars";
 
@@ -21,9 +26,12 @@ import { endpointGuardHandler } from "@src/runtime/server/middleware";
 import { EndpointConfig } from "@src/runtime/server/types";
 import {
   CreateEndpointDef,
+  CustomManyEndpointDef,
+  CustomOneEndpointDef,
   Definition,
   DeleteEndpointDef,
   EndpointDef,
+  EndpointHttpMethod,
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
@@ -72,6 +80,10 @@ function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig
       return buildUpdateEndpoint(def, endpoint);
     case "delete":
       return buildDeleteEndpoint(def, endpoint);
+    case "custom-one":
+      return buildCustomOneEndpoint(def, endpoint);
+    case "custom-many":
+      return buildCustomManyEndpoint(def, endpoint);
   }
 }
 
@@ -276,7 +288,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
@@ -350,9 +362,9 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             contextVars.set("@auth", result);
           }
 
-          let pids: number[] = [];
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
+          let pids: number[] = [];
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
@@ -370,7 +382,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           console.log("FIELDSET", endpoint.fieldset);
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(endpoint.fieldset, body);
+          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
           await executeActions(
@@ -464,6 +476,191 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
           await tx.commit();
 
           resp.sendStatus(200);
+        } catch (err) {
+          await tx?.rollback();
+
+          errorResponse(err);
+        }
+      },
+    ]),
+  };
+}
+
+/** Build "custom-one" endpoint handler from definition */
+export function buildCustomOneEndpoint(
+  def: Definition,
+  endpoint: CustomOneEndpointDef
+): EndpointConfig {
+  const endpointPath = buildEndpointPath(endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
+
+  return {
+    path: endpointPath.fullPath,
+    method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
+    handlers: _.compact([
+      // prehandlers
+      authenticationHandler(def, { allowAnonymous: true }),
+      // handler
+      async (req: Request, resp: Response) => {
+        let tx;
+        try {
+          console.log("AUTH USER", req.user);
+          tx = await getAppContext(req).dbConn.transaction();
+
+          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              tx,
+              def,
+              queries.authQueryTree,
+              new Vars({ base_id: req.user.base_id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
+
+          // group context and target queries since all are findOne
+          // FIXME implement "SELECT FOR UPDATE"
+          let pids: number[] = [];
+          const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
+          for (const qt of allQueries) {
+            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const result = findOne(results);
+            contextVars.set(qt.alias, result);
+            pids = [result.id];
+          }
+
+          await authorizeEndpoint(endpoint, contextVars);
+
+          // --- run custom actions
+
+          console.log("CTX PARAMS", pathParamVars);
+
+          let validationResult: Record<string, unknown> = {};
+          let referenceIds: ReferenceIdResult[] = [];
+          console.log("FIELDSET", endpoint.fieldset);
+          if (endpoint.fieldset != null) {
+            const body = req.body;
+            console.log("BODY", body);
+
+            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
+            assignNoReferenceValidators(endpoint.fieldset, referenceIds);
+
+            validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+            console.log("Validation result", validationResult);
+          }
+
+          if (endpoint.actions.length > 0) {
+            await executeActions(
+              def,
+              tx,
+              {
+                input: validationResult,
+                vars: contextVars,
+                referenceIds: referenceIds as ValidReferenceIdResult[],
+              },
+              endpoint.actions
+            );
+          }
+
+          await tx.commit();
+
+          resp.sendStatus(204);
+        } catch (err) {
+          await tx?.rollback();
+
+          errorResponse(err);
+        }
+      },
+    ]),
+  };
+}
+
+/** Create "custom-many" endpoint handler from definition */
+export function buildCustomManyEndpoint(
+  def: Definition,
+  endpoint: CustomManyEndpointDef
+): EndpointConfig {
+  const endpointPath = buildEndpointPath(endpoint);
+  const queries = buildEndpointQueries(def, endpoint);
+
+  return {
+    path: endpointPath.fullPath,
+    method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
+    handlers: _.compact([
+      // prehandlers
+      authenticationHandler(def, { allowAnonymous: true }),
+      // handler
+      async (req: Request, resp: Response) => {
+        let tx;
+        try {
+          console.log("AUTH USER", req.user);
+          tx = await getAppContext(req).dbConn.transaction();
+
+          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const contextVars = new Vars();
+
+          if (queries.authQueryTree && req.user) {
+            const results = await executeQueryTree(
+              tx,
+              def,
+              queries.authQueryTree,
+              new Vars({ base_id: req.user.base_id }),
+              []
+            );
+            const result = findOne(results);
+            contextVars.set("@auth", result);
+          }
+
+          let pids: number[] = [];
+          for (const qt of queries.parentContextQueryTrees) {
+            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const result = findOne(results);
+            contextVars.set(qt.alias, result);
+            pids = [result.id];
+          }
+
+          // no target query here because this is endpoint has "many" cardinality, all we know are parents
+
+          await authorizeEndpoint(endpoint, contextVars);
+
+          // --- run custom actions
+
+          console.log("CTX PARAMS", pathParamVars);
+
+          let validationResult: Record<string, unknown> = {};
+          let referenceIds: ReferenceIdResult[] = [];
+          console.log("FIELDSET", endpoint.fieldset);
+          if (endpoint.fieldset != null) {
+            const body = req.body;
+            console.log("BODY", body);
+
+            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
+            assignNoReferenceValidators(endpoint.fieldset, referenceIds);
+
+            validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+            console.log("Validation result", validationResult);
+          }
+
+          if (endpoint.actions.length > 0) {
+            await executeActions(
+              def,
+              tx,
+              {
+                input: validationResult,
+                vars: contextVars,
+                referenceIds: referenceIds as ValidReferenceIdResult[],
+              },
+              endpoint.actions
+            );
+          }
+
+          await tx.commit();
+
+          resp.sendStatus(204);
         } catch (err) {
           await tx?.rollback();
 

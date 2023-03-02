@@ -11,12 +11,11 @@ import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { compile, compose, parse } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
-import { importHooks } from "@src/runtime/hooks";
 import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authentication";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
-import { bindAppContextHandler, errorHandler } from "@src/runtime/server/middleware";
+import { bindAppContextHandler, errorHandler, requestLogger } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
@@ -74,9 +73,6 @@ export function createApiTestSetup(
     console.info(`  created output folder ${outputFolder}`);
     const def = buildDefinition(blueprint, outputFolder);
     console.info(`  created definition`);
-
-    // setup external hooks
-    await importHooks("./src/e2e/api/hooks");
 
     // setup DB
     await createDbSchema(context.dbConn, schema);
@@ -236,6 +232,7 @@ async function createAppServer(
   app.use(bindAppContextHandler(app, ctx));
 
   app.use(json());
+  app.use(requestLogger);
 
   configure(app);
 

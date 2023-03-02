@@ -13,8 +13,6 @@ export type RuntimeConfig = {
   definitionPath: string;
   /** Directory where runtime should output generated files */
   outputFolder: string;
-  /** Root folder for hooks */
-  hookFolder: string;
   /** DB connection URL */
   dbConnUrl: string;
   /** DB default schema */
@@ -32,12 +30,11 @@ export function readConfig(configPath?: string): RuntimeConfig {
       : 3001;
   const definitionPath = process.env.GAUDI_RUNTIME_DEFINITION_PATH || "definition.json";
   const outputFolder = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
-  const hookFolder = process.env.GAUDI_RUNTIME_HOOK_PATH || ".";
 
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
   const dbSchema = process.env.GAUDI_DATABASE_SCHEMA || "public";
 
-  return { host, port, definitionPath, outputFolder, hookFolder, dbConnUrl, dbSchema };
+  return { host, port, definitionPath, outputFolder, dbConnUrl, dbSchema };
 }
 
 /** Load definition file and return it's content */

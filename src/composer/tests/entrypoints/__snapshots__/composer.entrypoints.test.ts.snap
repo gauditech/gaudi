@@ -37,6 +37,29 @@ exports[`entrypoint adds validators into fieldsets 1`] = `
 }
 `;
 
+exports[`entrypoint collects dependencies 1`] = `
+{
+  "actionSelects": [
+    [
+      "id",
+      "name",
+    ],
+    [],
+  ],
+  "orgSelect": [
+    "id",
+    "name",
+    "desc",
+    "repoCount",
+    "coef",
+  ],
+  "repoSelect": [
+    "id",
+    "name",
+  ],
+}
+`;
+
 exports[`entrypoint composes basic example 1`] = `
 [
   {
@@ -504,6 +527,119 @@ exports[`entrypoint composes basic example 1`] = `
               "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
+            },
+          },
+          {
+            "actions": [
+              {
+                "alias": "$repo",
+                "changeset": [
+                  {
+                    "name": "title",
+                    "setter": {
+                      "fieldsetAccess": [
+                        "title",
+                      ],
+                      "kind": "fieldset-input",
+                      "required": false,
+                      "type": "text",
+                    },
+                  },
+                  {
+                    "name": "org_id",
+                    "setter": {
+                      "fieldsetAccess": [
+                        "org_id",
+                      ],
+                      "kind": "fieldset-input",
+                      "required": false,
+                      "type": "integer",
+                    },
+                  },
+                ],
+                "filter": undefined,
+                "kind": "update-one",
+                "model": "Repo",
+                "select": [],
+                "targetPath": [
+                  "repo",
+                ],
+              },
+            ],
+            "authSelect": [],
+            "authorize": undefined,
+            "fieldset": {
+              "kind": "record",
+              "nullable": false,
+              "record": {
+                "org_id": {
+                  "kind": "field",
+                  "nullable": false,
+                  "required": false,
+                  "type": "integer",
+                  "validators": [],
+                },
+                "title": {
+                  "kind": "field",
+                  "nullable": false,
+                  "required": false,
+                  "type": "text",
+                  "validators": [],
+                },
+              },
+            },
+            "kind": "custom-one",
+            "method": "PATCH",
+            "parentContext": [
+              {
+                "alias": "$target_0",
+                "identifyWith": {
+                  "name": "slug",
+                  "paramName": "org_slug",
+                  "refKey": "Org.slug",
+                  "type": "text",
+                },
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "refKey": "Org",
+                "retType": "Org",
+                "select": [],
+              },
+            ],
+            "path": "somePath",
+            "response": undefined,
+            "target": {
+              "alias": "repo",
+              "identifyWith": {
+                "name": "id",
+                "paramName": "repo_id",
+                "refKey": "Repo.id",
+                "type": "integer",
+              },
+              "kind": "relation",
+              "name": "repos",
+              "namePath": [
+                "Org",
+                "repos",
+              ],
+              "refKey": "Org.repos",
+              "retType": "Repo",
+              "select": [
+                {
+                  "alias": "id",
+                  "kind": "field",
+                  "name": "id",
+                  "namePath": [
+                    "Org",
+                    "repos",
+                    "id",
+                  ],
+                  "refKey": "Repo.id",
+                },
+              ],
             },
           },
         ],

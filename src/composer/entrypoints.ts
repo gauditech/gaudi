@@ -4,7 +4,13 @@ import { composeActionBlock, getInitialContext } from "./actions";
 import { composeExpression } from "./models";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual } from "@src/common/utils";
+import {
+  assertUnreachable,
+  ensureEmpty,
+  ensureEqual,
+  ensureExists,
+  ensureUnique,
+} from "@src/common/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -12,7 +18,10 @@ import {
   Definition,
   DeleteOneAction,
   EndpointDef,
+  EndpointHttpMethod,
+  EndpointType,
   EntrypointDef,
+  FieldSetter,
   FieldSetterReferenceValue,
   FieldsetDef,
   FieldsetFieldDef,
@@ -23,7 +32,7 @@ import {
   TargetWithSelectDef,
   TypedExprDef,
 } from "@src/types/definition";
-import { EntrypointSpec } from "@src/types/specification";
+import { EndpointSpec, EntrypointSpec } from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
@@ -179,11 +188,19 @@ function processEndpoints(
   const parentAuthorizes = parents.map((p) => p.authorize.expr);
   const parentAuthorizeDeps = parents.flatMap((p) => p.authorize.deps);
 
+  // ensure there are no duplicate custom endpoint paths on the same method
+  ensureUnique(
+    entrySpec.endpoints.filter((e) => e.type === "custom").map((ep) => `${ep.method}-${ep.path}`),
+    `Custom endpoints on the same HTTP method must have unique paths in one entrypoint ("${entrySpec.name}")`
+  );
+
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    const rawActions = composeActionBlock(def, endSpec.action ?? [], targets, endSpec.type);
+    const endpointType = mapEndpointSpecToDefType(endSpec);
+    const rawActions = composeActionBlock(def, endSpec.actions ?? [], targets, endpointType);
     const actionDeps = collectActionDeps(def, rawActions);
+
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
-    const authorizeContext = getInitialContext(def, targets, endSpec.type);
+    const authorizeContext = getInitialContext(def, targets, endpointType);
     const currentAuthorize = endSpec.authorize
       ? composeExpression(def, endSpec.authorize, [], authorizeContext)
       : undefined;
@@ -199,8 +216,14 @@ function processEndpoints(
     const target = _.last(targetsWithSelect)!;
     const authSelect = getAuthSelect(def, selectDeps);
 
-    switch (endSpec.type) {
+    switch (endpointType) {
       case "get": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         return {
           kind: "get",
           authSelect,
@@ -212,6 +235,12 @@ function processEndpoints(
         };
       }
       case "list": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         return {
           kind: "list",
           authSelect,
@@ -223,6 +252,12 @@ function processEndpoints(
         };
       }
       case "create": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "create",
@@ -236,6 +271,12 @@ function processEndpoints(
         };
       }
       case "update": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "update",
@@ -249,6 +290,12 @@ function processEndpoints(
         };
       }
       case "delete": {
+        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
+        ensureEmpty(
+          endSpec.method,
+          `Property "method" is not allowed for "${endpointType}" endpoints`
+        );
+
         return {
           kind: "delete",
           actions,
@@ -259,8 +306,87 @@ function processEndpoints(
           response: undefined,
         };
       }
+      case "custom-one": {
+        ensureExists(endSpec.path, `Property "path" is required for custom endpoints`);
+        ensureExists(endSpec.method, `Property "method" is required for custom endpoints`);
+
+        const fieldset = isMethodWithFieldset(endSpec.method)
+          ? fieldsetFromActions(def, actions)
+          : undefined;
+
+        return {
+          kind: "custom-one",
+          method: endSpec.method,
+          path: endSpec.path,
+          actions,
+          parentContext,
+          target,
+          authSelect,
+          authorize,
+          fieldset,
+          response: undefined,
+        };
+      }
+      case "custom-many": {
+        ensureExists(endSpec.path, `Property "path" is required for custom endpoints`);
+        ensureExists(endSpec.method, `Property "method" is required for custom endpoints`);
+
+        const fieldset = isMethodWithFieldset(endSpec.method)
+          ? fieldsetFromActions(def, actions)
+          : undefined;
+
+        return {
+          kind: "custom-many",
+          method: endSpec.method,
+          path: endSpec.path,
+          actions,
+          parentContext,
+          target: _.omit(target, "identifyWith"),
+          authSelect,
+          authorize,
+          fieldset,
+          response: undefined,
+        };
+      }
+      default: {
+        assertUnreachable(endpointType);
+      }
     }
   });
+}
+
+function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
+  switch (method) {
+    case "GET":
+    case "DELETE":
+      return false;
+    case "POST":
+    case "PATCH":
+      return true;
+    default:
+      assertUnreachable(method);
+  }
+}
+
+function mapEndpointSpecToDefType(endSpec: EndpointSpec): EndpointType {
+  if (endSpec.type === "custom") {
+    ensureExists(endSpec.cardinality, `Property "cardinality" is required for custom endpoints`);
+
+    if (endSpec.cardinality === "one") {
+      return "custom-one";
+    } else if (endSpec.cardinality === "many") {
+      return "custom-many";
+    } else {
+      assertUnreachable(endSpec.cardinality);
+    }
+  } else {
+    ensureEmpty(
+      endSpec.cardinality,
+      `Property "cardinality" is not allowed for "${endSpec.type}" endpoints`
+    );
+
+    return endSpec.type;
+  }
 }
 
 export function processSelect(
@@ -311,7 +437,7 @@ export function processSelect(
           alias: name,
           namePath: [...namePath, name],
           args: ref.args,
-          code: ref.code,
+          hook: ref.hook,
         };
       } else if (ref.kind === "computed") {
         return {
@@ -454,23 +580,28 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     .compact()
     .value();
   // collect all targets
-  const setterTargets = nonDeleteActions.flatMap((a) => {
-    return a.changeset.flatMap(({ setter: operation }) => {
-      switch (operation.kind) {
-        case "reference-value": {
-          return [operation.target];
-        }
-        case "fieldset-hook": {
-          return operation.args.flatMap(({ setter: operation }) =>
-            operation.kind === "reference-value" ? [operation.target] : []
-          );
-        }
-        default: {
-          return [];
-        }
+
+  function collectReferenceValues(setter: FieldSetter): FieldSetterReferenceValue[] {
+    switch (setter.kind) {
+      case "reference-value": {
+        return [setter];
       }
-    });
+      case "function": {
+        return setter.args.flatMap((setter) => collectReferenceValues(setter));
+      }
+      case "fieldset-hook": {
+        return setter.args.flatMap(({ setter }) => collectReferenceValues(setter));
+      }
+      default: {
+        return [];
+      }
+    }
+  }
+
+  const referenceValues = nonDeleteActions.flatMap((a) => {
+    return a.changeset.flatMap(({ setter }) => collectReferenceValues(setter));
   });
+  const setterTargets = referenceValues.map((rv) => rv.target);
   return [...setterTargets, ...targetPaths];
 }
 
@@ -505,11 +636,11 @@ function wrapTargetsWithSelect(
   deps: SelectDep[]
 ): TargetWithSelectDef[] {
   return targets.map((target) => {
-    const paths = uniqueNamePaths(
+    const targetPaths = uniqueNamePaths(
       deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
     );
-    const model = getRef.model(def, target.retType);
-    const select = pathsToSelectDef(def, model, paths, target.namePath);
+    const targetModel = getRef.model(def, target.retType);
+    const select = pathsToSelectDef(def, targetModel, targetPaths, target.namePath);
     return { ...target, select };
   });
 }
@@ -524,15 +655,19 @@ export function wrapActionsWithSelect(
   actions: ActionDef[],
   deps: SelectDep[]
 ): ActionDef[] {
-  return actions
-    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
-    .map((a): ActionDef => {
-      const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
-      const model = getRef.model(def, a.model);
+  return (
+    actions
+      // .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+      .map((a): ActionDef => {
+        if (a.kind === "delete-one") return a;
 
-      const select = pathsToSelectDef(def, model, paths, [a.alias]);
-      return { ...a, select };
-    });
+        const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
+        const model = getRef.model(def, a.model);
+
+        const select = pathsToSelectDef(def, model, paths, [a.alias]);
+        return { ...a, select };
+      })
+  );
 }
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
@@ -544,6 +679,10 @@ function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
   return pathsToSelectDef(def, model, paths, [model.name]);
 }
 
+/**
+ * Accepts a model, paths related to a model, model namespace in a query,
+ * and constructs SelectDef for the paths given.
+ */
 function pathsToSelectDef(
   def: Definition,
   model: ModelDef,
@@ -554,21 +693,38 @@ function pathsToSelectDef(
     .map((p) => p[0])
     .uniq()
     .value();
+
   return direct.map((name): SelectItem => {
     // what is name?
-    const ref = getRef(def, model.name, name, ["query", "reference", "relation", "field"]);
+    const ref = getRef(def, model.name, name, [
+      "query",
+      "reference",
+      "relation",
+      "field",
+      "aggregate",
+      "computed",
+    ]);
     const relatedPaths = paths
       .filter((p) => p[0] === name)
       .map(_.tail)
       .filter((p) => p.length > 0);
+
     switch (ref.kind) {
-      case "field": {
-        // ensure leaf
+      case "field":
+      case "computed":
+      case "aggregate": {
+        // ensure the ref is the leaf of the path
+        // For a path Org.name.foo.bar, example error would be:
+        //   Org.name is a field, can't access foo.bar
         if (relatedPaths.length) {
-          throw new Error(`Field path is not root!`);
+          throw new Error(
+            `Path ${[...namespace, name].join(".")} is a leaf, can't access ${relatedPaths.join(
+              "."
+            )}`
+          );
         }
         return {
-          kind: "field",
+          kind: ref.kind,
           alias: name,
           name,
           refKey: ref.refKey,

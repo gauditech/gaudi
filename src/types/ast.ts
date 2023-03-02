@@ -2,7 +2,7 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST;
+export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST | ExecutionRuntimeAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -109,14 +109,20 @@ export type SelectAST = WithContext<{
 }>;
 
 export type EndpointAST = WithContext<{
-  type: EndpointType;
+  type: EndpointTypeAST;
   body: EndpointBodyAST[];
 }>;
 
-export type EndpointType = "list" | "get" | "create" | "update" | "delete";
+export type EndpointTypeAST = "list" | "get" | "create" | "update" | "delete" | "custom";
+export type EndpointCardinality = "one" | "many";
+export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 export type EndpointBodyAST = WithContext<
-  { kind: "action"; body: ActionBodyAST[] } | { kind: "authorize"; expression: ExpAST }
+  | { kind: "action-block"; atoms: ActionBodyAST[] }
+  | { kind: "authorize"; expression: ExpAST }
+  | { kind: "cardinality"; value: EndpointCardinality }
+  | { kind: "path"; value: string }
+  | { kind: "method"; value: EndpointMethod }
 >;
 
 export type ActionKindAST = "create" | "update" | "delete";
@@ -125,16 +131,33 @@ export type ActionBodyAST = WithContext<{
   kind: ActionKindAST;
   target?: string[];
   alias?: string;
-  body: ActionAtomBodyAST[];
+  atoms: ActionAtomAST[];
 }>;
 
-export type ActionAtomBodyAST = WithContext<
+export type VirtualInputAST = WithContext<{
+  kind: "virtual-input";
+  name: string;
+  atoms: VirtualInputAtomAST[];
+}>;
+
+export type VirtualInputAtomAST = WithContext<
+  | { kind: "optional" }
+  | { kind: "nullable" }
+  | VirtualInputAtomASTType
+  | VirtualInputAtomASTValidator
+>;
+
+export type VirtualInputAtomASTType = { kind: "type"; type: string };
+export type VirtualInputAtomASTValidator = { kind: "validate"; validators: ValidatorAST[] };
+
+export type ActionAtomAST = WithContext<
   | {
       kind: "set";
       target: string;
       set: { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
     }
   | { kind: "reference"; target: string; through: string }
+  | VirtualInputAST
   | { kind: "input"; fields: InputFieldAST[] }
   | { kind: "action"; body: ActionBodyAST }
   | { kind: "deny"; fields: "*" | string[] }
@@ -162,6 +185,7 @@ export type HookBodyAST = WithContext<
   | { kind: "returnType"; type: string }
   | { kind: "source"; target: string; file: string }
   | { kind: "inline"; inline: string }
+  | { kind: "execution-runtime"; name: string }
 >;
 
 export type HookArgValueAST = WithContext<
@@ -228,4 +252,16 @@ export type RepeaterAtomAST = WithContext<
   | { kind: "fixed"; value: number }
   | { kind: "start"; value: number }
   | { kind: "end"; value: number }
+>;
+
+// ----- Execution Runtime
+
+export type ExecutionRuntimeAST = WithContext<{
+  kind: "execution-runtime";
+  name: string;
+  body: ExecutionRuntimeBodyAtomAST[];
+}>;
+
+export type ExecutionRuntimeBodyAtomAST = WithContext<
+  { kind: "sourcePath"; value: string } | { kind: "default" }
 >;

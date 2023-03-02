@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Populator), ";">
+    = NewlineBody<(Model | Entrypoint | Populator | ExecutionRuntime), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -132,10 +132,29 @@ Gaudi {
     | "create"
     | "update"
     | "delete"
+    | "custom"
+
+  EndpointMethod
+   = "GET"
+   | "POST"
+   | "PATCH"
+   | "DELETE"
+
+  EndpointCardinality = "one" | "many"
 
   EndpointBody
-    = "action" "{" NewlineBody<ActionBody, ";"> "}" -- action
-    | "authorize" "{" QueryExp "}" -- authorize
+    = "action" "{" NewlineBody<ActionBody, ";"> "}"     -- action_block
+    | "authorize" "{" QueryExp "}"                      -- authorize
+    | "cardinality" EndpointCardinality                 -- cardinality
+    | "method" EndpointMethod                           -- method
+    | "path" string                                     -- path
+
+
+  VirtualInputBody
+    = "type" identifier                                       -- type
+    | "nullable"                                              -- nullable
+    | "optional"                                              -- optional
+    | "validate" "{" NonemptyNewlineBody<Validator, ","> "}"  -- validate
 
 
   ActionKind = "create" | "update" | "delete"
@@ -146,12 +165,13 @@ Gaudi {
 
 
   ActionAtomBody
-    = "set" identifier Hook                               -- set_hook
-    | "set" identifier QueryExp                           -- set_expression
-    | "reference" identifier "through" identifier         -- reference
-    | "input" "{" NewlineBody<ActionInputAtom, ","> "}"   -- input
-    | "deny" DenyList                                     -- deny
-    | ActionBody                                          -- nested_action
+    = "set" identifier Hook                                                         -- set_hook
+    | "set" identifier QueryExp                                                     -- set_expression
+    | "reference" identifier "through" identifier                                   -- reference
+    | "virtual input" identifier "{" NonemptyNewlineBody<VirtualInputBody, ","> "}" -- virtual_input
+    | "input" "{" NewlineBody<ActionInputAtom, ","> "}"                             -- input
+    | "deny" DenyList                                                               -- deny
+    | ActionBody                                                                    -- nested_action
 
   ActionInputAtom
     = identifier "{" NewlineBody<ActionInputOpt, ","> "}" -- field_with_opts
@@ -180,6 +200,7 @@ Gaudi {
   | "returns" identifier                -- return_type
   | "source" identifier "from" string   -- source
   | "inline" multiLineString            -- inline
+  | "runtime" identifier                -- executionRuntime
 
   HookQuery
     = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"
@@ -267,4 +288,16 @@ Gaudi {
 
   RepeaterRangeAtom
     = ("start" | "end") integer -- limits
+
+
+  // ********************
+  // Execution Runtime
+  // ********************
+
+  ExecutionRuntime
+   = "runtime" identifier "{" NonemptyNewlineBody<ExecutionRuntimeBody, ","> "}"
+
+  ExecutionRuntimeBody
+   = "sourcePath" string  -- sourcePath
+   | "default"            -- default
 }

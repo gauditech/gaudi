@@ -1,4 +1,12 @@
-import { BinaryOperator, EndpointType, LiteralValue, SelectAST, UnaryOperator } from "./ast";
+import {
+  BinaryOperator,
+  EndpointCardinality,
+  EndpointMethod,
+  EndpointTypeAST,
+  LiteralValue,
+  SelectAST,
+  UnaryOperator,
+} from "./ast";
 
 import { WithContext } from "@src/common/error";
 
@@ -6,6 +14,7 @@ export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
+  runtimes: ExecutionRuntimeSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -89,9 +98,12 @@ export type EntrypointSpec = WithContext<{
 }>;
 
 export type EndpointSpec = WithContext<{
-  type: EndpointType;
-  action?: ActionSpec[];
+  type: EndpointTypeAST;
+  actions?: ActionSpec[];
   authorize?: ExpSpec;
+  cardinality?: EndpointCardinality;
+  method?: EndpointMethod;
+  path?: string;
 }>;
 
 export type ActionSpec = WithContext<{
@@ -106,11 +118,12 @@ export type ActionAtomSpec = WithContext<
   | ActionAtomSpecRefThrough
   | ActionAtomSpecAction
   | ActionAtomSpecDeny
-  | ActionAtomSpecInputList
+  | ActionAtomSpecVirtualInput
   | ActionAtomSpecInput
+  | ActionAtomSpecInputList
 >;
 
-export type HookCode =
+export type HookCodeSpec =
   | { kind: "inline"; inline: string }
   | { kind: "source"; target: string; file: string };
 
@@ -125,18 +138,26 @@ export type ActionAtomSpecSet = {
 export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
-export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
+export type ActionAtomSpecVirtualInput = {
+  kind: "virtual-input";
+  name: string;
+  type: string;
+  nullable: boolean;
+  optional: boolean;
+  validators: ValidatorSpec[];
+};
 export type ActionAtomSpecInput = { kind: "input"; fieldSpec: InputFieldSpec };
-
+export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
 export type InputFieldSpec = {
   name: string;
   optional: boolean;
   default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
 
-export type BaseHookSpec = WithContext<{
+export type HookSpec = WithContext<{
   name?: string;
-  code: HookCode;
+  runtimeName?: string;
+  code: HookCodeSpec;
 }>;
 
 export type RepeaterSpec = WithContext<
@@ -164,15 +185,23 @@ export type PopulateSetterSpec = WithContext<{
   set: { kind: "hook"; hook: ActionHookSpec } | { kind: "expression"; exp: ExpSpec };
 }>;
 
-export type FieldValidatorHookSpec = BaseHookSpec & {
+export type FieldValidatorHookSpec = HookSpec & {
   arg?: string;
 };
 
-export type ModelHookSpec = BaseHookSpec & {
+export type ModelHookSpec = HookSpec & {
   name: string;
   args: { name: string; query: QuerySpec }[];
 };
 
-export type ActionHookSpec = BaseHookSpec & {
+export type ActionHookSpec = HookSpec & {
   args: Record<string, { kind: "expression"; exp: ExpSpec }>;
 };
+
+// ----- Execution Runtime
+
+export type ExecutionRuntimeSpec = WithContext<{
+  name: string;
+  default?: boolean;
+  sourcePath: string;
+}>;

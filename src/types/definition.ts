@@ -1,5 +1,4 @@
 import { BinaryOperator } from "./ast";
-import { HookCode } from "./specification";
 
 export type Definition = {
   auth?: AuthDef;
@@ -7,6 +6,7 @@ export type Definition = {
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
   populators: PopulatorDef[];
+  runtimes: ExecutionRuntimeDef[];
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -108,7 +108,7 @@ export type ModelHookDef = {
   refKey: string;
   name: string;
   args: { name: string; query: QueryDef }[];
-  code: HookCode;
+  hook: HookDef;
 };
 
 type NaiveType = {
@@ -163,13 +163,24 @@ export type TargetDef = {
 
 export type TargetWithSelectDef = TargetDef & { select: SelectDef };
 
+export type EndpointType =
+  | "list"
+  | "get"
+  | "create"
+  | "update"
+  | "delete"
+  | "custom-one"
+  | "custom-many";
+export type EndpointHttpMethod = "GET" | "POST" | /*"PUT" |*/ "PATCH" | "DELETE";
+
 export type EndpointDef =
   | CreateEndpointDef
   | ListEndpointDef
   | GetEndpointDef
   | UpdateEndpointDef
-  | DeleteEndpointDef;
-// | CustomEndpointDef;
+  | DeleteEndpointDef
+  | CustomOneEndpointDef
+  | CustomManyEndpointDef;
 
 export type ListEndpointDef = {
   kind: "list";
@@ -223,15 +234,30 @@ export type DeleteEndpointDef = {
   response: undefined;
 };
 
-type CustomEndpointDef = {
-  kind: "custom";
+export type CustomOneEndpointDef = {
+  kind: "custom-one";
   parentContext: TargetWithSelectDef[];
-  target: null;
-  method: "post" | "get" | "put" | "delete";
+  target: TargetWithSelectDef;
+  method: EndpointHttpMethod;
+  path: string;
   actions: ActionDef[];
-  respondWith: {
-    // TODO
-  };
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
+  fieldset?: FieldsetDef;
+  response: undefined;
+};
+
+export type CustomManyEndpointDef = {
+  kind: "custom-many";
+  parentContext: TargetWithSelectDef[];
+  target: Omit<TargetWithSelectDef, "identifyWith">;
+  method: EndpointHttpMethod;
+  path: string;
+  actions: ActionDef[];
+  authSelect: SelectDef;
+  authorize: TypedExprDef;
+  fieldset?: FieldsetDef;
+  response: undefined;
 };
 
 export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
@@ -270,7 +296,7 @@ export type SelectHookItem = {
   alias: string;
   namePath: string[];
   args: { name: string; query: QueryDef }[];
-  code: HookCode;
+  hook: HookDef;
 };
 
 export type DeepSelectItem = {
@@ -381,7 +407,7 @@ export interface IsTextEqual extends IValidatorDef {
 export interface HookValidator {
   name: "hook";
   arg?: string;
-  code: HookCode;
+  hook: HookDef;
 }
 export interface NoReferenceValidator {
   name: "noReference";
@@ -435,10 +461,20 @@ export type FieldSetterReferenceValue = {
 
 export type FieldSetterInput = {
   kind: "fieldset-input";
-  type: FieldDef["type"];
+  type: FieldType;
   fieldsetAccess: string[];
   required: boolean;
-  default?: LiteralValueDef | FieldSetterReferenceValue;
+  // FIXME implement default
+  // default?: LiteralValueDef | FieldSetterReferenceValue;
+};
+
+export type FieldSetterVirtualInput = {
+  kind: "fieldset-virtual-input";
+  type: FieldType;
+  fieldsetAccess: string[];
+  required: boolean;
+  nullable: boolean;
+  validators: ValidatorDef[];
 };
 
 export type FieldSetterReferenceInput = {
@@ -494,7 +530,7 @@ export type FieldSetterContextReference = {
 
 export type FieldSetterHook = {
   kind: "fieldset-hook";
-  code: HookCode;
+  hook: HookDef;
   args: ChangesetDef;
 };
 
@@ -503,8 +539,27 @@ export type FieldSetter =
   | LiteralValueDef
   | FieldSetterReferenceValue
   | FieldSetterInput
+  | FieldSetterVirtualInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
   | FieldSetterHook
   | FieldSetterFunction
   | FieldSetterContextReference;
+
+export type HookDef = {
+  runtimeName: string;
+  code: HookCodeDef;
+};
+
+export type HookCodeDef =
+  | { kind: "inline"; inline: string }
+  | { kind: "source"; target: string; file: string };
+
+export type ExecutionRuntimeDef = {
+  name: string;
+  type: RuntimeEngineType;
+  default: boolean;
+  sourcePath: string;
+};
+
+export type RuntimeEngineType = "node";

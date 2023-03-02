@@ -1,13 +1,16 @@
 import _ from "lodash";
 
 import { CompilerError } from "@src/common/error";
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, ensureExists } from "@src/common/utils";
 import {
   AST,
   ActionBodyAST,
   ComputedAST,
   EndpointAST,
+  EndpointCardinality,
+  EndpointMethod,
   EntrypointAST,
+  ExecutionRuntimeAST,
   ExpAST,
   FieldAST,
   HookAST,
@@ -20,19 +23,24 @@ import {
   ReferenceAST,
   RelationAST,
   ValidatorAST,
+  VirtualInputAST,
+  VirtualInputAtomASTType,
+  VirtualInputAtomASTValidator,
 } from "@src/types/ast";
 import {
   ActionAtomSpec,
+  ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
-  BaseHookSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
+  ExecutionRuntimeSpec,
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
-  HookCode,
+  HookCodeSpec,
+  HookSpec,
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,
@@ -66,6 +74,7 @@ function compileField(field: FieldAST): FieldSpec {
     } else if (b.kind === "default") {
       default_ = b.default;
     } else if (b.kind === "validate") {
+      // FIXME multiple `validate` blocks override the previous ones
       validators = b.validators.map(compileValidator);
     }
   });
@@ -271,7 +280,7 @@ function compileModel(model: ModelAST): ModelSpec {
 }
 
 function compileAction(action: ActionBodyAST): ActionSpec {
-  const atoms = action.body.map((a): ActionAtomSpec => {
+  const atoms = action.atoms.map((a): ActionAtomSpec => {
     switch (a.kind) {
       case "action": {
         return { kind: "action", body: compileAction(a.body) };
@@ -291,6 +300,9 @@ function compileAction(action: ActionBodyAST): ActionSpec {
             return assertUnreachable(a.set);
           }
         }
+      }
+      case "virtual-input": {
+        return compileVirtualInput(a);
       }
       case "input": {
         const fields = a.fields.map((f): InputFieldSpec => {
@@ -324,21 +336,59 @@ function compileAction(action: ActionBodyAST): ActionSpec {
   return { kind: action.kind, targetPath: action.target, actionAtoms: atoms, alias: action.alias };
 }
 
+function compileVirtualInput(input: VirtualInputAST): ActionAtomSpecVirtualInput {
+  const validators = input.atoms
+    .filter((a): a is VirtualInputAtomASTValidator => a.kind === "validate")
+    .flatMap((validate) => validate.validators)
+    .map(_.unary(compileValidator));
+
+  const type = input.atoms.find((a): a is VirtualInputAtomASTType => a.kind === "type");
+  if (type === undefined) {
+    throw new CompilerError(`Virtual field must specify it's type`, input);
+  }
+
+  return {
+    kind: "virtual-input",
+    name: input.name,
+    type: type.type,
+    nullable: !!input.atoms.find((a) => a.kind === "nullable"),
+    optional: !!input.atoms.find((a) => a.kind === "optional"),
+    validators,
+  };
+}
+
 function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
-  let action: ActionSpec[] | undefined;
+  let actions: ActionSpec[] = [];
   let authorize: ExpSpec | undefined;
+  let cardinality: EndpointCardinality | undefined;
+  let method: EndpointMethod | undefined;
+  let path: string | undefined;
 
   endpoint.body.map((b) => {
-    if (b.kind === "action") {
-      action = b.body.map(compileAction);
+    if (b.kind === "action-block") {
+      actions = b.atoms.map(compileAction);
     } else if (b.kind === "authorize") {
       authorize = compileQueryExp(b.expression);
+    } else if (b.kind === "cardinality") {
+      cardinality = b.value;
+    } else if (b.kind === "method") {
+      method = b.value;
+    } else if (b.kind === "path") {
+      path = b.value;
     } else {
       assertUnreachable(b);
     }
   });
 
-  return { type: endpoint.type, action, authorize, interval: endpoint.interval };
+  return {
+    type: endpoint.type,
+    actions,
+    authorize,
+    method,
+    path,
+    cardinality,
+    interval: endpoint.interval,
+  };
 }
 
 function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
@@ -383,15 +433,18 @@ function compileEntrypoint(entrypoint: EntrypointAST): EntrypointSpec {
   };
 }
 
-function compileBaseHook(hook: HookAST): BaseHookSpec {
+function compileBaseHook(hook: HookAST): HookSpec {
   const name = hook.name;
-  let code: HookCode | undefined;
+  let code: HookCodeSpec | undefined;
+  let runtimeName: string | undefined;
 
   hook.body.forEach((b) => {
     if (b.kind === "inline") {
       code = { kind: "inline", inline: b.inline };
     } else if (b.kind === "source") {
       code = { kind: "source", target: b.target, file: b.file };
+    } else if (b.kind === "execution-runtime") {
+      runtimeName = b.name;
     }
   });
 
@@ -401,6 +454,7 @@ function compileBaseHook(hook: HookAST): BaseHookSpec {
 
   return {
     name,
+    runtimeName,
     code,
     interval: hook.interval,
   };
@@ -567,10 +621,33 @@ function compilePopulate(populate: PopulateAST): PopulateSpec {
   };
 }
 
+function compileExecutionRuntime(runtime: ExecutionRuntimeAST): ExecutionRuntimeSpec {
+  const name = runtime.name;
+  let sourcePath: string | undefined;
+  let isDefault: boolean | undefined;
+
+  runtime.body.forEach((atom) => {
+    const kind = atom.kind;
+    if (kind === "sourcePath") {
+      sourcePath = atom.value;
+    } else if (kind === "default") {
+      isDefault = true;
+    } else {
+      assertUnreachable(kind);
+    }
+  });
+
+  ensureExists(name, "Runtime name cannot be empty");
+  ensureExists(sourcePath, "Runtime source path cannot be empty");
+
+  return { name, default: isDefault, sourcePath };
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
   const populators: PopulatorSpec[] = [];
+  const runtimes: ExecutionRuntimeSpec[] = [];
 
   input.map((definition) => {
     const kind = definition.kind;
@@ -580,6 +657,8 @@ export function compile(input: AST): Specification {
       entrypoints.push(compileEntrypoint(definition));
     } else if (kind === "populator") {
       populators.push(compilePopulator(definition));
+    } else if (kind === "execution-runtime") {
+      runtimes.push(compileExecutionRuntime(definition));
     } else {
       assertUnreachable(kind);
     }
@@ -587,5 +666,5 @@ export function compile(input: AST): Specification {
 
   checkMaxOneAuthModel(models);
 
-  return { models, entrypoints, populators };
+  return { models, entrypoints, populators, runtimes };
 }

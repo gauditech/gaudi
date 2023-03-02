@@ -5,7 +5,7 @@ import { executeArithmetics } from "./arithmetics";
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { executeHook } from "@src/runtime/hooks";
-import { ChangesetDef, FieldDef, FieldSetter } from "@src/types/definition";
+import { ChangesetDef, Definition, FieldDef, FieldSetter } from "@src/types/definition";
 
 type Changeset = Record<string, unknown>;
 
@@ -13,6 +13,7 @@ type Changeset = Record<string, unknown>;
  * Build result record from given action changeset rules and give context (source) inputs.
  */
 export async function buildChangeset(
+  def: Definition,
   actionChangsetDefinition: ChangesetDef,
   actionContext: ActionContext,
   // `changesetContext` is used for hooks, to be able to pass the "parent context" changeset
@@ -25,6 +26,7 @@ export async function buildChangeset(
       case "literal": {
         return formatFieldValue(setter.value, setter.type);
       }
+      case "fieldset-virtual-input":
       case "fieldset-input": {
         return formatFieldValue(
           getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
@@ -35,8 +37,8 @@ export async function buildChangeset(
         return actionContext.vars.get(setter.target.alias, setter.target.access);
       }
       case "fieldset-hook": {
-        const args = await buildChangeset(setter.args, actionContext, changeset);
-        return await executeHook(setter.code, args);
+        const args = await buildChangeset(def, setter.args, actionContext, changeset);
+        return await executeHook(def, setter.hook, args);
       }
       case "changeset-reference": {
         /**
@@ -85,6 +87,17 @@ export async function buildChangeset(
       }
       default: {
         changeset[name] = await getValue(setter);
+      }
+    }
+  }
+
+  /**
+   * Remove all the virtual fields' values from the changeset.
+   */
+  for (const { name, setter } of actionChangsetDefinition) {
+    switch (setter.kind) {
+      case "fieldset-virtual-input": {
+        delete changeset[name];
       }
     }
   }

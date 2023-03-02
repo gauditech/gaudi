@@ -588,9 +588,12 @@ exports[`populator composer succeeds for simple populator 1`] = `
                     },
                   },
                 ],
-                "code": {
-                  "inline": ""Description of" + name",
-                  "kind": "inline",
+                "hook": {
+                  "code": {
+                    "inline": ""Description of" + name",
+                    "kind": "inline",
+                  },
+                  "runtimeName": "MyRuntime",
                 },
                 "kind": "fieldset-hook",
               },
@@ -667,9 +670,12 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
                     },
                   },
                 ],
-                "code": {
-                  "inline": ""Org " + oIter.current",
-                  "kind": "inline",
+                "hook": {
+                  "code": {
+                    "inline": ""Org " + oIter.current",
+                    "kind": "inline",
+                  },
+                  "runtimeName": "MyRuntime",
                 },
                 "kind": "fieldset-hook",
               },

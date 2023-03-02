@@ -1,3 +1,4 @@
+import { compose } from "@src/composer/composer";
 import { getTypedLiteralValue } from "@src/composer/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import {
@@ -10,6 +11,7 @@ import {
 import { Vars } from "@src/runtime/server/vars";
 import {
   ChangesetDef,
+  Definition,
   FieldSetter,
   FieldSetterChangesetReference,
   FieldSetterFunction,
@@ -43,6 +45,17 @@ describe("runtime", () => {
           },
         },
         {
+          name: "virtual_input_prop",
+          setter: {
+            fieldsetAccess: ["virtual_input_prop"],
+            kind: "fieldset-virtual-input",
+            type: "text",
+            required: false,
+            nullable: false,
+            validators: [],
+          },
+        },
+        {
           name: "input_value_copy",
           setter: {
             kind: "changeset-reference",
@@ -65,9 +78,12 @@ describe("runtime", () => {
               { name: "x", setter: { kind: "literal", type: "integer", value: 6 } },
               { name: "y", setter: { kind: "literal", type: "integer", value: 2 } },
             ],
-            code: {
-              kind: "inline",
-              inline: "x / y",
+            hook: {
+              runtimeName: "TestRuntime",
+              code: {
+                kind: "inline",
+                inline: "x / y",
+              },
             },
           },
         },
@@ -76,12 +92,13 @@ describe("runtime", () => {
       const context: ActionContext = {
         input: {
           input_prop: "input value",
+          virtual_input_prop: "virtual input value",
         },
         vars: new Vars(),
         referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
-      expect(await buildChangeset(data, context)).toMatchSnapshot();
+      expect(await buildChangeset(createTestDefinition(), data, context)).toMatchSnapshot();
     });
     it("calculate changeset arithmetic operations", async () => {
       const mkRef = (referenceName: string): FieldSetterChangesetReference => ({
@@ -131,7 +148,7 @@ describe("runtime", () => {
         vars: new Vars(),
         referenceIds: [],
       };
-      expect(await buildChangeset(changeset, context)).toMatchSnapshot();
+      expect(await buildChangeset(createTestDefinition(), changeset, context)).toMatchSnapshot();
     });
   });
 
@@ -191,3 +208,22 @@ describe("runtime", () => {
     });
   });
 });
+
+/**
+ * Creates dummy definition struct
+ */
+function createTestDefinition(): Definition {
+  const def = compose({
+    entrypoints: [],
+    models: [],
+    populators: [],
+    runtimes: [
+      {
+        name: "TestRuntime",
+        sourcePath: "./src/runtime/test/hooks",
+      },
+    ],
+  });
+
+  return def;
+}

@@ -3,6 +3,10 @@
 //     uri 'postgresql://postgres@localhost:5342'
 // }
 
+runtime HooksRuntime {
+    sourcePath "hooks"
+}
+
 // ----- models
 
 model Org {

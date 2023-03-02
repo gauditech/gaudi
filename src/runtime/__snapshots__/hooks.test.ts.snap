@@ -1,0 +1,79 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`hooks execution runtime should execute hooks from multiple exec runtimes 1`] = `
+{
+  "alias": "$target_0",
+  "changeset": [
+    {
+      "name": "name",
+      "setter": {
+        "args": [
+          {
+            "name": "value",
+            "setter": {
+              "kind": "literal",
+              "type": "text",
+              "value": "First Last",
+            },
+          },
+          {
+            "name": "prefix",
+            "setter": {
+              "kind": "literal",
+              "type": "text",
+              "value": "Mr. ",
+            },
+          },
+        ],
+        "hook": {
+          "code": {
+            "file": "hooks2.js",
+            "kind": "source",
+            "target": "prefix",
+          },
+          "runtimeName": "TextRuntime",
+        },
+        "kind": "fieldset-hook",
+      },
+    },
+    {
+      "name": "avg",
+      "setter": {
+        "args": [
+          {
+            "name": "x",
+            "setter": {
+              "kind": "literal",
+              "type": "integer",
+              "value": 100,
+            },
+          },
+          {
+            "name": "y",
+            "setter": {
+              "kind": "literal",
+              "type": "integer",
+              "value": 20,
+            },
+          },
+        ],
+        "hook": {
+          "code": {
+            "file": "hooks.js",
+            "kind": "source",
+            "target": "prefix",
+          },
+          "runtimeName": "MathRuntime",
+        },
+        "kind": "fieldset-hook",
+      },
+    },
+  ],
+  "kind": "create-one",
+  "model": "Result",
+  "select": [],
+  "targetPath": [
+    "$target_0",
+  ],
+}
+`;

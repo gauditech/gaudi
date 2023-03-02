@@ -174,6 +174,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
     },
   ],
   "populators": [],
+  "runtimes": [],
 }
 `;
 
@@ -235,6 +236,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
     },
   ],
   "populators": [],
+  "runtimes": [],
 }
 `;
 
@@ -245,40 +247,69 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       "authorize": undefined,
       "endpoints": [
         {
-          "action": undefined,
+          "actions": [],
           "authorize": undefined,
+          "cardinality": undefined,
           "interval": {
             "endIdx": 133,
             "startIdx": 117,
           },
+          "method": undefined,
+          "path": undefined,
           "type": "list",
         },
         {
-          "action": undefined,
+          "actions": [],
           "authorize": undefined,
+          "cardinality": undefined,
           "interval": {
             "endIdx": 151,
             "startIdx": 136,
           },
+          "method": undefined,
+          "path": undefined,
           "type": "get",
         },
         {
-          "action": undefined,
+          "actions": [],
           "authorize": undefined,
+          "cardinality": undefined,
           "interval": {
             "endIdx": 172,
             "startIdx": 154,
           },
+          "method": undefined,
+          "path": undefined,
           "type": "update",
         },
         {
-          "action": [
+          "actions": [
             {
               "actionAtoms": [
                 {
+                  "kind": "virtual-input",
+                  "name": "password",
+                  "nullable": true,
+                  "optional": true,
+                  "type": "text",
+                  "validators": [
+                    {
+                      "args": [
+                        3,
+                      ],
+                      "interval": {
+                        "endIdx": 303,
+                        "startIdx": 298,
+                      },
+                      "kind": "builtin",
+                      "name": "min",
+                    },
+                  ],
+                },
+                {
                   "interval": {
-                    "endIdx": 257,
-                    "startIdx": 230,
+                    "endIdx": 343,
+                    "startIdx": 316,
                   },
                   "kind": "reference",
                   "target": "plan",
@@ -352,8 +383,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                         "y",
                       ],
                       "interval": {
-                        "endIdx": 464,
-                        "startIdx": 448,
+                        "endIdx": 550,
+                        "startIdx": 534,
                       },
                       "kind": "identifier",
                     },
@@ -366,8 +397,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   "set": {
                     "exp": {
                       "interval": {
-                        "endIdx": 483,
-                        "startIdx": 481,
+                        "endIdx": 569,
+                        "startIdx": 567,
                       },
                       "kind": "literal",
                       "literal": 10,
@@ -381,8 +412,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   "set": {
                     "exp": {
                       "interval": {
-                        "endIdx": 504,
-                        "startIdx": 500,
+                        "endIdx": 590,
+                        "startIdx": 586,
                       },
                       "kind": "literal",
                       "literal": null,
@@ -396,8 +427,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   "set": {
                     "exp": {
                       "interval": {
-                        "endIdx": 532,
-                        "startIdx": 521,
+                        "endIdx": 618,
+                        "startIdx": 607,
                       },
                       "kind": "binary",
                       "lhs": {
@@ -405,16 +436,16 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                           "c",
                         ],
                         "interval": {
-                          "endIdx": 522,
-                          "startIdx": 521,
+                          "endIdx": 608,
+                          "startIdx": 607,
                         },
                         "kind": "identifier",
                       },
                       "operator": "*",
                       "rhs": {
                         "interval": {
-                          "endIdx": 531,
-                          "startIdx": 526,
+                          "endIdx": 617,
+                          "startIdx": 612,
                         },
                         "kind": "binary",
                         "lhs": {
@@ -422,8 +453,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                             "a",
                           ],
                           "interval": {
-                            "endIdx": 527,
-                            "startIdx": 526,
+                            "endIdx": 613,
+                            "startIdx": 612,
                           },
                           "kind": "identifier",
                         },
@@ -433,8 +464,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                             "b",
                           ],
                           "interval": {
-                            "endIdx": 531,
-                            "startIdx": 530,
+                            "endIdx": 617,
+                            "startIdx": 616,
                           },
                           "kind": "identifier",
                         },
@@ -501,11 +532,33 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
             },
           ],
           "authorize": undefined,
+          "cardinality": undefined,
           "interval": {
-            "endIdx": 671,
+            "endIdx": 757,
             "startIdx": 175,
           },
+          "method": undefined,
+          "path": undefined,
           "type": "create",
+        },
+        {
+          "actions": [
+            {
+              "actionAtoms": [],
+              "alias": undefined,
+              "kind": "update",
+              "targetPath": undefined,
+            },
+          ],
+          "authorize": undefined,
+          "cardinality": "one",
+          "interval": {
+            "endIdx": 876,
+            "startIdx": 760,
+          },
+          "method": "PATCH",
+          "path": "customPath",
+          "type": "custom",
         },
       ],
       "entrypoints": [
@@ -513,20 +566,23 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "authorize": undefined,
           "endpoints": [
             {
-              "action": undefined,
+              "actions": [],
               "authorize": undefined,
+              "cardinality": undefined,
               "interval": {
-                "endIdx": 744,
-                "startIdx": 726,
+                "endIdx": 950,
+                "startIdx": 932,
               },
+              "method": undefined,
+              "path": undefined,
               "type": "create",
             },
           ],
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 748,
-            "startIdx": 674,
+            "endIdx": 954,
+            "startIdx": 880,
           },
           "name": "Review",
           "response": undefined,
@@ -539,7 +595,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 750,
+        "endIdx": 956,
         "startIdx": 0,
       },
       "name": "ItemEntry",
@@ -586,6 +642,22 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
   ],
   "models": [],
   "populators": [],
+  "runtimes": [],
+}
+`;
+
+exports[`parser blueprint test/executionRuntimes.gaudi 1`] = `
+{
+  "entrypoints": [],
+  "models": [],
+  "populators": [],
+  "runtimes": [
+    {
+      "default": true,
+      "name": "MyRuntime",
+      "sourcePath": "some/path/to/file.js",
+    },
+  ],
 }
 `;
 
@@ -732,6 +804,7 @@ exports[`parser blueprint test/git.gaudi 1`] = `
     },
   ],
   "populators": [],
+  "runtimes": [],
 }
 `;
 
@@ -742,13 +815,13 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       "authorize": undefined,
       "endpoints": [
         {
-          "action": [
+          "actions": [
             {
               "actionAtoms": [
                 {
                   "interval": {
-                    "endIdx": 558,
-                    "startIdx": 460,
+                    "endIdx": 584,
+                    "startIdx": 486,
                   },
                   "kind": "set",
                   "set": {
@@ -760,8 +833,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                               "fieldTwo",
                             ],
                             "interval": {
-                              "endIdx": 509,
-                              "startIdx": 501,
+                              "endIdx": 535,
+                              "startIdx": 527,
                             },
                             "kind": "identifier",
                           },
@@ -774,10 +847,11 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                         "target": "foo",
                       },
                       "interval": {
-                        "endIdx": 558,
-                        "startIdx": 473,
+                        "endIdx": 584,
+                        "startIdx": 499,
                       },
                       "name": undefined,
+                      "runtimeName": undefined,
                     },
                     "kind": "hook",
                   },
@@ -790,18 +864,21 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
             },
           ],
           "authorize": undefined,
+          "cardinality": undefined,
           "interval": {
-            "endIdx": 576,
-            "startIdx": 406,
+            "endIdx": 602,
+            "startIdx": 432,
           },
+          "method": undefined,
+          "path": undefined,
           "type": "create",
         },
       ],
       "entrypoints": [],
       "identify": undefined,
       "interval": {
-        "endIdx": 578,
-        "startIdx": 361,
+        "endIdx": 604,
+        "startIdx": 387,
       },
       "name": "UserEntry",
       "response": undefined,
@@ -820,7 +897,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 165,
+            "endIdx": 191,
             "startIdx": 15,
           },
           "name": "fieldOne",
@@ -837,13 +914,14 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                   "target": "foo",
                 },
                 "interval": {
-                  "endIdx": 155,
+                  "endIdx": 181,
                   "startIdx": 67,
                 },
                 "name": undefined,
+                "runtimeName": "MyRuntime",
               },
               "interval": {
-                "endIdx": 155,
+                "endIdx": 181,
                 "startIdx": 67,
               },
               "kind": "hook",
@@ -853,8 +931,8 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         {
           "default": undefined,
           "interval": {
-            "endIdx": 357,
-            "startIdx": 168,
+            "endIdx": 383,
+            "startIdx": 194,
           },
           "name": "fieldTwo",
           "nullable": undefined,
@@ -871,14 +949,15 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
                   "kind": "inline",
                 },
                 "interval": {
-                  "endIdx": 347,
-                  "startIdx": 220,
+                  "endIdx": 373,
+                  "startIdx": 246,
                 },
                 "name": undefined,
+                "runtimeName": undefined,
               },
               "interval": {
-                "endIdx": 347,
-                "startIdx": 220,
+                "endIdx": 373,
+                "startIdx": 246,
               },
               "kind": "hook",
             },
@@ -887,7 +966,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       ],
       "hooks": [],
       "interval": {
-        "endIdx": 359,
+        "endIdx": 385,
         "startIdx": 0,
       },
       "isAuth": false,
@@ -898,6 +977,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
     },
   ],
   "populators": [],
+  "runtimes": [],
 }
 `;
 
@@ -961,6 +1041,7 @@ exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
     },
   ],
   "populators": [],
+  "runtimes": [],
 }
 `;
 
@@ -1212,6 +1293,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
       ],
     },
   ],
+  "runtimes": [],
 }
 `;
 
@@ -1588,6 +1670,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
     },
   ],
   "populators": [],
+  "runtimes": [],
 }
 `;
 
@@ -1672,5 +1755,6 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
     },
   ],
   "populators": [],
+  "runtimes": [],
 }
 `;

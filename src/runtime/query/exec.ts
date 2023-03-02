@@ -91,7 +91,7 @@ export async function executeQueryTree(
         ])
       );
 
-      result[hook.name] = await executeHook(hook.code, args);
+      result[hook.name] = await executeHook(def, hook.hook, args);
     }
   }
 

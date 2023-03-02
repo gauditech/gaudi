@@ -60,7 +60,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
     : [endpoint.target.retType];
 
   const targetFilter =
-    endpoint.kind === "create" || endpoint.kind === "list"
+    endpoint.kind === "create" || endpoint.kind === "list" || endpoint.kind === "custom-many"
       ? undefined
       : targetToFilter({ ...endpoint.target, namePath });
 
@@ -97,7 +97,8 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
     case "update":
     case "create":
     case "delete": // FIXME delete should have no response query! Make it nullable?
-    case "get": {
+    case "get":
+    case "custom-one": {
       // fetch directly from the table, we have the ID
       const namePath = [endpoint.target.retType];
       const filter = applyFilterIdInContext(namePath, undefined);
@@ -109,7 +110,8 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
       const responseQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, response);
       return buildQueryTree(def, responseQuery);
     }
-    case "list": {
+    case "list":
+    case "custom-many": {
       const parentTarget = _.last(endpoint.parentContext);
       const namePath = parentTarget
         ? [parentTarget.retType, endpoint.target.name]

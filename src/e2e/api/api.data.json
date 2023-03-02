@@ -4,7 +4,8 @@
     "data": [
       { "name": "Org 1", "slug": "org1", "description": "Org 1 description" },
       { "name": "Org 2", "slug": "org2", "description": "Org 2 description" },
-      { "name": "Org 3", "slug": "org3", "description": "Org 3 description" }
+      { "name": "Org 3", "slug": "org3", "description": "Org 3 description" },
+      { "name": "Org 4", "slug": "org4", "description": "Org 4 description" }
     ]
   },
   {

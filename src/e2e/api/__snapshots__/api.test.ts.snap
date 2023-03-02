@@ -29,11 +29,33 @@ exports[`API endpoints Issue create 1`] = `
 exports[`API endpoints Org create 1`] = `
 {
   "description": "Org NEW description",
-  "id": 4,
+  "id": 5,
   "name": "Org NEW",
   "nameAndDesc": "Org NEW: Org NEW description",
   "slug": "orgNEW",
   "summary": "Org NEWOrg NEW description",
+}
+`;
+
+exports[`API endpoints Org custom create 1`] = `
+{
+  "description": "Org custom NEW description",
+  "id": 6,
+  "name": "Org Custom NEW",
+  "nameAndDesc": "Org Custom NEW: Org custom NEW description",
+  "slug": "orgCustomNEW",
+  "summary": "Org Custom NEWOrg custom NEW description",
+}
+`;
+
+exports[`API endpoints Org custom update 1`] = `
+{
+  "description": "Org custom 2A description",
+  "id": 2,
+  "name": "Org custom 2A",
+  "nameAndDesc": "Org custom 2A: Org custom 2A description",
+  "slug": "org2",
+  "summary": "Org custom 2AOrg custom 2A description",
 }
 `;
 
@@ -74,6 +96,14 @@ exports[`API endpoints Org list 1`] = `
     "slug": "org3",
     "summary": "Org 3Org 3 description",
   },
+  {
+    "description": "Org 4 description",
+    "id": 4,
+    "name": "Org 4",
+    "nameAndDesc": "Org 4: Org 4 description",
+    "slug": "org4",
+    "summary": "Org 4Org 4 description",
+  },
 ]
 `;
 
@@ -90,7 +120,7 @@ exports[`API endpoints Org update 1`] = `
 
 exports[`API endpoints Repo create 1`] = `
 {
-  "description": "Repo 6 description",
+  "description": "Description: Repo 6 description",
   "id": 6,
   "org_id": 1,
   "slug": "org_1-W5JU1e0Kj1Kv",
