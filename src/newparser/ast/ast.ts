@@ -77,13 +77,15 @@ export type AggregateType = "count" | "sum" | "one" | "first";
 export type OrderBy = (
   | {
       identifierPath: IdentifierRef[];
+      keyword?: undefined;
+      order?: undefined;
     }
   | WithKeyword<{
       identifierPath: IdentifierRef[];
       order: OrderType;
     }>
 )[];
-export type OrderType = "count" | "sum";
+export type OrderType = "asc" | "desc";
 
 export type Computed = WithKeyword<{
   kind: "computed";
@@ -215,7 +217,7 @@ export type Select = {
 export type Db = "db";
 export type Code = "code";
 export type ExprKind = Db | Code;
-export type Expr<kind extends ExprKind> = (
+export type Expr<kind extends ExprKind = ExprKind> = (
   | WithKeyword<{
       kind: "binary";
       operator: BinaryOperator;

@@ -12,7 +12,6 @@ import {
   Endpoint,
   Entrypoint,
   Expr,
-  ExprKind,
   Field,
   FieldValidationHook,
   Identifier,
@@ -175,7 +174,7 @@ export function buildTokens(
           buildKeyword(keyword);
           orderBy.forEach((orderBy) => {
             buildIdentifierPath(orderBy.identifierPath);
-            if ("keyword" in orderBy) buildKeyword(orderBy.keyword);
+            if (orderBy.keyword) buildKeyword(orderBy.keyword);
           });
         })
         .with({ kind: "limit" }, { kind: "offset" }, ({ keyword, value }) => {
@@ -415,7 +414,7 @@ export function buildTokens(
     });
   }
 
-  function buildExpr(expr: Expr<ExprKind>) {
+  function buildExpr(expr: Expr) {
     match(expr)
       .with({ kind: "binary" }, ({ lhs, operator, keyword, rhs }) => {
         buildExpr(lhs);

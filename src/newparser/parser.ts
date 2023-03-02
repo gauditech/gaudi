@@ -28,7 +28,6 @@ import {
   Entrypoint,
   EntrypointAtom,
   Expr,
-  ExprKind,
   Field,
   FieldAtom,
   FieldValidationHook,
@@ -826,12 +825,12 @@ class GaudiParser extends EmbeddedActionsParser {
 
   // Ordinary operator precedance, modeled after chevrotain example:
   // https://github.com/Chevrotain/chevrotain/blob/master/examples/grammars/calculator/calculator_embedded_actions.js
-  expr = this.RULE("expr", (): Expr<ExprKind> => {
+  expr = this.RULE("expr", (): Expr => {
     return this.SUBRULE(this.orExpr);
   });
 
-  primaryExpr = this.RULE("primaryExpr", (): Expr<ExprKind> => {
-    return this.OR<Expr<ExprKind>>([
+  primaryExpr = this.RULE("primaryExpr", (): Expr => {
+    return this.OR<Expr>([
       { ALT: () => this.SUBRULE(this.fnExpr) },
       { ALT: () => this.SUBRULE(this.groupExpr) },
       { ALT: () => this.SUBRULE(this.notExpr) },
@@ -845,8 +844,8 @@ class GaudiParser extends EmbeddedActionsParser {
     ]);
   });
 
-  fnExpr = this.RULE("fnExpr", (): Expr<ExprKind> => {
-    const args: Expr<ExprKind>[] = [];
+  fnExpr = this.RULE("fnExpr", (): Expr => {
+    const args: Expr[] = [];
 
     const name = this.SUBRULE(this.identifier);
     this.CONSUME(L.LRound);
@@ -859,14 +858,14 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "function", name, args, type: unknownType };
   });
 
-  groupExpr = this.RULE("groupExpr", (): Expr<ExprKind> => {
+  groupExpr = this.RULE("groupExpr", (): Expr => {
     this.CONSUME(L.LRound);
     const expr = this.SUBRULE(this.expr);
     this.CONSUME(L.RRound);
     return { kind: "group", expr, type: unknownType };
   });
 
-  notExpr = this.RULE("notExpr", (): Expr<ExprKind> => {
+  notExpr = this.RULE("notExpr", (): Expr => {
     const keyword = getTokenData(this.CONSUME(L.Not));
     const expr = this.SUBRULE(this.primaryExpr);
     return { kind: "unary", operator: "not", expr, keyword, type: unknownType };
@@ -883,9 +882,9 @@ class GaudiParser extends EmbeddedActionsParser {
   GENERATE_BINARY_OPERATOR_RULE(
     name: string,
     operators: TokenType[],
-    next: ParserMethod<[], Expr<ExprKind>>
-  ): ParserMethod<[], Expr<ExprKind>> {
-    return this.RULE(name, (): Expr<ExprKind> => {
+    next: ParserMethod<[], Expr>
+  ): ParserMethod<[], Expr> {
+    return this.RULE(name, (): Expr => {
       let lhs = this.SUBRULE1(next);
       this.MANY(() => {
         const operator = this.OR(operators.map((op) => ({ ALT: () => this.CONSUME(op) })));

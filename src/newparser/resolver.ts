@@ -11,7 +11,6 @@ import {
   Endpoint,
   Entrypoint,
   Expr,
-  ExprKind,
   Field,
   FieldValidationHook,
   IdentifierRef,
@@ -593,11 +592,7 @@ export function resolve(definition: Definition) {
     return patternFind(models, { name: { text: name } });
   }
 
-  function getBinaryOperatorType(
-    op: BinaryOperator,
-    lhs: Expr<ExprKind>,
-    rhs: Expr<ExprKind>
-  ): Type {
+  function getBinaryOperatorType(op: BinaryOperator, lhs: Expr, rhs: Expr): Type {
     const booleanType: Type = { kind: "primitive", primitiveKind: "boolean" };
     const integerType: Type = { kind: "primitive", primitiveKind: "integer" };
     const floatType: Type = { kind: "primitive", primitiveKind: "float" };
@@ -665,7 +660,7 @@ export function resolve(definition: Definition) {
     }
   }
 
-  function getUnaryOperatorType(op: UnaryOperator, expr: Expr<ExprKind>): Type {
+  function getUnaryOperatorType(op: UnaryOperator, expr: Expr): Type {
     const booleanType: Type = { kind: "primitive", primitiveKind: "boolean" };
 
     switch (op) {
