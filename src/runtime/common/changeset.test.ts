@@ -213,6 +213,7 @@ describe("runtime", () => {
         { name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
         { name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
         { name: "now", setter: mkFn("now", []) },
+        { name: "stringify", setter: mkFn("stringify", [getTypedLiteralValue(1234)]) },
         {
           name: "cryptoHash",
           setter: mkFn("cryptoHash", [

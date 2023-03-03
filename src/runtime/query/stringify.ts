@@ -547,6 +547,7 @@ function functionToString(def: Definition, exp: TypedFunction): string {
     case "now": {
       return stringifyFn("now", exp.args);
     }
+    case "stringify":
     case "cryptoCompare":
     case "cryptoHash":
     case "cryptoToken":

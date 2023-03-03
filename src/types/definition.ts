@@ -135,7 +135,8 @@ export type FunctionName =
   | "now"
   | "cryptoHash"
   | "cryptoCompare"
-  | "cryptoToken";
+  | "cryptoToken"
+  | "stringify";
 
 export type TypedFunction = {
   kind: "function";

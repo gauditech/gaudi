@@ -47,6 +47,8 @@ export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknow
       return (value: string) => value.toUpperCase();
     case "now":
       return () => Date.now();
+    case "stringify":
+      return (value) => JSON.stringify(value);
     case "cryptoCompare": {
       return (clearPassword, hashedPassword) => compare(clearPassword, hashedPassword);
     }
@@ -113,6 +115,12 @@ export async function executeArithmetics<T>(
       );
 
       return fnNameToFunction(func.name)(vals);
+    }
+    case "stringify": {
+      ensureEqual(func.args.length, 1);
+      const val = await getValue(func.args[0]);
+
+      return fnNameToFunction(func.name)(val);
     }
     case "cryptoHash":
     case "cryptoCompare": {

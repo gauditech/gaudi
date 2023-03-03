@@ -46,6 +46,7 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
   "now": 1677513237728,
   "or": true,
   "plus": 6,
+  "stringify": "1234",
   "upper": "FOO1",
 }
 `;
