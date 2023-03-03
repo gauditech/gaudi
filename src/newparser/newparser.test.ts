@@ -5,6 +5,7 @@ import _ from "lodash";
 
 import { checkForm } from "./checkForm";
 import { CompilerError } from "./compilerError";
+import { migrate } from "./migrate";
 import { parse } from "./parser";
 import { resolve } from "./resolver";
 
@@ -22,6 +23,10 @@ describe("parser", () => {
       const checkFormErrors = checkForm(result.ast);
       const resolveErrors = resolve(result.ast);
       logErrors(sourcePath, source, [...checkFormErrors, ...resolveErrors]);
+
+      if (result.success && checkFormErrors.length === 0 && resolveErrors.length === 0) {
+        migrate(result.ast);
+      }
     }
   });
 });
