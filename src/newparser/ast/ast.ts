@@ -193,8 +193,8 @@ export type PopulateAtom =
   | Populate;
 
 export type Repeater =
-  | { kind: "body"; atoms: RepeaterAtom[] }
-  | { kind: "simple"; value: IntegerLiteral };
+  | { name?: Identifier; kind: "body"; atoms: RepeaterAtom[] }
+  | { name?: Identifier; kind: "simple"; value: IntegerLiteral };
 export type RepeaterAtom = WithKeyword<
   { kind: "start"; value: IntegerLiteral } | { kind: "end"; value: IntegerLiteral }
 >;

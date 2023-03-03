@@ -260,14 +260,13 @@ function migratePopulate(populate: AST.Populate): PopulateSpec {
 }
 
 function migrateRepeater(repeater: AST.Repeater): RepeaterSpec {
-  // TODO: repeater alias
   switch (repeater.kind) {
     case "simple":
-      return { kind: "fixed", value: repeater.value.value };
+      return { kind: "fixed", value: repeater.value.value, alias: repeater.name?.text };
     case "body": {
       const start = kindFind(repeater.atoms, "start")?.value.value;
       const end = kindFind(repeater.atoms, "end")?.value.value;
-      return { kind: "range", range: { start, end } };
+      return { kind: "range", range: { start, end }, alias: repeater.name?.text };
     }
   }
 }

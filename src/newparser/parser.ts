@@ -727,16 +727,18 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   repeater = this.RULE("repeater", (): Repeater => {
+    const name = this.OPTION(() => this.SUBRULE(this.identifier));
     return this.OR1<Repeater>([
       {
         ALT: () => {
           const value = this.SUBRULE1(this.integer);
-          return { kind: "simple", value };
+          return { name, kind: "simple", value };
         },
       },
       {
         ALT: () => {
           const atoms: RepeaterAtom[] = [];
+          this.CONSUME(L.LCurly);
           this.MANY_SEP({
             SEP: L.Comma,
             DEF: () => {
@@ -750,7 +752,8 @@ class GaudiParser extends EmbeddedActionsParser {
               atoms.push({ kind, value, keyword });
             },
           });
-          return { kind: "body", atoms };
+          this.CONSUME(L.RCurly);
+          return { name, kind: "body", atoms };
         },
       },
     ]);
