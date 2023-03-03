@@ -122,8 +122,15 @@ export type Endpoint = WithKeyword<{
   atoms: EndpointAtom[];
 }>;
 export type EndpointType = "list" | "get" | "create" | "update" | "delete";
+export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
+export type EndpointCardinality = "one" | "many";
+
 export type EndpointAtom = WithKeyword<
-  { kind: "action"; actions: Action[] } | { kind: "authorize"; expr: Expr<Code> }
+  | { kind: "action"; actions: Action[] }
+  | { kind: "authorize"; expr: Expr<Code> }
+  | { kind: "method"; method: EndpointMethod; methodKeyword: TokenData }
+  | { kind: "cardinality"; cardinality: EndpointCardinality; cardinalityKeyword: TokenData }
+  | { kind: "path"; path: StringLiteral }
 >;
 
 export type Action = WithKeyword<{

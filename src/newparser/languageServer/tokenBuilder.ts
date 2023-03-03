@@ -252,6 +252,18 @@ export function buildTokens(
           buildKeyword(keyword);
           buildExpr(expr);
         })
+        .with({ kind: "method" }, ({ keyword, methodKeyword }) => {
+          buildKeyword(keyword);
+          buildKeyword(methodKeyword);
+        })
+        .with({ kind: "cardinality" }, ({ keyword, cardinalityKeyword }) => {
+          buildKeyword(keyword);
+          buildKeyword(cardinalityKeyword);
+        })
+        .with({ kind: "path" }, ({ keyword, path }) => {
+          buildKeyword(keyword);
+          buildLiteral(path);
+        })
         .exhaustive()
     );
   }

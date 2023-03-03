@@ -62,19 +62,26 @@ export const Repeat = createWeakKeyword("repeat");
 export const Relation = createWeakKeyword("relation");
 export const Reference = createWeakKeyword("reference");
 export const Query = createWeakKeyword("query");
+export const POST = createWeakKeyword("POST");
 export const Populator = createWeakKeyword("populator");
 export const Populate = createWeakKeyword("populate");
+export const Path = createWeakKeyword("path");
+export const PATCH = createWeakKeyword("PATCH");
 export const Order = createWeakKeyword("order");
 export const Optional = createWeakKeyword("optional");
+export const One = createWeakKeyword("one");
 export const Offset = createWeakKeyword("offset");
 export const Nullable = createWeakKeyword("nullable");
 export const Model = createWeakKeyword("model");
+export const Method = createWeakKeyword("method");
+export const Many = createWeakKeyword("many");
 export const List = createWeakKeyword("list");
 export const Limit = createWeakKeyword("limit");
 export const Input = createWeakKeyword("input");
 export const Inline = createWeakKeyword("inline");
 export const Identify = createWeakKeyword("identify");
 export const Hook = createWeakKeyword("hook");
+export const GET = createWeakKeyword("GET");
 export const Get = createWeakKeyword("get");
 export const From = createWeakKeyword("from");
 export const Filter = createWeakKeyword("filter");
@@ -84,11 +91,13 @@ export const Endpoint = createWeakKeyword("endpoint");
 export const End = createWeakKeyword("end");
 export const Desc = createWeakKeyword("desc");
 export const Deny = createWeakKeyword("deny");
+export const DELETE = createWeakKeyword("DELETE");
 export const Delete = createWeakKeyword("delete");
 export const Default = createWeakKeyword("default");
 export const Create = createWeakKeyword("create");
 export const Count = createWeakKeyword("count");
 export const Computed = createWeakKeyword("computed");
+export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
 export const Authorize = createWeakKeyword("authorize");
 export const Auth = createWeakKeyword("auth");
@@ -167,19 +176,26 @@ export const GaudiTokens = [
   Relation,
   Reference,
   Query,
+  POST,
   Populator,
   Populate,
+  Path,
+  PATCH,
   Order,
   Optional,
+  One,
   Offset,
   Nullable,
   Model,
+  Method,
+  Many,
   List,
   Limit,
   Input,
   Inline,
   Identify,
   Hook,
+  GET,
   Get,
   From,
   Filter,
@@ -189,11 +205,13 @@ export const GaudiTokens = [
   End,
   Desc,
   Deny,
+  DELETE,
   Delete,
   Default,
   Create,
   Count,
   Computed,
+  Cardinality,
   By,
   Authorize,
   Auth,

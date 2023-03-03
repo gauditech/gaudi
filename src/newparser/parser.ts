@@ -24,6 +24,8 @@ import {
   Definition,
   Endpoint,
   EndpointAtom,
+  EndpointCardinality,
+  EndpointMethod,
   EndpointType,
   Entrypoint,
   EntrypointAtom,
@@ -475,6 +477,39 @@ class GaudiParser extends EmbeddedActionsParser {
             const keyword = getTokenData(this.CONSUME(L.Authorize));
             const expr = this.SUBRULE(this.expr);
             atoms.push({ kind: "authorize", expr, keyword });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Method));
+            const methodToken = this.OR3([
+              { ALT: () => this.CONSUME(L.GET) },
+              { ALT: () => this.CONSUME(L.POST) },
+              { ALT: () => this.CONSUME(L.PATCH) },
+              { ALT: () => this.CONSUME(L.DELETE) },
+            ]);
+            const method = methodToken.image as EndpointMethod;
+            const methodKeyword = getTokenData(methodToken);
+            atoms.push({ kind: "method", method, keyword, methodKeyword });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Cardinality));
+            const cardinalityToken = this.OR4([
+              { ALT: () => this.CONSUME(L.One) },
+              { ALT: () => this.CONSUME(L.Many) },
+            ]);
+            const cardinality = cardinalityToken.image as EndpointCardinality;
+            const cardinalityKeyword = getTokenData(cardinalityToken);
+            atoms.push({ kind: "cardinality", cardinality, keyword, cardinalityKeyword });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Path));
+            const path = this.SUBRULE(this.string);
+            atoms.push({ kind: "path", path, keyword });
           },
         },
       ]);

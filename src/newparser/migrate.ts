@@ -168,12 +168,17 @@ function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {
 function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
   const actions = kindFind(endpoint.atoms, "action")?.actions.map(migrateAction);
   const authorize = kindFind(endpoint.atoms, "authorize");
+  const method = kindFind(endpoint.atoms, "method");
+  const cardinality = kindFind(endpoint.atoms, "cardinality");
+  const path = kindFind(endpoint.atoms, "path");
 
   return {
     type: endpoint.type,
     actions,
     authorize: authorize ? migrateExpr(authorize.expr) : undefined,
-    // TODO
+    method: method?.method,
+    cardinality: cardinality?.cardinality,
+    path: path?.path.value,
   };
 }
 

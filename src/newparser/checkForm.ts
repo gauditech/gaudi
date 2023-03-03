@@ -131,7 +131,7 @@ export function checkForm(definition: Definition) {
   }
 
   function checkEndpoint(endpoint: Endpoint) {
-    noDuplicateAtoms(endpoint, ["action", "authorize"]);
+    noDuplicateAtoms(endpoint, ["action", "authorize", "method", "cardinality", "path"]);
 
     const action = kindFind(endpoint.atoms, "action");
     if (action) action.actions.map(checkAction);
