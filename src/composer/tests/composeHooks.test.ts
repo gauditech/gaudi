@@ -237,9 +237,11 @@ describe("compose hooks", () => {
       
           action {
             execute {
+              virtual input username { type text }
               hook {
+                arg xusername username
                 // action arg hook
-                arg user query { from Org, filter id is 1, select { id, name }} 
+                arg user query { from Org, filter username is xusername, select { id, name }} 
 
                 runtime @GAUDI_INTERNAL
                 source login from "hooks/auth"

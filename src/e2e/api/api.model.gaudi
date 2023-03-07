@@ -242,6 +242,7 @@ entrypoint Orgs {
     update endpoint {
       action {
         update repo {}
+        delete repo.org {}
       }
     }
     delete endpoint {}

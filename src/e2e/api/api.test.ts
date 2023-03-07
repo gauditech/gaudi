@@ -239,7 +239,7 @@ describe("API endpoints", () => {
       expect(getResp.body).toMatchSnapshot();
     });
 
-    it("update", async () => {
+    it("updateX", async () => {
       const data = { slug: "repo2", name: "Repo 2A", description: "Repo 2A description" };
 
       const patchResp = await request(getServer()).patch("/org/org1/repos/2").send(data);

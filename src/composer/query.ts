@@ -22,7 +22,12 @@ import {
 } from "@src/types/definition";
 import { ExpSpec, QuerySpec } from "@src/types/specification";
 
-export function composeQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
+export function composeQuery(
+  def: Definition,
+  mdef: ModelDef,
+  qspec: QuerySpec,
+  ctx: VarContext = {}
+): QueryDef {
   if (qspec.aggregate) {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
@@ -51,7 +56,7 @@ export function composeQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec):
     return _.assign(acc, { [curr]: _.take(fromPath, index + 2) });
   }, {} as Record<string, NamePath>);
 
-  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, {}, aliases);
+  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, ctx, aliases);
 
   const filterPaths = getFilterPaths(filter);
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
@@ -140,6 +145,15 @@ export function composeExpression(
         exp.identifier[0] in aliases
           ? [...aliases[exp.identifier[0]], ..._.tail(exp.identifier)]
           : [...namespace, ...exp.identifier];
+
+      // QUICKFIX for contexts
+      if (exp.identifier.length === 1) {
+        const name = exp.identifier[0];
+        const ctx = context[name];
+        if (ctx?.kind === "any-value") {
+          return { kind: "variable", name };
+        }
+      }
 
       // ensure everything resolves
       getTypedPath(def, expandedNamePath, context);

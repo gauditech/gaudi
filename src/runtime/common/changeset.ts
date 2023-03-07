@@ -1,5 +1,7 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
+import { buildQueryTree } from "../query/build";
+
 import { executeArithmetics } from "./arithmetics";
 
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
@@ -85,7 +87,15 @@ export async function buildChangeset(
       }
       case "query": {
         // const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
-        return qx.executeQuery(def, setter.query, actionContext.vars, []);
+        // QUICKFIX: add all the changeset values in the `Vars` context so query can use them in a filter
+        const vars = actionContext.vars.copy();
+        Object.keys(changeset).forEach(([name, value]) => {
+          // don't set if name is taken
+          vars._vars[name] || vars.set(name, value);
+        });
+        console.dir({ vars: vars._vars }, { depth: 10 });
+        const qt = buildQueryTree(def, setter.query);
+        return qx.executeQueryTree(def, qt, vars, []);
       }
       default: {
         return assertUnreachable(setter);

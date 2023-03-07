@@ -329,9 +329,13 @@ function composeSingleAction(
         return { name: atom.target, setter };
       }
       case "query": {
+        changeset.forEach((op) => {
+          ctx[op.name] = ctx[op.name] || { kind: "any-value" };
+        });
+        console.dir({ ctx, changeset }, { depth: 10 });
         return {
           name: atom.target,
-          setter: { kind: "query", query: queryFromSpec(def, atom.set.query) },
+          setter: { kind: "query", query: queryFromSpec(def, atom.set.query, ctx) },
         };
       }
     }
@@ -733,7 +737,7 @@ function actionFromParts(
   }
 }
 
-export function queryFromSpec(def: Definition, qspec: QuerySpec): QueryDef {
+export function queryFromSpec(def: Definition, qspec: QuerySpec, ctx: VarContext = {}): QueryDef {
   ensureEmpty(qspec.aggregate, "Aggregates are not yet supported in action queries");
 
   const pathPrefix = _.first(qspec.fromModel);
@@ -741,5 +745,5 @@ export function queryFromSpec(def: Definition, qspec: QuerySpec): QueryDef {
 
   const fromModel = getRef.model(def, pathPrefix);
 
-  return composeQuery(def, fromModel, qspec);
+  return composeQuery(def, fromModel, qspec, ctx);
 }

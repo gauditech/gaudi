@@ -63,7 +63,10 @@ export type TypedIterator = {
 };
 
 export type VarContext = Record<string, ContextRecord | undefined>;
-type ContextRecord = { kind: "record"; modelName: string } | { kind: "iterator" };
+type ContextRecord =
+  | { kind: "record"; modelName: string }
+  | { kind: "iterator" }
+  | { kind: "any-value" };
 
 export function getTypedIterator(def: Definition, path: string[], ctx: VarContext): TypedIterator {
   if (path[0] in ctx) {
@@ -89,6 +92,7 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
   }
   const start = _.first(path)!;
   const maybeCtx = ctx[start];
+
   const ctxModel: string | null = maybeCtx?.kind === "record" ? maybeCtx.modelName : null;
 
   const startModel = getRef.model(def, ctxModel || start);
