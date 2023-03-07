@@ -4,11 +4,11 @@ exports[`parser blueprint test/authenticator.gaudi 1`] = `
 {
   "authenticator": {
     "accessTokenModelName": "AuthUserAccessToken",
+    "authUserModelName": "AuthUser",
     "method": {
       "kind": "basic",
     },
     "name": undefined,
-    "targetModelName": "AuthUser",
   },
   "entrypoints": [],
   "models": [],

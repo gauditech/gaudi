@@ -232,15 +232,37 @@ export function dataToFieldDbnames(
 ): Record<string, unknown> {
   return chain(data)
     .toPairs()
-    .map(([name, value]) => [nameToFieldDbname(model, name), value])
+    .map(([name, value]) => [fieldModelToDbName(model, name), value])
     .fromPairs()
     .value();
 }
 
-function nameToFieldDbname(model: ModelDef, name: string): string {
+/** Map data record's DB field names to model names */
+export function dataToFieldModelNames(
+  model: ModelDef,
+  data: Record<string, unknown>
+): Record<string, unknown> {
+  return chain(data)
+    .toPairs()
+    .map(([name, value]) => [fieldDbToModelName(model, name), value])
+    .fromPairs()
+    .value();
+}
+
+/** Map model field name to it's DB name */
+export function fieldModelToDbName(model: ModelDef, name: string): string {
   const field = model.fields.find((f) => f.name === name);
   if (!field) {
     throw new Error(`Field ${model.name}.${name} doesn't exist`);
   }
   return field.dbname;
+}
+
+/** Map model field name to it's DB name */
+export function fieldDbToModelName(model: ModelDef, dbname: string): string {
+  const field = model.fields.find((f) => f.dbname === dbname);
+  if (!field) {
+    throw new Error(`Field ${model.name}.${dbname} doesn't exist`);
+  }
+  return field.name;
 }

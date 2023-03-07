@@ -1,13 +1,12 @@
 import { BinaryOperator } from "./ast";
 
 export type Definition = {
-  auth?: AuthDef;
   models: ModelDef[];
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
   populators: PopulatorDef[];
   runtimes: ExecutionRuntimeDef[];
-  authenticator?: AuthenticatorDef;
+  authenticator: AuthenticatorDef | undefined;
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -612,7 +611,7 @@ export type RuntimeEngineType = "node";
 
 export type AuthenticatorDef = {
   name: string;
-  targetModel: AuthenticatorNamedModelDef;
+  authUserModel: AuthenticatorNamedModelDef;
   accessTokenModel: AuthenticatorNamedModelDef;
   method: AuthenticatorMethodDef;
 };

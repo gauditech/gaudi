@@ -247,6 +247,7 @@ exports[`compose hooks composes action hook 1`] = `
 
 exports[`compose hooks composes source hooks 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [
     {
       "endpoints": [
@@ -513,6 +514,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
 
 exports[`compose hooks inline hooks 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [
     {
       "endpoints": [

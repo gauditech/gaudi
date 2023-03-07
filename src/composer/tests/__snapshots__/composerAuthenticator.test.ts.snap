@@ -153,6 +153,18 @@ exports[`authenticator composer resolves authenticator model reference 1`] = `
     "references": [],
     "relations": [
       {
+        "fromModel": "UserProfile",
+        "fromModelRefKey": "UserProfile",
+        "kind": "relation",
+        "modelRefKey": "AuthUser",
+        "name": "userProfileUserRel",
+        "nullable": false,
+        "refKey": "AuthUser.userProfileUserRel",
+        "through": "user",
+        "throughRefKey": "UserProfile.user",
+        "unique": false,
+      },
+      {
         "fromModel": "AuthUserAccessToken",
         "fromModelRefKey": "AuthUserAccessToken",
         "kind": "relation",
@@ -160,8 +172,8 @@ exports[`authenticator composer resolves authenticator model reference 1`] = `
         "name": "tokens",
         "nullable": false,
         "refKey": "AuthUser.tokens",
-        "through": "target",
-        "throughRefKey": "AuthUserAccessToken.target",
+        "through": "authUser",
+        "throughRefKey": "AuthUserAccessToken.authUser",
         "unique": false,
       },
     ],
@@ -211,14 +223,14 @@ exports[`authenticator composer resolves authenticator model reference 1`] = `
         "validators": [],
       },
       {
-        "dbname": "target_id",
+        "dbname": "authuser_id",
         "dbtype": "integer",
         "kind": "field",
         "modelRefKey": "AuthUserAccessToken",
-        "name": "target_id",
+        "name": "authUser_id",
         "nullable": false,
         "primary": false,
-        "refKey": "AuthUserAccessToken.target_id",
+        "refKey": "AuthUserAccessToken.authUser_id",
         "type": "integer",
         "unique": false,
         "validators": [],
@@ -231,12 +243,12 @@ exports[`authenticator composer resolves authenticator model reference 1`] = `
     "refKey": "AuthUserAccessToken",
     "references": [
       {
-        "fieldRefKey": "AuthUserAccessToken.target_id",
+        "fieldRefKey": "AuthUserAccessToken.authUser_id",
         "kind": "reference",
         "modelRefKey": "AuthUserAccessToken",
-        "name": "target",
+        "name": "authUser",
         "nullable": false,
-        "refKey": "AuthUserAccessToken.target",
+        "refKey": "AuthUserAccessToken.authUser",
         "toModelFieldRefKey": "AuthUser.id",
         "toModelRefKey": "AuthUser",
         "unique": false,
@@ -247,7 +259,22 @@ exports[`authenticator composer resolves authenticator model reference 1`] = `
 ]
 `;
 
-exports[`authenticator composer succeeds for simple authenticator 1`] = `undefined`;
+exports[`authenticator composer succeeds for simple authenticator 1`] = `
+{
+  "accessTokenModel": {
+    "name": "AuthUserAccessToken",
+    "refKey": "AuthUserAccessToken",
+  },
+  "authUserModel": {
+    "name": "AuthUser",
+    "refKey": "AuthUser",
+  },
+  "method": {
+    "kind": "basic",
+  },
+  "name": "Auth",
+}
+`;
 
 exports[`authenticator composer succeeds for simple authenticator 2`] = `
 [
@@ -357,8 +384,8 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "name": "tokens",
         "nullable": false,
         "refKey": "AuthUser.tokens",
-        "through": "target",
-        "throughRefKey": "AuthUserAccessToken.target",
+        "through": "authUser",
+        "throughRefKey": "AuthUserAccessToken.authUser",
         "unique": false,
       },
     ],
@@ -408,14 +435,14 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "validators": [],
       },
       {
-        "dbname": "target_id",
+        "dbname": "authuser_id",
         "dbtype": "integer",
         "kind": "field",
         "modelRefKey": "AuthUserAccessToken",
-        "name": "target_id",
+        "name": "authUser_id",
         "nullable": false,
         "primary": false,
-        "refKey": "AuthUserAccessToken.target_id",
+        "refKey": "AuthUserAccessToken.authUser_id",
         "type": "integer",
         "unique": false,
         "validators": [],
@@ -428,18 +455,608 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
     "refKey": "AuthUserAccessToken",
     "references": [
       {
-        "fieldRefKey": "AuthUserAccessToken.target_id",
+        "fieldRefKey": "AuthUserAccessToken.authUser_id",
         "kind": "reference",
         "modelRefKey": "AuthUserAccessToken",
-        "name": "target",
+        "name": "authUser",
         "nullable": false,
-        "refKey": "AuthUserAccessToken.target",
+        "refKey": "AuthUserAccessToken.authUser",
         "toModelFieldRefKey": "AuthUser.id",
         "toModelRefKey": "AuthUser",
         "unique": false,
       },
     ],
     "relations": [],
+  },
+]
+`;
+
+exports[`authenticator composer succeeds for simple authenticator 3`] = `
+[
+  {
+    "endpoints": [
+      {
+        "actions": [
+          {
+            "alias": "authUser",
+            "changeset": [
+              {
+                "name": "username",
+                "setter": {
+                  "fieldsetAccess": [
+                    "authUser",
+                    "username",
+                  ],
+                  "kind": "fieldset-virtual-input",
+                  "nullable": false,
+                  "required": true,
+                  "type": "text",
+                  "validators": [],
+                },
+              },
+              {
+                "name": "name",
+                "setter": {
+                  "fieldsetAccess": [
+                    "authUser",
+                    "name",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+              {
+                "name": "password",
+                "setter": {
+                  "fieldsetAccess": [
+                    "authUser",
+                    "password",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+            ],
+            "kind": "fetch-one",
+            "model": "AuthUser",
+            "query": {
+              "filter": {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUser",
+                      "username",
+                    ],
+                  },
+                  {
+                    "kind": "literal",
+                    "type": "text",
+                    "value": "first",
+                  },
+                ],
+                "kind": "function",
+                "name": "is",
+              },
+              "fromPath": [
+                "AuthUser",
+              ],
+              "kind": "query",
+              "limit": 1,
+              "modelRefKey": "AuthUser",
+              "name": "$query",
+              "offset": undefined,
+              "orderBy": undefined,
+              "refKey": "N/A",
+              "retType": "AuthUser",
+              "select": [
+                {
+                  "alias": "id",
+                  "kind": "field",
+                  "name": "id",
+                  "namePath": [
+                    "AuthUser",
+                    "id",
+                  ],
+                  "refKey": "AuthUser.id",
+                },
+                {
+                  "alias": "name",
+                  "kind": "field",
+                  "name": "name",
+                  "namePath": [
+                    "AuthUser",
+                    "name",
+                  ],
+                  "refKey": "AuthUser.name",
+                },
+                {
+                  "alias": "username",
+                  "kind": "field",
+                  "name": "username",
+                  "namePath": [
+                    "AuthUser",
+                    "username",
+                  ],
+                  "refKey": "AuthUser.username",
+                },
+                {
+                  "alias": "password",
+                  "kind": "field",
+                  "name": "password",
+                  "namePath": [
+                    "AuthUser",
+                    "password",
+                  ],
+                  "refKey": "AuthUser.password",
+                },
+              ],
+            },
+          },
+          {
+            "changeset": [
+              {
+                "name": "password",
+                "setter": {
+                  "fieldsetAccess": [
+                    "password",
+                  ],
+                  "kind": "fieldset-virtual-input",
+                  "nullable": false,
+                  "required": true,
+                  "type": "text",
+                  "validators": [],
+                },
+              },
+              {
+                "name": "name",
+                "setter": {
+                  "fieldsetAccess": [
+                    "name",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+              {
+                "name": "username",
+                "setter": {
+                  "fieldsetAccess": [
+                    "username",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+            ],
+            "hook": {
+              "args": [
+                {
+                  "name": "clearPassword",
+                  "setter": {
+                    "kind": "changeset-reference",
+                    "referenceName": "password",
+                  },
+                },
+                {
+                  "name": "hashPassword",
+                  "setter": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "password",
+                      ],
+                      "alias": "authUser",
+                    },
+                  },
+                },
+              ],
+              "hook": {
+                "code": {
+                  "file": "hooks/actions.js",
+                  "kind": "source",
+                  "target": "authenticateUser",
+                },
+                "runtimeName": "@GAUDI_INTERNAL",
+              },
+            },
+            "kind": "execute-hook",
+            "responds": false,
+          },
+          {
+            "alias": "accessToken",
+            "changeset": [
+              {
+                "name": "token",
+                "setter": {
+                  "args": [
+                    {
+                      "kind": "literal",
+                      "type": "integer",
+                      "value": 32,
+                    },
+                  ],
+                  "kind": "function",
+                  "name": "cryptoToken",
+                },
+              },
+              {
+                "name": "expiryDate",
+                "setter": {
+                  "args": [
+                    {
+                      "args": [
+                        {
+                          "args": [],
+                          "kind": "function",
+                          "name": "now",
+                        },
+                        {
+                          "kind": "literal",
+                          "type": "integer",
+                          "value": 3600000,
+                        },
+                      ],
+                      "kind": "function",
+                      "name": "+",
+                    },
+                  ],
+                  "kind": "function",
+                  "name": "stringify",
+                },
+              },
+              {
+                "name": "authUser_id",
+                "setter": {
+                  "kind": "reference-value",
+                  "target": {
+                    "access": [
+                      "id",
+                    ],
+                    "alias": "authUser",
+                  },
+                },
+              },
+            ],
+            "kind": "create-one",
+            "model": "AuthUserAccessToken",
+            "select": [
+              {
+                "alias": "token",
+                "kind": "field",
+                "name": "token",
+                "namePath": [
+                  "accessToken",
+                  "token",
+                ],
+                "refKey": "AuthUserAccessToken.token",
+              },
+            ],
+            "targetPath": [
+              "AuthUserAccessToken",
+            ],
+          },
+          {
+            "changeset": [
+              {
+                "name": "name",
+                "setter": {
+                  "fieldsetAccess": [
+                    "name",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+              {
+                "name": "username",
+                "setter": {
+                  "fieldsetAccess": [
+                    "username",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+              {
+                "name": "password",
+                "setter": {
+                  "fieldsetAccess": [
+                    "password",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+            ],
+            "hook": {
+              "args": [
+                {
+                  "name": "token",
+                  "setter": {
+                    "kind": "reference-value",
+                    "target": {
+                      "access": [
+                        "token",
+                      ],
+                      "alias": "accessToken",
+                    },
+                  },
+                },
+              ],
+              "hook": {
+                "code": {
+                  "file": "hooks/actions.js",
+                  "kind": "source",
+                  "target": "sendToken",
+                },
+                "runtimeName": "@GAUDI_INTERNAL",
+              },
+            },
+            "kind": "execute-hook",
+            "responds": true,
+          },
+        ],
+        "authSelect": [],
+        "authorize": undefined,
+        "fieldset": {
+          "kind": "record",
+          "nullable": false,
+          "record": {},
+        },
+        "kind": "custom-many",
+        "method": "POST",
+        "parentContext": [],
+        "path": "login",
+        "responds": false,
+        "response": undefined,
+        "target": {
+          "alias": "$target_0",
+          "kind": "model",
+          "name": "AuthUser",
+          "namePath": [
+            "AuthUser",
+          ],
+          "refKey": "AuthUser",
+          "retType": "AuthUser",
+          "select": [],
+        },
+      },
+      {
+        "actions": [
+          {
+            "alias": "accessToken",
+            "changeset": [
+              {
+                "name": "expiryDate",
+                "setter": {
+                  "fieldsetAccess": [
+                    "accessToken",
+                    "expiryDate",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+              {
+                "name": "authUser_id",
+                "setter": {
+                  "fieldsetAccess": [
+                    "accessToken",
+                    "authUser_id",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "integer",
+                },
+              },
+              {
+                "name": "token",
+                "setter": {
+                  "access": [
+                    "user",
+                    "token",
+                  ],
+                  "kind": "http-handler",
+                  "name": "request",
+                },
+              },
+            ],
+            "kind": "fetch-one",
+            "model": "AuthUserAccessToken",
+            "query": {
+              "filter": {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUserAccessToken",
+                      "token",
+                    ],
+                  },
+                  {
+                    "kind": "literal",
+                    "type": "text",
+                    "value": "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U",
+                  },
+                ],
+                "kind": "function",
+                "name": "is",
+              },
+              "fromPath": [
+                "AuthUserAccessToken",
+              ],
+              "kind": "query",
+              "limit": 1,
+              "modelRefKey": "AuthUserAccessToken",
+              "name": "$query",
+              "offset": undefined,
+              "orderBy": undefined,
+              "refKey": "N/A",
+              "retType": "AuthUserAccessToken",
+              "select": [
+                {
+                  "alias": "id",
+                  "kind": "field",
+                  "name": "id",
+                  "namePath": [
+                    "AuthUserAccessToken",
+                    "id",
+                  ],
+                  "refKey": "AuthUserAccessToken.id",
+                },
+                {
+                  "alias": "token",
+                  "kind": "field",
+                  "name": "token",
+                  "namePath": [
+                    "AuthUserAccessToken",
+                    "token",
+                  ],
+                  "refKey": "AuthUserAccessToken.token",
+                },
+                {
+                  "alias": "expiryDate",
+                  "kind": "field",
+                  "name": "expiryDate",
+                  "namePath": [
+                    "AuthUserAccessToken",
+                    "expiryDate",
+                  ],
+                  "refKey": "AuthUserAccessToken.expiryDate",
+                },
+                {
+                  "alias": "authUser_id",
+                  "kind": "field",
+                  "name": "authUser_id",
+                  "namePath": [
+                    "AuthUserAccessToken",
+                    "authUser_id",
+                  ],
+                  "refKey": "AuthUserAccessToken.authUser_id",
+                },
+              ],
+            },
+          },
+          {
+            "kind": "delete-one",
+            "model": "AuthUserAccessToken",
+            "targetPath": [
+              "accessToken",
+            ],
+          },
+          {
+            "changeset": [
+              {
+                "name": "name",
+                "setter": {
+                  "fieldsetAccess": [
+                    "name",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+              {
+                "name": "username",
+                "setter": {
+                  "fieldsetAccess": [
+                    "username",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+              {
+                "name": "password",
+                "setter": {
+                  "fieldsetAccess": [
+                    "password",
+                  ],
+                  "kind": "fieldset-input",
+                  "required": true,
+                  "type": "text",
+                },
+              },
+            ],
+            "hook": {
+              "args": [
+                {
+                  "name": "status",
+                  "setter": {
+                    "kind": "literal",
+                    "type": "integer",
+                    "value": 204,
+                  },
+                },
+              ],
+              "hook": {
+                "code": {
+                  "file": "hooks/actions.js",
+                  "kind": "source",
+                  "target": "sendResponse",
+                },
+                "runtimeName": "@GAUDI_INTERNAL",
+              },
+            },
+            "kind": "execute-hook",
+            "responds": true,
+          },
+        ],
+        "authSelect": [],
+        "authorize": undefined,
+        "fieldset": {
+          "kind": "record",
+          "nullable": false,
+          "record": {},
+        },
+        "kind": "custom-many",
+        "method": "POST",
+        "parentContext": [],
+        "path": "logout",
+        "responds": false,
+        "response": undefined,
+        "target": {
+          "alias": "$target_0",
+          "kind": "model",
+          "name": "AuthUser",
+          "namePath": [
+            "AuthUser",
+          ],
+          "refKey": "AuthUser",
+          "retType": "AuthUser",
+          "select": [],
+        },
+      },
+    ],
+    "entrypoints": [],
+    "name": "Auth",
+    "target": {
+      "alias": "$target_0",
+      "identifyWith": {
+        "name": "id",
+        "paramName": "authuser_id",
+        "refKey": "AuthUser.id",
+        "type": "integer",
+      },
+      "kind": "model",
+      "name": "AuthUser",
+      "namePath": [
+        "AuthUser",
+      ],
+      "refKey": "AuthUser",
+      "retType": "AuthUser",
+    },
   },
 ]
 `;

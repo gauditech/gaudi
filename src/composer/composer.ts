@@ -1,7 +1,7 @@
 import { composeEntrypoints } from "./entrypoints";
 import { composeModels } from "./models";
 
-import { compileAuthenticatorSpec } from "@src/composer/authenticator";
+import { compileAuthenticatorSpec, composeAuthenticator } from "@src/composer/authenticator";
 import { composeExecutionRuntimes } from "@src/composer/executionRuntimes";
 import { composePopulators } from "@src/composer/populators";
 import { Definition } from "@src/types/definition";
@@ -18,11 +18,13 @@ export function compose(input: Specification): Definition {
     resolveOrder: [],
     populators: [],
     runtimes: [],
+    authenticator: undefined,
   };
 
   // runtimes can be composed first because they don't have external deps
   composeExecutionRuntimes(def, mergedSpecs.runtimes);
-  composeModels(def, mergedSpecs.models);
+  composeModels(def, mergedSpecs, mergedSpecs.models);
+  composeAuthenticator(def, mergedSpecs.authenticator);
   composeEntrypoints(def, mergedSpecs.entrypoints);
   composePopulators(def, mergedSpecs.populators);
 
@@ -45,6 +47,7 @@ function mergePredefinedSpecs(input: Specification): Specification {
       entrypoints: [...accum.entrypoints, ...spec.entrypoints],
       populators: [...accum.populators, ...spec.populators],
       runtimes: [...accum.runtimes, ...spec.runtimes],
+      authenticator: spec.authenticator ?? accum.authenticator,
     };
   }, input);
 }

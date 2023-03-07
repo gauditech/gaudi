@@ -679,27 +679,23 @@ export function wrapActionsWithSelect(
   actions: ActionDef[],
   deps: SelectDep[]
 ): ActionDef[] {
-  return (
-    actions
-      .map((a): ActionDef => {
-        if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one")
-          return a;
+  return actions.map((a): ActionDef => {
+    if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one") return a;
 
-        const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
-        const model = getRef.model(def, a.model);
+    const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
+    const model = getRef.model(def, a.model);
 
-        const select = pathsToSelectDef(def, model, paths, [a.alias]);
-        return { ...a, select };
-      })
-  );
+    const select = pathsToSelectDef(def, model, paths, [a.alias]);
+    return { ...a, select };
+  });
 }
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
-  if (!def.auth) return [];
+  if (!def.authenticator) return [];
   const paths = uniqueNamePaths(
     deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access)
   );
-  const model = getRef.model(def, def.auth.baseRefKey);
+  const model = getRef.model(def, def.authenticator.authUserModel.refKey);
   return pathsToSelectDef(def, model, paths, [model.name]);
 }
 

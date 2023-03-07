@@ -237,11 +237,11 @@ describe("compose hooks", () => {
 
           action {
             execute {
-              set user query { from Org, filter id is 1, select { id, name }} 
+              set user query { from Org, filter id is 1, select { id, name }} // TODO: read from ctx - id
 
               hook {
                 // action arg hook
-                arg user query { from Org, filter id is 1, select { id, name }} 
+                arg user query { from Org, filter id is 1, select { id, name }} // TODO: read from ctx - id
 
                 runtime @GAUDI_INTERNAL
                 source login from "hooks/auth"

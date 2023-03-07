@@ -164,10 +164,10 @@ export function getInitialContext(
     ])
   );
 
-  if (def.auth) {
+  if (def.authenticator) {
     parentContext["@auth"] = {
       kind: "record",
-      modelName: getRef.model(def, def.auth.baseRefKey).name,
+      modelName: def.authenticator.authUserModel.name,
     };
   }
 
@@ -207,17 +207,21 @@ function composeSingleAction(
   const actionTargetScope = getActionTargetScope(def, spec, target.alias, ctx);
   // Overwriting a default action
   if (actionTargetScope === "target") {
-    ensureCorrectDefaultAction(spec, target, endpointKind);
-  } else if (actionTargetScope === "none") {
-    // there is no alias for "none" scope action
+    ensureAllowedAction(spec, target, endpointKind);
   } else {
-    ensureNot(spec.alias, undefined, `Custom action must have an alias`);
-    // ensure alias doesn't reuse an existing name
-    const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
+    // check alias
+    // some actions are not allowed to have alias
+    if (spec.kind === "delete" || spec.kind === "execute") {
+      ensureEmpty(spec.alias, `Action "${spec.kind}" cannot have an alias`);
+    } else {
+      ensureNot(spec.alias, undefined, `Custom action must have an alias`);
+      // ensure alias doesn't reuse an existing name
+      const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
 
-    // FIXME not sure if this logic works
-    ensureThrow(() => getRef(def, spec.alias!), message);
-    ensureEqual(spec.alias! in ctx, false, message);
+      // FIXME not sure if this logic works
+      ensureThrow(() => getRef(def, spec.alias!), message);
+      ensureEqual(spec.alias! in ctx, false, message);
+    }
   }
 
   const specWithParentSetter = assignParentContextSetter(def, spec, ctx, targets);
@@ -480,15 +484,14 @@ function composeSingleAction(
 }
 
 /**
- * Ensures that a default action kind matches the endpoint kind.
- * eg. on `create endpoint` there can only be a `create` specification
+ * Ensures that a action kind is allowed in given endpoint.
+ *
+ * Eg. on `create endpoint` there can only be a `create` specification
  * for a default action.
+ *
+ * Eg. `custom-one` endpoints allow only `update`, `delete`, `execute` and `fetch` actions.
  */
-function ensureCorrectDefaultAction(
-  spec: ActionSpec,
-  target: TargetDef,
-  endpointKind: EndpointType
-) {
+function ensureAllowedAction(spec: ActionSpec, target: TargetDef, endpointKind: EndpointType) {
   // --- check endpoint action types
   // custom endpoint action types depend on their cardinality
   if (endpointKind === "custom-one" || endpointKind === "custom-many") {

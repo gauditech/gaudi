@@ -17,22 +17,42 @@ describe("Auth", () => {
     loadBlueprint(path.join(__dirname, "auth.gaudi")),
     [
       {
-        model: "Operator",
-        data: [{ name: "First" }, { name: "Second" }],
-      },
-      {
-        model: "Operator__AuthLocal",
-        // password: 1234
+        model: "AuthUser",
         data: [
           {
-            base_id: 1,
+            id: 1,
+            name: "First",
             username: "first",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
           {
-            base_id: 2,
+            id: 2,
+            name: "Second",
             username: "second",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
+          },
+        ],
+      },
+      {
+        model: "AuthUserAccessToken",
+        data: [
+          {
+            authUser_id: 1,
+            token: "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U",
+            expiryDate: `${Date.now() + 1 * 60 * 60 * 1000}`,
+          },
+          {
+            authUser_id: 2,
+            token: "FwExbO7sVwf95pI3F3qWSpkANE4aeoNiI0pogqiMcfQ",
+            expiryDate: `${Date.now() + 1 * 60 * 60 * 1000}`,
+          },
+        ],
+      },
+      {
+        model: "Operator",
+        data: [
+          {
+            user_id: 1,
           },
         ],
       },
@@ -57,14 +77,14 @@ describe("Auth", () => {
 
   async function loginTestUser() {
     const loginResponse = await request(getServer())
-      .post("/auth/login")
+      .post("/auth_user/login")
       .send({ username: "first", password: "1234" });
     return loginResponse.body.token;
   }
 
   async function loginTestUser2() {
     const loginResponse = await request(getServer())
-      .post("/auth/login")
+      .post("/auth_user/login")
       .send({ username: "second", password: "1234" });
     return loginResponse.body.token;
   }
@@ -82,11 +102,12 @@ describe("Auth", () => {
       expect(listResponse1.statusCode).toBe(401);
 
       const loginResponse = await request(getServer())
-        .post("/auth/login")
+        .post("/auth_user/login")
         .send({ username: "first", password: "1234" });
       expect(loginResponse.statusCode).toBe(200);
+
       const token = loginResponse.body.token;
-      expect(token.length).toBe(43);
+      expect(token?.length).toBe(43);
 
       const listResponse2 = await request(getServer())
         .get("/box")
@@ -94,7 +115,7 @@ describe("Auth", () => {
       expect(listResponse2.statusCode).toBe(200);
 
       const logoutResponse = await request(getServer())
-        .post("/auth/logout")
+        .post("/auth_user/logout")
         .set("Authorization", "bearer " + token);
       expect(logoutResponse.statusCode).toBe(204);
 
@@ -106,14 +127,14 @@ describe("Auth", () => {
 
     it("Wrong Login password", async () => {
       const loginResponse = await request(getServer())
-        .post("/auth/login")
+        .post("/auth_user/login")
         .send({ username: "first", password: "wrong password" });
       expect(loginResponse.statusCode).toBe(401);
     });
 
     it("Wrong Login username", async () => {
       const loginResponse = await request(getServer())
-        .post("/auth/login")
+        .post("/auth_user/login")
         .send({ username: "wrong username", password: "1234" });
       expect(loginResponse.statusCode).toBe(401);
     });

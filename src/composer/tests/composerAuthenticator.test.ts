@@ -1,5 +1,4 @@
 import { compile, compose, parse } from "@src/index";
-import { CustomOneEndpointDef } from "@src/types/definition";
 import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
 
 describe("authenticator composer", () => {
@@ -12,10 +11,9 @@ describe("authenticator composer", () => {
 
     const def = compose(compile(parse(bp)));
 
-    // check authenticator struct
     expect(def.authenticator).toMatchSnapshot();
-    // check authenticator's models
     expect(def.models).toMatchSnapshot();
+    expect(def.entrypoints).toMatchSnapshot();
   });
 
   it("fails if authenticator model names are already taken", () => {

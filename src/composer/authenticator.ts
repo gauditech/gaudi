@@ -2,6 +2,9 @@ import _ from "lodash";
 
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { compile } from "@src/compiler/compiler";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
+import { parse } from "@src/parser/parser";
 import {
   AuthenticatorMethodDef,
   AuthenticatorNamedModelDef,
@@ -23,13 +26,13 @@ export function composeAuthenticator(def: Definition, spec: AuthenticatorSpec | 
 
   // hardcoded authenticator name - not exposed through blueprint cause we don't support multiple auth blocks yet
   const name = "Auth";
-  const targetModel = composeTargetModel(def, spec.targetModelName);
+  const authUserModel = composeTargetModel(def, spec.authUserModelName);
   const accessTokenModel = composeTargetModel(def, spec.accessTokenModelName);
   const method = composeMethod(def, spec.method);
 
   def.authenticator = {
     name,
-    targetModel,
+    authUserModel,
     accessTokenModel,
     method,
   };
@@ -66,73 +69,116 @@ export function compileAuthenticatorSpec(
   authenticatorSpec: AuthenticatorSpec | undefined
 ): Specification {
   if (authenticatorSpec == null) {
-    return { models: [], entrypoints: [], populators: [], runtimes: [] };
+    return { models: [], entrypoints: [], populators: [], runtimes: [], authenticator: undefined };
   }
 
-  const targetModelName = authenticatorSpec.targetModelName;
+  const authUserModelName = authenticatorSpec.authUserModelName;
   const accessTokenModelName = authenticatorSpec.accessTokenModelName;
 
-  return {
-    models: [
-      // target model
-      {
-        name: targetModelName,
-        fields: [
-          {
-            name: "name",
-            type: "text",
-            validators: [{ kind: "builtin", name: "min", args: [1] }],
-          },
-          // this is used as username so it must be unique
-          // if we had parallel auth methods this probably couldn't be unique anymore
-          {
-            name: "username",
-            type: "text",
-            unique: true,
-            validators: [{ kind: "builtin", name: "min", args: [8] }],
-          },
-          {
-            name: "password",
-            type: "text",
-            validators: [{ kind: "builtin", name: "min", args: [8] }],
-          },
-        ],
-        references: [],
-        relations: [
-          {
-            name: "tokens",
-            fromModel: accessTokenModelName,
-            through: "target",
-          },
-        ],
-        queries: [],
-        computeds: [],
-        hooks: [],
-      },
-      // access token model
-      // maybe this will have to renamed/moved when we have other auth methods
-      {
-        name: accessTokenModelName,
-        fields: [
-          {
-            name: "token",
-            type: "text",
-            unique: true,
-          },
-          {
-            name: "expiryDate",
-            type: "text",
-          },
-        ],
-        references: [{ name: "target", toModel: targetModelName }],
-        relations: [],
-        queries: [],
-        computeds: [],
-        hooks: [],
-      },
-    ],
-    entrypoints: [],
-    populators: [],
-    runtimes: [],
-  };
+  const internalExecRuntimeName = getInternalExecutionRuntimeName();
+
+  const AuthenticatorModel = `
+    model ${authUserModelName} {
+      field name { type text, validate { min 1 } }
+      field username { type text, unique, validate { min 8 } }
+      field password { type text, validate { min 8 } }
+      relation tokens { from ${accessTokenModelName}, through authUser }
+    }
+    model ${accessTokenModelName} {
+      field token { type text, unique }
+      field expiryDate { type text }
+      reference authUser { to ${authUserModelName} }
+    }
+
+    entrypoint Auth {
+      target model ${authUserModelName}
+    
+      // login
+      custom endpoint {
+        path "login"
+        method POST
+        cardinality many
+    
+        action {
+          fetch as authUser {
+            virtual input username { type text }
+            query {
+              from AuthUser
+              filter username is "first" // TODO: read from ctx
+              limit 1
+            }
+          }
+    
+          execute {
+            virtual input password { type text }
+    
+            hook {
+              arg clearPassword password
+              arg hashPassword authUser.password
+    
+              runtime ${internalExecRuntimeName}
+              source authenticateUser from "hooks/actions.js"
+              // TODO: handle hook errors
+              // how to throw BusinessError?
+              //  - any of passwords is empty -> 401
+              //  - passwords don't match -> 401
+            }
+          }
+    
+          // create access token
+          create ${accessTokenModelName} as accessToken {
+            set token cryptoToken(32)
+            set expiryDate stringify(now() + 3600000) // 1 hour
+            set authUser authUser
+          }
+        
+          // return token
+          execute {
+            responds
+        
+            hook {
+              arg token accessToken.token
+    
+              runtime ${internalExecRuntimeName}
+              source sendToken from "hooks/actions.js"
+            }
+          }
+        }
+      }
+
+      // logout
+      custom endpoint {
+        path "logout"
+        method POST
+        cardinality many
+    
+        action {
+          // TODO: how to get token form HTTP request to context?!
+          fetch as accessToken {
+            query {
+              from ${accessTokenModelName}
+              filter token is "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U" // TODO: read from ctx - @authToken.token
+              limit 1
+            }
+          }
+
+          delete accessToken {}
+
+          // return token
+          execute {
+            responds
+
+            hook {
+              arg status 204
+
+              runtime ${internalExecRuntimeName}
+              source sendResponse from "hooks/actions.js"
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  return compile(parse(AuthenticatorModel));
 }

@@ -170,7 +170,7 @@ entrypoint Orgs {
     path "customFetchAction"
     action {
       fetch as fRepo {
-        query { from Repo, filter id is 1, select {slug}}
+        query { from Repo, filter id is 1, select {slug}} // TODO: read from ctx - id
       }
       execute {
         responds

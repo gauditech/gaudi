@@ -666,15 +666,15 @@ function compileExecutionRuntime(runtime: ExecutionRuntimeAST): ExecutionRuntime
 function compileAuthenticator(authenticator: AuthenticatorAST): AuthenticatorSpec {
   const name = authenticator.name;
   // this is not exposed in blueprint yet
-  const targetModelName = AUTH_TARGET_MODEL_NAME;
-  const accessTokenModelName = `${targetModelName}AccessToken`;
+  const authUserModelName = AUTH_TARGET_MODEL_NAME;
+  const accessTokenModelName = `${authUserModelName}AccessToken`;
   const method = compileAuthenticatorMethod(authenticator.body);
 
   if (method == null) {
     throw new CompilerError("Authenticator method is required.");
   }
 
-  return { name, targetModelName, accessTokenModelName, method };
+  return { name, authUserModelName, accessTokenModelName, method };
 }
 
 function compileAuthenticatorMethod(

@@ -28,9 +28,10 @@ import {
   QuerySpec,
   ReferenceSpec,
   RelationSpec,
+  Specification,
 } from "@src/types/specification";
 
-export function composeModels(def: Definition, specs: ModelSpec[]): void {
+export function composeModels(def: Definition, spec: Specification, modelSpecs: ModelSpec[]): void {
   const unresolvedRefs = new Set<string>();
   let needsExtraStep = true;
   function tryCall<T>(fn: () => T): T | null {
@@ -51,8 +52,8 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     const resolvedCount = def.resolveOrder.length;
     needsExtraStep = false;
     // ensure model uniqueness
-    ensureUnique(specs.map((s) => s.name.toLowerCase()));
-    specs.forEach((mspec) => {
+    ensureUnique(modelSpecs.map((s) => s.name.toLowerCase()));
+    modelSpecs.forEach((mspec) => {
       // ensure prop uniqueness
       ensureUnique([
         ...mspec.fields.map((f) => f.name.toLowerCase()),
@@ -64,7 +65,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
       const mdef = defineModel(def, mspec);
       mspec.fields.forEach((hspec) => defineField(def, mdef, hspec));
       mspec.computeds.forEach((cspec) => tryCall(() => defineComputed(def, mdef, cspec)));
-      mspec.references.forEach((rspec) => tryCall(() => defineReference(def, mdef, rspec)));
+      mspec.references.forEach((rspec) => tryCall(() => defineReference(def, spec, mdef, rspec)));
       mspec.relations.forEach((rspec) => tryCall(() => defineRelation(def, mdef, rspec)));
       mspec.queries
         .filter((qspec) => !qspec.aggregate)
@@ -227,11 +228,19 @@ function literalToConstantDef(literal: LiteralValue): ConstantDef {
   throw new Error(`Can't detect literal type from ${literal} : ${typeof literal}`);
 }
 
-function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
+function defineReference(
+  def: Definition,
+  spec: Specification,
+  mdef: ModelDef,
+  rspec: ReferenceSpec
+): ReferenceDef {
   const refKey = `${mdef.refKey}.${rspec.name}`;
   const ex = getDefinition(def, refKey, "reference");
   if (ex) return ex;
-  getDefinition(def, rspec.toModel, "model", true);
+
+  const refToModelName = rspec.toModel;
+
+  getDefinition(def, refToModelName, "model", true);
 
   const fieldRefKey = `${refKey}_id`; // or `Id`?? FIXME decide casing logic
   if (getDefinition(def, refKey, "field")) {
@@ -258,14 +267,17 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     refKey,
     fieldRefKey,
     modelRefKey: mdef.refKey,
-    toModelFieldRefKey: `${rspec.toModel}.id`,
-    toModelRefKey: rspec.toModel,
+    toModelFieldRefKey: `${refToModelName}.id`,
+    toModelRefKey: refToModelName,
     name: rspec.name,
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
   };
   mdef.references.push(ref);
   def.resolveOrder.push(f.refKey);
+
+  defineImplicitRelation(def, spec, mdef, rspec, ref);
+
   return ref;
 }
 
@@ -371,4 +383,44 @@ export function validateType(type: string): FieldDef["type"] {
 
 function constructDbType(type: FieldDef["type"]): FieldDef["dbtype"] {
   return type;
+}
+
+/**
+ * When referencing implicit models (eg. authenticator's `AuthUser`) those models need matching relation
+ * but since those models are created on the fly, relations also need to be added on the fly.
+ */
+function defineImplicitRelation(
+  def: Definition,
+  spec: Specification,
+  refModel: ModelDef,
+  refSpec: ReferenceSpec,
+  refDef: ReferenceDef
+) {
+  const authenticatorSpec = spec.authenticator;
+  // define implicit model names
+  const implicitModels = [
+    // authenticator model relations
+    ...(authenticatorSpec != null
+      ? [authenticatorSpec.authUserModelName, authenticatorSpec.accessTokenModelName]
+      : []),
+  ];
+
+  if (_.includes(implicitModels, refSpec.toModel)) {
+    // relation between implicit models should have already been defined so we'll skip it
+    if (_.includes(implicitModels, refModel.name)) {
+      return;
+    }
+
+    const toModel = getRef.model(def, refSpec.toModel);
+
+    const relSpec: RelationSpec = {
+      // TODO: different rel name depending on cardinality (one or many)
+      name: `${_.camelCase(refModel.name)}${_.upperFirst(_.camelCase(refDef.name))}Rel`,
+      fromModel: refModel.name,
+      through: refDef.name,
+    };
+
+    defineRelation(def, toModel, relSpec);
+  }
+  // ref not implicit, do nothing
 }

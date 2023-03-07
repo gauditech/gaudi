@@ -69,19 +69,21 @@ describe("compose action queries", () => {
           action {
             // target model
             fetch as cOrg {
-              query { from Org, filter id is 1, select {name} }
+              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
             }
             // other model
             fetch as cRepo {
-              query { from Repo, filter id is 1 }
+              query { from Repo, filter id is 1 } // TODO: read from ctx - id
             }
           }
         }
       }
       `;
-  
+
       const def = compose(compile(parse(bp)));
-      expect((def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]).toMatchSnapshot();
+      expect(
+        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+      ).toMatchSnapshot();
     });
     it("custom endpoint", () => {
       const bp = `
@@ -104,20 +106,21 @@ describe("compose action queries", () => {
           action {
             // target model
             fetch as cOrg {
-              query { from Org, filter id is 1, select {name} }
+              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
             }
             // other model
             fetch as cRepo {
-              query { from Repo, filter id is 1 }
+              query { from Repo, filter id is 1 } // TODO: read from ctx - id
             }
           }
         }
       }
       `;
-  
+
       const def = compose(compile(parse(bp)));
-      expect((def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]).toMatchSnapshot();
+      expect(
+        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+      ).toMatchSnapshot();
     });
-  
-  })
+  });
 });
