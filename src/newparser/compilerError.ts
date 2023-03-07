@@ -1,6 +1,7 @@
 import { TokenData } from "./ast/ast";
 
 export enum ErrorCode {
+  ParserError,
   // Check form Errors
   MustContainAtom,
   DuplicateAtom,
@@ -24,8 +25,10 @@ export enum ErrorCode {
   VirtualInputType,
 }
 
-function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>) {
+function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>): string {
   switch (errorCode) {
+    case ErrorCode.ParserError:
+      return `${params?.message}`;
     case ErrorCode.MustContainAtom:
       return `'${params?.["parent"]}' must contain a '${params?.["atom"]}'`;
     case ErrorCode.DuplicateAtom:
@@ -71,7 +74,7 @@ export class CompilerError extends Error {
   params?: Record<string, unknown>;
 
   constructor(errorPosition: TokenData, errorCode: ErrorCode, params?: Record<string, unknown>) {
-    super(getErrorMessage(errorCode));
+    super(getErrorMessage(errorCode, params));
     this.errorPosition = errorPosition;
     this.errorCode = errorCode;
     this.params = params;

@@ -1,12 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
 
+import { ILexingError, IRecognitionException } from "chevrotain";
 import _ from "lodash";
 
+import { TokenData } from "./ast/ast";
 import { checkForm } from "./checkForm";
-import { CompilerError } from "./compilerError";
+import { CompilerError, ErrorCode } from "./compilerError";
 import { migrate } from "./migrate";
-import { parse } from "./parser";
+import { getTokenData, parse } from "./parser";
 import { resolve } from "./resolver";
 
 const folder = "./src/newparser/tests";
@@ -19,17 +21,34 @@ describe("parser", () => {
 
     const result = parse(source);
 
+    const errors = [
+      ...(result.lexerErrors ?? []).map(toCompilerError),
+      ...(result.parserErrors ?? []).map(toCompilerError),
+    ];
+
     if (result.ast) {
       const checkFormErrors = checkForm(result.ast);
       const resolveErrors = resolve(result.ast);
-      logErrors(sourcePath, source, [...checkFormErrors, ...resolveErrors]);
+      errors.push(...checkFormErrors, ...resolveErrors);
 
       if (result.success && checkFormErrors.length === 0 && resolveErrors.length === 0) {
         migrate(result.ast);
       }
     }
+
+    logErrors(sourcePath, source, errors);
   });
 });
+
+function toCompilerError(error: ILexingError | IRecognitionException) {
+  let tokenData: TokenData;
+  if ("token" in error) {
+    tokenData = getTokenData(error.token);
+  } else {
+    tokenData = { start: error.offset, end: error.offset + 1 };
+  }
+  return new CompilerError(tokenData, ErrorCode.ParserError, { message: error.message });
+}
 
 function logErrors(filename: string, source: string, errors: CompilerError[]) {
   if (errors.length === 0) return;

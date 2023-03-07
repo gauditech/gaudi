@@ -478,7 +478,7 @@ export function resolve(definition: Definition) {
         group.type = group.expr.type;
       })
       .with({ kind: "unary" }, (unary) => {
-        resolveExpression(unary, scope);
+        resolveExpression(unary.expr, scope);
         unary.type = getUnaryOperatorType(unary.operator, unary.expr);
       })
       .with({ kind: "path" }, (path) => {

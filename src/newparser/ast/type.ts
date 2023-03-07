@@ -134,6 +134,9 @@ export function isExpectedType(type: Type, expected: Type | TypeCategory): boole
   if (expected.kind === "nullable" && type.kind === "nullable") {
     return isExpectedType(type.type, expected.type);
   }
+  if (expected.kind === "nullable" && type.kind === "primitive" && type.primitiveKind === "null") {
+    return true;
+  }
   if (expected.kind === "model" && type.kind === "model") {
     return expected.model === type.model;
   }

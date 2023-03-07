@@ -178,7 +178,7 @@ export function checkForm(definition: Definition) {
 
   function checkPopulate(populate: Populate) {
     containsAtoms(populate, ["target"]);
-    noDuplicateAtoms(populate, ["target", "populate"]);
+    noDuplicateAtoms(populate, ["target", "repeat"]);
     const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
       if (set.kind === "hook") checkHook(set);
       return target.identifier;

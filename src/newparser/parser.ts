@@ -67,7 +67,7 @@ import {
 import { unknownType } from "./ast/type";
 import * as L from "./lexer";
 
-function getTokenData(...tokens: IToken[]): TokenData {
+export function getTokenData(...tokens: IToken[]): TokenData {
   const positions = tokens.map((t) => ({
     start: t.startOffset,
     end: t.endOffset ?? t.startOffset,
@@ -289,6 +289,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
     const keyword = getTokenData(this.CONSUME(L.Query));
     const name = this.SUBRULE(this.identifier);
+    this.CONSUME1(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
       DEF: () => {
@@ -313,7 +314,9 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = getTokenData(this.CONSUME(L.Filter));
+              this.CONSUME2(L.LCurly);
               const expr = this.SUBRULE(this.expr) as Expr<Db>;
+              this.CONSUME2(L.RCurly);
               atoms.push({ kind: "filter", expr, keyword });
             },
           },
@@ -361,6 +364,7 @@ class GaudiParser extends EmbeddedActionsParser {
         ]);
       },
     });
+    this.CONSUME1(L.RCurly);
 
     return { kind: "query", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
   });
@@ -368,7 +372,7 @@ class GaudiParser extends EmbeddedActionsParser {
   orderBy = this.RULE("orderBy", (): OrderBy => {
     const orderBy: OrderBy = [];
 
-    this.CONSUME(L.RCurly);
+    this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
       DEF: () => {
@@ -385,7 +389,7 @@ class GaudiParser extends EmbeddedActionsParser {
         }
       },
     });
-    this.CONSUME(L.LCurly);
+    this.CONSUME(L.RCurly);
 
     return orderBy;
   });
@@ -743,7 +747,7 @@ class GaudiParser extends EmbeddedActionsParser {
         },
         {
           ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Repeat));
+            const keyword = getTokenData(this.CONSUME(L.Repeater));
             const repeater = this.SUBRULE(this.repeater);
             atoms.push({ kind: "repeat", repeater, keyword });
           },

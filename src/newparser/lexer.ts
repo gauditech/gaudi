@@ -59,7 +59,7 @@ export const Set = createWeakKeyword("set");
 export const Select = createWeakKeyword("select");
 export const Returns = createWeakKeyword("returns");
 export const Response = createWeakKeyword("response");
-export const Repeat = createWeakKeyword("repeat");
+export const Repeater = createWeakKeyword("repeater");
 export const Relation = createWeakKeyword("relation");
 export const Reference = createWeakKeyword("reference");
 export const Query = createWeakKeyword("query");
@@ -174,7 +174,7 @@ export const GaudiTokens = [
   Select,
   Returns,
   Response,
-  Repeat,
+  Repeater,
   Relation,
   Reference,
   Query,
