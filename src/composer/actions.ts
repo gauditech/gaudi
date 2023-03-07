@@ -22,6 +22,7 @@ import {
   getTypedLiteralValue,
   getTypedPath,
   getTypedPathWithLeaf,
+  getTypedRequestPath,
 } from "@src/composer/utils";
 import {
   ActionDef,
@@ -241,7 +242,6 @@ function composeSingleAction(
             /**
              * Check if path is an iterator.
              */
-
             const maybeIterator = safeInvoke(() => getTypedIterator(def, path, ctx));
             switch (maybeIterator.kind) {
               case "success": {
@@ -255,23 +255,43 @@ function composeSingleAction(
               }
               case "error": {
                 /**
-                 * Is this a computed "sibling" call?
-                 * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+                 * Check if path is HTTP handler
                  */
-                if (path[0] === simpleSpec.alias) {
-                  ensureEqual(path.length, 2);
-                } else {
-                  ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
-                }
-                const siblingName = _.last(path)!;
-                // check if sibling name is defined in the changeset
-                const siblingOp = _.find(changeset, { name: siblingName });
-                if (siblingOp) {
-                  return { kind: "changeset-reference", referenceName: siblingName };
-                } else {
-                  throw ["unresolved", path];
+                const maybeRequestValue = safeInvoke(() => getTypedRequestPath(def, path));
+                switch (maybeRequestValue.kind) {
+                  case "success": {
+                    return {
+                      kind: maybeRequestValue.result.kind,
+                      access: maybeRequestValue.result.access,
+                    };
+                  }
+                  case "error": {
+                    /**
+                     * Is this a computed "sibling" call?
+                     * It must start with an action spec alias, and must be a shallow path (no deep aliases)
+                     */
+                    if (path[0] === simpleSpec.alias) {
+                      ensureEqual(path.length, 2);
+                    } else {
+                      ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
+                    }
+                    const siblingName = _.last(path)!;
+                    // check if sibling name is defined in the changeset
+                    const siblingOp = _.find(changeset, { name: siblingName });
+                    if (siblingOp) {
+                      return { kind: "changeset-reference", referenceName: siblingName };
+                    } else {
+                      // final error - every "maybe" failed,so we'll throw an error
+                      throw new Error(`Unresolved expression path ${path}`);
+                    }
+                  }
+
+                  default: {
+                    return assertUnreachable(maybeRequestValue);
+                  }
                 }
               }
+
               default: {
                 return assertUnreachable(maybeIterator);
               }

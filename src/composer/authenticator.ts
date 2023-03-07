@@ -98,7 +98,7 @@ export function compileAuthenticatorSpec(
         path "login"
         method POST
         cardinality many
-    
+
         action {
           fetch as authUser {
             virtual input username { type text }
@@ -108,10 +108,10 @@ export function compileAuthenticatorSpec(
               limit 1
             }
           }
-    
+
           execute {
             virtual input password { type text }
-    
+
             hook {
               arg clearPassword password
               arg hashPassword authUser.password
@@ -124,21 +124,21 @@ export function compileAuthenticatorSpec(
               //  - passwords don't match -> 401
             }
           }
-    
+
           // create access token
           create ${accessTokenModelName} as accessToken {
             set token cryptoToken(32)
             set expiryDate stringify(now() + 3600000) // 1 hour
             set authUser authUser
           }
-        
+
           // return token
           execute {
             responds
-        
+
             hook {
               arg token accessToken.token
-    
+
               runtime ${internalExecRuntimeName}
               source sendToken from "hooks/actions.js"
             }
@@ -151,13 +151,13 @@ export function compileAuthenticatorSpec(
         path "logout"
         method POST
         cardinality many
-    
+
         action {
-          // TODO: how to get token form HTTP request to context?!
-          fetch as accessToken {
+          fetch ${accessTokenModelName} as accessToken {
+            set token @requestAuthToken
             query {
               from ${accessTokenModelName}
-              filter token is "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U" // TODO: read from ctx - @authToken.token
+              filter token is "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U" // TODO: read from ctx - token or @requestAuthToken
               limit 1
             }
           }

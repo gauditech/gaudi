@@ -50,7 +50,7 @@ async function _internalExecuteActions(
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildStrictChangeset(def, qx, action.changeset, ctx);
+      const actionChangeset = await buildStrictChangeset(def, qx, epCtx, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const id = await insertData(dbConn, dbModel, dbData);
@@ -60,7 +60,7 @@ async function _internalExecuteActions(
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildStrictChangeset(def, qx, action.changeset, ctx);
+      const actionChangeset = await buildStrictChangeset(def, qx, epCtx, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const targetId = resolveTargetId(ctx, action.targetPath);
@@ -76,7 +76,7 @@ async function _internalExecuteActions(
 
       await deleteData(dbConn, dbModel, targetId);
     } else if (actionKind === "fetch-one") {
-      const changeset = await buildChangeset(def, qx, action.changeset, ctx);
+      const changeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
 
       // TODO: use executeQueryTree - how to cast to `QueryTree`?
       const result = await qx.executeQuery(def, action.query, new Vars(changeset), []);
@@ -86,8 +86,15 @@ async function _internalExecuteActions(
     } else if (actionKind === "execute-hook") {
       ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
 
-      const actionChangeset = await buildChangeset(def, qx, action.changeset, ctx);
-      const argsChangeset = await buildChangeset(def, qx, action.hook.args, ctx, actionChangeset);
+      const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
+      const argsChangeset = await buildChangeset(
+        def,
+        qx,
+        epCtx,
+        action.hook.args,
+        ctx,
+        actionChangeset
+      );
 
       await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
     } else {

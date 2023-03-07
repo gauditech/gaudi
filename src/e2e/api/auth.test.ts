@@ -214,5 +214,18 @@ describe("Auth", () => {
         .send({ name: "another box", is_public: false });
       expect(getResponse.statusCode).toBe(401);
     });
+
+    it("Return auth token in response", async () => {
+      const authToken = "FwExbO7sVwf95pI3F3qWSpkANE4aeoNiI0pogqiMcfQ";
+
+      const listResponse2 = await request(getServer())
+        .post("/box/fetchAuthToken")
+        // send token in header
+        .set("Authorization", "bearer " + authToken)
+        .send({});
+      expect(listResponse2.statusCode).toBe(200);
+      // expect the same token in response
+      expect(listResponse2.body?.token).toBe(authToken);
+    });
   });
 });

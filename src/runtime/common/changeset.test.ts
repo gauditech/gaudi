@@ -129,7 +129,7 @@ describe("runtime", () => {
       };
 
       expect(
-        await buildChangeset(createTestDefinition(), mockQueryExecutor(), data, context)
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
       ).toMatchSnapshot();
     });
 
@@ -164,7 +164,13 @@ describe("runtime", () => {
       };
 
       expect(
-        await buildStrictChangeset(createTestDefinition(), mockQueryExecutor(), data, context)
+        await buildStrictChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          data,
+          context
+        )
       ).toMatchSnapshot();
     });
 
@@ -247,7 +253,13 @@ describe("runtime", () => {
         referenceIds: [],
       };
       expect(
-        await buildChangeset(createTestDefinition(), mockQueryExecutor(), changeset, context)
+        await buildChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          changeset,
+          context
+        )
       ).toMatchSnapshot();
     });
   });

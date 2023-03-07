@@ -554,6 +554,11 @@ export type FieldSetterChangesetReference = {
   referenceName: string;
 };
 
+export type FieldSetterHttpHandler = {
+  kind: "request-auth-token";
+  access: string[];
+};
+
 export type FieldSetterFunction = {
   kind: "function";
   name: FunctionName; // TODO rename to `fnName` to make it more clear, see line 124 as well
@@ -585,6 +590,7 @@ export type FieldSetter =
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
   | FieldSetterHook
+  | FieldSetterHttpHandler
   | FieldSetterFunction
   | FieldSetterContextReference
   | FieldSetterQuery;

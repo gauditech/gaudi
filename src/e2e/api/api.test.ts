@@ -139,11 +139,14 @@ describe("API endpoints", () => {
       expect(postResp.statusCode).toBe(204);
     });
 
+    // --- hook action
+
     it("custom one action", async () => {
       const data = { name: "Org Custom One", counter: 1 };
       const postResp = await request(getServer()).post("/org/org1/customOneAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
+      // header should contain the same data sent we've sent
       expect(postResp.get("Gaudi-Test-body")).toBe(JSON.stringify(data));
     });
 
@@ -152,8 +155,11 @@ describe("API endpoints", () => {
       const postResp = await request(getServer()).patch("/org/customManyAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
+      // header should contain the same data sent we've sent
       expect(postResp.get("Gaudi-Test-body")).toBe(JSON.stringify(data));
     });
+
+    // --- hook action that responds
 
     it("custom one endpoint - action responds", async () => {
       const data = { name: "Org Custom One", counter: 1 };
@@ -182,6 +188,8 @@ describe("API endpoints", () => {
         }
       `);
     });
+
+    // --- hook action with query
 
     it("custom one endpoint - action with query", async () => {
       const data = { name: "Org Custom Query One", userId: 2 };
