@@ -21,6 +21,7 @@ export enum ErrorCode {
   // Type Errors
   UnexpectedType,
   UnexpectedFieldType,
+  VirtualInputType,
 }
 
 function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>) {
@@ -59,6 +60,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Unexpected type`;
     case ErrorCode.UnexpectedFieldType:
       return `Field type must be a non null primitive type`;
+    case ErrorCode.VirtualInputType:
+      return `Virtual input type must be a non null primitive type`;
   }
 }
 

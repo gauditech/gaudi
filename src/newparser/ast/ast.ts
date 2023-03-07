@@ -284,7 +284,7 @@ export type RefModelAtom = {
   name: string;
   model: string;
 };
-export type RefContext = { kind: "runtime"; path: string[] };
+export type RefContext = { kind: "runtime"; path: string };
 export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;
 
 export const unresolvedRef: Ref = { kind: "unresolved" };

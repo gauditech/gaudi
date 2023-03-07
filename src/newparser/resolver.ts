@@ -47,7 +47,14 @@ type ScopeDb =
   | { kind: "querySimple"; model: string | undefined }
   | { kind: "queryAlias"; models: { model: string | undefined; as: string }[] };
 
-type ScopeCode = { kind: "entrypoint"; models: { model: string | undefined; as: string }[] };
+type ScopeCode = {
+  kind: "entrypoint";
+  models: { model: string | undefined; as: string }[];
+  context: ScopeContext;
+};
+type ScopeContext = {
+  [P in string]?: Type;
+};
 
 type Scope = ScopeDb | ScopeCode;
 
@@ -61,7 +68,7 @@ export function resolve(definition: Definition) {
       match(d)
         .with({ kind: "model" }, resolveModel)
         .with({ kind: "entrypoint" }, (entrypoint) =>
-          resolveEntrypoint(entrypoint, null, { kind: "entrypoint", models: [] })
+          resolveEntrypoint(entrypoint, null, { kind: "entrypoint", models: [], context: {} })
         )
         .with({ kind: "populator" }, resolvePopulator)
         .exhaustive()
@@ -310,26 +317,33 @@ export function resolve(definition: Definition) {
       }
     }
 
+    // first resolve all virtual inputs so they can be referenced
+    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) => {
+      let type = unknownType;
+      virtualInput.ref = { kind: "runtime", path: virtualInput.name.text };
+      const typeAtom = kindFind(virtualInput.atoms, "type");
+      if (typeAtom) {
+        const typeText = typeAtom.identifier.text;
+        if (typeText !== "null" && _.includes(primitiveTypes, typeText)) {
+          type = { kind: "primitive", primitiveKind: typeText } as Type;
+        } else {
+          errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.VirtualInputType));
+        }
+      }
+      if (kindFind(virtualInput.atoms, "nullable")) {
+        type = addTypeModifier(type, "nullable");
+      }
+      virtualInput.type = type;
+      scope.context[virtualInput.name.text] = type;
+    });
+
     action.atoms.forEach((a) =>
       match(a)
+        .with({ kind: "virtualInput" }, () => undefined) // already resolved
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
         .with({ kind: "referenceThrough" }, ({ target, through }) => {
           resolveModelAtomRef(target, currentModel, "reference");
           resolveModelAtomRef(through, getTypeModel(target.type), "field");
-        })
-        .with({ kind: "virtualInput" }, (virtualInput) => {
-          virtualInput.ref = { kind: "runtime", path: [virtualInput.name.text] };
-          const typeAtom = kindFind(virtualInput.atoms, "type");
-          if (typeAtom) {
-            const typeText = typeAtom.identifier.text;
-            if (typeText !== "null" && _.includes(primitiveTypes, typeText)) {
-              virtualInput.type = { kind: "primitive", primitiveKind: typeText } as Type;
-            } else {
-              errors.push(
-                new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType)
-              );
-            }
-          }
         })
         .with({ kind: "deny" }, ({ fields }) => {
           if (fields.kind === "list") {
@@ -349,17 +363,21 @@ export function resolve(definition: Definition) {
   }
 
   function resolveActionAtomSet(set: ActionAtomSet, model: string | undefined, scope: ScopeCode) {
-    // TODO check that types match
     resolveModelAtomRef(set.target, model, "field", "reference");
     match(set.set)
       .with({ kind: "hook" }, (hook) => resolveActionFieldHook(hook, scope))
-      .with({ kind: "expr" }, ({ expr }) => resolveExpression(expr, scope))
+      .with({ kind: "expr" }, ({ expr }) => {
+        resolveExpression(expr, scope);
+        if (isExpectedType(expr.type, set.target.type)) {
+          errors.push(new CompilerError(set.target.identifier.token, ErrorCode.UnexpectedType));
+        }
+      })
       .exhaustive();
   }
 
   function resolvePopulator(populator: Populator) {
     populator.atoms.forEach((populate) =>
-      resolvePopulate(populate, null, { kind: "entrypoint", models: [] })
+      resolvePopulate(populate, null, { kind: "entrypoint", models: [], context: {} })
     );
   }
 
@@ -479,37 +497,40 @@ export function resolve(definition: Definition) {
   function resolveIdentifierRefPath(path: IdentifierRef[], scope: Scope) {
     switch (scope.kind) {
       case "entrypoint": {
-        const [modelIdentifier, ...tail] = path;
+        const [head, ...tail] = path;
+
+        if (tail.length === 0) {
+          const type = scope.context[head.identifier.text];
+          if (type) {
+            head.ref = { kind: "runtime", path: head.identifier.text };
+            head.type = type;
+            return;
+          }
+        }
 
         let model: string | undefined;
-        if (modelIdentifier.identifier.text === "@auth") {
+        if (head.identifier.text === "@auth") {
           model = "@auth";
         } else {
-          model = scope.models.find((model) => model.as === modelIdentifier.identifier.text)?.model;
+          model = scope.models.find((model) => model.as === head.identifier.text)?.model;
         }
         if (!model) {
-          errors.push(
-            new CompilerError(modelIdentifier.identifier.token, ErrorCode.CantResolveModel)
-          );
+          errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
         } else {
-          modelIdentifier.ref = { kind: "model", model };
-          modelIdentifier.type = { kind: "model", model };
+          head.ref = { kind: "model", model };
+          head.type = { kind: "model", model };
         }
         resolveIdentifierRefPathForModel(tail, model, "entrypoint");
         break;
       }
       case "queryAlias": {
-        const [modelIdentifier, ...tail] = path;
-        const model = scope.models.find(
-          (model) => model.as === modelIdentifier.identifier.text
-        )?.model;
+        const [head, ...tail] = path;
+        const model = scope.models.find((model) => model.as === head.identifier.text)?.model;
         if (!model) {
-          errors.push(
-            new CompilerError(modelIdentifier.identifier.token, ErrorCode.CantResolveModel)
-          );
+          errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
         } else {
-          modelIdentifier.ref = { kind: "model", model };
-          modelIdentifier.type = { kind: "model", model };
+          head.ref = { kind: "model", model };
+          head.type = { kind: "model", model };
         }
         resolveIdentifierRefPathForModel(tail, model, "db");
         break;
