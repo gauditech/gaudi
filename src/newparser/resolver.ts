@@ -317,6 +317,20 @@ export function resolve(definition: Definition) {
           resolveModelAtomRef(target, currentModel, "reference");
           resolveModelAtomRef(through, getTypeModel(target.type), "field");
         })
+        .with({ kind: "virtualInput" }, (virtualInput) => {
+          virtualInput.ref = { kind: "runtime", path: [virtualInput.name.text] };
+          const typeAtom = kindFind(virtualInput.atoms, "type");
+          if (typeAtom) {
+            const typeText = typeAtom.identifier.text;
+            if (typeText !== "null" && _.includes(primitiveTypes, typeText)) {
+              virtualInput.type = { kind: "primitive", primitiveKind: typeText } as Type;
+            } else {
+              errors.push(
+                new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType)
+              );
+            }
+          }
+        })
         .with({ kind: "deny" }, ({ fields }) => {
           if (fields.kind === "list") {
             fields.fields.forEach((field) =>
@@ -335,6 +349,7 @@ export function resolve(definition: Definition) {
   }
 
   function resolveActionAtomSet(set: ActionAtomSet, model: string | undefined, scope: ScopeCode) {
+    // TODO check that types match
     resolveModelAtomRef(set.target, model, "field", "reference");
     match(set.set)
       .with({ kind: "hook" }, (hook) => resolveActionFieldHook(hook, scope))

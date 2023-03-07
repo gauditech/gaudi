@@ -2,6 +2,7 @@ import { match } from "ts-pattern";
 
 import {
   Action,
+  ActionVirtualInput,
   Computed,
   Definition,
   Endpoint,
@@ -145,6 +146,10 @@ export function checkForm(definition: Definition) {
           return [target.identifier];
         })
         .with({ kind: "referenceThrough" }, ({ target }) => [target.identifier])
+        .with({ kind: "virtualInput" }, (virtualInput) => {
+          checkActionVirtualInput(virtualInput);
+          return [virtualInput.name];
+        })
         .with({ kind: "deny" }, ({ fields }) =>
           fields.kind === "all" ? [] : fields.fields.map(({ identifier }) => identifier)
         )
@@ -157,6 +162,14 @@ export function checkForm(definition: Definition) {
         .exhaustive()
     );
     noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+  }
+
+  function checkActionVirtualInput(virtualInput: ActionVirtualInput) {
+    containsAtoms(virtualInput, ["type"]);
+    noDuplicateAtoms(virtualInput, ["type", "nullable", "validate"]);
+    kindFilter(virtualInput.atoms, "validate").map(({ validators }) =>
+      validators.forEach(checkValidator)
+    );
   }
 
   function checkPopulator(populator: Populator) {

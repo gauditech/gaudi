@@ -44,6 +44,7 @@ export const Lte = createOperator("Lte", "<=");
 export const Lt = createOperator("Lt", "<");
 
 export const With = createWeakKeyword("with");
+export const Virtual = createWeakKeyword("virtual");
 export const Validate = createWeakKeyword("validate");
 export const Update = createWeakKeyword("update");
 export const Unique = createWeakKeyword("unique");
@@ -158,6 +159,7 @@ export const GaudiTokens = [
   Float,
   String,
   With,
+  Virtual,
   Validate,
   Update,
   Unique,

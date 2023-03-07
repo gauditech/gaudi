@@ -9,6 +9,7 @@ import {
   ActionAtomSpecInputList,
   ActionAtomSpecRefThrough,
   ActionAtomSpecSet,
+  ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
   ComputedSpec,
@@ -194,6 +195,19 @@ function migrateAction(action: AST.Action): ActionSpec {
           through: through.identifier.text,
         })
       )
+      .with({ kind: "virtualInput" }, ({ name, atoms }): ActionAtomSpecVirtualInput => {
+        const validators = kindFilter(atoms, "validate").flatMap((v) =>
+          v.validators.map(migrateValidator)
+        );
+        return {
+          kind: "virtual-input",
+          name: name.text,
+          type: kindFind(atoms, "type")!.identifier.text,
+          nullable: !!kindFind(atoms, "nullable"),
+          optional: false,
+          validators,
+        };
+      })
       .with(
         { kind: "deny" },
         ({ fields }): ActionAtomSpecDeny => ({

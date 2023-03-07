@@ -145,7 +145,8 @@ export type ActionAtom =
   | ActionAtomSet
   | ActionAtomReferenceThrough
   | ActionAtomDeny
-  | ActionAtomInput;
+  | ActionAtomInput
+  | ActionVirtualInput;
 export type ActionAtomSet = WithKeyword<{
   kind: "set";
   target: IdentifierRef;
@@ -173,6 +174,19 @@ export type ActionAtomInput = WithKeyword<{
   }[];
 }>;
 export type InputAtom = WithKeyword<{ kind: "optional" } | { kind: "default"; value: Expr<Code> }>;
+export type ActionVirtualInput = WithKeyword<{
+  kind: "virtualInput";
+  name: Identifier;
+  ref: Ref;
+  type: Type;
+  atoms: ActionVirtualInputAtom[];
+}>;
+
+export type ActionVirtualInputAtom = WithKeyword<
+  | { kind: "type"; identifier: Identifier }
+  | { kind: "nullable" }
+  | { kind: "validate"; validators: Validator[] }
+>;
 
 export type Populator = WithKeyword<{
   kind: "populator";
@@ -202,6 +216,7 @@ export type RepeaterAtom = WithKeyword<
 export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
   kind: "hook";
   name: named extends true ? Identifier : undefined;
+  ref: named extends true ? Ref : undefined;
   atoms: WithKeyword<
     | (simple extends true
         ? { kind: "default_arg"; name: Identifier }
@@ -210,7 +225,7 @@ export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
     | { kind: "inline"; code: StringLiteral }
   >[];
 }>;
-export type ModelHook = Hook<true, false> & { ref: Ref; type: Type; resolved?: true };
+export type ModelHook = Hook<true, false> & { type: Type; resolved?: true };
 export type FieldValidationHook = Hook<false, true>;
 export type ActionFieldHook = Hook<false, false>;
 

@@ -16,6 +16,7 @@ import {
   ActionAtomSet,
   ActionFieldHook,
   ActionType,
+  ActionVirtualInput,
   AggregateType,
   BinaryOperator,
   BooleanLiteral,
@@ -113,7 +114,6 @@ class GaudiParser extends EmbeddedActionsParser {
           ALT: () => {
             const modelHook = this.SUBRULE(this.modelHook);
             this.ACTION(() => {
-              modelHook.ref = unresolvedRef;
               modelHook.type = unknownType;
             });
             atoms.push(modelHook);
@@ -636,6 +636,46 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "input", fields, keyword };
   });
 
+  actionVirtualInput = this.RULE("actionVirtualInput", (): ActionVirtualInput => {
+    const atoms: ActionVirtualInput["atoms"] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Virtual), this.CONSUME(L.Input));
+    const name = this.SUBRULE(this.identifier);
+    this.CONSUME(L.LCurly);
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () =>
+        this.OR([
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Type));
+              const identifier = this.SUBRULE2(this.identifier);
+              atoms.push({ kind: "type", identifier, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Nullable));
+              atoms.push({ kind: "nullable", keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Validate));
+              atoms.push({
+                kind: "validate",
+                validators: this.SUBRULE(this.fieldValidators),
+                keyword,
+              });
+            },
+          },
+        ]),
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "virtualInput", name, atoms, ref: unresolvedRef, type: unknownType, keyword };
+  });
+
   inputAtoms = this.RULE("inputAtoms", (): InputAtom[] => {
     const atoms: InputAtom[] = [];
 
@@ -825,7 +865,7 @@ class GaudiParser extends EmbeddedActionsParser {
       });
       this.CONSUME(L.RCurly);
 
-      return { kind: "hook", name, atoms, keyword } as h;
+      return { kind: "hook", name, ref: named ? unresolvedRef : undefined, atoms, keyword } as h;
     });
   }
 

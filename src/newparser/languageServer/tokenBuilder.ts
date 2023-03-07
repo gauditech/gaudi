@@ -7,6 +7,7 @@ import {
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionFieldHook,
+  ActionVirtualInput,
   Computed,
   Definition,
   Endpoint,
@@ -279,6 +280,7 @@ export function buildTokens(
       match(a)
         .with({ kind: "set" }, buildActionAtomSet)
         .with({ kind: "referenceThrough" }, () => buildActionAtomReferenceThrough)
+        .with({ kind: "virtualInput" }, () => buildActionAtomVirtualInput)
         .with({ kind: "deny" }, () => buildActionAtomDeny)
         .with({ kind: "input" }, () => buildActionAtomInput)
         .exhaustive()
@@ -302,6 +304,24 @@ export function buildTokens(
     buildKeyword(keyword);
     buildIdentifierRef(target);
     buildIdentifierRef(through);
+  }
+
+  function buildActionAtomVirtualInput({ keyword, name, atoms }: ActionVirtualInput) {
+    buildKeyword(keyword);
+    push(name.token, TokenTypes.property);
+    atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "type" }, ({ keyword, identifier }) => {
+          buildKeyword(keyword);
+          buildType(identifier);
+        })
+        .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "validate" }, ({ keyword, validators }) => {
+          buildKeyword(keyword);
+          validators.forEach(buildValidator);
+        })
+        .exhaustive()
+    );
   }
 
   function buildActionAtomDeny({ keyword, fields }: ActionAtomDeny) {
