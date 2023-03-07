@@ -368,7 +368,7 @@ export function resolve(definition: Definition) {
       .with({ kind: "hook" }, (hook) => resolveActionFieldHook(hook, scope))
       .with({ kind: "expr" }, ({ expr }) => {
         resolveExpression(expr, scope);
-        if (isExpectedType(expr.type, set.target.type)) {
+        if (!isExpectedType(expr.type, set.target.type)) {
           errors.push(new CompilerError(set.target.identifier.token, ErrorCode.UnexpectedType));
         }
       })
@@ -485,8 +485,8 @@ export function resolve(definition: Definition) {
         resolveIdentifierRefPath(path.path, scope);
         path.type = path.path.at(-1)?.type ?? unknownType;
       })
-      .with({ kind: "literal" }, (_literal) => {
-        // TODO: do nothing?
+      .with({ kind: "literal" }, (literal) => {
+        literal.type = { kind: "primitive", primitiveKind: literal.literal.kind };
       })
       .with({ kind: "function" }, (function_) => {
         function_.args.forEach((arg) => resolveExpression(arg, scope));

@@ -49,7 +49,7 @@ model Repo {
 model Issue {
   reference repo { to Repo }
 
-  field number { type string }
+  field number { type integer }
   field title { type string }
 
   relation comments { from Comment, through issue }
