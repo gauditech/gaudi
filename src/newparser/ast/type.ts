@@ -11,6 +11,7 @@ export type Type = AnyType | PrimitiveType | ModelType | CollectionType | Nullab
 
 export const unknownType: Type = { kind: "unknown" };
 
+// types are generated in a way that nesting will always be collection > unique > nullable
 export type TypeModifier = "collection" | "nullable" | "unique";
 
 export function addTypeModifier(type: Type, modifier: TypeModifier): Type {
@@ -116,6 +117,7 @@ export function isExpectedType(type: Type, expected: Type | TypeCategory): boole
     return isExpectedType(type.type, expected);
   }
 
+  // typeof string means expected is a `TypeCategory`
   if (typeof expected === "string") {
     const expectedKinds: readonly string[] = typeCategories[expected];
     return type.kind === "primitive" && expectedKinds.includes(type.primitiveKind);

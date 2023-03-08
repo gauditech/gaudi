@@ -240,6 +240,8 @@ export function checkForm(definition: Definition) {
     return identifiers.flatMap(({ text, token }) => {
       if (takenNames.has(text)) {
         errors.push(new CompilerError(token, errorCode));
+      } else {
+        takenNames.add(text);
       }
     });
   }
