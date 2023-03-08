@@ -31,14 +31,13 @@ module.exports.customActionResponds = function (args, ctx) {
 };
 
 /**
- * Throws given error structure
+ * Throws error `{ status, message }`
  *
- * If given `status`, `code` and (optionally) `message` it throws
- * a structure that will be translated to
+ * If `status` is empty it will throw some other text error
  */
 module.exports.customHttpErrorResponse = function ({ status, message }) {
-  if (status && message) {
-    throw { status, message };
+  if (status != null) {
+    throw { status, message: message ?? "" };
   } else {
     throw "some other error";
   }

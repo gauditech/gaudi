@@ -20,13 +20,13 @@ describe("Auth", () => {
         model: "AuthUser",
         data: [
           {
-            id: 1,
+            // id: 1,
             name: "First",
             username: "first",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
           {
-            id: 2,
+            // id: 2,
             name: "Second",
             username: "second",
             password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
@@ -148,6 +148,7 @@ describe("Auth", () => {
 
     it("Success private owned", async () => {
       const token = await loginTestUser();
+
       const getResponse = await request(getServer())
         .get("/box/private")
         .set("Authorization", "bearer " + token);
@@ -193,6 +194,7 @@ describe("Auth", () => {
 
     it("Success private owned > public", async () => {
       const token = await loginTestUser();
+
       const getResponse = await request(getServer())
         .get("/box/private/items/public")
         .set("Authorization", "bearer " + token);
@@ -201,6 +203,7 @@ describe("Auth", () => {
 
     it("Success create box", async () => {
       const token = await loginTestUser2();
+
       const getResponse = await request(getServer())
         .post("/box")
         .set("Authorization", "bearer " + token)
@@ -226,6 +229,61 @@ describe("Auth", () => {
       expect(listResponse2.statusCode).toBe(200);
       // expect the same token in response
       expect(listResponse2.body?.token).toBe(authToken);
+    });
+  });
+
+  describe("user registration", () => {
+    beforeAll(async () => {
+      await setup();
+    });
+    afterAll(async () => {
+      await destroy();
+    });
+
+    it("should register and login new user", async () => {
+      const registerResponse = await request(getServer())
+        .post("/auth_user/register")
+        .send({
+          name: "some name",
+          username: "somename@example.com",
+          clearPassword: "some password",
+          userProfile: { displayName: "Profile Display Name" },
+        });
+
+      expect(registerResponse.statusCode).toBe(201);
+      expect(registerResponse.body).toMatchSnapshot();
+
+      // login is tested fully in another test, this just confirmation that login doesn't fail for new user
+      const loginResponse = await request(getServer())
+        .post("/auth_user/login")
+        .send({ username: "somename@example.com", password: "some password" });
+      expect(loginResponse.statusCode).toBe(200);
+    });
+
+    it("should fail when creating user with invalid parameters", async () => {
+      const registerResponse = await request(getServer())
+        .post("/auth_user/register")
+        .send({ name: "", username: "", password: "" });
+
+      expect(registerResponse.statusCode).toBe(400);
+      expect(registerResponse.body?.code).toMatchInlineSnapshot(`"ERROR_CODE_VALIDATION"`);
+    });
+
+    it("should fail when creating user with existing username", async () => {
+      const data = {
+        name: "some name",
+        username: "somename2@example.com",
+        password: "some password",
+        userProfile: { displayName: "Profile Display Name" },
+      };
+
+      await request(getServer()).post("/auth_user/register").send(data);
+
+      const reregisterReponse = await request(getServer()).post("/auth_user/register").send(data);
+
+      expect(reregisterReponse.statusCode).toBe(400);
+      // TODO: match body instead of text once hooks are able to throw complex errors
+      expect(reregisterReponse.text).toMatchInlineSnapshot(`"Username already exists"`);
     });
   });
 });

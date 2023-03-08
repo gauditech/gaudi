@@ -91,8 +91,8 @@ export function compileAuthenticatorSpec(
     }
 
     entrypoint Auth {
-      target model ${authUserModelName}
-    
+      target model ${authUserModelName} as authUser
+
       // login
       custom endpoint {
         path "login"
@@ -100,15 +100,15 @@ export function compileAuthenticatorSpec(
         cardinality many
 
         action {
-          fetch as authUser {
-            virtual input username { type text }
+          fetch as existingAuthUser {
+            input { username }
             query {
-              from AuthUser
+              from ${authUserModelName}
               filter username is "first" // TODO: read from ctx
               limit 1
             }
             // TODO: throw error id user is not resolved
-            // currently, "authUser" ends up empty and "authenticateUser" hook throws error
+            // currently, "existingAuthUser" ends up empty and "authenticateUser" hook throws error
           }
 
           execute {
@@ -116,7 +116,7 @@ export function compileAuthenticatorSpec(
 
             hook {
               arg clearPassword password
-              arg hashPassword authUser.password
+              arg hashPassword existingAuthUser.password
     
               runtime ${internalExecRuntimeName}
               source authenticateUser from "hooks/actions.js"
@@ -127,7 +127,7 @@ export function compileAuthenticatorSpec(
           create ${accessTokenModelName} as accessToken {
             set token cryptoToken(32)
             set expiryDate stringify(now() + 3600000) // 1 hour
-            set authUser authUser
+            set authUser existingAuthUser
           }
 
           // return token
@@ -135,10 +135,11 @@ export function compileAuthenticatorSpec(
             responds
 
             hook {
-              arg token accessToken.token
+              arg status 200
+              arg body_token accessToken.token
 
               runtime ${internalExecRuntimeName}
-              source sendToken from "hooks/actions.js"
+              source sendResponse from "hooks/actions.js"
             }
           }
         }
@@ -162,12 +163,66 @@ export function compileAuthenticatorSpec(
 
           delete accessToken {}
 
-          // return token
+          // return status
           execute {
             responds
 
             hook {
               arg status 204
+
+              runtime ${internalExecRuntimeName}
+              source sendResponse from "hooks/actions.js"
+            }
+          }
+        }
+      }
+
+      // register
+      custom endpoint {
+        path "register"
+        method POST
+        cardinality many
+
+        action {
+          fetch as existingUser {
+            input { username }
+            query {
+              from ${authUserModelName}
+              filter username is "somename@example.com" // TODO: read from ctx - username
+            }
+          }
+
+
+          // throw error if username already exists
+          // TODO: this should be implemented as validator
+          execute {
+            hook {
+              // throw if existing user is not empty
+              arg condition existingUser
+              arg status 400
+              arg message concat("Username already exists: ", existingUser.username)
+
+              runtime ${internalExecRuntimeName}
+              source throwConditionalResponseError from "hooks/actions.js"
+            }
+          }
+
+          create authUser {
+            input { name, username }
+            virtual input clearPassword { type text, validate { min 8 } }
+            set password cryptoHash(clearPassword, 10)
+          }
+
+          // return created user
+          execute {
+            responds
+
+            hook {
+              arg status 201
+              // body - see hook for details
+              arg body_id authUser.id
+              arg body_name authUser.name
+              arg body_username authUser.username
 
               runtime ${internalExecRuntimeName}
               source sendResponse from "hooks/actions.js"

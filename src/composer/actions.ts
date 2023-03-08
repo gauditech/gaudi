@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
+import { SimpleActionAtoms, SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
 
 import { kindFilter } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
@@ -11,6 +11,7 @@ import {
   ensureExists,
   ensureNot,
   ensureThrow,
+  resolveItems,
   safeInvoke,
 } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
@@ -413,32 +414,49 @@ function composeSingleAction(
   }
 
   const changeset: ChangesetDef = [];
-  let keyCount = changeset.length;
-  let shouldRetry = true;
-  while (shouldRetry) {
-    shouldRetry = false;
-    simpleSpec.actionAtoms.forEach((atom) => {
-      const result = safeInvoke(() => {
-        const fieldsetNamespace =
-          actionTargetScope === "target" || actionTargetScope === "none"
-            ? _.compact([simpleSpec.blueprintAlias])
-            : [simpleSpec.alias];
-        const op = atomToChangesetOperation(atom, fieldsetNamespace);
-        // Add the changeset operation only if not added before
-        if (!_.find(changeset, { name: op.name })) {
-          changeset.push(op);
-        }
-      });
-      if (result.kind === "error") {
-        shouldRetry = true;
+  const resolveResult = resolveItems(
+    // atoms to be resolved
+    simpleSpec.actionAtoms,
+    // item name resolver
+    (atom: SimpleActionAtoms) => {
+      switch (atom.kind) {
+        case "input":
+          return atom.fieldSpec.name;
+        case "reference":
+          return atom.target;
+        case "set":
+          return atom.target;
+        case "virtual-input":
+          return atom.name;
       }
-    });
-    if (shouldRetry && changeset.length === keyCount) {
-      // we had an iteration in which nothing was resolved, and there are still unresolved setters
-      throw new Error(`Couldn't resolve all field setters`);
+    },
+    // item resolver
+    (atom) => {
+      const fieldsetNamespace =
+        actionTargetScope === "target" || actionTargetScope === "none"
+          ? _.compact([simpleSpec.blueprintAlias])
+          : [simpleSpec.alias];
+
+      const op = atomToChangesetOperation(atom, fieldsetNamespace);
+      // Add the changeset operation only if not added before
+      if (!_.find(changeset, { name: op.name })) {
+        changeset.push(op);
+      }
     }
-    keyCount = changeset.length;
+  );
+  // handle error
+  if (resolveResult.kind === "error") {
+    console.log(
+      "ERRORS",
+      resolveResult.errors.map((e) => `${e.name} [${e.error.message ?? e.error}]`)
+    );
+
+    throw new Error(
+      `Couldn't resolve all field setters: ${resolveResult.errors.map((i) => i.name).join()}`
+    );
   }
+
+  // TODO: resolving should break on any error other than "not yet resolved"
   // TODO ensure changeset has covered every non-optional field in the model!
 
   // compose action hook (if available) - only in "execute"s
