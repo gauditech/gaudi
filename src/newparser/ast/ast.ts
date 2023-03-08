@@ -73,7 +73,7 @@ export type QueryAtom = WithKeyword<
   | { kind: "select"; select: Select }
   | { kind: "aggregate"; aggregate: AggregateType }
 >;
-export type AggregateType = "count" | "sum" | "one" | "first";
+export type AggregateType = "count" | "one" | "first";
 export type OrderBy = (
   | {
       identifierPath: IdentifierRef[];

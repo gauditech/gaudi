@@ -217,7 +217,13 @@ export function resolve(definition: Definition) {
     }
 
     const filter = kindFind(query.atoms, "filter");
-    if (filter) resolveExpression(filter.expr, scope);
+    if (filter) {
+      resolveExpression(filter.expr, scope);
+      // if filter is present on cardinality 'one', cardinality changes to 'nullable'
+      if (cardinality === "one") {
+        cardinality = "nullable";
+      }
+    }
 
     const orderBy = kindFind(query.atoms, "orderBy");
     if (orderBy) {
@@ -236,7 +242,22 @@ export function resolve(definition: Definition) {
 
     if (currentModel) {
       const baseType: Type = { kind: "model", model: currentModel };
-      query.type = cardinality === "one" ? baseType : addTypeModifier(baseType, cardinality);
+
+      const aggregate = kindFind(query.atoms, "aggregate");
+      switch (aggregate?.aggregate) {
+        case "one":
+          query.type = baseType;
+          break;
+        case "first":
+          query.type = cardinality === "one" ? baseType : addTypeModifier(baseType, "nullable");
+          break;
+        case "count":
+          query.type = { kind: "primitive", primitiveKind: "integer" };
+          break;
+        default:
+          query.type = cardinality === "one" ? baseType : addTypeModifier(baseType, cardinality);
+          break;
+      }
     }
   }
 

@@ -52,7 +52,6 @@ export const Type = createWeakKeyword("type");
 export const To = createWeakKeyword("to");
 export const Through = createWeakKeyword("through");
 export const Target = createWeakKeyword("target");
-export const Sum = createWeakKeyword("sum");
 export const Start = createWeakKeyword("start");
 export const Source = createWeakKeyword("source");
 export const Set = createWeakKeyword("set");
@@ -86,6 +85,7 @@ export const Hook = createWeakKeyword("hook");
 export const GET = createWeakKeyword("GET");
 export const Get = createWeakKeyword("get");
 export const From = createWeakKeyword("from");
+export const First = createWeakKeyword("first");
 export const Filter = createWeakKeyword("filter");
 export const Field = createWeakKeyword("field");
 export const Entrypoint = createWeakKeyword("entrypoint");
@@ -168,7 +168,6 @@ export const GaudiTokens = [
   To,
   Through,
   Target,
-  Sum,
   Start,
   Source,
   Set,
@@ -202,6 +201,7 @@ export const GaudiTokens = [
   GET,
   Get,
   From,
+  First,
   Filter,
   Field,
   Entrypoint,

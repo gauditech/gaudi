@@ -15,6 +15,7 @@ export enum ErrorCode {
   DuplicatePopulateSet,
   DuplicateHookArg,
   QueryFromAliasWrongLength,
+  QueryMaxOneAggregate,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -34,9 +35,9 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.ParserError:
       return `${params?.message}`;
     case ErrorCode.MustContainAtom:
-      return `'${params?.["parent"]}' must contain a '${params?.["atom"]}'`;
+      return `'${params?.parent}' must contain a '${params?.atom}'`;
     case ErrorCode.DuplicateAtom:
-      return `Duplicate '${params?.["atom"]}' in a '${params?.["parent"]}'`;
+      return `Duplicate '${params?.atom}' in a '${params?.parent}'`;
     case ErrorCode.DuplicateModel:
       return `Duplicate model definition`;
     case ErrorCode.DuplicateRuntime:
@@ -57,6 +58,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate hook argument`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
+    case ErrorCode.QueryMaxOneAggregate:
+      return `Query can't have more than one aggregate`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain 'source' or 'inline' definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:

@@ -44,8 +44,8 @@ export function checkForm(definition: Definition) {
       hasDefaultRuntime = true;
     } else if (runtimes.length > 1) {
       runtimes.forEach((runtime) => {
-        containsAtoms(runtime, ["sourcePath"]);
-        noDuplicateAtoms(runtime, ["default", "sourcePath"]);
+        containsAtoms(runtime, "sourcePath");
+        noDuplicateAtoms(runtime, "default", "sourcePath");
         const default_ = kindFind(runtime.atoms, "default");
         if (default_) {
           if (hasDefaultRuntime) {
@@ -89,8 +89,8 @@ export function checkForm(definition: Definition) {
   }
 
   function checkField(field: Field) {
-    containsAtoms(field, ["type"]);
-    noDuplicateAtoms(field, ["type", "default", "nullable", "unique", "validate"]);
+    containsAtoms(field, "type");
+    noDuplicateAtoms(field, "type", "default", "nullable", "unique", "validate");
 
     kindFilter(field.atoms, "validate").map(({ validators }) => validators.forEach(checkValidator));
   }
@@ -104,26 +104,18 @@ export function checkForm(definition: Definition) {
   }
 
   function checkReference(reference: Reference) {
-    containsAtoms(reference, ["to"]);
-    noDuplicateAtoms(reference, ["to", "nullable", "unique"]);
+    containsAtoms(reference, "to");
+    noDuplicateAtoms(reference, "to", "nullable", "unique");
   }
 
   function checkRelation(relation: Relation) {
-    containsAtoms(relation, ["from", "through"]);
-    noDuplicateAtoms(relation, ["from", "through"]);
+    containsAtoms(relation, "from", "through");
+    noDuplicateAtoms(relation, "from", "through");
   }
 
   function checkQuery(query: Query) {
-    containsAtoms(query, ["from"]);
-    noDuplicateAtoms(query, [
-      "from",
-      "filter",
-      "orderBy",
-      "limit",
-      "offset",
-      "aggregate",
-      "select",
-    ]);
+    containsAtoms(query, "from");
+    noDuplicateAtoms(query, "from", "filter", "orderBy", "limit", "offset", "select", "aggregate");
 
     const from = kindFind(query.atoms, "from");
     if (from && from.as) {
@@ -146,8 +138,8 @@ export function checkForm(definition: Definition) {
   }
 
   function checkEntrypoint(entrypoint: Entrypoint) {
-    containsAtoms(entrypoint, ["target"]);
-    noDuplicateAtoms(entrypoint, ["target", "identifyWith", "authorize", "response"]);
+    containsAtoms(entrypoint, "target");
+    noDuplicateAtoms(entrypoint, "target", "identifyWith", "authorize", "response");
 
     entrypoint.atoms.forEach((a) =>
       match(a)
@@ -161,7 +153,7 @@ export function checkForm(definition: Definition) {
   }
 
   function checkEndpoint(endpoint: Endpoint) {
-    noDuplicateAtoms(endpoint, ["action", "authorize", "method", "cardinality", "path"]);
+    noDuplicateAtoms(endpoint, "action", "authorize", "method", "cardinality", "path");
 
     const action = kindFind(endpoint.atoms, "action");
     if (action) action.actions.map(checkAction);
@@ -184,7 +176,7 @@ export function checkForm(definition: Definition) {
         )
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
-            noDuplicateAtoms({ ...field, kind: "input" }, ["optional", "default"]);
+            noDuplicateAtoms({ ...field, kind: "input" }, "optional", "default");
             return field.field.identifier;
           })
         )
@@ -194,8 +186,8 @@ export function checkForm(definition: Definition) {
   }
 
   function checkActionVirtualInput(virtualInput: ActionVirtualInput) {
-    containsAtoms(virtualInput, ["type"]);
-    noDuplicateAtoms(virtualInput, ["type", "nullable", "validate"]);
+    containsAtoms(virtualInput, "type");
+    noDuplicateAtoms(virtualInput, "type", "nullable", "validate");
     kindFilter(virtualInput.atoms, "validate").map(({ validators }) =>
       validators.forEach(checkValidator)
     );
@@ -206,8 +198,8 @@ export function checkForm(definition: Definition) {
   }
 
   function checkPopulate(populate: Populate) {
-    containsAtoms(populate, ["target"]);
-    noDuplicateAtoms(populate, ["target", "repeat"]);
+    containsAtoms(populate, "target");
+    noDuplicateAtoms(populate, "target", "repeat");
     const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
       if (set.kind === "hook") checkHook(set);
       return target.identifier;
@@ -230,7 +222,7 @@ export function checkForm(definition: Definition) {
     } else if (sourceOrInline[0].kind === "source" && !hasDefaultRuntime) {
       errors.push(new CompilerError(sourceOrInline[0].keyword, ErrorCode.NoRuntimeDefinedForHook));
     }
-    noDuplicateAtoms(hook, ["default_arg"]);
+    noDuplicateAtoms(hook, "default_arg");
     const argIdentifiers = kindFilter(hook.atoms, "arg_expr").map(({ name }) => name);
     noDuplicateNames(argIdentifiers, ErrorCode.DuplicateHookArg);
   }
@@ -255,7 +247,7 @@ export function checkForm(definition: Definition) {
   function containsAtoms<
     ast extends { kind: string; keyword: TokenData; atoms: { kind: string }[] },
     k extends ast["atoms"][number]["kind"]
-  >(parent: ast, kinds: k[]) {
+  >(parent: ast, ...kinds: k[]) {
     kinds.forEach((kind) => {
       const filteredAtoms = parent.atoms.filter((a) => a.kind === kind);
       if (filteredAtoms.length === 0) {
@@ -272,7 +264,7 @@ export function checkForm(definition: Definition) {
   function noDuplicateAtoms<
     ast extends { kind: string; atoms: { kind: string; keyword: TokenData }[] },
     k extends ast["atoms"][number]["kind"]
-  >(parent: ast, kinds: k[]) {
+  >(parent: ast, ...kinds: k[]) {
     kinds.forEach((kind) => {
       const filteredAtoms = parent.atoms.filter((a) => a.kind === kind);
       if (filteredAtoms.length > 1) {
