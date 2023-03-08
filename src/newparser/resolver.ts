@@ -134,9 +134,8 @@ export function resolve(definition: Definition) {
   function resolveValidator(validator: Validator) {
     match(validator)
       .with({ kind: "hook" }, resolveFieldValidationHook)
-      .otherwise(() => {
-        // TODO: do nothing?
-      });
+      .with({ kind: "builtin" }, () => undefined) // TODO: do nothing?
+      .exhaustive();
   }
 
   function resolveReference(model: Model, reference: Reference) {
@@ -290,7 +289,12 @@ export function resolve(definition: Definition) {
     if (response) resolveSelect(response.select, currentModel, scope);
 
     const authorize = kindFind(entrypoint.atoms, "authorize");
-    if (authorize) resolveExpression(authorize.expr, scope);
+    if (authorize) {
+      resolveExpression(authorize.expr, scope);
+      if (!isExpectedType(authorize.expr.type, { kind: "primitive", primitiveKind: "boolean" })) {
+        errors.push(new CompilerError(authorize.keyword, ErrorCode.UnexpectedType));
+      }
+    }
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
       resolveEndpoint(endpoint, currentModel, { ..._.cloneDeep(scope), model: currentModel })
@@ -310,7 +314,12 @@ export function resolve(definition: Definition) {
     }
 
     const authorize = kindFind(endpoint.atoms, "authorize");
-    if (authorize) resolveExpression(authorize.expr, scope);
+    if (authorize) {
+      resolveExpression(authorize.expr, scope);
+      if (!isExpectedType(authorize.expr.type, { kind: "primitive", primitiveKind: "boolean" })) {
+        errors.push(new CompilerError(authorize.keyword, ErrorCode.UnexpectedType));
+      }
+    }
   }
 
   function resolveAction(action: Action, parentModel: string | undefined, scope: ScopeCode) {
