@@ -51,6 +51,7 @@ type ScopeDb =
 
 type ScopeCode = {
   kind: "entrypoint";
+  model: string | undefined;
   models: { model: string | undefined; as: string }[];
   context: ScopeContext;
 };
@@ -72,6 +73,7 @@ export function resolve(definition: Definition) {
         .with({ kind: "entrypoint" }, (entrypoint) =>
           resolveEntrypoint(entrypoint, null, {
             kind: "entrypoint",
+            model: undefined,
             models: [],
             context: {},
           })
@@ -291,7 +293,7 @@ export function resolve(definition: Definition) {
     if (authorize) resolveExpression(authorize.expr, scope);
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
-      resolveEndpoint(endpoint, currentModel, _.cloneDeep(scope))
+      resolveEndpoint(endpoint, currentModel, { ..._.cloneDeep(scope), model: currentModel })
     );
 
     kindFilter(entrypoint.atoms, "entrypoint").forEach((entrypoint) =>
@@ -386,6 +388,7 @@ export function resolve(definition: Definition) {
     populator.atoms.forEach((populate) =>
       resolvePopulate(populate, null, {
         kind: "entrypoint",
+        model: undefined,
         models: [],
         context: {},
       })
@@ -534,29 +537,41 @@ export function resolve(definition: Definition) {
       case "entrypoint": {
         const [head, ...tail] = path;
 
-        if (tail.length === 0) {
-          const type = scope.context[head.identifier.text];
-          if (type) {
-            head.ref = { kind: "runtime", path: head.identifier.text };
-            head.type = type;
-            return;
-          }
+        const type = scope.context[head.identifier.text];
+        if (type) {
+          head.ref = { kind: "runtime", path: head.identifier.text };
+          head.type = type;
+          return;
         }
 
-        let model: string | undefined;
+        let model: string | undefined = undefined;
         if (head.identifier.text === "@auth") {
           model = "@auth";
         } else {
           model = scope.models.find((model) => model.as === head.identifier.text)?.model;
         }
-        if (!model) {
-          errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
-        } else {
+
+        if (model) {
           head.ref = { kind: "model", model };
           head.type = { kind: "model", model };
+          resolveIdentifierRefPathForModel(tail, model, "entrypoint");
+          return;
         }
-        resolveIdentifierRefPathForModel(tail, model, "entrypoint");
-        break;
+
+        const contextType = tail.length === 0 ? scope.context[head.identifier.text] : undefined;
+        if (contextType) {
+          head.ref = { kind: "runtime", path: head.identifier.text };
+          head.type = contextType;
+          return;
+        }
+
+        if (scope.model) {
+          resolveIdentifierRefPathForModel(path, scope.model, "entrypoint");
+          return;
+        }
+
+        errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
+        return;
       }
       case "queryAlias": {
         const [head, ...tail] = path;
@@ -568,11 +583,11 @@ export function resolve(definition: Definition) {
           head.type = { kind: "model", model };
         }
         resolveIdentifierRefPathForModel(tail, model, "db");
-        break;
+        return;
       }
       case "querySimple": {
         resolveIdentifierRefPathForModel(path, scope.model, "db");
-        break;
+        return;
       }
     }
   }

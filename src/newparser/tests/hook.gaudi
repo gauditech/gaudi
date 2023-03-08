@@ -36,6 +36,7 @@ entrypoint UserEntry {
     action {
       create {
         set fieldOne hook {
+          arg second fieldTwo
           source foo from "customHook"
         }
       }
