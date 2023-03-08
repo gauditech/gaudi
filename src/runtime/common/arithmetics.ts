@@ -81,7 +81,7 @@ export async function executeArithmetics<T>(
     case "<":
     case ">=":
     case "<=": {
-      ensureEqual(func.args.length, 2);
+      ensureEqual(func.args.length, 2, `Function "${func.name}" expects 2 parameters`);
       const val1 = await getValue(func.args[0]);
       const val2 = await getValue(func.args[1]);
 
@@ -89,7 +89,7 @@ export async function executeArithmetics<T>(
     }
     case "and":
     case "or": {
-      ensureEqual(func.args.length, 2);
+      ensureEqual(func.args.length, 2, `Function "${func.name}" expects 2 parameters`);
       const val1 = await getValue(func.args[0]);
       const val2 = await getValue(func.args[1]);
 
@@ -99,7 +99,7 @@ export async function executeArithmetics<T>(
     case "is not":
     case "in":
     case "not in": {
-      ensureEqual(func.args.length, 2);
+      ensureEqual(func.args.length, 2, `Function "${func.name}" expects 2 parameters`);
       const val1 = await getValue(func.args[0]);
       const val2 = await getValue(func.args[1]);
 
@@ -117,14 +117,14 @@ export async function executeArithmetics<T>(
       return fnNameToFunction(func.name)(vals);
     }
     case "stringify": {
-      ensureEqual(func.args.length, 1);
+      ensureEqual(func.args.length, 1, `Function "${func.name}" expects 1 parameter`);
       const val = await getValue(func.args[0]);
 
       return fnNameToFunction(func.name)(val);
     }
     case "cryptoHash":
     case "cryptoCompare": {
-      ensureEqual(func.args.length, 2);
+      ensureEqual(func.args.length, 2, `Function "${func.name}" expects 2 parameters`);
 
       const vals = await Promise.all(
         func.args.map(async (arg) => {
@@ -137,7 +137,7 @@ export async function executeArithmetics<T>(
       return fnNameToFunction(func.name)(...vals);
     }
     case "cryptoToken": {
-      ensureEqual(func.args.length, 1);
+      ensureEqual(func.args.length, 1, `Function "${func.name}" expects 1 parameter`);
       const val = await getValue(func.args[0]);
 
       return fnNameToFunction(func.name)(val);
@@ -145,13 +145,13 @@ export async function executeArithmetics<T>(
     case "length":
     case "lower":
     case "upper": {
-      ensureEqual(func.args.length, 1);
+      ensureEqual(func.args.length, 1, `Function "${func.name}" expects 1 parameter`);
       const val = await getValue(func.args[0]);
 
       return fnNameToFunction(func.name)(val);
     }
     case "now": {
-      ensureEqual(func.args.length, 0);
+      ensureEqual(func.args.length, 0, `Function "${func.name}" expects 0 parameters`);
 
       return fnNameToFunction(func.name)();
     }
