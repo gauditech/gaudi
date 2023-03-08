@@ -58,6 +58,8 @@ import {
   RelationAtom,
   Repeater,
   RepeaterAtom,
+  Runtime,
+  RuntimeAtom,
   Select,
   StringLiteral,
   TokenData,
@@ -91,6 +93,7 @@ class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => definition.push(this.SUBRULE(this.model)) },
         { ALT: () => definition.push(this.SUBRULE(this.entrypoint)) },
         { ALT: () => definition.push(this.SUBRULE(this.populator)) },
+        { ALT: () => definition.push(this.SUBRULE(this.runtime)) },
       ]);
     });
 
@@ -803,6 +806,34 @@ class GaudiParser extends EmbeddedActionsParser {
     ]);
   });
 
+  runtime = this.RULE("runtime", (): Runtime => {
+    const atoms: RuntimeAtom[] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Runtime));
+    const name = this.SUBRULE(this.identifier);
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Default));
+            atoms.push({ kind: "default", keyword });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Source), this.CONSUME(L.Path));
+            const path = this.SUBRULE(this.string);
+            atoms.push({ kind: "sourcePath", path, keyword });
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "runtime", name, atoms, keyword };
+  });
+
   modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", true, false);
   fieldValidationHook: ParserMethod<[], FieldValidationHook> = this.GENERATE_HOOK(
     "fieldValidationHook",
@@ -863,6 +894,13 @@ class GaudiParser extends EmbeddedActionsParser {
               const keyword = getTokenData(this.CONSUME(L.Inline));
               const code = this.SUBRULE2(this.string);
               atoms.push({ kind: "inline", code, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Runtime));
+              const identifier = this.SUBRULE5(this.identifier);
+              atoms.push({ kind: "runtime", identifier, keyword });
             },
           },
         ]);

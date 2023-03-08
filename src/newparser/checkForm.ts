@@ -26,6 +26,7 @@ import { kindFilter, kindFind } from "@src/common/patternFilter";
 
 export function checkForm(definition: Definition) {
   const errors: CompilerError[] = [];
+  let hasDefaultRuntime = false;
 
   function checkDefinition(definition: Definition) {
     noDuplicateNames(
@@ -33,11 +34,39 @@ export function checkForm(definition: Definition) {
       ErrorCode.DuplicateModel
     );
 
+    const runtimes = kindFilter(definition, "runtime");
+    noDuplicateNames(
+      runtimes.map(({ name }) => name),
+      ErrorCode.DuplicateRuntime
+    );
+
+    if (runtimes.length === 1) {
+      hasDefaultRuntime = true;
+    } else if (runtimes.length > 1) {
+      runtimes.forEach((runtime) => {
+        containsAtoms(runtime, ["sourcePath"]);
+        noDuplicateAtoms(runtime, ["default", "sourcePath"]);
+        const default_ = kindFind(runtime.atoms, "default");
+        if (default_) {
+          if (hasDefaultRuntime) {
+            errors.push(new CompilerError(default_.keyword, ErrorCode.DuplicateDefaultRuntime));
+          } else {
+            hasDefaultRuntime = true;
+          }
+        }
+      });
+
+      if (!hasDefaultRuntime) {
+        errors.push(new CompilerError(runtimes[0].keyword, ErrorCode.MustHaveDefaultRuntime));
+      }
+    }
+
     definition.forEach((d) =>
       match(d)
         .with({ kind: "model" }, checkModel)
         .with({ kind: "entrypoint" }, checkEntrypoint)
         .with({ kind: "populator" }, checkPopulator)
+        .with({ kind: "runtime" }, () => undefined) // runtime is checked first
         .exhaustive()
     );
   }
@@ -198,6 +227,8 @@ export function checkForm(definition: Definition) {
       sourceOrInline.forEach(({ keyword }) =>
         errors.push(new CompilerError(keyword, ErrorCode.HookOnlyOneSourceOrInline))
       );
+    } else if (sourceOrInline[0].kind === "source" && !hasDefaultRuntime) {
+      errors.push(new CompilerError(sourceOrInline[0].keyword, ErrorCode.NoRuntimeDefinedForHook));
     }
     noDuplicateAtoms(hook, ["default_arg"]);
     const argIdentifiers = kindFilter(hook.atoms, "arg_expr").map(({ name }) => name);

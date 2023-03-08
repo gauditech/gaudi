@@ -13,6 +13,7 @@ import {
   Expr,
   Field,
   FieldValidationHook,
+  Hook,
   IdentifierRef,
   Model,
   ModelAtom,
@@ -22,6 +23,7 @@ import {
   Query,
   Reference,
   Relation,
+  Runtime,
   Select,
   UnaryOperator,
   Validator,
@@ -68,9 +70,14 @@ export function resolve(definition: Definition) {
       match(d)
         .with({ kind: "model" }, resolveModel)
         .with({ kind: "entrypoint" }, (entrypoint) =>
-          resolveEntrypoint(entrypoint, null, { kind: "entrypoint", models: [], context: {} })
+          resolveEntrypoint(entrypoint, null, {
+            kind: "entrypoint",
+            models: [],
+            context: {},
+          })
         )
         .with({ kind: "populator" }, resolvePopulator)
+        .with({ kind: "runtime" }, () => undefined)
         .exhaustive()
     );
   }
@@ -377,7 +384,11 @@ export function resolve(definition: Definition) {
 
   function resolvePopulator(populator: Populator) {
     populator.atoms.forEach((populate) =>
-      resolvePopulate(populate, null, { kind: "entrypoint", models: [], context: {} })
+      resolvePopulate(populate, null, {
+        kind: "entrypoint",
+        models: [],
+        context: {},
+      })
     );
   }
 
@@ -415,6 +426,7 @@ export function resolve(definition: Definition) {
   }
 
   function resolveModelHook(model: Model, hook: ModelHook) {
+    resolveHook(hook);
     hook.ref = {
       kind: "modelAtom",
       atomKind: "hook",
@@ -423,12 +435,35 @@ export function resolve(definition: Definition) {
     };
   }
 
-  function resolveFieldValidationHook(_hook: FieldValidationHook) {
-    // TODO: do nothing?
+  function resolveFieldValidationHook(hook: FieldValidationHook) {
+    resolveHook(hook);
   }
 
   function resolveActionFieldHook(hook: ActionFieldHook, scope: ScopeCode) {
+    resolveHook(hook);
     kindFilter(hook.atoms, "arg_expr").map(({ expr }) => resolveExpression(expr, scope));
+  }
+
+  function resolveHook(hook: Hook<boolean, boolean>) {
+    const source = kindFind(hook.atoms, "source");
+    if (source) {
+      const runtimes = kindFilter(definition, "runtime");
+      const runtimeAtom = kindFind(hook.atoms, "runtime");
+
+      let runtime: Runtime | undefined = undefined;
+      if (runtimeAtom) {
+        runtime = runtimes.find((r) => r.name.text === runtimeAtom.identifier.text);
+      } else {
+        runtime = runtimes.find((r) => kindFind(r.atoms, "default"));
+      }
+
+      if (runtime) {
+        const runtimePath = kindFind(runtime.atoms, "sourcePath")?.path.value;
+        if (runtimePath) {
+          source.runtimePath = runtimePath;
+        }
+      }
+    }
   }
 
   function resolveSelect(select: Select, model: string | undefined, scope: Scope) {

@@ -1,3 +1,6 @@
+runtime Runtime {
+  source path "path/to/runtime"
+}
 
 model Org {
   field name {

@@ -1,0 +1,44 @@
+runtime DefaultRuntime {
+  default
+  source path "path/to/runtime"
+}
+
+runtime OtherRuntime {
+  source path "path/to/runtime"
+}
+
+
+model User {
+  field fieldOne {
+    type string,
+    validate {
+      hook {
+        default arg fieldOne
+        runtime OtherRuntime
+        source foo from "customValidateHook"
+      }
+    }
+  }
+  field fieldTwo {
+    type string,
+    validate {
+      hook {
+        default arg fieldTwo
+        inline "fieldTwo.toLowerCase() === 'something';"
+      }
+    }
+  }
+}
+
+entrypoint UserEntry {
+  target User
+  create endpoint {
+    action {
+      create {
+        set fieldOne hook {
+          source foo from "customHook"
+        }
+      }
+    }
+  }
+}

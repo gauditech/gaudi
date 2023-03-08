@@ -6,6 +6,10 @@ export enum ErrorCode {
   MustContainAtom,
   DuplicateAtom,
   DuplicateModel,
+  DuplicateRuntime,
+  DuplicateDefaultRuntime,
+  MustHaveDefaultRuntime,
+  NoRuntimeDefinedForHook,
   DuplicateModelAtom,
   DuplicateActionAtom,
   DuplicatePopulateSet,
@@ -35,6 +39,14 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate '${params?.["atom"]}' in a '${params?.["parent"]}'`;
     case ErrorCode.DuplicateModel:
       return `Duplicate model definition`;
+    case ErrorCode.DuplicateRuntime:
+      return `Duplicate runtime definition`;
+    case ErrorCode.DuplicateDefaultRuntime:
+      return `Duplicate default runtime definition`;
+    case ErrorCode.MustHaveDefaultRuntime:
+      return `When using multiple runtimes one runtime must be set default`;
+    case ErrorCode.NoRuntimeDefinedForHook:
+      return `Hook with source can't be used without a runtime`;
     case ErrorCode.DuplicateModelAtom:
       return `Duplicate model member definition`;
     case ErrorCode.DuplicateActionAtom:

@@ -57,6 +57,7 @@ export const Start = createWeakKeyword("start");
 export const Source = createWeakKeyword("source");
 export const Set = createWeakKeyword("set");
 export const Select = createWeakKeyword("select");
+export const Runtime = createWeakKeyword("runtime");
 export const Returns = createWeakKeyword("returns");
 export const Response = createWeakKeyword("response");
 export const Repeater = createWeakKeyword("repeater");
@@ -172,6 +173,7 @@ export const GaudiTokens = [
   Source,
   Set,
   Select,
+  Runtime,
   Returns,
   Response,
   Repeater,

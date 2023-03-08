@@ -1,6 +1,6 @@
 import { Type } from "./type";
 
-export type Definition = (Model | Entrypoint | Populator)[];
+export type Definition = (Model | Entrypoint | Populator | Runtime)[];
 
 export type Model = WithKeyword<{
   kind: "model";
@@ -213,6 +213,11 @@ export type RepeaterAtom = WithKeyword<
   { kind: "start"; value: IntegerLiteral } | { kind: "end"; value: IntegerLiteral }
 >;
 
+export type Runtime = WithKeyword<{ kind: "runtime"; name: Identifier; atoms: RuntimeAtom[] }>;
+export type RuntimeAtom = WithKeyword<
+  { kind: "default" } | { kind: "sourcePath"; path: StringLiteral }
+>;
+
 export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
   kind: "hook";
   name: named extends true ? Identifier : undefined;
@@ -221,8 +226,15 @@ export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
     | (simple extends true
         ? { kind: "default_arg"; name: Identifier }
         : { kind: "arg_expr"; name: Identifier; expr: Expr<Code> })
-    | { kind: "source"; keywordFrom: TokenData; name: Identifier; file: StringLiteral }
+    | {
+        kind: "source";
+        keywordFrom: TokenData;
+        name: Identifier;
+        file: StringLiteral;
+        runtimePath?: string;
+      }
     | { kind: "inline"; code: StringLiteral }
+    | { kind: "runtime"; identifier: Identifier }
   >[];
 }>;
 export type ModelHook = Hook<true, false> & { type: Type; resolved?: true };
