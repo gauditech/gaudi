@@ -183,7 +183,26 @@ entrypoint Orgs {
     }
   }
 
+  // hook error response
+  custom endpoint {
+    path "hookErrorResponse"
+    method POST
+    cardinality many
 
+    action {
+      execute {
+        virtual input status { type integer }
+        virtual input message { type text }
+
+        hook {
+          arg status status
+          arg message message
+
+          source customHttpErrorResponse from "hooks.js"
+        }
+      }
+    }
+  }
 
   // --- custom-one endpoints
 

@@ -15,17 +15,31 @@ module.exports.randomSlug = function ({ org }) {
 
 // ----- actions
 
-module.exports.customAction = function(args, ctx) {
-  console.log('[EXEC] customAction: ', args)
+module.exports.customAction = function (args, ctx) {
+  console.log("[EXEC] customAction: ", args);
 
   // return args via HTTP header
-  ctx.response.set('Gaudi-Test-body', JSON.stringify(args))
-}
+  ctx.response.set("Gaudi-Test-body", JSON.stringify(args));
+};
 
 /** Custom action that sends entire response */
-module.exports.customActionResponds = function(args, ctx) {
-  console.log('[EXEC] customActionResponds: ', args)
+module.exports.customActionResponds = function (args, ctx) {
+  console.log("[EXEC] customActionResponds: ", args);
 
   // send entire response
-  ctx.response.json(args)
-}
+  ctx.response.json(args);
+};
+
+/**
+ * Throws given error structure
+ *
+ * If given `status`, `code` and (optionally) `message` it throws
+ * a structure that will be translated to
+ */
+module.exports.customHttpErrorResponse = function ({ status, message }) {
+  if (status && message) {
+    throw { status, message };
+  } else {
+    throw "some other error";
+  }
+};

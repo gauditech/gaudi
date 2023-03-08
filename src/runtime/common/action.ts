@@ -8,6 +8,7 @@ import { assertUnreachable, ensureExists } from "@src/common/utils";
 import { buildChangeset, buildStrictChangeset } from "@src/runtime/common/changeset";
 import { HookActionContext, executeActionHook } from "@src/runtime/hooks";
 import { DbConn } from "@src/runtime/server/dbConn";
+import { HookError } from "@src/runtime/server/error";
 import { Vars } from "@src/runtime/server/vars";
 import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition";
 
@@ -96,7 +97,11 @@ async function _internalExecuteActions(
         actionChangeset
       );
 
-      await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
+      try {
+        await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
+      } catch (err) {
+        throw new HookError(err);
+      }
     } else {
       assertUnreachable(actionKind);
     }

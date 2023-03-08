@@ -206,6 +206,24 @@ describe("API endpoints", () => {
       expect(postResp.statusCode).toBe(200);
       expect(postResp.body).toMatchSnapshot();
     });
+
+    // --- hook error
+
+    it("Hook throws specific HTTP error response", async () => {
+      const data = { status: 451, code: "UNAVAILABLE", message: "Unavailable For Legal Reasons" };
+
+      const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
+      expect(response.statusCode).toBe(data.status);
+      expect(response.text).toEqual(data.message);
+    });
+
+    it("Hook throws generic HTTP error response", async () => {
+      const data = {};
+
+      const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
+      expect(response.statusCode).toBe(500);
+      expect(response.text).toBe("Server error");
+    });
   });
 
   describe("Repo", () => {

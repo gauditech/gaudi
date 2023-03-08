@@ -107,6 +107,8 @@ export function compileAuthenticatorSpec(
               filter username is "first" // TODO: read from ctx
               limit 1
             }
+            // TODO: throw error id user is not resolved
+            // currently, "authUser" ends up empty and "authenticateUser" hook throws error
           }
 
           execute {
@@ -118,10 +120,6 @@ export function compileAuthenticatorSpec(
     
               runtime ${internalExecRuntimeName}
               source authenticateUser from "hooks/actions.js"
-              // TODO: handle hook errors
-              // how to throw BusinessError?
-              //  - any of passwords is empty -> 401
-              //  - passwords don't match -> 401
             }
           }
 
