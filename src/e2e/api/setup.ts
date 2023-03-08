@@ -117,7 +117,10 @@ export function createApiTestSetup(
   }
 
   return {
-    getServer: () => server,
+    getServer: () => {
+      if (server == null) throw new Error("Test HTTP server not yet started");
+      return server;
+    },
     setup: setupApiTest,
     destroy: destroyApiTest,
   };
