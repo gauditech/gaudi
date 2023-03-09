@@ -394,7 +394,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
     const keyword = getTokenData(this.CONSUME(L.Entrypoint));
     const name = this.SUBRULE1(this.identifier);
-    this.CONSUME(L.LCurly);
+    this.CONSUME1(L.LCurly);
     this.MANY(() => {
       this.OR([
         {
@@ -426,7 +426,9 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Authorize));
+            this.CONSUME2(L.LCurly);
             const expr = this.SUBRULE(this.expr);
+            this.CONSUME2(L.RCurly);
             atoms.push({ kind: "authorize", expr, keyword });
           },
         },
@@ -442,7 +444,7 @@ class GaudiParser extends EmbeddedActionsParser {
         },
       ]);
     });
-    this.CONSUME(L.RCurly);
+    this.CONSUME1(L.RCurly);
 
     return { kind: "entrypoint", name, atoms, keyword };
   });
@@ -460,7 +462,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const keywordType = getTokenData(typeToken);
     const type = typeToken.image as EndpointType;
     const keyword = getTokenData(this.CONSUME(L.Endpoint));
-    this.CONSUME(L.LCurly);
+    this.CONSUME1(L.LCurly);
     this.MANY(() => {
       this.OR2([
         {
@@ -473,7 +475,9 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Authorize));
+            this.CONSUME2(L.LCurly);
             const expr = this.SUBRULE(this.expr);
+            this.CONSUME2(L.RCurly);
             atoms.push({ kind: "authorize", expr, keyword });
           },
         },
@@ -512,7 +516,7 @@ class GaudiParser extends EmbeddedActionsParser {
         },
       ]);
     });
-    this.CONSUME(L.RCurly);
+    this.CONSUME1(L.RCurly);
 
     return { kind: "endpoint", type, keywordType, atoms, keyword };
   });

@@ -64,7 +64,7 @@ function migrateModel(model: AST.Model): ModelSpec {
 }
 
 function migrateField(field: AST.Field): FieldSpec {
-  const type = kindFind(field.atoms, "type")!;
+  const type = kindFind(field.atoms, "type")!.identifier.text;
   const default_ = kindFind(field.atoms, "default");
   const unique = kindFind(field.atoms, "unique");
   const nullable = kindFind(field.atoms, "nullable");
@@ -74,7 +74,7 @@ function migrateField(field: AST.Field): FieldSpec {
 
   return {
     name: field.name.text,
-    type: type.identifier.text,
+    type: type === "string" ? "text" : type,
     default: default_?.literal.value,
     unique: !!unique,
     nullable: !!nullable,
@@ -199,10 +199,11 @@ function migrateAction(action: AST.Action): ActionSpec {
         const validators = kindFilter(atoms, "validate").flatMap((v) =>
           v.validators.map(migrateValidator)
         );
+        const type = kindFind(atoms, "type")!.identifier.text;
         return {
           kind: "virtual-input",
           name: name.text,
-          type: kindFind(atoms, "type")!.identifier.text,
+          type: type === "string" ? "text" : type,
           nullable: !!kindFind(atoms, "nullable"),
           optional: false,
           validators,
