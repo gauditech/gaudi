@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import { TokenData } from "./ast/ast";
 
 export enum ErrorCode {
@@ -94,4 +96,40 @@ export class CompilerError extends Error {
     this.errorCode = errorCode;
     this.params = params;
   }
+}
+
+export function printErrorsToString(
+  filename: string,
+  source: string,
+  errors: CompilerError[]
+): string {
+  if (errors.length === 0) return "";
+
+  const lineIndecies = [0];
+
+  for (let i = 0; i < source.length; i++) {
+    if (source.charAt(i) === "\n") {
+      lineIndecies.push(i + 1);
+    }
+  }
+
+  let output = "";
+
+  errors.forEach((error) => {
+    const start = error.errorPosition.start;
+    const end = error.errorPosition.end;
+    const lineStart = _.findLast(lineIndecies, (i) => i < start) ?? 0;
+    const lineEnd = _.find(lineIndecies, (i) => i > end) ?? source.length;
+
+    const line = lineIndecies.indexOf(lineStart) + 1;
+    const column = start - lineStart + 1;
+    const length = end - start;
+
+    output += `${filename}:${line}:${column} - ${error.message}\n`;
+    output += source.substring(lineStart, lineEnd);
+    output += " ".repeat(column - 1) + "~".repeat(length + 1);
+    output += "\n";
+  });
+
+  return output;
 }

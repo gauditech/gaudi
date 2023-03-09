@@ -16,11 +16,8 @@ import {
   createConnection,
 } from "vscode-languageserver/node";
 
-import { Definition, TokenData } from "../ast/ast";
-import { checkForm } from "../checkForm";
-import { CompilerError } from "../compilerError";
-import { parse } from "../parser";
-import { resolve } from "../resolver";
+import { CompileResult, compileToAST } from "..";
+import { TokenData } from "../ast/ast";
 
 import { TokenModifiers, TokenTypes, buildTokens } from "./tokenBuilder";
 
@@ -52,13 +49,6 @@ connection.onInitialize((params) => {
   };
 });
 
-type CompileResult = {
-  ast: Definition | undefined;
-  compilerErrors: CompilerError[];
-  success: boolean;
-  errorMessage: string;
-};
-
 const compiledFiles: Map<string, { hash: string; result: CompileResult }> = new Map();
 
 function getFileHash(source: string): string {
@@ -75,26 +65,7 @@ function compile(document: TextDocument): CompileResult {
     return previousCompilation.result;
   }
 
-  const { ast, success: parseSuccess, lexerErrors, parserErrors } = parse(source);
-
-  const compilerErrors: CompilerError[] = [];
-
-  if (ast) {
-    compilerErrors.push(...checkForm(ast));
-    compilerErrors.push(...resolve(ast));
-  }
-
-  const success = parseSuccess && compilerErrors.length === 0;
-
-  const result = {
-    ast,
-    compilerErrors,
-    success,
-    errorMessage: lexerErrors?.at(0)?.message ?? parserErrors?.at(0)?.message ?? "",
-  };
-  compiledFiles.set(document.uri, { hash, result });
-
-  return result;
+  return compileToAST(source);
 }
 
 documents.onDidChangeContent((change) => {
@@ -102,9 +73,9 @@ documents.onDidChangeContent((change) => {
 });
 
 async function validateTextDocument(document: TextDocument): Promise<void> {
-  const { compilerErrors } = compile(document);
+  const { errors } = compile(document);
 
-  const diagnostics: Diagnostic[] = compilerErrors.map((error) => ({
+  const diagnostics: Diagnostic[] = errors.map((error) => ({
     severity: DiagnosticSeverity.Error,
     range: {
       start: document.positionAt(error.errorPosition.start),
@@ -126,13 +97,13 @@ function buildSemanticTokens(document: TextDocument): SemanticTokens | ResponseE
     builder.push(line, character, length, tokenType, tokenModifiers);
   }
 
-  const { ast, errorMessage } = compile(document);
-  if (ast) {
-    buildTokens(ast, addToken);
-    return builder.build();
+  const { ast, errors } = compile(document);
+  if (!ast) {
+    return new ResponseError<void>(ErrorCodes.ParseError, errors.at(0)?.message ?? "Unknown error");
   }
 
-  return new ResponseError<void>(ErrorCodes.ParseError, errorMessage);
+  buildTokens(ast, addToken);
+  return builder.build();
 }
 
 connection.languages.semanticTokens.on((params) => {

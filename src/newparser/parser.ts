@@ -1,11 +1,4 @@
-import {
-  EmbeddedActionsParser,
-  ILexingError,
-  IRecognitionException,
-  IToken,
-  ParserMethod,
-  TokenType,
-} from "chevrotain";
+import { EmbeddedActionsParser, IToken, ParserMethod, TokenType } from "chevrotain";
 
 import {
   Action,
@@ -325,9 +318,7 @@ class GaudiParser extends EmbeddedActionsParser {
           },
           {
             ALT: () => {
-              const order = this.CONSUME(L.Order);
-              const by = this.CONSUME(L.By);
-              const keyword = getTokenData(order, by);
+              const keyword = getTokenData(this.CONSUME(L.Order), this.CONSUME(L.By));
               const orderBy = this.SUBRULE(this.orderBy);
               atoms.push({ kind: "orderBy", orderBy, keyword });
             },
@@ -360,8 +351,8 @@ class GaudiParser extends EmbeddedActionsParser {
                 { ALT: () => this.CONSUME(L.One) },
                 { ALT: () => this.CONSUME(L.First) },
               ]);
-              const keyword = getTokenData(aggregateToken);
               const aggregate = aggregateToken.image as AggregateType;
+              const keyword = getTokenData(aggregateToken);
               atoms.push({ kind: "aggregate", aggregate, keyword });
             },
           },
@@ -420,9 +411,7 @@ class GaudiParser extends EmbeddedActionsParser {
         },
         {
           ALT: () => {
-            const identify = this.CONSUME(L.Identify);
-            const with_ = this.CONSUME(L.With);
-            const keyword = getTokenData(identify, with_);
+            const keyword = getTokenData(this.CONSUME(L.Identify), this.CONSUME(L.With));
             const identifier = this.SUBRULE3(this.identifierRef);
             atoms.push({ kind: "identifyWith", identifier, keyword });
           },
@@ -865,9 +854,7 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             GATE: () => simple,
             ALT: () => {
-              const default_ = this.CONSUME(L.Default);
-              const arg = this.CONSUME1(L.Arg);
-              const keyword = getTokenData(default_, arg);
+              const keyword = getTokenData(this.CONSUME(L.Default), this.CONSUME1(L.Arg));
               const name = this.SUBRULE2(this.identifier);
               atoms.push({ kind: "default_arg", name, keyword });
             },
@@ -1087,40 +1074,4 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 }
 
-const parser = new GaudiParser();
-
-export type ParseResult =
-  | {
-      success: true;
-      ast: Definition;
-      lexerErrors: undefined;
-      parserErrors: undefined;
-    }
-  | {
-      success: false;
-      ast?: Definition;
-      lexerErrors?: ILexingError[];
-      parserErrors?: IRecognitionException[];
-    };
-
-export function parse(source: string): ParseResult {
-  const lexerResult = L.lexer.tokenize(source);
-  parser.input = lexerResult.tokens;
-
-  let lexerErrors;
-  if (lexerResult.errors.length > 0) {
-    lexerErrors = lexerResult.errors;
-  }
-
-  const ast = parser.definition();
-  let parserErrors;
-  if (parser.errors.length > 0) {
-    parserErrors = parser.errors;
-  }
-
-  if (lexerErrors || parserErrors) {
-    return { success: false, ast, lexerErrors, parserErrors };
-  } else {
-    return { success: true, ast, lexerErrors: undefined, parserErrors: undefined };
-  }
-}
+export const parser = new GaudiParser();
