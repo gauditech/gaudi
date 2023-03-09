@@ -7,9 +7,9 @@ import {
   ActionAtomInput,
   ActionAtomReferenceThrough,
   ActionAtomSet,
+  ActionAtomVirtualInput,
   ActionFieldHook,
   ActionType,
-  ActionVirtualInput,
   AggregateType,
   BinaryOperator,
   BooleanLiteral,
@@ -455,6 +455,7 @@ class GaudiParser extends EmbeddedActionsParser {
       { ALT: () => this.CONSUME(L.Create) },
       { ALT: () => this.CONSUME(L.Update) },
       { ALT: () => this.CONSUME(L.Delete) },
+      { ALT: () => this.CONSUME(L.Custom) },
     ]);
     const keywordType = getTokenData(typeToken);
     const type = typeToken.image as EndpointType;
@@ -553,6 +554,7 @@ class GaudiParser extends EmbeddedActionsParser {
       this.OR2([
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomSet)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomReference)) },
+        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomVirtualInput)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomDeny)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInput)) },
       ]);
@@ -633,8 +635,8 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "input", fields, keyword };
   });
 
-  actionVirtualInput = this.RULE("actionVirtualInput", (): ActionVirtualInput => {
-    const atoms: ActionVirtualInput["atoms"] = [];
+  actionAtomVirtualInput = this.RULE("actionAtomVirtualInput", (): ActionAtomVirtualInput => {
+    const atoms: ActionAtomVirtualInput["atoms"] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Virtual), this.CONSUME(L.Input));
     const name = this.SUBRULE(this.identifier);

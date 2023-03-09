@@ -2,7 +2,7 @@ import { match } from "ts-pattern";
 
 import {
   Action,
-  ActionVirtualInput,
+  ActionAtomVirtualInput,
   Computed,
   Definition,
   Endpoint,
@@ -155,6 +155,21 @@ export function checkForm(definition: Definition) {
   function checkEndpoint(endpoint: Endpoint) {
     noDuplicateAtoms(endpoint, "action", "authorize", "method", "cardinality", "path");
 
+    if (endpoint.type === "custom") {
+      containsAtoms(endpoint, "method", "cardinality", "path");
+    } else {
+      const customAtoms = [
+        ...kindFilter(endpoint.atoms, "method"),
+        ...kindFilter(endpoint.atoms, "cardinality"),
+        ...kindFilter(endpoint.atoms, "path"),
+      ];
+      if (customAtoms.length > 0) {
+        errors.push(
+          new CompilerError(customAtoms[0].keyword, ErrorCode.ConfiguringNonCustomEndpoint)
+        );
+      }
+    }
+
     const action = kindFind(endpoint.atoms, "action");
     if (action) action.actions.map(checkAction);
   }
@@ -168,7 +183,7 @@ export function checkForm(definition: Definition) {
         })
         .with({ kind: "referenceThrough" }, ({ target }) => [target.identifier])
         .with({ kind: "virtualInput" }, (virtualInput) => {
-          checkActionVirtualInput(virtualInput);
+          checkActionAtomVirtualInput(virtualInput);
           return [virtualInput.name];
         })
         .with({ kind: "deny" }, ({ fields }) =>
@@ -185,7 +200,7 @@ export function checkForm(definition: Definition) {
     noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
   }
 
-  function checkActionVirtualInput(virtualInput: ActionVirtualInput) {
+  function checkActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput) {
     containsAtoms(virtualInput, "type");
     noDuplicateAtoms(virtualInput, "type", "nullable", "validate");
     kindFilter(virtualInput.atoms, "validate").map(({ validators }) =>

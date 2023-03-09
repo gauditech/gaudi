@@ -6,8 +6,8 @@ import {
   ActionAtomInput,
   ActionAtomReferenceThrough,
   ActionAtomSet,
+  ActionAtomVirtualInput,
   ActionFieldHook,
-  ActionVirtualInput,
   Computed,
   Definition,
   Endpoint,
@@ -278,15 +278,15 @@ export function buildTokens(
       buildKeyword(as.keyword);
       buildIdentifierRef(as.identifier);
     }
-    atoms.forEach((a) =>
+    atoms.forEach((a) => {
       match(a)
         .with({ kind: "set" }, buildActionAtomSet)
-        .with({ kind: "referenceThrough" }, () => buildActionAtomReferenceThrough)
-        .with({ kind: "virtualInput" }, () => buildActionAtomVirtualInput)
-        .with({ kind: "deny" }, () => buildActionAtomDeny)
-        .with({ kind: "input" }, () => buildActionAtomInput)
-        .exhaustive()
-    );
+        .with({ kind: "referenceThrough" }, buildActionAtomReferenceThrough)
+        .with({ kind: "virtualInput" }, buildActionAtomVirtualInput)
+        .with({ kind: "deny" }, buildActionAtomDeny)
+        .with({ kind: "input" }, buildActionAtomInput)
+        .exhaustive();
+    });
   }
 
   function buildActionAtomSet({ keyword, target, set }: ActionAtomSet) {
@@ -308,7 +308,7 @@ export function buildTokens(
     buildIdentifierRef(through);
   }
 
-  function buildActionAtomVirtualInput({ keyword, name, atoms }: ActionVirtualInput) {
+  function buildActionAtomVirtualInput({ keyword, name, atoms }: ActionAtomVirtualInput) {
     buildKeyword(keyword);
     push(name.token, TokenTypes.property);
     atoms.forEach((a) =>

@@ -96,6 +96,7 @@ export const Deny = createWeakKeyword("deny");
 export const DELETE = createWeakKeyword("DELETE");
 export const Delete = createWeakKeyword("delete");
 export const Default = createWeakKeyword("default");
+export const Custom = createWeakKeyword("custom");
 export const Create = createWeakKeyword("create");
 export const Count = createWeakKeyword("count");
 export const Computed = createWeakKeyword("computed");
@@ -212,6 +213,7 @@ export const GaudiTokens = [
   DELETE,
   Delete,
   Default,
+  Custom,
   Create,
   Count,
   Computed,

@@ -18,6 +18,7 @@ export enum ErrorCode {
   DuplicateHookArg,
   QueryFromAliasWrongLength,
   QueryMaxOneAggregate,
+  ConfiguringNonCustomEndpoint,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -62,6 +63,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Query from alias must have same length as definition`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
+    case ErrorCode.ConfiguringNonCustomEndpoint:
+      return `Only custom endpoint can have method, cardinality and path configuration`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain 'source' or 'inline' definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:

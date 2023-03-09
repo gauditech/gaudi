@@ -121,7 +121,7 @@ export type Endpoint = WithKeyword<{
   type: EndpointType;
   atoms: EndpointAtom[];
 }>;
-export type EndpointType = "list" | "get" | "create" | "update" | "delete";
+export type EndpointType = "list" | "get" | "create" | "update" | "delete" | "custom";
 export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 export type EndpointCardinality = "one" | "many";
 
@@ -146,7 +146,7 @@ export type ActionAtom =
   | ActionAtomReferenceThrough
   | ActionAtomDeny
   | ActionAtomInput
-  | ActionVirtualInput;
+  | ActionAtomVirtualInput;
 export type ActionAtomSet = WithKeyword<{
   kind: "set";
   target: IdentifierRef;
@@ -174,15 +174,15 @@ export type ActionAtomInput = WithKeyword<{
   }[];
 }>;
 export type InputAtom = WithKeyword<{ kind: "optional" } | { kind: "default"; value: Expr<Code> }>;
-export type ActionVirtualInput = WithKeyword<{
+export type ActionAtomVirtualInput = WithKeyword<{
   kind: "virtualInput";
   name: Identifier;
   ref: Ref;
   type: Type;
-  atoms: ActionVirtualInputAtom[];
+  atoms: ActionAtomVirtualInputAtom[];
 }>;
 
-export type ActionVirtualInputAtom = WithKeyword<
+export type ActionAtomVirtualInputAtom = WithKeyword<
   | { kind: "type"; identifier: Identifier }
   | { kind: "nullable" }
   | { kind: "validate"; validators: Validator[] }
