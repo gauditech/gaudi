@@ -209,7 +209,7 @@ function composeSingleAction(
   const actionTargetScope = getActionTargetScope(def, spec, target.alias, ctx);
   // Overwriting a default action
   if (actionTargetScope === "target") {
-    ensureAllowedAction(spec, target, endpointKind);
+    ensureAllowedTargetAction(spec, target, endpointKind);
   } else {
     // check alias
     // some actions are not allowed to have alias
@@ -529,7 +529,11 @@ function composeSingleAction(
  *
  * Eg. `custom-one` endpoints allow only `update`, `delete`, `execute` and `fetch` actions.
  */
-function ensureAllowedAction(spec: ActionSpec, target: TargetDef, endpointKind: EndpointType) {
+function ensureAllowedTargetAction(
+  spec: ActionSpec,
+  target: TargetDef,
+  endpointKind: EndpointType
+) {
   // --- check endpoint action types
   // custom endpoint action types depend on their cardinality
   if (endpointKind === "custom-one" || endpointKind === "custom-many") {
@@ -537,19 +541,23 @@ function ensureAllowedAction(spec: ActionSpec, target: TargetDef, endpointKind: 
       endpointKind === "custom-many" &&
       !_.includes<ActionSpec["kind"]>(["create", "execute", "fetch"], spec.kind)
     ) {
-      throw new Error(`"custom-many" endpoint does not allow "${spec.kind}" action`);
+      throw new Error(
+        `"custom-many" endpoint does not allow "${spec.kind}" action on default target`
+      );
     }
     if (
       endpointKind === "custom-one" &&
       !_.includes<ActionSpec["kind"]>(["update", "delete", "execute", "fetch"], spec.kind)
     ) {
-      throw new Error(`"custom-one" endpoint does not allow "${spec.kind}" action`);
+      throw new Error(
+        `"custom-one" endpoint does not allow "${spec.kind}" action on default target`
+      );
     }
   } else {
     // standard endpoint action types' cardinality is implicit and reflects on allowed default action type
     if (spec.kind !== endpointKind) {
       throw new Error(
-        `Mismatching context action: overriding ${endpointKind} endpoint with a ${spec.kind} action`
+        `Mismatching context action: overriding ${endpointKind} endpoint with a ${spec.kind} action on default target`
       );
     }
   }
@@ -557,13 +565,13 @@ function ensureAllowedAction(spec: ActionSpec, target: TargetDef, endpointKind: 
   if (spec.kind === "create") {
     if (spec.alias && spec.alias !== target.alias) {
       throw new Error(
-        `Default create action cannot be re-aliased: expected ${target.alias}, got ${spec.alias}`
+        `Default target create action cannot be re-aliased: expected ${target.alias}, got ${spec.alias}`
       );
     }
   }
 
   if (spec.kind === "delete" && spec.alias) {
-    throw new Error(`Delete action cannot make an alias; remove "as ${spec.alias}"`);
+    throw new Error(`Delete target action cannot make an alias; remove "as ${spec.alias}"`);
   }
 }
 
