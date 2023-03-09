@@ -156,6 +156,7 @@ export type ActionAtomReferenceThrough = WithKeyword<{
   kind: "referenceThrough";
   target: IdentifierRef;
   through: IdentifierRef;
+  keywordThrough: TokenData;
 }>;
 export type ActionAtomDeny = WithKeyword<{
   kind: "deny";

@@ -582,7 +582,7 @@ class GaudiParser extends EmbeddedActionsParser {
   actionAtomReference = this.RULE("actionAtomReference", (): ActionAtomReferenceThrough => {
     const keyword = getTokenData(this.CONSUME(L.Reference));
     const target = this.SUBRULE1(this.identifierRef);
-    this.CONSUME(L.Through);
+    const keywordThrough = getTokenData(this.CONSUME(L.Through));
     const through = this.SUBRULE2(this.identifierRef);
 
     return {
@@ -590,6 +590,7 @@ class GaudiParser extends EmbeddedActionsParser {
       target,
       through,
       keyword,
+      keywordThrough,
     };
   });
 

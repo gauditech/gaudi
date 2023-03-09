@@ -301,10 +301,12 @@ export function buildTokens(
   function buildActionAtomReferenceThrough({
     keyword,
     target,
+    keywordThrough,
     through,
   }: ActionAtomReferenceThrough) {
     buildKeyword(keyword);
     buildIdentifierRef(target);
+    buildKeyword(keywordThrough);
     buildIdentifierRef(through);
   }
 
