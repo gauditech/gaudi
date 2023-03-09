@@ -15,6 +15,7 @@ import {
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
+  ExecutionRuntimeSpec,
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
@@ -37,7 +38,7 @@ export function migrate(definition: AST.Definition): Specification {
     models: kindFilter(definition, "model").map(migrateModel),
     entrypoints: kindFilter(definition, "entrypoint").map(migrateEntrypoint),
     populators: kindFilter(definition, "populator").map(migratePopulator),
-    runtimes: [],
+    runtimes: kindFilter(definition, "runtime").map(migrateRuntime),
   };
 
   return specification;
@@ -294,6 +295,14 @@ function migrateActionAtomSet(set: AST.ActionAtomSet): ActionAtomSpecSet {
       set.set.kind === "expr"
         ? { kind: "expression", exp: migrateExpr(set.set.expr) }
         : { kind: "hook", hook: migrateActionFieldHook(set.set) },
+  };
+}
+
+function migrateRuntime(runtime: AST.Runtime): ExecutionRuntimeSpec {
+  return {
+    name: runtime.name.text,
+    sourcePath: kindFind(runtime.atoms, "sourcePath")!.path.value,
+    default: !!kindFind(runtime.atoms, "default"),
   };
 }
 
