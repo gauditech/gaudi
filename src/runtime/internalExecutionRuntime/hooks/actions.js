@@ -37,7 +37,7 @@ module.exports.sendResponse = async function (args, ctx) {
     .fromPairs()
     .value();
 
-  console.log("[EXEC] sendResponse:", `[${status}]`, JSON.stringify(body), args.prop);
+  console.log("[EXEC] sendResponse:", `[${status}]`, JSON.stringify(body));
 
   const responseStatus = status ?? 200;
   const responseBody = body ?? "";

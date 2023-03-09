@@ -283,7 +283,9 @@ describe("Auth", () => {
 
       expect(reregisterReponse.statusCode).toBe(400);
       // TODO: match body instead of text once hooks are able to throw complex errors
-      expect(reregisterReponse.text).toMatchInlineSnapshot(`"Username already exists"`);
+      expect(reregisterReponse.text).toMatchInlineSnapshot(
+        `"Username already exists: somename@example.com"`
+      );
     });
   });
 });

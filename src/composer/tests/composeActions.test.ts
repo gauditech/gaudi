@@ -192,7 +192,7 @@ describe("compose actions", () => {
     }`;
       const spec = compile(parse(bp));
       expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-        `"Mismatching context action: overriding update endpoint with a create action"`
+        `"Mismatching context action: overriding update endpoint with a create action on default target"`
       );
     });
     it("succeeds with custom inputs", () => {
