@@ -1,3 +1,4 @@
+import { getRef } from "@src/common/refs";
 import { compile, compose, parse } from "@src/index";
 import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
 
@@ -60,7 +61,7 @@ describe("authenticator composer", () => {
     );
   });
 
-  it("resolves authenticator model reference", () => {
+  it("resolves authenticator model implicit relations", () => {
     const bp = `
       model UserProfile {
         reference user { to AuthUser }
@@ -73,7 +74,10 @@ describe("authenticator composer", () => {
 
     const def = compose(compile(parse(bp)));
 
+    const model = getRef.model(def, def.authenticator!.authUserModel.name);
+    const relation = model.relations.find((rel) => rel.fromModel === "UserProfile");
+
     // check authenticator's models
-    expect(def.models).toMatchSnapshot();
+    expect(relation).toMatchSnapshot();
   });
 });
