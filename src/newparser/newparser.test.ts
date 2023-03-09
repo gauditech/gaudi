@@ -3,7 +3,7 @@ import * as path from "path";
 
 import _ from "lodash";
 
-import { printErrorsToString } from "./compilerError";
+import { compilerErrorsToString } from "./compilerError";
 import { migrate } from "./migrate";
 
 import { compileToAST } from ".";
@@ -23,7 +23,7 @@ describe("parser", () => {
       return;
     }
 
-    console.log(printErrorsToString(sourcePath, source, errors));
+    console.log(compilerErrorsToString(sourcePath, source, errors));
     expect(errors.length).toBe(0);
   });
 });

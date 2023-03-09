@@ -26,6 +26,7 @@ import {
   Reference,
   Relation,
   Repeater,
+  Runtime,
   Select,
   TokenData,
   Validator,
@@ -80,6 +81,7 @@ export function buildTokens(
         .with({ kind: "model" }, buildModel)
         .with({ kind: "entrypoint" }, buildEntrypoint)
         .with({ kind: "populator" }, buildPopulator)
+        .with({ kind: "runtime" }, buildRuntime)
         .exhaustive();
     });
   }
@@ -390,6 +392,20 @@ export function buildTokens(
       .exhaustive();
   }
 
+  function buildRuntime({ keyword, name, atoms }: Runtime) {
+    buildKeyword(keyword);
+    push(name.token, TokenTypes.variable);
+    atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "default" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "sourcePath" }, ({ keyword, path }) => {
+          buildKeyword(keyword);
+          buildLiteral(path);
+        })
+        .exhaustive()
+    );
+  }
+
   function buildModelHook(hook: ModelHook) {
     buildKeyword(hook.keyword);
     push(hook.name.token, TokenTypes.property);
@@ -427,6 +443,10 @@ export function buildTokens(
       .with({ kind: "inline" }, ({ keyword, code }) => {
         buildKeyword(keyword);
         buildLiteral(code);
+      })
+      .with({ kind: "runtime" }, ({ keyword, identifier }) => {
+        buildKeyword(keyword);
+        push(identifier.token, TokenTypes.variable);
       })
       .exhaustive();
   }

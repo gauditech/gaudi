@@ -98,7 +98,7 @@ export class CompilerError extends Error {
   }
 }
 
-export function printErrorsToString(
+export function compilerErrorsToString(
   filename: string,
   source: string,
   errors: CompilerError[]
