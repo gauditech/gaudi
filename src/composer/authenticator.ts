@@ -101,7 +101,8 @@ export function compileAuthenticatorSpec(
 
         action {
           fetch as existingAuthUser {
-            input { username }
+            virtual input username { type text }
+
             query {
               from ${authUserModelName}
               filter username is "first" // TODO: read from ctx
@@ -153,7 +154,7 @@ export function compileAuthenticatorSpec(
 
         action {
           fetch ${accessTokenModelName} as accessToken {
-            set token @requestAuthToken
+ 
             query {
               from ${accessTokenModelName}
               filter token is "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U" // TODO: read from ctx - token or @requestAuthToken
@@ -185,7 +186,8 @@ export function compileAuthenticatorSpec(
 
         action {
           fetch as existingUser {
-            input { username }
+            virtual input username { type text }
+            
             query {
               from ${authUserModelName}
               filter username is "somename@example.com" // TODO: read from ctx - username

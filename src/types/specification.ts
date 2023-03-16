@@ -106,24 +106,40 @@ export type EndpointSpec = WithContext<{
   path?: string;
 }>;
 
-export type ActionSpec = WithContext<{
-  kind: "create" | "update" | "delete" | "execute" | "fetch";
-  targetPath: string[] | undefined;
-  alias: string | undefined;
-  actionAtoms: ActionAtomSpec[];
-}>;
+export type ActionSpec = WithContext<
+  | {
+      kind: "create" | "update";
+      targetPath: string[] | undefined;
+      alias: string | undefined;
+      actionAtoms: ModelActionAtomSpec[];
+    }
+  | {
+      kind: "delete";
+      targetPath: string[] | undefined;
+    }
+  | {
+      kind: "execute";
+      alias: string | undefined;
+      hook: ActionHookSpec;
+      responds: boolean;
+      atoms: ActionAtomSpecVirtualInput[];
+    }
+  | {
+      kind: "fetch";
+      alias: string | undefined;
+      query: QuerySpec;
+      atoms: ActionAtomSpecVirtualInput[];
+    }
+>;
 
-export type ActionAtomSpec = WithContext<
+export type ModelActionSpec = Extract<ActionSpec, { kind: "create" | "update" }>;
+
+export type ModelActionAtomSpec = WithContext<
   | ActionAtomSpecSet
   | ActionAtomSpecRefThrough
-  | ActionAtomSpecAction
   | ActionAtomSpecDeny
   | ActionAtomSpecVirtualInput
-  | ActionAtomSpecInput
   | ActionAtomSpecInputList
-  | ActionAtomSpecHook
-  | ActionAtomSpecResponds
-  | ActionAtomSpecQuery
 >;
 
 export type HookCodeSpec =
@@ -140,7 +156,6 @@ export type ActionAtomSpecSet = {
   set: ActionAtomSpecSetHook | ActionAtomSpecSetExp | ActionAtomSpecSetQuery;
 };
 export type ActionAtomSpecHook = { kind: "hook"; hook: ActionHookSpec };
-export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
 export type ActionAtomSpecVirtualInput = {

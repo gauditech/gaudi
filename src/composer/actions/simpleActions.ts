@@ -1,5 +1,6 @@
 import _ from "lodash";
 
+import { FilteredKind } from "@src/common/patternFilter";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { Definition, ModelDef } from "@src/types/definition";
@@ -10,16 +11,17 @@ import {
   ActionAtomSpecRefThrough,
   ActionAtomSpecSet,
   ActionAtomSpecVirtualInput,
-  ActionSpec,
+  ModelActionSpec,
 } from "@src/types/specification";
 
-export interface SimpleActionSpec extends ActionSpec {
+export type SimpleActionSpec = {
+  kind: "create" | "update";
   alias: string;
   blueprintAlias: string | undefined;
   targetPath: string[];
   blueprintTargetPath: string[] | undefined;
   actionAtoms: SimpleActionAtoms[];
-}
+};
 
 export type SimpleActionAtoms =
   | ActionAtomSpecVirtualInput
@@ -29,15 +31,11 @@ export type SimpleActionAtoms =
 
 export function simplifyActionSpec(
   def: Definition,
-  spec: ActionSpec,
+  spec: ModelActionSpec,
   defaultActionAlias: string,
   model: ModelDef
-): SimpleActionSpec {
+): FilteredKind<SimpleActionSpec, "create" | "update"> {
   const atoms = spec.actionAtoms;
-
-  // We don't support nested actions yet
-  const actions = atoms.filter((a) => a.kind === "action");
-  ensureEqual(actions.length, 0);
 
   /**
    * Convert input-list to input for easier handling later in the code.
@@ -61,15 +59,9 @@ export function simplifyActionSpec(
   );
 
   const inputs = atoms
-    .filter(
-      (a): a is ActionAtomSpecInputList | ActionAtomSpecInput =>
-        a.kind === "input-list" || a.kind === "input"
-    )
+    .filter((a): a is ActionAtomSpecInputList => a.kind === "input-list")
     .flatMap((i): ActionAtomSpecInput[] => {
       switch (i.kind) {
-        case "input": {
-          return [maybeConvertReferenceToField(i)];
-        }
         case "input-list": {
           return i.fields.map(
             (fspec): ActionAtomSpecInput =>

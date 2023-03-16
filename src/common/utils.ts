@@ -178,7 +178,13 @@ export function nameInitials(input: string): string {
 
 /** Function that ensures exhaustivness of conditional statements. */
 export function assertUnreachable(_: never): never {
-  throw new Error("Unreachable code detected");
+  throw new UnreachableError(`assertUnreachable`);
+}
+
+export class UnreachableError extends Error {
+  constructor(message: string) {
+    super(`Unreachable code path executed: ${message}`);
+  }
 }
 
 /**

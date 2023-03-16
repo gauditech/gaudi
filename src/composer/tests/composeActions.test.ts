@@ -557,6 +557,8 @@ describe("compose actions", () => {
         sourcePath "some/source/path"
       }
 
+      auth { method basic {} }
+
       model Org { field name { type text }}
 
       entrypoint Orgs {
@@ -569,8 +571,6 @@ describe("compose actions", () => {
 
           action {
             execute {
-              // in setter
-              set name @requestAuthToken
 
               hook {
                 // in hook arg

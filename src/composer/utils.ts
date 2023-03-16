@@ -93,6 +93,7 @@ export function getTypedIterator(def: Definition, path: string[], ctx: VarContex
 }
 
 export function getTypedRequestPath(def: Definition, path: string[]): TypedRequestPath {
+  // FIXME it's not typed since we're not ensuring the request exists in the ctx!
   const [prefix, ...rest] = path;
 
   if (prefix === "@requestAuthToken") {
