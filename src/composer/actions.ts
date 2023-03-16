@@ -5,6 +5,7 @@ import { SimpleActionAtoms, SimpleActionSpec, simplifyActionSpec } from "./actio
 import { FilteredKind } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
+  UnreachableError,
   assertUnreachable,
   ensureEmpty,
   ensureEqual,
@@ -217,7 +218,7 @@ export function getInitialContext(
       modelName: def.authenticator.authUserModel.name,
     };
     parentContext["@requestAuthToken"] = {
-      kind: "request",
+      kind: "requestAuthToken",
     };
   }
 
@@ -276,7 +277,11 @@ function composeFetchAction(
   });
   // fetch action's model is derived from it's query
   const startModel = getRef.model(def, spec.query.fromModel[0]);
-  const query = composeQuery(def, startModel, spec.query);
+  const chxCtx: VarContext = {
+    ...ctx,
+    "@changeset": { kind: "changeset-value", keys: changeset.map((c) => c.name) },
+  };
+  const query = composeQuery(def, startModel, spec.query, chxCtx);
   return {
     kind: "fetch-one",
     alias: spec.alias,
@@ -427,8 +432,8 @@ function expandSetterExpression(
               },
             };
           }
-          case "request": {
-            const request = getTypedRequestPath(def, path);
+          case "requestAuthToken": {
+            const request = getTypedRequestPath(path, ctx);
             return {
               kind: request.kind,
               access: request.access,
@@ -442,6 +447,11 @@ function expandSetterExpression(
               kind: "reference-value",
               target: { alias: path[0], access },
             };
+          }
+          case "changeset-value": {
+            throw new UnreachableError(
+              `Changeset context shouldn't be accessed through identifier`
+            );
           }
           default: {
             return assertUnreachable(ctxVar);
@@ -457,7 +467,9 @@ function expandSetterExpression(
         if (siblingOp) {
           return { kind: "changeset-reference", referenceName: siblingName };
         } else {
-          throw new Error(`Unresolved expression path ${path}`);
+          throw new Error(
+            `Unresolved expression path: ${path} (${exp.interval?.getLineAndColumnMessage()})`
+          );
         }
       }
     }
@@ -513,9 +525,13 @@ function setterToChangesetOperation(
       return { name: atom.target, setter };
     }
     case "query": {
+      const chxCtx: VarContext = {
+        ...ctx,
+        "@changeset": { kind: "changeset-value", keys: changeset.map((c) => c.name) },
+      };
       return {
         name: atom.target,
-        setter: { kind: "query", query: queryFromSpec(def, atom.set.query) },
+        setter: { kind: "query", query: queryFromSpec(def, atom.set.query, chxCtx) },
       };
     }
   }
@@ -825,7 +841,7 @@ function modelActionFromParts(
   }
 }
 
-export function queryFromSpec(def: Definition, qspec: QuerySpec): QueryDef {
+export function queryFromSpec(def: Definition, qspec: QuerySpec, ctx: VarContext): QueryDef {
   ensureEmpty(qspec.aggregate, "Aggregates are not yet supported in action queries");
 
   const pathPrefix = _.first(qspec.fromModel);
@@ -833,5 +849,5 @@ export function queryFromSpec(def: Definition, qspec: QuerySpec): QueryDef {
 
   const fromModel = getRef.model(def, pathPrefix);
 
-  return composeQuery(def, fromModel, qspec);
+  return composeQuery(def, fromModel, qspec, ctx);
 }

@@ -1,9 +1,14 @@
 import _ from "lodash";
 
 import { getRef } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
 import { processSelect } from "@src/composer/entrypoints";
-import { VarContext, getTypedLiteralValue, getTypedPath } from "@src/composer/utils";
+import {
+  VarContext,
+  getTypedChangesetContext,
+  getTypedLiteralValue,
+  getTypedPath,
+} from "@src/composer/utils";
 import {
   NamePath,
   getDirectChildren,
@@ -22,7 +27,12 @@ import {
 } from "@src/types/definition";
 import { ExpSpec, QuerySpec } from "@src/types/specification";
 
-export function composeQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
+export function composeQuery(
+  def: Definition,
+  mdef: ModelDef,
+  qspec: QuerySpec,
+  ctx: VarContext
+): QueryDef {
   if (qspec.aggregate) {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
@@ -51,7 +61,7 @@ export function composeQuery(def: Definition, mdef: ModelDef, qspec: QuerySpec):
     return _.assign(acc, { [curr]: _.take(fromPath, index + 2) });
   }, {} as Record<string, NamePath>);
 
-  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, {}, aliases);
+  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, ctx, aliases);
 
   const filterPaths = getFilterPaths(filter);
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
@@ -87,7 +97,7 @@ export function composeAggregate(def: Definition, mdef: ModelDef, qspec: QuerySp
   if (qspec.select) {
     throw new Error(`Aggregate query can't have a select`);
   }
-  const qdef = composeQuery(def, mdef, { ...qspec, aggregate: undefined });
+  const qdef = composeQuery(def, mdef, { ...qspec, aggregate: undefined }, {});
   const { refKey } = qdef;
   const query = _.omit(qdef, ["refKey", "name", "select"]);
 
@@ -132,18 +142,30 @@ export function composeExpression(
       return getTypedLiteralValue(exp.literal);
     }
     case "identifier": {
-      /**
-       * If identifier starts with a known alias, replace the first element (_.tail drops the first one)
-       * with it's NamePath.
-       */
-      const expandedNamePath =
-        exp.identifier[0] in aliases
-          ? [...aliases[exp.identifier[0]], ..._.tail(exp.identifier)]
-          : [...namespace, ...exp.identifier];
+      // Check if identifier is from the changeset. This takes precedence over other stuff.
 
-      // ensure everything resolves
-      getTypedPath(def, expandedNamePath, context);
-      return { kind: "alias", namePath: expandedNamePath };
+      try {
+        getTypedChangesetContext(["@changeset", ...exp.identifier], context);
+        return { kind: "variable", name: `___changeset___${exp.identifier.join("___")}` };
+      } catch {
+        const kind = context[exp.identifier[0]]?.kind;
+        switch (kind) {
+          case "iterator": {
+            throw new Error("TODO");
+          }
+          case "requestAuthToken": {
+            return { kind: "variable", name: `___requestAuthToken` };
+          }
+          default: {
+            const expandedNamePath =
+              exp.identifier[0] in aliases
+                ? [...aliases[exp.identifier[0]], ..._.tail(exp.identifier)]
+                : [...namespace, ...exp.identifier];
+            getTypedPath(def, expandedNamePath, context);
+            return { kind: "alias", namePath: expandedNamePath };
+          }
+        }
+      }
     }
     // everything else composes to a function
     case "unary": {

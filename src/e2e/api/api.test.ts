@@ -192,7 +192,7 @@ describe("API endpoints", () => {
     // --- hook action with query
 
     it("custom one endpoint - action with query", async () => {
-      const data = { name: "Org Custom Query One", userId: 2 };
+      const data = { name: "Org 1", orgId: 1 };
       const postResp = await request(getServer()).post("/org/org1/customOneQueryAction").send(data);
 
       expect(postResp.statusCode).toBe(200);

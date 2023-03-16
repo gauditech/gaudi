@@ -104,8 +104,8 @@ export function compileAuthenticatorSpec(
             virtual input username { type text }
 
             query {
-              from ${authUserModelName}
-              filter username is "first" // TODO: read from ctx
+              from ${authUserModelName} as a
+              filter a.username is username
               limit 1
             }
             // TODO: throw error id user is not resolved
@@ -157,7 +157,7 @@ export function compileAuthenticatorSpec(
  
             query {
               from ${accessTokenModelName}
-              filter token is "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U" // TODO: read from ctx - token or @requestAuthToken
+              filter token is @requestAuthToken
               limit 1
             }
           }
@@ -189,8 +189,8 @@ export function compileAuthenticatorSpec(
             virtual input username { type text }
             
             query {
-              from ${authUserModelName}
-              filter username is "somename@example.com" // TODO: read from ctx - username
+              from ${authUserModelName} as a
+              filter a.username is username
             }
           }
 

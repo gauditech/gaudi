@@ -1,5 +1,7 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
+import { buildQueryTree } from "../query/build";
+
 import { executeArithmetics } from "./arithmetics";
 
 import { assertUnreachable, ensureEqual, ensureExists, ensureNot } from "@src/common/utils";
@@ -91,8 +93,17 @@ export async function buildChangeset(
         return actionContext.vars.get(setter.referenceName);
       }
       case "query": {
-        // const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
-        return qx.executeQuery(def, setter.query, actionContext.vars, []);
+        const vars = actionContext.vars.copy();
+        vars.set("___requestAuthToken", await getValue({ kind: "request-auth-token", access: [] }));
+        Object.keys(changeset).forEach((key) => {
+          vars.set(`___changeset___${key}`, changeset[key]);
+        });
+        Object.keys(changesetContext).forEach((key) => {
+          vars.set(`___changeset___${key}`, changesetContext[key]);
+        });
+
+        const qt = buildQueryTree(def, setter.query);
+        return qx.executeQueryTree(def, qt, vars, []);
       }
       default: {
         return assertUnreachable(setter);

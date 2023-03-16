@@ -1,7 +1,8 @@
 import _ from "lodash";
 
+import { FilteredKind } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { ensureEqual, ensureNot } from "@src/common/utils";
 import { LiteralValue } from "@src/types/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 
@@ -72,7 +73,8 @@ export type VarContext = Record<string, ContextRecord | undefined>;
 type ContextRecord =
   | { kind: "record"; modelName: string }
   | { kind: "iterator" }
-  | { kind: "request" };
+  | { kind: "requestAuthToken" }
+  | { kind: "changeset-value"; keys: string[] };
 
 export function getTypedIterator(def: Definition, path: string[], ctx: VarContext): TypedIterator {
   if (path[0] in ctx) {
@@ -92,12 +94,21 @@ export function getTypedIterator(def: Definition, path: string[], ctx: VarContex
   }
 }
 
-export function getTypedRequestPath(def: Definition, path: string[]): TypedRequestPath {
-  // FIXME it's not typed since we're not ensuring the request exists in the ctx!
+export function getTypedChangesetContext(path: string[], ctx: VarContext): void {
+  ensureEqual(path.length, 2, `Changeset path can't be nested: ${path.join(".")}`);
+  const [name, value] = path;
+  const chx = ctx[name] as FilteredKind<ContextRecord, "changeset-value">;
+  ensureEqual(chx.kind, "changeset-value");
+  ensureEqual(_.includes(chx.keys, value), true, `${value} is not in the changeset context`);
+}
+
+export function getTypedRequestPath(path: string[], ctx: VarContext): TypedRequestPath {
   const [prefix, ...rest] = path;
 
   if (prefix === "@requestAuthToken") {
     ensureEqual(rest.length, 0, `Additional "${prefix}" path ${rest.join(".")} is not supported`);
+
+    ensureNot(ctx[prefix], undefined, `${prefix} is not in the context`);
 
     return {
       kind: "request-auth-token",
