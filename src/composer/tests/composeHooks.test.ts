@@ -159,7 +159,7 @@ describe("compose hooks", () => {
       }
 
       entrypoint Orgs {
-        target model Org
+        target model Org as org
 
         custom endpoint {
           path "somePath"
@@ -173,7 +173,7 @@ describe("compose hooks", () => {
 
               hook {
                 // test hook args
-                arg name name
+                arg name org.name
                 arg terms termsOfUse
 
                 runtime MyRuntime
@@ -237,7 +237,8 @@ describe("compose hooks", () => {
 
           action {
             execute {
-              set user query { from Org, filter id is 1, select { id, name }} // TODO: read from ctx - id
+
+              virtual input prop { type text }
 
               hook {
                 // action arg hook

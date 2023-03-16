@@ -204,7 +204,7 @@ describe("entrypoint", () => {
     `;
 
     expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
-      `"Actions with "responds" keyword are allowed only in "custom-one" and "custom-many" endpoints, not in "create""`
+      `"Actions with "responds" keyword are allowed only in "custom" endpoints, not in "create""`
     );
   });
 
@@ -229,8 +229,9 @@ describe("entrypoint", () => {
     }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
-      `"Keyword "responds" is allowed only on "execute" actions"`
-    );
+    expect(() => compile(parse(bp))).toThrowErrorMatchingInlineSnapshot(`
+      "Unknown source position!
+      responds is not a valid model action"
+    `);
   });
 });

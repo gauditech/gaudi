@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { SimpleActionAtoms, SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
 
-import { kindFilter } from "@src/common/patternFilter";
+import { FilteredKind } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
   assertUnreachable,
@@ -12,7 +12,6 @@ import {
   ensureNot,
   ensureThrow,
   resolveItems,
-  safeInvoke,
 } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
 import { composeValidators, validateType } from "@src/composer/models";
@@ -30,15 +29,26 @@ import {
   ActionHookDef,
   ChangesetDef,
   ChangesetOperationDef,
+  CreateOneAction,
   Definition,
+  DeleteOneAction,
   EndpointType,
+  ExecuteHookAction,
+  FetchOneAction,
   FieldSetter,
   FunctionName,
   ModelDef,
   QueryDef,
   TargetDef,
+  UpdateOneAction,
 } from "@src/types/definition";
-import { ActionAtomSpecSet, ActionSpec, ExpSpec, QuerySpec } from "@src/types/specification";
+import {
+  ActionAtomSpecSet,
+  ActionSpec,
+  ExpSpec,
+  ModelActionSpec,
+  QuerySpec,
+} from "@src/types/specification";
 
 /**
  * Composes the custom actions block for an endpoint. Adds a default action
@@ -83,11 +93,28 @@ export function composeActionBlock(
   const [ctx, actions] = specs.reduce(
     (acc, atom) => {
       const [currentCtx, actions] = acc;
-      const action = composeSingleAction(def, atom, currentCtx, targets, endpointKind);
-      if (action.kind !== "delete-one" && action.kind !== "execute-hook" && action.alias) {
-        currentCtx[action.alias] = { kind: "record", modelName: action.model };
+      switch (atom.kind) {
+        case "create":
+        case "update": {
+          const action = composeModelAction(def, atom, currentCtx, targets, endpointKind);
+          currentCtx[action.alias] = { kind: "record", modelName: action.model };
+          return [currentCtx, [...actions, action]];
+        }
+        case "delete": {
+          const action = composeDeleteAction(def, atom, currentCtx, _.last(targets)!, endpointKind);
+          // FIXME delete an alias from `currentCtx`
+          return [currentCtx, [...actions, action]];
+        }
+        case "execute": {
+          const action = composeExecuteAction(def, atom, currentCtx);
+          return [currentCtx, [...actions, action]];
+        }
+        case "fetch": {
+          const action = composeFetchAction(def, atom, currentCtx);
+          currentCtx[action.alias] = { kind: "record", modelName: action.model };
+          return [currentCtx, [...actions, action]];
+        }
       }
-      return [currentCtx, [...actions, action]];
     },
     [initialCtx, []] as [VarContext, ActionDef[]]
   );
@@ -113,10 +140,25 @@ export function composeActionBlock(
         return actions;
       }
       case "custom-one":
-      case "custom-many":
+      case "custom-many": {
         // no default action here since it's a "custom" endpoint
         return actions;
-      default: {
+      }
+      case "delete": {
+        const action = composeDeleteAction(
+          def,
+          {
+            kind: "delete",
+            targetPath: undefined,
+          },
+          ctx,
+          _.last(targets)!,
+          endpointKind
+        );
+        return [action, ...actions];
+      }
+      case "create":
+      case "update": {
         /**
          * Make custom default action and insert at the beginning.
          *
@@ -129,7 +171,7 @@ export function composeActionBlock(
          *      if user is referencing a default target alias before it's initialisation
          *      or after.
          */
-        const action: ActionDef = composeSingleAction(
+        const action: CreateOneAction | UpdateOneAction = composeModelAction(
           def,
           {
             kind: endpointKind,
@@ -143,6 +185,9 @@ export function composeActionBlock(
         );
 
         return [action, ...actions];
+      }
+      default: {
+        return assertUnreachable(endpointKind);
       }
     }
   }
@@ -171,6 +216,9 @@ export function getInitialContext(
       kind: "record",
       modelName: def.authenticator.authUserModel.name,
     };
+    parentContext["@requestAuthToken"] = {
+      kind: "request",
+    };
   }
 
   switch (endpointKind) {
@@ -192,226 +240,114 @@ export function getInitialContext(
   }
 }
 
+function composeDeleteAction(
+  def: Definition,
+  spec: FilteredKind<ActionSpec, "delete">,
+  ctx: VarContext,
+  target: TargetDef,
+  endpointKind: EndpointType
+): DeleteOneAction {
+  // Targeting model, context-path or reimplementing a default action?
+  const actionTargetScope = getActionTargetScope(def, spec, target.alias, ctx);
+  // Reimplementing a default action
+  if (actionTargetScope === "target") {
+    ensureAllowedTargetAction(spec, target, endpointKind);
+  }
+  const targetPath = spec.targetPath ?? [target.alias];
+  return {
+    kind: "delete-one",
+    targetPath,
+    model: findChangesetModel(def, ctx, targetPath, target).refKey,
+  };
+}
+
+function composeFetchAction(
+  def: Definition,
+  spec: FilteredKind<ActionSpec, "fetch">,
+  ctx: VarContext
+): FetchOneAction {
+  const changeset: ChangesetDef = [];
+
+  ensureExists(spec.alias, `Alias is required in fetch actions`);
+
+  spec.atoms.forEach((atom) => {
+    const op = atomToChangesetOperation(def, atom, [], null, ctx, changeset);
+    changeset.push(op);
+  });
+  // fetch action's model is derived from it's query
+  const startModel = getRef.model(def, spec.query.fromModel[0]);
+  const query = composeQuery(def, startModel, spec.query);
+  return {
+    kind: "fetch-one",
+    alias: spec.alias,
+    changeset,
+    model: query.retType,
+    query: query,
+  };
+}
+
+function composeExecuteAction(
+  def: Definition,
+  spec: FilteredKind<ActionSpec, "execute">,
+  ctx: VarContext
+): ExecuteHookAction {
+  const changeset: ChangesetDef = [];
+
+  spec.atoms.forEach((atom) => {
+    const op = atomToChangesetOperation(def, atom, [], null, ctx, changeset);
+    changeset.push(op);
+  });
+
+  const actionHook: ActionHookDef = {
+    args: _.chain(spec.hook.args)
+      .toPairs()
+      .map(([name, arg]) =>
+        setterToChangesetOperation(def, { kind: "set", target: name, set: arg }, ctx, changeset)
+      )
+      .value(),
+
+    hook: composeHook(def, spec.hook),
+  };
+
+  return {
+    kind: "execute-hook",
+    hook: actionHook,
+    changeset,
+    responds: spec.responds,
+  };
+}
+
 /**
  * Composes a single `ActionDef` based on current variable context, entrypoint, endpoint and action specs.
  */
-function composeSingleAction(
+function composeModelAction(
   def: Definition,
-  spec: ActionSpec,
+  spec: ModelActionSpec,
   ctx: VarContext,
   targets: TargetDef[],
   endpointKind: EndpointType
-): ActionDef {
+): CreateOneAction | UpdateOneAction {
   const target = _.last(targets)!;
-  let model = findChangesetModel(def, ctx, spec.targetPath, target);
+  const model = findChangesetModel(def, ctx, spec.targetPath, target);
 
   // Targeting model, context-path or reimplementing a default action?
   const actionTargetScope = getActionTargetScope(def, spec, target.alias, ctx);
-  // Overwriting a default action
+  // Reimplementing a default action
   if (actionTargetScope === "target") {
     ensureAllowedTargetAction(spec, target, endpointKind);
   } else {
     // check alias
-    // some actions are not allowed to have alias
-    if (spec.kind === "delete" || spec.kind === "execute") {
-      ensureEmpty(spec.alias, `Action "${spec.kind}" cannot have an alias`);
-    } else {
-      ensureNot(spec.alias, undefined, `Custom action must have an alias`);
-      // ensure alias doesn't reuse an existing name
-      const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
+    ensureNot(spec.alias, undefined, `Custom action must have an alias`);
+    // ensure alias doesn't reuse an existing name
+    const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
 
-      // FIXME not sure if this logic works
-      ensureThrow(() => getRef(def, spec.alias!), message);
-      ensureEqual(spec.alias! in ctx, false, message);
-    }
+    // FIXME not sure if this logic works
+    ensureThrow(() => getRef(def, spec.alias!), message);
+    ensureEqual(spec.alias! in ctx, false, message);
   }
 
   const specWithParentSetter = assignParentContextSetter(def, spec, ctx, targets);
   const simpleSpec = simplifyActionSpec(def, specWithParentSetter, target.alias, model);
-
-  function expandSetterExpression(exp: ExpSpec, changeset: ChangesetDef): FieldSetter {
-    switch (exp.kind) {
-      case "literal": {
-        return getTypedLiteralValue(exp.literal);
-      }
-      case "identifier": {
-        const path = exp.identifier;
-
-        const maybeTypedPath = safeInvoke(() => getTypedPathWithLeaf(def, path, ctx));
-        switch (maybeTypedPath.kind) {
-          case "error": {
-            /**
-             * Check if path is an iterator.
-             */
-            const maybeIterator = safeInvoke(() => getTypedIterator(def, path, ctx));
-            switch (maybeIterator.kind) {
-              case "success": {
-                return {
-                  kind: "reference-value",
-                  target: {
-                    alias: maybeIterator.result.name,
-                    access: _.compact([maybeIterator.result.leaf]),
-                  },
-                };
-              }
-              case "error": {
-                /**
-                 * Check if path is HTTP handler
-                 */
-                const maybeRequestValue = safeInvoke(() => getTypedRequestPath(def, path));
-                switch (maybeRequestValue.kind) {
-                  case "success": {
-                    return {
-                      kind: maybeRequestValue.result.kind,
-                      access: maybeRequestValue.result.access,
-                    };
-                  }
-                  case "error": {
-                    /**
-                     * Is this a computed "sibling" call?
-                     * It must start with an action spec alias, and must be a shallow path (no deep aliases)
-                     */
-                    if (path[0] === simpleSpec.alias) {
-                      ensureEqual(path.length, 2);
-                    } else {
-                      ensureEqual(path.length, 1, `Path "${path}" must have length 1`);
-                    }
-                    const siblingName = _.last(path)!;
-                    // check if sibling name is defined in the changeset
-                    const siblingOp = _.find(changeset, { name: siblingName });
-                    if (siblingOp) {
-                      return { kind: "changeset-reference", referenceName: siblingName };
-                    } else {
-                      // final error - every "maybe" failed,so we'll throw an error
-                      throw new Error(`Unresolved expression path ${path}`);
-                    }
-                  }
-
-                  default: {
-                    return assertUnreachable(maybeRequestValue);
-                  }
-                }
-              }
-
-              default: {
-                return assertUnreachable(maybeIterator);
-              }
-            }
-          }
-          case "success": {
-            const typedPath = maybeTypedPath.result;
-            const namePath = typedPath.nodes.map((p) => p.name);
-            const access = [...namePath, typedPath.leaf.name];
-            return {
-              kind: "reference-value",
-              target: { alias: path[0], access },
-            };
-          }
-          default: {
-            return assertUnreachable(maybeTypedPath);
-          }
-        }
-      }
-      case "unary": {
-        return {
-          kind: "function",
-          name: exp.operator as FunctionName, // FIXME proper validation
-          args: [expandSetterExpression(exp.exp, changeset)],
-        };
-      }
-      case "binary": {
-        return {
-          kind: "function",
-          name: exp.operator as FunctionName, // FIXME proper validation
-          args: [
-            expandSetterExpression(exp.lhs, changeset),
-            expandSetterExpression(exp.rhs, changeset),
-          ],
-        };
-      }
-      case "function": {
-        return {
-          kind: "function",
-          name: exp.name as FunctionName, // FIXME proper validation
-          args: exp.args.map((a) => expandSetterExpression(a, changeset)),
-        };
-      }
-    }
-  }
-
-  function toFieldSetter(atom: ActionAtomSpecSet, changeset: ChangesetDef): ChangesetOperationDef {
-    switch (atom.set.kind) {
-      case "hook": {
-        const args = _.chain(atom.set.hook.args)
-          .toPairs()
-          .map(([name, arg]) => toFieldSetter({ kind: "set", target: name, set: arg }, changeset))
-          .value();
-        return {
-          name: atom.target,
-          setter: { kind: "fieldset-hook", hook: composeHook(def, atom.set.hook), args },
-        };
-      }
-      case "expression": {
-        const exp = atom.set.exp;
-        const setter = expandSetterExpression(exp, changeset);
-        return { name: atom.target, setter };
-      }
-      case "query": {
-        return {
-          name: atom.target,
-          setter: { kind: "query", query: queryFromSpec(def, atom.set.query) },
-        };
-      }
-    }
-  }
-
-  function atomToChangesetOperation(
-    atom: SimpleActionSpec["actionAtoms"][number],
-    fieldsetNamespace: string[]
-  ): ChangesetOperationDef {
-    switch (atom.kind) {
-      case "virtual-input": {
-        return {
-          name: atom.name,
-          setter: {
-            kind: "fieldset-virtual-input",
-            type: validateType(atom.type),
-            required: !atom.optional,
-            nullable: atom.nullable,
-            fieldsetAccess: [...fieldsetNamespace, atom.name],
-            validators: composeValidators(def, validateType(atom.type), atom.validators),
-          },
-        };
-      }
-      case "input": {
-        const field = getRef.field(def, model.name, atom.fieldSpec.name);
-        return {
-          name: atom.fieldSpec.name,
-          setter: {
-            kind: "fieldset-input",
-            type: field.type,
-            required: !atom.fieldSpec.optional,
-            fieldsetAccess: [...fieldsetNamespace, atom.fieldSpec.name],
-          },
-        };
-      }
-      case "reference": {
-        const reference = getRef.reference(def, model.name, atom.target);
-        const throughField = getRef.field(def, reference.toModelRefKey, atom.through);
-        return {
-          name: atom.target,
-          setter: {
-            kind: "fieldset-reference-input",
-            throughRefKey: throughField.refKey,
-            fieldsetAccess: [...fieldsetNamespace, `${atom.target}_${atom.through}`],
-          },
-        };
-      }
-      case "set": {
-        return toFieldSetter(atom, changeset);
-      }
-    }
-  }
 
   const changeset: ChangesetDef = [];
   const resolveResult = resolveItems(
@@ -437,7 +373,7 @@ function composeSingleAction(
           ? _.compact([simpleSpec.blueprintAlias])
           : [simpleSpec.alias];
 
-      const op = atomToChangesetOperation(atom, fieldsetNamespace);
+      const op = atomToChangesetOperation(def, atom, fieldsetNamespace, model, ctx, changeset);
       // Add the changeset operation only if not added before
       if (!_.find(changeset, { name: op.name })) {
         changeset.push(op);
@@ -459,66 +395,184 @@ function composeSingleAction(
   // TODO: resolving should break on any error other than "not yet resolved"
   // TODO ensure changeset has covered every non-optional field in the model!
 
-  // compose action hook (if available) - only in "execute"s
-  const hookSpecs = kindFilter(spec.actionAtoms, "hook");
-  let actionHook: ActionHookDef | undefined;
-  if (hookSpecs.length > 0) {
-    ensureEqual(hookSpecs.length, 1, "Max one hook per action is allowed");
-    ensureEqual(spec.kind, "execute", 'Hooks are allowed only in "execute" action types');
-
-    const hookSpec = hookSpecs[0].hook;
-
-    ensureNot(hookSpec.code.kind, "inline", 'Inline hooks cannot be used for "execute" actions');
-
-    actionHook = {
-      args: _.chain(hookSpec.args)
-        .toPairs()
-        .map(([name, arg]) => toFieldSetter({ kind: "set", target: name, set: arg }, changeset))
-        .value(),
-
-      hook: composeHook(def, hookSpec),
-    };
-  }
-
-  // action responds
-  const respondsAtoms = kindFilter(spec.actionAtoms, "responds");
-  if (respondsAtoms.length > 0) {
-    // in custom endpoint
-    ensureEqual(
-      _.includes<EndpointType>(["custom-one", "custom-many"], endpointKind),
-      true,
-      `Actions with "responds" keyword are allowed only in "custom-one" and "custom-many" endpoints, not in "${endpointKind}"`
-    );
-    // in execute action
-    ensureEqual(spec.kind, "execute", 'Keyword "responds" is allowed only on "execute" actions');
-  }
-  const responds = respondsAtoms.length > 0;
-
-  // compose action query
-  let actionQuery: QueryDef | undefined;
-  const queryAtoms = kindFilter(spec.actionAtoms, "query");
-  if (queryAtoms.length > 0) {
-    ensureEqual(queryAtoms.length, 1, "Max one query per action is allowed");
-
-    const querySpec = queryAtoms[0].query;
-
-    // fetch action's model is derived from it's query
-    model = getRef.model(def, querySpec.fromModel[0]);
-
-    actionQuery = composeQuery(def, model, querySpec);
-  }
-
   // Build the desired `ActionDef`.
-  return actionFromParts(
-    simpleSpec,
-    actionTargetScope,
-    target,
-    model,
-    changeset,
-    actionHook,
-    responds,
-    actionQuery
-  );
+  return modelActionFromParts(simpleSpec, actionTargetScope, target, model, changeset);
+}
+
+function expandSetterExpression(
+  def: Definition,
+  exp: ExpSpec,
+  ctx: VarContext,
+  changeset: ChangesetDef
+): FieldSetter {
+  switch (exp.kind) {
+    case "literal": {
+      return getTypedLiteralValue(exp.literal);
+    }
+    case "identifier": {
+      const path = exp.identifier;
+
+      // is path alias in the context?
+      if (path[0] in ctx) {
+        const alias = path[0];
+        const ctxVar = ctx[alias]!;
+        switch (ctxVar.kind) {
+          case "iterator": {
+            const iterator = getTypedIterator(def, path, ctx);
+            return {
+              kind: "reference-value",
+              target: {
+                alias: iterator.name,
+                access: _.compact([iterator.leaf]),
+              },
+            };
+          }
+          case "request": {
+            const request = getTypedRequestPath(def, path);
+            return {
+              kind: request.kind,
+              access: request.access,
+            };
+          }
+          case "record": {
+            const typedPath = getTypedPathWithLeaf(def, path, ctx);
+            const namePath = typedPath.nodes.map((p) => p.name);
+            const access = [...namePath, typedPath.leaf.name];
+            return {
+              kind: "reference-value",
+              target: { alias: path[0], access },
+            };
+          }
+          default: {
+            return assertUnreachable(ctxVar);
+          }
+        }
+      } else {
+        // FIXME sibling call should be a qualified form
+        // if path has more than 1 element, it can't be a sibling call
+        ensureEqual(path.length, 1, `Unresolved expression path ${path}`);
+        const siblingName = path[0];
+        // check if sibling name is defined in the changeset
+        const siblingOp = _.find(changeset, { name: siblingName });
+        if (siblingOp) {
+          return { kind: "changeset-reference", referenceName: siblingName };
+        } else {
+          throw new Error(`Unresolved expression path ${path}`);
+        }
+      }
+    }
+    case "unary": {
+      return {
+        kind: "function",
+        name: exp.operator as FunctionName, // FIXME proper validation
+        args: [expandSetterExpression(def, exp.exp, ctx, changeset)],
+      };
+    }
+    case "binary": {
+      return {
+        kind: "function",
+        name: exp.operator as FunctionName, // FIXME proper validation
+        args: [
+          expandSetterExpression(def, exp.lhs, ctx, changeset),
+          expandSetterExpression(def, exp.rhs, ctx, changeset),
+        ],
+      };
+    }
+    case "function": {
+      return {
+        kind: "function",
+        name: exp.name as FunctionName, // FIXME proper validation
+        args: exp.args.map((a) => expandSetterExpression(def, a, ctx, changeset)),
+      };
+    }
+  }
+}
+
+function setterToChangesetOperation(
+  def: Definition,
+  atom: ActionAtomSpecSet,
+  ctx: VarContext,
+  changeset: ChangesetDef
+): ChangesetOperationDef {
+  switch (atom.set.kind) {
+    case "hook": {
+      const args = _.chain(atom.set.hook.args)
+        .toPairs()
+        .map(([name, arg]) =>
+          setterToChangesetOperation(def, { kind: "set", target: name, set: arg }, ctx, changeset)
+        )
+        .value();
+      return {
+        name: atom.target,
+        setter: { kind: "fieldset-hook", hook: composeHook(def, atom.set.hook), args },
+      };
+    }
+    case "expression": {
+      const exp = atom.set.exp;
+      const setter = expandSetterExpression(def, exp, ctx, changeset);
+      return { name: atom.target, setter };
+    }
+    case "query": {
+      return {
+        name: atom.target,
+        setter: { kind: "query", query: queryFromSpec(def, atom.set.query) },
+      };
+    }
+  }
+}
+
+function atomToChangesetOperation(
+  def: Definition,
+  atom: SimpleActionSpec["actionAtoms"][number],
+  fieldsetNamespace: string[],
+  model: ModelDef | null,
+  ctx: VarContext,
+  changeset: ChangesetDef
+): ChangesetOperationDef {
+  switch (atom.kind) {
+    case "virtual-input": {
+      return {
+        name: atom.name,
+        setter: {
+          kind: "fieldset-virtual-input",
+          type: validateType(atom.type),
+          required: !atom.optional,
+          nullable: atom.nullable,
+          fieldsetAccess: [...fieldsetNamespace, atom.name],
+          validators: composeValidators(def, validateType(atom.type), atom.validators),
+        },
+      };
+    }
+    case "input": {
+      ensureNot(model, null, `input atom can't be used with actions without target model`);
+      const field = getRef.field(def, model.name, atom.fieldSpec.name);
+      return {
+        name: atom.fieldSpec.name,
+        setter: {
+          kind: "fieldset-input",
+          type: field.type,
+          required: !atom.fieldSpec.optional,
+          fieldsetAccess: [...fieldsetNamespace, atom.fieldSpec.name],
+        },
+      };
+    }
+    case "reference": {
+      ensureNot(model, null, `input atom can't be used with actions without target model`);
+      const reference = getRef.reference(def, model.name, atom.target);
+      const throughField = getRef.field(def, reference.toModelRefKey, atom.through);
+      return {
+        name: atom.target,
+        setter: {
+          kind: "fieldset-reference-input",
+          throughRefKey: throughField.refKey,
+          fieldsetAccess: [...fieldsetNamespace, `${atom.target}_${atom.through}`],
+        },
+      };
+    }
+    case "set": {
+      return setterToChangesetOperation(def, atom, ctx, changeset);
+    }
+  }
 }
 
 /**
@@ -569,10 +623,6 @@ function ensureAllowedTargetAction(
       );
     }
   }
-
-  if (spec.kind === "delete" && spec.alias) {
-    throw new Error(`Delete target action cannot make an alias; remove "as ${spec.alias}"`);
-  }
 }
 
 /**
@@ -594,13 +644,12 @@ function getActionTargetScope(
   targetAlias: string,
   ctx: VarContext
 ): ActionTargetScope {
+  // action without explicit target
+  if (spec.kind === "execute" || spec.kind === "fetch") {
+    return "none";
+  }
   const path = spec.targetPath;
   if (!path) {
-    // action withut explicit target
-    if (spec.kind === "execute" || spec.kind === "fetch") {
-      return "none";
-    }
-
     return "target";
   }
   if (path.length === 1) {
@@ -679,10 +728,10 @@ function findChangesetModel(
 
 function assignParentContextSetter(
   def: Definition,
-  spec: ActionSpec,
+  spec: ModelActionSpec,
   ctx: VarContext,
   targets: TargetDef[]
-): ActionSpec {
+): ModelActionSpec {
   if (spec.kind !== "create") {
     return spec;
   }
@@ -738,18 +787,15 @@ function assignParentContextSetter(
 }
 
 /**
- * Constructs an `ActionDef`.
+ * Constructs an `ActionDef` for a model action.
  */
-function actionFromParts(
+function modelActionFromParts(
   spec: SimpleActionSpec,
   targetKind: ActionTargetScope,
   target: TargetDef,
   model: ModelDef,
-  changeset: ChangesetDef,
-  hook: ActionHookDef | undefined,
-  responds: boolean,
-  query: QueryDef | undefined
-): ActionDef {
+  changeset: ChangesetDef
+): CreateOneAction | UpdateOneAction {
   // FIXME come up with an alias in case of nested actions
   const alias = targetKind === "target" && spec.kind === "create" ? target.alias : spec.alias;
 
@@ -774,35 +820,6 @@ function actionFromParts(
         model: model.name,
         filter: undefined,
         select: [],
-      };
-    }
-    case "delete": {
-      // FIXME delete-many
-      return {
-        kind: "delete-one",
-        model: model.name,
-        targetPath: spec.targetPath ?? [target.alias],
-      };
-    }
-    case "execute": {
-      ensureExists(hook, 'Missing hook from "execute" action spec');
-
-      return {
-        kind: "execute-hook",
-        changeset,
-        hook,
-        responds,
-      };
-    }
-    case "fetch": {
-      ensureExists(query, `Query is required for "${spec.kind}" action`);
-
-      return {
-        kind: "fetch-one",
-        alias,
-        model: model.name,
-        changeset,
-        query,
       };
     }
   }

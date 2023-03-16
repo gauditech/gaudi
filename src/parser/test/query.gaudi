@@ -40,15 +40,13 @@ entrypoint Ep {
         }
       }
 
-      // test setter query
       execute {
-        set prop1 query { from Class, filter id is 1 }
-
+        
         // test arg query
         hook {
           arg prop2 query { from Class, filter id is 1 }
 
-          inline `prop2`
+          source foo from "bar"
         }
       }
     }

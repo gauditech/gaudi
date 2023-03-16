@@ -195,6 +195,7 @@ function processEndpoints(
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const endpointType = mapEndpointSpecToDefType(endSpec);
+
     const rawActions = composeActionBlock(def, endSpec.actions ?? [], targets, endpointType);
     const actionDeps = collectActionDeps(def, rawActions);
 
@@ -608,23 +609,21 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     .flatMap((a) => a.hook.args)
     .value();
   // collect targets
-  const setterTargets = [...actionChangesets, ...actionHookChangesets].flatMap(
-    ({ setter: operation }) => {
-      switch (operation.kind) {
-        case "reference-value": {
-          return [operation.target];
-        }
-        case "fieldset-hook": {
-          return operation.args.flatMap(({ setter: operation }) =>
-            operation.kind === "reference-value" ? [operation.target] : []
-          );
-        }
-        default: {
-          return [];
-        }
+  const setterTargets = [...actionChangesets, ...actionHookChangesets].flatMap(({ setter }) => {
+    switch (setter.kind) {
+      case "reference-value": {
+        return [setter.target];
+      }
+      case "fieldset-hook": {
+        return setter.args.flatMap(({ setter }) =>
+          setter.kind === "reference-value" ? [setter.target] : []
+        );
+      }
+      default: {
+        return [];
       }
     }
-  );
+  });
 
   return [...setterTargets, ...targetPaths];
 }

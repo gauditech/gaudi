@@ -19,25 +19,19 @@ exports[`compose hooks action hook 1`] = `
               "validators": [],
             },
           },
-          {
-            "name": "name",
-            "setter": {
-              "fieldsetAccess": [
-                "name",
-              ],
-              "kind": "fieldset-input",
-              "required": true,
-              "type": "text",
-            },
-          },
         ],
         "hook": {
           "args": [
             {
               "name": "name",
               "setter": {
-                "kind": "changeset-reference",
-                "referenceName": "name",
+                "kind": "reference-value",
+                "target": {
+                  "access": [
+                    "name",
+                  ],
+                  "alias": "org",
+                },
               },
             },
             {
@@ -75,7 +69,7 @@ exports[`compose hooks action hook 1`] = `
     "responds": true,
     "response": undefined,
     "target": {
-      "alias": "$target_0",
+      "alias": "org",
       "identifyWith": {
         "name": "id",
         "paramName": "org_id",
@@ -89,7 +83,18 @@ exports[`compose hooks action hook 1`] = `
       ],
       "refKey": "Org",
       "retType": "Org",
-      "select": [],
+      "select": [
+        {
+          "alias": "name",
+          "kind": "field",
+          "name": "name",
+          "namePath": [
+            "Org",
+            "name",
+          ],
+          "refKey": "Org.name",
+        },
+      ],
     },
   },
 ]
@@ -99,73 +104,16 @@ exports[`compose hooks composes action hook 1`] = `
 {
   "changeset": [
     {
-      "name": "name",
+      "name": "prop",
       "setter": {
         "fieldsetAccess": [
-          "name",
+          "prop",
         ],
-        "kind": "fieldset-input",
+        "kind": "fieldset-virtual-input",
+        "nullable": false,
         "required": true,
         "type": "text",
-      },
-    },
-    {
-      "name": "user",
-      "setter": {
-        "kind": "query",
-        "query": {
-          "filter": {
-            "args": [
-              {
-                "kind": "alias",
-                "namePath": [
-                  "Org",
-                  "id",
-                ],
-              },
-              {
-                "kind": "literal",
-                "type": "integer",
-                "value": 1,
-              },
-            ],
-            "kind": "function",
-            "name": "is",
-          },
-          "fromPath": [
-            "Org",
-          ],
-          "kind": "query",
-          "limit": undefined,
-          "modelRefKey": "Org",
-          "name": "user",
-          "offset": undefined,
-          "orderBy": undefined,
-          "refKey": "N/A",
-          "retType": "Org",
-          "select": [
-            {
-              "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "Org",
-                "id",
-              ],
-              "refKey": "Org.id",
-            },
-            {
-              "alias": "name",
-              "kind": "field",
-              "name": "name",
-              "namePath": [
-                "Org",
-                "name",
-              ],
-              "refKey": "Org.name",
-            },
-          ],
-        },
+        "validators": [],
       },
     },
   ],

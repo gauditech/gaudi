@@ -240,36 +240,13 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "name": "username",
                 "setter": {
                   "fieldsetAccess": [
-                    "existingAuthUser",
                     "username",
                   ],
-                  "kind": "fieldset-input",
+                  "kind": "fieldset-virtual-input",
+                  "nullable": false,
                   "required": true,
                   "type": "text",
-                },
-              },
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "existingAuthUser",
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "existingAuthUser",
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
+                  "validators": [],
                 },
               },
             ],
@@ -362,28 +339,6 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "required": true,
                   "type": "text",
                   "validators": [],
-                },
-              },
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
                 },
               },
             ],
@@ -495,41 +450,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
-            "changeset": [
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-            ],
+            "changeset": [],
             "hook": {
               "args": [
                 {
@@ -595,42 +516,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "actions": [
           {
             "alias": "accessToken",
-            "changeset": [
-              {
-                "name": "expiryDate",
-                "setter": {
-                  "fieldsetAccess": [
-                    "accessToken",
-                    "expiryDate",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "authUser_id",
-                "setter": {
-                  "fieldsetAccess": [
-                    "accessToken",
-                    "authUser_id",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "integer",
-                },
-              },
-              {
-                "name": "token",
-                "setter": {
-                  "access": [
-                    "user",
-                    "token",
-                  ],
-                  "kind": "request-auth-token",
-                },
-              },
-            ],
+            "changeset": [],
             "kind": "fetch-one",
             "model": "AuthUserAccessToken",
             "query": {
@@ -715,41 +601,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
-            "changeset": [
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-            ],
+            "changeset": [],
             "hook": {
               "args": [
                 {
@@ -808,36 +660,13 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "name": "username",
                 "setter": {
                   "fieldsetAccess": [
-                    "existingUser",
                     "username",
                   ],
-                  "kind": "fieldset-input",
+                  "kind": "fieldset-virtual-input",
+                  "nullable": false,
                   "required": true,
                   "type": "text",
-                },
-              },
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "existingUser",
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "existingUser",
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
+                  "validators": [],
                 },
               },
             ],
@@ -918,41 +747,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             },
           },
           {
-            "changeset": [
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-            ],
+            "changeset": [],
             "hook": {
               "args": [
                 {
@@ -1118,41 +913,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
-            "changeset": [
-              {
-                "name": "name",
-                "setter": {
-                  "fieldsetAccess": [
-                    "name",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "password",
-                  ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "text",
-                },
-              },
-            ],
+            "changeset": [],
             "hook": {
               "args": [
                 {

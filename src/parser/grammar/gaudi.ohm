@@ -176,7 +176,6 @@ Gaudi {
     | "responds"                                                                    -- responds
     | Hook                                                                          -- hook
     | QueryAtom                                                                     -- query
-    | ActionBody                                                                    -- nested_action
 
   ActionInputAtom
     = identifier "{" NewlineBody<ActionInputOpt, ","> "}" -- field_with_opts

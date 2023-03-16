@@ -2,7 +2,9 @@
 import { match } from "ts-pattern";
 import { InvertPattern } from "ts-pattern/dist/types/InvertPattern";
 import { MatchedValue } from "ts-pattern/dist/types/Match";
-import { Pattern } from "ts-pattern/dist/types/Pattern";
+import { NotP, Pattern } from "ts-pattern/dist/types/Pattern";
+
+import { AnyActionBodyAST } from "@src/types/ast";
 
 type Cast<A, B> = A extends B ? A : B;
 
@@ -32,7 +34,7 @@ export function patternFilter<i, p extends Pattern<ShallowNarrowed<i>>>(
 export function kindFilter<
   i extends { kind: unknown },
   k extends Pattern<ShallowNarrowed<i["kind"]>>
->(input: i[], kind: k): MatchedValue<i, InvertPattern<{ kind: k }>>[] {
+>(input: i[], kind: k): FilteredKind<i, k>[] {
   return input.filter((i) =>
     match(i.kind)
       .with(kind, () => true)
@@ -54,10 +56,28 @@ export function patternFind<i, p extends Pattern<ShallowNarrowed<i>>>(
 export function kindFind<
   i extends { kind: unknown },
   k extends Pattern<ShallowNarrowed<i["kind"]>>
->(input: i[], kind: k): MatchedValue<i, InvertPattern<{ kind: k }>> | undefined {
+>(input: i[], kind: k): FilteredKind<i, k> | undefined {
   return input.find((i) =>
     match(i.kind)
       .with(kind, () => true)
       .otherwise(() => false)
   ) as any;
 }
+
+export type FilteredKind<
+  i extends { kind: unknown },
+  k extends Pattern<ShallowNarrowed<i["kind"]>>
+> = Omit<MatchedValue<i, InvertPattern<{ kind: k }>>, OptionalKeys<i>> & OptionalValues<i>;
+export type RejectedKind<
+  i extends { kind: unknown },
+  k extends Pattern<ShallowNarrowed<i["kind"]>>
+> = Omit<MatchedValue<i, InvertPattern<NotP<i, { kind: k }>>>, OptionalKeys<i>> & OptionalValues<i>;
+
+type Mapped<A, B> = {
+  [K in keyof A & keyof B]: A[K] extends B[K] ? never : K;
+};
+type OptionalKeys<T> = Mapped<T, Required<T>>[keyof T];
+
+type OptionalValues<T> = {
+  [K in OptionalKeys<T>]?: T[K];
+};

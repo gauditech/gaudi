@@ -355,33 +355,13 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
               ],
             },
             {
-              "actionAtoms": [
-                {
-                  "body": {
-                    "actionAtoms": [],
-                    "alias": undefined,
-                    "kind": "delete",
-                    "targetPath": [
-                      "item",
-                      "parent",
-                    ],
-                  },
-                  "kind": "action",
-                },
-                {
-                  "body": {
-                    "actionAtoms": [],
-                    "alias": undefined,
-                    "kind": "update",
-                    "targetPath": [
-                      "item",
-                      "parent",
-                    ],
-                  },
-                  "kind": "action",
-                },
+              "kind": "delete",
+              "targetPath": [
+                "item",
+                "parent",
               ],
-              "alias": undefined,
+            },
+            {
               "kind": "delete",
               "targetPath": [
                 "item",
@@ -401,8 +381,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                         "y",
                       ],
                       "interval": {
-                        "endIdx": 550,
-                        "startIdx": 534,
+                        "endIdx": 511,
+                        "startIdx": 495,
                       },
                       "kind": "identifier",
                     },
@@ -415,8 +395,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   "set": {
                     "exp": {
                       "interval": {
-                        "endIdx": 569,
-                        "startIdx": 567,
+                        "endIdx": 530,
+                        "startIdx": 528,
                       },
                       "kind": "literal",
                       "literal": 10,
@@ -430,8 +410,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   "set": {
                     "exp": {
                       "interval": {
-                        "endIdx": 590,
-                        "startIdx": 586,
+                        "endIdx": 551,
+                        "startIdx": 547,
                       },
                       "kind": "literal",
                       "literal": null,
@@ -445,8 +425,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                   "set": {
                     "exp": {
                       "interval": {
-                        "endIdx": 618,
-                        "startIdx": 607,
+                        "endIdx": 579,
+                        "startIdx": 568,
                       },
                       "kind": "binary",
                       "lhs": {
@@ -454,16 +434,16 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                           "c",
                         ],
                         "interval": {
-                          "endIdx": 608,
-                          "startIdx": 607,
+                          "endIdx": 569,
+                          "startIdx": 568,
                         },
                         "kind": "identifier",
                       },
                       "operator": "*",
                       "rhs": {
                         "interval": {
-                          "endIdx": 617,
-                          "startIdx": 612,
+                          "endIdx": 578,
+                          "startIdx": 573,
                         },
                         "kind": "binary",
                         "lhs": {
@@ -471,8 +451,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                             "a",
                           ],
                           "interval": {
-                            "endIdx": 613,
-                            "startIdx": 612,
+                            "endIdx": 574,
+                            "startIdx": 573,
                           },
                           "kind": "identifier",
                         },
@@ -482,8 +462,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
                             "b",
                           ],
                           "interval": {
-                            "endIdx": 617,
-                            "startIdx": 616,
+                            "endIdx": 578,
+                            "startIdx": 577,
                           },
                           "kind": "identifier",
                         },
@@ -552,7 +532,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "authorize": undefined,
           "cardinality": undefined,
           "interval": {
-            "endIdx": 757,
+            "endIdx": 718,
             "startIdx": 175,
           },
           "method": undefined,
@@ -571,8 +551,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "authorize": undefined,
           "cardinality": "one",
           "interval": {
-            "endIdx": 876,
-            "startIdx": 760,
+            "endIdx": 837,
+            "startIdx": 721,
           },
           "method": "PATCH",
           "path": "customPath",
@@ -588,8 +568,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
               "authorize": undefined,
               "cardinality": undefined,
               "interval": {
-                "endIdx": 950,
-                "startIdx": 932,
+                "endIdx": 911,
+                "startIdx": 893,
               },
               "method": undefined,
               "path": undefined,
@@ -599,8 +579,8 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
           "entrypoints": [],
           "identify": undefined,
           "interval": {
-            "endIdx": 954,
-            "startIdx": 880,
+            "endIdx": 915,
+            "startIdx": 841,
           },
           "name": "Review",
           "response": undefined,
@@ -613,7 +593,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       ],
       "identify": "slug",
       "interval": {
-        "endIdx": 956,
+        "endIdx": 917,
         "startIdx": 0,
       },
       "name": "ItemEntry",
@@ -895,45 +875,38 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
         {
           "actions": [
             {
-              "actionAtoms": [
-                {
-                  "kind": "responds",
-                },
-                {
-                  "hook": {
-                    "args": {
-                      "name": {
-                        "exp": {
-                          "identifier": [
-                            "name",
-                          ],
-                          "interval": {
-                            "endIdx": 760,
-                            "startIdx": 756,
-                          },
-                          "kind": "identifier",
-                        },
-                        "kind": "expression",
-                      },
-                    },
-                    "code": {
-                      "file": "customHooks",
-                      "kind": "source",
-                      "target": "foo",
-                    },
-                    "interval": {
-                      "endIdx": 838,
-                      "startIdx": 730,
-                    },
-                    "name": undefined,
-                    "runtimeName": "MyRuntime",
-                  },
-                  "kind": "hook",
-                },
-              ],
               "alias": undefined,
+              "atoms": [],
+              "hook": {
+                "args": {
+                  "name": {
+                    "exp": {
+                      "identifier": [
+                        "name",
+                      ],
+                      "interval": {
+                        "endIdx": 760,
+                        "startIdx": 756,
+                      },
+                      "kind": "identifier",
+                    },
+                    "kind": "expression",
+                  },
+                },
+                "code": {
+                  "file": "customHooks",
+                  "kind": "source",
+                  "target": "foo",
+                },
+                "interval": {
+                  "endIdx": 838,
+                  "startIdx": 730,
+                },
+                "name": undefined,
+                "runtimeName": "MyRuntime",
+              },
               "kind": "execute",
-              "targetPath": undefined,
+              "responds": true,
             },
           ],
           "authorize": undefined,
@@ -1379,66 +1352,62 @@ exports[`parser blueprint test/query.gaudi 1`] = `
         {
           "actions": [
             {
-              "actionAtoms": [
-                {
-                  "kind": "query",
-                  "query": {
-                    "aggregate": undefined,
-                    "filter": {
-                      "interval": {
-                        "endIdx": 899,
-                        "startIdx": 892,
-                      },
-                      "kind": "binary",
-                      "lhs": {
-                        "identifier": [
-                          "id",
-                        ],
-                        "interval": {
-                          "endIdx": 894,
-                          "startIdx": 892,
-                        },
-                        "kind": "identifier",
-                      },
-                      "operator": "is",
-                      "rhs": {
-                        "interval": {
-                          "endIdx": 899,
-                          "startIdx": 898,
-                        },
-                        "kind": "literal",
-                        "literal": 1,
-                      },
-                    },
-                    "fromAlias": undefined,
-                    "fromModel": [
-                      "Class",
+              "alias": "fClass",
+              "atoms": [],
+              "kind": "fetch",
+              "query": {
+                "aggregate": undefined,
+                "filter": {
+                  "interval": {
+                    "endIdx": 899,
+                    "startIdx": 892,
+                  },
+                  "kind": "binary",
+                  "lhs": {
+                    "identifier": [
+                      "id",
                     ],
-                    "interval": undefined,
-                    "limit": undefined,
-                    "name": "$query",
-                    "offset": undefined,
-                    "orderBy": undefined,
-                    "select": undefined,
+                    "interval": {
+                      "endIdx": 894,
+                      "startIdx": 892,
+                    },
+                    "kind": "identifier",
+                  },
+                  "operator": "is",
+                  "rhs": {
+                    "interval": {
+                      "endIdx": 899,
+                      "startIdx": 898,
+                    },
+                    "kind": "literal",
+                    "literal": 1,
                   },
                 },
-              ],
-              "alias": "fClass",
-              "kind": "fetch",
-              "targetPath": undefined,
+                "fromAlias": undefined,
+                "fromModel": [
+                  "Class",
+                ],
+                "interval": undefined,
+                "limit": undefined,
+                "name": "$query",
+                "offset": undefined,
+                "orderBy": undefined,
+                "select": undefined,
+              },
             },
             {
-              "actionAtoms": [
-                {
-                  "kind": "set",
-                  "set": {
+              "alias": undefined,
+              "atoms": [],
+              "hook": {
+                "args": {
+                  "prop2": {
                     "kind": "query",
                     "query": {
                       "aggregate": undefined,
                       "filter": {
                         "interval": {
-                          "endIdx": 1014,
-                          "startIdx": 1007,
+                          "endIdx": 1039,
+                          "startIdx": 1032,
                         },
                         "kind": "binary",
                         "lhs": {
@@ -1446,16 +1415,16 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                             "id",
                           ],
                           "interval": {
-                            "endIdx": 1009,
-                            "startIdx": 1007,
+                            "endIdx": 1034,
+                            "startIdx": 1032,
                           },
                           "kind": "identifier",
                         },
                         "operator": "is",
                         "rhs": {
                           "interval": {
-                            "endIdx": 1014,
-                            "startIdx": 1013,
+                            "endIdx": 1039,
+                            "startIdx": 1038,
                           },
                           "kind": "literal",
                           "literal": 1,
@@ -1467,83 +1436,33 @@ exports[`parser blueprint test/query.gaudi 1`] = `
                       ],
                       "interval": undefined,
                       "limit": undefined,
-                      "name": "prop1",
+                      "name": "prop2",
                       "offset": undefined,
                       "orderBy": undefined,
                       "select": undefined,
                     },
                   },
-                  "target": "prop1",
                 },
-                {
-                  "hook": {
-                    "args": {
-                      "prop2": {
-                        "kind": "query",
-                        "query": {
-                          "aggregate": undefined,
-                          "filter": {
-                            "interval": {
-                              "endIdx": 1113,
-                              "startIdx": 1106,
-                            },
-                            "kind": "binary",
-                            "lhs": {
-                              "identifier": [
-                                "id",
-                              ],
-                              "interval": {
-                                "endIdx": 1108,
-                                "startIdx": 1106,
-                              },
-                              "kind": "identifier",
-                            },
-                            "operator": "is",
-                            "rhs": {
-                              "interval": {
-                                "endIdx": 1113,
-                                "startIdx": 1112,
-                              },
-                              "kind": "literal",
-                              "literal": 1,
-                            },
-                          },
-                          "fromAlias": undefined,
-                          "fromModel": [
-                            "Class",
-                          ],
-                          "interval": undefined,
-                          "limit": undefined,
-                          "name": "prop2",
-                          "offset": undefined,
-                          "orderBy": undefined,
-                          "select": undefined,
-                        },
-                      },
-                    },
-                    "code": {
-                      "inline": "prop2",
-                      "kind": "inline",
-                    },
-                    "interval": {
-                      "endIdx": 1151,
-                      "startIdx": 1052,
-                    },
-                    "name": undefined,
-                    "runtimeName": undefined,
-                  },
-                  "kind": "hook",
+                "code": {
+                  "file": "bar",
+                  "kind": "source",
+                  "target": "foo",
                 },
-              ],
-              "alias": undefined,
+                "interval": {
+                  "endIdx": 1084,
+                  "startIdx": 978,
+                },
+                "name": undefined,
+                "runtimeName": undefined,
+              },
               "kind": "execute",
-              "targetPath": undefined,
+              "responds": false,
             },
           ],
           "authorize": undefined,
           "cardinality": undefined,
           "interval": {
-            "endIdx": 1169,
+            "endIdx": 1102,
             "startIdx": 756,
           },
           "method": undefined,
@@ -1554,7 +1473,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
       "entrypoints": [],
       "identify": undefined,
       "interval": {
-        "endIdx": 1171,
+        "endIdx": 1104,
         "startIdx": 716,
       },
       "name": "Ep",

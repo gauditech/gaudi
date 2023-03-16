@@ -122,20 +122,20 @@ export type EndpointCardinality = "one" | "many";
 export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 export type EndpointBodyAST = WithContext<
-  | { kind: "action-block"; atoms: ActionBodyAST[] }
+  | { kind: "action-block"; atoms: AnyActionBodyAST[] }
   | { kind: "authorize"; expression: ExpAST }
   | { kind: "cardinality"; value: EndpointCardinality }
   | { kind: "path"; value: string }
   | { kind: "method"; value: EndpointMethod }
 >;
 
-export type ActionKindAST = "create" | "update" | "delete";
+export type ActionKindAST = "create" | "update" | "delete" | "execute" | "fetch";
 
-export type ActionBodyAST = WithContext<{
+export type AnyActionBodyAST = WithContext<{
   kind: ActionKindAST;
   target?: string[];
   alias?: string;
-  atoms: ActionAtomAST[];
+  atoms: AnyActionAtomAST[];
 }>;
 
 export type VirtualInputAST = WithContext<{
@@ -154,7 +154,7 @@ export type VirtualInputAtomAST = WithContext<
 export type VirtualInputAtomASTType = { kind: "type"; type: string };
 export type VirtualInputAtomASTValidator = { kind: "validate"; validators: ValidatorAST[] };
 
-export type ActionAtomAST = WithContext<
+export type AnyActionAtomAST = WithContext<
   | {
       kind: "set";
       target: string;
@@ -166,7 +166,6 @@ export type ActionAtomAST = WithContext<
   | { kind: "reference"; target: string; through: string }
   | VirtualInputAST
   | { kind: "input"; fields: InputFieldAST[] }
-  | { kind: "action"; body: ActionBodyAST }
   | { kind: "deny"; fields: "*" | string[] }
   | { kind: "hook"; hook: HookAST }
   | { kind: "query"; body: QueryBodyAST[] }

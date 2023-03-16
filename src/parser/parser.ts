@@ -1,8 +1,8 @@
 import grammar from "@src/parser/grammar/gaudi.ohm-bundle";
 import {
   AST,
-  ActionAtomAST,
-  ActionBodyAST,
+  AnyActionAtomAST,
+  AnyActionBodyAST,
   ActionKindAST,
   AuthenticatorAST,
   AuthenticatorBodyAtomAST,
@@ -379,14 +379,14 @@ semantics.addOperation("parse()", {
   QueryAtom(this, _query, _parenL, body, _parenR): QueryBodyAST {
     return body.parse();
   },
-  ActionBody_default(this, kind, _braceL, body, _braceR): ActionBodyAST {
+  ActionBody_default(this, kind, _braceL, body, _braceR): AnyActionBodyAST {
     return {
       kind: kind.sourceString as ActionKindAST,
       atoms: body.parse(),
       interval: this.source,
     };
   },
-  ActionBody_aliased(this, kind, _as, alias, _braceL, body, _braceR): ActionBodyAST {
+  ActionBody_aliased(this, kind, _as, alias, _braceL, body, _braceR): AnyActionBodyAST {
     return {
       kind: kind.sourceString as ActionKindAST,
       alias: alias.parse(),
@@ -394,7 +394,7 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionBody_named(this, kind, name, _braceL, body, _braceR): ActionBodyAST {
+  ActionBody_named(this, kind, name, _braceL, body, _braceR): AnyActionBodyAST {
     return {
       kind: kind.sourceString as ActionKindAST,
       target: name.parse(),
@@ -402,7 +402,7 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionBody_named_aliased(this, kind, name, _as, alias, _braceL, body, _braceR): ActionBodyAST {
+  ActionBody_named_aliased(this, kind, name, _as, alias, _braceL, body, _braceR): AnyActionBodyAST {
     return {
       kind: kind.sourceString as ActionKindAST,
       target: name.parse(),
@@ -411,7 +411,7 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionAtomBody_set_hook(this, _set, identifier, hook): ActionAtomAST {
+  ActionAtomBody_set_hook(this, _set, identifier, hook): AnyActionAtomAST {
     return {
       kind: "set",
       target: identifier.parse(),
@@ -419,21 +419,21 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionAtomBody_set_expression(this, _set, identifier, exp): ActionAtomAST {
+  ActionAtomBody_set_expression(this, _set, identifier, exp): AnyActionAtomAST {
     return {
       kind: "set",
       target: identifier.parse(),
       set: { kind: "expression", exp: exp.parse() },
     };
   },
-  ActionAtomBody_set_query(this, _set, identifier, query): ActionAtomAST {
+  ActionAtomBody_set_query(this, _set, identifier, query): AnyActionAtomAST {
     return {
       kind: "set",
       target: identifier.parse(),
       set: { kind: "query", body: query.parse() },
     };
   },
-  ActionAtomBody_reference(this, _reference, identifier, _through, through): ActionAtomAST {
+  ActionAtomBody_reference(this, _reference, identifier, _through, through): AnyActionAtomAST {
     return {
       kind: "reference",
       target: identifier.parse(),
@@ -441,7 +441,7 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionAtomBody_input(this, _input, _braceL, atoms, _braceR): ActionAtomAST {
+  ActionAtomBody_input(this, _input, _braceL, atoms, _braceR): AnyActionAtomAST {
     return {
       kind: "input",
       fields: atoms.parse(),
@@ -453,25 +453,19 @@ semantics.addOperation("parse()", {
       fields: body.parse(),
     };
   },
-  ActionAtomBody_hook(this, body): ActionAtomAST {
+  ActionAtomBody_hook(this, body): AnyActionAtomAST {
     return {
       kind: "hook",
       hook: body.parse(),
     };
   },
-  ActionAtomBody_query(this, body): ActionAtomAST {
+  ActionAtomBody_query(this, body): AnyActionAtomAST {
     return {
       kind: "query",
       body: body.parse(),
     };
   },
-  ActionAtomBody_nested_action(this, action): ActionAtomAST {
-    return {
-      kind: "action",
-      body: action.parse(),
-    };
-  },
-  ActionAtomBody_virtual_input(this, _kw, identifier, _bL, body, _bR): ActionAtomAST {
+  ActionAtomBody_virtual_input(this, _kw, identifier, _bL, body, _bR): AnyActionAtomAST {
     return {
       kind: "virtual-input",
       name: identifier.parse(),
@@ -479,7 +473,7 @@ semantics.addOperation("parse()", {
       interval: this.source,
     };
   },
-  ActionAtomBody_responds(this, _responds): ActionAtomAST {
+  ActionAtomBody_responds(this, _responds): AnyActionAtomAST {
     return {
       kind: "responds",
     };

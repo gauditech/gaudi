@@ -3,32 +3,7 @@
 exports[`compose action queries "fetch" action custom endpoint 1`] = `
 {
   "alias": "cOrg",
-  "changeset": [
-    {
-      "name": "name",
-      "setter": {
-        "fieldsetAccess": [
-          "cOrg",
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": true,
-        "type": "text",
-      },
-    },
-    {
-      "name": "description",
-      "setter": {
-        "fieldsetAccess": [
-          "cOrg",
-          "description",
-        ],
-        "kind": "fieldset-input",
-        "required": true,
-        "type": "text",
-      },
-    },
-  ],
+  "changeset": [],
   "kind": "fetch-one",
   "model": "Org",
   "query": {
