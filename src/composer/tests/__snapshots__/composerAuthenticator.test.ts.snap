@@ -491,7 +491,22 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "fieldset": {
           "kind": "record",
           "nullable": false,
-          "record": {},
+          "record": {
+            "password": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
+            },
+            "username": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
+            },
+          },
         },
         "kind": "custom-many",
         "method": "POST",
@@ -655,10 +670,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "alias": "existingUser",
             "changeset": [
               {
-                "name": "username",
+                "name": "xusername",
                 "setter": {
                   "fieldsetAccess": [
-                    "username",
+                    "xusername",
                   ],
                   "kind": "fieldset-virtual-input",
                   "nullable": false,
@@ -682,7 +697,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                   {
                     "kind": "variable",
-                    "name": "___changeset___username",
+                    "name": "___changeset___xusername",
                   },
                 ],
                 "kind": "function",
@@ -977,6 +992,24 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
           "kind": "record",
           "nullable": false,
           "record": {
+            "clearPassword": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [
+                {
+                  "args": [
+                    {
+                      "type": "integer",
+                      "value": 8,
+                    },
+                  ],
+                  "inputType": "text",
+                  "name": "minLength",
+                },
+              ],
+            },
             "name": {
               "kind": "field",
               "nullable": false,
@@ -1012,6 +1045,13 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "name": "minLength",
                 },
               ],
+            },
+            "xusername": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
             },
           },
         },

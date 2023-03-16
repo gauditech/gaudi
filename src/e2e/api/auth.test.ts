@@ -272,6 +272,7 @@ describe("Auth", () => {
     it("should fail when creating user with existing username", async () => {
       const data = {
         name: "some name",
+        xusername: "somename2@example.com", // FIXME we can't reference `username` in another action
         username: "somename2@example.com",
         password: "some password",
         userProfile: { displayName: "Profile Display Name" },

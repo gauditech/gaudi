@@ -186,11 +186,11 @@ export function compileAuthenticatorSpec(
 
         action {
           fetch as existingUser {
-            virtual input username { type text }
+            virtual input xusername { type text }
             
             query {
               from ${authUserModelName} as a
-              filter a.username is username
+              filter a.username is xusername
             }
           }
 

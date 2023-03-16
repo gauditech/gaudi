@@ -2,6 +2,7 @@ import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
+  UnreachableError,
   assertUnreachable,
   ensureEmpty,
   ensureEqual,
@@ -487,15 +488,29 @@ export function processSelect(
 export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
   const fieldsetWithPaths = actions
     // filter out actions without fieldset
-    .filter(
-      (a): a is Exclude<ActionDef, DeleteOneAction | ExecuteHookAction> =>
-        a.kind !== "delete-one" && a.kind !== "execute-hook" && a.kind !== "fetch-one"
-    )
+    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .flatMap((action) => {
       return _.chain(action.changeset)
         .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
           switch (setter.kind) {
+            case "fieldset-virtual-input": {
+              return [
+                setter.fieldsetAccess,
+                {
+                  kind: "field",
+                  required: setter.required,
+                  type: setter.type,
+                  nullable: setter.nullable,
+                  validators: setter.validators,
+                },
+              ];
+            }
             case "fieldset-input": {
+              if (action.kind === "execute-hook") {
+                throw new UnreachableError(
+                  `Hook action can't have "fieldset-input" because it doesn't operate on a model.`
+                );
+              }
               const field = getRef.field(def, `${action.model}.${name}`);
               return [
                 setter.fieldsetAccess,
@@ -554,6 +569,7 @@ function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDe
         // OK, record without faulty leaf nodes
         return [name, collectFieldsetPaths(relatedPaths)];
       } else {
+        console.dir({ relatedPaths, name }, { depth: 10 });
         // leaf node + non-empty node, this is not correct
         throw new Error(`Error in paths: ${paths.map((p) => p[0].join(".")).sort()}`);
       }

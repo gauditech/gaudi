@@ -60,7 +60,15 @@ exports[`compose hooks action hook 1`] = `
     "fieldset": {
       "kind": "record",
       "nullable": false,
-      "record": {},
+      "record": {
+        "termsOfUse": {
+          "kind": "field",
+          "nullable": false,
+          "required": true,
+          "type": "boolean",
+          "validators": [],
+        },
+      },
     },
     "kind": "custom-one",
     "method": "POST",
