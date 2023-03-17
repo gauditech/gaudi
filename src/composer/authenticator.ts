@@ -185,30 +185,6 @@ export function compileAuthenticatorSpec(
         cardinality many
 
         action {
-          fetch as existingUser {
-            virtual input xusername { type text }
-            
-            query {
-              from ${authUserModelName} as a
-              filter a.username is xusername
-            }
-          }
-
-
-          // throw error if username already exists
-          // TODO: this should be implemented as validator
-          execute {
-            hook {
-              // throw if existing user is not empty
-              arg condition existingUser
-              arg status 400
-              arg message concat("Username already exists: ", existingUser.username)
-
-              runtime ${internalExecRuntimeName}
-              source throwConditionalResponseError from "hooks/actions.js"
-            }
-          }
-
           create authUser {
             input { name, username }
             virtual input password { type text, validate { min 8 } }
