@@ -956,7 +956,7 @@ class GaudiParser extends EmbeddedActionsParser {
               this.OR2([
                 {
                   ALT: () => {
-                    const queryKeyword = getTokenData(this.CONSUME2(L.Query));
+                    const queryKeyword = getTokenData(this.CONSUME(L.Query));
                     const queryAtoms = this.SUBRULE(this.queryAtoms);
                     const query: HookQuery = {
                       kind: "hookQuery",

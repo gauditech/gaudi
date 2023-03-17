@@ -1,20 +1,20 @@
 model Element {
-  field name { type text }
+  field name { type string }
   reference extra { to Extra } // TODO: unique?
 }
 
 model Extra {
-  field slug { type text, unique }
+  field slug { type string, unique }
   relation element { from Element, through extra }
 }
 
 entrypoint Extras {
-  target model Extra as extra
+  target Extra as extra
   create endpoint {}
 }
 
 entrypoint Elements {
-  target model Element as element
+  target Element as element
   create endpoint {
     action {
       create element {

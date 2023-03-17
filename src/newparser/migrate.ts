@@ -115,8 +115,8 @@ function migrateRelation(relation: AST.Relation): RelationSpec {
   };
 }
 
-function migrateQuery(query: AST.Query): QuerySpec {
-  const from = kindFind(query.atoms, "from")!;
+function migrateQuery(query: AST.Query | AST.HookQuery): QuerySpec {
+  const from = kindFind(query.atoms, "from");
   const filter = kindFind(query.atoms, "filter");
   const orderBy = kindFind(query.atoms, "orderBy")?.orderBy.map((a) => ({
     field: a.identifierPath.map((i) => i.identifier.text),
@@ -128,9 +128,9 @@ function migrateQuery(query: AST.Query): QuerySpec {
   const aggregate = kindFind(query.atoms, "aggregate");
 
   return {
-    name: query.name.text,
-    fromModel: from.identifierPath.map((i) => i.identifier.text),
-    fromAlias: from.as?.identifierPath.map((i) => i.identifier.text),
+    name: query.kind === "query" ? query.name.text : "",
+    fromModel: from?.identifierPath.map((i) => i.identifier.text) ?? [],
+    fromAlias: from?.as?.identifierPath.map((i) => i.identifier.text),
     filter: filter ? migrateExpr(filter.expr) : undefined,
     orderBy,
     limit: limit?.value.value,
@@ -310,37 +310,11 @@ function migrateModelHook(hook: AST.ModelHook): ModelHookSpec {
   const code = getHookCode(hook);
   // model spec does not support expression hooks
   const _args = kindFilter(hook.atoms, "arg_expr").map((a) => ({ name: a.name.text }));
-  const model = hook.ref.kind === "modelAtom" ? hook.ref.model : undefined;
   const args = kindFilter(hook.atoms, "arg_query").map((a) => ({
     name: a.name.text,
-    query: migrateHookQuery(a.query, model!),
+    query: migrateQuery(a.query),
   }));
   return { name: hook.name.text, code, args };
-}
-
-function migrateHookQuery(query: AST.HookQuery, model: string): QuerySpec {
-  const from = kindFind(query.atoms, "from");
-  const filter = kindFind(query.atoms, "filter");
-  const orderBy = kindFind(query.atoms, "orderBy")?.orderBy.map((a) => ({
-    field: a.identifierPath.map((i) => i.identifier.text),
-    order: a.order,
-  }));
-  const limit = kindFind(query.atoms, "limit");
-  const offset = kindFind(query.atoms, "offset");
-  const select = kindFind(query.atoms, "select");
-  const aggregate = kindFind(query.atoms, "aggregate");
-
-  return {
-    name: "",
-    fromModel: from?.identifierPath.map((i) => i.identifier.text) ?? [model],
-    fromAlias: from?.as?.identifierPath.map((i) => i.identifier.text),
-    filter: filter ? migrateExpr(filter.expr) : undefined,
-    orderBy,
-    limit: limit?.value.value,
-    offset: offset?.value.value,
-    select: select ? migrateSelect(select.select) : undefined,
-    aggregate: aggregate ? { name: aggregate.aggregate } : undefined,
-  };
 }
 
 function migrateFieldValidationHook(hook: AST.FieldValidationHook): FieldValidatorHookSpec {

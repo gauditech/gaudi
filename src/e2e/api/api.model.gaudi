@@ -1,10 +1,10 @@
 runtime MyRuntime {
-  sourcePath "./src/e2e/api/hooks"
+  source path "./src/e2e/api/hooks"
 }
 
 model Org {
   field name {
-    type text
+    type string,
     validate {
       hook {
         default arg name
@@ -13,16 +13,16 @@ model Org {
     }
   }
   field slug {
-    type text
-    unique
+    type string,
+    unique,
     validate {
-      hook noSpace {
+      hook {
         default arg slug
-        inline `!/\s/.test(slug)`
+        inline "!/\\s/.test(slug)"
       }
     }
   }
-  field description { type text }
+  field description { type string }
 
   relation repos { from Repo, through org }
 
@@ -32,7 +32,7 @@ model Org {
     arg test query {
       select { name, description }
     }
-    inline `test.name + ": " + test.description`
+    inline "test.name + ': ' + test.description"
   }
 }
 
@@ -40,9 +40,9 @@ model Org {
 model Repo {
   reference org { to Org }
 
-  field name { type text }
-  field slug { type text, unique }
-  field description { type text }
+  field name { type string }
+  field slug { type string, unique }
+  field description { type string }
   field is_public { type boolean, default true }
   field latest_num { type integer }
 
@@ -53,22 +53,22 @@ model Repo {
 model Issue {
   reference repo { to Repo }
 
-  field number { type text }
-  field title { type text }
+  field number { type integer }
+  field title { type string }
 
   relation comments { from Comment, through issue }
 }
 
 model Comment {
   reference issue { to Issue }
-  field body { type text }
+  field body { type string }
 }
 
 // ----- entrypoints
 
 // Orgs
 entrypoint Orgs {
-  target model Org as org
+  target Org as org
   identify with slug
   response { name, slug, description, summary, nameAndDesc }
 
@@ -128,7 +128,7 @@ entrypoint Orgs {
 
   // --- Repos
   entrypoint Repos {
-    target relation repos as repo
+    target repos as repo
     response { id, slug, description, org_id }
 
     get endpoint {}
@@ -137,7 +137,7 @@ entrypoint Orgs {
       action {
         create repo {
           set latest_num 0
-          virtual input raw_description { type text }
+          virtual input raw_description { type string }
           set description concat("Description: ", raw_description)
           set slug hook {
             arg org org.name
@@ -155,7 +155,7 @@ entrypoint Orgs {
 
     // Issues
     entrypoint Issues {
-      target relation issues as issue
+      target issues as issue
       response { id, title, repo, number, comments }
 
       get endpoint {}
