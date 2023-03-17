@@ -1,4 +1,4 @@
-export type WithContext<T> = T;
+export type WithContext<T> = { interval?: "" } & T;
 
 export class CompilerError extends Error {
   constructor(message: string, _context?: WithContext<unknown>) {

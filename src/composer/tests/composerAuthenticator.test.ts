@@ -1,5 +1,5 @@
 import { getRef } from "@src/common/refs";
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
 
 describe("authenticator composer", () => {
@@ -10,7 +10,7 @@ describe("authenticator composer", () => {
       }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
 
     expect(def.authenticator).toMatchSnapshot();
     expect(def.models).toMatchSnapshot();
@@ -20,21 +20,21 @@ describe("authenticator composer", () => {
   it("fails if authenticator model names are already taken", () => {
     const bp1 = `
         model ${AUTH_TARGET_MODEL_NAME} {}
-  
+
         auth { method basic {} }
       `;
 
-    expect(() => compose(compile(parse(bp1)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp1))).toThrowErrorMatchingInlineSnapshot(
       `"Items not unique!"`
     );
 
     const bp2 = `
         model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
-  
+
         auth { method basic {} }
       `;
 
-    expect(() => compose(compile(parse(bp2)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp2))).toThrowErrorMatchingInlineSnapshot(
       `"Items not unique!"`
     );
   });
@@ -42,21 +42,21 @@ describe("authenticator composer", () => {
   it("fails if authenticator model names are already taken", () => {
     const bp1 = `
         model ${AUTH_TARGET_MODEL_NAME} {}
-  
+
         auth { method basic {} }
       `;
 
-    expect(() => compose(compile(parse(bp1)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp1))).toThrowErrorMatchingInlineSnapshot(
       `"Items not unique!"`
     );
 
     const bp2 = `
         model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
-  
+
         auth { method basic {} }
       `;
 
-    expect(() => compose(compile(parse(bp2)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp2))).toThrowErrorMatchingInlineSnapshot(
       `"Items not unique!"`
     );
   });
@@ -72,7 +72,7 @@ describe("authenticator composer", () => {
       }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
 
     const model = getRef.model(def, def.authenticator!.authUserModel.name);
     const relation = model.relations.find((rel) => rel.fromModel === "UserProfile");

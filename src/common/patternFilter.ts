@@ -4,8 +4,6 @@ import { InvertPattern } from "ts-pattern/dist/types/InvertPattern";
 import { MatchedValue } from "ts-pattern/dist/types/Match";
 import { NotP, Pattern } from "ts-pattern/dist/types/Pattern";
 
-import { AnyActionBodyAST } from "@src/types/ast";
-
 type Cast<A, B> = A extends B ? A : B;
 
 type Narrowable = string | number | bigint | boolean;
@@ -34,7 +32,7 @@ export function patternFilter<i, p extends Pattern<ShallowNarrowed<i>>>(
 export function kindFilter<
   i extends { kind: unknown },
   k extends Pattern<ShallowNarrowed<i["kind"]>>
->(input: i[], kind: k): FilteredKind<i, k>[] {
+>(input: i[], kind: k): MatchedValue<i, InvertPattern<{ kind: k }>>[] {
   return input.filter((i) =>
     match(i.kind)
       .with(kind, () => true)

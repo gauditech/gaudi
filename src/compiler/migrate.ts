@@ -24,6 +24,7 @@ import {
   InputFieldSpec,
   ModelHookSpec,
   ModelSpec,
+  PopulateSetterSpec,
   PopulateSpec,
   PopulatorSpec,
   QuerySpec,
@@ -40,6 +41,7 @@ export function migrate(definition: AST.Definition): Specification {
     entrypoints: kindFilter(definition, "entrypoint").map(migrateEntrypoint),
     populators: kindFilter(definition, "populator").map(migratePopulator),
     runtimes: kindFilter(definition, "runtime").map(migrateRuntime),
+    authenticator: undefined, // TODO
   };
 
   return specification;
@@ -55,7 +57,6 @@ function migrateModel(model: AST.Model): ModelSpec {
 
   return {
     name: model.name.text,
-    isAuth: false,
     fields,
     references,
     relations,
@@ -259,7 +260,7 @@ function migratePopulator(populator: AST.Populator): PopulatorSpec {
 
 function migratePopulate(populate: AST.Populate): PopulateSpec {
   const from = kindFind(populate.atoms, "target")!;
-  const setters = kindFilter(populate.atoms, "set").map(migrateActionAtomSet);
+  const setters = kindFilter(populate.atoms, "set").map(migratePopulateSetter);
   const populates = kindFilter(populate.atoms, "populate").map(migratePopulate);
   const repeater = kindFind(populate.atoms, "repeat")?.repeater;
 
@@ -273,6 +274,17 @@ function migratePopulate(populate: AST.Populate): PopulateSpec {
     setters,
     populates,
     repeater: repeater ? migrateRepeater(repeater) : undefined,
+  };
+}
+
+function migratePopulateSetter(set: AST.ActionAtomSet): PopulateSetterSpec {
+  return {
+    kind: "set",
+    target: set.target.identifier.text,
+    set:
+      set.set.kind === "expr"
+        ? { kind: "expression", exp: migrateExpr(set.set.expr) }
+        : { kind: "hook", hook: migrateActionFieldHook(set.set) },
   };
 }
 

@@ -257,7 +257,7 @@ describe("Expression functions to queries", () => {
       field name { type text }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const q = def.models[0].queries[0];
     expect(queryToString(def, q)).toMatchSnapshot();
   });

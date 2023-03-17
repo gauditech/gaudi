@@ -1,10 +1,7 @@
-import _ from "lodash";
-
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
-import { compile } from "@src/compiler/compiler";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { parse } from "@src/parser/parser";
+import { compileToOldSpec } from "@src/index";
 import {
   AuthenticatorMethodDef,
   AuthenticatorNamedModelDef,
@@ -79,19 +76,19 @@ export function compileAuthenticatorSpec(
 
   const AuthenticatorModel = `
     model ${authUserModelName} {
-      field name { type text, validate { min 1 } }
-      field username { type text, unique, validate { min 8 } }
-      field passwordHash { type text, validate { min 8 } }
+      field name { type string, validate { min 1 } }
+      field username { type string, unique, validate { min 8 } }
+      field passwordHash { type string, validate { min 8 } }
       relation tokens { from ${accessTokenModelName}, through authUser }
     }
     model ${accessTokenModelName} {
-      field token { type text, unique }
-      field expiryDate { type text }
+      field token { type string, unique }
+      field expiryDate { type string }
       reference authUser { to ${authUserModelName} }
     }
 
     entrypoint Auth {
-      target model ${authUserModelName} as authUser
+      target ${authUserModelName} as authUser
 
       // login
       custom endpoint {
@@ -101,7 +98,7 @@ export function compileAuthenticatorSpec(
 
         action {
           fetch as existingAuthUser {
-            virtual input username { type text }
+            virtual input username { type string }
 
             query {
               from ${authUserModelName} as a
@@ -113,12 +110,12 @@ export function compileAuthenticatorSpec(
           }
 
           execute {
-            virtual input password { type text }
+            virtual input password { type string }
 
             hook {
               arg clearPassword password
               arg hashPassword existingAuthUser.passwordHash
-    
+
               runtime ${internalExecRuntimeName}
               source authenticateUser from "hooks/actions.js"
             }
@@ -154,7 +151,7 @@ export function compileAuthenticatorSpec(
 
         action {
           fetch ${accessTokenModelName} as accessToken {
- 
+
             query {
               from ${accessTokenModelName}
               filter token is @requestAuthToken
@@ -187,7 +184,7 @@ export function compileAuthenticatorSpec(
         action {
           create authUser {
             input { name, username }
-            virtual input password { type text, validate { min 8 } }
+            virtual input password { type string, validate { min 8 } }
             set passwordHash cryptoHash(password, 10)
           }
 
@@ -211,5 +208,5 @@ export function compileAuthenticatorSpec(
     }
   `;
 
-  return compile(parse(AuthenticatorModel));
+  return compileToOldSpec(AuthenticatorModel);
 }
