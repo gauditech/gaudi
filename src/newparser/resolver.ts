@@ -14,6 +14,7 @@ import {
   Field,
   FieldValidationHook,
   Hook,
+  HookQuery,
   IdentifierRef,
   Model,
   ModelAtom,
@@ -181,7 +182,7 @@ export function resolve(definition: Definition) {
     }
   }
 
-  function resolveQuery(model: Model, query: Query) {
+  function resolveQuery(model: Model, query: Query | HookQuery) {
     let currentModel: string | undefined;
     let scope: ScopeDb = { kind: "querySimple", model: undefined };
     let cardinality = "one" as TypeCardinality;
@@ -214,6 +215,8 @@ export function resolve(definition: Definition) {
       } else {
         scope = { kind: "querySimple", model: currentModel };
       }
+    } else if (query.kind === "hookQuery") {
+      currentModel = model.name.text;
     }
 
     const filter = kindFind(query.atoms, "filter");
@@ -232,6 +235,8 @@ export function resolve(definition: Definition) {
 
     const select = kindFind(query.atoms, "select");
     if (select) resolveSelect(select.select, currentModel, scope);
+
+    if (query.kind === "hookQuery") return;
 
     query.ref = {
       kind: "modelAtom",
@@ -460,6 +465,7 @@ export function resolve(definition: Definition) {
 
   function resolveModelHook(model: Model, hook: ModelHook) {
     resolveHook(hook);
+    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(model, query));
     hook.ref = {
       kind: "modelAtom",
       atomKind: "hook",
@@ -474,7 +480,7 @@ export function resolve(definition: Definition) {
 
   function resolveActionFieldHook(hook: ActionFieldHook, scope: ScopeCode) {
     resolveHook(hook);
-    kindFilter(hook.atoms, "arg_expr").map(({ expr }) => resolveExpression(expr, scope));
+    kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
   }
 
   function resolveHook(hook: Hook<boolean, boolean>) {

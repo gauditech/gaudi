@@ -29,6 +29,7 @@ import {
   FieldValidationHook,
   FloatLiteral,
   Hook,
+  HookQuery,
   Identifier,
   IdentifierRef,
   InputAtom,
@@ -362,6 +363,87 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME1(L.RCurly);
 
     return { kind: "query", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
+  });
+  queryAtoms = this.RULE("queryAtoms", (): QueryAtom[] => {
+    const atoms: QueryAtom[] = [];
+
+    this.CONSUME1(L.LCurly);
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () => {
+        this.OR1([
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.From));
+              const identifierPath = this.SUBRULE1(this.identifierRefPath);
+              const as = this.OPTION(() => {
+                const keyword = getTokenData(this.CONSUME(L.As));
+                const identifierPath = this.SUBRULE2(this.identifierRefPath);
+                return { keyword, identifierPath };
+              });
+              atoms.push({
+                kind: "from",
+                identifierPath,
+                as,
+                keyword,
+              });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Filter));
+              this.CONSUME2(L.LCurly);
+              const expr = this.SUBRULE(this.expr) as Expr<Db>;
+              this.CONSUME2(L.RCurly);
+              atoms.push({ kind: "filter", expr, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Order), this.CONSUME(L.By));
+              const orderBy = this.SUBRULE(this.orderBy);
+              atoms.push({ kind: "orderBy", orderBy, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Limit));
+              const value = this.SUBRULE1(this.integer);
+              atoms.push({ kind: "limit", value, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Offset));
+              const value = this.SUBRULE2(this.integer);
+              atoms.push({ kind: "offset", value, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Select));
+              const select = this.SUBRULE(this.select);
+              atoms.push({ kind: "select", select, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const aggregateToken = this.OR2([
+                { ALT: () => this.CONSUME(L.Count) },
+                { ALT: () => this.CONSUME(L.One) },
+                { ALT: () => this.CONSUME(L.First) },
+              ]);
+              const aggregate = aggregateToken.image as AggregateType;
+              const keyword = getTokenData(aggregateToken);
+              atoms.push({ kind: "aggregate", aggregate, keyword });
+            },
+          },
+        ]);
+      },
+    });
+    this.CONSUME1(L.RCurly);
+
+    return atoms;
   });
 
   orderBy = this.RULE("orderBy", (): OrderBy => {
@@ -857,7 +939,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
       this.CONSUME(L.LCurly);
       this.MANY(() => {
-        this.OR([
+        this.OR1([
           {
             GATE: () => simple,
             ALT: () => {
@@ -871,8 +953,26 @@ class GaudiParser extends EmbeddedActionsParser {
             ALT: () => {
               const keyword = getTokenData(this.CONSUME2(L.Arg));
               const name = this.SUBRULE3(this.identifier);
-              const expr = this.SUBRULE(this.expr);
-              atoms.push({ kind: "arg_expr", name, expr, keyword });
+              this.OR2([
+                {
+                  ALT: () => {
+                    const queryKeyword = getTokenData(this.CONSUME2(L.Query));
+                    const queryAtoms = this.SUBRULE(this.queryAtoms);
+                    const query: HookQuery = {
+                      kind: "hookQuery",
+                      atoms: queryAtoms,
+                      keyword: queryKeyword,
+                    };
+                    atoms.push({ kind: "arg_query", name, query, keyword });
+                  },
+                },
+                {
+                  ALT: () => {
+                    const expr = this.SUBRULE(this.expr);
+                    atoms.push({ kind: "arg_expr", name, expr, keyword });
+                  },
+                },
+              ]);
             },
           },
           {

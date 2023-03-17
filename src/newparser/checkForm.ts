@@ -9,6 +9,7 @@ import {
   Entrypoint,
   Field,
   Hook,
+  HookQuery,
   Identifier,
   Model,
   Populate,
@@ -113,8 +114,10 @@ export function checkForm(definition: Definition) {
     noDuplicateAtoms(relation, "from", "through");
   }
 
-  function checkQuery(query: Query) {
-    containsAtoms(query, "from");
+  function checkQuery(query: Query | HookQuery) {
+    if (query.kind === "query") {
+      containsAtoms(query, "from");
+    }
     noDuplicateAtoms(query, "from", "filter", "orderBy", "limit", "offset", "select", "aggregate");
 
     const from = kindFind(query.atoms, "from");
@@ -238,8 +241,15 @@ export function checkForm(definition: Definition) {
       errors.push(new CompilerError(sourceOrInline[0].keyword, ErrorCode.NoRuntimeDefinedForHook));
     }
     noDuplicateAtoms(hook, "default_arg");
-    const argIdentifiers = kindFilter(hook.atoms, "arg_expr").map(({ name }) => name);
+
+    const queryArgs = kindFilter(hook.atoms, "arg_query");
+
+    const argIdentifiers = [...kindFilter(hook.atoms, "arg_expr"), ...queryArgs].map(
+      ({ name }) => name
+    );
     noDuplicateNames(argIdentifiers, ErrorCode.DuplicateHookArg);
+
+    queryArgs.forEach(({ query }) => checkQuery(query));
   }
 
   function checkSelect(select: Select) {

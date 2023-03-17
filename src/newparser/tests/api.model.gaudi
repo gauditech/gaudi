@@ -29,9 +29,10 @@ model Org {
   computed summary { concat(name, "", description) }
 
   hook nameAndDesc {
-    arg name name
-    arg description description
-    inline "name + \": \" + description"
+    arg test query {
+      select { name, description }
+    }
+    inline "test.name + ': ' + test.description"
   }
 }
 

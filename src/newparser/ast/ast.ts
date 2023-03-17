@@ -226,7 +226,9 @@ export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
   atoms: WithKeyword<
     | (simple extends true
         ? { kind: "default_arg"; name: Identifier }
-        : { kind: "arg_expr"; name: Identifier; expr: Expr<Code> })
+        :
+            | { kind: "arg_expr"; name: Identifier; expr: Expr<Code> }
+            | { kind: "arg_query"; name: Identifier; query: HookQuery })
     | {
         kind: "source";
         keywordFrom: TokenData;
@@ -241,6 +243,11 @@ export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
 export type ModelHook = Hook<true, false> & { type: Type; resolved?: true };
 export type FieldValidationHook = Hook<false, true>;
 export type ActionFieldHook = Hook<false, false>;
+
+export type HookQuery = WithKeyword<{
+  kind: "hookQuery";
+  atoms: QueryAtom[];
+}>;
 
 export type Select = {
   target:

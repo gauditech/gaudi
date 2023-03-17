@@ -15,6 +15,7 @@ import {
   Expr,
   Field,
   FieldValidationHook,
+  HookQuery,
   Identifier,
   IdentifierRef,
   Literal,
@@ -156,10 +157,10 @@ export function buildTokens(
     );
   }
 
-  function buildQuery({ keyword, name, atoms }: Query) {
-    buildKeyword(keyword);
-    push(name.token, TokenTypes.property);
-    atoms.forEach((a) =>
+  function buildQuery(query: Query | HookQuery) {
+    buildKeyword(query.keyword);
+    if (query.kind === "query") push(query.name.token, TokenTypes.property);
+    query.atoms.forEach((a) =>
       match(a)
         .with({ kind: "from" }, ({ keyword, identifierPath, as }) => {
           buildKeyword(keyword);
@@ -431,6 +432,11 @@ export function buildTokens(
         buildKeyword(keyword);
         push(name.token, TokenTypes.property);
         buildExpr(expr);
+      })
+      .with({ kind: "arg_query" }, ({ keyword, name, query }) => {
+        buildKeyword(keyword);
+        push(name.token, TokenTypes.property);
+        buildQuery(query);
       })
       .with({ kind: "default_arg" }, ({ keyword, name }) => {
         buildKeyword(keyword);
