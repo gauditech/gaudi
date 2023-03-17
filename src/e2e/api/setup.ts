@@ -9,8 +9,7 @@ import _ from "lodash";
 
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { compose } from "@src/index";
-import { compileToOldSpec } from "@src/newparser";
+import { compileToOldSpec, compose } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
 import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authentication";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";

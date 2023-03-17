@@ -8,11 +8,11 @@ import { migrate } from "./migrate";
 
 import { compileToAST } from ".";
 
-const folder = "./src/newparser/tests";
+const folder = "./src/compiler/tests";
 const sources = fs.readdirSync(folder);
 
-describe("parser", () => {
-  test.each(sources)("parse tests/%s", (sourceFilename) => {
+describe("compiler", () => {
+  test.each(sources)("compile to AST and migrate: tests/%s", (sourceFilename) => {
     const sourcePath = path.join(folder, sourceFilename);
     const source = fs.readFileSync(sourcePath).toString();
 
