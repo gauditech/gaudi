@@ -795,6 +795,7 @@ export function resolve(definition: Definition) {
 
   function checkExpectedType(type: Type, expected: Type | TypeCategory) {
     if (!isExpectedType(type, expected)) {
+      // TODO: push error
       //errors.push(new CompilerError(tok, ErrorCode.UnexpectedType));
     }
   }
