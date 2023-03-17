@@ -277,11 +277,11 @@ function composeFetchAction(
   });
   // fetch action's model is derived from it's query
   const startModel = getRef.model(def, spec.query.fromModel[0]);
-  const chxCtx: VarContext = {
+  const changesetCtx: VarContext = {
     ...ctx,
     "@changeset": { kind: "changeset-value", keys: changeset.map((c) => c.name) },
   };
-  const query = composeQuery(def, startModel, spec.query, chxCtx);
+  const query = composeQuery(def, startModel, spec.query, changesetCtx);
   return {
     kind: "fetch-one",
     alias: spec.alias,
@@ -525,13 +525,13 @@ function setterToChangesetOperation(
       return { name: atom.target, setter };
     }
     case "query": {
-      const chxCtx: VarContext = {
+      const changesetCtx: VarContext = {
         ...ctx,
         "@changeset": { kind: "changeset-value", keys: changeset.map((c) => c.name) },
       };
       return {
         name: atom.target,
-        setter: { kind: "query", query: queryFromSpec(def, atom.set.query, chxCtx) },
+        setter: { kind: "query", query: queryFromSpec(def, atom.set.query, changesetCtx) },
       };
     }
   }
