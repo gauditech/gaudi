@@ -7,12 +7,10 @@
   "scripts": {
     "// --- build": "",
     "build": "npm run build:grammar; npm run build:ts; npm run build:copy-static;",
-    "build:grammar": "ohm generateBundles --withTypes ./src/parser/grammar/gaudi.ohm",
     "build:ts": "tsc --project ./tsconfig.json --preserveWatchOutput",
     "build:copy-static": "copyfiles -f -V ./src/package.json dist",
     "// --- dev": "",
     "dev": "concurrently --names GRAM,TS,COPY,DOCS --prefix-colors magenta,blue,yellow \"npm run dev:grammar\" \"npm run dev:ts\" \"npm run dev:copy-static\" \"npm run dev:docs\"",
-    "dev:grammar": "chokidar ./src/parser/grammar/gaudi.ohm --debounce 100 --initial --command \"npm run build:grammar\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "dev:copy-static": "chokidar ./src/package.json  --debounce 100 --initial --command \"npm run build:copy-static\"",
     "dev:docs": "npm start --prefix web -- --no-open",
@@ -35,7 +33,6 @@
   },
   "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
   "devDependencies": {
-    "@ohm-js/cli": "^1.1.0",
     "@types/bcrypt": "^5.0.0",
     "@types/chokidar": "^2.1.3",
     "@types/common-tags": "^1.8.1",
@@ -84,7 +81,6 @@
     "lodash": "^4.17.21",
     "module-alias": "^2.2.2",
     "nodemon": "^2.0.20",
-    "ohm-js": "^16.4.0",
     "passport": "^0.6.0",
     "passport-http-bearer": "^1.0.1",
     "pg": "^8.8.0",

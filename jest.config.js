@@ -7,6 +7,5 @@ module.exports = async () => {
     moduleNameMapper: {
       "@src/(.*)": "<rootDir>/src/$1",
     },
-    snapshotSerializers: ["<rootDir>/src/tests/gaudiSerializer.js"],
   };
 };
