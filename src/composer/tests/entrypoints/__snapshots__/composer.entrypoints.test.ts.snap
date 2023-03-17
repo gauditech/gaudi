@@ -37,6 +37,29 @@ exports[`entrypoint adds validators into fieldsets 1`] = `
 }
 `;
 
+exports[`entrypoint collects dependencies 1`] = `
+{
+  "actionSelects": [
+    [
+      "id",
+      "name",
+    ],
+    [],
+  ],
+  "orgSelect": [
+    "id",
+    "name",
+    "desc",
+    "repoCount",
+    "coef",
+  ],
+  "repoSelect": [
+    "id",
+    "name",
+  ],
+}
+`;
+
 exports[`entrypoint composes basic example 1`] = `
 [
   {
