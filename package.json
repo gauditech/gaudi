@@ -6,11 +6,11 @@
   "main": "index.js",
   "scripts": {
     "// --- build": "",
-    "build": "npm run build:grammar; npm run build:ts; npm run build:copy-static;",
+    "build": "npm run build:ts; npm run build:copy-static;",
     "build:ts": "tsc --project ./tsconfig.json --preserveWatchOutput",
     "build:copy-static": "copyfiles -f -V ./src/package.json dist",
     "// --- dev": "",
-    "dev": "concurrently --names GRAM,TS,COPY,DOCS --prefix-colors magenta,blue,yellow \"npm run dev:grammar\" \"npm run dev:ts\" \"npm run dev:copy-static\" \"npm run dev:docs\"",
+    "dev": "concurrently --names GRAM,TS,COPY,DOCS --prefix-colors magenta,blue,yellow \"npm run dev:ts\" \"npm run dev:copy-static\" \"npm run dev:docs\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "dev:copy-static": "chokidar ./src/package.json  --debounce 100 --initial --command \"npm run build:copy-static\"",
     "dev:docs": "npm start --prefix web -- --no-open",
