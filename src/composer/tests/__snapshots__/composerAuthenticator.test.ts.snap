@@ -101,14 +101,14 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         ],
       },
       {
-        "dbname": "password",
+        "dbname": "passwordhash",
         "dbtype": "text",
         "kind": "field",
         "modelRefKey": "AuthUser",
-        "name": "password",
+        "name": "passwordHash",
         "nullable": false,
         "primary": false,
-        "refKey": "AuthUser.password",
+        "refKey": "AuthUser.passwordHash",
         "type": "text",
         "unique": false,
         "validators": [
@@ -263,9 +263,8 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     ],
                   },
                   {
-                    "kind": "literal",
-                    "type": "text",
-                    "value": "first",
+                    "kind": "variable",
+                    "name": "___changeset___username",
                   },
                 ],
                 "kind": "function",
@@ -314,14 +313,14 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "refKey": "AuthUser.username",
                 },
                 {
-                  "alias": "password",
+                  "alias": "passwordHash",
                   "kind": "field",
-                  "name": "password",
+                  "name": "passwordHash",
                   "namePath": [
                     "AuthUser",
-                    "password",
+                    "passwordHash",
                   ],
-                  "refKey": "AuthUser.password",
+                  "refKey": "AuthUser.passwordHash",
                 },
               ],
             },
@@ -357,7 +356,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     "kind": "reference-value",
                     "target": {
                       "access": [
-                        "password",
+                        "passwordHash",
                       ],
                       "alias": "existingAuthUser",
                     },
@@ -492,7 +491,22 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "fieldset": {
           "kind": "record",
           "nullable": false,
-          "record": {},
+          "record": {
+            "password": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
+            },
+            "username": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
+            },
+          },
         },
         "kind": "custom-many",
         "method": "POST",
@@ -530,9 +544,8 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     ],
                   },
                   {
-                    "kind": "literal",
-                    "type": "text",
-                    "value": "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U",
+                    "kind": "variable",
+                    "name": "___requestAuthToken",
                   },
                 ],
                 "kind": "function",
@@ -654,166 +667,13 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
       {
         "actions": [
           {
-            "alias": "existingUser",
-            "changeset": [
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-virtual-input",
-                  "nullable": false,
-                  "required": true,
-                  "type": "text",
-                  "validators": [],
-                },
-              },
-            ],
-            "kind": "fetch-one",
-            "model": "AuthUser",
-            "query": {
-              "filter": {
-                "args": [
-                  {
-                    "kind": "alias",
-                    "namePath": [
-                      "AuthUser",
-                      "username",
-                    ],
-                  },
-                  {
-                    "kind": "literal",
-                    "type": "text",
-                    "value": "somename@example.com",
-                  },
-                ],
-                "kind": "function",
-                "name": "is",
-              },
-              "fromPath": [
-                "AuthUser",
-              ],
-              "kind": "query",
-              "limit": undefined,
-              "modelRefKey": "AuthUser",
-              "name": "$query",
-              "offset": undefined,
-              "orderBy": undefined,
-              "refKey": "N/A",
-              "retType": "AuthUser",
-              "select": [
-                {
-                  "alias": "id",
-                  "kind": "field",
-                  "name": "id",
-                  "namePath": [
-                    "AuthUser",
-                    "id",
-                  ],
-                  "refKey": "AuthUser.id",
-                },
-                {
-                  "alias": "name",
-                  "kind": "field",
-                  "name": "name",
-                  "namePath": [
-                    "AuthUser",
-                    "name",
-                  ],
-                  "refKey": "AuthUser.name",
-                },
-                {
-                  "alias": "username",
-                  "kind": "field",
-                  "name": "username",
-                  "namePath": [
-                    "AuthUser",
-                    "username",
-                  ],
-                  "refKey": "AuthUser.username",
-                },
-                {
-                  "alias": "password",
-                  "kind": "field",
-                  "name": "password",
-                  "namePath": [
-                    "AuthUser",
-                    "password",
-                  ],
-                  "refKey": "AuthUser.password",
-                },
-              ],
-            },
-          },
-          {
-            "changeset": [],
-            "hook": {
-              "args": [
-                {
-                  "name": "condition",
-                  "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "id",
-                      ],
-                      "alias": "existingUser",
-                    },
-                  },
-                },
-                {
-                  "name": "status",
-                  "setter": {
-                    "kind": "literal",
-                    "type": "integer",
-                    "value": 400,
-                  },
-                },
-                {
-                  "name": "message",
-                  "setter": {
-                    "args": [
-                      {
-                        "kind": "literal",
-                        "type": "text",
-                        "value": "Username already exists: ",
-                      },
-                      {
-                        "kind": "reference-value",
-                        "target": {
-                          "access": [
-                            "username",
-                          ],
-                          "alias": "existingUser",
-                        },
-                      },
-                    ],
-                    "kind": "function",
-                    "name": "concat",
-                  },
-                },
-              ],
-              "hook": {
-                "code": {
-                  "file": "hooks/actions.js",
-                  "kind": "source",
-                  "target": "throwConditionalResponseError",
-                },
-                "runtimeName": "@GAUDI_INTERNAL",
-              },
-            },
-            "kind": "execute-hook",
-            "responds": false,
-          },
-          {
             "alias": "authUser",
             "changeset": [
               {
-                "name": "clearPassword",
+                "name": "password",
                 "setter": {
                   "fieldsetAccess": [
-                    "clearPassword",
+                    "password",
                   ],
                   "kind": "fieldset-virtual-input",
                   "nullable": false,
@@ -856,12 +716,12 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               },
               {
-                "name": "password",
+                "name": "passwordHash",
                 "setter": {
                   "args": [
                     {
                       "kind": "changeset-reference",
-                      "referenceName": "clearPassword",
+                      "referenceName": "password",
                     },
                     {
                       "kind": "literal",
@@ -991,6 +851,24 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     {
                       "type": "integer",
                       "value": 1,
+                    },
+                  ],
+                  "inputType": "text",
+                  "name": "minLength",
+                },
+              ],
+            },
+            "password": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [
+                {
+                  "args": [
+                    {
+                      "type": "integer",
+                      "value": 8,
                     },
                   ],
                   "inputType": "text",

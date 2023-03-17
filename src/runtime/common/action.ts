@@ -1,4 +1,9 @@
-import { applyFilterIdInContext, queryTreeFromParts, transformSelectPath } from "../query/build";
+import {
+  applyFilterIdInContext,
+  buildQueryTree,
+  queryTreeFromParts,
+  transformSelectPath,
+} from "../query/build";
 import { createQueryExecutor, executeQueryTree } from "../query/exec";
 
 import { ValidReferenceIdResult } from "./constraintValidation";
@@ -79,8 +84,14 @@ async function _internalExecuteActions(
     } else if (actionKind === "fetch-one") {
       const changeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
 
-      // TODO: use executeQueryTree - how to cast to `QueryTree`?
-      const result = await qx.executeQuery(def, action.query, new Vars(changeset), []);
+      const qt = buildQueryTree(def, action.query);
+      // FIXME this ugly
+      const varsObj = Object.fromEntries(
+        Object.keys(changeset).map((k) => [`___changeset___${k}`, changeset[k]])
+      );
+      varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
+
+      const result = await qx.executeQueryTree(def, qt, new Vars(varsObj), []);
       const resultOne = result[0]; // extract the first record since this is "fetch-ONE"
 
       resultOne && ctx.vars.set(action.alias, resultOne);

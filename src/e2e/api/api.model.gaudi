@@ -81,6 +81,7 @@ entrypoint Orgs {
     path "customOneAction"
     action {
       execute {
+        virtual input name { type text }
         virtual input counter { type integer }
         hook {
           arg name name
@@ -97,6 +98,7 @@ entrypoint Orgs {
     path "customManyAction"
     action {
       execute {
+        virtual input name { type text }
         virtual input counter { type integer }
         hook {
           arg name name
@@ -115,6 +117,8 @@ entrypoint Orgs {
     action {
       execute {
         virtual input counter { type integer }
+        virtual input name { type text }
+
         responds
         hook {
           arg name name
@@ -132,6 +136,7 @@ entrypoint Orgs {
     path "customManyActionResponds"
     action {
       execute {
+        virtual input name { type text }
         virtual input counter { type integer }
         responds
         hook {
@@ -150,13 +155,15 @@ entrypoint Orgs {
     path "customOneQueryAction"
     action {
       execute {
-        virtual input userId { type integer }
-        set userSet query { from Org, filter {lower(name) is lower("Org 1")}, select {name} }
+        virtual input name { type text }
+        virtual input orgId { type integer }
         responds
         hook {
-          arg name name
-          arg userSet userSet
-          arg user query { from Org, filter {lower(name) is lower("Org 1")}, select {name} }
+          arg inputName name
+          arg inputOrgId orgId
+          arg orgByName query { from Org as o, filter {lower(o.name) is lower(name)}, select {name} }
+          arg orgById query { from Org as o, filter { o.id is orgId }, select {name} }
+          // arg orgByInputId query { from Org as o, filter { o.id is inputOrgId }, select {name} }
           source customActionResponds from "hooks.js"
         }
       }
@@ -173,6 +180,7 @@ entrypoint Orgs {
         query { from Repo, filter id is 1, select {slug}} // TODO: read from ctx - id
       }
       execute {
+        virtual input name { type text }
         responds
         hook {
           arg name name

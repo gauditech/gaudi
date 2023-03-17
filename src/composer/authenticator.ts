@@ -81,7 +81,7 @@ export function compileAuthenticatorSpec(
     model ${authUserModelName} {
       field name { type text, validate { min 1 } }
       field username { type text, unique, validate { min 8 } }
-      field password { type text, validate { min 8 } }
+      field passwordHash { type text, validate { min 8 } }
       relation tokens { from ${accessTokenModelName}, through authUser }
     }
     model ${accessTokenModelName} {
@@ -104,8 +104,8 @@ export function compileAuthenticatorSpec(
             virtual input username { type text }
 
             query {
-              from ${authUserModelName}
-              filter username is "first" // TODO: read from ctx
+              from ${authUserModelName} as a
+              filter a.username is username
               limit 1
             }
             // TODO: throw error id user is not resolved
@@ -117,7 +117,7 @@ export function compileAuthenticatorSpec(
 
             hook {
               arg clearPassword password
-              arg hashPassword existingAuthUser.password
+              arg hashPassword existingAuthUser.passwordHash
     
               runtime ${internalExecRuntimeName}
               source authenticateUser from "hooks/actions.js"
@@ -157,7 +157,7 @@ export function compileAuthenticatorSpec(
  
             query {
               from ${accessTokenModelName}
-              filter token is "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U" // TODO: read from ctx - token or @requestAuthToken
+              filter token is @requestAuthToken
               limit 1
             }
           }
@@ -185,34 +185,10 @@ export function compileAuthenticatorSpec(
         cardinality many
 
         action {
-          fetch as existingUser {
-            virtual input username { type text }
-            
-            query {
-              from ${authUserModelName}
-              filter username is "somename@example.com" // TODO: read from ctx - username
-            }
-          }
-
-
-          // throw error if username already exists
-          // TODO: this should be implemented as validator
-          execute {
-            hook {
-              // throw if existing user is not empty
-              arg condition existingUser
-              arg status 400
-              arg message concat("Username already exists: ", existingUser.username)
-
-              runtime ${internalExecRuntimeName}
-              source throwConditionalResponseError from "hooks/actions.js"
-            }
-          }
-
           create authUser {
             input { name, username }
-            virtual input clearPassword { type text, validate { min 8 } }
-            set password cryptoHash(clearPassword, 10)
+            virtual input password { type text, validate { min 8 } }
+            set passwordHash cryptoHash(password, 10)
           }
 
           // return created user

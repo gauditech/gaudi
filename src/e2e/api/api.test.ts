@@ -192,7 +192,7 @@ describe("API endpoints", () => {
     // --- hook action with query
 
     it("custom one endpoint - action with query", async () => {
-      const data = { name: "Org Custom Query One", userId: 2 };
+      const data = { name: "Org 1", orgId: 1 };
       const postResp = await request(getServer()).post("/org/org1/customOneQueryAction").send(data);
 
       expect(postResp.statusCode).toBe(200);
@@ -218,11 +218,14 @@ describe("API endpoints", () => {
     });
 
     it("Hook throws generic HTTP error response", async () => {
-      const data = {};
+      const data = {
+        message: "Custom error",
+        status: 505,
+      };
 
       const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
-      expect(response.statusCode).toBe(500);
-      expect(response.text).toBe("Server error");
+      expect(response.statusCode).toBe(505);
+      expect(response.text).toBe("Custom error");
     });
   });
 

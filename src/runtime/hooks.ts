@@ -3,6 +3,8 @@ import path from "path";
 
 import { Request, Response } from "express";
 
+import { Vars } from "./server/vars";
+
 import { getExecutionRuntime } from "@src/common/refs";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 import { Definition, ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition";

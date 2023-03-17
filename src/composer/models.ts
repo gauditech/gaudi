@@ -361,7 +361,7 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
 }
 
 export function queryFromSpec(def: Definition, model: ModelDef, qspec: QuerySpec): QueryDef {
-  return composeQuery(def, model, qspec);
+  return composeQuery(def, model, qspec, {});
 }
 
 function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
