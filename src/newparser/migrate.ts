@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/patternFilter";
+import { ensureExists } from "@src/common/utils";
 import { SelectAST } from "@src/types/ast";
 import {
   ActionAtomSpecDeny,
@@ -263,7 +264,7 @@ function migratePopulate(populate: AST.Populate): PopulateSpec {
   const repeater = kindFind(populate.atoms, "repeat")?.repeater;
 
   return {
-    name: "",
+    name: populate.name.text,
     target: {
       kind: from.identifier.ref.kind === "model" ? "model" : "relation",
       identifier: from.identifier.identifier.text,
@@ -299,9 +300,11 @@ function migrateActionAtomSet(set: AST.ActionAtomSet): ActionAtomSpecSet {
 }
 
 function migrateRuntime(runtime: AST.Runtime): ExecutionRuntimeSpec {
+  const sourcePath = kindFind(runtime.atoms, "sourcePath")?.path.value;
+  ensureExists(sourcePath, "Runtime source path cannot be empty");
   return {
     name: runtime.name.text,
-    sourcePath: kindFind(runtime.atoms, "sourcePath")!.path.value,
+    sourcePath,
     default: !!kindFind(runtime.atoms, "default"),
   };
 }
@@ -314,13 +317,13 @@ function migrateModelHook(hook: AST.ModelHook): ModelHookSpec {
     name: a.name.text,
     query: migrateQuery(a.query),
   }));
-  return { name: hook.name.text, code, args };
+  return { name: hook.name.text, code, args, runtimeName: getHookRuntime(hook) };
 }
 
 function migrateFieldValidationHook(hook: AST.FieldValidationHook): FieldValidatorHookSpec {
   const code = getHookCode(hook);
   const arg = kindFind(hook.atoms, "default_arg");
-  return { code, arg: arg?.name.text };
+  return { code, arg: arg?.name.text, runtimeName: getHookRuntime(hook) };
 }
 
 function migrateActionFieldHook(hook: AST.ActionFieldHook): ActionHookSpec {
@@ -329,7 +332,7 @@ function migrateActionFieldHook(hook: AST.ActionFieldHook): ActionHookSpec {
   kindFilter(hook.atoms, "arg_expr").forEach((a) => {
     args[a.name.text] = { kind: "expression", exp: migrateExpr(a.expr) };
   });
-  return { code, args };
+  return { code, args, runtimeName: getHookRuntime(hook) };
 }
 
 function getHookCode(hook: AST.Hook<boolean, boolean>): HookCodeSpec {
@@ -339,6 +342,14 @@ function getHookCode(hook: AST.Hook<boolean, boolean>): HookCodeSpec {
   }
   const source = kindFind(hook.atoms, "source")!;
   return { kind: "source", target: source.name.text, file: source.file.value };
+}
+
+function getHookRuntime(hook: AST.Hook<boolean, boolean>): string | undefined {
+  const runtime = kindFind(hook.atoms, "runtime");
+  if (runtime) {
+    return runtime.identifier.text;
+  }
+  return undefined;
 }
 
 function migrateSelect(select: AST.Select): SelectAST {

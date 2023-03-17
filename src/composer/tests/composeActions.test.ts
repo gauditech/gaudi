@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 import { ActionKindAST, EndpointBodyAST, EndpointCardinality } from "@src/types/ast";
 import { CreateEndpointDef, EndpointType, UpdateEndpointDef } from "@src/types/definition";
 
@@ -9,7 +9,7 @@ describe("custom actions", () => {
     const bp = `
     model Org {
       field is_new { type boolean }
-      field name { type text }
+      field name { type string }
       reference extras { to OrgExtra, unique }
     }
     model OrgExtra {
@@ -18,7 +18,7 @@ describe("custom actions", () => {
     model OrgOwner { reference org { to Org } }
 
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       create endpoint {
         action {
           create OrgExtra as e {}
@@ -33,23 +33,23 @@ describe("custom actions", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
   it("succeeds for basic update with a deny rule", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field description { type text }
-      field uuid { type text }
+      field name { type string }
+      field description { type string }
+      field uuid { type string }
       reference extras { to OrgExtra, unique }
     }
     model OrgExtra {
       relation org { from Org, through extras }
     }
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       update endpoint {
         action {
           update org as ox {
@@ -59,19 +59,19 @@ describe("custom actions", () => {
         }
       }
     }`;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
   it("succeeds with nested sibling reference", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field name2 { type text }
-      field name3 { type text }
+      field name { type string }
+      field name2 { type string }
+      field name3 { type string }
     }
     entrypoint Org {
-      target model Org
+      target Org
       create endpoint {
         action {
           create {
@@ -82,7 +82,7 @@ describe("custom actions", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
     expect(endpoint.fieldset).toMatchSnapshot();
@@ -92,9 +92,9 @@ describe("custom actions", () => {
     model Org { relation repos { from Repo, through org }}
     model Repo { reference org { to Org }}
     entrypoint Org {
-      target model Org as org
+      target Org as org
       entrypoint Repos {
-        target relation repos as repo
+        target repos as repo
         create endpoint {
           action {
             create repo {
@@ -106,7 +106,7 @@ describe("custom actions", () => {
       }
     }
     `;
-    const spec = compile(parse(bp));
+    const spec = compileToOldSpec(bp);
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Found duplicates: [org_id]"`);
   });
   it("correctly sets parent context", () => {
@@ -116,29 +116,29 @@ describe("custom actions", () => {
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
     }
     entrypoint Orgs {
-      target model Org as myorg
+      target Org as myorg
       entrypoint Repos {
-        target relation repos as myrepo
+        target repos as myrepo
         create endpoint {}
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
 
   it("can create nested relations through transient references", () => {
     const bp = `
-    model Org { relation repos { from Repo, through org }; relation logs { from OrgLog, through org } }
-    model Repo { reference org { to Org }; field name { type text } }
+    model Org { relation repos { from Repo, through org } relation logs { from OrgLog, through org } }
+    model Repo { reference org { to Org } field name { type string } }
     model OrgLog { reference org { to Org } }
 
     entrypoint R {
-      target model Repo as repo
+      target Repo as repo
       create endpoint {
         action {
           create repo {}
@@ -147,21 +147,21 @@ describe("custom actions", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
   it("can update deeply nested references", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
       relation repos { from Repo, through org }
     }
-    model Repo { reference org { to Org }; relation issues { from Issue, through repo } }
+    model Repo { reference org { to Org } relation issues { from Issue, through repo } }
     model Issue { reference repo { to Repo } }
 
     entrypoint I {
-      target model Issue as issue
+      target Issue as issue
       update endpoint {
         action {
           update issue {}
@@ -170,24 +170,24 @@ describe("custom actions", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
   it("fails when default action override is invalid type", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
     }
     entrypoint Orgs {
-      target model Org
+      target Org
       update endpoint {
         action {
           create {}
         }
       }
     }`;
-    const spec = compile(parse(bp));
+    const spec = compileToOldSpec(bp);
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
       `"Mismatching context action: overriding update endpoint with a create action"`
     );
@@ -195,17 +195,17 @@ describe("custom actions", () => {
   it("succeeds with custom inputs", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field description { type text }
-      field uuid { type text }
+      field name { type string }
+      field description { type string }
+      field uuid { type string }
       reference extras { to OrgExtra, unique }
     }
     model OrgExtra {
-      field name { type text }
+      field name { type string }
       relation org { from Org, through extras }
     }
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       update endpoint {
         action {
           update org as ox {
@@ -216,19 +216,19 @@ describe("custom actions", () => {
         }
       }
     }`;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
   it("succeeds with arithmetic expressions in setters", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field description { type text }
+      field name { type string }
+      field description { type string }
       field descLength { type integer }
     }
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       create endpoint {
         action {
           create {
@@ -239,7 +239,7 @@ describe("custom actions", () => {
         }
       }
     }`;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
@@ -252,7 +252,7 @@ describe("custom actions", () => {
       relation org { from Org, through extras }
     }
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       update endpoint {
         action {
           update org as ox {
@@ -262,21 +262,21 @@ describe("custom actions", () => {
         }
       }
     }`;
-    const spec = compile(parse(bp));
+    const spec = compileToOldSpec(bp);
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
       `"Found duplicates: [extras_id]"`
     );
   });
   it("succeeds when virtual input is defined and referenced", () => {
     const bp = `
-    model Org { field name { type text } }
+    model Org { field name { type string } }
 
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       create endpoint {
         action {
           create org {
-            virtual input iname { type text, validate { min 4 } }
+            virtual input iname { type string, validate { min 4 } }
             set name concat("Mr/Mrs ", iname)
           }
         }
@@ -284,17 +284,17 @@ describe("custom actions", () => {
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
   it("fails when there's an input and deny for the same field", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
     }
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       update endpoint {
         action {
           update org as ox {
@@ -305,31 +305,31 @@ describe("custom actions", () => {
       }
     }
     `;
-    const spec = compile(parse(bp));
+    const spec = compileToOldSpec(bp);
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Found duplicates: [name]"`);
   });
   it.todo("succeeds to update through unique relation");
   it("sets default action if not given", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
     }
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       update endpoint {}
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
     expect(endpoint.actions).toMatchSnapshot();
   });
   it("fails when custom action doesn't have an alias", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
     }
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
       update endpoint {
         action {
           update org {}
@@ -338,7 +338,7 @@ describe("custom actions", () => {
       }
     }
     `;
-    const spec = compile(parse(bp));
+    const spec = compileToOldSpec(bp);
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
       `"Custom action must have an alias"`
     );
@@ -350,9 +350,9 @@ describe("custom actions", () => {
       model Org { relation repos { from Repo, through org }}
       model Repo { reference org { to Org }}
       entrypoint O {
-        target model Org as org
+        target Org as org
         entrypoint R {
-          target relation repos as repo
+          target repos as repo
           create endpoint {
             action {
               create repo {}
@@ -362,7 +362,7 @@ describe("custom actions", () => {
         }
       }
     `;
-      const spec = compile(parse(bp));
+      const spec = compileToOldSpec(bp);
       expect(() => compose(spec)).toThrowError(
         `Cannot name an action with ${name}, name already exists in the context`
       );
@@ -373,11 +373,11 @@ describe("custom actions", () => {
 
   it("creates actions in custom endpoint", () => {
     const bp = `
-    model Org { field name { type text } }
+    model Org { field name { type string } }
     model Log {}
 
     entrypoint Orgs {
-      target model Org as org
+      target Org as org
 
       custom endpoint {
         cardinality one
@@ -420,7 +420,7 @@ describe("custom actions", () => {
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoints = def.entrypoints[0].endpoints;
 
     expect(endpoints).toMatchSnapshot();
@@ -431,17 +431,17 @@ describe("custom actions", () => {
     .forEach((property) => {
       it(`fails when "${property}" property is missing in custom endpoint`, () => {
         const bp = `
-          model Org { field name { type text } }
+          model Org { field name { type string } }
           model Log {}
-      
+
           entrypoint Orgs {
-            target model Org as org
+            target Org as org
             custom endpoint {
               // in each iteration skip one property
               ${property === "cardinality" ? "" : "cardinality many"}
               ${property === "method" ? "" : "method POST"}
               ${property === "path" ? "" : 'path "somePath"'}
-      
+
               action {
                 create Log as log {}
               }
@@ -449,7 +449,7 @@ describe("custom actions", () => {
           }
         `;
 
-        expect(() => compose(compile(parse(bp)))).toThrowError(
+        expect(() => compose(compileToOldSpec(bp))).toThrowError(
           `Property "${property}" is required for custom endpoints`
         );
       });
@@ -459,9 +459,9 @@ describe("custom actions", () => {
           it(`fails when "${property}" property is used in "${epType}" endpoint`, () => {
             const bp = `
               model Org {}
-          
+
               entrypoint Orgs {
-                target model Org
+                target Org
                 ${epType} endpoint {
                   // show one property in each iteration
                   ${property === "cardinality" ? "cardinality many" : ""}
@@ -471,7 +471,7 @@ describe("custom actions", () => {
               }
             `;
 
-            expect(() => compose(compile(parse(bp)))).toThrowError(
+            expect(() => compose(compileToOldSpec(bp))).toThrowError(
               `Property "${property}" is not allowed for "${epType}" endpoints`
             );
           });
@@ -498,7 +498,7 @@ describe("custom actions", () => {
         model Log {}
 
         entrypoint Orgs {
-          target model Org as org
+          target Org as org
           custom endpoint {
             cardinality ${cardinality}
             method POST
@@ -511,7 +511,7 @@ describe("custom actions", () => {
         }
         `;
 
-        expect(() => compose(compile(parse(bp)))).toThrowError(
+        expect(() => compose(compileToOldSpec(bp))).toThrowError(
           `"custom-${cardinality}" endpoint does not allow "${action}" action`
         );
       });
@@ -523,7 +523,7 @@ describe("custom actions", () => {
       model Org {}
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
 
         custom endpoint {
           cardinality many
@@ -539,7 +539,7 @@ describe("custom actions", () => {
       }
       `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowError(
+    expect(() => compose(compileToOldSpec(bp))).toThrowError(
       `Custom endpoints on the same HTTP method must have unique paths in one entrypoint ("Orgs")`
     );
   });

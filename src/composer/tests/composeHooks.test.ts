@@ -1,17 +1,15 @@
-import { compile } from "@src/compiler/compiler";
-import { compose } from "@src/composer/composer";
-import { parse } from "@src/parser/parser";
+import { compileToOldSpec, compose } from "@src/index";
 
 describe("compose hooks", () => {
   it("composes source hooks", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       model Org {
         field name {
-          type text,
+          type string,
           validate {
             hook {
               default arg name
@@ -22,12 +20,12 @@ describe("compose hooks", () => {
         }
         hook description {
           runtime MyRuntime
-          source someHook from "githubc.js"        
+          source someHook from "githubc.js"
         }
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
@@ -39,9 +37,9 @@ describe("compose hooks", () => {
           }
         }
       }
-  
+
     `;
-    const result = compose(compile(parse(bp)));
+    const result = compose(compileToOldSpec(bp));
 
     expect(result).toMatchSnapshot();
   });
@@ -49,40 +47,40 @@ describe("compose hooks", () => {
   it("composes inline hooks", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       model Org {
         field name {
-          type text,
+          type string,
           validate {
             hook {
               default arg name
-              inline \`"test name"\`
+              inline "'test name'"
             }
           }
         }
         hook description {
           runtime MyRuntime
-          inline \`"some description"\`        
+          inline "'some description'"
         }
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
               set name hook {
-                inline \`"test name"\`
+                inline "'test name'"
               }
             }
           }
         }
       }
-  
+
     `;
-    const result = compose(compile(parse(bp)));
+    const result = compose(compileToOldSpec(bp));
 
     expect(result).toMatchSnapshot();
   });
@@ -91,17 +89,17 @@ describe("compose hooks", () => {
     const bp = `
       runtime MyRuntime {
         default
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       runtime MyRuntime2 {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
-      model Org { field name { type text } }
+      model Org { field name { type string } }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
@@ -112,10 +110,10 @@ describe("compose hooks", () => {
           }
         }
       }
-  
+
     `;
 
-    const result = compose(compile(parse(bp)));
+    const result = compose(compileToOldSpec(bp));
 
     expect(result.entrypoints[0].endpoints[0]).toMatchSnapshot();
   });
@@ -123,11 +121,11 @@ describe("compose hooks", () => {
   it("fails on invalid runtime name", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
@@ -139,10 +137,10 @@ describe("compose hooks", () => {
           }
         }
       }
-  
+
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Unknown refkey: Org"`
     );
   });

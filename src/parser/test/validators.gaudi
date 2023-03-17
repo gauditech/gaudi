@@ -1,7 +1,0 @@
-model User {
-  field fullName {
-    type text
-    validate { min 4, max 20 }
-  }
-  field size { type integer, validate { min 0 } }
-}

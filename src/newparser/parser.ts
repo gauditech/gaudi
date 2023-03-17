@@ -766,7 +766,6 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: InputAtom[] = [];
 
     this.OPTION(() => {
-      this.CONSUME(L.Input);
       this.CONSUME(L.LCurly);
       this.MANY_SEP({
         SEP: L.Comma,
@@ -811,7 +810,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: PopulateAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Populate));
-    this.SUBRULE1(this.identifier);
+    const name = this.SUBRULE(this.identifier);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
@@ -849,7 +848,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "populate", atoms, keyword };
+    return { kind: "populate", name, atoms, keyword };
   });
 
   repeater = this.RULE("repeater", (): Repeater => {

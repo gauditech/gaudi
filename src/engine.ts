@@ -5,7 +5,7 @@ import "./common/setupAliases";
 
 import fs from "fs";
 
-import { build, compile, compose, parse } from "./index";
+import { build, compileToOldSpec, compose } from "./index";
 
 import { readConfig } from "@src/config";
 
@@ -16,7 +16,6 @@ if (!fs.existsSync(inputPath)) {
 }
 
 const input = fs.readFileSync(inputPath).toString("utf-8");
-const ast = parse(input);
-const specification = compile(ast);
+const specification = compileToOldSpec(input);
 const definition = compose(specification);
 build(definition, { outputFolder, gaudiFolder });

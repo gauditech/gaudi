@@ -590,7 +590,7 @@ exports[`populator composer succeeds for simple populator 1`] = `
                 ],
                 "hook": {
                   "code": {
-                    "inline": ""Description of" + name",
+                    "inline": "'Description of' + name",
                     "kind": "inline",
                   },
                   "runtimeName": "MyRuntime",
@@ -672,7 +672,7 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
                 ],
                 "hook": {
                   "code": {
-                    "inline": ""Org " + oIter.current",
+                    "inline": "'Org ' + oIter.current",
                     "kind": "inline",
                   },
                   "runtimeName": "MyRuntime",

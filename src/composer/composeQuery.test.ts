@@ -1,4 +1,4 @@
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 
 describe("compose model queries", () => {
   it("nested example without filters", () => {
@@ -11,7 +11,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     expect(def.models[0].queries).toMatchSnapshot();
   });
   it("example with nested filters", () => {
@@ -25,7 +25,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
 
     expect(def.models[0].queries).toMatchSnapshot();
   });
@@ -35,8 +35,8 @@ describe("compose model queries", () => {
     model Org {
       relation repos { from Repo, through org }
       query recent_repos {
-        from repos
-        order by id desc
+        from repos,
+        order by { id desc },
         limit 5
       }
     }
@@ -44,7 +44,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     expect(def.models[0].queries[0]).toMatchSnapshot();
   });
 });

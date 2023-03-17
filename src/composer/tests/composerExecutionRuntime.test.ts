@@ -1,17 +1,15 @@
-import { compile } from "@src/compiler/compiler";
-import { compose } from "@src/composer/composer";
-import { parse } from "@src/parser/parser";
+import { compileToOldSpec, compose } from "@src/index";
 
 describe("execution runtime composer", () => {
   it("composes single execution runtime", () => {
     const bp = `
        runtime MyRuntime1 {
         default
-        sourcePath "./some/path/to/file1.js"
+        source path "./some/path/to/file1.js"
       }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const runtimes = def.runtimes;
 
     expect(runtimes).toMatchSnapshot();
@@ -21,15 +19,15 @@ describe("execution runtime composer", () => {
     const bp = `
       runtime MyRuntime1 {
         default
-        sourcePath "./some/path/to/file1.js"
+        source path "./some/path/to/file1.js"
       }
 
       runtime MyRuntime2 {
-        sourcePath "./some/path/to/file2.js"
+        source path "./some/path/to/file2.js"
       }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const runtimes = def.runtimes;
 
     expect(runtimes).toMatchSnapshot();
@@ -38,11 +36,11 @@ describe("execution runtime composer", () => {
   it("makes a single runtime the default one", () => {
     const bp = `
        runtime MyRuntime1 {
-        sourcePath "./some/path/to/file1.js"
+        source path "./some/path/to/file1.js"
       }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const runtimes = def.runtimes;
 
     expect(runtimes).toMatchSnapshot();
@@ -55,7 +53,7 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Runtime source path cannot be empty"`
     );
   });
@@ -64,15 +62,15 @@ describe("execution runtime composer", () => {
     const bp = `
        runtime DuplicateRuntime {
         default
-        sourcePath "./some/path/to/file1.js"
+        source path "./some/path/to/file1.js"
       }
 
       runtime DuplicateRuntime {
-        sourcePath "./some/path/to/file2.js"
+        source path "./some/path/to/file2.js"
       }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Execution runtime names must be unique"`
     );
   });
@@ -80,15 +78,15 @@ describe("execution runtime composer", () => {
   it("fails on no default runtime", () => {
     const bp = `
       runtime MyRuntime1 {
-        sourcePath "./some/path/to/file1.js"
+        source path "./some/path/to/file1.js"
       }
 
       runtime MyRuntime2 {
-        sourcePath "./some/path/to/file2.js"
+        source path "./some/path/to/file2.js"
       }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"There can be only one default execution runtime"`
     );
   });
@@ -97,16 +95,16 @@ describe("execution runtime composer", () => {
     const bp = `
       runtime MyRuntime1 {
         default
-        sourcePath "./some/path/to/file1.js"
+        source path "./some/path/to/file1.js"
       }
 
       runtime MyRuntime2 {
         default
-        sourcePath "./some/path/to/file2.js"
+        source path "./some/path/to/file2.js"
       }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"There can be only one default execution runtime"`
     );
   });

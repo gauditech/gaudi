@@ -1,38 +1,38 @@
-import { compile, compose, parse } from "../index";
+import { compileToOldSpec, compose } from "../index";
 
 describe("compose models", () => {
   it("doesn't crash on empty blueprint", () => {
-    expect(() => compose(compile(parse("")))).not.toThrow();
+    expect(() => compose(compileToOldSpec(""))).not.toThrow();
   });
 
   it("fails on case insensitive duplicate field name", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field Name { type text }
+      field name { type string }
+      field Name { type string }
     }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowError("Items not unique!");
+    expect(() => compose(compileToOldSpec(bp))).toThrowError("Items not unique!");
   });
   it("fails on name colision between field and reference", () => {
     const bp = `
     model Org {
       reference parent { to Org }
-      field parent { type text }
+      field parent { type string }
     }
     `;
-    expect(() => compose(compile(parse(bp)))).toThrowError("Items not unique!");
+    expect(() => compose(compileToOldSpec(bp))).toThrowError("Items not unique!");
   });
   it("fails when relation doesn't point to a reference", () => {
     const bp = `
     model Org {
       reference parent { to Org }
-      field name { type text }
-      relation children { from Org, through name}
+      field name { type string }
+      relation children { from Org, through name }
     }
     `;
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Expected one of: [reference], got field"`
     );
   });
@@ -46,7 +46,7 @@ describe("compose models", () => {
       relation foos { from Foo, through parent }
     }
     `;
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Relation Baz.foos is pointing to a reference referencing a model Foo"`
     );
   });
@@ -55,7 +55,7 @@ describe("compose models", () => {
     const bp = `
     model Org { reference no { to UnknownModel } }
     `;
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Couldn't resolve the spec. The following refs are unresolved: UnknownModel"`
     );
   });
@@ -67,7 +67,7 @@ describe("compose models", () => {
       computed bar { foo - 1 }
     }
     `;
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Couldn't resolve the spec. The following refs are unresolved: Org.bar, Org.foo"`
     );
   });
@@ -75,19 +75,19 @@ describe("compose models", () => {
   it("parses validators", () => {
     const bp = `
     model Org {
-      field adminEmail { type text, validate { min 4, max 100, isEmail } }
+      field adminEmail { type string, validate { min 4, max 100, isEmail } }
       field num_employees { type integer, validate { min 0, max 9999 } }
     }`;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     expect(def.models).toMatchSnapshot();
   });
   it("fails on invalid validator", () => {
     const bp = `
     model Org {
-      field adminEmail { type text }
+      field adminEmail { type string }
       field num_employees { type integer, validate { isEmail } }
     }`;
-    const spec = compile(parse(bp));
+    const spec = compileToOldSpec(bp);
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Unknown validator!"`);
   });
 });

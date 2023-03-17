@@ -10,9 +10,7 @@ import _ from "lodash";
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { compose } from "@src/index";
-import { compileToAST } from "@src/newparser";
-import { compilerErrorsToString } from "@src/newparser/compilerError";
-import { migrate } from "@src/newparser/migrate";
+import { compileToOldSpec } from "@src/newparser";
 import { RuntimeConfig } from "@src/runtime/config";
 import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authentication";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
@@ -161,13 +159,7 @@ function removeOutputFolder(path: string) {
 // ----- gaudi definition
 
 function buildDefinition(blueprint: string, outputFolder: string) {
-  const { ast, errors } = compileToAST(blueprint);
-  if (!ast || errors.length > 0) {
-    console.error(compilerErrorsToString("", blueprint, errors));
-    throw Error("Failed to compile test");
-  }
-  const specification = migrate(ast);
-  const definition = compose(specification);
+  const definition = compose(compileToOldSpec(blueprint));
   // use output folder for both regular output and gaudi for simpler testing
   build(definition, { outputFolder, gaudiFolder: outputFolder });
 

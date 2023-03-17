@@ -194,7 +194,7 @@ export type Populator = WithKeyword<{
   name: Identifier;
   atoms: Populate[];
 }>;
-export type Populate = WithKeyword<{ kind: "populate"; atoms: PopulateAtom[] }>;
+export type Populate = WithKeyword<{ kind: "populate"; name: Identifier; atoms: PopulateAtom[] }>;
 export type PopulateAtom =
   | WithKeyword<
       | {

@@ -1,20 +1,20 @@
 import { buildOpenAPI } from "./openAPI";
 
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 
 describe("openAPI", () => {
   it("build spec", () => {
     const bp = `
     model Org {
-      field slug { type text, unique }
+      field slug { type string, unique }
       relation repos { from Repo, through org }
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
     }
     entrypoint Orgs {
-      target model Org
+      target Org
       identify with slug
 
       get endpoint {}
@@ -24,7 +24,7 @@ describe("openAPI", () => {
       delete endpoint {}
 
       entrypoint Repos {
-        target relation repos
+        target repos
         response { id, name }
 
         get endpoint {}
@@ -36,7 +36,7 @@ describe("openAPI", () => {
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
 
     expect(buildOpenAPI(def, "/api-test")).toMatchSnapshot();
   });

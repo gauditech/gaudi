@@ -1,7 +1,0 @@
-model Vehicle {
-  field serial_number { type text, nullable }
-  computed is_registred { serial_number is not null }
-  computed next_number { serial_number + 1 }
-  computed is_odd_number { is_odd(serial_number / 2) }
-  computed is_large_number { serial_number > 1000000000000 }
-}

@@ -1,4 +1,4 @@
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 import { CreateEndpointDef } from "@src/types/definition";
 
 describe("entrypoint", () => {
@@ -7,24 +7,24 @@ describe("entrypoint", () => {
     // Orgs.Repositories assumes default identifyWith; nested org select assuming all fields since not given
     const bp = `
     model Org {
-      field slug { type text, unique }
-      field name { type text }
+      field slug { type string, unique }
+      field name { type string }
       relation repos { from Repo, through org }
     }
     model Repo {
       reference org { to Org }
-      field title { type text }
+      field title { type string }
     }
 
     entrypoint Orgs {
-      target model Org
+      target Org
       identify with slug
-    
+
       list endpoint {}
       get endpoint {}
-    
+
       entrypoint Repositories {
-        target relation repos as repo
+        target repos as repo
         response { id, org }
 
         list endpoint {}
@@ -43,29 +43,29 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     expect(def.entrypoints).toMatchSnapshot();
   });
   it("adds validators into fieldsets", () => {
     const bp = `
     model Org {
-      field name { type text, validate { min 4, max 100 } }
+      field name { type string, validate { min 4, max 100 } }
     }
 
     entrypoint Orgs {
-      target model Org
+      target Org
       create endpoint {}
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.fieldset).toMatchSnapshot();
   });
   it("collects dependencies", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field desc { type text }
+      field name { type string }
+      field desc { type string }
 
       relation repos { from Repo, through org }
 
@@ -75,22 +75,22 @@ describe("entrypoint", () => {
     model Repo {
       reference org { to Org }
 
-      field name { type text }
+      field name { type string }
 
       relation issues { from Issue, through repo}
     }
     model Issue {
       reference repo { to Repo }
 
-      field source { type text }
-      field orgDesc { type text }
+      field source { type string }
+      field orgDesc { type string }
       field orgCoef { type integer }
     }
 
     entrypoint O {
-      target model Org as org
+      target Org as org
       entrypoint R {
-        target relation repos as repo
+        target repos as repo
         create endpoint {
           action {
             create {}
@@ -105,7 +105,7 @@ describe("entrypoint", () => {
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     const orgSelect = endpoint.parentContext[0].select.map((s) => s.alias);
     const repoSelect = endpoint.target.select.map((s) => s.alias);

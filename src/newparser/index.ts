@@ -3,10 +3,13 @@ import _ from "lodash";
 
 import { Definition, TokenData } from "./ast/ast";
 import { checkForm } from "./checkForm";
-import { CompilerError, ErrorCode } from "./compilerError";
+import { CompilerError, ErrorCode, compilerErrorsToString } from "./compilerError";
 import * as L from "./lexer";
+import { migrate } from "./migrate";
 import { getTokenData, parser } from "./parser";
 import { resolve } from "./resolver";
+
+import { Specification } from "@src/types/specification";
 
 export type CompileResult = {
   ast: Definition | undefined;
@@ -29,6 +32,15 @@ export function compileToAST(source: string): CompileResult {
   }
 
   return { ast, errors };
+}
+
+export function compileToOldSpec(source: string): Specification {
+  const { ast, errors } = compileToAST(source);
+  if (!ast) {
+    console.error(compilerErrorsToString("unknown", source, errors));
+    throw Error("Failed to compile test");
+  }
+  return migrate(ast);
 }
 
 function toCompilerError(error: ILexingError | IRecognitionException) {
