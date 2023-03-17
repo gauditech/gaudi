@@ -37,7 +37,24 @@ entrypoint UserEntry {
       create {
         set fieldOne hook {
           arg second fieldTwo
-          source foo from "customHook"
+          source foo from "customHooks"
+        }
+      }
+    }
+  }
+
+  custom endpoint {
+    path "somePath"
+    method POST
+    cardinality one
+
+    action {
+      execute {
+        responds
+        hook {
+          arg name name
+          runtime MyRuntime
+          source foo from "customHooks"
         }
       }
     }

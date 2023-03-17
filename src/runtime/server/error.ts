@@ -1,5 +1,7 @@
 // ---------- Endpoint responses
 
+import _ from "lodash";
+
 import { assertUnreachable } from "@src/common/utils";
 
 //** Error reponse codes  */
@@ -50,6 +52,16 @@ export class HttpResponseError extends Error {
   }
 }
 
+export class HookError extends Error {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(public readonly cause: any) {
+    super("Hook error");
+
+    // default "name" is always "Error" so we'll make it more correct
+    this.name = "HookError";
+  }
+}
+
 /** Throw error response from given cause */
 export function errorResponse(cause: unknown) {
   // business error
@@ -79,9 +91,25 @@ export function errorResponse(cause: unknown) {
   else if (cause instanceof HttpResponseError) {
     throw cause;
   }
+  // hook errors
+  else if (cause instanceof HookError) {
+    const status = cause.cause.status;
+    const message = cause.cause.message;
+
+    // throw HTTP response error - only if error contains required props
+    if (_.isInteger(status) && message != null) {
+      throw new HttpResponseError(status, message);
+    }
+    // otherwise, just throw server error
+
+    // log just in case
+    console.error(`[ERROR]`, cause);
+
+    throw new HttpResponseError(500, "Server error");
+  }
   // --- something unexpected
   else {
-    // log as error
+    // log just in case
     console.error(`[ERROR]`, cause);
 
     throw new HttpResponseError(500, "Server error");

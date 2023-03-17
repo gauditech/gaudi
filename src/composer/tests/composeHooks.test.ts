@@ -1,4 +1,5 @@
 import { compileToOldSpec, compose } from "@src/index";
+import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose hooks", () => {
   it("composes source hooks", () => {
@@ -44,7 +45,7 @@ describe("compose hooks", () => {
     expect(result).toMatchSnapshot();
   });
 
-  it("composes inline hooks", () => {
+  it("inline hooks", () => {
     const bp = `
       runtime MyRuntime {
         source path "some/path/to/file"
@@ -143,5 +144,115 @@ describe("compose hooks", () => {
     expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"Unknown refkey: Org"`
     );
+  });
+
+  it("action hook", () => {
+    const bp = `
+      runtime MyRuntime {
+        sourcePath "some/path/to/file"
+      }
+
+      model Org {
+        field name { type text }
+      }
+
+      entrypoint Orgs {
+        target model Org as org
+
+        custom endpoint {
+          path "somePath"
+          method POST
+          cardinality one
+
+          action {
+            execute {
+              // test action inputs
+              virtual input termsOfUse { type boolean }
+
+              hook {
+                // test hook args
+                arg name org.name
+                arg terms termsOfUse
+
+                runtime MyRuntime
+                source someHook from "hooks.js"
+              }
+            }
+          }
+        }
+      }
+    `;
+    const result = compose(compileToOldSpec(bp));
+
+    expect(result.entrypoints[0].endpoints).toMatchSnapshot();
+  });
+
+  it("fails on inline action hook", () => {
+    const bp = `
+      runtime MyRuntime {
+        sourcePath "some/path/to/file"
+      }
+
+      model Org {}
+
+      entrypoint Orgs {
+        target model Org
+
+        custom endpoint {
+          path "somePath"
+          method POST
+          cardinality one
+
+          action {
+            execute {
+              hook {
+                runtime MyRuntime
+                inline \`"some return value"\`
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+      `"Inline hooks cannot be used for "execute" actions"`
+    );
+  });
+
+  it("composes action hook", () => {
+    const bp = `
+      model Org { field name { type text} }
+
+      entrypoint Org {
+        target model Org
+
+        // login
+        custom endpoint {
+          path "somePath"
+          method POST
+          cardinality one
+
+          action {
+            execute {
+
+              virtual input prop { type text }
+
+              hook {
+                // action arg hook
+                arg user query { from Org, filter id is 1, select { id, name }} // TODO: read from ctx - id
+
+                runtime @GAUDI_INTERNAL
+                source login from "hooks/auth"
+              }
+            }
+          }
+        }
+      }
+    `;
+    const def = compose(compileToOldSpec(bp));
+    const action = (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
+
+    expect(action).toMatchSnapshot();
   });
 });

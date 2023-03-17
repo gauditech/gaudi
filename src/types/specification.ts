@@ -15,11 +15,11 @@ export type Specification = {
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
   runtimes: ExecutionRuntimeSpec[];
+  authenticator: AuthenticatorSpec | undefined;
 };
 
 export type ModelSpec = WithContext<{
   name: string;
-  isAuth: boolean;
   alias?: string;
   fields: FieldSpec[];
   references: ReferenceSpec[];
@@ -106,20 +106,39 @@ export type EndpointSpec = WithContext<{
   path?: string;
 }>;
 
-export type ActionSpec = WithContext<{
-  kind: "create" | "update" | "delete";
-  targetPath: string[] | undefined;
-  alias: string | undefined;
-  actionAtoms: ActionAtomSpec[];
-}>;
+export type ActionSpec = WithContext<
+  | {
+      kind: "create" | "update";
+      targetPath: string[] | undefined;
+      alias: string | undefined;
+      actionAtoms: ModelActionAtomSpec[];
+    }
+  | {
+      kind: "delete";
+      targetPath: string[] | undefined;
+    }
+  | {
+      kind: "execute";
+      alias: string | undefined;
+      hook: ActionHookSpec;
+      responds: boolean;
+      atoms: ActionAtomSpecVirtualInput[];
+    }
+  | {
+      kind: "fetch";
+      alias: string | undefined;
+      query: QuerySpec;
+      atoms: ActionAtomSpecVirtualInput[];
+    }
+>;
 
-export type ActionAtomSpec = WithContext<
+export type ModelActionSpec = Extract<ActionSpec, { kind: "create" | "update" }>;
+
+export type ModelActionAtomSpec = WithContext<
   | ActionAtomSpecSet
   | ActionAtomSpecRefThrough
-  | ActionAtomSpecAction
   | ActionAtomSpecDeny
   | ActionAtomSpecVirtualInput
-  | ActionAtomSpecInput
   | ActionAtomSpecInputList
 >;
 
@@ -129,13 +148,14 @@ export type HookCodeSpec =
 
 export type ActionAtomSpecSetHook = { kind: "hook"; hook: ActionHookSpec };
 export type ActionAtomSpecSetExp = { kind: "expression"; exp: ExpSpec };
+export type ActionAtomSpecSetQuery = { kind: "query"; query: QuerySpec };
 
 export type ActionAtomSpecSet = {
   kind: "set";
   target: string;
-  set: ActionAtomSpecSetHook | ActionAtomSpecSetExp;
+  set: ActionAtomSpecSetHook | ActionAtomSpecSetExp | ActionAtomSpecSetQuery;
 };
-export type ActionAtomSpecAction = { kind: "action"; body: ActionSpec };
+export type ActionAtomSpecHook = { kind: "hook"; hook: ActionHookSpec };
 export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
 export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
 export type ActionAtomSpecVirtualInput = {
@@ -153,6 +173,8 @@ export type InputFieldSpec = {
   optional: boolean;
   default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
 };
+export type ActionAtomSpecResponds = { kind: "responds" };
+export type ActionAtomSpecQuery = { kind: "query"; query: QuerySpec };
 
 export type HookSpec = WithContext<{
   name?: string;
@@ -195,7 +217,7 @@ export type ModelHookSpec = HookSpec & {
 };
 
 export type ActionHookSpec = HookSpec & {
-  args: Record<string, { kind: "expression"; exp: ExpSpec }>;
+  args: Record<string, { kind: "expression"; exp: ExpSpec } | { kind: "query"; query: QuerySpec }>;
 };
 
 // ----- Execution Runtime
@@ -205,3 +227,20 @@ export type ExecutionRuntimeSpec = WithContext<{
   default?: boolean;
   sourcePath: string;
 }>;
+
+// ---------- authenticator
+
+export const AUTH_TARGET_MODEL_NAME = "AuthUser";
+
+export type AuthenticatorSpec = WithContext<{
+  name?: string;
+  authUserModelName: string;
+  accessTokenModelName: string;
+  method: AuthenticatorMethodSpec;
+}>;
+
+export type AuthenticatorMethodSpec = WithContext<AuthenticatorBasicMethodSpec>;
+
+export type AuthenticatorBasicMethodSpec = {
+  kind: "basic";
+};

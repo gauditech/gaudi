@@ -1,5 +1,94 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`compose action queries "fetch" action custom endpoint 1`] = `
+{
+  "alias": "cOrg",
+  "changeset": [],
+  "kind": "fetch-one",
+  "model": "Org",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "type": "integer",
+          "value": 1,
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromPath": [
+      "Org",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+        "refKey": "Org.name",
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries "fetch" action native endpoint 1`] = `
+{
+  "alias": "$$target_0",
+  "changeset": [
+    {
+      "name": "name",
+      "setter": {
+        "fieldsetAccess": [
+          "name",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+    },
+    {
+      "name": "description",
+      "setter": {
+        "fieldsetAccess": [
+          "description",
+        ],
+        "kind": "fieldset-input",
+        "required": false,
+        "type": "text",
+      },
+    },
+  ],
+  "filter": undefined,
+  "kind": "update-one",
+  "model": "Org",
+  "select": [],
+  "targetPath": [
+    "$target_0",
+  ],
+}
+`;
+
 exports[`compose model queries example with nested filters 1`] = `
 [
   {

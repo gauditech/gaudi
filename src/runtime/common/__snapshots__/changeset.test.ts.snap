@@ -8,6 +8,13 @@ exports[`runtime changeset build action changeset object 1`] = `
   "input_value_copy": "input value",
   "other_model_id": 1,
   "value_prop": "just value",
+  "virtual_input_prop": "virtual input value",
+}
+`;
+
+exports[`runtime changeset build strict action changeset object 1`] = `
+{
+  "input_prop": "just value",
 }
 `;
 
@@ -17,6 +24,10 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
   "and": false,
   "bar": "bar2",
   "concat": "foo1 bar2",
+  "cryptoCompare": true,
+  "cryptoCompareFailed": false,
+  "cryptoHash": "$2a$10$rNj8LXd0g..DWYMzvq4DrOz61JLdi13f3GoTyuZLvi.eqZQ7YtYHe",
+  "cryptoToken": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
   "divide": 3,
   "foo": "foo1",
   "gt": false,
@@ -26,12 +37,16 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
   "is not": true,
   "is_a": true,
   "length": 4,
+  "lower": "foo1",
   "lt": false,
   "lte": true,
   "minus": 5,
   "multiply": 12,
   "not in": "TODO",
+  "now": 1677513237728,
   "or": true,
   "plus": 6,
+  "stringify": "1234",
+  "upper": "FOO1",
 }
 `;

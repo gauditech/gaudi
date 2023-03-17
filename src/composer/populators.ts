@@ -144,10 +144,13 @@ function checkActionChangeset(action: ActionDef | ActionDef[]) {
 
     // throw error if changeset contains input setters
     if (inputSetters.length > 0) {
+      // concat action's target path IF it has one
+      const actionTargetPath = "targetPath" in action ? action.targetPath.join(".") : "";
+
       throw new Error(
-        `Action ${action.kind} "${action.targetPath.join(
-          "."
-        )}" is missing setters for fields: ${inputSetters.join()}`
+        `Action ${
+          action.kind
+        } "${actionTargetPath}" is missing setters for fields: ${inputSetters.join()}`
       );
     }
   });

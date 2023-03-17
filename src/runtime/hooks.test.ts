@@ -150,6 +150,7 @@ function createTestDefinition(): Definition {
         sourcePath: "./src/runtime/test/hooks",
       },
     ],
+    authenticator: undefined,
   });
 
   return def;

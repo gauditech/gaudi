@@ -1,4 +1,5 @@
 import { compileToOldSpec, compose } from "@src/index";
+import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose model queries", () => {
   it("nested example without filters", () => {
@@ -46,5 +47,80 @@ describe("compose model queries", () => {
     `;
     const def = compose(compileToOldSpec(bp));
     expect(def.models[0].queries[0]).toMatchSnapshot();
+  });
+});
+
+describe("compose action queries", () => {
+  describe('"fetch" action', () => {
+    it("native endpoint", () => {
+      const bp = `
+      model Org {
+        field name { type text }
+        field description { type text }
+      }
+      model Repo {
+      }
+
+      entrypoint Org {
+        target model Org
+
+        // test in native endpoint
+        update endpoint {
+          action {
+            // target model
+            fetch as cOrg {
+              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
+            }
+            // other model
+            fetch as cRepo {
+              query { from Repo, filter id is 1 } // TODO: read from ctx - id
+            }
+          }
+        }
+      }
+      `;
+
+      const def = compose(compileToOldSpec(bp));
+      expect(
+        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+      ).toMatchSnapshot();
+    });
+    it("custom endpoint", () => {
+      const bp = `
+      model Org {
+        field name { type text }
+        field description { type text }
+      }
+      model Repo {
+      }
+
+      entrypoint Org {
+        target model Org
+
+        // test in custom endpoint
+        custom endpoint {
+          path "customPath"
+          method POST
+          cardinality one
+
+          action {
+            // target model
+            fetch as cOrg {
+              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
+            }
+            // other model
+            fetch as cRepo {
+              query { from Repo, filter id is 1 } // TODO: read from ctx - id
+            }
+          }
+        }
+      }
+      `;
+
+      const def = compose(compileToOldSpec(bp));
+      expect(
+        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+      ).toMatchSnapshot();
+    });
   });
 });

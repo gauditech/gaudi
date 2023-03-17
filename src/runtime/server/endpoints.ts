@@ -14,11 +14,11 @@ import { Vars } from "./vars";
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
-import { executeActions } from "@src/runtime/common/action";
+import { executeEndpointActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
 import { executeQueryTree } from "@src/runtime/query/exec";
-import { authenticationHandler } from "@src/runtime/server/authentication";
+import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@src/runtime/server/error";
@@ -97,12 +97,12 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
     method: "get",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH USER", req.user);
+          console.log("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -113,7 +113,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
@@ -170,12 +170,12 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     method: "get",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH USER", req.user);
+          console.log("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -186,7 +186,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
@@ -249,12 +249,12 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
     method: "post",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH USER", req.user);
+          console.log("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -265,7 +265,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
@@ -291,10 +291,15 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          await executeActions(
+          await executeEndpointActions(
             def,
             tx,
-            { input: validationResult, vars: contextVars, referenceIds },
+            {
+              input: validationResult,
+              vars: contextVars,
+              referenceIds,
+            },
+            { request: req, response: resp },
             endpoint.actions
           );
 
@@ -339,12 +344,12 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
     method: "patch",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH USER", req.user);
+          console.log("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -355,7 +360,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
@@ -385,10 +390,15 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
           console.log("Validation result", validationResult);
 
-          await executeActions(
+          await executeEndpointActions(
             def,
             tx,
-            { input: validationResult, vars: contextVars, referenceIds },
+            {
+              input: validationResult,
+              vars: contextVars,
+              referenceIds,
+            },
+            { request: req, response: resp },
             endpoint.actions
           );
 
@@ -434,12 +444,12 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
     method: "delete",
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH USER", req.user);
+          console.log("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -450,7 +460,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
@@ -499,12 +509,12 @@ export function buildCustomOneEndpoint(
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH USER", req.user);
+          console.log("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -515,7 +525,7 @@ export function buildCustomOneEndpoint(
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
@@ -554,7 +564,7 @@ export function buildCustomOneEndpoint(
           }
 
           if (endpoint.actions.length > 0) {
-            await executeActions(
+            await executeEndpointActions(
               def,
               tx,
               {
@@ -562,13 +572,16 @@ export function buildCustomOneEndpoint(
                 vars: contextVars,
                 referenceIds: referenceIds as ValidReferenceIdResult[],
               },
+              { request: req, response: resp },
               endpoint.actions
             );
           }
 
           await tx.commit();
 
-          resp.sendStatus(204);
+          if (endpoint.responds) {
+            resp.sendStatus(204);
+          }
         } catch (err) {
           await tx?.rollback();
 
@@ -592,12 +605,12 @@ export function buildCustomManyEndpoint(
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
       // prehandlers
-      authenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def, { allowAnonymous: true }),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH USER", req.user);
+          console.log("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -608,10 +621,11 @@ export function buildCustomManyEndpoint(
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ base_id: req.user.base_id }),
+              new Vars({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
+
             contextVars.set("@auth", result);
           }
 
@@ -646,7 +660,7 @@ export function buildCustomManyEndpoint(
           }
 
           if (endpoint.actions.length > 0) {
-            await executeActions(
+            await executeEndpointActions(
               def,
               tx,
               {
@@ -654,13 +668,16 @@ export function buildCustomManyEndpoint(
                 vars: contextVars,
                 referenceIds: referenceIds as ValidReferenceIdResult[],
               },
+              { request: req, response: resp },
               endpoint.actions
             );
           }
 
           await tx.commit();
 
-          resp.sendStatus(204);
+          if (endpoint.responds) {
+            resp.sendStatus(204);
+          }
         } catch (err) {
           await tx?.rollback();
 

@@ -1,5 +1,5 @@
 import { compileToOldSpec, compose } from "@src/index";
-import { CreateEndpointDef } from "@src/types/definition";
+import { CreateEndpointDef, CustomManyEndpointDef, ExecuteHookAction } from "@src/types/definition";
 
 describe("entrypoint", () => {
   it("composes basic example", () => {
@@ -61,6 +61,180 @@ describe("entrypoint", () => {
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.fieldset).toMatchSnapshot();
   });
+
+  it("action should send response", () => {
+    const bp = `
+    runtime MyRuntime {
+      sourcePath "some/source/path"
+    }
+
+    model Org {}
+
+    entrypoint Orgs {
+      target model Org
+
+      // endpoint W/ responding action
+      custom endpoint {
+        path "somePath1"
+        method POST
+        cardinality many
+
+        action {
+          execute {
+            responds
+            hook {
+              runtime MyRuntime
+              source testFn from "t/h/p"
+
+            }
+          }
+        }
+      }
+    }
+    `;
+    const def = compose(compileToOldSpec(bp));
+
+    const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
+    const action = endpoint.actions[0] as ExecuteHookAction;
+
+    expect(action.responds).toBe(true);
+    expect(endpoint.responds).toBe(false);
+  });
+
+  it("endpoint should send response", () => {
+    const bp = `
+    runtime MyRuntime {
+      sourcePath "some/source/path"
+    }
+
+    model Org {}
+
+    entrypoint Orgs {
+      target model Org
+
+      // endpoint W/O responding action
+      custom endpoint {
+        path "somePath1"
+        method POST
+        cardinality many
+
+        action {
+          execute {
+            hook {
+              runtime MyRuntime
+              source testFn from "t/h/p"
+            }
+          }
+        }
+      }
+    }
+    `;
+    const def = compose(compileToOldSpec(bp));
+
+    const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
+    const action = endpoint.actions[0] as ExecuteHookAction;
+
+    expect(action.responds).toBe(false);
+    expect(endpoint.responds).toBe(true);
+  });
+
+  it("fail for multiple actions that want to respond", () => {
+    const bp = `
+    runtime MyRuntime {
+      sourcePath "some/source/path"
+    }
+
+    model Org {}
+
+    entrypoint Orgs {
+      target model Org
+
+      custom endpoint {
+        path "somePath1"
+        method POST
+        cardinality many
+
+        action {
+          execute {
+            responds
+            hook {
+              runtime MyRuntime
+              source testFn from "t/h/p"
+            }
+          }
+          execute {
+            responds
+            hook {
+              runtime MyRuntime
+              source testFn from "t/h/p"
+            }
+          }
+        }
+      }
+    }
+    `;
+
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+      `"At most one action in entrypoint can have "responds" attribute"`
+    );
+  });
+
+  it("fails if responds action is used in implicit endpoints", () => {
+    const bp = `
+    runtime MyRuntime {
+      sourcePath "some/source/path"
+    }
+
+    model Org {}
+
+    entrypoint Orgs {
+      target model Org
+
+      create endpoint {
+        action {
+          execute {
+            responds
+            hook {
+              runtime MyRuntime
+              source testFn from "t/h/p"
+            }
+          }
+        }
+      }
+    }
+    `;
+
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+      `"Actions with "responds" keyword are allowed only in "custom" endpoints, not in "create""`
+    );
+  });
+
+  it("fails if responds action is used in implicit actions", () => {
+    const bp = `
+    model Org {}
+
+    entrypoint Orgs {
+      target model Org
+
+      custom endpoint {
+        path "somePath"
+        method POST
+        cardinality many
+
+        action {
+          create {
+            responds
+          }
+        }
+      }
+    }
+    `;
+
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(`
+      "Unknown source position!
+      responds is not a valid model action"
+    `);
+  });
   it("collects dependencies", () => {
     const bp = `
     model Org {
@@ -104,7 +278,6 @@ describe("entrypoint", () => {
       }
     }
     `;
-
     const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     const orgSelect = endpoint.parentContext[0].select.map((s) => s.alias);

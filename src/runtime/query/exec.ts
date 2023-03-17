@@ -1,4 +1,3 @@
-import { Knex } from "knex";
 import _ from "lodash";
 
 import { executeHook } from "../hooks";
@@ -7,25 +6,26 @@ import { Vars } from "../server/vars";
 import { QueryTree, selectableId } from "./build";
 import { queryToString } from "./stringify";
 
+import { DbConn } from "@src/runtime/server/dbConn";
 import { Definition, QueryDef } from "@src/types/definition";
 
-type Result = {
+export type Result = {
   rowCount: number;
   rows: Row[];
 };
 
-interface NestedRow {
+export interface NestedRow {
   id: number;
   [key: string]: string | number | NestedRow[];
 }
 
-interface Row {
+export interface Row {
   id: number;
   [key: string]: string | number;
 }
 
 export async function executeQuery(
-  conn: Knex | Knex.Transaction,
+  conn: DbConn,
   def: Definition,
   q: QueryDef,
   params: Vars,
@@ -46,7 +46,7 @@ export async function executeQuery(
 }
 
 export async function executeQueryTree(
-  conn: Knex | Knex.Transaction,
+  conn: DbConn,
   def: Definition,
   qt: QueryTree,
   params: Vars,
@@ -96,4 +96,41 @@ export async function executeQueryTree(
   }
 
   return results;
+}
+
+// ----- QueryExecutor
+
+/**
+ * Allows execution of queries without having the knowledge of DB connection.
+ * Also, allows easier creation of test mockups.
+ */
+export type QueryExecutor = {
+  executeQuery(
+    def: Definition,
+    q: QueryDef,
+    params: Vars,
+    contextIds: number[]
+  ): Promise<NestedRow[]>;
+
+  executeQueryTree(
+    def: Definition,
+    qt: QueryTree,
+    params: Vars,
+    contextIds: number[]
+  ): Promise<NestedRow[]>;
+};
+
+/**
+ * Function that creates default implementation of `QueryExecutor`.
+ */
+export function createQueryExecutor(dbConn: DbConn): QueryExecutor {
+  return {
+    executeQuery(def, q, params, contextIds) {
+      return executeQuery(dbConn, def, q, params, contextIds);
+    },
+
+    executeQueryTree(def, qt, params, contextIds) {
+      return executeQueryTree(dbConn, def, qt, params, contextIds);
+    },
+  };
 }

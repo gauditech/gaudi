@@ -538,6 +538,20 @@ function functionToString(def: Definition, exp: TypedFunction): string {
     case "concat": {
       return stringifyFn("concat", exp.args);
     }
+    case "lower": {
+      return stringifyFn("lower", exp.args);
+    }
+    case "upper": {
+      return stringifyFn("upper", exp.args);
+    }
+    case "now": {
+      return stringifyFn("now", exp.args);
+    }
+    case "stringify":
+    case "cryptoCompare":
+    case "cryptoHash":
+    case "cryptoToken":
+      throw new Error(`Expression "${exp.name}" cannot be used in queries.`);
     default:
       assertUnreachable(exp.name);
   }

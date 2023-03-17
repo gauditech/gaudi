@@ -1,18 +1,9 @@
 import _ from "lodash";
 
-import { processSelect } from "./entrypoints";
-import { VarContext, getTypedLiteralValue, getTypedPath } from "./utils";
-
 import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
-import { ensureEqual, ensureUnique } from "@src/common/utils";
+import { ensureUnique } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
-import {
-  NamePath,
-  getDirectChildren,
-  getFilterPaths,
-  queryFromParts,
-  uniqueNamePaths,
-} from "@src/runtime/query/build";
+import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query";
 import { LiteralValue } from "@src/types/ast";
 import {
   AggregateDef,
@@ -20,30 +11,27 @@ import {
   ConstantDef,
   Definition,
   FieldDef,
-  FunctionName,
   IValidatorDef,
   ModelDef,
   ModelHookDef,
   QueryDef,
-  QueryOrderByAtomDef,
   ReferenceDef,
   RelationDef,
-  TypedExprDef,
   ValidatorDef,
   ValidatorDefinition,
 } from "@src/types/definition";
 import {
   ComputedSpec,
-  ExpSpec,
   FieldSpec,
   ModelHookSpec,
   ModelSpec,
   QuerySpec,
   ReferenceSpec,
   RelationSpec,
+  Specification,
 } from "@src/types/specification";
 
-export function composeModels(def: Definition, specs: ModelSpec[]): void {
+export function composeModels(def: Definition, spec: Specification, modelSpecs: ModelSpec[]): void {
   const unresolvedRefs = new Set<string>();
   let needsExtraStep = true;
   function tryCall<T>(fn: () => T): T | null {
@@ -64,8 +52,8 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
     const resolvedCount = def.resolveOrder.length;
     needsExtraStep = false;
     // ensure model uniqueness
-    ensureUnique(specs.map((s) => s.name.toLowerCase()));
-    specs.forEach((mspec) => {
+    ensureUnique(modelSpecs.map((s) => s.name.toLowerCase()));
+    modelSpecs.forEach((mspec) => {
       // ensure prop uniqueness
       ensureUnique([
         ...mspec.fields.map((f) => f.name.toLowerCase()),
@@ -77,7 +65,7 @@ export function composeModels(def: Definition, specs: ModelSpec[]): void {
       const mdef = defineModel(def, mspec);
       mspec.fields.forEach((hspec) => defineField(def, mdef, hspec));
       mspec.computeds.forEach((cspec) => tryCall(() => defineComputed(def, mdef, cspec)));
-      mspec.references.forEach((rspec) => tryCall(() => defineReference(def, mdef, rspec)));
+      mspec.references.forEach((rspec) => tryCall(() => defineReference(def, spec, mdef, rspec)));
       mspec.relations.forEach((rspec) => tryCall(() => defineRelation(def, mdef, rspec)));
       mspec.queries
         .filter((qspec) => !qspec.aggregate)
@@ -138,79 +126,7 @@ function defineModel(def: Definition, spec: ModelSpec): ModelDef {
   def.models.push(model);
   def.resolveOrder.push(model.refKey);
 
-  if (spec.isAuth && !def.auth) {
-    defineAuthModel(def, model);
-  }
-
   return model;
-}
-
-function defineAuthModel(def: Definition, baseModel: ModelDef) {
-  const localModel = defineModel(def, {
-    name: baseModel.name + "__AuthLocal",
-    isAuth: false,
-    fields: [],
-    references: [],
-    relations: [],
-    queries: [],
-    computeds: [],
-    hooks: [],
-  });
-  const localReference = defineReference(def, localModel, {
-    name: "base",
-    toModel: baseModel.name,
-    // FIXME: fix unique references in prisma generation
-    //unique: true,
-  });
-  defineField(def, localModel, {
-    name: "username",
-    type: "text",
-    unique: true,
-  });
-  defineField(def, localModel, {
-    name: "password",
-    type: "text",
-  });
-  defineRelation(def, baseModel, {
-    name: "authLocal",
-    fromModel: localModel.name,
-    through: localReference.name,
-  });
-
-  const accessTokenModel = defineModel(def, {
-    name: baseModel.name + "__AuthAccessToken",
-    isAuth: false,
-    fields: [],
-    references: [],
-    relations: [],
-    queries: [],
-    computeds: [],
-    hooks: [],
-  });
-  const accessTokenReference = defineReference(def, accessTokenModel, {
-    name: "base",
-    toModel: baseModel.name,
-  });
-  defineField(def, accessTokenModel, {
-    name: "token",
-    type: "text",
-    unique: true,
-  });
-  defineField(def, accessTokenModel, {
-    name: "expiryDate",
-    type: "text",
-  });
-  defineRelation(def, baseModel, {
-    name: "authAccessTokens",
-    fromModel: accessTokenModel.name,
-    through: accessTokenReference.name,
-  });
-
-  def.auth = {
-    baseRefKey: baseModel.refKey,
-    localRefKey: localModel.refKey,
-    accessTokenRefKey: accessTokenModel.refKey,
-  };
 }
 
 function constructIdField(mdef: ModelDef): FieldDef {
@@ -312,11 +228,19 @@ function literalToConstantDef(literal: LiteralValue): ConstantDef {
   throw new Error(`Can't detect literal type from ${literal} : ${typeof literal}`);
 }
 
-function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec): ReferenceDef {
+function defineReference(
+  def: Definition,
+  spec: Specification,
+  mdef: ModelDef,
+  rspec: ReferenceSpec
+): ReferenceDef {
   const refKey = `${mdef.refKey}.${rspec.name}`;
   const ex = getDefinition(def, refKey, "reference");
   if (ex) return ex;
-  getDefinition(def, rspec.toModel, "model", true);
+
+  const refToModelName = rspec.toModel;
+
+  getDefinition(def, refToModelName, "model", true);
 
   const fieldRefKey = `${refKey}_id`; // or `Id`?? FIXME decide casing logic
   if (getDefinition(def, refKey, "field")) {
@@ -343,14 +267,17 @@ function defineReference(def: Definition, mdef: ModelDef, rspec: ReferenceSpec):
     refKey,
     fieldRefKey,
     modelRefKey: mdef.refKey,
-    toModelFieldRefKey: `${rspec.toModel}.id`,
-    toModelRefKey: rspec.toModel,
+    toModelFieldRefKey: `${refToModelName}.id`,
+    toModelRefKey: refToModelName,
     name: rspec.name,
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
   };
   mdef.references.push(ref);
   def.resolveOrder.push(f.refKey);
+
+  defineImplicitRelation(def, spec, mdef, rspec, ref);
+
   return ref;
 }
 
@@ -433,148 +360,12 @@ function defineModelHook(def: Definition, mdef: ModelDef, hspec: ModelHookSpec):
   return h;
 }
 
-function queryFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): QueryDef {
-  if (qspec.aggregate) {
-    throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
-  }
-  if (qspec.fromAlias) {
-    ensureEqual(
-      (qspec.fromAlias ?? []).length,
-      qspec.fromModel.length,
-      `alias ${qspec.fromAlias} should be the same length as from ${qspec.fromModel}`
-    );
-  }
-
-  const fromPath = [mdef.name, ...qspec.fromModel];
-
-  /**
-   *  For each alias in qspec, assign a NamePath. For example,
-   * `from repos.issues as r.i` produces the following `aliases`:
-   * { r: ["Org", "repos"], i: ["Org", "repos", "issues"] }
-   */
-  const aliases = (qspec.fromAlias ?? []).reduce((acc, curr, index) => {
-    return _.assign(acc, { [curr]: _.take(fromPath, index + 2) });
-  }, {} as Record<string, NamePath>);
-
-  const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, {}, aliases);
-
-  const filterPaths = getFilterPaths(filter);
-  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
-  const direct = getDirectChildren(paths);
-  ensureEqual(direct.length, 1);
-  const targetModel = getRef.model(def, direct[0]);
-  const select = processSelect(def, targetModel, qspec.select, fromPath);
-
-  const orderBy = qspec.orderBy?.map(
-    ({ field, order }): QueryOrderByAtomDef => ({
-      exp: { kind: "alias", namePath: [...fromPath, ...field] },
-      direction: order ?? "asc",
-    })
-  );
-
-  return queryFromParts(
-    def,
-    qspec.name,
-    fromPath,
-    filter,
-    select,
-    orderBy,
-    qspec.limit,
-    qspec.offset
-  );
+export function queryFromSpec(def: Definition, model: ModelDef, qspec: QuerySpec): QueryDef {
+  return composeQuery(def, model, qspec, {});
 }
 
 function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
-  const aggregate = qspec.aggregate?.name;
-  if (!aggregate) {
-    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
-  }
-  if (qspec.select) {
-    throw new Error(`Aggregate query can't have a select`);
-  }
-  const qdef = queryFromSpec(def, mdef, { ...qspec, aggregate: undefined });
-  const { refKey } = qdef;
-  const query = _.omit(qdef, ["refKey", "name", "select"]);
-
-  if (aggregate !== "sum" && aggregate !== "count") {
-    throw new Error(`Unknown aggregate function ${aggregate}`);
-  }
-
-  return {
-    refKey,
-    kind: "aggregate",
-    aggrFnName: aggregate,
-    targetPath: [mdef.refKey, "id"],
-    name: qspec.name,
-    query,
-  };
-}
-
-function typedFunctionFromParts(
-  def: Definition,
-  name: string,
-  args: ExpSpec[],
-  namespace: string[],
-  context: VarContext = {},
-  aliases: Record<string, NamePath> = {}
-): TypedExprDef {
-  return {
-    kind: "function",
-    name: name as FunctionName, // FIXME proper validation
-    args: args.map((arg) => composeExpression(def, arg, namespace, context, aliases)),
-  };
-}
-
-export function composeExpression(
-  def: Definition,
-  exp: ExpSpec,
-  namespace: string[],
-  context: VarContext = {},
-  aliases: Record<string, NamePath> = {}
-): TypedExprDef {
-  switch (exp.kind) {
-    case "literal": {
-      return getTypedLiteralValue(exp.literal);
-    }
-    case "identifier": {
-      /**
-       * If identifier starts with a known alias, replace the first element (_.tail drops the first one)
-       * with it's NamePath.
-       */
-      const expandedNamePath =
-        exp.identifier[0] in aliases
-          ? [...aliases[exp.identifier[0]], ..._.tail(exp.identifier)]
-          : [...namespace, ...exp.identifier];
-
-      // ensure everything resolves
-      getTypedPath(def, expandedNamePath, context);
-      return { kind: "alias", namePath: expandedNamePath };
-    }
-    // everything else composes to a function
-    case "unary": {
-      return typedFunctionFromParts(
-        def,
-        "not",
-        [exp.exp, { kind: "literal", literal: true }],
-        namespace,
-        context,
-        aliases
-      );
-    }
-    case "binary": {
-      return typedFunctionFromParts(
-        def,
-        exp.operator,
-        [exp.lhs, exp.rhs],
-        namespace,
-        context,
-        aliases
-      );
-    }
-    case "function": {
-      return typedFunctionFromParts(def, exp.name, exp.args, namespace, context, aliases);
-    }
-  }
+  return composeAggregate(def, mdef, qspec);
 }
 
 export function validateType(type: string): FieldDef["type"] {
@@ -592,4 +383,44 @@ export function validateType(type: string): FieldDef["type"] {
 
 function constructDbType(type: FieldDef["type"]): FieldDef["dbtype"] {
   return type;
+}
+
+/**
+ * When referencing implicit models (eg. authenticator's `AuthUser`) those models need matching relation
+ * but since those models are created on the fly, relations also need to be added on the fly.
+ */
+function defineImplicitRelation(
+  def: Definition,
+  spec: Specification,
+  refModel: ModelDef,
+  refSpec: ReferenceSpec,
+  refDef: ReferenceDef
+) {
+  const authenticatorSpec = spec.authenticator;
+  // define implicit model names
+  const implicitModels = [
+    // authenticator model relations
+    ...(authenticatorSpec != null
+      ? [authenticatorSpec.authUserModelName, authenticatorSpec.accessTokenModelName]
+      : []),
+  ];
+
+  if (_.includes(implicitModels, refSpec.toModel)) {
+    // relation between implicit models should have already been defined so we'll skip it
+    if (_.includes(implicitModels, refModel.name)) {
+      return;
+    }
+
+    const toModel = getRef.model(def, refSpec.toModel);
+
+    const relSpec: RelationSpec = {
+      // TODO: different rel name depending on cardinality (one or many)
+      name: `${_.camelCase(refModel.name)}${_.upperFirst(_.camelCase(refDef.name))}Rel`,
+      fromModel: refModel.name,
+      through: refDef.name,
+    };
+
+    defineRelation(def, toModel, relSpec);
+  }
+  // ref not implicit, do nothing
 }
