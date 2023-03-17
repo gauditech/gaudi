@@ -569,7 +569,6 @@ function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDe
         // OK, record without faulty leaf nodes
         return [name, collectFieldsetPaths(relatedPaths)];
       } else {
-        console.dir({ relatedPaths, name }, { depth: 10 });
         // leaf node + non-empty node, this is not correct
         throw new Error(`Error in paths: ${paths.map((p) => p[0].join(".")).sort()}`);
       }

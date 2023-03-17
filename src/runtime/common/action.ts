@@ -109,11 +109,8 @@ async function _internalExecuteActions(
       );
 
       try {
-        console.log("invoking hook...");
         await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
-        console.log("hook returned");
       } catch (err) {
-        console.dir({ err }, { depth: 40 });
         throw new HookError(err);
       }
     } else {

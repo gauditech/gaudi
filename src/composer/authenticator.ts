@@ -81,7 +81,7 @@ export function compileAuthenticatorSpec(
     model ${authUserModelName} {
       field name { type text, validate { min 1 } }
       field username { type text, unique, validate { min 8 } }
-      field password { type text, validate { min 8 } }
+      field passwordHash { type text, validate { min 8 } }
       relation tokens { from ${accessTokenModelName}, through authUser }
     }
     model ${accessTokenModelName} {
@@ -117,7 +117,7 @@ export function compileAuthenticatorSpec(
 
             hook {
               arg clearPassword password
-              arg hashPassword existingAuthUser.password
+              arg hashPassword existingAuthUser.passwordHash
     
               runtime ${internalExecRuntimeName}
               source authenticateUser from "hooks/actions.js"
@@ -211,8 +211,8 @@ export function compileAuthenticatorSpec(
 
           create authUser {
             input { name, username }
-            virtual input clearPassword { type text, validate { min 8 } }
-            set password cryptoHash(clearPassword, 10)
+            virtual input password { type text, validate { min 8 } }
+            set passwordHash cryptoHash(password, 10)
           }
 
           // return created user

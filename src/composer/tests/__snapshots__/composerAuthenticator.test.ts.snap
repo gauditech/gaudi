@@ -101,14 +101,14 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         ],
       },
       {
-        "dbname": "password",
+        "dbname": "passwordhash",
         "dbtype": "text",
         "kind": "field",
         "modelRefKey": "AuthUser",
-        "name": "password",
+        "name": "passwordHash",
         "nullable": false,
         "primary": false,
-        "refKey": "AuthUser.password",
+        "refKey": "AuthUser.passwordHash",
         "type": "text",
         "unique": false,
         "validators": [
@@ -313,14 +313,14 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "refKey": "AuthUser.username",
                 },
                 {
-                  "alias": "password",
+                  "alias": "passwordHash",
                   "kind": "field",
-                  "name": "password",
+                  "name": "passwordHash",
                   "namePath": [
                     "AuthUser",
-                    "password",
+                    "passwordHash",
                   ],
-                  "refKey": "AuthUser.password",
+                  "refKey": "AuthUser.passwordHash",
                 },
               ],
             },
@@ -356,7 +356,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     "kind": "reference-value",
                     "target": {
                       "access": [
-                        "password",
+                        "passwordHash",
                       ],
                       "alias": "existingAuthUser",
                     },
@@ -746,14 +746,14 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "refKey": "AuthUser.username",
                 },
                 {
-                  "alias": "password",
+                  "alias": "passwordHash",
                   "kind": "field",
-                  "name": "password",
+                  "name": "passwordHash",
                   "namePath": [
                     "AuthUser",
-                    "password",
+                    "passwordHash",
                   ],
-                  "refKey": "AuthUser.password",
+                  "refKey": "AuthUser.passwordHash",
                 },
               ],
             },
@@ -822,10 +822,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "alias": "authUser",
             "changeset": [
               {
-                "name": "clearPassword",
+                "name": "password",
                 "setter": {
                   "fieldsetAccess": [
-                    "clearPassword",
+                    "password",
                   ],
                   "kind": "fieldset-virtual-input",
                   "nullable": false,
@@ -868,12 +868,12 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               },
               {
-                "name": "password",
+                "name": "passwordHash",
                 "setter": {
                   "args": [
                     {
                       "kind": "changeset-reference",
-                      "referenceName": "clearPassword",
+                      "referenceName": "password",
                     },
                     {
                       "kind": "literal",
@@ -992,24 +992,6 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
           "kind": "record",
           "nullable": false,
           "record": {
-            "clearPassword": {
-              "kind": "field",
-              "nullable": false,
-              "required": true,
-              "type": "text",
-              "validators": [
-                {
-                  "args": [
-                    {
-                      "type": "integer",
-                      "value": 8,
-                    },
-                  ],
-                  "inputType": "text",
-                  "name": "minLength",
-                },
-              ],
-            },
             "name": {
               "kind": "field",
               "nullable": false,
@@ -1021,6 +1003,24 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     {
                       "type": "integer",
                       "value": 1,
+                    },
+                  ],
+                  "inputType": "text",
+                  "name": "minLength",
+                },
+              ],
+            },
+            "password": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [
+                {
+                  "args": [
+                    {
+                      "type": "integer",
+                      "value": 8,
                     },
                   ],
                   "inputType": "text",

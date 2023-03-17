@@ -23,13 +23,13 @@ describe("Auth", () => {
             // id: 1,
             name: "First",
             username: "first",
-            password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
+            passwordHash: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
           {
             // id: 2,
             name: "Second",
             username: "second",
-            password: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
+            passwordHash: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
           },
         ],
       },
@@ -50,11 +50,7 @@ describe("Auth", () => {
       },
       {
         model: "Operator",
-        data: [
-          {
-            user_id: 1,
-          },
-        ],
+        data: [{ user_id: 1 }, { user_id: 2 }],
       },
       {
         model: "Box",
@@ -245,8 +241,9 @@ describe("Auth", () => {
         .post("/auth_user/register")
         .send({
           name: "some name",
+          xusername: "somename@example.com", // FIXME
           username: "somename@example.com",
-          clearPassword: "some password",
+          password: "some password",
           userProfile: { displayName: "Profile Display Name" },
         });
 
@@ -272,8 +269,8 @@ describe("Auth", () => {
     it("should fail when creating user with existing username", async () => {
       const data = {
         name: "some name",
-        xusername: "somename2@example.com", // FIXME we can't reference `username` in another action
-        username: "somename2@example.com",
+        xusername: "somename@example.com", // FIXME remove this when actions can see full fieldset
+        username: "somename@example.com",
         password: "some password",
         userProfile: { displayName: "Profile Display Name" },
       };

@@ -218,11 +218,14 @@ describe("API endpoints", () => {
     });
 
     it("Hook throws generic HTTP error response", async () => {
-      const data = {};
+      const data = {
+        message: "Custom error",
+        status: 505,
+      };
 
       const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
-      expect(response.statusCode).toBe(500);
-      expect(response.text).toBe("Server error");
+      expect(response.statusCode).toBe(505);
+      expect(response.text).toBe("Custom error");
     });
   });
 
