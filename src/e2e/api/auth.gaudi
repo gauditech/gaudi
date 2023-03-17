@@ -1,9 +1,14 @@
-runtime MyRuntime {
+
+auth {
+  method basic {}
+}
+
+runtime TestRuntime {
   sourcePath "./src/e2e/api/hooks"
 }
 
-auth model Operator {
-  field name { type text }
+model Operator {
+  reference user { to AuthUser }
   relation boxes { from Box, through owner }
 }
 
@@ -36,6 +41,24 @@ entrypoint Boxes {
     action {
       create {
         set owner_id @auth.id
+      }
+    }
+  }
+
+  custom endpoint {
+    path "fetchAuthToken"
+    method POST
+    cardinality many
+
+    action {
+      execute {
+        responds
+
+        hook {
+          arg token @requestAuthToken
+
+          source customActionResponds from "hooks.js"
+        }
       }
     }
   }

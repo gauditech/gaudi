@@ -1,195 +1,209 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`compose hooks composes inline hooks 1`] = `
-{
-  "entrypoints": [
-    {
-      "endpoints": [
-        {
-          "actions": [
-            {
-              "alias": "org",
-              "changeset": [
-                {
-                  "name": "name",
-                  "setter": {
-                    "args": [],
-                    "hook": {
-                      "code": {
-                        "inline": ""test name"",
-                        "kind": "inline",
-                      },
-                      "runtimeName": "MyRuntime",
-                    },
-                    "kind": "fieldset-hook",
-                  },
-                },
+exports[`compose hooks action hook 1`] = `
+[
+  {
+    "actions": [
+      {
+        "changeset": [
+          {
+            "name": "termsOfUse",
+            "setter": {
+              "fieldsetAccess": [
+                "termsOfUse",
               ],
-              "kind": "create-one",
-              "model": "Org",
-              "select": [],
-              "targetPath": [
-                "org",
-              ],
+              "kind": "fieldset-virtual-input",
+              "nullable": false,
+              "required": true,
+              "type": "boolean",
+              "validators": [],
             },
-          ],
-          "authSelect": [],
-          "authorize": undefined,
-          "fieldset": {
-            "kind": "record",
-            "nullable": false,
-            "record": {},
           },
-          "kind": "create",
-          "parentContext": [],
-          "response": [
-            {
-              "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "Org",
-                "id",
-              ],
-              "refKey": "Org.id",
-            },
-            {
-              "alias": "name",
-              "kind": "field",
-              "name": "name",
-              "namePath": [
-                "Org",
-                "name",
-              ],
-              "refKey": "Org.name",
-            },
-          ],
-          "target": {
-            "alias": "org",
-            "kind": "model",
-            "name": "Org",
-            "namePath": [
-              "Org",
-            ],
-            "refKey": "Org",
-            "retType": "Org",
-            "select": [],
-          },
-        },
-      ],
-      "entrypoints": [],
-      "name": "Orgs",
-      "target": {
-        "alias": "org",
-        "identifyWith": {
-          "name": "id",
-          "paramName": "org_id",
-          "refKey": "Org.id",
-          "type": "integer",
-        },
-        "kind": "model",
-        "name": "Org",
-        "namePath": [
-          "Org",
         ],
-        "refKey": "Org",
-        "retType": "Org",
-      },
-    },
-  ],
-  "models": [
-    {
-      "aggregates": [],
-      "computeds": [],
-      "dbname": "org",
-      "fields": [
-        {
-          "dbname": "id",
-          "dbtype": "serial",
-          "kind": "field",
-          "modelRefKey": "Org",
-          "name": "id",
-          "nullable": false,
-          "primary": true,
-          "refKey": "Org.id",
-          "type": "integer",
-          "unique": true,
-          "validators": [],
-        },
-        {
-          "dbname": "name",
-          "dbtype": "text",
-          "kind": "field",
-          "modelRefKey": "Org",
-          "name": "name",
-          "nullable": false,
-          "primary": false,
-          "refKey": "Org.name",
-          "type": "text",
-          "unique": false,
-          "validators": [
+        "hook": {
+          "args": [
             {
-              "arg": "name",
-              "hook": {
-                "code": {
-                  "inline": ""test name"",
-                  "kind": "inline",
+              "name": "name",
+              "setter": {
+                "kind": "reference-value",
+                "target": {
+                  "access": [
+                    "name",
+                  ],
+                  "alias": "org",
                 },
-                "runtimeName": "MyRuntime",
               },
-              "name": "hook",
+            },
+            {
+              "name": "terms",
+              "setter": {
+                "kind": "changeset-reference",
+                "referenceName": "termsOfUse",
+              },
             },
           ],
-        },
-      ],
-      "hooks": [
-        {
-          "args": [],
           "hook": {
             "code": {
-              "inline": ""some description"",
-              "kind": "inline",
+              "file": "hooks.js",
+              "kind": "source",
+              "target": "someHook",
             },
             "runtimeName": "MyRuntime",
           },
-          "kind": "model-hook",
-          "name": "description",
-          "refKey": "Org.description",
         },
-      ],
+        "kind": "execute-hook",
+        "responds": false,
+      },
+    ],
+    "authSelect": [],
+    "authorize": undefined,
+    "fieldset": {
+      "kind": "record",
+      "nullable": false,
+      "record": {
+        "termsOfUse": {
+          "kind": "field",
+          "nullable": false,
+          "required": true,
+          "type": "boolean",
+          "validators": [],
+        },
+      },
+    },
+    "kind": "custom-one",
+    "method": "POST",
+    "parentContext": [],
+    "path": "somePath",
+    "responds": true,
+    "response": undefined,
+    "target": {
+      "alias": "org",
+      "identifyWith": {
+        "name": "id",
+        "paramName": "org_id",
+        "refKey": "Org.id",
+        "type": "integer",
+      },
       "kind": "model",
       "name": "Org",
-      "queries": [],
+      "namePath": [
+        "Org",
+      ],
       "refKey": "Org",
-      "references": [],
-      "relations": [],
+      "retType": "Org",
+      "select": [
+        {
+          "alias": "name",
+          "kind": "field",
+          "name": "name",
+          "namePath": [
+            "Org",
+            "name",
+          ],
+          "refKey": "Org.name",
+        },
+      ],
     },
-  ],
-  "populators": [],
-  "resolveOrder": [
-    "Org",
-    "Org.name",
-    "Org.description",
-  ],
-  "runtimes": [
+  },
+]
+`;
+
+exports[`compose hooks composes action hook 1`] = `
+{
+  "changeset": [
     {
-      "default": true,
-      "name": "MyRuntime",
-      "sourcePath": "some/path/to/file",
-      "type": "node",
-    },
-    {
-      "default": false,
-      "name": "$GAUDI_INTERNAL",
-      "sourcePath": "./internalExecutionRuntime",
-      "type": "node",
+      "name": "prop",
+      "setter": {
+        "fieldsetAccess": [
+          "prop",
+        ],
+        "kind": "fieldset-virtual-input",
+        "nullable": false,
+        "required": true,
+        "type": "text",
+        "validators": [],
+      },
     },
   ],
+  "hook": {
+    "args": [
+      {
+        "name": "user",
+        "setter": {
+          "kind": "query",
+          "query": {
+            "filter": {
+              "args": [
+                {
+                  "kind": "alias",
+                  "namePath": [
+                    "Org",
+                    "id",
+                  ],
+                },
+                {
+                  "kind": "literal",
+                  "type": "integer",
+                  "value": 1,
+                },
+              ],
+              "kind": "function",
+              "name": "is",
+            },
+            "fromPath": [
+              "Org",
+            ],
+            "kind": "query",
+            "limit": undefined,
+            "modelRefKey": "Org",
+            "name": "user",
+            "offset": undefined,
+            "orderBy": undefined,
+            "refKey": "N/A",
+            "retType": "Org",
+            "select": [
+              {
+                "alias": "id",
+                "kind": "field",
+                "name": "id",
+                "namePath": [
+                  "Org",
+                  "id",
+                ],
+                "refKey": "Org.id",
+              },
+              {
+                "alias": "name",
+                "kind": "field",
+                "name": "name",
+                "namePath": [
+                  "Org",
+                  "name",
+                ],
+                "refKey": "Org.name",
+              },
+            ],
+          },
+        },
+      },
+    ],
+    "hook": {
+      "code": {
+        "file": "hooks/auth",
+        "kind": "source",
+        "target": "login",
+      },
+      "runtimeName": "@GAUDI_INTERNAL",
+    },
+  },
+  "kind": "execute-hook",
+  "responds": false,
 }
 `;
 
 exports[`compose hooks composes source hooks 1`] = `
 {
+  "authenticator": undefined,
   "entrypoints": [
     {
       "endpoints": [
@@ -371,7 +385,7 @@ exports[`compose hooks composes source hooks 1`] = `
     },
     {
       "default": false,
-      "name": "$GAUDI_INTERNAL",
+      "name": "@GAUDI_INTERNAL",
       "sourcePath": "./internalExecutionRuntime",
       "type": "node",
     },
@@ -451,5 +465,194 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
     "retType": "Org",
     "select": [],
   },
+}
+`;
+
+exports[`compose hooks inline hooks 1`] = `
+{
+  "authenticator": undefined,
+  "entrypoints": [
+    {
+      "endpoints": [
+        {
+          "actions": [
+            {
+              "alias": "org",
+              "changeset": [
+                {
+                  "name": "name",
+                  "setter": {
+                    "args": [],
+                    "hook": {
+                      "code": {
+                        "inline": ""test name"",
+                        "kind": "inline",
+                      },
+                      "runtimeName": "MyRuntime",
+                    },
+                    "kind": "fieldset-hook",
+                  },
+                },
+              ],
+              "kind": "create-one",
+              "model": "Org",
+              "select": [],
+              "targetPath": [
+                "org",
+              ],
+            },
+          ],
+          "authSelect": [],
+          "authorize": undefined,
+          "fieldset": {
+            "kind": "record",
+            "nullable": false,
+            "record": {},
+          },
+          "kind": "create",
+          "parentContext": [],
+          "response": [
+            {
+              "alias": "id",
+              "kind": "field",
+              "name": "id",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+              "refKey": "Org.id",
+            },
+            {
+              "alias": "name",
+              "kind": "field",
+              "name": "name",
+              "namePath": [
+                "Org",
+                "name",
+              ],
+              "refKey": "Org.name",
+            },
+          ],
+          "target": {
+            "alias": "org",
+            "kind": "model",
+            "name": "Org",
+            "namePath": [
+              "Org",
+            ],
+            "refKey": "Org",
+            "retType": "Org",
+            "select": [],
+          },
+        },
+      ],
+      "entrypoints": [],
+      "name": "Orgs",
+      "target": {
+        "alias": "org",
+        "identifyWith": {
+          "name": "id",
+          "paramName": "org_id",
+          "refKey": "Org.id",
+          "type": "integer",
+        },
+        "kind": "model",
+        "name": "Org",
+        "namePath": [
+          "Org",
+        ],
+        "refKey": "Org",
+        "retType": "Org",
+      },
+    },
+  ],
+  "models": [
+    {
+      "aggregates": [],
+      "computeds": [],
+      "dbname": "org",
+      "fields": [
+        {
+          "dbname": "id",
+          "dbtype": "serial",
+          "kind": "field",
+          "modelRefKey": "Org",
+          "name": "id",
+          "nullable": false,
+          "primary": true,
+          "refKey": "Org.id",
+          "type": "integer",
+          "unique": true,
+          "validators": [],
+        },
+        {
+          "dbname": "name",
+          "dbtype": "text",
+          "kind": "field",
+          "modelRefKey": "Org",
+          "name": "name",
+          "nullable": false,
+          "primary": false,
+          "refKey": "Org.name",
+          "type": "text",
+          "unique": false,
+          "validators": [
+            {
+              "arg": "name",
+              "hook": {
+                "code": {
+                  "inline": ""test name"",
+                  "kind": "inline",
+                },
+                "runtimeName": "MyRuntime",
+              },
+              "name": "hook",
+            },
+          ],
+        },
+      ],
+      "hooks": [
+        {
+          "args": [],
+          "hook": {
+            "code": {
+              "inline": ""some description"",
+              "kind": "inline",
+            },
+            "runtimeName": "MyRuntime",
+          },
+          "kind": "model-hook",
+          "name": "description",
+          "refKey": "Org.description",
+        },
+      ],
+      "kind": "model",
+      "name": "Org",
+      "queries": [],
+      "refKey": "Org",
+      "references": [],
+      "relations": [],
+    },
+  ],
+  "populators": [],
+  "resolveOrder": [
+    "Org",
+    "Org.name",
+    "Org.description",
+  ],
+  "runtimes": [
+    {
+      "default": true,
+      "name": "MyRuntime",
+      "sourcePath": "some/path/to/file",
+      "type": "node",
+    },
+    {
+      "default": false,
+      "name": "@GAUDI_INTERNAL",
+      "sourcePath": "./internalExecutionRuntime",
+      "type": "node",
+    },
+  ],
 }
 `;

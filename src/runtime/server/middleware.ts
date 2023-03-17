@@ -51,6 +51,9 @@ export function errorHandler(error: unknown, _req: Request, resp: Response, _nex
 
 /** Simple request logger */
 export function requestLogger(req: Request, resp: Response, next: NextFunction) {
+  req.on("data", () => {
+    console.log(`[ENTRY] ${req.method} ${req.originalUrl}`);
+  });
   resp.on("finish", () => {
     console.log(`[REQ] ${req.method} ${req.originalUrl} ${resp.statusCode}`);
   });

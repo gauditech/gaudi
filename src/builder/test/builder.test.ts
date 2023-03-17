@@ -6,7 +6,8 @@ describe("builder", () => {
   describe("build DB schema", () => {
     it("renders DB schema template correctly", async () => {
       const data = {
-        definition: definition as Definition,
+        // undefined values cannot be defined in JSON so we need to define atuhenticator here to satisfy interface
+        definition: { ...definition, authenticator: undefined } as Definition,
         dbProvider: "DB_PROVIDER",
         dbConnectionUrl: "DB_CONNECTION_URL",
       };

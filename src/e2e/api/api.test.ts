@@ -138,6 +138,95 @@ describe("API endpoints", () => {
       // custom endpoint return empty body so we can check only status
       expect(postResp.statusCode).toBe(204);
     });
+
+    // --- hook action
+
+    it("custom one action", async () => {
+      const data = { name: "Org Custom One", counter: 1 };
+      const postResp = await request(getServer()).post("/org/org1/customOneAction").send(data);
+
+      expect(postResp.statusCode).toBe(204);
+      // header should contain the same data sent we've sent
+      expect(postResp.get("Gaudi-Test-body")).toBe(JSON.stringify(data));
+    });
+
+    it("custom many action", async () => {
+      const data = { name: "Org Custom Many", counter: 1 };
+      const postResp = await request(getServer()).patch("/org/customManyAction").send(data);
+
+      expect(postResp.statusCode).toBe(204);
+      // header should contain the same data sent we've sent
+      expect(postResp.get("Gaudi-Test-body")).toBe(JSON.stringify(data));
+    });
+
+    // --- hook action that responds
+
+    it("custom one endpoint - action responds", async () => {
+      const data = { name: "Org Custom One", counter: 1 };
+      const postResp = await request(getServer())
+        .post("/org/org1/customOneActionResponds")
+        .send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchInlineSnapshot(`
+        {
+          "counter": 1,
+          "name": "Org Custom One",
+        }
+      `);
+    });
+
+    it("custom many endpoint - action responds", async () => {
+      const data = { name: "Org Custom Many", counter: 1 };
+      const postResp = await request(getServer()).patch("/org/customManyActionResponds").send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchInlineSnapshot(`
+        {
+          "counter": 1,
+          "name": "Org Custom Many",
+        }
+      `);
+    });
+
+    // --- hook action with query
+
+    it("custom one endpoint - action with query", async () => {
+      const data = { name: "Org 1", orgId: 1 };
+      const postResp = await request(getServer()).post("/org/org1/customOneQueryAction").send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchSnapshot();
+    });
+
+    it("custom endpoint - fetch action", async () => {
+      const data = { name: "Fetch me org 1" };
+      const postResp = await request(getServer()).post("/org/org1/customFetchAction").send(data);
+
+      expect(postResp.statusCode).toBe(200);
+      expect(postResp.body).toMatchSnapshot();
+    });
+
+    // --- hook error
+
+    it("Hook throws specific HTTP error response", async () => {
+      const data = { status: 451, code: "UNAVAILABLE", message: "Unavailable For Legal Reasons" };
+
+      const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
+      expect(response.statusCode).toBe(data.status);
+      expect(response.text).toEqual(data.message);
+    });
+
+    it("Hook throws generic HTTP error response", async () => {
+      const data = {
+        message: "Custom error",
+        status: 505,
+      };
+
+      const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
+      expect(response.statusCode).toBe(505);
+      expect(response.text).toBe("Custom error");
+    });
   });
 
   describe("Repo", () => {

@@ -1,12 +1,12 @@
 import { BinaryOperator } from "./ast";
 
 export type Definition = {
-  auth?: AuthDef;
   models: ModelDef[];
   entrypoints: EntrypointDef[];
   resolveOrder: string[];
   populators: PopulatorDef[];
   runtimes: ExecutionRuntimeDef[];
+  authenticator: AuthenticatorDef | undefined;
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -125,7 +125,17 @@ export type LiteralValueDef =
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: NaiveType };
 type TypedVariable = { kind: "variable"; type?: NaiveType; name: string };
 
-export type FunctionName = BinaryOperator | "length" | "concat";
+export type FunctionName =
+  | BinaryOperator
+  | "length"
+  | "concat"
+  | "lower"
+  | "upper"
+  | "now"
+  | "cryptoHash"
+  | "cryptoCompare"
+  | "cryptoToken"
+  | "stringify";
 
 export type TypedFunction = {
   kind: "function";
@@ -245,6 +255,7 @@ export type CustomOneEndpointDef = {
   authorize: TypedExprDef;
   fieldset?: FieldsetDef;
   response: undefined;
+  responds: boolean;
 };
 
 export type CustomManyEndpointDef = {
@@ -258,6 +269,7 @@ export type CustomManyEndpointDef = {
   authorize: TypedExprDef;
   fieldset?: FieldsetDef;
   response: undefined;
+  responds: boolean;
 };
 
 export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
@@ -419,7 +431,12 @@ type IntConst = { type: "integer"; value: number };
 type TextConst = { type: "text"; value: string };
 type NullConst = { type: "null"; value: null };
 
-export type ActionDef = CreateOneAction | UpdateOneAction | DeleteOneAction;
+export type ActionDef =
+  | CreateOneAction
+  | UpdateOneAction
+  | DeleteOneAction
+  | ExecuteHookAction
+  | FetchOneAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -449,6 +466,26 @@ export type DeleteOneAction = {
 type DeleteManyAction = {
   kind: "delete-many";
   filter: TypedExprDef;
+};
+
+export type ExecuteHookAction = {
+  kind: "execute-hook";
+  changeset: ChangesetDef;
+  hook: ActionHookDef;
+  responds: boolean;
+};
+
+export type FetchOneAction = {
+  kind: "fetch-one";
+  alias: string;
+  model: string;
+  changeset: ChangesetDef;
+  query: QueryDef;
+};
+
+export type ActionHookDef = {
+  hook: HookDef;
+  args: ChangesetDef;
 };
 
 export type ChangesetDef = ChangesetOperationDef[];
@@ -517,6 +554,11 @@ export type FieldSetterChangesetReference = {
   referenceName: string;
 };
 
+export type FieldSetterHttpHandler = {
+  kind: "request-auth-token";
+  access: string[];
+};
+
 export type FieldSetterFunction = {
   kind: "function";
   name: FunctionName; // TODO rename to `fnName` to make it more clear, see line 124 as well
@@ -534,6 +576,11 @@ export type FieldSetterHook = {
   args: ChangesetDef;
 };
 
+export type FieldSetterQuery = {
+  kind: "query";
+  query: QueryDef;
+};
+
 export type FieldSetter =
   // TODO add composite expression setter
   | LiteralValueDef
@@ -543,8 +590,10 @@ export type FieldSetter =
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
   | FieldSetterHook
+  | FieldSetterHttpHandler
   | FieldSetterFunction
-  | FieldSetterContextReference;
+  | FieldSetterContextReference
+  | FieldSetterQuery;
 
 export type HookDef = {
   runtimeName: string;
@@ -563,3 +612,23 @@ export type ExecutionRuntimeDef = {
 };
 
 export type RuntimeEngineType = "node";
+
+// ---------- authenticator
+
+export type AuthenticatorDef = {
+  name: string;
+  authUserModel: AuthenticatorNamedModelDef;
+  accessTokenModel: AuthenticatorNamedModelDef;
+  method: AuthenticatorMethodDef;
+};
+
+export type AuthenticatorNamedModelDef = {
+  name: string;
+  refKey: string;
+};
+
+export type AuthenticatorMethodDef = AuthenticatorBasicMethodDef;
+
+export type AuthenticatorBasicMethodDef = {
+  kind: "basic";
+};

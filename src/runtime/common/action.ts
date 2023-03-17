@@ -1,12 +1,19 @@
-import { applyFilterIdInContext, queryTreeFromParts, transformSelectPath } from "../query/build";
-import { executeQueryTree } from "../query/exec";
+import {
+  applyFilterIdInContext,
+  buildQueryTree,
+  queryTreeFromParts,
+  transformSelectPath,
+} from "../query/build";
+import { createQueryExecutor, executeQueryTree } from "../query/exec";
 
 import { ValidReferenceIdResult } from "./constraintValidation";
 
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { assertUnreachable } from "@src/common/utils";
-import { buildChangeset } from "@src/runtime/common/changeset";
+import { assertUnreachable, ensureExists } from "@src/common/utils";
+import { buildChangeset, buildStrictChangeset } from "@src/runtime/common/changeset";
+import { HookActionContext, executeActionHook } from "@src/runtime/hooks";
 import { DbConn } from "@src/runtime/server/dbConn";
+import { HookError } from "@src/runtime/server/error";
 import { Vars } from "@src/runtime/server/vars";
 import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition";
 
@@ -16,27 +23,51 @@ export type ActionContext = {
   referenceIds: ValidReferenceIdResult[];
 };
 
+export async function executeEndpointActions(
+  def: Definition,
+  dbConn: DbConn,
+  ctx: ActionContext,
+  epCtx: HookActionContext,
+  actions: ActionDef[]
+) {
+  //
+  return _internalExecuteActions(def, dbConn, ctx, epCtx, actions);
+}
 export async function executeActions(
   def: Definition,
   dbConn: DbConn,
   ctx: ActionContext,
   actions: ActionDef[]
 ) {
-  for (const action of actions) {
-    const model = getRef.model(def, action.model);
-    const dbModel = model.dbname;
+  return _internalExecuteActions(def, dbConn, ctx, undefined, actions);
+}
+async function _internalExecuteActions(
+  def: Definition,
+  dbConn: DbConn,
+  ctx: ActionContext,
+  epCtx: HookActionContext | undefined,
+  actions: ActionDef[]
+) {
+  const qx = createQueryExecutor(dbConn);
 
+  for (const action of actions) {
     const actionKind = action.kind;
     if (actionKind === "create-one") {
-      const changesetData = await buildChangeset(def, action.changeset, ctx);
-      const dbData = dataToFieldDbnames(model, changesetData);
+      const model = getRef.model(def, action.model);
+      const dbModel = model.dbname;
+
+      const actionChangeset = await buildStrictChangeset(def, qx, epCtx, action.changeset, ctx);
+      const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const id = await insertData(dbConn, dbModel, dbData);
       const deps = await fetchActionDeps(def, dbConn, action, id);
       deps && ctx.vars.set(action.alias, deps[0]);
     } else if (actionKind === "update-one") {
-      const changesetData = await buildChangeset(def, action.changeset, ctx);
-      const dbData = dataToFieldDbnames(model, changesetData);
+      const model = getRef.model(def, action.model);
+      const dbModel = model.dbname;
+
+      const actionChangeset = await buildStrictChangeset(def, qx, epCtx, action.changeset, ctx);
+      const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const targetId = resolveTargetId(ctx, action.targetPath);
 
@@ -44,9 +75,44 @@ export async function executeActions(
       const deps = await fetchActionDeps(def, dbConn, action, id);
       deps && ctx.vars.set(action.alias, deps[0]);
     } else if (actionKind === "delete-one") {
+      const model = getRef.model(def, action.model);
+      const dbModel = model.dbname;
+
       const targetId = resolveTargetId(ctx, action.targetPath);
 
       await deleteData(dbConn, dbModel, targetId);
+    } else if (actionKind === "fetch-one") {
+      const changeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
+
+      const qt = buildQueryTree(def, action.query);
+      // FIXME this ugly
+      const varsObj = Object.fromEntries(
+        Object.keys(changeset).map((k) => [`___changeset___${k}`, changeset[k]])
+      );
+      varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
+
+      const result = await qx.executeQueryTree(def, qt, new Vars(varsObj), []);
+      const resultOne = result[0]; // extract the first record since this is "fetch-ONE"
+
+      resultOne && ctx.vars.set(action.alias, resultOne);
+    } else if (actionKind === "execute-hook") {
+      ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
+
+      const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
+      const argsChangeset = await buildChangeset(
+        def,
+        qx,
+        epCtx,
+        action.hook.args,
+        ctx,
+        actionChangeset
+      );
+
+      try {
+        await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
+      } catch (err) {
+        throw new HookError(err);
+      }
     } else {
       assertUnreachable(actionKind);
     }

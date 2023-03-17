@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Populator | ExecutionRuntime), ";">
+    = NewlineBody<(Model | Entrypoint | Populator | ExecutionRuntime | Authenticator), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -11,7 +11,7 @@ Gaudi {
   // Model grammar
   // ********************
 
-  Model = "auth"? "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
+  Model = "model" IdentifierWithAs "{" NewlineBody<ModelBody, ";"> "}"
 
   ModelBody
     = Field
@@ -157,21 +157,25 @@ Gaudi {
     | "validate" "{" NonemptyNewlineBody<Validator, ","> "}"  -- validate
 
 
-  ActionKind = "create" | "update" | "delete"
+  ActionKind = "create" | "update" | "delete" | "execute" | "fetch"
   ActionBody
-    = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                     -- default
-    | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                      -- named
-    | ActionKind IdentifierPath "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"      -- aliased
+    = ActionKind "{" NewlineBody<ActionAtomBody, ";"> "}"                                 -- default
+    | ActionKind "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"                 -- aliased
+    | ActionKind IdentifierPath "{" NewlineBody<ActionAtomBody, ";"> "}"                  -- named
+    | ActionKind IdentifierPath "as" identifier "{" NewlineBody<ActionAtomBody, ";"> "}"  -- named_aliased
 
 
   ActionAtomBody
     = "set" identifier Hook                                                         -- set_hook
+    | "set" identifier QueryAtom                                                    -- set_query
     | "set" identifier QueryExp                                                     -- set_expression
     | "reference" identifier "through" identifier                                   -- reference
     | "virtual input" identifier "{" NonemptyNewlineBody<VirtualInputBody, ","> "}" -- virtual_input
     | "input" "{" NewlineBody<ActionInputAtom, ","> "}"                             -- input
     | "deny" DenyList                                                               -- deny
-    | ActionBody                                                                    -- nested_action
+    | "responds"                                                                    -- responds
+    | Hook                                                                          -- hook
+    | QueryAtom                                                                     -- query
 
   ActionInputAtom
     = identifier "{" NewlineBody<ActionInputOpt, ","> "}" -- field_with_opts
@@ -195,14 +199,14 @@ Gaudi {
 
   HookBody
   = "default" "arg" identifier          -- argument_default
-  | "arg" identifier HookQuery          -- argument_query
+  | "arg" identifier QueryAtom          -- argument_query
   | "arg" identifier QueryExp           -- argument_expression
   | "returns" identifier                -- return_type
   | "source" identifier "from" string   -- source
   | "inline" multiLineString            -- inline
   | "runtime" identifier                -- executionRuntime
 
-  HookQuery
+  QueryAtom
     = "query" "{" NonemptyNewlineBody<QueryBody, ","> "}"
 
   IdentifierPath = identifier ("." identifier)*
@@ -300,4 +304,16 @@ Gaudi {
   ExecutionRuntimeBody
    = "sourcePath" string  -- sourcePath
    | "default"            -- default
+
+
+  // Authenticator grammar
+  // ********************
+
+  Authenticator = "auth" "{" NonemptyNewlineBody<AuthenticatorBodyAtom, ","> "}"
+
+  AuthenticatorBodyAtom
+   = "method" "basic" "{" NewlineBody<AuthenticatorBasicMethodBodyAtom, ","> "}" -- methodBasic
+
+  AuthenticatorBasicMethodBodyAtom
+   =  -- empty
 }

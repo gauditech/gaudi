@@ -1,13 +1,19 @@
+import crypto from "crypto";
+
+import bcrypt, { hash } from "bcrypt";
+
 import { compose } from "@src/composer/composer";
 import { getTypedLiteralValue } from "@src/composer/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
+  buildStrictChangeset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
+import { mockQueryExecutor } from "@src/runtime/common/testUtils";
 import { Vars } from "@src/runtime/server/vars";
 import {
   ChangesetDef,
@@ -20,6 +26,30 @@ import {
 
 describe("runtime", () => {
   describe("changeset", () => {
+    // mock Date to prevent changing snaps on each run
+    const originalBcryptHash = hash;
+
+    beforeAll(() => {
+      // mock `Date.now`
+      const fixedTimestamp = 1677513237728;
+      jest.spyOn(Date, "now").mockImplementation(() => fixedTimestamp);
+
+      // mock `bcrypt.hash`
+      const fixedSalt = "$2a$10$rNj8LXd0g..DWYMzvq4DrO"; // this was generated manually by callin `bcrypt.getSaltSync(10)`
+      jest.spyOn(bcrypt, "hash").mockImplementation(async (pass, _salt) => {
+        // call with fixed mock to get consistent results
+        return await originalBcryptHash(pass, fixedSalt);
+      });
+
+      // mock `crypto.randomBytes`
+      jest.spyOn(crypto, "randomBytes").mockImplementation((size: number) => {
+        return "x".repeat(size);
+      });
+    });
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
     it("build action changeset object", async () => {
       const data: ChangesetDef = [
         {
@@ -98,8 +128,52 @@ describe("runtime", () => {
         referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
       };
 
-      expect(await buildChangeset(createTestDefinition(), data, context)).toMatchSnapshot();
+      expect(
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
+      ).toMatchSnapshot();
     });
+
+    it("build strict action changeset object", async () => {
+      const data: ChangesetDef = [
+        // lept field
+        {
+          name: "input_prop",
+          setter: { kind: "literal", value: "just value", type: "text" },
+        },
+        // removed virtual/transient fileds
+        {
+          name: "virtual_input_prop",
+          setter: {
+            fieldsetAccess: ["virtual_input_prop"],
+            kind: "fieldset-virtual-input",
+            type: "text",
+            required: false,
+            nullable: false,
+            validators: [],
+          },
+        },
+      ];
+
+      const context: ActionContext = {
+        input: {
+          input_prop: "input value",
+          virtual_input_prop: "virtual input value",
+        },
+        vars: new Vars(),
+        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
+      };
+
+      expect(
+        await buildStrictChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          data,
+          context
+        )
+      ).toMatchSnapshot();
+    });
+
     it("calculate changeset arithmetic operations", async () => {
       const mkRef = (referenceName: string): FieldSetterChangesetReference => ({
         kind: "changeset-reference",
@@ -142,13 +216,51 @@ describe("runtime", () => {
           setter: mkFn("concat", [mkRef("foo"), getTypedLiteralValue(" "), mkRef("bar")]),
         },
         { name: "length", setter: mkFn("length", [mkRef("foo")]) },
+        { name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
+        { name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
+        { name: "now", setter: mkFn("now", []) },
+        { name: "stringify", setter: mkFn("stringify", [getTypedLiteralValue(1234)]) },
+        {
+          name: "cryptoHash",
+          setter: mkFn("cryptoHash", [
+            getTypedLiteralValue("1234567890"),
+            getTypedLiteralValue(10),
+          ]),
+        },
+        {
+          name: "cryptoCompare",
+          setter: mkFn("cryptoCompare", [
+            getTypedLiteralValue("1234567890"),
+            getTypedLiteralValue("$2b$10$yvIRy64TPxhnvXWcV0IReeFux.3uDoiR/H5bu5YsEqIkGroqk7To."),
+          ]),
+        },
+        // invalid password
+        {
+          name: "cryptoCompareFailed",
+          setter: mkFn("cryptoCompare", [
+            getTypedLiteralValue("1234567890"),
+            getTypedLiteralValue("invalid hash"),
+          ]),
+        },
+        {
+          name: "cryptoToken",
+          setter: mkFn("cryptoToken", [getTypedLiteralValue(32)]),
+        },
       ];
       const context: ActionContext = {
         input: {},
         vars: new Vars(),
         referenceIds: [],
       };
-      expect(await buildChangeset(createTestDefinition(), changeset, context)).toMatchSnapshot();
+      expect(
+        await buildChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          changeset,
+          context
+        )
+      ).toMatchSnapshot();
     });
   });
 
@@ -223,6 +335,7 @@ function createTestDefinition(): Definition {
         sourcePath: "./src/runtime/test/hooks",
       },
     ],
+    authenticator: undefined,
   });
 
   return def;

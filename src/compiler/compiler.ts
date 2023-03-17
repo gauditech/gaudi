@@ -1,14 +1,20 @@
 import _ from "lodash";
 
 import { CompilerError } from "@src/common/error";
-import { assertUnreachable, ensureExists } from "@src/common/utils";
+import { FilteredKind, kindFilter, kindFind } from "@src/common/patternFilter";
+import { UnreachableError, assertUnreachable, ensureEqual, ensureExists } from "@src/common/utils";
 import {
   AST,
-  ActionBodyAST,
+  AnyActionAtomAST,
+  AnyActionBodyAST,
+  AuthenticatorAST,
+  AuthenticatorBodyAtomAST,
+  AuthenticatorMethodBodyAtomAST,
   ComputedAST,
   EndpointAST,
   EndpointCardinality,
   EndpointMethod,
+  EndpointTypeAST,
   EntrypointAST,
   ExecutionRuntimeAST,
   ExpAST,
@@ -28,10 +34,13 @@ import {
   VirtualInputAtomASTValidator,
 } from "@src/types/ast";
 import {
-  ActionAtomSpec,
+  AUTH_TARGET_MODEL_NAME,
+  ActionAtomSpecSet,
   ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
+  AuthenticatorMethodSpec,
+  AuthenticatorSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
@@ -42,6 +51,7 @@ import {
   HookCodeSpec,
   HookSpec,
   InputFieldSpec,
+  ModelActionAtomSpec,
   ModelHookSpec,
   ModelSpec,
   PopulateSetterSpec,
@@ -267,7 +277,6 @@ function compileModel(model: ModelAST): ModelSpec {
 
   return {
     name: model.name,
-    isAuth: model.isAuth,
     alias: model.alias,
     fields,
     references,
@@ -279,61 +288,225 @@ function compileModel(model: ModelAST): ModelSpec {
   };
 }
 
-function compileAction(action: ActionBodyAST): ActionSpec {
-  const atoms = action.atoms.map((a): ActionAtomSpec => {
-    switch (a.kind) {
-      case "action": {
-        return { kind: "action", body: compileAction(a.body) };
-      }
-      case "deny":
-      case "reference":
-        return a;
-      case "set": {
-        switch (a.set.kind) {
-          case "hook": {
-            return { ...a, set: { kind: "hook", hook: compileActionHook(a.set.hook) } };
-          }
-          case "expression": {
-            return { ...a, set: { kind: "expression", exp: compileQueryExp(a.set.exp) } };
-          }
-          default: {
-            return assertUnreachable(a.set);
-          }
+function compileAnyAction(action: AnyActionBodyAST, endpointType: EndpointTypeAST): ActionSpec {
+  switch (action.kind) {
+    case "create":
+    case "update": {
+      return compileModelAction(action);
+    }
+    case "delete":
+      return compileDeleteAction(action);
+    case "fetch":
+      return compileFetchAction(action);
+    case "execute":
+      return compileExecuteAction(action, endpointType);
+  }
+}
+
+function compileModelAction(ast: AnyActionBodyAST): FilteredKind<ActionSpec, "create" | "update"> {
+  if (ast.kind === "create" || ast.kind === "update") {
+    // compile atoms
+    return {
+      kind: ast.kind,
+      alias: ast.alias,
+      targetPath: ast.target,
+      actionAtoms: ast.atoms.map(_.unary(compileModelActionAtom)),
+      // interval: ast.interval,
+    };
+  } else {
+    throw new UnreachableError(`${ast.kind} is not a valid model action`);
+  }
+}
+
+function compileDeleteAction(ast: AnyActionBodyAST): FilteredKind<ActionSpec, "delete"> {
+  if (ast.kind === "delete") {
+    if (ast.alias) {
+      throw new CompilerError(
+        `Delete target action cannot make an alias; remove "as ${ast.alias}"`,
+        ast
+      );
+    }
+
+    return {
+      kind: ast.kind,
+      targetPath: ast.target,
+      // interval: ast.interval,
+    };
+  } else {
+    throw new UnreachableError(`${ast.kind} is not a valid delete action`);
+  }
+}
+
+function compileExecuteAction(
+  ast: AnyActionBodyAST,
+  endpointType: EndpointTypeAST
+): FilteredKind<ActionSpec, "execute"> {
+  if (ast.kind === "execute") {
+    const atoms = ast.atoms.map((a) => {
+      switch (a.kind) {
+        case "virtual-input": {
+          return compileVirtualInput(a);
+        }
+        case "responds": {
+          return { kind: "responds" as const };
+        }
+        case "hook": {
+          return { kind: "hook" as const, hook: compileActionHook(a.hook) };
+        }
+        // case "set": {
+        //   return compileSetter(a);
+        // }
+        default: {
+          throw new CompilerError(`${a.kind} is not a valid execute atom`, a);
         }
       }
-      case "virtual-input": {
-        return compileVirtualInput(a);
+    });
+
+    const responds = kindFilter(atoms, "responds").length > 0;
+    if (responds) {
+      ensureEqual(
+        _.includes<EndpointTypeAST>(["custom", "custom"], endpointType),
+        true,
+        `Actions with "responds" keyword are allowed only in "custom" endpoints, not in "${endpointType}"`
+      );
+    }
+    const bodyAtoms = kindFilter(atoms, "virtual-input");
+    const hook = kindFind(atoms, "hook");
+    if (!hook) {
+      throw new CompilerError(`Execute action must have a hook`, ast);
+    }
+    if (hook.hook.code.kind === "inline") {
+      throw new Error(`Inline hooks cannot be used for "execute" actions`); // fixme compiler error
+    }
+
+    // do not allow any other kinds of atoms
+    ast.atoms.forEach((atom) => {
+      switch (atom.kind) {
+        case "responds":
+        case "hook":
+        case "virtual-input":
+          return;
+        default:
+          throw new CompilerError(`${atom.kind} is not a valid execute action atom`, atom);
       }
-      case "input": {
-        const fields = a.fields.map((f): InputFieldSpec => {
-          const defaults = f.opts
-            .filter((o): o is Exclude<InputFieldOptAST, { kind: "optional" }> =>
-              o.kind.startsWith("default")
-            )
-            .map((o): InputFieldSpec["default"] => {
-              switch (o.kind) {
-                case "default-value": {
-                  return { kind: "literal", value: o.value };
-                }
-                case "default-reference": {
-                  return { kind: "reference", reference: o.path };
-                }
-              }
-            });
-          if (defaults.length > 1) {
-            throw new CompilerError(`Multiple 'default' for a field is not allowed`);
-          }
-          const optionals = f.opts.filter((o) => o.kind === "optional");
-          if (optionals.length > 1) {
-            throw new CompilerError(`Multiple 'optional' for a field is not allowed`);
-          }
-          return { name: f.name, default: defaults[0], optional: !_.isEmpty(optionals) };
-        });
-        return { kind: "input-list", fields };
-      }
+    });
+
+    return {
+      kind: ast.kind,
+      alias: ast.alias,
+      atoms: bodyAtoms,
+      responds,
+      hook: hook.hook,
+      // interval: ast.interval
+    };
+  } else {
+    throw new UnreachableError(`${ast.kind} is not a valid delete action`);
+  }
+}
+
+function compileFetchAction(ast: AnyActionBodyAST): FilteredKind<ActionSpec, "fetch"> {
+  const queryAtoms = kindFilter(ast.atoms, "query");
+
+  if (queryAtoms.length === 0) {
+    throw new CompilerError(`"query" atom is required in fetch actions`, ast);
+  } else if (queryAtoms.length > 1) {
+    throw new CompilerError(`Duplicate "query" atom found`, queryAtoms[1]);
+  }
+  const query = queryAtoms[0];
+
+  const virtuals = kindFilter(ast.atoms, "virtual-input");
+
+  // do not allow any other kinds of atoms
+  ast.atoms.forEach((atom) => {
+    switch (atom.kind) {
+      case "query":
+      case "virtual-input":
+        return;
+      default:
+        throw new CompilerError(`${atom.kind} is not a valid execute action atom`, atom);
     }
   });
-  return { kind: action.kind, targetPath: action.target, actionAtoms: atoms, alias: action.alias };
+
+  if (ast.kind === "fetch") {
+    return {
+      kind: ast.kind,
+      alias: ast.alias,
+      query: compileQuery({ kind: "query", body: query.body, name: "$query" }),
+      atoms: virtuals.map(_.unary(compileVirtualInput)),
+      // interval: ast.interval,
+    };
+  } else {
+    throw new UnreachableError(`${ast.kind} is not a valid fetch action`);
+  }
+}
+
+function compileModelActionAtom(atom: AnyActionAtomAST): ModelActionAtomSpec {
+  switch (atom.kind) {
+    case "input": {
+      const fields = atom.fields.map((f): InputFieldSpec => {
+        const defaults = f.opts
+          .filter((o): o is Exclude<InputFieldOptAST, { kind: "optional" }> =>
+            o.kind.startsWith("default")
+          )
+          .map((o): InputFieldSpec["default"] => {
+            switch (o.kind) {
+              case "default-value": {
+                return { kind: "literal", value: o.value };
+              }
+              case "default-reference": {
+                return { kind: "reference", reference: o.path };
+              }
+            }
+          });
+        if (defaults.length > 1) {
+          throw new CompilerError(`Multiple 'default' for a field is not allowed`);
+        }
+        const optionals = f.opts.filter((o) => o.kind === "optional");
+        if (optionals.length > 1) {
+          throw new CompilerError(`Multiple 'optional' for a field is not allowed`);
+        }
+        return { name: f.name, default: defaults[0], optional: !_.isEmpty(optionals) };
+      });
+      return { kind: "input-list", fields };
+    }
+    case "virtual-input": {
+      return compileVirtualInput(atom);
+    }
+    case "deny":
+    case "reference":
+      return atom;
+    case "set": {
+      return compileSetter(atom);
+    }
+    case "hook":
+    case "query":
+    case "responds": {
+      throw new CompilerError(`${atom.kind} is not a valid model action`, atom);
+    }
+    default: {
+      return assertUnreachable(atom);
+    }
+  }
+}
+
+function compileSetter(atom: FilteredKind<AnyActionAtomAST, "set">): ActionAtomSpecSet {
+  switch (atom.set.kind) {
+    case "hook": {
+      return { ...atom, set: { kind: "hook", hook: compileActionHook(atom.set.hook) } };
+    }
+    case "expression": {
+      return { ...atom, set: { kind: "expression", exp: compileQueryExp(atom.set.exp) } };
+    }
+    case "query": {
+      return {
+        ...atom,
+        set: { kind: "query", query: compileQuery({ ...atom.set, name: atom.target }) },
+      };
+    }
+    default: {
+      return assertUnreachable(atom.set);
+    }
+  }
 }
 
 function compileVirtualInput(input: VirtualInputAST): ActionAtomSpecVirtualInput {
@@ -366,7 +539,7 @@ function compileEndpoint(endpoint: EndpointAST): EndpointSpec {
 
   endpoint.body.map((b) => {
     if (b.kind === "action-block") {
-      actions = b.atoms.map(compileAction);
+      actions = b.atoms.map((action) => compileAnyAction(action, endpoint.type));
     } else if (b.kind === "authorize") {
       authorize = compileQueryExp(b.expression);
     } else if (b.kind === "cardinality") {
@@ -497,7 +670,7 @@ function compileModelHook(hook: HookAST): ModelHookSpec {
       // hook query has a generated name with pattern -> HOOK_NAME:ARG_NAME
       // placeholder name, not actually used FIXME
       const queryName = `${name}:${b.name}`;
-      const query = compileQuery({ ...b.value.query, name: queryName }, []);
+      const query = compileQuery({ ...b.value, name: queryName }, []);
       args.push({ name: b.name, query });
     }
   });
@@ -515,6 +688,8 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
     if (b.kind === "arg") {
       if (b.value.kind === "expression") {
         args[b.name] = { kind: "expression", exp: compileQueryExp(b.value.exp) };
+      } else if (b.value.kind === "query") {
+        args[b.name] = { kind: "query", query: compileQuery({ ...b.value, name: b.name }) };
       } else {
         throw new CompilerError("Invalid `hook` type for this context", b);
       }
@@ -522,16 +697,6 @@ function compileActionHook(hook: HookAST): ActionHookSpec {
   });
 
   return { ...baseHook, name, args };
-}
-
-function checkMaxOneAuthModel(models: ModelSpec[]) {
-  const authModels = models.filter((m) => m.isAuth);
-  if (authModels.length > 1) {
-    throw new CompilerError(
-      "Default `auth model` already defined! There can be maximum of 1 `auth model`",
-      authModels[1]
-    );
-  }
 }
 
 function compilePopulator(populator: PopulatorAST): PopulatorSpec {
@@ -643,11 +808,49 @@ function compileExecutionRuntime(runtime: ExecutionRuntimeAST): ExecutionRuntime
   return { name, default: isDefault, sourcePath };
 }
 
+// ----- authenticator
+
+function compileAuthenticator(authenticator: AuthenticatorAST): AuthenticatorSpec {
+  const name = authenticator.name;
+  // this is not exposed in blueprint yet
+  const authUserModelName = AUTH_TARGET_MODEL_NAME;
+  const accessTokenModelName = `${authUserModelName}AccessToken`;
+  const method = compileAuthenticatorMethod(authenticator.body);
+
+  if (method == null) {
+    throw new CompilerError("Authenticator method is required.");
+  }
+
+  return { name, authUserModelName, accessTokenModelName, method };
+}
+
+function compileAuthenticatorMethod(
+  atoms: AuthenticatorBodyAtomAST[]
+): AuthenticatorMethodSpec | undefined {
+  const methodAtom = atoms.filter((a): a is AuthenticatorMethodBodyAtomAST => a.kind === "method");
+  if (methodAtom.length == 0) {
+    return;
+  }
+  if (methodAtom.length > 1) {
+    throw new CompilerError(`Max 1 authenticator method is allowed but ${methodAtom.length} given`);
+  }
+
+  const method = methodAtom[0];
+  const methodKind = method.methodKind;
+  if (methodKind === "basic") {
+    // add here basic method's config properties
+    return { kind: "basic" };
+  } else {
+    assertUnreachable(methodKind);
+  }
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
   const populators: PopulatorSpec[] = [];
   const runtimes: ExecutionRuntimeSpec[] = [];
+  let authenticator: AuthenticatorSpec | undefined = undefined;
 
   input.map((definition) => {
     const kind = definition.kind;
@@ -659,12 +862,12 @@ export function compile(input: AST): Specification {
       populators.push(compilePopulator(definition));
     } else if (kind === "execution-runtime") {
       runtimes.push(compileExecutionRuntime(definition));
+    } else if (kind === "authenticator") {
+      authenticator = compileAuthenticator(definition);
     } else {
       assertUnreachable(kind);
     }
   });
 
-  checkMaxOneAuthModel(models);
-
-  return { models, entrypoints, populators, runtimes };
+  return { models, entrypoints, populators, runtimes, authenticator };
 }

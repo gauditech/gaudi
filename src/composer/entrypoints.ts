@@ -1,16 +1,16 @@
 import _ from "lodash";
 
-import { composeActionBlock, getInitialContext } from "./actions";
-import { composeExpression } from "./models";
-
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
+  UnreachableError,
   assertUnreachable,
   ensureEmpty,
   ensureEqual,
   ensureExists,
   ensureUnique,
 } from "@src/common/utils";
+import { composeActionBlock, getInitialContext } from "@src/composer/actions";
+import { composeExpression } from "@src/composer/query";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import { SelectAST } from "@src/types/ast";
 import {
@@ -21,6 +21,7 @@ import {
   EndpointHttpMethod,
   EndpointType,
   EntrypointDef,
+  ExecuteHookAction,
   FieldSetter,
   FieldSetterReferenceValue,
   FieldsetDef,
@@ -196,6 +197,7 @@ function processEndpoints(
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const endpointType = mapEndpointSpecToDefType(endSpec);
+
     const rawActions = composeActionBlock(def, endSpec.actions ?? [], targets, endpointType);
     const actionDeps = collectActionDeps(def, rawActions);
 
@@ -211,10 +213,23 @@ function processEndpoints(
     });
     const authorizeDeps = collectAuthorizeDeps(def, currentAuthorize);
     const selectDeps = [...actionDeps, ...parentAuthorizeDeps, ...authorizeDeps];
+
     const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
     const parentContext = _.initial(targetsWithSelect);
     const target = _.last(targetsWithSelect)!;
     const authSelect = getAuthSelect(def, selectDeps);
+
+    // should endpoint respond - only if something else (eg. action) does not send response before
+    const respondingActions = actions.filter((a) => a.kind === "execute-hook" && a.responds);
+    if (respondingActions.length > 0) {
+      // only one
+      ensureEqual(
+        respondingActions.length,
+        1,
+        'At most one action in entrypoint can have "responds" attribute'
+      );
+    }
+    const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
 
     switch (endpointType) {
       case "get": {
@@ -325,6 +340,7 @@ function processEndpoints(
           authorize,
           fieldset,
           response: undefined,
+          responds,
         };
       }
       case "custom-many": {
@@ -346,6 +362,7 @@ function processEndpoints(
           authorize,
           fieldset,
           response: undefined,
+          responds,
         };
       }
       default: {
@@ -471,12 +488,30 @@ export function processSelect(
 
 export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
   const fieldsetWithPaths = actions
+    // filter out actions without fieldset
     .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
     .flatMap((action) => {
       return _.chain(action.changeset)
         .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
           switch (setter.kind) {
+            case "fieldset-virtual-input": {
+              return [
+                setter.fieldsetAccess,
+                {
+                  kind: "field",
+                  required: setter.required,
+                  type: setter.type,
+                  nullable: setter.nullable,
+                  validators: setter.validators,
+                },
+              ];
+            }
             case "fieldset-input": {
+              if (action.kind === "execute-hook") {
+                throw new UnreachableError(
+                  `Hook action can't have "fieldset-input" because it doesn't operate on a model.`
+                );
+              }
               const field = getRef.field(def, `${action.model}.${name}`);
               return [
                 setter.fieldsetAccess,
@@ -557,6 +592,7 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
   const nonDeleteActions = actions.filter(
     (a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one"
   );
+
   const targetPaths = _.chain(nonDeleteActions)
     .flatMap((a) => {
       switch (a.kind) {
@@ -579,6 +615,7 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     })
     .compact()
     .value();
+
   // collect all targets
 
   function collectReferenceValues(setter: FieldSetter): FieldSetterReferenceValue[] {
@@ -597,11 +634,19 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
       }
     }
   }
+  // --- collect changeset targets
+  // action changeset
+  const actionChangesets = nonDeleteActions.flatMap((a) => a.changeset);
+  // hooks changeset
+  const actionHookChangesets = _.chain(actions)
+    .filter((a): a is ExecuteHookAction => a.kind === "execute-hook")
+    .flatMap((a) => a.hook.args)
+    .value();
 
-  const referenceValues = nonDeleteActions.flatMap((a) => {
-    return a.changeset.flatMap(({ setter }) => collectReferenceValues(setter));
-  });
+  const changesets = [...actionChangesets, ...actionHookChangesets];
+  const referenceValues = changesets.flatMap(({ setter }) => collectReferenceValues(setter));
   const setterTargets = referenceValues.map((rv) => rv.target);
+
   return [...setterTargets, ...targetPaths];
 }
 
@@ -655,27 +700,23 @@ export function wrapActionsWithSelect(
   actions: ActionDef[],
   deps: SelectDep[]
 ): ActionDef[] {
-  return (
-    actions
-      // .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
-      .map((a): ActionDef => {
-        if (a.kind === "delete-one") return a;
+  return actions.map((a): ActionDef => {
+    if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one") return a;
 
-        const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
-        const model = getRef.model(def, a.model);
+    const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
+    const model = getRef.model(def, a.model);
 
-        const select = pathsToSelectDef(def, model, paths, [a.alias]);
-        return { ...a, select };
-      })
-  );
+    const select = pathsToSelectDef(def, model, paths, [a.alias]);
+    return { ...a, select };
+  });
 }
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
-  if (!def.auth) return [];
+  if (!def.authenticator) return [];
   const paths = uniqueNamePaths(
     deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access)
   );
-  const model = getRef.model(def, def.auth.baseRefKey);
+  const model = getRef.model(def, def.authenticator.authUserModel.refKey);
   return pathsToSelectDef(def, model, paths, [model.name]);
 }
 

@@ -7,7 +7,6 @@ import { serve, setup } from "swagger-ui-express";
 import { buildOpenAPI } from "@src/builder/openAPI";
 import { saveOutputFile } from "@src/common/utils";
 import { buildEntrypoints } from "@src/runtime/server/admin";
-import { buildEndpoints as buildAuthEndpoints } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
 import { EndpointConfig } from "@src/runtime/server/types";
@@ -44,10 +43,6 @@ export function setupServerApis(definition: Definition, app: Express) {
     app,
     specOutputFolder
   );
-
-  // --- authentication API
-  const authConfigs = buildAuthEndpoints(definition);
-  setupConfigEndpoints("api", authConfigs, app);
 }
 
 /** Create API endpoints from entrypoints.*/

@@ -2,14 +2,18 @@ import { WithContext } from "@src/common/error";
 
 export type AST = DefinitionAST[];
 
-export type DefinitionAST = ModelAST | EntrypointAST | PopulatorAST | ExecutionRuntimeAST;
+export type DefinitionAST =
+  | ModelAST
+  | EntrypointAST
+  | PopulatorAST
+  | ExecutionRuntimeAST
+  | AuthenticatorAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
   name: string;
   alias?: string;
   body: ModelBodyAST[];
-  isAuth: boolean;
 }>;
 
 export type ModelBodyAST = FieldAST | ReferenceAST | RelationAST | QueryAST | ComputedAST | HookAST;
@@ -118,20 +122,20 @@ export type EndpointCardinality = "one" | "many";
 export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 export type EndpointBodyAST = WithContext<
-  | { kind: "action-block"; atoms: ActionBodyAST[] }
+  | { kind: "action-block"; atoms: AnyActionBodyAST[] }
   | { kind: "authorize"; expression: ExpAST }
   | { kind: "cardinality"; value: EndpointCardinality }
   | { kind: "path"; value: string }
   | { kind: "method"; value: EndpointMethod }
 >;
 
-export type ActionKindAST = "create" | "update" | "delete";
+export type ActionKindAST = "create" | "update" | "delete" | "execute" | "fetch";
 
-export type ActionBodyAST = WithContext<{
+export type AnyActionBodyAST = WithContext<{
   kind: ActionKindAST;
   target?: string[];
   alias?: string;
-  atoms: ActionAtomAST[];
+  atoms: AnyActionAtomAST[];
 }>;
 
 export type VirtualInputAST = WithContext<{
@@ -150,17 +154,22 @@ export type VirtualInputAtomAST = WithContext<
 export type VirtualInputAtomASTType = { kind: "type"; type: string };
 export type VirtualInputAtomASTValidator = { kind: "validate"; validators: ValidatorAST[] };
 
-export type ActionAtomAST = WithContext<
+export type AnyActionAtomAST = WithContext<
   | {
       kind: "set";
       target: string;
-      set: { kind: "hook"; hook: HookAST } | { kind: "expression"; exp: ExpAST };
+      set:
+        | { kind: "hook"; hook: HookAST }
+        | { kind: "expression"; exp: ExpAST }
+        | { kind: "query"; body: QueryBodyAST[] };
     }
   | { kind: "reference"; target: string; through: string }
   | VirtualInputAST
   | { kind: "input"; fields: InputFieldAST[] }
-  | { kind: "action"; body: ActionBodyAST }
   | { kind: "deny"; fields: "*" | string[] }
+  | { kind: "hook"; hook: HookAST }
+  | { kind: "query"; body: QueryBodyAST[] }
+  | { kind: "responds" }
 >;
 
 export type InputFieldAST = WithContext<{
@@ -189,13 +198,10 @@ export type HookBodyAST = WithContext<
 >;
 
 export type HookArgValueAST = WithContext<
-  { kind: "query"; query: HookQueryAST } | { kind: "expression"; exp: ExpAST } | { kind: "default" }
+  | { kind: "query"; body: QueryBodyAST[] }
+  | { kind: "expression"; exp: ExpAST }
+  | { kind: "default" }
 >;
-
-export type HookQueryAST = WithContext<{
-  kind: "query";
-  body: QueryBodyAST[];
-}>;
 
 export type LiteralValue = null | boolean | number | string;
 
@@ -265,3 +271,23 @@ export type ExecutionRuntimeAST = WithContext<{
 export type ExecutionRuntimeBodyAtomAST = WithContext<
   { kind: "sourcePath"; value: string } | { kind: "default" }
 >;
+
+// ---------- authenticator
+
+export type AuthenticatorAST = WithContext<{
+  kind: "authenticator";
+  name?: string;
+  body: AuthenticatorBodyAtomAST[];
+}>;
+
+export type AuthenticatorBodyAtomAST = WithContext<AuthenticatorMethodBodyAtomAST>;
+
+export type AuthenticatorMethodBodyAtomAST = {
+  kind: "method";
+  methodKind: "basic";
+  body: AuthenticatorBasicMethodBodyAtomAST[];
+} /* | { ... } add other auth methods */;
+
+export type AuthenticatorBasicMethodBodyAtomAST =
+  WithContext<never /* never is just a placeholder for an empty arr since we currently don't have anything to put in here */>;
+/* | { ... } add other basic method atoms */

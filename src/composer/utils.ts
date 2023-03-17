@@ -1,7 +1,8 @@
 import _ from "lodash";
 
+import { FilteredKind } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
+import { ensureEqual, ensureNot } from "@src/common/utils";
 import { LiteralValue } from "@src/types/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 
@@ -62,8 +63,18 @@ export type TypedIterator = {
   leaf: "start" | "end" | "current" | null;
 };
 
+export type TypedRequestPath = TypedRequestAuthToken;
+export type TypedRequestAuthToken = {
+  kind: "request-auth-token";
+  access: string[];
+};
+
 export type VarContext = Record<string, ContextRecord | undefined>;
-type ContextRecord = { kind: "record"; modelName: string } | { kind: "iterator" };
+type ContextRecord =
+  | { kind: "record"; modelName: string }
+  | { kind: "iterator" }
+  | { kind: "requestAuthToken" }
+  | { kind: "changeset-value"; keys: string[] };
 
 export function getTypedIterator(def: Definition, path: string[], ctx: VarContext): TypedIterator {
   if (path[0] in ctx) {
@@ -80,6 +91,31 @@ export function getTypedIterator(def: Definition, path: string[], ctx: VarContex
     return { name: path[0], leaf: path[1] as never };
   } else {
     throw new Error(`Iterator with name ${path[0]} is not in the context`);
+  }
+}
+
+export function getTypedChangesetContext(path: string[], ctx: VarContext): void {
+  ensureEqual(path.length, 2, `Changeset path can't be nested: ${path.join(".")}`);
+  const [name, value] = path;
+  const chx = ctx[name] as FilteredKind<ContextRecord, "changeset-value">;
+  ensureEqual(chx.kind, "changeset-value");
+  ensureEqual(_.includes(chx.keys, value), true, `${value} is not in the changeset context`);
+}
+
+export function getTypedRequestPath(path: string[], ctx: VarContext): TypedRequestPath {
+  const [prefix, ...rest] = path;
+
+  if (prefix === "@requestAuthToken") {
+    ensureEqual(rest.length, 0, `Additional "${prefix}" path ${rest.join(".")} is not supported`);
+
+    ensureNot(ctx[prefix], undefined, `${prefix} is not in the context`);
+
+    return {
+      kind: "request-auth-token",
+      access: ["user", "token"],
+    };
+  } else {
+    throw new Error(`Invalid HTTP handler context type "${path}"`);
   }
 }
 

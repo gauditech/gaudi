@@ -15,10 +15,8 @@ entrypoint ItemEntry {
       }
       create item {}
       create Item as item {}
-      delete item {
-        delete item.parent {}
-        update item.parent {}
-      }
+      delete item.parent {}
+      delete item {}
       update item.bar.baz {
         set bar item.bar.baz.x.y
         set foo 10

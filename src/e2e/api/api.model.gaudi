@@ -72,7 +72,148 @@ entrypoint Orgs {
   identify with slug
   response { name, slug, description, summary, nameAndDesc }
 
-  // custom-one endpoints
+  // --- endpoints with "execute" actions
+  // register BEFORE other endpoints to avoid mismatching with other endpoints
+
+  custom endpoint {
+    cardinality one
+    method POST
+    path "customOneAction"
+    action {
+      execute {
+        virtual input name { type text }
+        virtual input counter { type integer }
+        hook {
+          arg name name
+          arg counter counter
+          source customAction from "hooks.js"
+        }
+      }
+    }
+  }
+
+  custom endpoint {
+    cardinality many
+    method PATCH
+    path "customManyAction"
+    action {
+      execute {
+        virtual input name { type text }
+        virtual input counter { type integer }
+        hook {
+          arg name name
+          arg counter counter
+          source customAction from "hooks.js"
+        }
+      }
+    }
+  }
+
+  // custom one endpoint - "execute" action responds
+  custom endpoint {
+    cardinality one
+    method POST
+    path "customOneActionResponds"
+    action {
+      execute {
+        virtual input counter { type integer }
+        virtual input name { type text }
+
+        responds
+        hook {
+          arg name name
+          arg counter counter
+          source customActionResponds from "hooks.js"
+        }
+      }
+    }
+  }
+
+  // custom many endpoint - "execute" action responds
+  custom endpoint {
+    cardinality many
+    method PATCH
+    path "customManyActionResponds"
+    action {
+      execute {
+        virtual input name { type text }
+        virtual input counter { type integer }
+        responds
+        hook {
+          arg name name
+          arg counter counter
+          source customActionResponds from "hooks.js"
+        }
+      }
+    }
+  }
+
+  // custom ep/action with action query
+  custom endpoint {
+    cardinality one
+    method POST
+    path "customOneQueryAction"
+    action {
+      execute {
+        virtual input name { type text }
+        virtual input orgId { type integer }
+        responds
+        hook {
+          arg inputName name
+          arg inputOrgId orgId
+          arg orgByName query { from Org as o, filter {lower(o.name) is lower(name)}, select {name} }
+          arg orgById query { from Org as o, filter { o.id is orgId }, select {name} }
+          // arg orgByInputId query { from Org as o, filter { o.id is inputOrgId }, select {name} }
+          source customActionResponds from "hooks.js"
+        }
+      }
+    }
+  }
+
+  // custom ep/action with action query
+  custom endpoint {
+    cardinality one
+    method POST
+    path "customFetchAction"
+    action {
+      fetch as fRepo {
+        query { from Repo, filter id is 1, select {slug}} // TODO: read from ctx - id
+      }
+      execute {
+        virtual input name { type text }
+        responds
+        hook {
+          arg name name
+          arg repoSlug fRepo.slug
+          source customActionResponds from "hooks.js"
+        }
+      }
+    }
+  }
+
+  // hook error response
+  custom endpoint {
+    path "hookErrorResponse"
+    method POST
+    cardinality many
+
+    action {
+      execute {
+        virtual input status { type integer }
+        virtual input message { type text }
+
+        hook {
+          arg status status
+          arg message message
+
+          source customHttpErrorResponse from "hooks.js"
+        }
+      }
+    }
+  }
+
+  // --- custom-one endpoints
+
   custom endpoint {
     cardinality one
     method GET
@@ -95,7 +236,8 @@ entrypoint Orgs {
     }
   }
 
-  // custom-many endpoints
+  // --- custom-many endpoints
+
   custom endpoint {
     cardinality many
     method GET
@@ -110,7 +252,8 @@ entrypoint Orgs {
     }
   }
 
-  // regular endpoints
+  // --- regular endpoints
+
   get endpoint {}
   list endpoint {}
   create endpoint {

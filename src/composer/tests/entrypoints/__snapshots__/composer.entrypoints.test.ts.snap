@@ -610,6 +610,7 @@ exports[`entrypoint composes basic example 1`] = `
               },
             ],
             "path": "somePath",
+            "responds": true,
             "response": undefined,
             "target": {
               "alias": "repo",
