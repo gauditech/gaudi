@@ -2,15 +2,14 @@ import { EmbeddedActionsParser, IToken, ParserMethod, TokenType } from "chevrota
 
 import {
   Action,
-  ActionAtom,
   ActionAtomDeny,
   ActionAtomInput,
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionAtomVirtualInput,
-  ActionFieldHook,
-  ActionType,
+  ActionHook,
   AggregateType,
+  AnonymousQuery,
   Authenticator,
   AuthenticatorAtom,
   BinaryOperator,
@@ -18,6 +17,7 @@ import {
   Computed,
   Db,
   Definition,
+  DeleteAction,
   Endpoint,
   EndpointAtom,
   EndpointCardinality,
@@ -25,19 +25,24 @@ import {
   EndpointType,
   Entrypoint,
   EntrypointAtom,
+  ExecuteAction,
+  ExecuteActionAtom,
   Expr,
+  FetchAction,
+  FetchActionAtom,
   Field,
   FieldAtom,
   FieldValidationHook,
   FloatLiteral,
   Hook,
-  HookQuery,
   Identifier,
   IdentifierRef,
   InputAtom,
   IntegerLiteral,
   Literal,
   Model,
+  ModelAction,
+  ModelActionAtom,
   ModelAtom,
   ModelHook,
   NullLiteral,
@@ -619,15 +624,23 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   action = this.RULE("action", (): Action => {
-    const atoms: ActionAtom[] = [];
+    return this.OR<Action>([
+      { ALT: () => this.SUBRULE(this.modelAction) },
+      { ALT: () => this.SUBRULE(this.deleteAction) },
+      { ALT: () => this.SUBRULE(this.executeAction) },
+      { ALT: () => this.SUBRULE(this.fetchAction) },
+    ]);
+  });
+
+  modelAction = this.RULE("modelAction", (): ModelAction => {
+    const atoms: ModelActionAtom[] = [];
 
     const token = this.OR1([
       { ALT: () => this.CONSUME(L.Create) },
       { ALT: () => this.CONSUME(L.Update) },
-      { ALT: () => this.CONSUME(L.Delete) },
     ]);
     const keyword = getTokenData(token);
-    const kind = token.image as ActionType;
+    const kind = token.image as ModelAction["kind"];
     const target = this.OPTION1(() => {
       const target = this.SUBRULE(this.identifierRefPath);
       const as = this.OPTION2(() => {
@@ -653,11 +666,68 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind, target: target?.target, as: target?.as, atoms, keyword };
   });
 
+  deleteAction = this.RULE("deleteAction", (): DeleteAction => {
+    const keyword = getTokenData(this.CONSUME(L.Delete));
+    const target = this.OPTION(() => this.SUBRULE(this.identifierRefPath));
+
+    this.CONSUME(L.LCurly);
+    this.CONSUME(L.RCurly);
+
+    return { kind: "delete", target, keyword };
+  });
+
+  executeAction = this.RULE("executeAction", (): ExecuteAction => {
+    const atoms: ExecuteActionAtom[] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Execute));
+    const alias = this.OPTION(() => {
+      const keywordAs = getTokenData(this.CONSUME(L.As));
+      const name = this.SUBRULE(this.identifier);
+      return { keywordAs, name };
+    });
+
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomVirtualInput)) },
+        { ALT: () => atoms.push(this.SUBRULE(this.actionHook)) },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Responds));
+            atoms.push({ kind: "responds", keyword });
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "execute", keywordAs: alias?.keywordAs, name: alias?.name, atoms, keyword };
+  });
+
+  fetchAction = this.RULE("fetchAction", (): FetchAction => {
+    const atoms: FetchActionAtom[] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Fetch));
+    const keywordAs = getTokenData(this.CONSUME(L.As));
+    const name = this.SUBRULE(this.identifier);
+
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomVirtualInput)) },
+        { ALT: () => atoms.push(this.SUBRULE(this.anonymousQuery)) },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "fetch", keywordAs, name, atoms, keyword };
+  });
+
   actionAtomSet = this.RULE("actionAtomSet", (): ActionAtomSet => {
     const keyword = getTokenData(this.CONSUME(L.Set));
     const target = this.SUBRULE(this.identifierRef);
     const set = this.OR<ActionAtomSet["set"]>([
-      { ALT: () => this.SUBRULE(this.actionFieldHook) },
+      { ALT: () => this.SUBRULE(this.actionHook) },
       { ALT: () => ({ kind: "expr", expr: this.SUBRULE(this.expr) }) },
     ]);
 
@@ -942,11 +1012,7 @@ class GaudiParser extends EmbeddedActionsParser {
     false,
     true
   );
-  actionFieldHook: ParserMethod<[], ActionFieldHook> = this.GENERATE_HOOK(
-    "actionFieldHook",
-    false,
-    false
-  );
+  actionHook: ParserMethod<[], ActionHook> = this.GENERATE_HOOK("actionHook", false, false);
 
   GENERATE_HOOK<h extends Hook<n, s>, n extends boolean, s extends boolean>(
     ruleName: string,
@@ -979,13 +1045,7 @@ class GaudiParser extends EmbeddedActionsParser {
               this.OR2([
                 {
                   ALT: () => {
-                    const queryKeyword = getTokenData(this.CONSUME(L.Query));
-                    const queryAtoms = this.SUBRULE(this.queryAtoms);
-                    const query: HookQuery = {
-                      kind: "hookQuery",
-                      atoms: queryAtoms,
-                      keyword: queryKeyword,
-                    };
+                    const query = this.SUBRULE(this.anonymousQuery);
                     atoms.push({ kind: "arg_query", name, query, keyword });
                   },
                 },
@@ -1028,6 +1088,12 @@ class GaudiParser extends EmbeddedActionsParser {
       return { kind: "hook", name, ref: named ? unresolvedRef : undefined, atoms, keyword } as h;
     });
   }
+
+  anonymousQuery = this.RULE("anonymousQuery", (): AnonymousQuery => {
+    const keyword = getTokenData(this.CONSUME(L.Query));
+    const atoms = this.SUBRULE(this.queryAtoms);
+    return { kind: "anonymousQuery", atoms, keyword };
+  });
 
   select = this.RULE("select", (): Select => {
     const select: Select = [];

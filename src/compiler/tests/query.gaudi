@@ -1,3 +1,8 @@
+runtime DefaultRuntime {
+  default
+  source path "path/to/runtime"
+}
+
 model Class {
   field year { type integer }
 
@@ -36,7 +41,7 @@ entrypoint Ep {
       // test query in fetch action
       fetch as fClass {
         query {
-          from Class, filter id is 1
+          from Class, filter { id is 1 }
         }
       }
 
@@ -44,7 +49,7 @@ entrypoint Ep {
 
         // test arg query
         hook {
-          arg prop2 query { from Class, filter id is 1 }
+          arg prop2 query { from Class, filter { id is 1 } }
 
           source foo from "bar"
         }

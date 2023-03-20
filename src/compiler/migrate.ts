@@ -24,6 +24,7 @@ import {
   FieldValidatorHookSpec,
   HookCodeSpec,
   InputFieldSpec,
+  ModelActionSpec,
   ModelHookSpec,
   ModelSpec,
   PopulateSetterSpec,
@@ -119,7 +120,7 @@ function migrateRelation(relation: AST.Relation): RelationSpec {
   };
 }
 
-function migrateQuery(query: AST.Query | AST.HookQuery): QuerySpec {
+function migrateQuery(query: AST.Query | AST.AnonymousQuery): QuerySpec {
   const from = kindFind(query.atoms, "from");
   const filter = kindFind(query.atoms, "filter");
   const orderBy = kindFind(query.atoms, "orderBy")?.orderBy.map((a) => ({
@@ -189,6 +190,15 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
 }
 
 function migrateAction(action: AST.Action): ActionSpec {
+  return match(action)
+    .with({ kind: "create" }, { kind: "update" }, migrateModelAction)
+    .with({ kind: "delete" }, migrateDeleteAction)
+    .with({ kind: "execute" }, migrateExecuteAction)
+    .with({ kind: "fetch" }, migrateFetchAction)
+    .exhaustive();
+}
+
+function migrateModelAction(action: AST.ModelAction): ModelActionSpec {
   const actionAtoms = action.atoms.map((a) =>
     match(a)
       .with({ kind: "set" }, migrateActionAtomSet)
@@ -200,20 +210,7 @@ function migrateAction(action: AST.Action): ActionSpec {
           through: through.identifier.text,
         })
       )
-      .with({ kind: "virtualInput" }, ({ name, atoms }): ActionAtomSpecVirtualInput => {
-        const validators = kindFilter(atoms, "validate").flatMap((v) =>
-          v.validators.map(migrateValidator)
-        );
-        const type = kindFind(atoms, "type")!.identifier.text;
-        return {
-          kind: "virtual-input",
-          name: name.text,
-          type: type === "string" ? "text" : type,
-          nullable: !!kindFind(atoms, "nullable"),
-          optional: false,
-          validators,
-        };
-      })
+      .with({ kind: "virtualInput" }, migrateActionAtomVirtualInput)
       .with(
         { kind: "deny" },
         ({ fields }): ActionAtomSpecDeny => ({
@@ -256,6 +253,62 @@ function migrateAction(action: AST.Action): ActionSpec {
   };
 }
 
+function migrateDeleteAction(action: AST.DeleteAction): ActionSpec {
+  return { kind: "delete", targetPath: action.target?.map((i) => i.identifier.text) };
+}
+
+function migrateExecuteAction(action: AST.ExecuteAction): ActionSpec {
+  const atoms = kindFilter(action.atoms, "virtualInput").map(migrateActionAtomVirtualInput);
+
+  return {
+    kind: "execute",
+    alias: action.name?.text,
+    hook: migrateActionHook(kindFind(action.atoms, "hook")!),
+    responds: !!kindFind(action.atoms, "responds"),
+    atoms,
+  };
+}
+
+function migrateFetchAction(action: AST.FetchAction): ActionSpec {
+  const atoms = kindFilter(action.atoms, "virtualInput").map(migrateActionAtomVirtualInput);
+
+  return {
+    kind: "fetch",
+    alias: action.name?.text,
+    query: migrateQuery(kindFind(action.atoms, "anonymousQuery")!),
+    atoms,
+  };
+}
+
+function migrateActionAtomSet(set: AST.ActionAtomSet): ActionAtomSpecSet {
+  return {
+    kind: "set",
+    target: set.target.identifier.text,
+    set:
+      set.set.kind === "expr"
+        ? { kind: "expression", exp: migrateExpr(set.set.expr) }
+        : { kind: "hook", hook: migrateActionHook(set.set) },
+  };
+}
+
+function migrateActionAtomVirtualInput({
+  name,
+  atoms,
+}: AST.ActionAtomVirtualInput): ActionAtomSpecVirtualInput {
+  const validators = kindFilter(atoms, "validate").flatMap((v) =>
+    v.validators.map(migrateValidator)
+  );
+  const type = kindFind(atoms, "type")!.identifier.text;
+  return {
+    kind: "virtual-input",
+    name: name.text,
+    type: type === "string" ? "text" : type,
+    nullable: !!kindFind(atoms, "nullable"),
+    optional: false,
+    validators,
+  };
+}
+
 function migratePopulator(populator: AST.Populator): PopulatorSpec {
   return { name: populator.name.text, populates: populator.atoms.map(migratePopulate) };
 }
@@ -286,7 +339,7 @@ function migratePopulateSetter(set: AST.ActionAtomSet): PopulateSetterSpec {
     set:
       set.set.kind === "expr"
         ? { kind: "expression", exp: migrateExpr(set.set.expr) }
-        : { kind: "hook", hook: migrateActionFieldHook(set.set) },
+        : { kind: "hook", hook: migrateActionHook(set.set) },
   };
 }
 
@@ -300,17 +353,6 @@ function migrateRepeater(repeater: AST.Repeater): RepeaterSpec {
       return { kind: "range", range: { start, end }, alias: repeater.name?.text };
     }
   }
-}
-
-function migrateActionAtomSet(set: AST.ActionAtomSet): ActionAtomSpecSet {
-  return {
-    kind: "set",
-    target: set.target.identifier.text,
-    set:
-      set.set.kind === "expr"
-        ? { kind: "expression", exp: migrateExpr(set.set.expr) }
-        : { kind: "hook", hook: migrateActionFieldHook(set.set) },
-  };
 }
 
 function migrateRuntime(runtime: AST.Runtime): ExecutionRuntimeSpec {
@@ -347,7 +389,7 @@ function migrateFieldValidationHook(hook: AST.FieldValidationHook): FieldValidat
   return { code, arg: arg?.name.text, runtimeName: getHookRuntime(hook) };
 }
 
-function migrateActionFieldHook(hook: AST.ActionFieldHook): ActionHookSpec {
+function migrateActionHook(hook: AST.ActionHook): ActionHookSpec {
   const code = getHookCode(hook);
   const args: ActionHookSpec["args"] = {};
   kindFilter(hook.atoms, "arg_expr").forEach((a) => {

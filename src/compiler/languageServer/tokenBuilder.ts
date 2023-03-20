@@ -7,19 +7,23 @@ import {
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionAtomVirtualInput,
-  ActionFieldHook,
+  ActionHook,
+  AnonymousQuery,
+  Authenticator,
   Computed,
   Definition,
   Endpoint,
   Entrypoint,
+  ExecuteAction,
   Expr,
+  FetchAction,
   Field,
   FieldValidationHook,
-  HookQuery,
   Identifier,
   IdentifierRef,
   Literal,
   Model,
+  ModelAction,
   ModelHook,
   Populate,
   Populator,
@@ -83,6 +87,7 @@ export function buildTokens(
         .with({ kind: "entrypoint" }, buildEntrypoint)
         .with({ kind: "populator" }, buildPopulator)
         .with({ kind: "runtime" }, buildRuntime)
+        .with({ kind: "authenticator" }, buildAuthenticator)
         .exhaustive();
     });
   }
@@ -157,7 +162,7 @@ export function buildTokens(
     );
   }
 
-  function buildQuery(query: Query | HookQuery) {
+  function buildQuery(query: Query | AnonymousQuery) {
     buildKeyword(query.keyword);
     if (query.kind === "query") push(query.name.token, TokenTypes.property);
     query.atoms.forEach((a) =>
@@ -272,7 +277,19 @@ export function buildTokens(
     );
   }
 
-  function buildAction({ keyword, target, as, atoms }: Action) {
+  function buildAction(action: Action) {
+    match(action)
+      .with({ kind: "create" }, { kind: "update" }, buildModelAction)
+      .with({ kind: "delete" }, ({ keyword, target }) => {
+        buildKeyword(keyword);
+        if (target) buildIdentifierPath(target);
+      })
+      .with({ kind: "execute" }, buildExecuteAction)
+      .with({ kind: "fetch" }, buildFetchAction)
+      .exhaustive();
+  }
+
+  function buildModelAction({ keyword, target, as, atoms }: ModelAction) {
     buildKeyword(keyword);
     if (target) buildIdentifierPath(target);
     if (as) {
@@ -290,11 +307,36 @@ export function buildTokens(
     });
   }
 
+  function buildExecuteAction({ keyword, keywordAs, name, atoms }: ExecuteAction) {
+    buildKeyword(keyword);
+    if (keywordAs) buildKeyword(keywordAs);
+    if (name) push(name.token, TokenTypes.variable);
+    atoms.forEach((a) => {
+      match(a)
+        .with({ kind: "virtualInput" }, buildActionAtomVirtualInput)
+        .with({ kind: "hook" }, buildActionHook)
+        .with({ kind: "responds" }, ({ keyword }) => buildKeyword(keyword))
+        .exhaustive();
+    });
+  }
+
+  function buildFetchAction({ keyword, keywordAs, name, atoms }: FetchAction) {
+    buildKeyword(keyword);
+    if (keywordAs) buildKeyword(keywordAs);
+    if (name) push(name.token, TokenTypes.variable);
+    atoms.forEach((a) => {
+      match(a)
+        .with({ kind: "virtualInput" }, buildActionAtomVirtualInput)
+        .with({ kind: "anonymousQuery" }, buildQuery)
+        .exhaustive();
+    });
+  }
+
   function buildActionAtomSet({ keyword, target, set }: ActionAtomSet) {
     buildKeyword(keyword);
     buildIdentifierRef(target);
     match(set)
-      .with({ kind: "hook" }, buildActionFieldHook)
+      .with({ kind: "hook" }, buildActionHook)
       .with({ kind: "expr" }, ({ expr }) => buildExpr(expr))
       .exhaustive();
   }
@@ -409,6 +451,18 @@ export function buildTokens(
     );
   }
 
+  function buildAuthenticator({ keyword, atoms }: Authenticator) {
+    buildKeyword(keyword);
+    atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "method" }, ({ keyword, method }) => {
+          buildKeyword(keyword);
+          buildKeyword(method.keyword);
+        })
+        .exhaustive()
+    );
+  }
+
   function buildModelHook(hook: ModelHook) {
     buildKeyword(hook.keyword);
     push(hook.name.token, TokenTypes.property);
@@ -419,14 +473,12 @@ export function buildTokens(
     buildKeyword(hook.keyword);
     hook.atoms.forEach(buildHookAtom);
   }
-  function buildActionFieldHook(hook: ActionFieldHook) {
+  function buildActionHook(hook: ActionHook) {
     buildKeyword(hook.keyword);
     hook.atoms.forEach(buildHookAtom);
   }
 
-  function buildHookAtom(
-    atom: (ModelHook | FieldValidationHook | ActionFieldHook)["atoms"][number]
-  ) {
+  function buildHookAtom(atom: (ModelHook | FieldValidationHook | ActionHook)["atoms"][number]) {
     match(atom)
       .with({ kind: "arg_expr" }, ({ keyword, name, expr }) => {
         buildKeyword(keyword);

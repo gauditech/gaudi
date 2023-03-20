@@ -4,19 +4,24 @@ import { match } from "ts-pattern";
 import {
   Action,
   ActionAtomSet,
-  ActionFieldHook,
+  ActionAtomVirtualInput,
+  ActionHook,
+  AnonymousQuery,
   BinaryOperator,
   Computed,
   Definition,
+  DeleteAction,
   Endpoint,
   Entrypoint,
+  ExecuteAction,
   Expr,
+  FetchAction,
   Field,
   FieldValidationHook,
   Hook,
-  HookQuery,
   IdentifierRef,
   Model,
+  ModelAction,
   ModelAtom,
   ModelHook,
   Populate,
@@ -183,13 +188,14 @@ export function resolve(definition: Definition) {
     }
   }
 
-  function resolveQuery(model: Model, query: Query | HookQuery) {
+  function resolveQuery(model: Model, query: Query | AnonymousQuery) {
     let currentModel: string | undefined;
     let scope: ScopeDb = { kind: "querySimple", model: undefined };
     let cardinality = "one" as TypeCardinality;
 
     const from = kindFind(query.atoms, "from");
     if (from) {
+      // TODO: allow global queries
       currentModel = model.name.text;
       from.identifierPath.map((identifier) => {
         resolveModelAtomRef(identifier, currentModel, "reference", "relation", "query");
@@ -216,7 +222,7 @@ export function resolve(definition: Definition) {
       } else {
         scope = { kind: "querySimple", model: currentModel };
       }
-    } else if (query.kind === "hookQuery") {
+    } else if (query.kind === "anonymousQuery") {
       currentModel = model.name.text;
     }
 
@@ -237,16 +243,16 @@ export function resolve(definition: Definition) {
     const select = kindFind(query.atoms, "select");
     if (select) resolveSelect(select.select, currentModel, scope);
 
-    if (query.kind === "hookQuery") return;
-
-    query.ref = {
-      kind: "modelAtom",
-      atomKind: "query",
-      name: query.name.text,
-      model: model.name.text,
-    };
+    if (query.kind === "anonymousQuery") return;
 
     if (currentModel) {
+      query.ref = {
+        kind: "modelAtom",
+        atomKind: "query",
+        name: query.name.text,
+        model: currentModel,
+      };
+
       const baseType: Type = { kind: "model", model: currentModel };
 
       const aggregate = kindFind(query.atoms, "aggregate");
@@ -350,6 +356,21 @@ export function resolve(definition: Definition) {
   }
 
   function resolveAction(action: Action, parentModel: string | undefined, scope: ScopeCode) {
+    match(action)
+      .with({ kind: "create" }, { kind: "update" }, (action) =>
+        resolveModelAction(action, parentModel, scope)
+      )
+      .with({ kind: "delete" }, (action) => resolveDeleteAction(action, scope))
+      .with({ kind: "execute" }, (action) => resolveExecuteAction(action, scope))
+      .with({ kind: "fetch" }, (action) => resolveFetchAction(action, scope))
+      .exhaustive();
+  }
+
+  function resolveModelAction(
+    action: ModelAction,
+    parentModel: string | undefined,
+    scope: ScopeCode
+  ) {
     let currentModel: string | undefined = parentModel;
     if (action.target) {
       resolveIdentifierRefPath(action.target, scope);
@@ -363,24 +384,9 @@ export function resolve(definition: Definition) {
     }
 
     // first resolve all virtual inputs so they can be referenced
-    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) => {
-      let type = unknownType;
-      virtualInput.ref = { kind: "runtime", path: virtualInput.name.text };
-      const typeAtom = kindFind(virtualInput.atoms, "type");
-      if (typeAtom) {
-        const typeText = typeAtom.identifier.text;
-        if (typeText !== "null" && _.includes(primitiveTypes, typeText)) {
-          type = { kind: "primitive", primitiveKind: typeText } as Type;
-        } else {
-          errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.VirtualInputType));
-        }
-      }
-      if (kindFind(virtualInput.atoms, "nullable")) {
-        type = addTypeModifier(type, "nullable");
-      }
-      virtualInput.type = type;
-      scope.context[virtualInput.name.text] = type;
-    });
+    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) =>
+      resolveActionAtomVirtualInput(virtualInput, scope)
+    );
 
     action.atoms.forEach((a) =>
       match(a)
@@ -407,10 +413,33 @@ export function resolve(definition: Definition) {
     );
   }
 
+  function resolveDeleteAction(action: DeleteAction, scope: ScopeCode) {
+    if (action.target) {
+      resolveIdentifierRefPath(action.target, scope);
+    }
+  }
+
+  function resolveExecuteAction(action: ExecuteAction, scope: ScopeCode) {
+    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) =>
+      resolveActionAtomVirtualInput(virtualInput, scope)
+    );
+    const hook = kindFind(action.atoms, "hook");
+    if (hook) resolveActionHook(hook, scope);
+  }
+
+  function resolveFetchAction(action: FetchAction, scope: ScopeCode) {
+    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) =>
+      resolveActionAtomVirtualInput(virtualInput, scope)
+    );
+    const query = kindFind(action.atoms, "anonymousQuery");
+    const model = scope.model ? findModel(scope.model) : undefined;
+    if (query && model) resolveQuery(model, query);
+  }
+
   function resolveActionAtomSet(set: ActionAtomSet, model: string | undefined, scope: ScopeCode) {
     resolveModelAtomRef(set.target, model, "field", "reference");
     match(set.set)
-      .with({ kind: "hook" }, (hook) => resolveActionFieldHook(hook, scope))
+      .with({ kind: "hook" }, (hook) => resolveActionHook(hook, scope))
       .with({ kind: "expr" }, ({ expr }) => {
         resolveExpression(expr, scope);
         if (!isExpectedType(expr.type, set.target.type)) {
@@ -418,6 +447,25 @@ export function resolve(definition: Definition) {
         }
       })
       .exhaustive();
+  }
+
+  function resolveActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput, scope: ScopeCode) {
+    let type = unknownType;
+    virtualInput.ref = { kind: "runtime", path: virtualInput.name.text };
+    const typeAtom = kindFind(virtualInput.atoms, "type");
+    if (typeAtom) {
+      const typeText = typeAtom.identifier.text;
+      if (typeText !== "null" && _.includes(primitiveTypes, typeText)) {
+        type = { kind: "primitive", primitiveKind: typeText } as Type;
+      } else {
+        errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.VirtualInputType));
+      }
+    }
+    if (kindFind(virtualInput.atoms, "nullable")) {
+      type = addTypeModifier(type, "nullable");
+    }
+    virtualInput.type = type;
+    scope.context[virtualInput.name.text] = type;
   }
 
   function resolvePopulator(populator: Populator) {
@@ -479,7 +527,7 @@ export function resolve(definition: Definition) {
     resolveHook(hook);
   }
 
-  function resolveActionFieldHook(hook: ActionFieldHook, scope: ScopeCode) {
+  function resolveActionHook(hook: ActionHook, scope: ScopeCode) {
     resolveHook(hook);
     kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
   }

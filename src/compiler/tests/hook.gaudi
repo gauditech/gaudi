@@ -9,6 +9,7 @@ runtime OtherRuntime {
 
 
 model User {
+  field name { type string }
   field fieldOne {
     type string,
     validate {

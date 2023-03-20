@@ -133,24 +133,49 @@ export type EndpointAtom = WithKeyword<
   | { kind: "path"; path: StringLiteral }
 >;
 
-export type Action = WithKeyword<{
-  kind: ActionType;
+export type Action = ModelAction | DeleteAction | ExecuteAction | FetchAction;
+
+export type ModelAction = WithKeyword<{
+  kind: "create" | "update";
   target?: IdentifierRef[];
   as?: WithKeyword<{ identifier: IdentifierRef }>;
-  atoms: ActionAtom[];
+  atoms: ModelActionAtom[];
 }>;
-export type ActionType = "create" | "update" | "delete";
-
-export type ActionAtom =
+export type ModelActionAtom =
   | ActionAtomSet
   | ActionAtomReferenceThrough
   | ActionAtomDeny
   | ActionAtomInput
   | ActionAtomVirtualInput;
+
+export type DeleteAction = WithKeyword<{
+  kind: "delete";
+  target?: IdentifierRef[];
+}>;
+
+export type ExecuteAction = WithKeyword<{
+  kind: "execute";
+  keywordAs?: TokenData;
+  name?: Identifier;
+  atoms: ExecuteActionAtom[];
+}>;
+export type ExecuteActionAtom =
+  | ActionAtomVirtualInput
+  | ActionHook
+  | WithKeyword<{ kind: "responds" }>;
+
+export type FetchAction = WithKeyword<{
+  kind: "fetch";
+  keywordAs: TokenData;
+  name: Identifier;
+  atoms: FetchActionAtom[];
+}>;
+export type FetchActionAtom = ActionAtomVirtualInput | AnonymousQuery;
+
 export type ActionAtomSet = WithKeyword<{
   kind: "set";
   target: IdentifierRef;
-  set: ActionFieldHook | { kind: "expr"; expr: Expr<Code> };
+  set: ActionHook | { kind: "expr"; expr: Expr<Code> };
 }>;
 export type ActionAtomReferenceThrough = WithKeyword<{
   kind: "referenceThrough";
@@ -232,7 +257,7 @@ export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
         ? { kind: "default_arg"; name: Identifier }
         :
             | { kind: "arg_expr"; name: Identifier; expr: Expr<Code> }
-            | { kind: "arg_query"; name: Identifier; query: HookQuery })
+            | { kind: "arg_query"; name: Identifier; query: AnonymousQuery })
     | {
         kind: "source";
         keywordFrom: TokenData;
@@ -246,10 +271,10 @@ export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
 }>;
 export type ModelHook = Hook<true, false> & { type: Type; resolved?: true };
 export type FieldValidationHook = Hook<false, true>;
-export type ActionFieldHook = Hook<false, false>;
+export type ActionHook = Hook<false, false>;
 
-export type HookQuery = WithKeyword<{
-  kind: "hookQuery";
+export type AnonymousQuery = WithKeyword<{
+  kind: "anonymousQuery";
   atoms: QueryAtom[];
 }>;
 

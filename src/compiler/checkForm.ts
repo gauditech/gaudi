@@ -3,16 +3,19 @@ import { match } from "ts-pattern";
 import {
   Action,
   ActionAtomVirtualInput,
+  AnonymousQuery,
   Authenticator,
   Computed,
   Definition,
   Endpoint,
   Entrypoint,
+  ExecuteAction,
+  FetchAction,
   Field,
   Hook,
-  HookQuery,
   Identifier,
   Model,
+  ModelAction,
   Populate,
   Populator,
   Query,
@@ -121,7 +124,7 @@ export function checkForm(definition: Definition) {
     noDuplicateAtoms(relation, "from", "through");
   }
 
-  function checkQuery(query: Query | HookQuery) {
+  function checkQuery(query: Query | AnonymousQuery) {
     if (query.kind === "query") {
       containsAtoms(query, "from");
     }
@@ -185,6 +188,15 @@ export function checkForm(definition: Definition) {
   }
 
   function checkAction(action: Action) {
+    match(action)
+      .with({ kind: "create" }, { kind: "update" }, checkModelAction)
+      .with({ kind: "delete" }, () => undefined)
+      .with({ kind: "execute" }, checkExecuteAction)
+      .with({ kind: "fetch" }, checkFetchAction)
+      .exhaustive();
+  }
+
+  function checkModelAction(action: ModelAction) {
     const allIdentifiers = action.atoms.flatMap((a) =>
       match(a)
         .with({ kind: "set" }, ({ target, set }) => {
@@ -208,6 +220,31 @@ export function checkForm(definition: Definition) {
         .exhaustive()
     );
     noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+  }
+
+  function checkExecuteAction(action: ExecuteAction) {
+    containsAtoms(action, "hook");
+    noDuplicateAtoms(action, "hook", "responds");
+    const allIdentifiers = kindFilter(action.atoms, "virtualInput").map((virtualInput) => {
+      checkActionAtomVirtualInput(virtualInput);
+      return virtualInput.name;
+    });
+    noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+
+    const hook = kindFind(action.atoms, "hook");
+    if (hook) checkHook(hook);
+  }
+
+  function checkFetchAction(action: FetchAction) {
+    containsAtoms(action, "anonymousQuery");
+    const allIdentifiers = kindFilter(action.atoms, "virtualInput").map((virtualInput) => {
+      checkActionAtomVirtualInput(virtualInput);
+      return virtualInput.name;
+    });
+    noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+
+    const query = kindFind(action.atoms, "anonymousQuery");
+    if (query) checkQuery(query);
   }
 
   function checkActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput) {
