@@ -81,6 +81,7 @@ export function resolve(definition: Definition) {
         )
         .with({ kind: "populator" }, resolvePopulator)
         .with({ kind: "runtime" }, () => undefined)
+        .with({ kind: "authenticator" }, () => undefined)
         .exhaustive()
     );
   }

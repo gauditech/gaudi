@@ -1,6 +1,6 @@
 import { Type } from "./type";
 
-export type Definition = (Model | Entrypoint | Populator | Runtime)[];
+export type Definition = (Model | Entrypoint | Populator | Runtime | Authenticator)[];
 
 export type Model = WithKeyword<{
   kind: "model";
@@ -218,6 +218,10 @@ export type Runtime = WithKeyword<{ kind: "runtime"; name: Identifier; atoms: Ru
 export type RuntimeAtom = WithKeyword<
   { kind: "default" } | { kind: "sourcePath"; path: StringLiteral }
 >;
+
+export type Authenticator = WithKeyword<{ kind: "authenticator"; atoms: AuthenticatorAtom[] }>;
+export type AuthenticatorAtom = WithKeyword<{ kind: "method"; method: AuthenticatorMethod }>;
+export type AuthenticatorMethod = WithKeyword<{ kind: "basic" }>;
 
 export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
   kind: "hook";

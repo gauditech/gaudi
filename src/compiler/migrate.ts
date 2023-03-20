@@ -6,6 +6,7 @@ import { kindFilter, kindFind } from "@src/common/patternFilter";
 import { ensureExists } from "@src/common/utils";
 import { SelectAST } from "@src/types/ast";
 import {
+  AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
   ActionAtomSpecInputList,
   ActionAtomSpecRefThrough,
@@ -13,6 +14,7 @@ import {
   ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
+  AuthenticatorSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
@@ -41,7 +43,7 @@ export function migrate(definition: AST.Definition): Specification {
     entrypoints: kindFilter(definition, "entrypoint").map(migrateEntrypoint),
     populators: kindFilter(definition, "populator").map(migratePopulator),
     runtimes: kindFilter(definition, "runtime").map(migrateRuntime),
-    authenticator: undefined, // TODO
+    authenticator: migrateAuthenticator(kindFind(definition, "authenticator")!),
   };
 
   return specification;
@@ -319,6 +321,13 @@ function migrateRuntime(runtime: AST.Runtime): ExecutionRuntimeSpec {
     sourcePath,
     default: !!kindFind(runtime.atoms, "default"),
   };
+}
+
+function migrateAuthenticator(_authenticator: AST.Authenticator): AuthenticatorSpec {
+  const authUserModelName = AUTH_TARGET_MODEL_NAME;
+  const accessTokenModelName = `${authUserModelName}AccessToken`;
+
+  return { authUserModelName, accessTokenModelName, method: { kind: "basic" } };
 }
 
 function migrateModelHook(hook: AST.ModelHook): ModelHookSpec {

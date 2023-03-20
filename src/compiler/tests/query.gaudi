@@ -29,7 +29,7 @@ model Student {
 }
 
 entrypoint Ep {
-  target model Class
+  target Class
 
   create endpoint {
     action {

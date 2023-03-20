@@ -102,6 +102,7 @@ export const Count = createWeakKeyword("count");
 export const Computed = createWeakKeyword("computed");
 export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
+export const Basic = createWeakKeyword("basic");
 export const Authorize = createWeakKeyword("authorize");
 export const Auth = createWeakKeyword("auth");
 export const Asc = createWeakKeyword("asc");
@@ -219,6 +220,7 @@ export const GaudiTokens = [
   Computed,
   Cardinality,
   By,
+  Basic,
   Authorize,
   Auth,
   Asc,

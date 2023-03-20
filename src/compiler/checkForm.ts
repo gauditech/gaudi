@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 import {
   Action,
   ActionAtomVirtualInput,
+  Authenticator,
   Computed,
   Definition,
   Endpoint,
@@ -62,12 +63,18 @@ export function checkForm(definition: Definition) {
       }
     }
 
+    const authenticators = kindFilter(definition, "authenticator");
+    if (authenticators.length > 1) {
+      errors.push(new CompilerError(authenticators[1].keyword, ErrorCode.DuplicateAuthBlock));
+    }
+
     definition.forEach((d) =>
       match(d)
         .with({ kind: "model" }, checkModel)
         .with({ kind: "entrypoint" }, checkEntrypoint)
         .with({ kind: "populator" }, checkPopulator)
         .with({ kind: "runtime" }, () => undefined) // runtime is checked first
+        .with({ kind: "authenticator" }, () => checkAuthenticator) // runtime is checked first
         .exhaustive()
     );
   }
@@ -224,6 +231,11 @@ export function checkForm(definition: Definition) {
     });
     noDuplicateNames(setIdentifiers, ErrorCode.DuplicatePopulateSet);
     kindFilter(populate.atoms, "populate").forEach(checkPopulate);
+  }
+
+  function checkAuthenticator(authenticator: Authenticator) {
+    containsAtoms(authenticator, "method");
+    noDuplicateAtoms(authenticator, "method");
   }
 
   function checkHook(hook: Hook<boolean, boolean>) {

@@ -11,6 +11,8 @@ import {
   ActionFieldHook,
   ActionType,
   AggregateType,
+  Authenticator,
+  AuthenticatorAtom,
   BinaryOperator,
   BooleanLiteral,
   Computed,
@@ -88,6 +90,7 @@ class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => definition.push(this.SUBRULE(this.entrypoint)) },
         { ALT: () => definition.push(this.SUBRULE(this.populator)) },
         { ALT: () => definition.push(this.SUBRULE(this.runtime)) },
+        { ALT: () => definition.push(this.SUBRULE(this.authenticator)) },
       ]);
     });
 
@@ -910,6 +913,27 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return { kind: "runtime", name, atoms, keyword };
+  });
+
+  authenticator = this.RULE("authenticator", (): Authenticator => {
+    const atoms: AuthenticatorAtom[] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Auth));
+    this.CONSUME1(L.LCurly);
+    this.MANY(() => {
+      const keyword = getTokenData(this.CONSUME(L.Method));
+      const methodKeyword = getTokenData(this.CONSUME(L.Basic));
+      this.CONSUME2(L.LCurly);
+      this.CONSUME2(L.RCurly);
+      atoms.push({
+        kind: "method",
+        method: { kind: "basic", keyword: methodKeyword },
+        keyword,
+      });
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "authenticator", atoms, keyword };
   });
 
   modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", true, false);
