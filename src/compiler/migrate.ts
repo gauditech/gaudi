@@ -133,7 +133,7 @@ function migrateQuery(query: AST.Query | AST.AnonymousQuery): QuerySpec {
   const aggregate = kindFind(query.atoms, "aggregate");
 
   return {
-    name: query.kind === "query" ? query.name.text : "",
+    name: query.kind === "query" ? query.name.text : "$query",
     fromModel: from?.identifierPath.map((i) => i.identifier.text) ?? [],
     fromAlias: from?.as?.identifierPath.map((i) => i.identifier.text),
     filter: filter ? migrateExpr(filter.expr) : undefined,
