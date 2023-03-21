@@ -3,6 +3,10 @@ import path from "path";
 
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
+  BuildApiClientData,
+  render as renderApiClientTpl,
+} from "@src/builder/renderer/templates/api-client-browser.tpl";
+import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
 } from "@src/builder/renderer/templates/schema.prisma.tpl";
@@ -21,6 +25,7 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
 
   await buildDefinition({ definition }, config.outputFolder);
   await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
+  await buildApiClient({ definition }, config.outputFolder);
 }
 
 // -------------------- part builders
@@ -65,4 +70,18 @@ async function buildDb(data: BuildDbSchemaData, outputFolder: string): Promise<u
     // render DB schema
     renderDbSchema(data).then((content) => storeTemplateOutput(outFile, content))
   );
+}
+
+// ---------- API client
+
+export async function renderApiClient(data: BuildApiClientData): Promise<string> {
+  return renderApiClientTpl(data);
+}
+
+async function buildApiClient(data: BuildApiClientData, outputFolder: string): Promise<unknown> {
+  const outFile = path.join(outputFolder, "client/api-client.ts");
+
+  return renderApiClient(data).then((content) => {
+    storeTemplateOutput(outFile, content);
+  });
 }
