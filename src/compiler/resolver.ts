@@ -99,13 +99,14 @@ export function resolve(definition: Definition) {
     if (atom.resolved) return;
     atom.resolved = true;
 
+    const scope: ScopeDb = { kind: "querySimple", model: model.name.text };
     match(atom)
       .with({ kind: "field" }, (field) => resolveField(model, field))
       .with({ kind: "reference" }, (reference) => resolveReference(model, reference))
       .with({ kind: "relation" }, (relation) => resolveRelation(model, relation))
-      .with({ kind: "query" }, (query) => resolveQuery(model, query))
+      .with({ kind: "query" }, (query) => resolveQuery(query, scope))
       .with({ kind: "computed" }, (computed) => resolveComputed(model, computed))
-      .with({ kind: "hook" }, (hook) => resolveModelHook(model, hook))
+      .with({ kind: "hook" }, (hook) => resolveModelHook(hook, scope))
       .exhaustive();
   }
 
@@ -188,26 +189,21 @@ export function resolve(definition: Definition) {
     }
   }
 
-  function resolveQuery(model: Model, query: Query | AnonymousQuery) {
+  function resolveQuery(query: Query | AnonymousQuery, parentScope: Scope) {
     let currentModel: string | undefined;
     let scope: ScopeDb = { kind: "querySimple", model: undefined };
     let cardinality = "one" as TypeCardinality;
 
     const from = kindFind(query.atoms, "from");
     if (from) {
-      // TODO: allow global queries
-      currentModel = model.name.text;
-      from.identifierPath.map((identifier) => {
-        resolveModelAtomRef(identifier, currentModel, "reference", "relation", "query");
-
+      resolveIdentifierRefPath(from.identifierPath, parentScope, true);
+      from.identifierPath.forEach((identifier) => {
         currentModel = getTypeModel(identifier.type);
         cardinality = getTypeCardinality(identifier.type, cardinality);
         identifier.type = removeTypeModifier(
           removeTypeModifier(identifier.type, "nullable"),
           "collection"
         );
-
-        return identifier;
       });
 
       if (from.as) {
@@ -223,7 +219,12 @@ export function resolve(definition: Definition) {
         scope = { kind: "querySimple", model: currentModel };
       }
     } else if (query.kind === "anonymousQuery") {
-      currentModel = model.name.text;
+      switch (parentScope.kind) {
+        case "querySimple":
+        case "entrypoint":
+          currentModel = parentScope.model;
+          break;
+      }
     }
 
     const filter = kindFind(query.atoms, "filter");
@@ -432,8 +433,7 @@ export function resolve(definition: Definition) {
       resolveActionAtomVirtualInput(virtualInput, scope)
     );
     const query = kindFind(action.atoms, "anonymousQuery");
-    const model = scope.model ? findModel(scope.model) : undefined;
-    if (query && model) resolveQuery(model, query);
+    if (query) resolveQuery(query, scope);
   }
 
   function resolveActionAtomSet(set: ActionAtomSet, model: string | undefined, scope: ScopeCode) {
@@ -512,15 +512,18 @@ export function resolve(definition: Definition) {
     );
   }
 
-  function resolveModelHook(model: Model, hook: ModelHook) {
+  function resolveModelHook(hook: ModelHook, scope: Scope) {
     resolveHook(hook);
-    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(model, query));
-    hook.ref = {
-      kind: "modelAtom",
-      atomKind: "hook",
-      name: hook.name.text,
-      model: model.name.text,
-    };
+    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(query, scope));
+    const model = (scope.kind === "querySimple" && scope.model) || undefined;
+    if (model) {
+      hook.ref = {
+        kind: "modelAtom",
+        atomKind: "hook",
+        name: hook.name.text,
+        model,
+      };
+    }
   }
 
   function resolveFieldValidationHook(hook: FieldValidationHook) {
@@ -617,7 +620,7 @@ export function resolve(definition: Definition) {
       .exhaustive();
   }
 
-  function resolveIdentifierRefPath(path: IdentifierRef[], scope: Scope) {
+  function resolveIdentifierRefPath(path: IdentifierRef[], scope: Scope, allowGlobal = false) {
     switch (scope.kind) {
       case "entrypoint": {
         const [head, ...tail] = path;
@@ -651,7 +654,7 @@ export function resolve(definition: Definition) {
         }
 
         if (scope.model) {
-          resolveIdentifierRefPathForModel(path, scope.model, "entrypoint");
+          resolveIdentifierRefPathForModel(path, scope.model, "entrypoint", allowGlobal);
           return;
         }
 
@@ -662,7 +665,9 @@ export function resolve(definition: Definition) {
         const [head, ...tail] = path;
         const model = scope.models.find((model) => model.as === head.identifier.text)?.model;
         if (!model) {
+          resolveIdentifierRefPathForModel(path, undefined, "db", true);
           errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
+          return;
         } else {
           head.ref = { kind: "model", model };
           head.type = { kind: "model", model };
@@ -671,7 +676,7 @@ export function resolve(definition: Definition) {
         return;
       }
       case "querySimple": {
-        resolveIdentifierRefPathForModel(path, scope.model, "db");
+        resolveIdentifierRefPathForModel(path, scope.model, "db", true);
         return;
       }
     }
@@ -680,17 +685,32 @@ export function resolve(definition: Definition) {
   function resolveIdentifierRefPathForModel(
     path: IdentifierRef[],
     model: string | undefined,
-    environment: "db" | "model" | "entrypoint"
+    environment: "db" | "model" | "entrypoint",
+    allowGlobal = false
   ) {
     let currentModel = model;
+    let successfull = true;
     path.forEach((identifier) => {
+      if (!currentModel) return;
       const kinds: ModelAtom["kind"][] =
         environment === "db"
           ? ["field", "reference", "relation", "query", "computed"]
           : ["field", "reference", "relation", "query", "computed", "hook"];
-      resolveModelAtomRef(identifier, currentModel, ...kinds);
+      if (allowGlobal) {
+        const errors = tryResolveModelAtomRef(identifier, currentModel, ...kinds);
+        if (errors.length > 0) {
+          successfull = false;
+        }
+      } else {
+        resolveModelAtomRef(identifier, currentModel, ...kinds);
+      }
       currentModel = getTypeModel(identifier.type);
     });
+    if (allowGlobal && !successfull) {
+      const [head, ...tail] = path;
+      resolveModelRef(head);
+      resolveIdentifierRefPathForModel(tail, getTypeModel(head.type), environment, false);
+    }
   }
 
   function resolveModelRef(identifier: IdentifierRef) {
@@ -708,9 +728,17 @@ export function resolve(definition: Definition) {
     modelName: string | undefined,
     ...kinds: ModelAtom["kind"][]
   ) {
-    if (!modelName) return;
+    errors.push(...tryResolveModelAtomRef(identifier, modelName, ...kinds));
+  }
+
+  function tryResolveModelAtomRef(
+    identifier: IdentifierRef,
+    modelName: string | undefined,
+    ...kinds: ModelAtom["kind"][]
+  ): CompilerError[] {
+    if (!modelName) return [];
     const model = findModel(modelName);
-    if (!model) return;
+    if (!model) return [];
 
     const targetName = identifier.identifier.text;
     const atom = patternFind(model.atoms, { name: { text: targetName } });
@@ -729,7 +757,7 @@ export function resolve(definition: Definition) {
           kind: "primitive",
           primitiveKind: "integer",
         };
-        return;
+        return [];
       }
     }
     // Model id can be targeted
@@ -744,7 +772,7 @@ export function resolve(definition: Definition) {
         kind: "primitive",
         primitiveKind: "integer",
       };
-      return;
+      return [];
     }
 
     for (const kind of kinds) {
@@ -752,11 +780,11 @@ export function resolve(definition: Definition) {
         resolveModelAtom(model, atom);
         identifier.ref = atom.ref;
         identifier.type = atom.type;
-        return;
+        return [];
       }
     }
 
-    errors.push(new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom));
+    return [new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom)];
   }
 
   function findModel(name: string): Model | undefined {

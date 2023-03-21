@@ -101,8 +101,8 @@ export function compileAuthenticatorSpec(
             virtual input username { type string }
 
             query {
-              from ${authUserModelName} as a
-              filter a.username is username
+              from ${authUserModelName} as a,
+              filter { a.username is username },
               limit 1
             }
             // TODO: throw error id user is not resolved
@@ -150,11 +150,11 @@ export function compileAuthenticatorSpec(
         cardinality many
 
         action {
-          fetch ${accessTokenModelName} as accessToken {
+          fetch as accessToken {
 
             query {
-              from ${accessTokenModelName}
-              filter token is @requestAuthToken
+              from ${accessTokenModelName},
+              filter { token is @requestAuthToken },
               limit 1
             }
           }
