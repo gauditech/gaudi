@@ -373,7 +373,11 @@ describe("compose actions", () => {
     );
     it.todo("gives proper error when nested cycle is detected");
     // create user { create profile { create user {} } }
+  });
 
+  // ----- custom actions
+
+  describe("custom actions", () => {
     it("creates actions in custom endpoint", () => {
       const bp = `
     model Org { field name { type text } }
