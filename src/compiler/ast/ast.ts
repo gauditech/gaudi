@@ -332,6 +332,7 @@ export type RefModelAtom = {
   atomKind: ModelAtom["kind"];
   name: string;
   model: string;
+  unique: boolean;
 };
 export type RefContext = { kind: "runtime"; path: string };
 export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;

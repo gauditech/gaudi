@@ -5,14 +5,13 @@ export type PrimitiveType = { kind: "primitive"; primitiveKind: typeof primitive
 export type ModelType = { kind: "model"; model: string };
 export type CollectionType = { kind: "collection"; type: Type };
 export type NullableType = { kind: "nullable"; type: Type };
-export type UniqueType = { kind: "unique"; type: Type };
 
-export type Type = AnyType | PrimitiveType | ModelType | CollectionType | NullableType | UniqueType;
+export type Type = AnyType | PrimitiveType | ModelType | CollectionType | NullableType;
 
 export const unknownType: Type = { kind: "unknown" };
 
 // types are generated in a way that nesting will always be collection > unique > nullable
-export type TypeModifier = "collection" | "nullable" | "unique";
+export type TypeModifier = "collection" | "nullable";
 
 export function addTypeModifier(type: Type, modifier: TypeModifier): Type {
   if (type.kind === "unknown") return type;
@@ -20,17 +19,7 @@ export function addTypeModifier(type: Type, modifier: TypeModifier): Type {
   switch (modifier) {
     case "nullable": {
       if (type.kind === "nullable" || type.kind === "collection") return type;
-      if (type.kind === "unique") {
-        return { ...type, type: addTypeModifier(type.type, "nullable") };
-      }
       return { kind: "nullable", type };
-    }
-    case "unique": {
-      if (type.kind === "unique") return type;
-      if (type.kind === "collection") {
-        return { ...type, type: addTypeModifier(type.type, "unique") };
-      }
-      return { kind: "unique", type };
     }
     case "collection": {
       type = removeTypeModifier(type, "nullable");
@@ -51,20 +40,6 @@ export function removeTypeModifier(type: Type, modifier: TypeModifier): Type {
         ? type.type
         : { ...type, type: removeTypeModifier(type.type, modifier) };
     }
-  }
-}
-
-export function hasTypeModifier(type: Type, modifier: TypeModifier): boolean {
-  switch (type.kind) {
-    case "unknown":
-      return true;
-    case "model":
-    case "primitive":
-      return false;
-    case modifier:
-      return true;
-    default:
-      return hasTypeModifier(type.type, modifier);
   }
 }
 
@@ -95,8 +70,6 @@ export function getTypeCardinality(
     case "model":
     case "primitive":
       return baseCardinality;
-    case "unique":
-      return getTypeCardinality(type.type, baseCardinality);
     case "nullable":
       return getTypeCardinality(type.type, "nullable");
   }
@@ -112,10 +85,6 @@ export type TypeCategory = keyof typeof typeCategories;
 
 export function isExpectedType(type: Type, expected: Type | TypeCategory): boolean {
   if (type.kind === "unknown") return true;
-  // unique is ignored
-  if (type.kind === "unique") {
-    return isExpectedType(type.type, expected);
-  }
 
   // typeof string means expected is a `TypeCategory`
   if (typeof expected === "string") {
@@ -124,11 +93,6 @@ export function isExpectedType(type: Type, expected: Type | TypeCategory): boole
   }
 
   if (expected.kind === "unknown") return true;
-
-  // unique is ignored
-  if (expected.kind === "unique") {
-    return isExpectedType(type, expected.type);
-  }
 
   if (expected.kind === "collection" && type.kind === "collection") {
     return isExpectedType(type.type, expected.type);
