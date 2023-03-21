@@ -39,12 +39,13 @@ import {
 } from "@src/types/specification";
 
 export function migrate(definition: AST.Definition): Specification {
+  const authenticator = kindFind(definition, "authenticator");
   const specification: Specification = {
     models: kindFilter(definition, "model").map(migrateModel),
     entrypoints: kindFilter(definition, "entrypoint").map(migrateEntrypoint),
     populators: kindFilter(definition, "populator").map(migratePopulator),
     runtimes: kindFilter(definition, "runtime").map(migrateRuntime),
-    authenticator: migrateAuthenticator(kindFind(definition, "authenticator")!),
+    authenticator: authenticator ? migrateAuthenticator(authenticator) : undefined,
   };
 
   return specification;

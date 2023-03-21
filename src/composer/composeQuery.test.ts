@@ -62,18 +62,18 @@ describe("compose action queries", () => {
       }
 
       entrypoint Org {
-        target model Org
+        target Org
 
         // test in native endpoint
         update endpoint {
           action {
-            // target model
+            // target
             fetch as cOrg {
-              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
+              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
             }
             // other model
             fetch as cRepo {
-              query { from Repo, filter id is 1 } // TODO: read from ctx - id
+              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
             }
           }
         }
@@ -95,7 +95,7 @@ describe("compose action queries", () => {
       }
 
       entrypoint Org {
-        target model Org
+        target Org
 
         // test in custom endpoint
         custom endpoint {
@@ -104,13 +104,13 @@ describe("compose action queries", () => {
           cardinality one
 
           action {
-            // target model
+            // target
             fetch as cOrg {
-              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
+              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
             }
             // other model
             fetch as cRepo {
-              query { from Repo, filter id is 1 } // TODO: read from ctx - id
+              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
             }
           }
         }

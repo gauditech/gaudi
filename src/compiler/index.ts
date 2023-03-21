@@ -37,8 +37,7 @@ export function compileToAST(source: string): CompileResult {
 export function compileToOldSpec(source: string): Specification {
   const { ast, errors } = compileToAST(source);
   if (!ast) {
-    console.error(compilerErrorsToString("unknown", source, errors));
-    throw Error("Failed to compile test");
+    throw compilerErrorsToString("unknown", source, errors);
   }
   return migrate(ast);
 }

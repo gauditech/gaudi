@@ -241,7 +241,7 @@ describe("Expression functions to queries", () => {
     model Org {
       relation repos { from Repo, through org }
       query repo_fns {
-        from repos
+        from repos,
         filter {
           // test SQL functions
           length(name) is 4
@@ -254,7 +254,7 @@ describe("Expression functions to queries", () => {
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
     }
     `;
     const def = compose(compileToOldSpec(bp));

@@ -149,15 +149,15 @@ describe("compose hooks", () => {
   it("action hook", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       model Org {
-        field name { type text }
+        field name { type string }
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
 
         custom endpoint {
           path "somePath"
@@ -190,13 +190,13 @@ describe("compose hooks", () => {
   it("fails on inline action hook", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       model Org {}
 
       entrypoint Orgs {
-        target model Org
+        target Org
 
         custom endpoint {
           path "somePath"
@@ -222,10 +222,10 @@ describe("compose hooks", () => {
 
   it("composes action hook", () => {
     const bp = `
-      model Org { field name { type text} }
+      model Org { field name { type string} }
 
       entrypoint Org {
-        target model Org
+        target Org
 
         // login
         custom endpoint {
@@ -236,11 +236,11 @@ describe("compose hooks", () => {
           action {
             execute {
 
-              virtual input prop { type text }
+              virtual input prop { type string }
 
               hook {
                 // action arg hook
-                arg user query { from Org, filter id is 1, select { id, name }} // TODO: read from ctx - id
+                arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id
 
                 runtime @GAUDI_INTERNAL
                 source login from "hooks/auth"
