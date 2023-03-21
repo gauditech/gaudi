@@ -3,7 +3,7 @@ import _ from "lodash";
 
 import { Definition, TokenData } from "./ast/ast";
 import { checkForm } from "./checkForm";
-import { CompilerError, ErrorCode, compilerErrorsToString } from "./compilerError";
+import { CompilerError, ErrorCode } from "./compilerError";
 import * as L from "./lexer";
 import { migrate } from "./migrate";
 import { getTokenData, parser } from "./parser";
@@ -36,8 +36,10 @@ export function compileToAST(source: string): CompileResult {
 
 export function compileToOldSpec(source: string): Specification {
   const { ast, errors } = compileToAST(source);
-  if (!ast) {
-    throw compilerErrorsToString("unknown", source, errors);
+  if (errors.length > 0) {
+    throw errors[0];
+  } else if (!ast) {
+    throw Error("Unknown compiler error");
   }
   return migrate(ast);
 }

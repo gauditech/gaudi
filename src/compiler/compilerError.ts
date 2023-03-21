@@ -17,6 +17,7 @@ export enum ErrorCode {
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
+  RespondsCanOnlyBeUsedInCustomEndpoint,
   QueryFromAliasWrongLength,
   QueryMaxOneAggregate,
   ConfiguringNonCustomEndpoint,
@@ -62,6 +63,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate populate set field`;
     case ErrorCode.DuplicateHookArg:
       return `Duplicate hook argument`;
+    case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
+      return `Actions with "responds" can only be used in custom endpoints`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
     case ErrorCode.QueryMaxOneAggregate:

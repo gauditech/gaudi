@@ -205,7 +205,7 @@ describe("entrypoint", () => {
     `;
 
     expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Actions with "responds" keyword are allowed only in "custom" endpoints, not in "create""`
+      `"Actions with "responds" can only be used in custom endpoints"`
     );
   });
 

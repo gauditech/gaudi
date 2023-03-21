@@ -8,6 +8,7 @@ import {
   Computed,
   Definition,
   Endpoint,
+  EndpointType,
   Entrypoint,
   ExecuteAction,
   FetchAction,
@@ -184,14 +185,14 @@ export function checkForm(definition: Definition) {
     }
 
     const action = kindFind(endpoint.atoms, "action");
-    if (action) action.actions.map(checkAction);
+    if (action) action.actions.map((a) => checkAction(a, endpoint.type));
   }
 
-  function checkAction(action: Action) {
+  function checkAction(action: Action, endpointType: EndpointType) {
     match(action)
       .with({ kind: "create" }, { kind: "update" }, checkModelAction)
       .with({ kind: "delete" }, () => undefined)
-      .with({ kind: "execute" }, checkExecuteAction)
+      .with({ kind: "execute" }, (a) => checkExecuteAction(a, endpointType))
       .with({ kind: "fetch" }, checkFetchAction)
       .exhaustive();
   }
@@ -222,7 +223,7 @@ export function checkForm(definition: Definition) {
     noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
   }
 
-  function checkExecuteAction(action: ExecuteAction) {
+  function checkExecuteAction(action: ExecuteAction, endpointType: EndpointType) {
     containsAtoms(action, "hook");
     noDuplicateAtoms(action, "hook", "responds");
     const allIdentifiers = kindFilter(action.atoms, "virtualInput").map((virtualInput) => {
@@ -233,6 +234,12 @@ export function checkForm(definition: Definition) {
 
     const hook = kindFind(action.atoms, "hook");
     if (hook) checkHook(hook);
+    const responds = kindFind(action.atoms, "responds");
+    if (responds && endpointType !== "custom") {
+      errors.push(
+        new CompilerError(responds.keyword, ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint)
+      );
+    }
   }
 
   function checkFetchAction(action: FetchAction) {
