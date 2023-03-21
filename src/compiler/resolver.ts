@@ -515,6 +515,7 @@ export function resolve(definition: Definition) {
   function resolveModelHook(hook: ModelHook, scope: Scope) {
     resolveHook(hook);
     kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(query, scope));
+    kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
     const model = (scope.kind === "querySimple" && scope.model) || undefined;
     if (model) {
       hook.ref = {
@@ -532,6 +533,7 @@ export function resolve(definition: Definition) {
 
   function resolveActionHook(hook: ActionHook, scope: ScopeCode) {
     resolveHook(hook);
+    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(query, scope));
     kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
   }
 

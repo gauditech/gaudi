@@ -65,13 +65,13 @@ describe("entrypoint", () => {
   it("action should send response", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       // endpoint W/ responding action
       custom endpoint {
@@ -104,13 +104,13 @@ describe("entrypoint", () => {
   it("endpoint should send response", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       // endpoint W/O responding action
       custom endpoint {
@@ -141,13 +141,13 @@ describe("entrypoint", () => {
   it("fail for multiple actions that want to respond", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       custom endpoint {
         path "somePath1"
@@ -182,13 +182,13 @@ describe("entrypoint", () => {
   it("fails if responds action is used in implicit endpoints", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       create endpoint {
         action {
@@ -214,7 +214,7 @@ describe("entrypoint", () => {
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       custom endpoint {
         path "somePath"

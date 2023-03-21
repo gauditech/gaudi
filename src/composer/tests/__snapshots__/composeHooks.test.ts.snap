@@ -156,7 +156,7 @@ exports[`compose hooks composes action hook 1`] = `
             "kind": "query",
             "limit": undefined,
             "modelRefKey": "Org",
-            "name": "user",
+            "name": "$query",
             "offset": undefined,
             "orderBy": undefined,
             "refKey": "N/A",

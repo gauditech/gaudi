@@ -396,6 +396,9 @@ function migrateActionHook(hook: AST.ActionHook): ActionHookSpec {
   kindFilter(hook.atoms, "arg_expr").forEach((a) => {
     args[a.name.text] = { kind: "expression", exp: migrateExpr(a.expr) };
   });
+  kindFilter(hook.atoms, "arg_query").map((a) => {
+    args[a.name.text] = { kind: "query", query: migrateQuery(a.query) };
+  });
   return { code, args, runtimeName: getHookRuntime(hook) };
 }
 
