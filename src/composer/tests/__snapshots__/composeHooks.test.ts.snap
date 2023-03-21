@@ -485,7 +485,7 @@ exports[`compose hooks inline hooks 1`] = `
                     "args": [],
                     "hook": {
                       "code": {
-                        "inline": ""test name"",
+                        "inline": "'test name'",
                         "kind": "inline",
                       },
                       "runtimeName": "MyRuntime",
@@ -601,7 +601,7 @@ exports[`compose hooks inline hooks 1`] = `
               "arg": "name",
               "hook": {
                 "code": {
-                  "inline": ""test name"",
+                  "inline": "'test name'",
                   "kind": "inline",
                 },
                 "runtimeName": "MyRuntime",
@@ -616,7 +616,7 @@ exports[`compose hooks inline hooks 1`] = `
           "args": [],
           "hook": {
             "code": {
-              "inline": ""some description"",
+              "inline": "'some description'",
               "kind": "inline",
             },
             "runtimeName": "MyRuntime",
