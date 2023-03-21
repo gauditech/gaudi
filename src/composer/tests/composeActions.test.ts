@@ -136,8 +136,8 @@ describe("compose actions", () => {
 
     it("can create nested relations through transient references", () => {
       const bp = `
-    model Org { relation repos { from Repo, through org }; relation logs { from OrgLog, through org } }
-    model Repo { reference org { to Org }; field name { type text } }
+    model Org { relation repos { from Repo, through org } relation logs { from OrgLog, through org } }
+    model Repo { reference org { to Org } field name { type string } }
     model OrgLog { reference org { to Org } }
 
     entrypoint R {
@@ -272,7 +272,7 @@ describe("compose actions", () => {
     });
     it("succeeds when virtual input is defined and referenced", () => {
       const bp = `
-    model Org { field name { type text } }
+    model Org { field name { type string } }
 
     entrypoint Orgs {
       target Org as org
@@ -308,8 +308,9 @@ describe("compose actions", () => {
       }
     }
     `;
-      const spec = compileToOldSpec(bp);
-      expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Found duplicates: [name]"`);
+      expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+        `"Field used twice in single action"`
+      );
     });
     it.todo("succeeds to update through unique relation");
     it("sets default action if not given", () => {
@@ -341,8 +342,7 @@ describe("compose actions", () => {
       }
     }
     `;
-      const spec = compileToOldSpec(bp);
-      expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
+      expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
         `"Custom action must have an alias"`
       );
     });
@@ -365,8 +365,7 @@ describe("compose actions", () => {
         }
       }
     `;
-        const spec = compileToOldSpec(bp);
-        expect(() => compose(spec)).toThrowError(
+        expect(() => compose(compileToOldSpec(bp))).toThrowError(
           `Cannot name an action with ${name}, name already exists in the context`
         );
       }
@@ -380,7 +379,7 @@ describe("compose actions", () => {
   describe("custom actions", () => {
     it("creates actions in custom endpoint", () => {
       const bp = `
-    model Org { field name { type text } }
+    model Org { field name { type string } }
     model Log {}
 
     entrypoint Orgs {
@@ -438,7 +437,7 @@ describe("compose actions", () => {
       .forEach((property) => {
         it(`fails when "${property}" property is missing in custom endpoint`, () => {
           const bp = `
-          model Org { field name { type text } }
+          model Org { field name { type string } }
           model Log {}
 
           entrypoint Orgs {
@@ -457,7 +456,7 @@ describe("compose actions", () => {
         `;
 
           expect(() => compose(compileToOldSpec(bp))).toThrowError(
-            `Property "${property}" is required for custom endpoints`
+            `'endpoint' must contain a '${property}'`
           );
         });
 
@@ -479,7 +478,7 @@ describe("compose actions", () => {
             `;
 
               expect(() => compose(compileToOldSpec(bp))).toThrowError(
-                `Property "${property}" is not allowed for "${epType}" endpoints`
+                `Only custom endpoint can have method, cardinality and path configuration`
               );
             });
           })

@@ -777,6 +777,10 @@ export function resolve(definition: Definition) {
       return [];
     }
 
+    if (!atom) {
+      return [new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom)];
+    }
+
     for (const kind of kinds) {
       if (kind === atom?.kind) {
         resolveModelAtom(model, atom);
@@ -786,7 +790,12 @@ export function resolve(definition: Definition) {
       }
     }
 
-    return [new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom)];
+    return [
+      new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtomWrongKind, {
+        atom: atom.kind,
+        expected: kinds,
+      }),
+    ];
   }
 
   function findModel(name: string): Model | undefined {

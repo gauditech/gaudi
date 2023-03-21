@@ -27,6 +27,7 @@ export enum ErrorCode {
   // Resolver Errors
   CantResolveModel,
   CantResolveModelAtom,
+  CantResolveModelAtomWrongKind,
   CantResolveExpressionReference,
   SelectCantNest,
   // Type Errors
@@ -81,6 +82,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve model with this name`;
     case ErrorCode.CantResolveModelAtom:
       return `Can't resolve model member with this name`;
+    case ErrorCode.CantResolveModelAtomWrongKind:
+      return `Model member must be one of [${params?.expected}], but ${params?.atom} member was found`;
     case ErrorCode.CantResolveExpressionReference:
       return `Can't resolve expression reference`;
     case ErrorCode.SelectCantNest:

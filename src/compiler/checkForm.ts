@@ -29,6 +29,7 @@ import {
 import { CompilerError, ErrorCode } from "./compilerError";
 
 import { kindFilter, kindFind } from "@src/common/patternFilter";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 
 export function checkForm(definition: Definition) {
   const errors: CompilerError[] = [];
@@ -283,20 +284,25 @@ export function checkForm(definition: Definition) {
   }
 
   function checkHook(hook: Hook<boolean, boolean>) {
+    noDuplicateAtoms(hook, "default_arg", "runtime");
     const sourceOrInline = [
       ...kindFilter(hook.atoms, "source"),
       ...kindFilter(hook.atoms, "inline"),
     ];
+    const internalExecRuntimeName = getInternalExecutionRuntimeName();
     if (sourceOrInline.length === 0) {
       errors.push(new CompilerError(hook.keyword, ErrorCode.HookMustContainSourceOrInline));
     } else if (sourceOrInline.length > 1) {
       sourceOrInline.forEach(({ keyword }) =>
         errors.push(new CompilerError(keyword, ErrorCode.HookOnlyOneSourceOrInline))
       );
-    } else if (sourceOrInline[0].kind === "source" && !hasDefaultRuntime) {
+    } else if (
+      sourceOrInline[0].kind === "source" &&
+      !hasDefaultRuntime &&
+      kindFind(hook.atoms, "runtime")?.identifier.text !== internalExecRuntimeName
+    ) {
       errors.push(new CompilerError(sourceOrInline[0].keyword, ErrorCode.NoRuntimeDefinedForHook));
     }
-    noDuplicateAtoms(hook, "default_arg");
 
     const queryArgs = kindFilter(hook.atoms, "arg_query");
 

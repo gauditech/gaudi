@@ -56,7 +56,7 @@ describe("compose models", () => {
     model Org { reference no { to UnknownModel } }
     `;
     expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Couldn't resolve the spec. The following refs are unresolved: UnknownModel"`
+      `"Can't resolve model with this name"`
     );
   });
 
