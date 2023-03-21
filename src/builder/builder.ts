@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 
+import { DiagnosticCategory, Project, ScriptTarget } from "ts-morph";
+
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
   BuildApiClientData,
@@ -81,7 +83,38 @@ export async function renderApiClient(data: BuildApiClientData): Promise<string>
 async function buildApiClient(data: BuildApiClientData, outputFolder: string): Promise<unknown> {
   const outFile = path.join(outputFolder, "client/api-client.ts");
 
-  return renderApiClient(data).then((content) => {
-    storeTemplateOutput(outFile, content);
-  });
+  return (
+    renderApiClient(data)
+      .then((content) => {
+        storeTemplateOutput(outFile, content);
+      })
+      // compile client TS file to JS and DTS files
+      .then(async () => {
+        const project = new Project({
+          compilerOptions: {
+            declaration: true,
+            target: ScriptTarget.ES2015,
+            strict: true,
+          },
+        });
+        const sourceFile = project.addSourceFileAtPath(outFile);
+
+        const diagnostics = sourceFile.getPreEmitDiagnostics();
+
+        if (diagnostics.length === 0) {
+          console.log(`Compiled API client source file: ${outFile}`);
+          return project.emit();
+        } else {
+          console.log(`Error compiling API client source file: ${outFile}`);
+
+          for (const diagnostic of diagnostics) {
+            console.log(
+              `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
+              `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
+              diagnostic.getMessageText()
+            );
+          }
+        }
+      })
+  );
 }

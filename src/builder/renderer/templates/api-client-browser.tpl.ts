@@ -463,12 +463,6 @@ function buildCommonCode(def: Definition): string {
   async function makeRequest(url: string, init: RequestInit) {
     return fetch(url, init);
   }
-  
-  /** Function that ensures exhaustivness of conditional statements. */
-  export function assertUnreachable(_: never): never {
-    throw new Error("Unreachable code detected");
-  }
-
   `;
 }
 
