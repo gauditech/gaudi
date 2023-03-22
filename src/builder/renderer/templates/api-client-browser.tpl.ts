@@ -1,42 +1,45 @@
 import _ from "lodash";
 
+import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
-import { Definition, EndpointDef, EntrypointDef } from "@src/types/definition";
+import { Definition, EndpointDef, EntrypointDef, SelectItem } from "@src/types/definition";
 
 export type BuildApiClientData = {
   definition: Definition;
 };
 
+/** Template renderer */
 export function render(data: BuildApiClientData): string {
   return buildClient(data.definition);
 }
+
+// --- API client
 
 function buildClient(def: Definition): string {
   // TODO: read target and api from generator def block
 
   return `
-// ----- API client
-export type ApiClientOptions = {
-  rootPath?: string;
-};
-
-export function createClient(options?: ApiClientOptions) {
-  const rootPath = options?.rootPath ?? "";
-  return {
-    api: buildApi(rootPath),
+  // ----- API client
+  export type ApiClientOptions = {
+    rootPath?: string;
   };
-}
 
-${buildApi(def, def.entrypoints, "")}
+  export function createClient(options?: ApiClientOptions) {
+    const rootPath = options?.rootPath ?? "";
+    return {
+      api: buildApi(rootPath),
+    };
+  }
 
-${buildCommonCode(def)}
+  ${buildApi(def, def.entrypoints, "")}
 
-`;
+  ${buildCommonCode()}
+
+  `;
 }
 
 type EntrypointName = { name: string; segment: string; type: string; builder: string };
 type EntrypointApiEntry = { name: string; builderName: string; builderFn: string[] };
-type EndpointApiEntry = { name: string; builder: string };
 
 function buildApi(def: Definition, entrypoints: EntrypointDef[], basePath: string): string {
   const apiEntries = entrypoints.map((sub) => buildEntrypointApi(def, sub, basePath));
@@ -54,55 +57,130 @@ function buildApi(def: Definition, entrypoints: EntrypointDef[], basePath: strin
   `;
 }
 
+// --- entrypoint API
+
 function buildEntrypointApi(
   def: Definition,
   entrypoint: EntrypointDef,
   basePath: string
 ): EntrypointApiEntry {
   const epName = entrypointName(entrypoint.name, entrypoint.target.retType);
-  console.log("EP NAME", epName);
 
-  const entries = entrypoint.entrypoints.map((sub) => buildEntrypointApi(def, sub, basePath));
-
-  const subBuilderFns = entries.map((sub) => sub.builderFn);
+  const entrypointEntries = entrypoint.entrypoints.map((sub) =>
+    buildEntrypointApi(def, sub, basePath)
+  );
+  const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints, epName);
 
   const builderFn = `
-function ${epName.builder}(basePath: string) {
-  type ${epName.type} = { id: number, name: string }
-  type ${epName.type}CreateData = { name: string }; // read from fieldset
-  type ${epName.type}UpdateData = { id: number, name: string }; // read from fieldset
+  function ${epName.builder}(basePath: string) {
+    // type ${epName.type} = { id: number, name: string }
+    type ${epName.type}CreateData = { name: string }; // read from fieldset
+    type ${epName.type}UpdateData = { id: number, name: string }; // read from fieldset
 
-  const api = (id: number | string) => {
-    const url = \`${basePath}/\${id}\`;
-    return {
-      ${entries.map((sub) => `${sub.name}: ${sub.builderName}(url)`).join(",\n")}
+    ${endpointEntries
+      .map((epe) => epe.types)
+      .flat()
+      .map((t) => `type ${t.name} = ${t.body};`)
+      .join("\n")}
+
+    const api = (id: number | string) => {
+      const url = \`${basePath}/\${id}\`;
+      return {
+        ${entrypointEntries.map((sub) => `${sub.name}: ${sub.builderName}(url)`).join(",\n")}
+      }
     }
-  }
 
-  return Object.assign(api, 
-    ${buildEndpointsApi(def, entrypoint.endpoints, epName)}
-  )
-}
-`;
+    return Object.assign(api, 
+      {
+        ${endpointEntries.map((epb) => `${epb.name}: ${epb.builder}`)}
+      }
+    )
+  }`;
 
   return {
     name: epName.segment,
     builderName: epName.builder,
-    builderFn: [builderFn, ...subBuilderFns.flat()],
+    builderFn: [builderFn, ...entrypointEntries.map((sub) => sub.builderFn).flat()],
   };
 }
+
+// --- endpoint API
+
+type EndpointApiEntry = { name: string; builder: string; types: { name: string; body: string }[] };
+
 function buildEndpointsApi(
   def: Definition,
   endpoints: EndpointDef[],
   entrypName: EntrypointName
-): string {
-  const apiEntries = endpoints.map((ep) => buildEndpointApi(def, ep, entrypName));
+): EndpointApiEntry[] {
+  return endpoints.map((ep) => buildEndpointApi(def, ep, entrypName));
+}
 
-  const epApi = apiEntries.map((epb) => `${epb.name}: ${epb.builder}`);
+function buildSelectType(def: Definition, select: SelectItem[]): SchemaObject {
+  return select
+    .map((item): { name: string; type: SchemaItem } => {
+      const selectKind = item.kind;
+      switch (selectKind) {
+        case "field": {
+          const field = getRef.field(def, item.refKey);
+          return {
+            name: item.alias,
+            type: {
+              type: convertFieldToSchemaType(field.type),
+              nullable: field.nullable,
+              optional: false,
+            },
+          };
+        }
+        case "reference":
+        case "relation":
+        case "query": {
+          // TODO: check optional/nullable
+          const isObject = item.kind === "reference";
+          const properties = buildSelectType(def, item.select);
+          if (isObject) {
+            return { name: item.alias, type: properties };
+          } else {
+            return {
+              name: item.alias,
+              type: { type: "array", items: properties, nullable: false, optional: false },
+            };
+          }
+        }
+        case "aggregate": {
+          // FIXME read the type from the `AggregateDef`
+          return { name: item.name, type: { type: "number", nullable: false, optional: false } };
+        }
+        case "computed": {
+          const computed = getRef.computed(def, item.refKey);
+          const computedType =
+            computed.type != null ? convertFieldToSchemaType(computed.type.type) : "unknown";
 
-  return `{
-  ${epApi.join(",\n\t")}
-  }`;
+          return {
+            name: item.name,
+            type: { type: computedType, nullable: false, optional: false },
+          };
+        }
+        case "model-hook": {
+          // FIXME - add return type to hooks
+          return {
+            name: item.name,
+            type: { type: "object", properties: {}, nullable: false, optional: false },
+          };
+        }
+
+        default:
+          assertUnreachable(selectKind);
+      }
+    })
+    .reduce(
+      (accum, item) => {
+        accum.properties[item.name] = item.type;
+
+        return accum;
+      },
+      { type: "object", properties: {} } as SchemaObject
+    );
 }
 
 function buildEndpointApi(
@@ -113,32 +191,42 @@ function buildEndpointApi(
   const epKind = endpoint.kind;
   switch (epKind) {
     case "get": {
+      const responseTypeName = `GetResp`;
+      const responseType = renderSchema(buildSelectType(def, endpoint.response));
+      console.log("SCHEMA", buildSelectType(def, endpoint.response), responseType);
+
       const path = entrypName.segment;
-      const returnType = entrypName.type;
       const errorsType = `"CODE_11" | "CODE_12"`;
       return {
         name: "get",
-        builder: `buildGetFn<${returnType}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildGetFn<${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        types: [{ name: responseTypeName, body: responseType }],
       };
     }
     case "create": {
+      const responseTypeName = `CreateResp`;
+      const responseType = renderSchema(buildSelectType(def, endpoint.response));
+
       const path = entrypName.segment;
       const inputType = `${entrypName.type}CreateData`;
-      const returnType = entrypName.type;
       const errorsType = `"CODE_11" | "CODE_12"`;
       return {
         name: "create",
-        builder: `buildCreateFn<${inputType},${returnType}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildCreateFn<${inputType},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        types: [{ name: responseTypeName, body: responseType }],
       };
     }
     case "update": {
+      const responseTypeName = `UpdateResp`;
+      const responseType = renderSchema(buildSelectType(def, endpoint.response));
+
       const path = entrypName.segment;
-      const returnType = entrypName.type;
       const inputType = `${entrypName.type}UpdateData`;
       const errorsType = `"CODE_11" | "CODE_12"`;
       return {
         name: "update",
-        builder: `buildUpdateFn<${inputType},${returnType}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildUpdateFn<${inputType},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        types: [{ name: responseTypeName, body: responseType }],
       };
     }
     case "delete": {
@@ -147,15 +235,19 @@ function buildEndpointApi(
       return {
         name: "delete",
         builder: `buildDeleteFn<${errorsType}>("${path}", basePath)`,
+        types: [],
       };
     }
     case "list": {
+      const responseTypeName = `ListResp`;
+      const responseType = renderSchema(buildSelectType(def, endpoint.response));
+
       const path = entrypName.segment;
-      const returnType = entrypName.type;
       const errorsType = `"CODE_11" | "CODE_12"`;
       return {
         name: "list",
-        builder: `buildListFn<${returnType}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildListFn<${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        types: [{ name: responseTypeName, body: responseType }],
       };
     }
     case "custom-one": {
@@ -167,6 +259,7 @@ function buildEndpointApi(
           return {
             name: path,
             builder: `buildCustomOneFetchFn<any, any>("${path}", "${method}", basePath)`,
+            types: [],
           };
         }
         case "POST":
@@ -174,6 +267,7 @@ function buildEndpointApi(
           return {
             name: path,
             builder: `buildCustomOneSubmitFn<any, any, any>("${path}", "${method}", basePath)`,
+            types: [],
           };
         }
         default: {
@@ -193,6 +287,7 @@ function buildEndpointApi(
           return {
             name: path,
             builder: `buildCustomManyFetchFn<any, any>("${path}", "${method}", basePath)`,
+            types: [],
           };
         }
         case "POST":
@@ -200,6 +295,7 @@ function buildEndpointApi(
           return {
             name: path,
             builder: `buildCustomManySubmitFn<any, any, any>("${path}", "${method}", basePath)`,
+            types: [],
           };
         }
         default: {
@@ -216,7 +312,7 @@ function buildEndpointApi(
   }
 }
 
-function buildCommonCode(def: Definition): string {
+function buildCommonCode(): string {
   return `
 
   // ----- API types
@@ -475,4 +571,75 @@ function entrypointName(name: string, type: string): EntrypointName {
     segment: _.toLower(name),
     builder: _.camelCase(`build${_.capitalize(name)}Api`),
   };
+}
+
+type SchemaField = {
+  type: "string" | "number" | "boolean" | "number[]" | "unknown";
+  optional: boolean;
+  nullable: boolean;
+};
+type SchemaObject = {
+  type: "object";
+  properties: { [k: string]: SchemaField | SchemaObject | SchemaArray };
+  optional: boolean;
+  nullable: boolean;
+};
+type SchemaArray = {
+  type: "array";
+  items: SchemaObject;
+  optional: boolean;
+  nullable: boolean;
+};
+type SchemaItem = SchemaField | SchemaObject | SchemaArray;
+
+function convertFieldToSchemaType(
+  type: "boolean" | "integer" | "text" | "list-integer"
+): SchemaField["type"] {
+  switch (type) {
+    case "boolean":
+      return type;
+    case "integer":
+      return "number";
+    case "list-integer":
+      return "number[]";
+    case "text":
+      return "string";
+    default:
+      assertUnreachable(type);
+  }
+}
+
+function renderSchema(schema: SchemaObject): string {
+  return renderSchemaObject(schema);
+}
+
+function renderSchemaObject(schema: SchemaObject): string {
+  const properties = _.chain(schema.properties)
+    .toPairs()
+    .map(([name, value]) => renderSchemaItem(name, value))
+    .join(",\n")
+    .value();
+
+  return `{ ${properties} }`;
+}
+
+function renderSchemaItem(name: string, item: SchemaItem): string {
+  const itemType = item.type;
+  switch (itemType) {
+    case "boolean":
+    case "number":
+    case "string":
+    case "number[]":
+    case "unknown": {
+      return `${name}${item.optional ? "?" : ""}: ${itemType} ${item.nullable ? "|null" : ""}`;
+    }
+    case "array": {
+      return `${name}: ${renderSchemaObject(item.items)}[] `;
+    }
+    case "object": {
+      return `${name}: ${renderSchemaObject(item)}`;
+    }
+    default:
+      assertUnreachable(itemType);
+  }
 }
