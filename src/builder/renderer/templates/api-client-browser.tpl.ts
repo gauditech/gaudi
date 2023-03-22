@@ -125,6 +125,16 @@ function buildEndpointApi(
   endpoint: EndpointDef,
   entrypName: EntrypointName
 ): EndpointApiEntry {
+  // endpoints currently don't define their errors so we can only manually hardcode it
+  const commonErrorTypes = [
+    // common server errors
+    `"ERROR_CODE_RESOURCE_NOT_FOUND"`,
+    `"ERROR_CODE_RESOURCE_NOT_FOUND"`,
+    `"ERROR_CODE_SERVER_ERROR"`,
+    // client errors - wraps any error that doesn't have structure { code, message, body? }
+    `"ERROR_CODE_OTHER"`,
+  ];
+
   const epKind = endpoint.kind;
   switch (epKind) {
     case "get": {
@@ -132,7 +142,7 @@ function buildEndpointApi(
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
-      const errorsType = `"CODE_11" | "CODE_12"`;
+      const errorsType = commonErrorTypes.join("|");
       return {
         name: "get",
         builder: `buildGetFn<${responseTypeName}, ${errorsType}>("${path}", basePath)`,
@@ -147,7 +157,7 @@ function buildEndpointApi(
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
-      const errorsType = `"CODE_11" | "CODE_12"`;
+      const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "create",
         builder: `buildCreateFn<${inputTypeName},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
@@ -165,7 +175,7 @@ function buildEndpointApi(
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
-      const errorsType = `"CODE_11" | "CODE_12"`;
+      const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "update",
         builder: `buildUpdateFn<${inputTypeName},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
@@ -177,7 +187,7 @@ function buildEndpointApi(
     }
     case "delete": {
       const path = entrypName.segment;
-      const errorsType = `"CODE_11" | "CODE_12"`;
+      const errorsType = commonErrorTypes.join("|");
       return {
         name: "delete",
         builder: `buildDeleteFn<${errorsType}>("${path}", basePath)`,
@@ -189,7 +199,7 @@ function buildEndpointApi(
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
-      const errorsType = `"CODE_11" | "CODE_12"`;
+      const errorsType = commonErrorTypes.join("|");
       return {
         name: "list",
         builder: `buildListFn<${responseTypeName}, ${errorsType}>("${path}", basePath)`,
@@ -202,17 +212,21 @@ function buildEndpointApi(
       switch (method) {
         case "GET":
         case "DELETE": {
+          const errorsType = commonErrorTypes.join("|");
+
           return {
             name: path,
-            builder: `buildCustomOneFetchFn<any, any>("${path}", "${method}", basePath)`,
+            builder: `buildCustomOneFetchFn<any, ${errorsType}>("${path}", "${method}", basePath)`,
             types: [],
           };
         }
         case "POST":
         case "PATCH": {
+          const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
+
           return {
             name: path,
-            builder: `buildCustomOneSubmitFn<any, any, any>("${path}", "${method}", basePath)`,
+            builder: `buildCustomOneSubmitFn<any, any, ${errorsType}>("${path}", "${method}", basePath)`,
             types: [],
           };
         }
@@ -230,17 +244,21 @@ function buildEndpointApi(
       switch (method) {
         case "GET":
         case "DELETE": {
+          const errorsType = commonErrorTypes.join("|");
+
           return {
             name: path,
-            builder: `buildCustomManyFetchFn<any, any>("${path}", "${method}", basePath)`,
+            builder: `buildCustomManyFetchFn<any, ${errorsType}>("${path}", "${method}", basePath)`,
             types: [],
           };
         }
         case "POST":
         case "PATCH": {
+          const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
+
           return {
             name: path,
-            builder: `buildCustomManySubmitFn<any, any, any>("${path}", "${method}", basePath)`,
+            builder: `buildCustomManySubmitFn<any, any, ${errorsType}>("${path}", "${method}", basePath)`,
             types: [],
           };
         }
@@ -497,7 +515,30 @@ function buildCommonCode(): string {
           headers: { ...(options?.headers ?? {}) },
         })
           // interpret response as JSON
-          .then((response) => response.json())
+          .then((response) => {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+              return response.json().then(data => {
+                if ("code" in data && "message" in data) {
+                  return data
+                }
+                else {
+                  return {
+                    code: "ERROR_CODE_OTHER",
+                    message: "Other error",
+                    body: data
+                  }
+                }
+              });
+            } else {
+              return response.text().then(text => {
+                return {
+                  code: "ERROR_CODE_OTHER",
+                  message: text
+                }
+              });
+            }
+          })
       );
     };
   }
