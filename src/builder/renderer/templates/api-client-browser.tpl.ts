@@ -2,7 +2,15 @@ import _ from "lodash";
 
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
-import { Definition, EndpointDef, EntrypointDef, SelectItem } from "@src/types/definition";
+import {
+  Definition,
+  EndpointDef,
+  EntrypointDef,
+  FieldsetDef,
+  FieldsetFieldDef,
+  FieldsetRecordDef,
+  SelectItem,
+} from "@src/types/definition";
 
 export type BuildApiClientData = {
   definition: Definition;
@@ -73,10 +81,6 @@ function buildEntrypointApi(
 
   const builderFn = `
   function ${epName.builder}(basePath: string) {
-    // type ${epName.type} = { id: number, name: string }
-    type ${epName.type}CreateData = { name: string }; // read from fieldset
-    type ${epName.type}UpdateData = { id: number, name: string }; // read from fieldset
-
     ${endpointEntries
       .map((epe) => epe.types)
       .flat()
@@ -116,73 +120,6 @@ function buildEndpointsApi(
   return endpoints.map((ep) => buildEndpointApi(def, ep, entrypName));
 }
 
-function buildSelectType(def: Definition, select: SelectItem[]): SchemaObject {
-  return select
-    .map((item): { name: string; type: SchemaItem } => {
-      const selectKind = item.kind;
-      switch (selectKind) {
-        case "field": {
-          const field = getRef.field(def, item.refKey);
-          return {
-            name: item.alias,
-            type: {
-              type: convertFieldToSchemaType(field.type),
-              nullable: field.nullable,
-              optional: false,
-            },
-          };
-        }
-        case "reference":
-        case "relation":
-        case "query": {
-          // TODO: check optional/nullable
-          const isObject = item.kind === "reference";
-          const properties = buildSelectType(def, item.select);
-          if (isObject) {
-            return { name: item.alias, type: properties };
-          } else {
-            return {
-              name: item.alias,
-              type: { type: "array", items: properties, nullable: false, optional: false },
-            };
-          }
-        }
-        case "aggregate": {
-          // FIXME read the type from the `AggregateDef`
-          return { name: item.name, type: { type: "number", nullable: false, optional: false } };
-        }
-        case "computed": {
-          const computed = getRef.computed(def, item.refKey);
-          const computedType =
-            computed.type != null ? convertFieldToSchemaType(computed.type.type) : "unknown";
-
-          return {
-            name: item.name,
-            type: { type: computedType, nullable: false, optional: false },
-          };
-        }
-        case "model-hook": {
-          // FIXME - add return type to hooks
-          return {
-            name: item.name,
-            type: { type: "object", properties: {}, nullable: false, optional: false },
-          };
-        }
-
-        default:
-          assertUnreachable(selectKind);
-      }
-    })
-    .reduce(
-      (accum, item) => {
-        accum.properties[item.name] = item.type;
-
-        return accum;
-      },
-      { type: "object", properties: {} } as SchemaObject
-    );
-}
-
 function buildEndpointApi(
   def: Definition,
   endpoint: EndpointDef,
@@ -192,8 +129,7 @@ function buildEndpointApi(
   switch (epKind) {
     case "get": {
       const responseTypeName = `GetResp`;
-      const responseType = renderSchema(buildSelectType(def, endpoint.response));
-      console.log("SCHEMA", buildSelectType(def, endpoint.response), responseType);
+      const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
       const errorsType = `"CODE_11" | "CODE_12"`;
@@ -204,29 +140,39 @@ function buildEndpointApi(
       };
     }
     case "create": {
+      const inputTypeName = "CreateData";
+      const inputType = renderSchema(fieldsetToSchema(def, endpoint.fieldset));
+
       const responseTypeName = `CreateResp`;
-      const responseType = renderSchema(buildSelectType(def, endpoint.response));
+      const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
-      const inputType = `${entrypName.type}CreateData`;
       const errorsType = `"CODE_11" | "CODE_12"`;
       return {
         name: "create",
-        builder: `buildCreateFn<${inputType},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
-        types: [{ name: responseTypeName, body: responseType }],
+        builder: `buildCreateFn<${inputTypeName},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        types: [
+          { name: inputTypeName, body: inputType },
+          { name: responseTypeName, body: responseType },
+        ],
       };
     }
     case "update": {
+      const inputTypeName = "UpdateData";
+      const inputType = renderSchema(fieldsetToSchema(def, endpoint.fieldset));
+
       const responseTypeName = `UpdateResp`;
-      const responseType = renderSchema(buildSelectType(def, endpoint.response));
+      const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
-      const inputType = `${entrypName.type}UpdateData`;
       const errorsType = `"CODE_11" | "CODE_12"`;
       return {
         name: "update",
-        builder: `buildUpdateFn<${inputType},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
-        types: [{ name: responseTypeName, body: responseType }],
+        builder: `buildUpdateFn<${inputTypeName},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        types: [
+          { name: inputTypeName, body: inputType },
+          { name: responseTypeName, body: responseType },
+        ],
       };
     }
     case "delete": {
@@ -240,7 +186,7 @@ function buildEndpointApi(
     }
     case "list": {
       const responseTypeName = `ListResp`;
-      const responseType = renderSchema(buildSelectType(def, endpoint.response));
+      const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const path = entrypName.segment;
       const errorsType = `"CODE_11" | "CODE_12"`;
@@ -609,6 +555,107 @@ function convertFieldToSchemaType(
   }
 }
 
+function fieldsetToSchema(def: Definition, fieldset: FieldsetDef): SchemaObject {
+  if (fieldset.kind !== "record") throw new Error('Root fieldset must be of kind "record".');
+
+  return buildFieldsetObjectSchema(def, fieldset);
+}
+
+function buildFieldsetObjectSchema(def: Definition, field: FieldsetRecordDef): SchemaObject {
+  return {
+    type: "object",
+    properties: Object.fromEntries(
+      Object.entries(field.record).map(([name, value]) => {
+        if (value.kind === "field") {
+          return [name, buildFieldsetFieldSchema(def, value)];
+        } else {
+          return [name, buildFieldsetObjectSchema(def, value)];
+        }
+      })
+    ),
+    nullable: field.nullable,
+    optional: false,
+  };
+}
+
+function buildFieldsetFieldSchema(def: Definition, field: FieldsetFieldDef): SchemaField {
+  switch (field.type) {
+    case "boolean":
+    case "integer":
+    case "text":
+      return {
+        type: convertFieldToSchemaType(field.type),
+        nullable: field.nullable,
+        optional: !field.required,
+      };
+    default:
+      assertUnreachable(field.type);
+  }
+}
+
+function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
+  return {
+    type: "object",
+    properties: Object.fromEntries(
+      select.map((item) => {
+        const selectKind = item.kind;
+        switch (selectKind) {
+          case "field": {
+            const field = getRef.field(def, item.refKey);
+            return [
+              item.alias,
+              {
+                type: convertFieldToSchemaType(field.type),
+                nullable: field.nullable,
+                optional: false,
+              },
+            ];
+          }
+          case "reference":
+          case "relation":
+          case "query": {
+            // TODO: check optional/nullable
+            const isObject = item.kind === "reference";
+            const properties = selectToSchema(def, item.select);
+            if (isObject) {
+              return [item.alias, properties];
+            } else {
+              return [
+                item.alias,
+                { type: "array", items: properties, nullable: false, optional: false },
+              ];
+            }
+          }
+          case "aggregate": {
+            // FIXME read the type from the `AggregateDef`
+            return [item.name, { type: "number", nullable: false, optional: false }];
+          }
+          case "computed": {
+            // TODO: check optional/nullable
+            const computed = getRef.computed(def, item.refKey);
+            const computedType =
+              computed.type != null ? convertFieldToSchemaType(computed.type.type) : "unknown";
+
+            return [item.name, { type: computedType, nullable: false, optional: false }];
+          }
+          case "model-hook": {
+            // FIXME - add return type to hooks
+            return [
+              item.name,
+              { type: "object", properties: {}, nullable: false, optional: false },
+            ];
+          }
+
+          default:
+            assertUnreachable(selectKind);
+        }
+      })
+    ),
+    nullable: false,
+    optional: false,
+  };
+}
+
 function renderSchema(schema: SchemaObject): string {
   return renderSchemaObject(schema);
 }
@@ -631,10 +678,10 @@ function renderSchemaItem(name: string, item: SchemaItem): string {
     case "string":
     case "number[]":
     case "unknown": {
-      return `${name}${item.optional ? "?" : ""}: ${itemType} ${item.nullable ? "|null" : ""}`;
+      return `${name}${item.optional ? "?" : ""}: ${itemType}${item.nullable ? "|null" : ""}`;
     }
     case "array": {
-      return `${name}: ${renderSchemaObject(item.items)}[] `;
+      return `${name}: ${renderSchemaObject(item.items)}[]`;
     }
     case "object": {
       return `${name}: ${renderSchemaObject(item)}`;
