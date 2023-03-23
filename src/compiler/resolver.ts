@@ -453,7 +453,8 @@ export function resolve(definition: Definition) {
     const query = kindFind(action.atoms, "anonymousQuery");
     if (query) {
       resolveQuery(query, scope);
-      scope.context[action.name.text] = query.type;
+      // TODO: for now, we magicaly get non modified type from fetch query
+      scope.context[action.name.text] = removeTypeModifier(query.type, "collection", "nullable");
     }
   }
 
