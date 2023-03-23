@@ -665,6 +665,24 @@ exports[`parser blueprint test/executionRuntimes.gaudi 1`] = `
 }
 `;
 
+exports[`parser blueprint test/generator.gaudi 1`] = `
+{
+  "authenticator": undefined,
+  "entrypoints": [],
+  "generators": [
+    {
+      "api": "entrypoint",
+      "kind": "generator-client",
+      "output": ""test/path/something"",
+      "target": "js",
+    },
+  ],
+  "models": [],
+  "populators": [],
+  "runtimes": [],
+}
+`;
+
 exports[`parser blueprint test/git.gaudi 1`] = `
 {
   "authenticator": undefined,
