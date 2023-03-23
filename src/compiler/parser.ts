@@ -1092,7 +1092,7 @@ class GaudiParser extends EmbeddedActionsParser {
   anonymousQuery = this.RULE("anonymousQuery", (): AnonymousQuery => {
     const keyword = getTokenData(this.CONSUME(L.Query));
     const atoms = this.SUBRULE(this.queryAtoms);
-    return { kind: "anonymousQuery", atoms, keyword };
+    return { kind: "anonymousQuery", atoms, type: unknownType, keyword };
   });
 
   select = this.RULE("select", (): Select => {

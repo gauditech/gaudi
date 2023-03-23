@@ -103,7 +103,8 @@ export function compileAuthenticatorSpec(
             query {
               from ${authUserModelName} as a,
               filter { a.username is username },
-              limit 1
+              limit 1,
+              one
             }
             // TODO: throw error id user is not resolved
             // currently, "existingAuthUser" ends up empty and "authenticateUser" hook throws error

@@ -3,10 +3,11 @@ export const primitiveTypes = ["integer", "float", "boolean", "null", "string"] 
 export type AnyType = { kind: "unknown" };
 export type PrimitiveType = { kind: "primitive"; primitiveKind: typeof primitiveTypes[number] };
 export type ModelType = { kind: "model"; model: string };
+export type StructType = { kind: "struct"; types: Record<string, Type> };
 export type CollectionType = { kind: "collection"; type: Type };
 export type NullableType = { kind: "nullable"; type: Type };
 
-export type Type = AnyType | PrimitiveType | ModelType | CollectionType | NullableType;
+export type Type = AnyType | PrimitiveType | ModelType | StructType | CollectionType | NullableType;
 
 export const unknownType: Type = { kind: "unknown" };
 
@@ -29,16 +30,17 @@ export function addTypeModifier(type: Type, modifier: TypeModifier): Type {
   }
 }
 
-export function removeTypeModifier(type: Type, modifier: TypeModifier): Type {
+export function removeTypeModifier(type: Type, ...modifiers: TypeModifier[]): Type {
   switch (type.kind) {
     case "unknown":
     case "model":
+    case "struct":
     case "primitive":
       return type;
     default: {
-      return type.kind === modifier
+      return modifiers.includes(type.kind)
         ? type.type
-        : { ...type, type: removeTypeModifier(type.type, modifier) };
+        : { ...type, type: removeTypeModifier(type.type, ...modifiers) };
     }
   }
 }
@@ -48,6 +50,7 @@ export function getTypeModel(type?: Type): string | undefined {
   switch (type.kind) {
     case "unknown":
     case "primitive":
+    case "struct":
       return undefined;
     case "model":
       return type.model;
@@ -68,6 +71,7 @@ export function getTypeCardinality(
       return "collection";
     case "unknown":
     case "model":
+    case "struct":
     case "primitive":
       return baseCardinality;
     case "nullable":

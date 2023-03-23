@@ -27,6 +27,9 @@ export enum ErrorCode {
   // Resolver Errors
   CantResolveModel,
   CantResolveModelAtom,
+  CantResolveStructMember,
+  TypeHasNoMembers,
+  CantFindNameInScope,
   CantResolveModelAtomWrongKind,
   CantResolveExpressionReference,
   SelectCantNest,
@@ -82,6 +85,12 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve model with this name`;
     case ErrorCode.CantResolveModelAtom:
       return `Can't resolve model member with this name`;
+    case ErrorCode.CantResolveStructMember:
+      return `Can't resolve member of primitive types`;
+    case ErrorCode.TypeHasNoMembers:
+      return `This type has no members`;
+    case ErrorCode.CantFindNameInScope:
+      return `This name does not exist in current scope`;
     case ErrorCode.CantResolveModelAtomWrongKind:
       return `Model member must be one of [${params?.expected}], but ${params?.atom} member was found`;
     case ErrorCode.CantResolveExpressionReference:

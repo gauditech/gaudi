@@ -276,6 +276,7 @@ export type ActionHook = Hook<false, false>;
 export type AnonymousQuery = WithKeyword<{
   kind: "anonymousQuery";
   atoms: QueryAtom[];
+  type: Type;
 }>;
 
 export type Select = {
@@ -334,7 +335,7 @@ export type RefModelAtom = {
   model: string;
   unique: boolean;
 };
-export type RefContext = { kind: "runtime"; path: string };
+export type RefContext = { kind: "context" };
 export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;
 
 export const unresolvedRef: Ref = { kind: "unresolved" };
