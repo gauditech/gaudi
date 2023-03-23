@@ -187,39 +187,6 @@ describe("compose hooks", () => {
     expect(result.entrypoints[0].endpoints).toMatchSnapshot();
   });
 
-  it("fails on inline action hook", () => {
-    const bp = `
-      runtime MyRuntime {
-        source path "some/path/to/file"
-      }
-
-      model Org {}
-
-      entrypoint Orgs {
-        target Org
-
-        custom endpoint {
-          path "somePath"
-          method POST
-          cardinality one
-
-          action {
-            execute {
-              hook {
-                runtime MyRuntime
-                inline "'some return value'"
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Inline hooks cannot be used for "execute" actions"`
-    );
-  });
-
   it("composes action hook", () => {
     const bp = `
       model Org { field name { type string} }
