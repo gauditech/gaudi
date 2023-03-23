@@ -230,10 +230,9 @@ describe("entrypoint", () => {
     }
     `;
 
-    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(`
-      "Unknown source position!
-      responds is not a valid model action"
-    `);
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"Expecting token of type --> RCurly <-- but found --> 'responds' <--"`
+    );
   });
   it("collects dependencies", () => {
     const bp = `

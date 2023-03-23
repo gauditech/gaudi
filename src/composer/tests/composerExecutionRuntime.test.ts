@@ -45,7 +45,9 @@ describe("execution runtime composer", () => {
 
     expect(runtimes).toMatchSnapshot();
   });
+});
 
+describe("execution runtime compiler errors", () => {
   it("fails on missing source path", () => {
     const bp = `
        runtime DuplicateRuntime {
@@ -53,8 +55,8 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Runtime source path cannot be empty"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"'runtime' must contain a 'sourcePath'"`
     );
   });
 
@@ -70,8 +72,8 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Execution runtime names must be unique"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"Duplicate runtime definition"`
     );
   });
 
@@ -86,8 +88,8 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"There can be only one default execution runtime"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"When using multiple runtimes one runtime must be set as default"`
     );
   });
 
@@ -104,8 +106,8 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"There can be only one default execution runtime"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"Duplicate default runtime definition"`
     );
   });
 });

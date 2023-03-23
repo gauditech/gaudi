@@ -46,13 +46,15 @@ export function checkForm(definition: Definition) {
       runtimes.map(({ name }) => name),
       ErrorCode.DuplicateRuntime
     );
+    runtimes.forEach((runtime) => {
+      containsAtoms(runtime, "sourcePath");
+      noDuplicateAtoms(runtime, "default", "sourcePath");
+    });
 
     if (runtimes.length === 1) {
       hasDefaultRuntime = true;
     } else if (runtimes.length > 1) {
       runtimes.forEach((runtime) => {
-        containsAtoms(runtime, "sourcePath");
-        noDuplicateAtoms(runtime, "default", "sourcePath");
         const default_ = kindFind(runtime.atoms, "default");
         if (default_) {
           if (hasDefaultRuntime) {

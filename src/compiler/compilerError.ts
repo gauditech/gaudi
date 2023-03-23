@@ -54,7 +54,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.DuplicateDefaultRuntime:
       return `Duplicate default runtime definition`;
     case ErrorCode.MustHaveDefaultRuntime:
-      return `When using multiple runtimes one runtime must be set default`;
+      return `When using multiple runtimes one runtime must be set as default`;
     case ErrorCode.DuplicateAuthBlock:
       return `Can't have more than one auth block defined`;
     case ErrorCode.NoRuntimeDefinedForHook:

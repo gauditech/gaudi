@@ -392,13 +392,13 @@ export function resolve(definition: Definition) {
   function resolveModelAction(action: ModelAction, parentModel: string | undefined, scope: Scope) {
     let currentModel: string | undefined = parentModel;
     if (action.target) {
-      resolveIdentifierRefPath(action.target, scope, true);
+      resolveIdentifierRefPath(action.target, scope, action.kind === "create");
       const lastTarget = action.target.at(-1);
       currentModel = getTypeModel(lastTarget?.type);
       if (lastTarget && action.as) {
         action.as.identifier.ref = lastTarget.ref;
-        action.as.identifier.type = lastTarget.type;
-        scope.context[action.as.identifier.identifier.text] = lastTarget.type;
+        action.as.identifier.type = removeTypeModifier(lastTarget.type, "collection", "nullable");
+        scope.context[action.as.identifier.identifier.text] = action.as.identifier.type;
       }
     }
 
@@ -464,7 +464,6 @@ export function resolve(definition: Definition) {
       .with({ kind: "expr" }, ({ expr }) => {
         resolveExpression(expr, scope);
         if (!isExpectedType(expr.type, set.target.type)) {
-          console.log(expr.type, set.target.type);
           errors.push(new CompilerError(set.target.identifier.token, ErrorCode.UnexpectedType));
         }
       })
@@ -513,12 +512,26 @@ export function resolve(definition: Definition) {
         resolveModelAtomRef(target.identifier, parentModel, "relation");
         currentModel = getTypeModel(target.identifier.type);
       }
+      scope.model = currentModel;
       if (target.as) {
         target.as.identifier.ref = target.identifier.ref;
         target.as.identifier.type = target.identifier.type;
         scope.context[target.as.identifier.identifier.text] = target.identifier.type;
       }
     }
+
+    kindFilter(populate.atoms, "repeat").forEach((repeater) => {
+      if (repeater.repeater.name) {
+        scope.context[repeater.repeater.name.text] = {
+          kind: "struct",
+          types: {
+            start: { kind: "primitive", primitiveKind: "integer" },
+            end: { kind: "primitive", primitiveKind: "integer" },
+            current: { kind: "primitive", primitiveKind: "integer" },
+          },
+        };
+      }
+    });
 
     kindFilter(populate.atoms, "set").forEach((set) =>
       resolveActionAtomSet(set, currentModel, scope)
@@ -857,6 +870,8 @@ export function resolve(definition: Definition) {
         return booleanType;
       }
       case "+": {
+        if (lhs.type.kind === "unknown") return rhs.type;
+        if (rhs.type.kind === "unknown") return lhs.type;
         checkExpectedType(lhs.type, "addable");
         checkExpectedType(rhs.type, "addable");
         if (isExpectedType(lhs.type, "number")) {
@@ -873,6 +888,8 @@ export function resolve(definition: Definition) {
       }
       case "-":
       case "*": {
+        if (lhs.type.kind === "unknown") return rhs.type;
+        if (rhs.type.kind === "unknown") return lhs.type;
         checkExpectedType(lhs.type, "number");
         checkExpectedType(rhs.type, "number");
         if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {

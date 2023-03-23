@@ -142,7 +142,7 @@ describe("compose hooks", () => {
     `;
 
     expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Unknown refkey: Org"`
+      `"Can't resolve model with this name"`
     );
   });
 
@@ -207,7 +207,7 @@ describe("compose hooks", () => {
             execute {
               hook {
                 runtime MyRuntime
-                inline \`"some return value"\`
+                inline "'some return value'"
               }
             }
           }

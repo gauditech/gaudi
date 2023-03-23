@@ -55,8 +55,8 @@ describe("compose action queries", () => {
     it("native endpoint", () => {
       const bp = `
       model Org {
-        field name { type text }
-        field description { type text }
+        field name { type string }
+        field description { type string }
       }
       model Repo {
       }
@@ -88,8 +88,8 @@ describe("compose action queries", () => {
     it("custom endpoint", () => {
       const bp = `
       model Org {
-        field name { type text }
-        field description { type text }
+        field name { type string }
+        field description { type string }
       }
       model Repo {
       }

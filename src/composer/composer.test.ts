@@ -22,7 +22,7 @@ describe("compose models", () => {
       field parent { type string }
     }
     `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowError("Items not unique!");
+    expect(() => compose(compileToOldSpec(bp))).toThrowError("Duplicate model member definition");
   });
   it("fails when relation doesn't point to a reference", () => {
     const bp = `
@@ -33,7 +33,7 @@ describe("compose models", () => {
     }
     `;
     expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Expected one of: [reference], got field"`
+      `"Model member must be one of [reference], but field member was found"`
     );
   });
   it("fails when relation points to a reference for another model", () => {
