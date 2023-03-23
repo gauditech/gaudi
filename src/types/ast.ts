@@ -7,7 +7,8 @@ export type DefinitionAST =
   | EntrypointAST
   | PopulatorAST
   | ExecutionRuntimeAST
-  | AuthenticatorAST;
+  | AuthenticatorAST
+  | GeneratorAST;
 
 export type ModelAST = WithContext<{
   kind: "model";
@@ -291,3 +292,16 @@ export type AuthenticatorMethodBodyAtomAST = {
 export type AuthenticatorBasicMethodBodyAtomAST =
   WithContext<never /* never is just a placeholder for an empty arr since we currently don't have anything to put in here */>;
 /* | { ... } add other basic method atoms */
+
+// ----- Generators
+
+export type GeneratorAST = WithContext<{
+  kind: "generator";
+  type: string;
+  body: GeneratorClientBodyAST[];
+}>;
+
+export type GeneratorClientBodyAST =
+  | { kind: "target"; value: string }
+  | { kind: "api"; value: string }
+  | { kind: "output"; value: string };

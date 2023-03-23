@@ -1,6 +1,6 @@
 Gaudi {
   Definition
-    = NewlineBody<(Model | Entrypoint | Populator | ExecutionRuntime | Authenticator), ";">
+    = NewlineBody<(Model | Entrypoint | Populator | ExecutionRuntime | Authenticator | Generator), ";">
 
   // Override Ohm's built-in definition of space.
   space += comment
@@ -316,4 +316,17 @@ Gaudi {
 
   AuthenticatorBasicMethodBodyAtom
    =  -- empty
+
+  // ******************
+  // Client Generator
+  // ******************
+
+  Generator
+   = "generate" "client" "{" NonemptyNewlineBody<GeneratorClientBody, ","> "}" -- client
+
+  GeneratorClientBody
+   = "target" ("js")                   -- target
+   | "api" ("entrypoint" | "model")   -- api
+   | "output" string                  -- output
+
 }

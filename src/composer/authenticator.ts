@@ -69,7 +69,14 @@ export function compileAuthenticatorSpec(
   authenticatorSpec: AuthenticatorSpec | undefined
 ): Specification {
   if (authenticatorSpec == null) {
-    return { models: [], entrypoints: [], populators: [], runtimes: [], authenticator: undefined };
+    return {
+      models: [],
+      entrypoints: [],
+      populators: [],
+      runtimes: [],
+      authenticator: undefined,
+      generators: [],
+    };
   }
 
   const authUserModelName = authenticatorSpec.authUserModelName;

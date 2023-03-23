@@ -1,9 +1,9 @@
 import grammar from "@src/parser/grammar/gaudi.ohm-bundle";
 import {
   AST,
+  ActionKindAST,
   AnyActionAtomAST,
   AnyActionBodyAST,
-  ActionKindAST,
   AuthenticatorAST,
   AuthenticatorBodyAtomAST,
   BinaryOperator,
@@ -21,6 +21,8 @@ import {
   FieldAST,
   FieldBodyAST,
   FieldTag,
+  GeneratorAST,
+  GeneratorClientBodyAST,
   HookAST,
   HookBodyAST,
   InputFieldAST,
@@ -707,5 +709,38 @@ semantics.addOperation("parse()", {
   },
   AuthenticatorBasicMethodBodyAtom_empty(this) {
     return [];
+  },
+
+  // ----- API client
+
+  Generator_client(this, _generate, type, _lbrace, body, _rbrace): GeneratorAST {
+    return {
+      kind: "generator",
+      type: type.sourceString.toLowerCase(),
+
+      body: body.parse(),
+      interval: this.source,
+    };
+  },
+
+  GeneratorClientBody_target(this, _target, value): GeneratorClientBodyAST {
+    return {
+      kind: "target",
+      value: value.sourceString.toLowerCase(),
+    };
+  },
+
+  GeneratorClientBody_api(this, _target, value): GeneratorClientBodyAST {
+    return {
+      kind: "api",
+      value: value.sourceString.toLowerCase(),
+    };
+  },
+
+  GeneratorClientBody_output(this, _output, value): GeneratorClientBodyAST {
+    return {
+      kind: "output",
+      value: value.sourceString,
+    };
   },
 });

@@ -12,6 +12,8 @@ import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
 } from "@src/builder/renderer/templates/schema.prisma.tpl";
+import { kindFilter } from "@src/common/patternFilter";
+import { assertUnreachable } from "@src/common/utils";
 import { Definition } from "@src/types/definition";
 
 const DB_PROVIDER = "postgresql";
@@ -27,7 +29,7 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
 
   await buildDefinition({ definition }, config.outputFolder);
   await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
-  await buildApiClient({ definition }, config.outputFolder);
+  await buildApiClients({ definition }, config.outputFolder);
 }
 
 // -------------------- part builders
@@ -80,41 +82,64 @@ export async function renderApiClient(data: BuildApiClientData): Promise<string>
   return renderApiClientTpl(data);
 }
 
-async function buildApiClient(data: BuildApiClientData, outputFolder: string): Promise<unknown> {
-  const outFile = path.join(outputFolder, "client/api-client.ts");
+async function buildApiClients(data: BuildApiClientData, outputFolder: string): Promise<unknown> {
+  const clientGenerators = kindFilter(data.definition.generators, "generator-client");
 
-  return (
-    renderApiClient(data)
-      .then((content) => {
-        storeTemplateOutput(outFile, content);
-      })
-      // compile client TS file to JS and DTS files
-      .then(async () => {
-        const project = new Project({
-          compilerOptions: {
-            declaration: true,
-            target: ScriptTarget.ES2015,
-            strict: true,
-          },
-        });
-        const sourceFile = project.addSourceFileAtPath(outFile);
-
-        const diagnostics = sourceFile.getPreEmitDiagnostics();
-
-        if (diagnostics.length === 0) {
-          console.log(`Compiled API client source file: ${outFile}`);
-          return project.emit();
-        } else {
-          console.log(`Error compiling API client source file: ${outFile}`);
-
-          for (const diagnostic of diagnostics) {
-            console.log(
-              `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
-              `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
-              diagnostic.getMessageText()
-            );
+  return Promise.all(
+    clientGenerators.map((g) => {
+      const kind = g.target;
+      switch (kind) {
+        case "js": {
+          // check if definition output folder exists
+          if (g.output != null && !fs.existsSync(g.output)) {
+            throw new Error(`Client generator output path does not exist: "${g.output}"`);
           }
+
+          // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
+          const outFolder = g.output ?? path.join(outputFolder, "client");
+          const outFile = path.join(outFolder, "api-client.ts");
+
+          return (
+            renderApiClient(data)
+              .then((content) => {
+                storeTemplateOutput(outFile, content);
+              })
+              // compile client TS file to JS and DTS files
+              .then(async () => {
+                const project = new Project({
+                  compilerOptions: {
+                    declaration: true,
+                    target: ScriptTarget.ES2015,
+                    strict: true,
+                  },
+                });
+                const sourceFile = project.addSourceFileAtPath(outFile);
+
+                const diagnostics = sourceFile.getPreEmitDiagnostics();
+
+                // no errors, we can emit files
+                if (diagnostics.length === 0) {
+                  console.log(`Compiled API client source file: ${outFile}`);
+                  return project.emit();
+                }
+                // has errors, no emit
+                else {
+                  console.log(`Error compiling API client source file: ${outFile}`);
+
+                  for (const diagnostic of diagnostics) {
+                    console.log(
+                      `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
+                      `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
+                      diagnostic.getMessageText()
+                    );
+                  }
+                }
+              })
+          );
         }
-      })
+        default:
+          assertUnreachable(kind);
+      }
+    })
   );
 }

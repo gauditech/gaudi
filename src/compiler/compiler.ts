@@ -19,6 +19,7 @@ import {
   ExecutionRuntimeAST,
   ExpAST,
   FieldAST,
+  GeneratorAST,
   HookAST,
   InputFieldOptAST,
   LiteralValue,
@@ -48,6 +49,7 @@ import {
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
+  GeneratorSpec,
   HookCodeSpec,
   HookSpec,
   InputFieldSpec,
@@ -845,12 +847,44 @@ function compileAuthenticatorMethod(
   }
 }
 
+function compileGenerator(generator: GeneratorAST): GeneratorSpec {
+  const type = generator.type;
+
+  if (type === "client") {
+    let target: string | undefined, api: string | undefined, output: string | undefined;
+    generator.body.forEach((atom) => {
+      const kind = atom.kind;
+      switch (kind) {
+        case "target":
+          target = atom.value;
+
+          break;
+        case "api":
+          api = atom.value;
+          break;
+        case "output":
+          output = atom.value;
+          break;
+        default:
+          assertUnreachable(kind);
+      }
+    });
+    ensureExists(target);
+    ensureExists(api);
+
+    return { kind: "generator-client", target, api, output };
+  } else {
+    throw new CompilerError(`Unsupported generator type ${type}`);
+  }
+}
+
 export function compile(input: AST): Specification {
   const models: ModelSpec[] = [];
   const entrypoints: EntrypointSpec[] = [];
   const populators: PopulatorSpec[] = [];
   const runtimes: ExecutionRuntimeSpec[] = [];
   let authenticator: AuthenticatorSpec | undefined = undefined;
+  const generators: GeneratorSpec[] = [];
 
   input.map((definition) => {
     const kind = definition.kind;
@@ -864,10 +898,12 @@ export function compile(input: AST): Specification {
       runtimes.push(compileExecutionRuntime(definition));
     } else if (kind === "authenticator") {
       authenticator = compileAuthenticator(definition);
+    } else if (kind === "generator") {
+      generators.push(compileGenerator(definition));
     } else {
       assertUnreachable(kind);
     }
   });
 
-  return { models, entrypoints, populators, runtimes, authenticator };
+  return { models, entrypoints, populators, runtimes, authenticator, generators };
 }

@@ -16,6 +16,7 @@ export type Specification = {
   populators: PopulatorSpec[];
   runtimes: ExecutionRuntimeSpec[];
   authenticator: AuthenticatorSpec | undefined;
+  generators: GeneratorSpec[];
 };
 
 export type ModelSpec = WithContext<{
@@ -244,3 +245,12 @@ export type AuthenticatorMethodSpec = WithContext<AuthenticatorBasicMethodSpec>;
 export type AuthenticatorBasicMethodSpec = {
   kind: "basic";
 };
+
+// ----- Generators
+
+export type GeneratorSpec = WithContext<{
+  kind: "generator-client";
+  target: string;
+  api: string;
+  output?: string;
+}>;
