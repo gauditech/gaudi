@@ -34,7 +34,7 @@ export function patternFilter<i, p extends Pattern<ShallowNarrowed<i>>>(
 export function kindFilter<
   i extends { kind: unknown },
   k extends Pattern<ShallowNarrowed<i["kind"]>>
->(input: i[], kind: k): FilteredKind<i, k>[] {
+>(input: i[], kind: k): MatchedValue<i, InvertPattern<{ kind: k }>>[] {
   return input.filter((i) =>
     match(i.kind)
       .with(kind, () => true)
@@ -56,7 +56,7 @@ export function patternFind<i, p extends Pattern<ShallowNarrowed<i>>>(
 export function kindFind<
   i extends { kind: unknown },
   k extends Pattern<ShallowNarrowed<i["kind"]>>
->(input: i[], kind: k): FilteredKind<i, k> | undefined {
+>(input: i[], kind: k): MatchedValue<i, InvertPattern<{ kind: k }>> | undefined {
   return input.find((i) =>
     match(i.kind)
       .with(kind, () => true)
