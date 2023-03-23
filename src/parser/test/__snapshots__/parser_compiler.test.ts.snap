@@ -11,6 +11,7 @@ exports[`parser blueprint test/authenticator.gaudi 1`] = `
     "name": undefined,
   },
   "entrypoints": [],
+  "generators": [],
   "models": [],
   "populators": [],
   "runtimes": [],
@@ -21,6 +22,7 @@ exports[`parser blueprint test/computed.gaudi 1`] = `
 {
   "authenticator": undefined,
   "entrypoints": [],
+  "generators": [],
   "models": [
     {
       "alias": undefined,
@@ -199,6 +201,7 @@ exports[`parser blueprint test/default.gaudi 1`] = `
 {
   "authenticator": undefined,
   "entrypoints": [],
+  "generators": [],
   "models": [
     {
       "alias": undefined,
@@ -638,6 +641,7 @@ exports[`parser blueprint test/entrypoint.gaudi 1`] = `
       },
     },
   ],
+  "generators": [],
   "models": [],
   "populators": [],
   "runtimes": [],
@@ -648,6 +652,7 @@ exports[`parser blueprint test/executionRuntimes.gaudi 1`] = `
 {
   "authenticator": undefined,
   "entrypoints": [],
+  "generators": [],
   "models": [],
   "populators": [],
   "runtimes": [
@@ -664,6 +669,7 @@ exports[`parser blueprint test/git.gaudi 1`] = `
 {
   "authenticator": undefined,
   "entrypoints": [],
+  "generators": [],
   "models": [
     {
       "alias": undefined,
@@ -935,6 +941,7 @@ exports[`parser blueprint test/hook.gaudi 1`] = `
       },
     },
   ],
+  "generators": [],
   "models": [
     {
       "alias": undefined,
@@ -1030,6 +1037,7 @@ exports[`parser blueprint test/nullable_reference.gaudi 1`] = `
 {
   "authenticator": undefined,
   "entrypoints": [],
+  "generators": [],
   "models": [
     {
       "alias": undefined,
@@ -1093,6 +1101,7 @@ exports[`parser blueprint test/populator.gaudi 1`] = `
 {
   "authenticator": undefined,
   "entrypoints": [],
+  "generators": [],
   "models": [],
   "populators": [
     {
@@ -1485,6 +1494,7 @@ exports[`parser blueprint test/query.gaudi 1`] = `
       },
     },
   ],
+  "generators": [],
   "models": [
     {
       "alias": undefined,
@@ -1861,6 +1871,7 @@ exports[`parser blueprint test/validators.gaudi 1`] = `
 {
   "authenticator": undefined,
   "entrypoints": [],
+  "generators": [],
   "models": [
     {
       "alias": undefined,

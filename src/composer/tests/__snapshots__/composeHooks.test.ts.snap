@@ -300,6 +300,7 @@ exports[`compose hooks composes source hooks 1`] = `
       },
     },
   ],
+  "generators": [],
   "models": [
     {
       "aggregates": [],
@@ -566,6 +567,7 @@ exports[`compose hooks inline hooks 1`] = `
       },
     },
   ],
+  "generators": [],
   "models": [
     {
       "aggregates": [],
