@@ -1,4 +1,6 @@
 model Vehicle {
+  field name { type string, nullable }
+  computed has_name { name is not null }
   field serial_number { type integer }
   computed next_number { serial_number + 1 }
   computed is_odd_number { is_odd(serial_number / 2) }

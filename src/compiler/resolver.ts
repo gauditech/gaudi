@@ -843,7 +843,10 @@ export function resolve(definition: Definition) {
       }
       case "is":
       case "is not": {
-        checkExprType(rhs, lhs.type);
+        // extra check to allow nullable as rhs
+        if (!isExpectedType(lhs.type, rhs.type)) {
+          checkExprType(rhs, lhs.type);
+        }
         return booleanType;
       }
       case "in":
