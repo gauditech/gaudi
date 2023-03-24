@@ -347,9 +347,7 @@ export function resolve(definition: Definition) {
     const authorize = kindFind(entrypoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
-      if (!isExpectedType(authorize.expr.type, { kind: "primitive", primitiveKind: "boolean" })) {
-        errors.push(new CompilerError(authorize.keyword, ErrorCode.UnexpectedType));
-      }
+      checkExprType(authorize.expr, { kind: "primitive", primitiveKind: "boolean" });
     }
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
@@ -372,9 +370,7 @@ export function resolve(definition: Definition) {
     const authorize = kindFind(endpoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
-      if (!isExpectedType(authorize.expr.type, { kind: "primitive", primitiveKind: "boolean" })) {
-        errors.push(new CompilerError(authorize.keyword, ErrorCode.UnexpectedType));
-      }
+      checkExprType(authorize.expr, { kind: "primitive", primitiveKind: "boolean" });
     }
   }
 
@@ -464,9 +460,7 @@ export function resolve(definition: Definition) {
       .with({ kind: "hook" }, (hook) => resolveActionHook(hook, scope))
       .with({ kind: "expr" }, ({ expr }) => {
         resolveExpression(expr, scope);
-        if (!isExpectedType(expr.type, set.target.type)) {
-          errors.push(new CompilerError(set.target.identifier.token, ErrorCode.UnexpectedType));
-        }
+        checkExprType(expr, set.target.type);
       })
       .exhaustive();
   }
@@ -843,65 +837,83 @@ export function resolve(definition: Definition) {
     switch (op) {
       case "or":
       case "and": {
-        checkExpectedType(lhs.type, booleanType);
-        checkExpectedType(rhs.type, booleanType);
+        checkExprType(lhs, booleanType);
+        checkExprType(rhs, booleanType);
         return booleanType;
       }
       case "is":
       case "is not": {
-        checkExpectedType(rhs.type, lhs.type);
+        checkExprType(rhs, lhs.type);
         return booleanType;
       }
       case "in":
       case "not in": {
-        checkExpectedType(rhs.type, addTypeModifier(lhs.type, "collection"));
+        checkExprType(rhs, addTypeModifier(lhs.type, "collection"));
         return booleanType;
       }
       case "<":
       case "<=":
       case ">":
       case ">=": {
-        checkExpectedType(lhs.type, "comparable");
-        checkExpectedType(rhs.type, "comparable");
-        if (isExpectedType(lhs.type, "number")) {
-          checkExpectedType(rhs.type, "number");
-        } else {
-          checkExpectedType(rhs.type, lhs.type);
+        const lhsOk = checkExprType(lhs, "comparable");
+        const rhsOk = checkExprType(rhs, "comparable");
+        if (lhsOk && rhsOk) {
+          if (isExpectedType(lhs.type, "number")) {
+            checkExprType(rhs, "number");
+          } else {
+            checkExprType(rhs, lhs.type);
+          }
         }
         return booleanType;
       }
       case "+": {
-        if (lhs.type.kind === "unknown") return rhs.type;
-        if (rhs.type.kind === "unknown") return lhs.type;
-        checkExpectedType(lhs.type, "addable");
-        checkExpectedType(rhs.type, "addable");
-        if (isExpectedType(lhs.type, "number")) {
-          checkExpectedType(rhs.type, "number");
+        if (lhs.type.kind === "unknown") return unknownType;
+        if (rhs.type.kind === "unknown") return unknownType;
+        const lhsOk = checkExprType(lhs, "addable");
+        const rhsOk = checkExprType(rhs, "addable");
+        if (lhsOk && rhsOk) {
+          if (isExpectedType(lhs.type, "number")) {
+            checkExprType(rhs, "number");
+            if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
+              return floatType;
+            } else {
+              return integerType;
+            }
+          } else {
+            checkExprType(rhs, lhs.type);
+            return lhs.type;
+          }
+        } else if (lhsOk) {
+          return lhs.type;
+        } else if (rhsOk) {
+          return rhs.type;
+        } else {
+          return unknownType;
+        }
+      }
+      case "-":
+      case "*": {
+        if (lhs.type.kind === "unknown") return unknownType;
+        if (rhs.type.kind === "unknown") return unknownType;
+        const lhsOk = checkExprType(lhs, "number");
+        const rhsOk = checkExprType(rhs, "number");
+        if (lhsOk && rhsOk) {
           if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
             return floatType;
           } else {
             return integerType;
           }
+        } else if (lhsOk) {
+          return lhs.type;
+        } else if (rhsOk) {
+          return rhs.type;
         } else {
-          checkExpectedType(rhs.type, lhs.type);
-        }
-        return booleanType;
-      }
-      case "-":
-      case "*": {
-        if (lhs.type.kind === "unknown") return rhs.type;
-        if (rhs.type.kind === "unknown") return lhs.type;
-        checkExpectedType(lhs.type, "number");
-        checkExpectedType(rhs.type, "number");
-        if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
-          return floatType;
-        } else {
-          return integerType;
+          return unknownType;
         }
       }
       case "/": {
-        checkExpectedType(lhs.type, "number");
-        checkExpectedType(rhs.type, "number");
+        checkExprType(lhs, "number");
+        checkExprType(rhs, "number");
         return floatType;
       }
     }
@@ -912,17 +924,23 @@ export function resolve(definition: Definition) {
 
     switch (op) {
       case "not": {
-        checkExpectedType(expr.type, booleanType);
+        checkExprType(expr, booleanType);
         return booleanType;
       }
     }
   }
 
-  function checkExpectedType(type: Type, expected: Type | TypeCategory) {
-    if (!isExpectedType(type, expected)) {
-      // TODO: push error
-      //errors.push(new CompilerError({ start: 0, end: 0 }, ErrorCode.UnexpectedType));
+  function checkExprType(expr: Expr, expected: Type | TypeCategory): boolean {
+    if (!isExpectedType(expr.type, expected)) {
+      errors.push(
+        new CompilerError(expr.sourcePos, ErrorCode.UnexpectedType, {
+          expected: expected,
+          got: expr.type,
+        })
+      );
+      return false;
     }
+    return true;
   }
 
   resolveDefinition(definition);

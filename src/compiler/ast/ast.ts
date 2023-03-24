@@ -301,7 +301,7 @@ export type Expr<kind extends ExprKind = ExprKind> = (
   | { kind: "path"; path: IdentifierRef[] }
   | { kind: "literal"; literal: Literal }
   | { kind: "function"; name: Identifier; args: Expr<kind>[] }
-) & { type: Type };
+) & { type: Type; sourcePos: TokenData };
 export type BinaryOperator =
   | "or"
   | "and"

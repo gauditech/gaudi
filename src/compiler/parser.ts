@@ -1138,11 +1138,25 @@ class GaudiParser extends EmbeddedActionsParser {
       { ALT: () => this.SUBRULE(this.fnExpr) },
       { ALT: () => this.SUBRULE(this.groupExpr) },
       { ALT: () => this.SUBRULE(this.notExpr) },
-      { ALT: () => ({ kind: "literal", type: unknownType, literal: this.SUBRULE(this.literal) }) },
+      {
+        ALT: () => {
+          const literal = this.SUBRULE(this.literal);
+          return {
+            kind: "literal",
+            type: unknownType,
+            literal,
+            sourcePos: literal.token,
+          };
+        },
+      },
       {
         ALT: () => {
           const path = this.SUBRULE(this.identifierRefPath);
-          return { kind: "path", path, type: unknownType };
+          const sourcePos = this.ACTION(() => ({
+            start: path.at(0)!.identifier.token.start,
+            end: path.at(-1)!.identifier.token.end,
+          }));
+          return { kind: "path", path, type: unknownType, sourcePos };
         },
       },
     ]);
@@ -1157,51 +1171,90 @@ class GaudiParser extends EmbeddedActionsParser {
       SEP: L.Comma,
       DEF: () => args.push(this.SUBRULE(this.expr)),
     });
-    this.CONSUME(L.RRound);
-
-    return { kind: "function", name, args, type: unknownType };
+    const rRound = getTokenData(this.CONSUME(L.RRound));
+    const sourcePos = this.ACTION(() => ({ start: name.token.start, end: rRound.end }));
+    return { kind: "function", name, args, type: unknownType, sourcePos };
   });
 
   groupExpr = this.RULE("groupExpr", (): Expr => {
-    this.CONSUME(L.LRound);
+    const lRound = getTokenData(this.CONSUME(L.LRound));
     const expr = this.SUBRULE(this.expr);
-    this.CONSUME(L.RRound);
-    return { kind: "group", expr, type: unknownType };
+    const rRound = getTokenData(this.CONSUME(L.RRound));
+    const sourcePos = this.ACTION(() => ({ start: lRound.start, end: rRound.end }));
+    return { kind: "group", expr, type: unknownType, sourcePos };
   });
 
   notExpr = this.RULE("notExpr", (): Expr => {
     const keyword = getTokenData(this.CONSUME(L.Not));
     const expr = this.SUBRULE(this.primaryExpr);
-    return { kind: "unary", operator: "not", expr, keyword, type: unknownType };
+    const sourcePos = this.ACTION(() => ({ start: keyword.start, end: expr.sourcePos.end }));
+    return { kind: "unary", operator: "not", expr, keyword, type: unknownType, sourcePos };
   });
 
-  mulExpr = this.GENERATE_BINARY_OPERATOR_RULE("mulExpr", [L.Mul, L.Div], this.primaryExpr);
-  addExpr = this.GENERATE_BINARY_OPERATOR_RULE("addExpr", [L.Add, L.Sub], this.mulExpr);
-  cmpExpr = this.GENERATE_BINARY_OPERATOR_RULE("cmpExpr", [L.Gt, L.Gte, L.Lt, L.Lte], this.addExpr);
-  inExpr = this.GENERATE_BINARY_OPERATOR_RULE("inExpr", [L.In], this.cmpExpr);
-  isExpr = this.GENERATE_BINARY_OPERATOR_RULE("isExpr", [L.Is], this.inExpr);
-  andExpr = this.GENERATE_BINARY_OPERATOR_RULE("andExpr", [L.And], this.isExpr);
-  orExpr = this.GENERATE_BINARY_OPERATOR_RULE("orExpr", [L.Or], this.andExpr);
+  inOperator = this.RULE("inOperator", (): IToken[] => {
+    const not_ = this.OPTION(() => this.CONSUME(L.Not));
+    const in_ = this.CONSUME(L.In);
+    return not_ ? [not_, in_] : [in_];
+  });
+
+  isOperator = this.RULE("isNotOperator", (): IToken[] => {
+    const is_ = this.CONSUME(L.Is);
+    const not_ = this.OPTION(() => this.CONSUME(L.Not));
+    return not_ ? [is_, not_] : [is_];
+  });
+
+  mulExpr = this.GENERATE_BINARY_OPERATOR("mulExpr", this.primaryExpr, [L.Mul, L.Div]);
+  addExpr = this.GENERATE_BINARY_OPERATOR("addExpr", this.mulExpr, [L.Add, L.Sub]);
+  cmpExpr = this.GENERATE_BINARY_OPERATOR("cmpExpr", this.addExpr, [L.Gt, L.Gte, L.Lt, L.Lte]);
+  inExpr = this.GENERATE_BINARY_OPERATOR("inExpr", this.cmpExpr, this.inOperator);
+  isExpr = this.GENERATE_BINARY_OPERATOR("isExpr", this.inExpr, this.isOperator);
+  andExpr = this.GENERATE_BINARY_OPERATOR("andExpr", this.isExpr, [L.And]);
+  orExpr = this.GENERATE_BINARY_OPERATOR("orExpr", this.andExpr, [L.Or]);
 
   GENERATE_BINARY_OPERATOR_RULE(
     name: string,
-    operators: TokenType[],
-    next: ParserMethod<[], Expr>
+    next: ParserMethod<[], Expr>,
+    operators: TokenType[]
   ): ParserMethod<[], Expr> {
     return this.RULE(name, (): Expr => {
       let lhs = this.SUBRULE1(next);
       this.MANY(() => {
-        const operator = this.OR(operators.map((op) => ({ ALT: () => this.CONSUME(op) })));
-        const keyword = getTokenData(operator);
+        const operatorToken = this.OR(operators.map((op) => ({ ALT: () => this.CONSUME(op) })));
+        const operator = operatorToken.image as BinaryOperator;
+        const keyword = getTokenData(operatorToken);
         const rhs = this.SUBRULE2(next);
-        lhs = {
-          kind: "binary",
-          operator: operator.image as BinaryOperator,
-          lhs,
-          rhs,
-          keyword,
-          type: unknownType,
-        };
+        const sourcePos = this.ACTION(() => ({
+          start: lhs.sourcePos.start,
+          end: rhs.sourcePos.end,
+        }));
+        lhs = { kind: "binary", operator, lhs, rhs, keyword, type: unknownType, sourcePos };
+      });
+      return lhs;
+    });
+  }
+
+  GENERATE_BINARY_OPERATOR(
+    name: string,
+    next: ParserMethod<[], Expr>,
+    operator: TokenType[] | ParserMethod<[], IToken[]>
+  ): ParserMethod<[], Expr> {
+    return this.RULE(name, (): Expr => {
+      let lhs = this.SUBRULE1(next);
+      this.MANY(() => {
+        const operatorTokens = Array.isArray(operator)
+          ? [this.OR(operator.map((t) => ({ ALT: () => this.CONSUME(t) })))]
+          : this.SUBRULE(operator);
+
+        const rhs = this.SUBRULE2(next);
+
+        const operatorData = this.ACTION(() => {
+          const keyword = getTokenData(...operatorTokens);
+          const operator = operatorTokens.map((t) => t.image).join(" ") as BinaryOperator;
+          const sourcePos = { start: lhs.sourcePos.start, end: rhs.sourcePos.end };
+          return { sourcePos, keyword, operator };
+        });
+
+        lhs = { kind: "binary", ...operatorData, lhs, rhs, type: unknownType };
       });
       return lhs;
     });

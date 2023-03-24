@@ -98,7 +98,13 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.SelectCantNest:
       return `Can't can't write nested select for this reference`;
     case ErrorCode.UnexpectedType:
-      return `Unexpected type`;
+      return (
+        `Unexpected type\n` +
+        `expected:\n` +
+        `${JSON.stringify(params?.expected)}\n` +
+        `got:\n` +
+        `${JSON.stringify(params?.got)}`
+      );
     case ErrorCode.UnexpectedFieldType:
       return `Field type must be a non null primitive type`;
     case ErrorCode.VirtualInputType:
