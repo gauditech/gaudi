@@ -16,10 +16,10 @@
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "dev:copy-static": "chokidar ./src/package.json  --debounce 100 --initial --command \"npm run build:copy-static\"",
     "// --- test": "",
-    "test": "jest --testPathIgnorePatterns='<rootDir>/src/e2e/'",
+    "test": "jest --selectProjects unit",
     "test:watch": "npm test -- --watch",
-    "test:api": "jest ./src/e2e/api",
-    "test:api:watch": "npm run test:api -- --watch",
+    "test:e2e": "jest --selectProjects e2e",
+    "test:e2e:watch": "npm run test:e2e -- --watch",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
