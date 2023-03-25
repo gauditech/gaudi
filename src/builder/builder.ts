@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { DiagnosticCategory, Project, ScriptTarget } from "ts-morph";
+import { DiagnosticCategory, ModuleKind, Project, ScriptTarget } from "ts-morph";
 
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
@@ -82,7 +82,10 @@ export async function renderApiClient(data: BuildApiClientData): Promise<string>
   return renderApiClientTpl(data);
 }
 
-async function buildApiClients(data: BuildApiClientData, outputFolder: string): Promise<unknown> {
+export async function buildApiClients(
+  data: BuildApiClientData,
+  outputFolder: string
+): Promise<unknown> {
   const clientGenerators = kindFilter(data.definition.generators, "generator-client");
 
   return Promise.all(
@@ -109,7 +112,7 @@ async function buildApiClients(data: BuildApiClientData, outputFolder: string): 
                 const project = new Project({
                   compilerOptions: {
                     declaration: true,
-                    target: ScriptTarget.ES2015,
+                    target: ScriptTarget.ES5,
                     strict: true,
                   },
                 });

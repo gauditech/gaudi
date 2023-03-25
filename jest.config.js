@@ -25,6 +25,7 @@ module.exports = async () => {
         moduleNameMapper: {
           "@src/(.*)": "<rootDir>/src/$1",
         },
+        setupFiles: ["<rootDir>/src/e2e/client/setup.ts"],
         snapshotSerializers: ["<rootDir>/src/tests/gaudiSerializer.js"],
       },
     ],

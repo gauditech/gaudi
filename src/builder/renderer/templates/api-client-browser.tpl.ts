@@ -28,14 +28,15 @@ function buildClient(def: Definition): string {
 
   return `
   // ----- API client
+  
   export type ApiClientOptions = {
     rootPath?: string;
+    requestFn: ApiRequestFn;
   };
 
-  export function createClient(options?: ApiClientOptions) {
-    const rootPath = options?.rootPath ?? "";
+  export function createClient(options: ApiClientOptions) {
     return {
-      api: buildApi(rootPath),
+      api: buildApi(options ?? {}),
     };
   }
 
@@ -46,7 +47,16 @@ function buildClient(def: Definition): string {
   `;
 }
 
-type EntrypointName = { name: string; segment: string; type: string; builder: string };
+type EntrypointNaming = {
+  /** Original entrypoint name */
+  name: string;
+  /** Name of api segment. Must be a valid identifier */
+  segment: string;
+  /** Return type name */
+  type: string;
+  /** Name of builder factory function */
+  builder: string;
+};
 type EntrypointApiEntry = { name: string; builderName: string; builderFn: string[] };
 
 function buildApi(def: Definition, entrypoints: EntrypointDef[], basePath: string): string {
@@ -55,9 +65,11 @@ function buildApi(def: Definition, entrypoints: EntrypointDef[], basePath: strin
   const builderFns = apiEntries.map((sub) => sub.builderFn).flat();
 
   return `
-    function buildApi(basePath: string) {
+    function buildApi(options: ApiClientOptions) {
       return {
-        ${apiEntries.map((sub) => `${sub.name}: ${sub.builderName}(basePath)`).join(",\n")}
+        ${apiEntries
+          .map((sub) => `${sub.name}: ${sub.builderName}(options, "${sub.name}")`)
+          .join(",\n")}
       }
     }
 
@@ -72,31 +84,33 @@ function buildEntrypointApi(
   entrypoint: EntrypointDef,
   basePath: string
 ): EntrypointApiEntry {
-  const epName = entrypointName(entrypoint.name, entrypoint.target.retType);
+  const epName = entrypointNaming(entrypoint.name, entrypoint.target.retType);
 
   const entrypointEntries = entrypoint.entrypoints.map((sub) =>
     buildEntrypointApi(def, sub, basePath)
   );
-  const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints, epName);
+  const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints);
 
   const builderFn = `
-  function ${epName.builder}(basePath: string) {
+  function ${epName.builder}(options: ApiClientOptions, parentPath: string) {
     ${endpointEntries
       .map((epe) => epe.types)
       .flat()
       .map((t) => `type ${t.name} = ${t.body};`)
       .join("\n")}
 
-    const api = (id: number | string) => {
-      const url = \`${basePath}/\${id}\`;
+    function api(id: number | string) {
+      const baseUrl = \`${basePath}\${parentPath}/\${id}\`;
       return {
-        ${entrypointEntries.map((sub) => `${sub.name}: ${sub.builderName}(url)`).join(",\n")}
+        ${entrypointEntries
+          .map((sub) => `${sub.name}: ${sub.builderName}(options, \`\${baseUrl}/${sub.name}\`)`)
+          .join(",\n")}
       }
     }
 
     return Object.assign(api, 
       {
-        ${endpointEntries.map((epb) => `${epb.name}: ${epb.builder}`)}
+        ${endpointEntries.map((epb) => `${epb.name}: ${epb.builder}`).join(",\n")}
       }
     )
   }`;
@@ -112,19 +126,11 @@ function buildEntrypointApi(
 
 type EndpointApiEntry = { name: string; builder: string; types: { name: string; body: string }[] };
 
-function buildEndpointsApi(
-  def: Definition,
-  endpoints: EndpointDef[],
-  entrypName: EntrypointName
-): EndpointApiEntry[] {
-  return endpoints.map((ep) => buildEndpointApi(def, ep, entrypName));
+function buildEndpointsApi(def: Definition, endpoints: EndpointDef[]): EndpointApiEntry[] {
+  return endpoints.map((ep) => buildEndpointApi(def, ep));
 }
 
-function buildEndpointApi(
-  def: Definition,
-  endpoint: EndpointDef,
-  entrypName: EntrypointName
-): EndpointApiEntry {
+function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEntry {
   // endpoints currently don't define their errors so we can only manually hardcode it
   const commonErrorTypes = [
     // common server errors
@@ -141,11 +147,10 @@ function buildEndpointApi(
       const responseTypeName = `GetResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const path = entrypName.segment;
       const errorsType = commonErrorTypes.join("|");
       return {
         name: "get",
-        builder: `buildGetFn<${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildGetFn<${responseTypeName}, ${errorsType}>(options, parentPath)`,
         types: [{ name: responseTypeName, body: responseType }],
       };
     }
@@ -156,11 +161,10 @@ function buildEndpointApi(
       const responseTypeName = `CreateResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const path = entrypName.segment;
       const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "create",
-        builder: `buildCreateFn<${inputTypeName},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildCreateFn<${inputTypeName},${responseTypeName}, ${errorsType}>(options, parentPath)`,
         types: [
           { name: inputTypeName, body: inputType },
           { name: responseTypeName, body: responseType },
@@ -174,11 +178,10 @@ function buildEndpointApi(
       const responseTypeName = `UpdateResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const path = entrypName.segment;
       const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "update",
-        builder: `buildUpdateFn<${inputTypeName},${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildUpdateFn<${inputTypeName},${responseTypeName}, ${errorsType}>(options, parentPath)`,
         types: [
           { name: inputTypeName, body: inputType },
           { name: responseTypeName, body: responseType },
@@ -186,11 +189,10 @@ function buildEndpointApi(
       };
     }
     case "delete": {
-      const path = entrypName.segment;
       const errorsType = commonErrorTypes.join("|");
       return {
         name: "delete",
-        builder: `buildDeleteFn<${errorsType}>("${path}", basePath)`,
+        builder: `buildDeleteFn<${errorsType}>(options, parentPath)`,
         types: [],
       };
     }
@@ -198,16 +200,16 @@ function buildEndpointApi(
       const responseTypeName = `ListResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const path = entrypName.segment;
       const errorsType = commonErrorTypes.join("|");
       return {
         name: "list",
-        builder: `buildListFn<${responseTypeName}, ${errorsType}>("${path}", basePath)`,
+        builder: `buildListFn<${responseTypeName}, ${errorsType}>(options, parentPath)`,
         types: [{ name: responseTypeName, body: responseType }],
       };
     }
     case "custom-one": {
       const path = endpoint.path;
+      const name = entrypointSegmentName(endpoint.path);
       const method = endpoint.method;
       switch (method) {
         case "GET":
@@ -215,8 +217,8 @@ function buildEndpointApi(
           const errorsType = commonErrorTypes.join("|");
 
           return {
-            name: path,
-            builder: `buildCustomOneFetchFn<any, ${errorsType}>("${path}", "${method}", basePath)`,
+            name: name,
+            builder: `buildCustomOneFetchFn<any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
             types: [],
           };
         }
@@ -225,8 +227,8 @@ function buildEndpointApi(
           const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
           return {
-            name: path,
-            builder: `buildCustomOneSubmitFn<any, any, ${errorsType}>("${path}", "${method}", basePath)`,
+            name: name,
+            builder: `buildCustomOneSubmitFn<any, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
             types: [],
           };
         }
@@ -240,6 +242,7 @@ function buildEndpointApi(
     }
     case "custom-many": {
       const path = endpoint.path;
+      const name = entrypointSegmentName(endpoint.path);
       const method = endpoint.method;
       switch (method) {
         case "GET":
@@ -247,8 +250,8 @@ function buildEndpointApi(
           const errorsType = commonErrorTypes.join("|");
 
           return {
-            name: path,
-            builder: `buildCustomManyFetchFn<any, ${errorsType}>("${path}", "${method}", basePath)`,
+            name: name,
+            builder: `buildCustomManyFetchFn<any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
             types: [],
           };
         }
@@ -257,8 +260,8 @@ function buildEndpointApi(
           const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
           return {
-            name: path,
-            builder: `buildCustomManySubmitFn<any, any, ${errorsType}>("${path}", "${method}", basePath)`,
+            name: name,
+            builder: `buildCustomManySubmitFn<any, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
             types: [],
           };
         }
@@ -281,11 +284,43 @@ function buildCommonCode(): string {
 
   // ----- API types
 
-  type EndpointHttpMethod = "GET" | "POST" | /*"PUT" |*/ "PATCH" | "DELETE";
+  export type EndpointHttpMethod = "GET" | "POST" | /*"PUT" |*/ "PATCH" | "DELETE";
+
+  /** Result of API funciton call */
+  export type ApiRequestFnData = {
+    /** HTTP status */
+    status: number;
+    /** Response body data. */
+    data?: any;
+  };
   
-  type ApiRequestBody = Record<string, unknown>;
+  /**
+   * Function that performs request call and returns result.
+   * This allows for any custom HTTP client (fetch, axios, ...) implementation 
+   * to be used regardless of environment (node, browser, ...).
+   * 
+   * Return value from this function is wrapped by client in {ApiResponse} 
+   * structure and returned to the caller.
+   *
+   * @param url {string} request URL
+   * @param init {ApiRequestInit} request details
+   * @returns {ApiRequestFnData}
+   */
+  export type ApiRequestFn = (url: string, init: ApiRequestInit) => Promise<ApiRequestFnData>;
   
-  type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
+  /** API request additional parameters. */
+  export type ApiRequestInit = {
+    /** A BodyInit object or null to set request's body. */
+    body?: string[][] | Record<string, string> | string | null;
+    /** A Headers object, an object literal, or an array of two-item arrays to set request's headers. */
+    headers?: [string, string][] | Record<string, string>;
+    /** A string to set request's method. */
+    method: EndpointHttpMethod;
+  }
+  
+  export type ApiRequestBody = Record<string, unknown>;
+  
+  export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
     ? {
         code: C;
         message: string;
@@ -293,271 +328,286 @@ function buildCommonCode(): string {
       }
     : never;
   
-  type ApiResponse<D, EC extends string> =
-    | {
-        kind: "success";
-        status: number;
-        data: D;
-      }
-    | {
-        kind: "error";
-        status: number;
-        error: ApiResponseErrorBody<EC>;
-      };
+  export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
+
+  export type ApiResponseSuccess<D, E extends string> = {
+    kind: "success";
+    status: number;
+    data: D;
+  };
+
+  export type ApiResponseError<D, E extends string> = {
+    kind: "error";
+    status: number;
+    error: ApiResponseErrorBody<E>;
+  };
+
+      
+  export type ListData = { filter?: Record<string, any>; page?: number; pageSize?: number };
   
-  type ApiClientFnOptions = { headers?: Record<string, string> };
-  type ListData = { filter?: Record<string, any>; page?: number; pageSize?: number };
-  
-  type GetApiClientFn<R, E extends string> = (
+  export type GetApiClientFn<R, E extends string> = (
     id: number,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
-  type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
+  export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
     data: D,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
-  type UpdateApiClientFn<D, R, E extends string> = (
+  export type UpdateApiClientFn<D, R, E extends string> = (
     id: number,
     data: D,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
-  type ListApiClientFn<R, E extends string> = (
+  export type ListApiClientFn<R, E extends string> = (
     data?: ListData,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
-  type DeleteApiClientFn<E extends string> = (
+  export type DeleteApiClientFn<E extends string> = (
     id: number,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
   
-  type CustomOneFetchApiClientFn<R, E extends string> = (
+  export type CustomOneFetchApiClientFn<R, E extends string> = (
     id: number,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
-  type CustomOneSubmitApiClientFn<D, R, E extends string> = (
+  export type CustomOneSubmitApiClientFn<D, R, E extends string> = (
     id: number,
     data?: D,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
-  type CustomManyFetchApiClientFn<R, E extends string> = (
-    options?: ApiClientFnOptions
+  export type CustomManyFetchApiClientFn<R, E extends string> = (
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
-  type CustomManySubmitApiClientFn<D, R, E extends string> = (
+  export type CustomManySubmitApiClientFn<D, R, E extends string> = (
     data?: D,
-    options?: ApiClientFnOptions
+    options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
 
 
   // ----- API fn factories
 
-  function buildGetFn<R, E extends string>(name: string, basePath: string): GetApiClientFn<R, E> {
+  function buildGetFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<R, E> {
     return async (id, options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}/\${id}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
+
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method: "GET",
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
   function buildCreateFn<D extends ApiRequestBody, R, E extends string>(
-    name: string,
-    basePath: string
+    clientOptions: ApiClientOptions, parentPath: string
   ): CreateApiClientFn<D, R, E> {
     return async (data, options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
+
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method: "POST",
           body: JSON.stringify(data),
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
   function buildUpdateFn<D extends ApiRequestBody, R, E extends string>(
-    name: string,
-    basePath: string
+    clientOptions: ApiClientOptions, parentPath: string
   ): UpdateApiClientFn<D, R, E> {
     return async (id, data, options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}/\${id}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
+
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method: "PATCH",
           body: JSON.stringify(data),
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
-  function buildDeleteFn<E extends string>(name: string, basePath: string): DeleteApiClientFn<E> {
+  function buildDeleteFn<E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<E> {
     return async (id, options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}/\${id}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
+
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method: "DELETE",
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
-  function buildListFn<R, E extends string>(name: string, basePath: string): ListApiClientFn<R, E> {
+  function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
     return async (data, options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
       // TODO: add data to URL params with URLSearchParams
   
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method: "GET",
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
   function buildCustomOneFetchFn<R, E extends string>(
-    name: string,
-    method: EndpointHttpMethod,
-    basePath: string
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
   ): CustomOneFetchApiClientFn<R, E> {
     return async (id, options) => {
-      const url = \`\${basePath}/\${name}/\${id}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}/\${path}\`;
+
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method,
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
   function buildCustomOneSubmitFn<D extends ApiRequestBody, R, E extends string>(
-    name: string,
-    method: EndpointHttpMethod,
-    basePath: string
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
   ): CustomOneSubmitApiClientFn<D, R, E> {
     return async (id, data, options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}/\${id}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}/\${path}\`;
+
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method,
           body: JSON.stringify(data),
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
   function buildCustomManyFetchFn<R, E extends string>(
-    name: string,
-    method: EndpointHttpMethod,
-    basePath: string
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
   ): CustomManyFetchApiClientFn<R, E> {
     return async (options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${path}\`;
   
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method,
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => response.json())
       );
     };
   }
   
   function buildCustomManySubmitFn<D extends ApiRequestBody, R, E extends string>(
-    name: string,
-    method: EndpointHttpMethod,
-    basePath: string
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
   ): CustomManySubmitApiClientFn<D, R, E> {
     return async (data, options) => {
-      const epPath = name;
-      const url = \`\${basePath}/\${epPath}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${path}\`;
+
       return (
-        makeRequest(url, {
+        makeRequest(clientOptions, url, {
           method,
           body: JSON.stringify(data),
           headers: { ...(options?.headers ?? {}) },
         })
-          // interpret response as JSON
-          .then((response) => {
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-              return response.json().then(data => {
-                if ("code" in data && "message" in data) {
-                  return data
-                }
-                else {
-                  return {
-                    code: "ERROR_CODE_OTHER",
-                    message: "Other error",
-                    body: data
-                  }
-                }
-              });
-            } else {
-              return response.text().then(text => {
-                return {
-                  code: "ERROR_CODE_OTHER",
-                  message: text
-                }
-              });
-            }
-          })
       );
     };
   }
+  async function makeRequest<D, E extends string>(
+    options: ApiClientOptions,
+    url: string,
+    init: ApiRequestInit
+  ): Promise<ApiResponse<D, E>> {
+    if (options.requestFn == null) {
+      throw new Error("Request function is required in API client");
+    }
   
-  async function makeRequest(url: string, init: RequestInit) {
-    return fetch(url, init);
+    return options.requestFn(url, init).then(({status, data}) => {
+      if (status >= 200 && status < 300) {
+        return {
+          kind: "success",
+          status,
+          data,
+        };
+      } else {
+        if (typeof data === "string") {
+          return {
+            kind: "error",
+            status,
+            error: {
+              code: "ERROR_CODE_OTHER",
+              message: data,
+            } as ApiResponseErrorBody<E>,
+            // TODO: fix response error type (TS complains about types not overlapping!?)
+          };
+        } else {
+          if ("code" in data && "message" in data) {
+            return {
+              kind: "error",
+              status,
+              error: data,
+            };
+          } else {
+            return {
+              kind: "error",
+              status,
+              error: {
+                code: "ERROR_CODE_OTHER",
+                message: "Unexpected error",
+                data,
+              } as ApiResponseErrorBody<E>,
+              // TODO: fix response error type (TS complains about types not overlapping!?)
+            };
+          }
+        }
+      }
+    });
   }
-  `;
+
+`;
 }
 
 // ----- utils
 
-function entrypointName(name: string, type: string): EntrypointName {
+function entrypointNaming(name: string, typeName: string): EntrypointNaming {
   return {
     name,
-    type,
-    segment: _.toLower(name),
+    type: typeName,
+    segment: entrypointSegmentName(name),
     builder: _.camelCase(`build${_.capitalize(name)}Api`),
   };
+}
+
+/**
+ * Convert string to valid segment name.
+ *
+ * Segment name is name in API heirarchy.
+ * Eg. in API `{ someSegment: someFn() }` segment name is `someSegment`.
+ *
+ * It must be a valid identifier so we use `camelCase` to remove any
+ * special characters.
+ */
+function entrypointSegmentName(name: string) {
+  return _.camelCase(name);
 }
 
 type SchemaField = {
