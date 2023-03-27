@@ -81,7 +81,7 @@ entrypoint Orgs {
     path "customOneAction"
     action {
       execute {
-        virtual input name { type text }
+        virtual input name { type string }
         virtual input counter { type integer }
         hook {
           arg name name
@@ -98,7 +98,7 @@ entrypoint Orgs {
     path "customManyAction"
     action {
       execute {
-        virtual input name { type text }
+        virtual input name { type string }
         virtual input counter { type integer }
         hook {
           arg name name
@@ -117,7 +117,7 @@ entrypoint Orgs {
     action {
       execute {
         virtual input counter { type integer }
-        virtual input name { type text }
+        virtual input name { type string }
 
         responds
         hook {
@@ -136,7 +136,7 @@ entrypoint Orgs {
     path "customManyActionResponds"
     action {
       execute {
-        virtual input name { type text }
+        virtual input name { type string }
         virtual input counter { type integer }
         responds
         hook {
@@ -155,7 +155,7 @@ entrypoint Orgs {
     path "customOneQueryAction"
     action {
       execute {
-        virtual input name { type text }
+        virtual input name { type string }
         virtual input orgId { type integer }
         responds
         hook {
@@ -177,10 +177,10 @@ entrypoint Orgs {
     path "customFetchAction"
     action {
       fetch as fRepo {
-        query { from Repo, filter id is 1, select {slug}} // TODO: read from ctx - id
+        query { from Repo, filter { id is 1 }, select {slug}} // TODO: read from ctx - id
       }
       execute {
-        virtual input name { type text }
+        virtual input name { type string }
         responds
         hook {
           arg name name
@@ -200,7 +200,7 @@ entrypoint Orgs {
     action {
       execute {
         virtual input status { type integer }
-        virtual input message { type text }
+        virtual input message { type string }
 
         hook {
           arg status status

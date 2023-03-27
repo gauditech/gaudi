@@ -49,10 +49,6 @@ describe("Auth", () => {
         ],
       },
       {
-        model: "Operator",
-        data: [{ user_id: 1 }, { user_id: 2 }],
-      },
-      {
         model: "Box",
         data: [
           { owner_id: 1, name: "public", is_public: true },

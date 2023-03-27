@@ -102,7 +102,7 @@ function buildSemanticTokens(document: TextDocument): SemanticTokens | ResponseE
     return new ResponseError<void>(ErrorCodes.ParseError, errors.at(0)?.message ?? "Unknown error");
   }
 
-  buildTokens(ast, addToken);
+  buildTokens(ast.document, addToken);
   return builder.build();
 }
 

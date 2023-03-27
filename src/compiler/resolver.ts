@@ -760,10 +760,11 @@ export function resolve(projectASTs: ProjectASTs) {
               name,
               unique: false,
             };
-            identifier.type = {
-              kind: "primitive",
-              primitiveKind: "integer",
-            };
+            const baseType: Type = { kind: "primitive", primitiveKind: "integer" };
+            identifier.type =
+              referenceAtom.type.kind === "nullable"
+                ? addTypeModifier(baseType, "nullable")
+                : baseType;
             return undefined;
           }
         }

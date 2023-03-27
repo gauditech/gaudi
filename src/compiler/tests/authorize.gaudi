@@ -10,7 +10,7 @@ model Operator {
 model Box {
   field name { type string, unique }
   field is_public { type boolean }
-  reference owner { to Operator }
+  reference owner { to Operator, nullable }
   relation items { from Item, through box }
 }
 
