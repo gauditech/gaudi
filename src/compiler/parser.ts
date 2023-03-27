@@ -16,7 +16,6 @@ import {
   BooleanLiteral,
   Computed,
   Db,
-  Definition,
   DeleteAction,
   Endpoint,
   EndpointAtom,
@@ -34,6 +33,7 @@ import {
   FieldAtom,
   FieldValidationHook,
   FloatLiteral,
+  GlobalAtom,
   Hook,
   Identifier,
   IdentifierRef,
@@ -51,6 +51,7 @@ import {
   Populate,
   PopulateAtom,
   Populator,
+  ProjectASTs,
   Query,
   QueryAtom,
   Reference,
@@ -86,20 +87,20 @@ class GaudiParser extends EmbeddedActionsParser {
     this.performSelfAnalysis();
   }
 
-  definition = this.RULE("definition", (): Definition => {
-    const definition: Definition = [];
+  document = this.RULE("document", (): ProjectASTs => {
+    const document: GlobalAtom[] = [];
 
     this.MANY(() => {
       this.OR([
-        { ALT: () => definition.push(this.SUBRULE(this.model)) },
-        { ALT: () => definition.push(this.SUBRULE(this.entrypoint)) },
-        { ALT: () => definition.push(this.SUBRULE(this.populator)) },
-        { ALT: () => definition.push(this.SUBRULE(this.runtime)) },
-        { ALT: () => definition.push(this.SUBRULE(this.authenticator)) },
+        { ALT: () => document.push(this.SUBRULE(this.model)) },
+        { ALT: () => document.push(this.SUBRULE(this.entrypoint)) },
+        { ALT: () => document.push(this.SUBRULE(this.populator)) },
+        { ALT: () => document.push(this.SUBRULE(this.runtime)) },
+        { ALT: () => document.push(this.SUBRULE(this.authenticator)) },
       ]);
     });
 
-    return definition;
+    return { plugins: {}, document };
   });
 
   model = this.RULE("model", (): Model => {

@@ -17,50 +17,6 @@ describe("authenticator composer", () => {
     expect(def.entrypoints).toMatchSnapshot();
   });
 
-  it("fails if authenticator model names are already taken", () => {
-    const bp1 = `
-        model ${AUTH_TARGET_MODEL_NAME} {}
-
-        auth { method basic {} }
-      `;
-
-    expect(() => compose(compileToOldSpec(bp1))).toThrowErrorMatchingInlineSnapshot(
-      `"Items not unique!"`
-    );
-
-    const bp2 = `
-        model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
-
-        auth { method basic {} }
-      `;
-
-    expect(() => compose(compileToOldSpec(bp2))).toThrowErrorMatchingInlineSnapshot(
-      `"Items not unique!"`
-    );
-  });
-
-  it("fails if authenticator model names are already taken", () => {
-    const bp1 = `
-        model ${AUTH_TARGET_MODEL_NAME} {}
-
-        auth { method basic {} }
-      `;
-
-    expect(() => compose(compileToOldSpec(bp1))).toThrowErrorMatchingInlineSnapshot(
-      `"Items not unique!"`
-    );
-
-    const bp2 = `
-        model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
-
-        auth { method basic {} }
-      `;
-
-    expect(() => compose(compileToOldSpec(bp2))).toThrowErrorMatchingInlineSnapshot(
-      `"Items not unique!"`
-    );
-  });
-
   it("resolves authenticator model implicit relations", () => {
     const bp = `
       model UserProfile {
@@ -79,5 +35,51 @@ describe("authenticator composer", () => {
 
     // check authenticator's models
     expect(relation).toMatchSnapshot();
+  });
+});
+
+describe("authenticator compiler errors", () => {
+  it("fails if authenticator model names are already taken", () => {
+    const bp1 = `
+        model ${AUTH_TARGET_MODEL_NAME} {}
+
+        auth { method basic {} }
+      `;
+
+    expect(() => compileToOldSpec(bp1)).toThrowErrorMatchingInlineSnapshot(
+      `"Duplicate model definition"`
+    );
+
+    const bp2 = `
+        model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
+
+        auth { method basic {} }
+      `;
+
+    expect(() => compileToOldSpec(bp2)).toThrowErrorMatchingInlineSnapshot(
+      `"Duplicate model definition"`
+    );
+  });
+
+  it("fails if authenticator model names are already taken", () => {
+    const bp1 = `
+        model ${AUTH_TARGET_MODEL_NAME} {}
+
+        auth { method basic {} }
+      `;
+
+    expect(() => compileToOldSpec(bp1)).toThrowErrorMatchingInlineSnapshot(
+      `"Duplicate model definition"`
+    );
+
+    const bp2 = `
+        model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
+
+        auth { method basic {} }
+      `;
+
+    expect(() => compileToOldSpec(bp2)).toThrowErrorMatchingInlineSnapshot(
+      `"Duplicate model definition"`
+    );
   });
 });

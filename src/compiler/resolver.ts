@@ -9,7 +9,6 @@ import {
   AnonymousQuery,
   BinaryOperator,
   Computed,
-  Definition,
   DeleteAction,
   Endpoint,
   Entrypoint,
@@ -18,6 +17,7 @@ import {
   FetchAction,
   Field,
   FieldValidationHook,
+  GlobalAtom,
   Hook,
   IdentifierRef,
   Model,
@@ -26,6 +26,7 @@ import {
   ModelHook,
   Populate,
   Populator,
+  ProjectASTs,
   Query,
   Reference,
   Relation,
@@ -47,6 +48,7 @@ import {
   unknownType,
 } from "./ast/type";
 import { CompilerError, ErrorCode } from "./compilerError";
+import { authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind, patternFind } from "@src/common/patternFilter";
 
@@ -59,14 +61,26 @@ type ScopeContext = {
   [P in string]?: Type;
 };
 
-export function resolve(definition: Definition) {
+export function resolve(projectASTs: ProjectASTs) {
   const errors: CompilerError[] = [];
 
-  const models = kindFilter(definition, "model");
+  function getSumDocument(): GlobalAtom[] {
+    return Object.values(projectASTs.plugins)
+      .flatMap((p) => p)
+      .concat(projectASTs.document);
+  }
 
-  function resolveDefinition(definition: Definition) {
-    definition.forEach((d) =>
-      match(d)
+  function getAllModels(): Model[] {
+    return kindFilter(getSumDocument(), "model");
+  }
+
+  function getAllRuntimes(): Runtime[] {
+    return kindFilter(getSumDocument(), "runtime");
+  }
+
+  function resolveDocument(document: GlobalAtom[]) {
+    document.forEach((a) =>
+      match(a)
         .with({ kind: "model" }, resolveModel)
         .with({ kind: "entrypoint" }, (entrypoint) =>
           resolveEntrypoint(entrypoint, null, {
@@ -565,7 +579,7 @@ export function resolve(definition: Definition) {
   function resolveHook(hook: Hook<boolean, boolean>) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
-      const runtimes = kindFilter(definition, "runtime");
+      const runtimes = kindFilter(getAllRuntimes(), "runtime");
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
       let runtime: Runtime | undefined = undefined;
@@ -671,8 +685,15 @@ export function resolve(definition: Definition) {
       return;
     }
 
-    // TODO: what is the @auth type/model??? we don't resolve it this pass
     if (headName === "@auth") {
+      const model = findModel(authUserModelName);
+      if (!model) {
+        errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
+      } else {
+        head.ref = { kind: "model", model: model.name.text };
+        head.type = addTypeModifier({ kind: "model", model: model.name.text }, "nullable");
+      }
+      resolveRefPath(tail, head.type);
       return;
     }
     if (headName === "@requestAuthToken") {
@@ -826,7 +847,7 @@ export function resolve(definition: Definition) {
   }
 
   function findModel(name: string): Model | undefined {
-    return patternFind(models, { name: { text: name } });
+    return patternFind(getAllModels(), { name: { text: name } });
   }
 
   function getBinaryOperatorType(op: BinaryOperator, lhs: Expr, rhs: Expr): Type {
@@ -946,7 +967,7 @@ export function resolve(definition: Definition) {
     return true;
   }
 
-  resolveDefinition(definition);
+  resolveDocument(projectASTs.document);
 
   return errors;
 }

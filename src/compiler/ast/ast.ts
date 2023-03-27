@@ -1,6 +1,11 @@
 import { Type } from "./type";
 
-export type Definition = (Model | Entrypoint | Populator | Runtime | Authenticator)[];
+export type ProjectASTs = {
+  plugins: Record<string, GlobalAtom[]>;
+  document: GlobalAtom[];
+};
+
+export type GlobalAtom = Model | Entrypoint | Populator | Runtime | Authenticator;
 
 export type Model = WithKeyword<{
   kind: "model";

@@ -1,20 +1,40 @@
 import { ILexingError, IRecognitionException } from "chevrotain";
 import _ from "lodash";
 
-import { Definition, TokenData } from "./ast/ast";
+import { ProjectASTs, TokenData } from "./ast/ast";
 import { checkForm } from "./checkForm";
-import { CompilerError, ErrorCode } from "./compilerError";
+import { CompilerError, ErrorCode, compilerErrorsToString } from "./compilerError";
 import * as L from "./lexer";
 import { migrate } from "./migrate";
 import { getTokenData, parser } from "./parser";
+import { AuthPlugin } from "./plugins/authenticator";
 import { resolve } from "./resolver";
 
+import { kindFind } from "@src/common/patternFilter";
 import { Specification } from "@src/types/specification";
 
 export type CompileResult = {
-  ast: Definition | undefined;
+  ast: ProjectASTs | undefined;
   errors: CompilerError[];
 };
+
+// plugin compilation is the first step in resolving
+function compilePlugins(projectASTs: ProjectASTs) {
+  const authenticator = kindFind(projectASTs.document, "authenticator");
+  if (authenticator) {
+    const { ast, errors } = compileToAST(AuthPlugin.code);
+    if (!ast || errors.length > 0) {
+      let errorString;
+      if (errors.length > 0) {
+        errorString = compilerErrorsToString("plugin:auth", AuthPlugin.code, errors);
+      } else {
+        errorString = "Unknown compilation error";
+      }
+      throw new Error(`Failed to compile auth plugin:\n${errorString}`);
+    }
+    projectASTs.plugins["auth"] = ast.document;
+  }
+}
 
 export function compileToAST(source: string): CompileResult {
   const lexerResult = L.lexer.tokenize(source);
@@ -22,11 +42,12 @@ export function compileToAST(source: string): CompileResult {
 
   const errors = lexerResult.errors.map(toCompilerError);
 
-  const ast = parser.definition();
+  const ast = parser.document();
 
   errors.push(...parser.errors.map(toCompilerError));
 
-  if (ast) {
+  if (ast && errors.length === 0) {
+    compilePlugins(ast);
     errors.push(...checkForm(ast));
     errors.push(...resolve(ast));
   }

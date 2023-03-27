@@ -26,6 +26,7 @@ export enum ErrorCode {
   DuplicateSelectField,
   // Resolver Errors
   CantResolveModel,
+  CantResolveAuthModel,
   CantResolveModelAtom,
   CantResolveStructMember,
   TypeHasNoMembers,
@@ -83,6 +84,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate field in select`;
     case ErrorCode.CantResolveModel:
       return `Can't resolve model with this name`;
+    case ErrorCode.CantResolveAuthModel:
+      return `Can't resolve @auth model, is auth block used?`;
     case ErrorCode.CantResolveModelAtom:
       return `Can't resolve model member with this name`;
     case ErrorCode.CantResolveStructMember:

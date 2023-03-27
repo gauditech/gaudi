@@ -38,13 +38,14 @@ import {
   ValidatorSpec,
 } from "@src/types/specification";
 
-export function migrate(definition: AST.Definition): Specification {
-  const authenticator = kindFind(definition, "authenticator");
+export function migrate(projectASTs: AST.ProjectASTs): Specification {
+  const document = projectASTs.document;
+  const authenticator = kindFind(document, "authenticator");
   const specification: Specification = {
-    models: kindFilter(definition, "model").map(migrateModel),
-    entrypoints: kindFilter(definition, "entrypoint").map(migrateEntrypoint),
-    populators: kindFilter(definition, "populator").map(migratePopulator),
-    runtimes: kindFilter(definition, "runtime").map(migrateRuntime),
+    models: kindFilter(document, "model").map(migrateModel),
+    entrypoints: kindFilter(document, "entrypoint").map(migrateEntrypoint),
+    populators: kindFilter(document, "populator").map(migratePopulator),
+    runtimes: kindFilter(document, "runtime").map(migrateRuntime),
     authenticator: authenticator ? migrateAuthenticator(authenticator) : undefined,
   };
 

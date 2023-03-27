@@ -6,22 +6,24 @@ import {
   AnonymousQuery,
   Authenticator,
   Computed,
-  Definition,
   Endpoint,
   EndpointType,
   Entrypoint,
   ExecuteAction,
   FetchAction,
   Field,
+  GlobalAtom,
   Hook,
   Identifier,
   Model,
   ModelAction,
   Populate,
   Populator,
+  ProjectASTs,
   Query,
   Reference,
   Relation,
+  Runtime,
   Select,
   TokenData,
   Validator,
@@ -31,21 +33,36 @@ import { CompilerError, ErrorCode } from "./compilerError";
 import { kindFilter, kindFind } from "@src/common/patternFilter";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 
-export function checkForm(definition: Definition) {
+export function checkForm(projectASTs: ProjectASTs) {
+  const document = projectASTs.document;
   const errors: CompilerError[] = [];
   let hasDefaultRuntime = false;
 
-  function checkDefinition(definition: Definition) {
+  function getSumDocument(): GlobalAtom[] {
+    return Object.values(projectASTs.plugins)
+      .flatMap((p) => p)
+      .concat(projectASTs.document);
+  }
+
+  function getAllModels(): Model[] {
+    return kindFilter(getSumDocument(), "model");
+  }
+
+  function getAllRuntimes(): Runtime[] {
+    return kindFilter(getSumDocument(), "runtime");
+  }
+
+  function checkDocument(document: GlobalAtom[]) {
     noDuplicateNames(
-      kindFilter(definition, "model").map(({ name }) => name),
+      getAllModels().map(({ name }) => name),
       ErrorCode.DuplicateModel
     );
-
-    const runtimes = kindFilter(definition, "runtime");
     noDuplicateNames(
-      runtimes.map(({ name }) => name),
+      getAllRuntimes().map(({ name }) => name),
       ErrorCode.DuplicateRuntime
     );
+
+    const runtimes = kindFilter(document, "runtime");
     runtimes.forEach((runtime) => {
       containsAtoms(runtime, "sourcePath");
       noDuplicateAtoms(runtime, "default", "sourcePath");
@@ -70,18 +87,18 @@ export function checkForm(definition: Definition) {
       }
     }
 
-    const authenticators = kindFilter(definition, "authenticator");
+    const authenticators = kindFilter(document, "authenticator");
     if (authenticators.length > 1) {
       errors.push(new CompilerError(authenticators[1].keyword, ErrorCode.DuplicateAuthBlock));
     }
 
-    definition.forEach((d) =>
-      match(d)
+    document.forEach((a) =>
+      match(a)
         .with({ kind: "model" }, checkModel)
         .with({ kind: "entrypoint" }, checkEntrypoint)
         .with({ kind: "populator" }, checkPopulator)
         .with({ kind: "runtime" }, () => undefined) // runtime is checked first
-        .with({ kind: "authenticator" }, () => checkAuthenticator) // runtime is checked first
+        .with({ kind: "authenticator" }, () => checkAuthenticator)
         .exhaustive()
     );
   }
@@ -372,7 +389,7 @@ export function checkForm(definition: Definition) {
     });
   }
 
-  checkDefinition(definition);
+  checkDocument(document);
 
   return errors;
 }

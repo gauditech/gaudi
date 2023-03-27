@@ -11,7 +11,6 @@ import {
   AnonymousQuery,
   Authenticator,
   Computed,
-  Definition,
   Endpoint,
   Entrypoint,
   ExecuteAction,
@@ -19,6 +18,7 @@ import {
   FetchAction,
   Field,
   FieldValidationHook,
+  GlobalAtom,
   Identifier,
   IdentifierRef,
   Literal,
@@ -77,11 +77,11 @@ export enum TokenModifiers {
 }
 
 export function buildTokens(
-  definition: Definition,
+  document: GlobalAtom[],
   push: (token: TokenData, tokenType: TokenTypes, tokenModifiers?: TokenModifiers) => void
 ) {
-  function buildDefinition(definition: Definition) {
-    definition.forEach((d) => {
+  function buildDocument(document: GlobalAtom[]) {
+    document.forEach((d) => {
       match(d)
         .with({ kind: "model" }, buildModel)
         .with({ kind: "entrypoint" }, buildEntrypoint)
@@ -584,5 +584,5 @@ export function buildTokens(
     return push(operator, TokenTypes.operator);
   }
 
-  buildDefinition(definition);
+  buildDocument(document);
 }
