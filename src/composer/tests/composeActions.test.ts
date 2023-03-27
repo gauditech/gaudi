@@ -1,8 +1,7 @@
 import _ from "lodash";
 
 import { compileToOldSpec, compose } from "@src/index";
-import { ActionKindAST, EndpointBodyAST, EndpointCardinality } from "@src/types/ast";
-import { CreateEndpointDef, EndpointType, UpdateEndpointDef } from "@src/types/definition";
+import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
 
 describe("compose actions", () => {
   describe("native actions", () => {
@@ -433,7 +432,7 @@ describe("compose actions", () => {
     });
 
     // --- test missing/unallowed endpoint properties
-    _.chain<EndpointBodyAST["kind"][]>(["cardinality", "method", "path"])
+    _.chain(["cardinality", "method", "path"])
       .forEach((property) => {
         it(`fails when "${property}" property is missing in custom endpoint`, () => {
           const bp = `
@@ -460,7 +459,7 @@ describe("compose actions", () => {
           );
         });
 
-        _.chain<EndpointType[]>(["get", "list", "create", "update", "delete"])
+        _.chain(["get", "list", "create", "update", "delete"])
           .forEach((epType) => {
             it(`fails when "${property}" property is used in "${epType}" endpoint`, () => {
               const bp = `
@@ -487,12 +486,12 @@ describe("compose actions", () => {
       .value();
 
     // --- test invalid action types in custom endpoints
-    _.chain<[EndpointCardinality, ActionKindAST[]]>([
+    _.chain([
       ["one", ["create"]],
       ["many", ["update", "delete"]],
     ])
       .map(([cardinality, actions]) => {
-        return _.map(actions, (a): [EndpointCardinality, ActionKindAST] => [cardinality, a]);
+        return _.map(actions, (a) => [cardinality, a]);
       })
       .flatMap()
       .forEach(([cardinality, action]) => {

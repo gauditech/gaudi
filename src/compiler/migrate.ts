@@ -4,7 +4,6 @@ import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/patternFilter";
 import { ensureExists } from "@src/common/utils";
-import { SelectAST } from "@src/types/ast";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
@@ -34,6 +33,7 @@ import {
   ReferenceSpec,
   RelationSpec,
   RepeaterSpec,
+  SelectAST,
   Specification,
   ValidatorSpec,
 } from "@src/types/specification";

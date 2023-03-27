@@ -3,8 +3,8 @@ import _ from "lodash";
 import { FilteredKind } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
-import { LiteralValue } from "@src/types/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
+import { LiteralValue } from "@src/types/specification";
 
 export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
   if (typeof literal === "string") {

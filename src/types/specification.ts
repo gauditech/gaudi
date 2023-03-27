@@ -1,14 +1,32 @@
-import {
-  BinaryOperator,
-  EndpointCardinality,
-  EndpointMethod,
-  EndpointTypeAST,
-  LiteralValue,
-  SelectAST,
-  UnaryOperator,
-} from "./ast";
-
 import { WithContext } from "@src/common/error";
+
+// old AST types
+export type EndpointCardinality = "one" | "many";
+export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
+export type EndpointTypeAST = "list" | "get" | "create" | "update" | "delete" | "custom";
+
+export type LiteralValue = null | boolean | number | string;
+
+export type SelectAST = WithContext<{
+  select?: Record<string, SelectAST>;
+}>;
+
+export type UnaryOperator = "not";
+export type BinaryOperator =
+  | "or"
+  | "and"
+  | "is not"
+  | "is"
+  | "not in"
+  | "in"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "+"
+  | "-"
+  | "/"
+  | "*";
 
 export type Specification = {
   models: ModelSpec[];
