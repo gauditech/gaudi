@@ -2,15 +2,10 @@ auth {
   method basic {}
 }
 
-model Operator {
-  field name { type string }
-  relation boxes { from Box, through owner }
-}
-
 model Box {
   field name { type string, unique }
   field is_public { type boolean }
-  reference owner { to Operator, nullable }
+  reference owner { to AuthUser }
   relation items { from Item, through box }
 }
 

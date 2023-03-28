@@ -10,7 +10,7 @@ runtime TestRuntime {
 model Box {
   field name { type string, unique }
   field is_public { type boolean }
-  reference owner { to AuthUser, nullable }
+  reference owner { to AuthUser }
   relation items { from Item, through box }
 }
 

@@ -56,10 +56,135 @@ type Scope = {
   environment: "model" | "entrypoint";
   model: string | undefined;
   context: ScopeContext;
+  typeGuard: TypeGuard;
 };
-type ScopeContext = {
-  [P in string]?: Type;
-};
+type ScopeContext = { [P in string]?: Type };
+
+type TypeGuardOperation = "null" | "notNull";
+// key is a path joined with '|'
+type TypeGuard = { [P in string]?: TypeGuardOperation };
+
+/**
+ * Function that takes a boolean expression and creates new scope with more precise
+ * types which assume that expression is `true`. This function only works if the `expr`
+ * returns a boolean value.
+ */
+function addTypeGuard(expr: Expr, scope: Scope, isInverse: boolean): Scope {
+  const typeGuard = createTypeGuard(expr, isInverse);
+  // when adding a new type guard we use union
+  return { ...scope, typeGuard: { ...scope.typeGuard, ...typeGuard } };
+}
+
+function createTypeGuard(expr: Expr, isInverse: boolean): TypeGuard {
+  switch (expr.kind) {
+    case "binary": {
+      switch (expr.operator) {
+        case "is": {
+          const lhsOperation = getTypeGuardOperation(expr.lhs);
+          const rhsOperation = getTypeGuardOperation(expr.rhs);
+          if (lhsOperation && !rhsOperation) {
+            return createTypeGuardFromPath(expr.rhs, modifyGuardOperation(lhsOperation, isInverse));
+          } else if (!lhsOperation && rhsOperation) {
+            return createTypeGuardFromPath(expr.lhs, modifyGuardOperation(rhsOperation, isInverse));
+          }
+          return {};
+        }
+        case "is not": {
+          const lhsOperation = getTypeGuardOperation(expr.lhs);
+          const rhsOperation = getTypeGuardOperation(expr.rhs);
+          // use !isInverse because we want double inversion for is not
+          if (lhsOperation && !rhsOperation) {
+            return createTypeGuardFromPath(
+              expr.rhs,
+              modifyGuardOperation(lhsOperation, !isInverse)
+            );
+          } else if (!lhsOperation && rhsOperation) {
+            return createTypeGuardFromPath(
+              expr.lhs,
+              modifyGuardOperation(rhsOperation, !isInverse)
+            );
+          }
+          return {};
+        }
+        case "and": {
+          const lhsGuard = createTypeGuard(expr.lhs, isInverse);
+          const rhsGuard = createTypeGuard(expr.rhs, isInverse);
+          // return union of guards
+          return { ...lhsGuard, ...rhsGuard };
+        }
+        case "or": {
+          const lhsGuard = createTypeGuard(expr.lhs, isInverse);
+          const rhsGuard = createTypeGuard(expr.rhs, isInverse);
+          // return intersection of guards
+          const intersection: TypeGuard = {};
+          Object.keys(lhsGuard).forEach((key) => {
+            if (lhsGuard[key] && rhsGuard[key] && lhsGuard[key] === rhsGuard[key]) {
+              intersection[key] = lhsGuard[key];
+            }
+          });
+          return intersection;
+        }
+        default:
+          return {};
+      }
+    }
+    case "group":
+      return createTypeGuard(expr.expr, isInverse);
+    case "unary":
+      return createTypeGuard(expr.expr, !isInverse);
+    case "function":
+    case "path":
+    case "literal":
+      // we are not smart enough to get a guard for a function
+      // literal and path should be handled in a binary operation
+      return {};
+  }
+}
+
+function modifyGuardOperation(operation: TypeGuardOperation, isInverse: boolean) {
+  return isInverse ? (operation === "null" ? "notNull" : "null") : operation;
+}
+
+function createTypeGuardFromPath(expr: Expr, guardOperation: TypeGuardOperation): TypeGuard {
+  switch (expr.kind) {
+    case "group":
+      return createTypeGuardFromPath(expr.expr, guardOperation);
+    case "path": {
+      const result: TypeGuard = {};
+      if (guardOperation === "notNull") {
+        expr.path.forEach((identifier, i) => {
+          if (identifier.type.kind !== "nullable") return;
+          const path = expr.path
+            .slice(0, i + 1)
+            .map((i) => i.identifier.text)
+            .join("|");
+          result[path] = "notNull";
+        });
+      }
+      if (guardOperation === "null" && expr.path.at(-1)?.type.kind === "nullable") {
+        const path = expr.path.map((i) => i.identifier.text).join("|");
+        result[path] = "null";
+      }
+      return result;
+    }
+    default:
+      return {};
+  }
+}
+
+function getTypeGuardOperation(expr: Expr): TypeGuardOperation | undefined {
+  switch (expr.type.kind) {
+    case "unknown":
+    case "nullable":
+      return undefined;
+    case "primitive": {
+      if (expr.type.primitiveKind === "null") return "null";
+      else return "notNull";
+    }
+    default:
+      return "notNull";
+  }
+}
 
 export function resolve(projectASTs: ProjectASTs) {
   const errors: CompilerError[] = [];
@@ -87,6 +212,7 @@ export function resolve(projectASTs: ProjectASTs) {
             environment: "entrypoint",
             model: undefined,
             context: {},
+            typeGuard: {},
           })
         )
         .with({ kind: "populator" }, resolvePopulator)
@@ -104,7 +230,12 @@ export function resolve(projectASTs: ProjectASTs) {
     if (atom.resolved) return;
     atom.resolved = true;
 
-    const scope: Scope = { environment: "model", model: model.name.text, context: {} };
+    const scope: Scope = {
+      environment: "model",
+      model: model.name.text,
+      context: {},
+      typeGuard: {},
+    };
     match(atom)
       .with({ kind: "field" }, (field) => resolveField(model, field))
       .with({ kind: "reference" }, (reference) => resolveReference(model, reference))
@@ -309,7 +440,12 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveComputed(model: Model, computed: Computed) {
-    resolveExpression(computed.expr, { environment: "model", model: model.name.text, context: {} });
+    resolveExpression(computed.expr, {
+      environment: "model",
+      model: model.name.text,
+      context: {},
+      typeGuard: {},
+    });
 
     computed.ref = {
       kind: "modelAtom",
@@ -355,14 +491,15 @@ export function resolve(projectASTs: ProjectASTs) {
     const identifyWith = kindFind(entrypoint.atoms, "identifyWith");
     if (identifyWith) resolveModelAtomRef(identifyWith.identifier, currentModel, "field");
 
-    const response = kindFind(entrypoint.atoms, "response");
-    if (response) resolveSelect(response.select, currentModel, scope);
-
     const authorize = kindFind(entrypoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
       checkExprType(authorize.expr, { kind: "primitive", primitiveKind: "boolean" });
+      scope = addTypeGuard(authorize.expr, scope, false);
     }
+
+    const response = kindFind(entrypoint.atoms, "response");
+    if (response) resolveSelect(response.select, currentModel, scope);
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
       resolveEndpoint(endpoint, currentModel, { ..._.cloneDeep(scope), model: currentModel })
@@ -374,17 +511,18 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveEndpoint(endpoint: Endpoint, model: string | undefined, scope: Scope) {
+    const authorize = kindFind(endpoint.atoms, "authorize");
+    if (authorize) {
+      resolveExpression(authorize.expr, scope);
+      checkExprType(authorize.expr, { kind: "primitive", primitiveKind: "boolean" });
+      scope = addTypeGuard(authorize.expr, scope, false);
+    }
+
     const action = kindFind(endpoint.atoms, "action");
     if (action) {
       action.actions.forEach((action) => {
         resolveAction(action, model, scope);
       });
-    }
-
-    const authorize = kindFind(endpoint.atoms, "authorize");
-    if (authorize) {
-      resolveExpression(authorize.expr, scope);
-      checkExprType(authorize.expr, { kind: "primitive", primitiveKind: "boolean" });
     }
   }
 
@@ -500,7 +638,12 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolvePopulator(populator: Populator) {
     populator.atoms.forEach((populate) =>
-      resolvePopulate(populate, null, { environment: "entrypoint", model: undefined, context: {} })
+      resolvePopulate(populate, null, {
+        environment: "entrypoint",
+        model: undefined,
+        context: {},
+        typeGuard: {},
+      })
     );
   }
 
@@ -633,7 +776,15 @@ export function resolve(projectASTs: ProjectASTs) {
     match(expr)
       .with({ kind: "binary" }, (binary) => {
         resolveExpression(binary.lhs, scope);
-        resolveExpression(binary.rhs, scope);
+        let rhsScope = scope;
+        if (binary.lhs.type.kind === "primitive" && binary.lhs.type.primitiveKind === "boolean") {
+          if (binary.operator === "and") {
+            rhsScope = addTypeGuard(binary.lhs, scope, false);
+          } else if (binary.operator === "or") {
+            rhsScope = addTypeGuard(binary.lhs, scope, true);
+          }
+        }
+        resolveExpression(binary.rhs, rhsScope);
         binary.type = getBinaryOperatorType(binary.operator, binary.lhs, binary.rhs);
       })
       .with({ kind: "group" }, (group) => {
@@ -661,49 +812,60 @@ export function resolve(projectASTs: ProjectASTs) {
     if (path.length <= 0) return;
     const [head, ...tail] = path;
     const headName = head.identifier.text;
+    const context = scope.context[headName];
 
     // try to resolve from model scope
     if (scope.model && !tryResolveNextRef(head, { kind: "model", model: scope.model })) {
-      resolveRefPath(tail, head.type);
-      return;
+      // we don't set ref and type because it is set in tryResolveNextRef
     }
-
     // try to resolve from context
-    const context = scope.context[headName];
-    if (context) {
+    else if (context) {
       head.ref = { kind: "context" };
       head.type = context;
-      resolveRefPath(tail, head.type);
-      return;
     }
-
     // try to resolve from global models, if global is allowed
-    if (allowGlobal && findModel(headName)) {
+    else if (allowGlobal && findModel(headName)) {
       head.ref = { kind: "model", model: headName };
       head.type = addTypeModifier({ kind: "model", model: headName }, "collection");
-      resolveRefPath(tail, head.type);
-      return;
     }
-
-    if (headName === "@auth") {
+    // special case, try to resolve @auth
+    else if (headName === "@auth") {
       const model = findModel(authUserModelName);
       if (!model) {
+        // fail resolve
         errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
+        return;
       } else {
         head.ref = { kind: "model", model: model.name.text };
         head.type = addTypeModifier({ kind: "model", model: model.name.text }, "nullable");
       }
-      resolveRefPath(tail, head.type);
-      return;
     }
-    if (headName === "@requestAuthToken") {
+    // simple nullable string, we don't check if auth plugin is present for this for now
+    else if (headName === "@requestAuthToken") {
       head.ref = { kind: "context" };
       head.type = addTypeModifier({ kind: "primitive", primitiveKind: "string" }, "nullable");
-      resolveRefPath(tail, head.type);
+    } else {
+      // fail resolve
+      errors.push(new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope));
       return;
     }
 
-    errors.push(new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope));
+    // resolve rest of the path
+    resolveRefPath(tail, head.type);
+
+    // go through the path and set more precise type from current type guards
+    path.forEach((identifier, i) => {
+      const key = path
+        .slice(0, i + 1)
+        .map((i) => i.identifier.text)
+        .join("|");
+      const typeGuardOperation = scope.typeGuard[key];
+      if (typeGuardOperation === "notNull") {
+        identifier.type = removeTypeModifier(identifier.type, "nullable");
+      } else if (typeGuardOperation === "null") {
+        identifier.type = { kind: "primitive", primitiveKind: "null" };
+      }
+    });
   }
 
   function resolveRefPath(path: IdentifierRef[], previousType: Type): boolean {
