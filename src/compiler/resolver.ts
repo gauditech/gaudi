@@ -753,7 +753,8 @@ export function resolve(projectASTs: ProjectASTs) {
         type = target.identifierPath.at(-1)?.type ?? unknownType;
       }
       if (select) {
-        if (type.kind !== "model") {
+        const model = getTypeModel(type);
+        if (!model) {
           const errorToken =
             target.kind === "short"
               ? target.name.identifier.token
@@ -762,7 +763,6 @@ export function resolve(projectASTs: ProjectASTs) {
           return;
         }
         const name = target.kind === "short" ? target.name.identifier.text : target.name.text;
-        const model = getTypeModel(type);
         const nestedScope: Scope =
           target.kind === "short"
             ? { ..._.cloneDeep(scope), model }
