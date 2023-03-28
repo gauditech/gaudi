@@ -1,0 +1,22 @@
+model A {
+  field a { type string }
+  field a1 { type string, nullable }
+}
+
+model B {
+  field b { type string, nullable }
+  reference a { to A }
+}
+
+entrypoint B {
+  target B as b
+  create endpoint {
+    authorize { b is not null and a.a1 is b }
+    action {
+      create {}
+      create A as a {
+        set a a.a1
+      }
+    }
+  }
+}
