@@ -67,14 +67,15 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
         headers: {},
         method: "PATCH",
-        body: { slug: "slug1", name: "asdf" },
+        body: { slug: "slug1", name: "test name", description: "test description" },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": {
-            "name": "asdf",
+            "description": "test description",
+            "name": "test name",
             "slug": "slug1",
           },
           "headers": {},
@@ -100,14 +101,15 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
         headers: {},
         method: "POST",
-        body: { slug: "slug1", name: "asdf" },
+        body: { slug: "slug1", name: "test name", description: "test description" },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": {
-            "name": "asdf",
+            "description": "test description",
+            "name": "test name",
             "slug": "slug1",
           },
           "headers": {},
@@ -225,7 +227,7 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneSubmit`, {
         headers: {},
         method: "PATCH",
-        body: { slug: "slug1", name: "asdf" },
+        body: { slug: "slug1", name: "test name", description: "test description" },
       });
 
       // test response
@@ -278,7 +280,7 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManySubmit`, {
         headers: {},
         method: "POST",
-        body: { slug: "slug1", name: "asdf" },
+        body: { slug: "slug1", name: "test name", description: "test description" },
       });
 
       // test response
@@ -342,14 +344,15 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
         headers: {},
         method: "PATCH",
-        body: { slug: "slug1", name: "asdf" },
+        body: { slug: "slug1", name: "test name", description: "test description" },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": {
-            "name": "asdf",
+            "description": "test description",
+            "name": "test name",
             "slug": "slug1",
           },
           "headers": {},
@@ -377,14 +380,20 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
         headers: {},
         method: "POST",
-        body: { slug: "slug1", name: "asdf" },
+        body: {
+          slug: "slug1",
+          name: "test name",
+          description: "test description",
+          virtProp: "smthng",
+        },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": {
-            "name": "asdf",
+            "description": "test description",
+            "name": "test name",
             "slug": "slug1",
           },
           "headers": {},
@@ -504,7 +513,7 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1/customOneSubmit`, {
         headers: {},
         method: "PATCH",
-        body: { slug: "slug1", name: "asdf" },
+        body: { slug: "slug1", name: "test name", description: "test description" },
       });
 
       // test response
@@ -559,7 +568,7 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/customManySubmit`, {
         headers: {},
         method: "POST",
-        body: { slug: "slug1", name: "asdf" },
+        body: { slug: "slug1", name: "test name", description: "test description" },
       });
 
       // test response
@@ -638,7 +647,12 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
         headers: {},
         method: "POST",
-        body: { slug: "slug1", name: "asdf" },
+        body: {
+          slug: "slug1",
+          name: "test name",
+          description: "test description",
+          virtProp: "smthng",
+        },
       });
 
       // test response
