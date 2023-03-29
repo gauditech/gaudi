@@ -61,12 +61,14 @@ function buildApi(options) {
     };
 }
 function buildOrgApi(options, parentPath) {
+    // entrypoint function
     function api(id) {
         var baseUrl = "".concat(parentPath, "/").concat(id);
         return {
             repos: buildReposApi(options, "".concat(baseUrl, "/repos"))
         };
     }
+    // endpoint functions
     return Object.assign(api, {
         get: buildGetFn(options, parentPath),
         create: buildCreateFn(options, parentPath),
@@ -80,10 +82,12 @@ function buildOrgApi(options, parentPath) {
     });
 }
 function buildReposApi(options, parentPath) {
+    // entrypoint function
     function api(id) {
         var baseUrl = "".concat(parentPath, "/").concat(id);
         return {};
     }
+    // endpoint functions
     return Object.assign(api, {
         get: buildGetFn(options, parentPath),
         create: buildCreateFn(options, parentPath),

@@ -110,15 +110,14 @@ function buildEntrypointApi(
     buildEntrypointApi(def, sub, basePath)
   );
   const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints);
+  const endpointTypes = compactTypesArray(endpointEntries.map((epe) => epe.types).flat());
 
   const builderFn = `
   function ${targetInfo.builder}(options: ApiClientOptions, parentPath: string) {
-    ${endpointEntries
-      .map((epe) => epe.types)
-      .flat()
-      .map((t) => `type ${t.name} = ${t.body};`)
-      .join("\n")}
+    // endpoint types
+    ${endpointTypes.map((t) => `type ${t.name} = ${t.body};`).join("\n")}
 
+    // entrypoint function
     function api(id: ${targetInfo.identifierType}) {
       const baseUrl = \`${basePath}\${parentPath}/\${id}\`;
       return {
@@ -128,6 +127,7 @@ function buildEntrypointApi(
       }
     }
 
+    // endpoint functions
     return Object.assign(api, 
       {
         ${endpointEntries.map((epb) => `${epb.name}: ${epb.builder}`).join(",\n")}
@@ -141,6 +141,38 @@ function buildEntrypointApi(
     builderName: targetInfo.builder,
     builderFn: [builderFn, ...entrypointEntries.map((sub) => sub.builderFn).flat()],
   };
+}
+
+/**
+ * Compact type definitions by referencing other equal types.
+ *
+ * Endpoint types are mostly very similar eg. all endpoints in one entrypoint return the same model.
+ * This function goea through types list and if it finds equal types it removes duplicate definitions
+ * and references one (the first)already defined type.
+ *
+ * Example of compacted list:
+ * ```ts
+ * // original types list
+ * type GetResp = { id: number, name: string };
+ * type UpdateResp = { id: number, name: string };
+ *
+ * // compacted types list
+ * type GetResp = { id: number, name: string };
+ * type UpdateResp = GetResp;
+ * ```
+ */
+function compactTypesArray(types: EndpointApiEntry["types"]): EndpointApiEntry["types"] {
+  const typeCache: Record<string, string> = {};
+
+  return types.map((t) => {
+    if (typeCache[t.body] == null) {
+      typeCache[t.body] = t.name;
+
+      return t;
+    } else {
+      return { name: t.name, body: typeCache[t.body] };
+    }
+  });
 }
 
 // --- endpoint API
@@ -158,7 +190,7 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
     `"ERROR_CODE_RESOURCE_NOT_FOUND"`,
     `"ERROR_CODE_RESOURCE_NOT_FOUND"`,
     `"ERROR_CODE_SERVER_ERROR"`,
-    // client errors - wraps any error that doesn't have structure { code, message, body? }
+    // client error - wraps any error that doesn't have structure { code, message, body? }
     `"ERROR_CODE_OTHER"`,
   ];
 

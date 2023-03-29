@@ -21,32 +21,28 @@
 
     
   function buildOrgApi(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
     type GetResp = { id: number,
 slug: string,
 name: string };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type CreateData = { slug: string,
 name: string };
-type CreateResp = { id: number,
-slug: string,
-name: string };
+type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type UpdateData = { slug?: string,
 name?: string };
-type UpdateResp = { id: number,
-slug: string,
-name: string };
-type UpdateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type ListResp = { id: number,
-slug: string,
-name: string };
-type ListErrot = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type DeleteError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type CustomOneFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type CustomOneSubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type CustomManyFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type CustomManySubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type UpdateResp = GetResp;
+type UpdateError = CreateError;
+type ListResp = GetResp;
+type ListErrot = GetError;
+type DeleteError = GetError;
+type CustomOneFetchError = GetError;
+type CustomOneSubmitError = CreateError;
+type CustomManyFetchError = GetError;
+type CustomManySubmitError = CreateError;
 
+    // entrypoint function
     function api(id: string) {
       const baseUrl = `${parentPath}/${id}`;
       return {
@@ -54,6 +50,7 @@ type CustomManySubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURC
       }
     }
 
+    // endpoint functions
     return Object.assign(api, 
       {
         get: buildGetFn<string, GetResp, GetError>(options, parentPath),
@@ -70,6 +67,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
   }
 
   function buildReposApi(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
     type GetResp = { id: number,
 slug: string,
 name: string,
@@ -77,30 +75,22 @@ org_id: number };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type CreateData = { slug: string,
 name: string };
-type CreateResp = { id: number,
-slug: string,
-name: string,
-org_id: number };
+type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type UpdateData = { slug?: string,
 name?: string,
 org_id?: number };
-type UpdateResp = { id: number,
-slug: string,
-name: string,
-org_id: number };
-type UpdateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type ListResp = { id: number,
-slug: string,
-name: string,
-org_id: number };
-type ListErrot = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type DeleteError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type CustomOneFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type CustomOneSubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type CustomManyFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type CustomManySubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type UpdateResp = GetResp;
+type UpdateError = CreateError;
+type ListResp = GetResp;
+type ListErrot = GetError;
+type DeleteError = GetError;
+type CustomOneFetchError = GetError;
+type CustomOneSubmitError = CreateError;
+type CustomManyFetchError = GetError;
+type CustomManySubmitError = CreateError;
 
+    // entrypoint function
     function api(id: number) {
       const baseUrl = `${parentPath}/${id}`;
       return {
@@ -108,6 +98,7 @@ type CustomManySubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURC
       }
     }
 
+    // endpoint functions
     return Object.assign(api, 
       {
         get: buildGetFn<number, GetResp, GetError>(options, parentPath),

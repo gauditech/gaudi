@@ -61,12 +61,14 @@ function buildApi(options) {
     };
 }
 function buildOrgApi(options, parentPath) {
+    // entrypoint function
     function api(id) {
         var baseUrl = "".concat(parentPath, "/").concat(id);
         return {
             repos: buildReposApi(options, "".concat(baseUrl, "/repos"))
         };
     }
+    // endpoint functions
     return Object.assign(api, {
         customOneAction: buildCustomOneSubmitFn(options, parentPath, "customOneAction", "POST"),
         customManyAction: buildCustomManySubmitFn(options, parentPath, "customManyAction", "PATCH"),
@@ -88,12 +90,14 @@ function buildOrgApi(options, parentPath) {
     });
 }
 function buildReposApi(options, parentPath) {
+    // entrypoint function
     function api(id) {
         var baseUrl = "".concat(parentPath, "/").concat(id);
         return {
             issues: buildIssuesApi(options, "".concat(baseUrl, "/issues"))
         };
     }
+    // endpoint functions
     return Object.assign(api, {
         get: buildGetFn(options, parentPath),
         list: buildListFn(options, parentPath),
@@ -103,10 +107,12 @@ function buildReposApi(options, parentPath) {
     });
 }
 function buildIssuesApi(options, parentPath) {
+    // entrypoint function
     function api(id) {
         var baseUrl = "".concat(parentPath, "/").concat(id);
         return {};
     }
+    // endpoint functions
     return Object.assign(api, {
         get: buildGetFn(options, parentPath),
         create: buildCreateFn(options, parentPath)
