@@ -84,7 +84,9 @@ export type ApiRequestFnData = {
     /** HTTP status */
     status: number;
     /** HTTP repsonse headers map */
-    headers: {};
+    headers: {
+        [name: string]: string;
+    };
     /** Response body data. */
     data?: any;
 };
@@ -121,7 +123,7 @@ export type ApiResponseSuccess<D, E extends string> = {
     kind: "success";
     status: number;
     headers: {
-        [key: string]: string;
+        [name: string]: string;
     };
     data: D;
 };
@@ -129,7 +131,7 @@ export type ApiResponseError<D, E extends string> = {
     kind: "error";
     status: number;
     headers: {
-        [key: string]: string;
+        [name: string]: string;
     };
     error: ApiResponseErrorBody<E>;
 };

@@ -335,7 +335,7 @@ function buildCommonCode(): string {
     /** HTTP status */
     status: number;
     /** HTTP repsonse headers map */
-    headers: {},
+    headers: { [name: string]: string },
     /** Response body data. */
     data?: any;
   };
@@ -379,14 +379,14 @@ function buildCommonCode(): string {
   export type ApiResponseSuccess<D, E extends string> = {
     kind: "success";
     status: number;
-    headers: {[key: string]: string},
+    headers: {[name: string]: string},
     data: D;
   };
 
   export type ApiResponseError<D, E extends string> = {
     kind: "error";
     status: number;
-    headers: {[key: string]: string},
+    headers: { [name: string]: string },
     error: ApiResponseErrorBody<E>;
   };
 
