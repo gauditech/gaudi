@@ -6,7 +6,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   Diagnostic,
   DiagnosticSeverity,
-  ErrorCodes,
+  LSPErrorCodes,
   ProposedFeatures,
   ResponseError,
   SemanticTokens,
@@ -25,10 +25,6 @@ const connection: ProposedFeatures.Connection = createConnection(ProposedFeature
 const documents = new TextDocuments(TextDocument);
 
 documents.listen(connection);
-
-documents.onWillSave((_event) => {
-  connection.console.log("On Will save received");
-});
 
 connection.onInitialize((params) => {
   return {
@@ -65,7 +61,9 @@ function compile(document: TextDocument): CompileResult {
     return previousCompilation.result;
   }
 
-  return compileToAST(source);
+  const result = compileToAST(source);
+  compiledFiles.set(document.uri, { hash, result });
+  return result;
 }
 
 documents.onDidChangeContent((change) => {
@@ -97,9 +95,9 @@ function buildSemanticTokens(document: TextDocument): SemanticTokens | ResponseE
     builder.push(line, character, length, tokenType, tokenModifiers);
   }
 
-  const { ast, errors } = compile(document);
+  const { ast } = compile(document);
   if (!ast) {
-    return new ResponseError<void>(ErrorCodes.ParseError, errors.at(0)?.message ?? "Unknown error");
+    return new ResponseError<void>(LSPErrorCodes.ServerCancelled, "");
   }
 
   buildTokens(ast.document, addToken);
