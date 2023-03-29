@@ -105,45 +105,51 @@ export async function buildApiClients(
           return (
             renderApiClient(data)
               .then((content) => {
-                storeTemplateOutput(outFile, content);
+                return storeTemplateOutput(outFile, content);
               })
               // compile client TS file to JS and DTS files
-              .then(async () => {
-                const project = new Project({
-                  compilerOptions: {
-                    declaration: true,
-                    target: ScriptTarget.ES5,
-                    strict: true,
-                    // these settings make emitting much faster (https://github.com/dsherret/ts-morph/issues/149)
-                    isolatedModules: true,
-                    noResolve: true,
-                  },
-                });
-                const sourceFile = project.addSourceFileAtPath(outFile);
-
-                const diagnostics = sourceFile.getPreEmitDiagnostics();
-
-                // no errors, we can emit files
-                if (diagnostics.length === 0) {
-                  console.log(`Compiling API client source file: ${outFile}`);
-                  const t0 = Date.now();
-                  sourceFile.formatText();
-
-                  return project.emit().then(() => {
-                    console.log(`Source file compiled [${Date.now() - t0} ms]`);
+              .then(async (templateChanged) => {
+                if (templateChanged) {
+                  const project = new Project({
+                    compilerOptions: {
+                      declaration: true,
+                      target: ScriptTarget.ES5,
+                      strict: true,
+                      // these settings make emitting much faster (https://github.com/dsherret/ts-morph/issues/149)
+                      isolatedModules: true,
+                      noResolve: true,
+                    },
                   });
-                }
-                // has errors, no emit
-                else {
-                  console.log(`Error compiling API client source file: ${outFile}`);
+                  const sourceFile = project.addSourceFileAtPath(outFile);
 
-                  for (const diagnostic of diagnostics) {
-                    console.log(
-                      `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
-                      `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
-                      diagnostic.getMessageText()
-                    );
+                  const diagnostics = sourceFile.getPreEmitDiagnostics();
+
+                  // no errors, we can emit files
+                  if (diagnostics.length === 0) {
+                    console.log(`Compiling API client source file: ${outFile}`);
+                    const t0 = Date.now();
+                    sourceFile.formatText();
+
+                    return project.emit().then(() => {
+                      console.log(`Source file compiled [${Date.now() - t0} ms]`);
+                    });
                   }
+                  // has errors, no emit
+                  else {
+                    console.log(`Error compiling API client source file: ${outFile}`);
+
+                    for (const diagnostic of diagnostics) {
+                      console.log(
+                        `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
+                        `${diagnostic
+                          .getSourceFile()
+                          ?.getBaseName()}:${diagnostic.getLineNumber()}`,
+                        diagnostic.getMessageText()
+                      );
+                    }
+                  }
+                } else {
+                  console.log("API client not changed. Building skipped.");
                 }
               })
           );
