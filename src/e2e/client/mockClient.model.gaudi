@@ -1,0 +1,81 @@
+
+model Org {
+  field slug { type text }
+  field name { type text }
+  relation repos { from Repo, through org }
+}
+
+model Repo {
+  reference org { to Org }
+  field slug { type text }
+  field name { type text }
+}
+
+generate client {
+  target js
+  api entrypoint
+}
+
+entrypoint Org {
+  target model Org
+  identify with slug
+
+  get endpoint {}
+  create endpoint {}
+  update endpoint {}
+  list endpoint {}
+  delete endpoint {}
+
+  custom endpoint {
+    path "customOneFetch"
+    method GET
+    cardinality one
+  }
+  custom endpoint {
+      path "customOneSubmit"
+      method PATCH
+      cardinality one
+  }
+  custom endpoint {
+      path "customManyFetch"
+      method GET
+      cardinality many
+  }
+  custom endpoint {
+      path "customManySubmit"
+      method POST
+      cardinality many
+  }
+
+  // repo entrypoints
+  entrypoint Repo {
+    target relation repos
+
+    get endpoint {}
+    create endpoint {}
+    update endpoint {}
+    list endpoint {}
+    delete endpoint {}
+
+    custom endpoint {
+      path "customOneFetch"
+      method GET
+      cardinality one
+    }
+    custom endpoint {
+        path "customOneSubmit"
+        method PATCH
+        cardinality one
+    }
+    custom endpoint {
+        path "customManyFetch"
+        method GET
+        cardinality many
+    }
+    custom endpoint {
+        path "customManySubmit"
+        method POST
+        cardinality many
+    }
+  }
+}

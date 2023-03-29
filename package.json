@@ -18,8 +18,10 @@
     "// --- test": "",
     "test": "jest --selectProjects unit",
     "test:watch": "npm test -- --watch",
-    "test:e2e": "jest --selectProjects e2e",
-    "test:e2e:watch": "npm run test:e2e -- --watch",
+    "test:api": "jest --selectProjects api",
+    "test:api:watch": "npm run test:api -- --watch",
+    "test:client": "jest --selectProjects client",
+    "test:client:watch": "npm run test:client -- --watch",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },

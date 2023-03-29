@@ -10,6 +10,7 @@ import {
   FieldsetFieldDef,
   FieldsetRecordDef,
   SelectItem,
+  TargetDef,
 } from "@src/types/definition";
 
 export type BuildApiClientData = {
@@ -47,17 +48,26 @@ function buildClient(def: Definition): string {
   `;
 }
 
-type EntrypointNaming = {
-  /** Original entrypoint name */
+type TargetName = {
+  /**
+   * Segment name is name in API heirarchy.
+   * Eg. in API `{ someSegment: someFn() }` segment name is `someSegment`.
+   *
+   * It must be a valid identifier without special characters.
+   */
   name: string;
-  /** Name of api segment. Must be a valid identifier */
-  segment: string;
+  /** URL path used in REST APIs */
+  path: string;
   /** Return type name */
-  type: string;
+  retType: string;
   /** Name of builder factory function */
   builder: string;
 };
-type EntrypointApiEntry = { name: string; builderName: string; builderFn: string[] };
+type TargetWithIdentifierName = TargetName & {
+  /** Identifier type name */ identifierType: string;
+};
+
+type EntrypointApiEntry = { name: string; path: string; builderName: string; builderFn: string[] };
 
 function buildApi(def: Definition, entrypoints: EntrypointDef[], basePath: string): string {
   const apiEntries = entrypoints.map((sub) => buildEntrypointApi(def, sub, basePath));
@@ -84,7 +94,11 @@ function buildEntrypointApi(
   entrypoint: EntrypointDef,
   basePath: string
 ): EntrypointApiEntry {
-  const epName = entrypointNaming(entrypoint.name, entrypoint.target.retType);
+  const targetInfo = createIdentifierTargetInfo(
+    entrypoint.target.name,
+    entrypoint.target.identifyWith.type,
+    entrypoint.target.retType
+  );
 
   const entrypointEntries = entrypoint.entrypoints.map((sub) =>
     buildEntrypointApi(def, sub, basePath)
@@ -92,14 +106,14 @@ function buildEntrypointApi(
   const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints);
 
   const builderFn = `
-  function ${epName.builder}(options: ApiClientOptions, parentPath: string) {
+  function ${targetInfo.builder}(options: ApiClientOptions, parentPath: string) {
     ${endpointEntries
       .map((epe) => epe.types)
       .flat()
       .map((t) => `type ${t.name} = ${t.body};`)
       .join("\n")}
 
-    function api(id: number | string) {
+    function api(id: ${targetInfo.identifierType}) {
       const baseUrl = \`${basePath}\${parentPath}/\${id}\`;
       return {
         ${entrypointEntries
@@ -116,8 +130,9 @@ function buildEntrypointApi(
   }`;
 
   return {
-    name: epName.segment,
-    builderName: epName.builder,
+    name: targetInfo.name,
+    path: targetInfo.path,
+    builderName: targetInfo.builder,
     builderFn: [builderFn, ...entrypointEntries.map((sub) => sub.builderFn).flat()],
   };
 }
@@ -144,13 +159,20 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
   const epKind = endpoint.kind;
   switch (epKind) {
     case "get": {
+      const targetInfo = createIdentifierTargetInfo(
+        endpoint.target.name,
+        endpoint.target.identifyWith.type,
+        endpoint.target.retType
+      );
+
       const responseTypeName = `GetResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
+      const identifierType = targetInfo.identifierType;
       const errorsType = commonErrorTypes.join("|");
       return {
         name: "get",
-        builder: `buildGetFn<${responseTypeName}, ${errorsType}>(options, parentPath)`,
+        builder: `buildGetFn<${identifierType}, ${responseTypeName}, ${errorsType}>(options, parentPath)`,
         types: [{ name: responseTypeName, body: responseType }],
       };
     }
@@ -172,16 +194,23 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       };
     }
     case "update": {
+      const targetInfo = createIdentifierTargetInfo(
+        endpoint.target.name,
+        endpoint.target.identifyWith.type,
+        endpoint.target.retType
+      );
+
       const inputTypeName = "UpdateData";
       const inputType = renderSchema(fieldsetToSchema(def, endpoint.fieldset));
 
+      const identifierType = targetInfo.identifierType;
       const responseTypeName = `UpdateResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "update",
-        builder: `buildUpdateFn<${inputTypeName},${responseTypeName}, ${errorsType}>(options, parentPath)`,
+        builder: `buildUpdateFn<${identifierType}, ${inputTypeName},${responseTypeName}, ${errorsType}>(options, parentPath)`,
         types: [
           { name: inputTypeName, body: inputType },
           { name: responseTypeName, body: responseType },
@@ -189,10 +218,17 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       };
     }
     case "delete": {
+      const targetInfo = createIdentifierTargetInfo(
+        endpoint.target.name,
+        endpoint.target.identifyWith.type,
+        endpoint.target.retType
+      );
+
+      const identifierType = targetInfo.identifierType;
       const errorsType = commonErrorTypes.join("|");
       return {
         name: "delete",
-        builder: `buildDeleteFn<${errorsType}>(options, parentPath)`,
+        builder: `buildDeleteFn<${identifierType}, ${errorsType}>(options, parentPath)`,
         types: [],
       };
     }
@@ -208,8 +244,16 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       };
     }
     case "custom-one": {
+      const targetInfo = createIdentifierTargetInfo(
+        endpoint.path,
+        endpoint.target.identifyWith.type,
+        endpoint.target.retType
+      );
+
       const path = endpoint.path;
-      const name = entrypointSegmentName(endpoint.path);
+      const name = targetInfo.name;
+      const identifierType = targetInfo.identifierType;
+
       const method = endpoint.method;
       switch (method) {
         case "GET":
@@ -218,7 +262,7 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
 
           return {
             name: name,
-            builder: `buildCustomOneFetchFn<any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
+            builder: `buildCustomOneFetchFn<${identifierType}, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
             types: [],
           };
         }
@@ -228,7 +272,7 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
 
           return {
             name: name,
-            builder: `buildCustomOneSubmitFn<any, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
+            builder: `buildCustomOneSubmitFn<${identifierType}, any, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
             types: [],
           };
         }
@@ -242,7 +286,7 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
     }
     case "custom-many": {
       const path = endpoint.path;
-      const name = entrypointSegmentName(endpoint.path);
+      const name = createTargetInfo(endpoint.path, endpoint.target.retType).name;
       const method = endpoint.method;
       switch (method) {
         case "GET":
@@ -286,10 +330,12 @@ function buildCommonCode(): string {
 
   export type EndpointHttpMethod = "GET" | "POST" | /*"PUT" |*/ "PATCH" | "DELETE";
 
-  /** Result of API funciton call */
+  /** Result of API function call */
   export type ApiRequestFnData = {
     /** HTTP status */
     status: number;
+    /** HTTP repsonse headers map */
+    headers: {},
     /** Response body data. */
     data?: any;
   };
@@ -311,14 +357,14 @@ function buildCommonCode(): string {
   /** API request additional parameters. */
   export type ApiRequestInit = {
     /** A BodyInit object or null to set request's body. */
-    body?: string[][] | Record<string, string> | string | null;
+    body?: any;
     /** A Headers object, an object literal, or an array of two-item arrays to set request's headers. */
     headers?: [string, string][] | Record<string, string>;
     /** A string to set request's method. */
     method: EndpointHttpMethod;
   }
   
-  export type ApiRequestBody = Record<string, unknown>;
+  export type ApiRequestBody = any;
   
   export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
     ? {
@@ -333,28 +379,30 @@ function buildCommonCode(): string {
   export type ApiResponseSuccess<D, E extends string> = {
     kind: "success";
     status: number;
+    headers: {[key: string]: string},
     data: D;
   };
 
   export type ApiResponseError<D, E extends string> = {
     kind: "error";
     status: number;
+    headers: {[key: string]: string},
     error: ApiResponseErrorBody<E>;
   };
 
       
   export type ListData = { filter?: Record<string, any>; page?: number; pageSize?: number };
   
-  export type GetApiClientFn<R, E extends string> = (
-    id: number,
+  export type GetApiClientFn<ID, R, E extends string> = (
+    id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
   export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
-  export type UpdateApiClientFn<D, R, E extends string> = (
-    id: number,
+  export type UpdateApiClientFn<ID, D, R, E extends string> = (
+    id: ID,
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -362,17 +410,17 @@ function buildCommonCode(): string {
     data?: ListData,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
-  export type DeleteApiClientFn<E extends string> = (
-    id: number,
+  export type DeleteApiClientFn<ID, E extends string> = (
+    id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
   
-  export type CustomOneFetchApiClientFn<R, E extends string> = (
-    id: number,
+  export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
+    id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
-  export type CustomOneSubmitApiClientFn<D, R, E extends string> = (
-    id: number,
+  export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
+    id: ID,
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -387,7 +435,7 @@ function buildCommonCode(): string {
 
   // ----- API fn factories
 
-  function buildGetFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<R, E> {
+  function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
     return async (id, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
 
@@ -409,30 +457,30 @@ function buildCommonCode(): string {
       return (
         makeRequest(clientOptions, url, {
           method: "POST",
-          body: JSON.stringify(data),
+          body: data,
           headers: { ...(options?.headers ?? {}) },
         })
       );
     };
   }
   
-  function buildUpdateFn<D extends ApiRequestBody, R, E extends string>(
+  function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
-  ): UpdateApiClientFn<D, R, E> {
+  ): UpdateApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
 
       return (
         makeRequest(clientOptions, url, {
           method: "PATCH",
-          body: JSON.stringify(data),
+          body: data,
           headers: { ...(options?.headers ?? {}) },
         })
       );
     };
   }
   
-  function buildDeleteFn<E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<E> {
+  function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
     return async (id, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
 
@@ -459,12 +507,12 @@ function buildCommonCode(): string {
     };
   }
   
-  function buildCustomOneFetchFn<R, E extends string>(
+  function buildCustomOneFetchFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneFetchApiClientFn<R, E> {
+  ): CustomOneFetchApiClientFn<ID, R, E> {
     return async (id, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}/\${path}\`;
 
@@ -477,19 +525,19 @@ function buildCommonCode(): string {
     };
   }
   
-  function buildCustomOneSubmitFn<D extends ApiRequestBody, R, E extends string>(
+  function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneSubmitApiClientFn<D, R, E> {
+  ): CustomOneSubmitApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}/\${path}\`;
 
       return (
         makeRequest(clientOptions, url, {
           method,
-          body: JSON.stringify(data),
+          body: data,
           headers: { ...(options?.headers ?? {}) },
         })
       );
@@ -526,7 +574,7 @@ function buildCommonCode(): string {
       return (
         makeRequest(clientOptions, url, {
           method,
-          body: JSON.stringify(data),
+          body: data,
           headers: { ...(options?.headers ?? {}) },
         })
       );
@@ -541,18 +589,32 @@ function buildCommonCode(): string {
       throw new Error("Request function is required in API client");
     }
   
-    return options.requestFn(url, init).then(({status, data}) => {
+    return options.requestFn(url, init).then(({status, data, headers = {} }) => {
       if (status >= 200 && status < 300) {
         return {
           kind: "success",
           status,
+          headers,
           data,
         };
       } else {
-        if (typeof data === "string") {
+        if (data == null) {
           return {
             kind: "error",
             status,
+            headers,
+            error: {
+              code: "ERROR_CODE_OTHER",
+              message: "empty response",
+            } as ApiResponseErrorBody<E>,
+            // TODO: fix response error type (TS complains about types not overlapping!?)
+          };
+        }
+        else if (typeof data === "string") {
+          return {
+            kind: "error",
+            status,
+            headers,
             error: {
               code: "ERROR_CODE_OTHER",
               message: data,
@@ -564,12 +626,14 @@ function buildCommonCode(): string {
             return {
               kind: "error",
               status,
+              headers,
               error: data,
             };
           } else {
             return {
               kind: "error",
               status,
+              headers,
               error: {
                 code: "ERROR_CODE_OTHER",
                 message: "Unexpected error",
@@ -588,26 +652,22 @@ function buildCommonCode(): string {
 
 // ----- utils
 
-function entrypointNaming(name: string, typeName: string): EntrypointNaming {
+function createIdentifierTargetInfo(
+  name: string,
+  identifierType: TargetDef["identifyWith"]["type"],
+  typeName: string
+): TargetWithIdentifierName {
+  return Object.assign(createTargetInfo(name, typeName), {
+    identifierType: convertFieldToSchemaType(identifierType),
+  });
+}
+function createTargetInfo(name: string, typeName: string): TargetName {
   return {
-    name,
-    type: typeName,
-    segment: entrypointSegmentName(name),
+    name: _.camelCase(name),
+    path: _.snakeCase(name),
+    retType: typeName,
     builder: _.camelCase(`build${_.capitalize(name)}Api`),
   };
-}
-
-/**
- * Convert string to valid segment name.
- *
- * Segment name is name in API heirarchy.
- * Eg. in API `{ someSegment: someFn() }` segment name is `someSegment`.
- *
- * It must be a valid identifier so we use `camelCase` to remove any
- * special characters.
- */
-function entrypointSegmentName(name: string) {
-  return _.camelCase(name);
 }
 
 type SchemaField = {
@@ -731,10 +791,7 @@ function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
           }
           case "model-hook": {
             // FIXME - add return type to hooks
-            return [
-              item.name,
-              { type: "object", properties: {}, nullable: false, optional: false },
-            ];
+            return [item.name, { type: "unknown", nullable: false, optional: false }];
           }
 
           default:

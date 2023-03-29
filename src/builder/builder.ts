@@ -1,13 +1,13 @@
 import fs from "fs";
 import path from "path";
 
-import { DiagnosticCategory, ModuleKind, Project, ScriptTarget } from "ts-morph";
+import { DiagnosticCategory, Project, ScriptTarget } from "ts-morph";
 
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
   BuildApiClientData,
   render as renderApiClientTpl,
-} from "@src/builder/renderer/templates/api-client-browser.tpl";
+} from "@src/builder/renderer/templates/apiClient.tpl";
 import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,

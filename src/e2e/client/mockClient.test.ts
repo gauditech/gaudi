@@ -1,27 +1,35 @@
 import { ensureEqual } from "@src/common/utils";
-import { ApiRequestFn, ApiRequestInit, createClient } from "@src/e2e/client/dist/client/api-client";
+import {
+  ApiRequestFn,
+  ApiRequestInit,
+  createClient,
+} from "@src/e2e/client/__snapshots__/mockClient/client/api-client";
+
+// test are slow
+jest.setTimeout(20000);
 
 /** Test data type used for testing API call response types */
 type TestData = {
+  slug: string;
   name: string;
 };
 
 describe("client lib", () => {
   // common test data
-  const testData: TestData = { name: "asdf" };
+  const testData: TestData = { slug: "slug1", name: "asdf" };
 
   // ---------- 1st level API calls
 
-  describe(`successfully call to API 1st level`, () => {
+  describe(`successfully call API 1st level`, () => {
     it("get", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: testData }));
-      const resp = await createTestClient(requestFn).api.org.get(1);
+      const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org.get("slug1");
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
         headers: {},
         method: "GET",
       });
@@ -31,7 +39,9 @@ describe("client lib", () => {
         {
           "data": {
             "name": "asdf",
+            "slug": "slug1",
           },
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -44,17 +54,17 @@ describe("client lib", () => {
     });
 
     it("update", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: testData }));
-      const resp = await createTestClient(requestFn).api.org.update(1, testData);
+      const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org.update("slug1", testData);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // rest request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
         headers: {},
         method: "PATCH",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
@@ -62,7 +72,9 @@ describe("client lib", () => {
         {
           "data": {
             "name": "asdf",
+            "slug": "slug1",
           },
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -75,7 +87,7 @@ describe("client lib", () => {
     });
 
     it("create", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: testData }));
+      const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
       const resp = await createTestClient(requestFn).api.org.create(testData);
 
       // type narrowing for simpler later code
@@ -85,7 +97,7 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
         headers: {},
         method: "POST",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
@@ -93,7 +105,9 @@ describe("client lib", () => {
         {
           "data": {
             "name": "asdf",
+            "slug": "slug1",
           },
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -106,7 +120,7 @@ describe("client lib", () => {
     });
 
     it("list", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: [testData] }));
+      const requestFn = jest.fn(async () => ({ status: 200, data: [testData], headers: {} }));
       const resp = await createTestClient(requestFn).api.org.list();
 
       // type narrowing for simpler later code
@@ -124,8 +138,10 @@ describe("client lib", () => {
           "data": [
             {
               "name": "asdf",
+              "slug": "slug1",
             },
           ],
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -138,14 +154,14 @@ describe("client lib", () => {
     });
 
     it("delete", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.delete(1);
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org.delete("slug1");
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
         headers: {},
         method: "DELETE",
       });
@@ -154,6 +170,7 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -168,14 +185,14 @@ describe("client lib", () => {
     // ----- custom endpoints
 
     it("customOneFeth", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.customOneFetch(1);
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org.customOneFetch("slug1");
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1/customOneFetch`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneFetch`, {
         headers: {},
         method: "GET",
       });
@@ -184,6 +201,7 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -193,23 +211,24 @@ describe("client lib", () => {
     });
 
     it("customOneSubmit", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.customOneSubmit(1, testData);
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org.customOneSubmit("slug1", testData);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1/customOneSubmit`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneSubmit`, {
         headers: {},
         method: "PATCH",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -219,7 +238,7 @@ describe("client lib", () => {
     });
 
     it("customManyFetch", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
       const resp = await createTestClient(requestFn).api.org.customManyFetch();
 
       // type narrowing for simpler later code
@@ -235,6 +254,7 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -244,7 +264,7 @@ describe("client lib", () => {
     });
 
     it("customManySubmit", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
       const resp = await createTestClient(requestFn).api.org.customManySubmit(testData);
 
       // type narrowing for simpler later code
@@ -254,13 +274,14 @@ describe("client lib", () => {
       expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManySubmit`, {
         headers: {},
         method: "POST",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -274,14 +295,14 @@ describe("client lib", () => {
 
   describe(`successfully call API 2nd level"`, () => {
     it("get", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: testData }));
-      const resp = await createTestClient(requestFn).api.org(1).repo.get(1);
+      const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.get(1);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1/repo/1`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
         headers: {},
         method: "GET",
       });
@@ -291,7 +312,9 @@ describe("client lib", () => {
         {
           "data": {
             "name": "asdf",
+            "slug": "slug1",
           },
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -304,17 +327,17 @@ describe("client lib", () => {
     });
 
     it("update", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: testData }));
-      const resp = await createTestClient(requestFn).api.org.update(1, testData);
+      const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.update(1, testData);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // rest request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
         headers: {},
         method: "PATCH",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
@@ -322,7 +345,9 @@ describe("client lib", () => {
         {
           "data": {
             "name": "asdf",
+            "slug": "slug1",
           },
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -335,17 +360,17 @@ describe("client lib", () => {
     });
 
     it("create", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: testData }));
-      const resp = await createTestClient(requestFn).api.org.create(testData);
+      const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.create(testData);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // rest request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
         headers: {},
         method: "POST",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
@@ -353,7 +378,9 @@ describe("client lib", () => {
         {
           "data": {
             "name": "asdf",
+            "slug": "slug1",
           },
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -366,14 +393,14 @@ describe("client lib", () => {
     });
 
     it("list", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200, data: [testData] }));
-      const resp = await createTestClient(requestFn).api.org.list();
+      const requestFn = jest.fn(async () => ({ status: 200, data: [testData], headers: {} }));
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.list();
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // rest request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
         headers: {},
         method: "GET",
       });
@@ -384,8 +411,10 @@ describe("client lib", () => {
           "data": [
             {
               "name": "asdf",
+              "slug": "slug1",
             },
           ],
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -398,14 +427,14 @@ describe("client lib", () => {
     });
 
     it("delete", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.delete(1);
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.delete(1);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
         headers: {},
         method: "DELETE",
       });
@@ -414,6 +443,7 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -428,14 +458,14 @@ describe("client lib", () => {
     // ----- custom endpoints
 
     it("customOneFeth", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.customOneFetch(1);
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.customOneFetch(1);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1/customOneFetch`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1/customOneFetch`, {
         headers: {},
         method: "GET",
       });
@@ -444,6 +474,7 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -453,23 +484,26 @@ describe("client lib", () => {
     });
 
     it("customOneSubmit", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.customOneSubmit(1, testData);
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn)
+        .api.org("slug1")
+        .repos.customOneSubmit(1, testData);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1/customOneSubmit`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1/customOneSubmit`, {
         headers: {},
         method: "PATCH",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -479,14 +513,14 @@ describe("client lib", () => {
     });
 
     it("customManyFetch", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.customManyFetch();
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.customManyFetch();
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManyFetch`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/customManyFetch`, {
         headers: {},
         method: "GET",
       });
@@ -495,6 +529,7 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -504,23 +539,26 @@ describe("client lib", () => {
     });
 
     it("customManySubmit", async () => {
-      const requestFn = jest.fn(async () => ({ status: 200 }));
-      const resp = await createTestClient(requestFn).api.org.customManySubmit(testData);
+      const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+      const resp = await createTestClient(requestFn)
+        .api.org("slug1")
+        .repos.customManySubmit(testData);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManySubmit`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/customManySubmit`, {
         headers: {},
         method: "POST",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
+          "headers": {},
           "kind": "success",
           "status": 200,
         }
@@ -536,14 +574,15 @@ describe("client lib", () => {
       const requestFn = jest.fn(async () => ({
         status: 500,
         data: "Test server error message",
+        headers: {},
       }));
-      const resp = await createTestClient(requestFn).api.org.get(1);
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.get(1);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "error" as const, `API response is not "error" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/1`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
         headers: {},
         method: "GET",
       });
@@ -555,6 +594,7 @@ describe("client lib", () => {
             "code": "ERROR_CODE_OTHER",
             "message": "Test server error message",
           },
+          "headers": {},
           "kind": "error",
           "status": 500,
         }
@@ -572,22 +612,23 @@ describe("client lib", () => {
     it("error with data", async () => {
       const requestFn = jest.fn(async () => ({
         status: 400,
+        headers: {},
         data: {
           code: "ERROR_CODE_VALIDATION",
           message: "test error message",
           data: { value: "test error data" },
         },
       }));
-      const resp = await createTestClient(requestFn).api.org.create(testData);
+      const resp = await createTestClient(requestFn).api.org("slug1").repos.create(testData);
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "error" as const, `API response is not "error" but "${resp.kind}`);
 
       // test request
-      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
+      expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
         headers: {},
         method: "POST",
-        body: '{"name":"asdf"}',
+        body: { slug: "slug1", name: "asdf" },
       });
 
       // test response
@@ -600,6 +641,7 @@ describe("client lib", () => {
             },
             "message": "test error message",
           },
+          "headers": {},
           "kind": "error",
           "status": 400,
         }
