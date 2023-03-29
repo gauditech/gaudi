@@ -3,6 +3,7 @@ import path from "path";
 
 import { DiagnosticCategory, Project, ScriptTarget } from "ts-morph";
 
+import { buildEntrypoints } from "@src/builder/admin";
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
   BuildApiClientData,
@@ -29,7 +30,7 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
 
   await buildDefinition({ definition }, config.outputFolder);
   await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
-  await buildApiClients({ definition }, config.outputFolder);
+  await buildApiClients(definition, config.outputFolder);
 }
 
 // -------------------- part builders
@@ -83,10 +84,10 @@ export async function renderApiClient(data: BuildApiClientData): Promise<string>
 }
 
 export async function buildApiClients(
-  data: BuildApiClientData,
+  definition: Definition,
   outputFolder: string
 ): Promise<unknown> {
-  const clientGenerators = kindFilter(data.definition.generators, "generator-client");
+  const clientGenerators = kindFilter(definition.generators, "generator-client");
 
   return Promise.all(
     clientGenerators.map((g) => {
@@ -98,12 +99,24 @@ export async function buildApiClients(
             throw new Error(`Client generator output path does not exist: "${g.output}"`);
           }
 
+          let entrypoints;
+          switch (g.api) {
+            case "entrypoint":
+              entrypoints = definition.entrypoints;
+              break;
+            case "model":
+              entrypoints = buildEntrypoints(definition);
+              break;
+            default:
+              assertUnreachable(g.api);
+          }
+
           // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
           const outFolder = g.output ?? path.join(outputFolder, "client");
-          const outFile = path.join(outFolder, "api-client.ts");
+          const outFile = path.join(outFolder, `api-client-${g.api}.ts`);
 
           return (
-            renderApiClient(data)
+            renderApiClient({ definition, entrypoints })
               .then((content) => {
                 return storeTemplateOutput(outFile, content);
               })

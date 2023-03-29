@@ -35,7 +35,7 @@ async function setupClient(name: string, bpPath: string) {
   const definition = compose(compile(parse(bp)));
 
   // build and output client lib to `./data` folder
-  await buildApiClients({ definition }, path.join(CLIENT_LIB_DIST_FOLDER, name));
+  await buildApiClients(definition, path.join(CLIENT_LIB_DIST_FOLDER, name));
 }
 
 // current Jest TS setup doesn't work with ESM exports so we have to export it using CJS syntax

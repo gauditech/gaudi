@@ -17,6 +17,11 @@ generate client {
   api entrypoint
 }
 
+generate client {
+  target js
+  api model
+}
+
 entrypoint Org {
   target model Org
   identify with slug

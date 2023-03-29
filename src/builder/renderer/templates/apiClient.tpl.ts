@@ -15,16 +15,17 @@ import {
 
 export type BuildApiClientData = {
   definition: Definition;
+  entrypoints: EntrypointDef[];
 };
 
 /** Template renderer */
 export function render(data: BuildApiClientData): string {
-  return buildClient(data.definition);
+  return buildClient(data.definition, data.entrypoints);
 }
 
 // --- API client
 
-function buildClient(def: Definition): string {
+function buildClient(def: Definition, entrypoints: EntrypointDef[]): string {
   // TODO: read target and api from generator def block
 
   return `
@@ -41,7 +42,7 @@ function buildClient(def: Definition): string {
     };
   }
 
-  ${buildApi(def, def.entrypoints, "")}
+  ${buildApi(def, entrypoints, "")}
 
   ${buildCommonCode()}
 

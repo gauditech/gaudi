@@ -7,13 +7,13 @@ import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@src/e2e/a
 import {
   ApiRequestInit,
   createClient,
-} from "@src/e2e/client/__snapshots__/apiClient/client/api-client";
+} from "@src/e2e/client/__snapshots__/apiClient/client/api-client-entrypoint";
 import { readConfig } from "@src/runtime/config";
 
 // test are slow
 jest.setTimeout(20000);
 
-describe("API client", () => {
+describe("api client lib", () => {
   const config = readConfig(path.join(__dirname, "../api/api.test.env"));
 
   const { getServer, setup, destroy } = createApiTestSetup(
