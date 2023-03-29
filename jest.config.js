@@ -1,11 +1,11 @@
 /** @returns {Promise<import('jest').JestConfigWithTsJest>} */
 module.exports = async () => {
   return {
+    verbose: true,
     projects: [
       // --- unit tests
       {
         displayName: "unit",
-        verbose: true,
         preset: "ts-jest",
         testEnvironment: "node",
         roots: ["<rootDir>/src"],
@@ -18,7 +18,6 @@ module.exports = async () => {
       // --- api tests
       {
         displayName: "api",
-        verbose: true,
         preset: "ts-jest",
         testEnvironment: "node",
         roots: ["<rootDir>/src/e2e/api"],
@@ -30,7 +29,6 @@ module.exports = async () => {
       // --- client tests
       {
         displayName: "client",
-        verbose: true,
         preset: "ts-jest",
         testEnvironment: "node",
         roots: ["<rootDir>/src/e2e/client"],
