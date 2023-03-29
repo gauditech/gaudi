@@ -266,7 +266,7 @@ describe("entrypoint", () => {
         target repos as repo
         create endpoint {
           action {
-            create {}
+            create as repo {}
             create repo.issues as i {
               set source concat(org.name, repo.name)
               set orgDesc org.desc

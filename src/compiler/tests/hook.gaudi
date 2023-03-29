@@ -32,7 +32,7 @@ model User {
 }
 
 entrypoint UserEntry {
-  target User
+  target User as user
   create endpoint {
     action {
       create {
@@ -53,7 +53,7 @@ entrypoint UserEntry {
       execute {
         responds
         hook {
-          arg name name
+          arg name user.name
           runtime MyRuntime
           source foo from "customHooks"
         }

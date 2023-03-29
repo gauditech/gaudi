@@ -642,19 +642,38 @@ class GaudiParser extends EmbeddedActionsParser {
     ]);
     const keyword = getTokenData(token);
     const kind = token.image as ModelAction["kind"];
-    const target = this.OPTION1(() => {
-      const target = this.SUBRULE(this.identifierRefPath);
-      const as = this.OPTION2(() => {
-        const keyword = getTokenData(this.CONSUME(L.As));
-        const identifier = this.SUBRULE(this.identifierRef);
-        return { keyword, identifier };
-      });
-      return { target, as };
-    });
 
-    this.CONSUME(L.LCurly);
+    const { target, as } = this.OR2<{ target: ModelAction["target"]; as: ModelAction["as"] }>([
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME2(L.As));
+          const identifier = this.SUBRULE2(this.identifierRef);
+          this.CONSUME1(L.LCurly);
+          return { target: undefined, as: { keyword, identifier } };
+        },
+      },
+      {
+        ALT: () => {
+          const target = this.SUBRULE(this.identifierRefPath);
+          const as = this.OPTION(() => {
+            const keyword = getTokenData(this.CONSUME1(L.As));
+            const identifier = this.SUBRULE1(this.identifierRef);
+            return { keyword, identifier };
+          });
+          this.CONSUME2(L.LCurly);
+          return { target, as };
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME3(L.LCurly);
+          return { target: undefined, as: undefined };
+        },
+      },
+    ]);
+
     this.MANY(() => {
-      this.OR2([
+      this.OR3([
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomSet)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomReference)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomVirtualInput)) },
@@ -664,7 +683,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind, target: target?.target, as: target?.as, atoms, keyword };
+    return { kind, target, as, atoms, keyword };
   });
 
   deleteAction = this.RULE("deleteAction", (): DeleteAction => {

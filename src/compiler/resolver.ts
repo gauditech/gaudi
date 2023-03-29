@@ -465,6 +465,7 @@ export function resolve(projectASTs: ProjectASTs) {
     scope: Scope
   ) {
     let currentModel: string | undefined;
+    let alias: { name: string; type: Type } | undefined;
 
     const target = kindFind(entrypoint.atoms, "target");
     if (target) {
@@ -484,7 +485,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (target.as) {
         target.as.identifier.ref = target.identifier.ref;
         target.as.identifier.type = target.identifier.type;
-        scope.context[target.as.identifier.identifier.text] = target.identifier.type;
+        alias = { name: target.as.identifier.identifier.text, type: target.identifier.type };
       }
     }
 
@@ -502,15 +503,39 @@ export function resolve(projectASTs: ProjectASTs) {
     if (response) resolveSelect(response.select, currentModel, scope);
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
-      resolveEndpoint(endpoint, currentModel, { ..._.cloneDeep(scope), model: currentModel })
+      resolveEndpoint(endpoint, currentModel, alias, _.cloneDeep(scope))
     );
 
+    const childEntrypointScope = _.cloneDeep(scope);
+    if (alias) childEntrypointScope.context[alias.name] = alias.type;
     kindFilter(entrypoint.atoms, "entrypoint").forEach((entrypoint) =>
-      resolveEntrypoint(entrypoint, currentModel, _.cloneDeep(scope))
+      resolveEntrypoint(entrypoint, currentModel, childEntrypointScope)
     );
   }
 
-  function resolveEndpoint(endpoint: Endpoint, model: string | undefined, scope: Scope) {
+  function resolveEndpoint(
+    endpoint: Endpoint,
+    model: string | undefined,
+    alias: { name: string; type: Type } | undefined,
+    scope: Scope
+  ) {
+    // add current target alias to all endpoints with cardinality one
+    switch (endpoint.type) {
+      case "custom": {
+        const cardinality = kindFind(endpoint.atoms, "cardinality")?.cardinality;
+        if (cardinality !== "one") break;
+        // fall through
+      }
+      case "get":
+      case "delete":
+      case "update": {
+        if (alias) scope.context[alias.name] = alias.type;
+        break;
+      }
+      default:
+        break;
+    }
+
     const authorize = kindFind(endpoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
@@ -543,12 +568,14 @@ export function resolve(projectASTs: ProjectASTs) {
       resolveIdentifierRefPath(action.target, scope, action.kind === "create");
       const lastTarget = action.target.at(-1);
       currentModel = getTypeModel(lastTarget?.type);
-      if (lastTarget && action.as) {
-        action.as.identifier.ref = lastTarget.ref;
-        action.as.identifier.type = removeTypeModifier(lastTarget.type, "collection", "nullable");
-        scope.context[action.as.identifier.identifier.text] = action.as.identifier.type;
-      }
     }
+    if (currentModel && action.as) {
+      action.as.identifier.ref = { kind: "model", model: currentModel };
+      action.as.identifier.type = { kind: "model", model: currentModel };
+      scope.context[action.as.identifier.identifier.text] = action.as.identifier.type;
+    }
+
+    scope = { ...scope, model: currentModel };
 
     // first resolve all virtual inputs so they can be referenced
     kindFilter(action.atoms, "virtualInput").forEach((virtualInput) =>

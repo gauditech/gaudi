@@ -22,7 +22,7 @@ describe("compose actions", () => {
       create endpoint {
         action {
           create OrgExtra as e {}
-          create org {
+          create as org {
             set is_new true
             set extras e
           }
@@ -97,7 +97,7 @@ describe("compose actions", () => {
         target repos as repo
         create endpoint {
           action {
-            create repo {
+            create as repo {
               set org_id 1
               set org org
             }
@@ -143,7 +143,7 @@ describe("compose actions", () => {
       target Repo as repo
       create endpoint {
         action {
-          create repo {}
+          create as repo {}
           create repo.org.logs as log {}
         }
       }
@@ -277,7 +277,7 @@ describe("compose actions", () => {
       target Org as org
       create endpoint {
         action {
-          create org {
+          create as org {
             virtual input iname { type string, validate { min 4 } }
             set name concat("Mr/Mrs ", iname)
           }
@@ -335,7 +335,7 @@ describe("compose actions", () => {
       target Org as org
       update endpoint {
         action {
-          update org {}
+          update {}
           create Org {}
         }
       }
@@ -357,7 +357,7 @@ describe("compose actions", () => {
           target repos as repo
           create endpoint {
             action {
-              create repo {}
+              create as repo {}
               create Repo as ${name} {}
             }
           }
@@ -486,40 +486,55 @@ describe("compose actions", () => {
       .value();
 
     // --- test invalid action types in custom endpoints
-    _.chain([
-      ["one", ["create"]],
-      ["many", ["update", "delete"]],
-    ])
-      .map(([cardinality, actions]) => {
-        return _.map(actions, (a) => [cardinality, a]);
-      })
-      .flatMap()
-      .forEach(([cardinality, action]) => {
-        it(`fails when creating "${cardinality}" endpoint with unallowed action "${action}"`, () => {
-          const bp = `
+    it(`fails when creating "one" endpoint with unallowed action "create"`, () => {
+      const bp = `
         model Org {}
         model Log {}
 
         entrypoint Orgs {
           target Org as org
           custom endpoint {
-            cardinality ${cardinality}
+            cardinality one
             method POST
             path "somePath"
 
             action {
-              ${action} org {}
+              create org {}
             }
           }
         }
         `;
 
-          expect(() => compose(compileToOldSpec(bp))).toThrowError(
-            `"custom-${cardinality}" endpoint does not allow "${action}" action`
-          );
-        });
-      })
-      .value();
+      expect(() => compose(compileToOldSpec(bp))).toThrowError(
+        `"custom-one" endpoint does not allow "create" action`
+      );
+    });
+
+    ["update", "delete"].forEach((action) => {
+      it(`fails when creating "many" endpoint with unallowed action "${action}"`, () => {
+        const bp = `
+      model Org {}
+      model Log {}
+
+      entrypoint Orgs {
+        target Org as org
+        custom endpoint {
+          cardinality many
+          method POST
+          path "somePath"
+
+          action {
+            ${action} org {}
+          }
+        }
+      }
+      `;
+
+        expect(() => compileToOldSpec(bp)).toThrowError(
+          `This name does not exist in current scope`
+        );
+      });
+    });
 
     it(`fails on duplicate endpoint paths`, () => {
       const bp = `

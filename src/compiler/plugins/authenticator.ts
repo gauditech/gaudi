@@ -116,7 +116,7 @@ function getCode(): string {
         cardinality many
 
         action {
-          create authUser {
+          create as authUser {
             input { name, username }
             virtual input password { type string, validate { min 8 } }
             set passwordHash cryptoHash(password, 10)

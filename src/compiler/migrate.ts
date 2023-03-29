@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
@@ -39,7 +40,7 @@ import {
 } from "@src/types/specification";
 
 export function migrate(projectASTs: AST.ProjectASTs): Specification {
-  const document = projectASTs.document;
+  const document = _.concat(...Object.values(projectASTs.plugins), projectASTs.document);
   const authenticator = kindFind(document, "authenticator");
   const specification: Specification = {
     models: kindFilter(document, "model").map(migrateModel),
@@ -246,6 +247,15 @@ function migrateModelAction(action: AST.ModelAction): ModelActionSpec {
       )
       .exhaustive()
   );
+
+  if (!action.target && action.as) {
+    return {
+      kind: action.kind,
+      targetPath: [action.as?.identifier.identifier.text],
+      alias: undefined,
+      actionAtoms,
+    };
+  }
 
   return {
     kind: action.kind,
