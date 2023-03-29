@@ -114,6 +114,9 @@ export async function buildApiClients(
                     declaration: true,
                     target: ScriptTarget.ES5,
                     strict: true,
+                    // these settings make emitting much faster (https://github.com/dsherret/ts-morph/issues/149)
+                    isolatedModules: true,
+                    noResolve: true,
                   },
                 });
                 const sourceFile = project.addSourceFileAtPath(outFile);
@@ -122,8 +125,13 @@ export async function buildApiClients(
 
                 // no errors, we can emit files
                 if (diagnostics.length === 0) {
-                  console.log(`Compiled API client source file: ${outFile}`);
-                  return project.emit();
+                  console.log(`Compiling API client source file: ${outFile}`);
+                  const t0 = Date.now();
+                  sourceFile.formatText();
+
+                  return project.emit().then(() => {
+                    console.log(`Source file compiled [${Date.now() - t0} ms]`);
+                  });
                 }
                 // has errors, no emit
                 else {
