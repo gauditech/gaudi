@@ -14,10 +14,10 @@ entrypoint Extras {
 }
 
 entrypoint Elements {
-  target Element as element
+  target Element
   create endpoint {
     action {
-      create element {
+      create {
         reference extra through slug
       }
     }

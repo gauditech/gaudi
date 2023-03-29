@@ -258,12 +258,12 @@ entrypoint Orgs {
   list endpoint {}
   create endpoint {
     action {
-      create org {}
+      create as org {}
     }
   }
   update endpoint {
     action {
-      update org {}
+      update as org {}
     }
   }
   delete endpoint {}
@@ -278,7 +278,7 @@ entrypoint Orgs {
     list endpoint {}
     create endpoint {
       action {
-        create repo {
+        create as repo {
           set latest_num 0
           virtual input raw_description { type string }
           set description concat("Description: ", raw_description)
@@ -304,7 +304,7 @@ entrypoint Orgs {
       get endpoint {}
       create endpoint {
         action {
-          create issue as issue {
+          create as issue {
             set number repo.latest_num + 1
           }
 
