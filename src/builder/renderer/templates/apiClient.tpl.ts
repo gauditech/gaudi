@@ -55,11 +55,17 @@ type TargetName = {
    *
    * It must be a valid identifier without special characters.
    */
-  name: string;
+  identifierName: string;
+  /**
+   * Name that can be used when naming type (eg. return type, error type, ...)
+   *
+   * Basically the same as `identifierName` but with capitalized first letter.
+   */
+  typeName: string;
   /** URL path used in REST APIs */
   path: string;
   /** Return type name */
-  retType: string;
+  retTypeName: string;
   /** Name of builder factory function */
   builder: string;
 };
@@ -130,7 +136,7 @@ function buildEntrypointApi(
   }`;
 
   return {
-    name: targetInfo.name,
+    name: targetInfo.identifierName,
     path: targetInfo.path,
     builderName: targetInfo.builder,
     builderFn: [builderFn, ...entrypointEntries.map((sub) => sub.builderFn).flat()],
@@ -169,11 +175,15 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const identifierType = targetInfo.identifierType;
-      const errorsType = commonErrorTypes.join("|");
+      const errorTypeName = "GetError";
+      const errorType = commonErrorTypes.join("|");
       return {
         name: "get",
-        builder: `buildGetFn<${identifierType}, ${responseTypeName}, ${errorsType}>(options, parentPath)`,
-        types: [{ name: responseTypeName, body: responseType }],
+        builder: `buildGetFn<${identifierType}, ${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+        types: [
+          { name: responseTypeName, body: responseType },
+          { name: errorTypeName, body: errorType },
+        ],
       };
     }
     case "create": {
@@ -183,13 +193,15 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseTypeName = `CreateResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
+      const errorTypeName = "CreateError";
+      const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "create",
-        builder: `buildCreateFn<${inputTypeName},${responseTypeName}, ${errorsType}>(options, parentPath)`,
+        builder: `buildCreateFn<${inputTypeName},${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
         types: [
           { name: inputTypeName, body: inputType },
           { name: responseTypeName, body: responseType },
+          { name: errorTypeName, body: errorType },
         ],
       };
     }
@@ -207,13 +219,15 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseTypeName = `UpdateResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
+      const errorTypeName = "UpdateError";
+      const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "update",
-        builder: `buildUpdateFn<${identifierType}, ${inputTypeName},${responseTypeName}, ${errorsType}>(options, parentPath)`,
+        builder: `buildUpdateFn<${identifierType}, ${inputTypeName},${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
         types: [
           { name: inputTypeName, body: inputType },
           { name: responseTypeName, body: responseType },
+          { name: errorTypeName, body: errorType },
         ],
       };
     }
@@ -225,22 +239,27 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       );
 
       const identifierType = targetInfo.identifierType;
-      const errorsType = commonErrorTypes.join("|");
+      const errorTypeName = "DeleteError";
+      const errorType = commonErrorTypes.join("|");
       return {
         name: "delete",
-        builder: `buildDeleteFn<${identifierType}, ${errorsType}>(options, parentPath)`,
-        types: [],
+        builder: `buildDeleteFn<${identifierType}, ${errorTypeName}>(options, parentPath)`,
+        types: [{ name: errorTypeName, body: errorType }],
       };
     }
     case "list": {
       const responseTypeName = `ListResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const errorsType = commonErrorTypes.join("|");
+      const errorTypeName = "ListErrot";
+      const errorType = commonErrorTypes.join("|");
       return {
         name: "list",
-        builder: `buildListFn<${responseTypeName}, ${errorsType}>(options, parentPath)`,
-        types: [{ name: responseTypeName, body: responseType }],
+        builder: `buildListFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+        types: [
+          { name: responseTypeName, body: responseType },
+          { name: errorTypeName, body: errorType },
+        ],
       };
     }
     case "custom-one": {
@@ -251,29 +270,32 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       );
 
       const path = endpoint.path;
-      const name = targetInfo.name;
+      const name = targetInfo.identifierName;
       const identifierType = targetInfo.identifierType;
+      const typeName = targetInfo.typeName;
 
       const method = endpoint.method;
       switch (method) {
         case "GET":
         case "DELETE": {
-          const errorsType = commonErrorTypes.join("|");
+          const errorTypeName = `${typeName}Error`;
+          const errorType = commonErrorTypes.join("|");
 
           return {
             name: name,
-            builder: `buildCustomOneFetchFn<${identifierType}, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
-            types: [],
+            builder: `buildCustomOneFetchFn<${identifierType}, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
+            types: [{ name: errorTypeName, body: errorType }],
           };
         }
         case "POST":
         case "PATCH": {
-          const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
+          const errorTypeName = `${typeName}Error`;
+          const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
           return {
             name: name,
-            builder: `buildCustomOneSubmitFn<${identifierType}, any, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
-            types: [],
+            builder: `buildCustomOneSubmitFn<${identifierType}, any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
+            types: [{ name: errorTypeName, body: errorType }],
           };
         }
         default: {
@@ -285,28 +307,34 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       /* falls through -- disable lint rule */
     }
     case "custom-many": {
+      const targetInfo = createTargetInfo(endpoint.path, endpoint.target.retType);
+
       const path = endpoint.path;
-      const name = createTargetInfo(endpoint.path, endpoint.target.retType).name;
+      const name = targetInfo.identifierName;
+      const typeName = targetInfo.typeName;
+
       const method = endpoint.method;
       switch (method) {
         case "GET":
         case "DELETE": {
-          const errorsType = commonErrorTypes.join("|");
+          const errorTypeName = `${typeName}Error`;
+          const errorType = commonErrorTypes.join("|");
 
           return {
             name: name,
-            builder: `buildCustomManyFetchFn<any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
-            types: [],
+            builder: `buildCustomManyFetchFn<any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
+            types: [{ name: errorTypeName, body: errorType }],
           };
         }
         case "POST":
         case "PATCH": {
-          const errorsType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
+          const errorTypeName = `${typeName}Error`;
+          const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
           return {
             name: name,
-            builder: `buildCustomManySubmitFn<any, any, ${errorsType}>(options, parentPath, "${path}", "${method}")`,
-            types: [],
+            builder: `buildCustomManySubmitFn<any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
+            types: [{ name: errorTypeName, body: errorType }],
           };
         }
         default: {
@@ -661,11 +689,15 @@ function createIdentifierTargetInfo(
     identifierType: convertFieldToSchemaType(identifierType),
   });
 }
-function createTargetInfo(name: string, typeName: string): TargetName {
+function createTargetInfo(name: string, retTypeName: string): TargetName {
   return {
-    name: _.camelCase(name),
+    identifierName: _.camelCase(name),
+    typeName: _.camelCase(name)
+      .split("")
+      // capitalize only the first letter
+      .reduce((w, l, i) => w + (i === 0 ? l.toUpperCase() : l), ""),
+    retTypeName,
     path: _.snakeCase(name),
-    retType: typeName,
     builder: _.camelCase(`build${_.capitalize(name)}Api`),
   };
 }

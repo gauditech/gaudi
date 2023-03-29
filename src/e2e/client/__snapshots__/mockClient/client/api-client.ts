@@ -24,19 +24,28 @@
     type GetResp = { id: number,
 slug: string,
 name: string };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type CreateData = { slug: string,
 name: string };
 type CreateResp = { id: number,
 slug: string,
 name: string };
+type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type UpdateData = { slug?: string,
 name?: string };
 type UpdateResp = { id: number,
 slug: string,
 name: string };
+type UpdateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type ListResp = { id: number,
 slug: string,
 name: string };
+type ListErrot = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type DeleteError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomOneFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomOneSubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CustomManyFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomManySubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 
     function api(id: string) {
       const baseUrl = `${parentPath}/${id}`;
@@ -47,15 +56,15 @@ name: string };
 
     return Object.assign(api, 
       {
-        get: buildGetFn<string, GetResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath),
-create: buildCreateFn<CreateData,CreateResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath),
-update: buildUpdateFn<string, UpdateData,UpdateResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath),
-list: buildListFn<ListResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath),
-delete: buildDeleteFn<string, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath),
-customOneFetch: buildCustomOneFetchFn<string, any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath, "customOneFetch", "GET"),
-customOneSubmit: buildCustomOneSubmitFn<string, any, any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath, "customOneSubmit", "PATCH"),
-customManyFetch: buildCustomManyFetchFn<any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath, "customManyFetch", "GET"),
-customManySubmit: buildCustomManySubmitFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath, "customManySubmit", "POST")
+        get: buildGetFn<string, GetResp, GetError>(options, parentPath),
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
+update: buildUpdateFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+list: buildListFn<ListResp, ListErrot>(options, parentPath),
+delete: buildDeleteFn<string, DeleteError>(options, parentPath),
+customOneFetch: buildCustomOneFetchFn<string, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
+customOneSubmit: buildCustomOneSubmitFn<string, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
+customManyFetch: buildCustomManyFetchFn<any, CustomManyFetchError>(options, parentPath, "customManyFetch", "GET"),
+customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(options, parentPath, "customManySubmit", "POST")
       }
     )
   }
@@ -65,12 +74,14 @@ customManySubmit: buildCustomManySubmitFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOU
 slug: string,
 name: string,
 org_id: number };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type CreateData = { slug: string,
 name: string };
 type CreateResp = { id: number,
 slug: string,
 name: string,
 org_id: number };
+type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type UpdateData = { slug?: string,
 name?: string,
 org_id?: number };
@@ -78,10 +89,17 @@ type UpdateResp = { id: number,
 slug: string,
 name: string,
 org_id: number };
+type UpdateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type ListResp = { id: number,
 slug: string,
 name: string,
 org_id: number };
+type ListErrot = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type DeleteError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomOneFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomOneSubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CustomManyFetchError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomManySubmitError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 
     function api(id: number) {
       const baseUrl = `${parentPath}/${id}`;
@@ -92,15 +110,15 @@ org_id: number };
 
     return Object.assign(api, 
       {
-        get: buildGetFn<number, GetResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath),
-create: buildCreateFn<CreateData,CreateResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath),
-update: buildUpdateFn<number, UpdateData,UpdateResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath),
-list: buildListFn<ListResp, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath),
-delete: buildDeleteFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath),
-customOneFetch: buildCustomOneFetchFn<number, any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath, "customOneFetch", "GET"),
-customOneSubmit: buildCustomOneSubmitFn<number, any, any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath, "customOneSubmit", "PATCH"),
-customManyFetch: buildCustomManyFetchFn<any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER">(options, parentPath, "customManyFetch", "GET"),
-customManySubmit: buildCustomManySubmitFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION">(options, parentPath, "customManySubmit", "POST")
+        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
+update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+list: buildListFn<ListResp, ListErrot>(options, parentPath),
+delete: buildDeleteFn<number, DeleteError>(options, parentPath),
+customOneFetch: buildCustomOneFetchFn<number, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
+customOneSubmit: buildCustomOneSubmitFn<number, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
+customManyFetch: buildCustomManyFetchFn<any, CustomManyFetchError>(options, parentPath, "customManyFetch", "GET"),
+customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(options, parentPath, "customManySubmit", "POST")
       }
     )
   }
