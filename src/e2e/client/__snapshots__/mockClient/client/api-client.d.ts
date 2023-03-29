@@ -7,35 +7,29 @@ export declare function createClient(options: ApiClientOptions): {
         org: ((id: string) => {
             repos: ((id: number) => {}) & {
                 get: GetApiClientFn<number, {
-                    id: number;
                     slug: string;
                     name: string;
-                    org_id: number;
                 }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
                 create: CreateApiClientFn<{
+                    virtProp: string;
                     slug: string;
                     name: string;
+                    description: string;
                 }, {
-                    id: number;
                     slug: string;
                     name: string;
-                    org_id: number;
                 }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
                 update: UpdateApiClientFn<number, {
-                    slug?: string | undefined;
                     name?: string | undefined;
+                    description?: string | undefined;
                     org_id?: number | undefined;
                 }, {
-                    id: number;
                     slug: string;
                     name: string;
-                    org_id: number;
                 }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
                 list: ListApiClientFn<{
-                    id: number;
                     slug: string;
                     name: string;
-                    org_id: number;
                 }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
                 delete: DeleteApiClientFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
                 customOneFetch: CustomOneFetchApiClientFn<number, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;

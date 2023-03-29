@@ -9,6 +9,7 @@ model Repo {
   reference org { to Org }
   field slug { type text }
   field name { type text }
+  field description { type text }
 }
 
 generate client {
@@ -50,10 +51,26 @@ entrypoint Org {
   // repo entrypoints
   entrypoint Repo {
     target relation repos
+    // test non-default response
+    response { slug, name }
 
     get endpoint {}
-    create endpoint {}
-    update endpoint {}
+    create endpoint {
+      action {
+        create {
+          // test changing input fields
+          virtual input virtProp { type text }
+        }
+      }
+    }
+    update endpoint {
+      action {
+        update {
+          // test denied input fields
+          deny { slug }
+        }
+      }
+    }
     list endpoint {}
     delete endpoint {}
 

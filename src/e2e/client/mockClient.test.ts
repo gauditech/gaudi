@@ -12,11 +12,13 @@ jest.setTimeout(20000);
 type TestData = {
   slug: string;
   name: string;
+  description: string;
 };
+type RespData = Omit<TestData, "description">;
 
 describe("client lib", () => {
   // common test data
-  const testData: TestData = { slug: "slug1", name: "asdf" };
+  const testData: TestData = { slug: "slug1", name: "test name", description: "test description" };
 
   // ---------- 1st level API calls
 
@@ -38,7 +40,8 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": {
-            "name": "asdf",
+            "description": "test description",
+            "name": "test name",
             "slug": "slug1",
           },
           "headers": {},
@@ -50,7 +53,7 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData = resp.data;
+      const typeTest: RespData = resp.data;
     });
 
     it("update", async () => {
@@ -83,7 +86,7 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData = resp.data;
+      const typeTest: RespData = resp.data;
     });
 
     it("create", async () => {
@@ -116,7 +119,7 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData = resp.data;
+      const typeTest: RespData = resp.data;
     });
 
     it("list", async () => {
@@ -137,7 +140,8 @@ describe("client lib", () => {
         {
           "data": [
             {
-              "name": "asdf",
+              "description": "test description",
+              "name": "test name",
               "slug": "slug1",
             },
           ],
@@ -150,7 +154,7 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData[] = resp.data;
+      const typeTest: RespData[] = resp.data;
     });
 
     it("delete", async () => {
@@ -311,7 +315,8 @@ describe("client lib", () => {
       expect(resp).toMatchInlineSnapshot(`
         {
           "data": {
-            "name": "asdf",
+            "description": "test description",
+            "name": "test name",
             "slug": "slug1",
           },
           "headers": {},
@@ -323,7 +328,7 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData = resp.data;
+      const typeTest: RespData = resp.data;
     });
 
     it("update", async () => {
@@ -356,12 +361,14 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData = resp.data;
+      const typeTest: RespData = resp.data;
     });
 
     it("create", async () => {
       const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
-      const resp = await createTestClient(requestFn).api.org("slug1").repos.create(testData);
+      const resp = await createTestClient(requestFn)
+        .api.org("slug1")
+        .repos.create({ ...testData, virtProp: "smthng" });
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
@@ -389,7 +396,7 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData = resp.data;
+      const typeTest: RespData = resp.data;
     });
 
     it("list", async () => {
@@ -410,7 +417,8 @@ describe("client lib", () => {
         {
           "data": [
             {
-              "name": "asdf",
+              "description": "test description",
+              "name": "test name",
               "slug": "slug1",
             },
           ],
@@ -423,7 +431,7 @@ describe("client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: TestData[] = resp.data;
+      const typeTest: RespData[] = resp.data;
     });
 
     it("delete", async () => {
@@ -619,7 +627,9 @@ describe("client lib", () => {
           data: { value: "test error data" },
         },
       }));
-      const resp = await createTestClient(requestFn).api.org("slug1").repos.create(testData);
+      const resp = await createTestClient(requestFn)
+        .api.org("slug1")
+        .repos.create({ ...testData, virtProp: "smthng" });
 
       // type narrowing for simpler later code
       ensureEqual(resp.kind, "error" as const, `API response is not "error" but "${resp.kind}`);

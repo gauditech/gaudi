@@ -68,17 +68,17 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
 
   function buildReposApi(options: ApiClientOptions, parentPath: string) {
     // endpoint types
-    type GetResp = { id: number,
+    type GetResp = { slug: string,
+name: string };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CreateData = { virtProp: string,
 slug: string,
 name: string,
-org_id: number };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type CreateData = { slug: string,
-name: string };
+description: string };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { slug?: string,
-name?: string,
+type UpdateData = { name?: string,
+description?: string,
 org_id?: number };
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
