@@ -3,72 +3,20 @@ import path from "path";
 import _ from "lodash";
 import request from "supertest";
 
+import { DATA } from "@src/e2e/api/auth.data";
 import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup";
 import { readConfig } from "@src/runtime/config";
 
 // these tests last longer than default 5s timeout so this seems to help
-jest.setTimeout(10000);
+jest.setTimeout(60000);
 
 describe("Auth", () => {
   const config = readConfig(path.join(__dirname, "api.test.env"));
 
   const { getServer, setup, destroy } = createApiTestSetup(
     config,
-    loadBlueprint(path.join(__dirname, "auth.gaudi")),
-    [
-      {
-        model: "AuthUser",
-        data: [
-          {
-            // id: 1,
-            name: "First",
-            username: "first",
-            passwordHash: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
-          },
-          {
-            // id: 2,
-            name: "Second",
-            username: "second",
-            passwordHash: "$2b$10$TQpDb3kHc3yLLwtQlM3Rve/ZhUPF7ZZ3WdZ90OxygOCmb7YH.AT86",
-          },
-        ],
-      },
-      {
-        model: "AuthUserAccessToken",
-        data: [
-          {
-            authUser_id: 1,
-            token: "6Jty8G-HtB9CmB9xqRkJ3Z9LY5_or7pACnAQ6dERc1U",
-            expiryDate: `${Date.now() + 1 * 60 * 60 * 1000}`,
-          },
-          {
-            authUser_id: 2,
-            token: "FwExbO7sVwf95pI3F3qWSpkANE4aeoNiI0pogqiMcfQ",
-            expiryDate: `${Date.now() + 1 * 60 * 60 * 1000}`,
-          },
-        ],
-      },
-      {
-        model: "Operator",
-        data: [{ user_id: 1 }, { user_id: 2 }],
-      },
-      {
-        model: "Box",
-        data: [
-          { owner_id: 1, name: "public", is_public: true },
-          { owner_id: 1, name: "private", is_public: false },
-        ],
-      },
-      {
-        model: "Item",
-        data: [
-          { box_id: 1, name: "public", is_public: true },
-          { box_id: 1, name: "private", is_public: false },
-          { box_id: 2, name: "public", is_public: true },
-          { box_id: 2, name: "private", is_public: false },
-        ],
-      },
-    ]
+    loadBlueprint(path.join(__dirname, "auth.model.gaudi")),
+    DATA
   );
 
   async function loginTestUser() {

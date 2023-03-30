@@ -7,6 +7,16 @@ runtime TestRuntime {
   sourcePath "./src/e2e/api/hooks"
 }
 
+generate client {
+  target js,
+  api entrypoint
+}
+
+generate client {
+  target js,
+  api model
+}
+
 model Operator {
   reference user { to AuthUser }
   relation boxes { from Box, through owner }

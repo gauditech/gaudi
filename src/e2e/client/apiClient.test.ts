@@ -11,7 +11,7 @@ import {
 import { readConfig } from "@src/runtime/config";
 
 // test are slow
-jest.setTimeout(20000);
+jest.setTimeout(10000);
 
 describe("api client lib", () => {
   const config = readConfig(path.join(__dirname, "../api/api.test.env"));
@@ -33,7 +33,7 @@ describe("api client lib", () => {
         .then(() => {
           const httpClient = request(getServer());
           if (init.method === "GET") {
-            return httpClient.get(url);
+            return httpClient.get(url).set(init.headers ?? {});
           } else if (init.method === "POST") {
             return httpClient
               .post(url)
@@ -45,7 +45,7 @@ describe("api client lib", () => {
               .set(init.headers ?? {})
               .send(init.body);
           } else if (init.method === "DELETE") {
-            return httpClient.delete(url);
+            return httpClient.delete(url).set(init.headers ?? {});
           } else {
             assertUnreachable(init.method);
           }
