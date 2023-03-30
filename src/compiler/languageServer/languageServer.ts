@@ -88,7 +88,11 @@ async function validateTextDocument(document: TextDocument): Promise<void> {
 
 function buildSemanticTokens(document: TextDocument): SemanticTokens | ResponseError {
   const builder = new SemanticTokensBuilder();
-  function addToken(token: TokenData, tokenType: TokenTypes, tokenModifiers: TokenModifiers = 0) {
+  function addToken(
+    token: TokenData,
+    tokenType: TokenTypes,
+    tokenModifiers: TokenModifiers = TokenModifiers.none
+  ) {
     const { character, line } = document.positionAt(token.start);
     const length = token.end - token.start + 1;
 
