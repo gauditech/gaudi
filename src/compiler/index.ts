@@ -58,7 +58,6 @@ export function compileToAST(source: string): CompileResult {
 export function compileToOldSpec(source: string): Specification {
   const { ast, errors } = compileToAST(source);
   if (errors.length > 0) {
-    console.log(compilerErrorsToString("unknown", source, errors));
     throw errors[0];
   } else if (!ast) {
     throw Error("Unknown compiler error");

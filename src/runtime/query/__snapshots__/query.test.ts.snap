@@ -1330,7 +1330,19 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "modelRefKey": "Repo",
     "name": "$target_2",
     "offset": undefined,
-    "orderBy": undefined,
+    "orderBy": [
+      {
+        "direction": "asc",
+        "exp": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+      },
+    ],
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1413,6 +1425,8 @@ FROM
   JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo"."id" IN :@context_ids
+ORDER BY
+  "Repo.issues"."id" asc
 
 
 ",
