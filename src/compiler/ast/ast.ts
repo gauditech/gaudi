@@ -7,69 +7,77 @@ export type ProjectASTs = {
 
 export type GlobalAtom = Model | Entrypoint | Populator | Runtime | Authenticator;
 
-export type Model = WithKeyword<{
+export type Model = {
   kind: "model";
+  keyword: TokenData;
   name: Identifier;
   atoms: ModelAtom[];
-}>;
+};
 export type ModelAtom = Field | Reference | Relation | Query | Computed | ModelHook;
 
-export type Field = WithKeyword<{
+export type Field = {
   kind: "field";
+  keyword: TokenData;
   name: Identifier;
   ref: Ref;
   type: Type;
   atoms: FieldAtom[];
   resolved?: true;
-}>;
-export type FieldAtom = WithKeyword<
+};
+export type FieldAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
   | { kind: "unique" }
   | { kind: "nullable" }
   | { kind: "default"; literal: Literal }
   | { kind: "validate"; validators: Validator[] }
->;
+);
 export type Validator =
   | FieldValidationHook
   | { kind: "builtin"; name: Identifier; args: Literal[] };
 
-export type Reference = WithKeyword<{
+export type Reference = {
   kind: "reference";
+  keyword: TokenData;
   name: Identifier;
   ref: Ref;
   type: Type;
   atoms: ReferenceAtom[];
   resolved?: true;
-}>;
-export type ReferenceAtom = WithKeyword<
-  { kind: "to"; identifier: IdentifierRef } | { kind: "nullable" } | { kind: "unique" }
->;
+};
+export type ReferenceAtom = { keyword: TokenData } & (
+  | { kind: "to"; identifier: IdentifierRef }
+  | { kind: "nullable" }
+  | { kind: "unique" }
+);
 
-export type Relation = WithKeyword<{
+export type Relation = {
   kind: "relation";
+  keyword: TokenData;
   name: Identifier;
   ref: Ref;
   type: Type;
   atoms: RelationAtom[];
   resolved?: true;
-}>;
-export type RelationAtom = WithKeyword<
-  { kind: "from"; identifier: IdentifierRef } | { kind: "through"; identifier: IdentifierRef }
->;
+};
+export type RelationAtom = { keyword: TokenData } & (
+  | { kind: "from"; identifier: IdentifierRef }
+  | { kind: "through"; identifier: IdentifierRef }
+);
 
-export type Query = WithKeyword<{
+export type Query = {
   kind: "query";
+  keyword: TokenData;
   name: Identifier;
   ref: Ref;
   type: Type;
   atoms: QueryAtom[];
   resolved?: true;
-}>;
-export type QueryAtom = WithKeyword<
+};
+export type QueryAtom = { keyword: TokenData } & (
   | {
       kind: "from";
       identifierPath: IdentifierRef[];
-      as?: WithKeyword<{ identifierPath: IdentifierRef[] }>;
+      as?: { keyword: TokenData; identifierPath: IdentifierRef[] };
     }
   | { kind: "filter"; expr: Expr<Db> }
   | { kind: "orderBy"; orderBy: OrderBy }
@@ -77,7 +85,7 @@ export type QueryAtom = WithKeyword<
   | { kind: "offset"; value: IntegerLiteral }
   | { kind: "select"; select: Select }
   | { kind: "aggregate"; aggregate: AggregateType }
->;
+);
 export type AggregateType = "count" | "one" | "first";
 export type OrderBy = (
   | {
@@ -85,67 +93,72 @@ export type OrderBy = (
       keyword?: undefined;
       order?: undefined;
     }
-  | WithKeyword<{
+  | {
       identifierPath: IdentifierRef[];
       order: OrderType;
-    }>
+      keyword: TokenData;
+    }
 )[];
 export type OrderType = "asc" | "desc";
 
-export type Computed = WithKeyword<{
+export type Computed = {
   kind: "computed";
+  keyword: TokenData;
   name: Identifier;
   ref: Ref;
   type: Type;
   expr: Expr<Db>;
   resolved?: true;
-}>;
+};
 
-export type Entrypoint = WithKeyword<{
+export type Entrypoint = {
   kind: "entrypoint";
+  keyword: TokenData;
   name: Identifier;
   atoms: EntrypointAtom[];
-}>;
+};
 export type EntrypointAtom =
-  | WithKeyword<
+  | ({ keyword: TokenData } & (
       | {
           kind: "target";
           identifier: IdentifierRef;
-          as?: WithKeyword<{ identifier: IdentifierRef }>;
+          as?: { keyword: TokenData; identifier: IdentifierRef };
         }
       | { kind: "identifyWith"; identifier: IdentifierRef }
       | { kind: "response"; select: Select }
       | { kind: "authorize"; expr: Expr<Code> }
-    >
+    ))
   | Endpoint
   | Entrypoint;
 
-export type Endpoint = WithKeyword<{
+export type Endpoint = {
   kind: "endpoint";
+  keyword: TokenData;
   keywordType: TokenData;
   type: EndpointType;
   atoms: EndpointAtom[];
-}>;
+};
 export type EndpointType = "list" | "get" | "create" | "update" | "delete" | "custom";
 export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 export type EndpointCardinality = "one" | "many";
 
-export type EndpointAtom = WithKeyword<
+export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "action"; actions: Action[] }
   | { kind: "authorize"; expr: Expr<Code> }
   | { kind: "method"; method: EndpointMethod; methodKeyword: TokenData }
   | { kind: "cardinality"; cardinality: EndpointCardinality; cardinalityKeyword: TokenData }
   | { kind: "path"; path: StringLiteral }
->;
+);
 
 export type Action = ModelAction | DeleteAction | ExecuteAction | FetchAction;
 
-export type ModelAction = WithKeyword<{
+export type ModelAction = {
   kind: "create" | "update";
+  keyword: TokenData;
   target?: IdentifierRef[];
-  as?: WithKeyword<{ identifier: IdentifierRef }>;
+  as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: ModelActionAtom[];
-}>;
+};
 export type ModelActionAtom =
   | ActionAtomSet
   | ActionAtomReferenceThrough
@@ -153,136 +166,167 @@ export type ModelActionAtom =
   | ActionAtomInput
   | ActionAtomVirtualInput;
 
-export type DeleteAction = WithKeyword<{
+export type DeleteAction = {
   kind: "delete";
+  keyword: TokenData;
   target?: IdentifierRef[];
-}>;
+};
 
-export type ExecuteAction = WithKeyword<{
+export type ExecuteAction = {
   kind: "execute";
+  keyword: TokenData;
   keywordAs?: TokenData;
   name?: Identifier;
   atoms: ExecuteActionAtom[];
-}>;
+};
 export type ExecuteActionAtom =
   | ActionAtomVirtualInput
   | ActionHook
-  | WithKeyword<{ kind: "responds" }>;
+  | { kind: "responds"; keyword: TokenData };
 
-export type FetchAction = WithKeyword<{
+export type FetchAction = {
   kind: "fetch";
+  keyword: TokenData;
   keywordAs: TokenData;
   name: Identifier;
   atoms: FetchActionAtom[];
-}>;
+};
 export type FetchActionAtom = ActionAtomVirtualInput | AnonymousQuery;
 
-export type ActionAtomSet = WithKeyword<{
+export type ActionAtomSet = {
   kind: "set";
+  keyword: TokenData;
   target: IdentifierRef;
   set: ActionHook | { kind: "expr"; expr: Expr<Code> };
-}>;
-export type ActionAtomReferenceThrough = WithKeyword<{
+};
+export type ActionAtomReferenceThrough = {
   kind: "referenceThrough";
+  keyword: TokenData;
   target: IdentifierRef;
   through: IdentifierRef;
   keywordThrough: TokenData;
-}>;
-export type ActionAtomDeny = WithKeyword<{
+};
+export type ActionAtomDeny = {
   kind: "deny";
+  keyword: TokenData;
   fields:
-    | WithKeyword<{ kind: "all" }>
+    | { kind: "all"; keyword: TokenData }
     | {
         kind: "list";
         fields: IdentifierRef[];
       };
-}>;
-export type ActionAtomInput = WithKeyword<{
+};
+export type ActionAtomInput = {
   kind: "input";
+  keyword: TokenData;
   fields: {
     field: IdentifierRef;
     atoms: InputAtom[];
   }[];
-}>;
-export type InputAtom = WithKeyword<{ kind: "optional" } | { kind: "default"; value: Expr<Code> }>;
-export type ActionAtomVirtualInput = WithKeyword<{
+};
+export type InputAtom = { keyword: TokenData } & (
+  | { kind: "optional" }
+  | { kind: "default"; value: Expr<Code> }
+);
+export type ActionAtomVirtualInput = {
   kind: "virtualInput";
+  keyword: TokenData;
   name: Identifier;
   ref: Ref;
   type: Type;
   atoms: ActionAtomVirtualInputAtom[];
-}>;
+};
 
-export type ActionAtomVirtualInputAtom = WithKeyword<
+export type ActionAtomVirtualInputAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
   | { kind: "nullable" }
   | { kind: "validate"; validators: Validator[] }
->;
+);
 
-export type Populator = WithKeyword<{
+export type Populator = {
   kind: "populator";
+  keyword: TokenData;
   name: Identifier;
   atoms: Populate[];
-}>;
-export type Populate = WithKeyword<{ kind: "populate"; name: Identifier; atoms: PopulateAtom[] }>;
+};
+export type Populate = {
+  kind: "populate";
+  keyword: TokenData;
+  name: Identifier;
+  atoms: PopulateAtom[];
+};
 export type PopulateAtom =
-  | WithKeyword<
+  | ({ keyword: TokenData } & (
       | {
           kind: "target";
           identifier: IdentifierRef;
-          as?: WithKeyword<{ identifier: IdentifierRef }>;
+          as?: { keyword: TokenData; identifier: IdentifierRef };
         }
       | { kind: "repeat"; repeater: Repeater }
-    >
+    ))
   | ActionAtomSet
   | Populate;
 
 export type Repeater =
   | { name?: Identifier; kind: "body"; atoms: RepeaterAtom[] }
   | { name?: Identifier; kind: "simple"; value: IntegerLiteral };
-export type RepeaterAtom = WithKeyword<
-  { kind: "start"; value: IntegerLiteral } | { kind: "end"; value: IntegerLiteral }
->;
+export type RepeaterAtom = { keyword: TokenData } & (
+  | { kind: "start"; value: IntegerLiteral }
+  | { kind: "end"; value: IntegerLiteral }
+);
 
-export type Runtime = WithKeyword<{ kind: "runtime"; name: Identifier; atoms: RuntimeAtom[] }>;
-export type RuntimeAtom = WithKeyword<
-  { kind: "default" } | { kind: "sourcePath"; path: StringLiteral }
->;
+export type Runtime = {
+  kind: "runtime";
+  keyword: TokenData;
+  name: Identifier;
+  atoms: RuntimeAtom[];
+};
+export type RuntimeAtom = { keyword: TokenData } & (
+  | { kind: "default" }
+  | { kind: "sourcePath"; path: StringLiteral }
+);
 
-export type Authenticator = WithKeyword<{ kind: "authenticator"; atoms: AuthenticatorAtom[] }>;
-export type AuthenticatorAtom = WithKeyword<{ kind: "method"; method: AuthenticatorMethod }>;
-export type AuthenticatorMethod = WithKeyword<{ kind: "basic" }>;
+export type Authenticator = {
+  kind: "authenticator";
+  keyword: TokenData;
+  atoms: AuthenticatorAtom[];
+};
+export type AuthenticatorAtom = { kind: "method"; keyword: TokenData; method: AuthenticatorMethod };
+export type AuthenticatorMethod = { kind: "basic"; keyword: TokenData };
 
-export type Hook<named extends boolean, simple extends boolean> = WithKeyword<{
+export type Hook<named extends boolean, simple extends boolean> = {
   kind: "hook";
+  keyword: TokenData;
   name: named extends true ? Identifier : undefined;
   ref: named extends true ? Ref : undefined;
-  atoms: WithKeyword<
+  atoms: (
     | (simple extends true
-        ? { kind: "default_arg"; name: Identifier }
+        ? { kind: "default_arg"; keyword: TokenData; name: Identifier }
         :
-            | { kind: "arg_expr"; name: Identifier; expr: Expr<Code> }
-            | { kind: "arg_query"; name: Identifier; query: AnonymousQuery })
+            | { kind: "arg_expr"; keyword: TokenData; name: Identifier; expr: Expr<Code> }
+            | { kind: "arg_query"; keyword: TokenData; name: Identifier; query: AnonymousQuery })
     | {
         kind: "source";
+        keyword: TokenData;
         keywordFrom: TokenData;
         name: Identifier;
         file: StringLiteral;
         runtimePath?: string;
       }
-    | { kind: "inline"; code: StringLiteral }
-    | { kind: "runtime"; identifier: Identifier }
-  >[];
-}>;
+    | { kind: "inline"; keyword: TokenData; code: StringLiteral }
+    | { kind: "runtime"; keyword: TokenData; identifier: Identifier }
+  )[];
+};
 export type ModelHook = Hook<true, false> & { type: Type; resolved?: true };
 export type FieldValidationHook = Hook<false, true>;
 export type ActionHook = Hook<false, false>;
 
-export type AnonymousQuery = WithKeyword<{
+export type AnonymousQuery = {
   kind: "anonymousQuery";
+  keyword: TokenData;
   atoms: QueryAtom[];
   type: Type;
-}>;
+};
 
 export type Select = {
   target:
@@ -295,14 +339,15 @@ export type Db = "db";
 export type Code = "code";
 export type ExprKind = Db | Code;
 export type Expr<kind extends ExprKind = ExprKind> = (
-  | WithKeyword<{
+  | {
       kind: "binary";
+      keyword: TokenData;
       operator: BinaryOperator;
       lhs: Expr<kind>;
       rhs: Expr<kind>;
-    }>
+    }
   | { kind: "group"; expr: Expr<kind> }
-  | WithKeyword<{ kind: "unary"; operator: UnaryOperator; expr: Expr<kind> }>
+  | { kind: "unary"; keyword: TokenData; operator: UnaryOperator; expr: Expr<kind> }
   | { kind: "path"; path: IdentifierRef[] }
   | { kind: "literal"; literal: Literal }
   | { kind: "function"; name: Identifier; args: Expr<kind>[] }
@@ -349,8 +394,6 @@ export type Identifier = { text: string; token: TokenData };
 export type IdentifierRef = { identifier: Identifier; ref: Ref; type: Type };
 
 export type TokenData = { start: number; end: number };
-
-export type WithKeyword<O extends Record<string, unknown>> = { keyword: TokenData } & O;
 
 export type Parsed = "parsed";
 export type Resolved = "resolved";
