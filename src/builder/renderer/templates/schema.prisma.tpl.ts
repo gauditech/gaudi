@@ -35,13 +35,14 @@ export function render(data: BuildDbSchemaData): string {
           (relation) => oneLine`
           ${relation.name}
             ${getRef.model(d, relation.fromModelRefKey).dbname}${!relation.unique ? "[]" : ""}${relation.unique && relation.nullable ? "?" : ""}
+          @relation("${relation.fromModel}${relation.through}")
         `)}
 
         ${(model.references ?? []).map(
           (reference) => oneLine`
             ${reference.name}
               ${getRef.model(d, reference.toModelRefKey).dbname}${reference.nullable ? "?" : ""}
-              @relation(fields: [${getRef.field(d, reference.fieldRefKey).dbname}], references: [${getRef.field(d, reference.toModelFieldRefKey).dbname}])
+              @relation("${reference.modelRefKey}${reference.name}", fields: [${getRef.field(d, reference.fieldRefKey).dbname}], references: [${getRef.field(d, reference.toModelFieldRefKey).dbname}])
         `)}
         }
       `
