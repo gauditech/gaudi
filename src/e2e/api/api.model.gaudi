@@ -2,16 +2,6 @@ runtime MyRuntime {
   sourcePath "./src/e2e/api/hooks"
 }
 
-generate client {
-  target js,
-  api entrypoint
-}
-
-generate client {
-  target js,
-  api model
-}
-
 model Org {
   field name {
     type text

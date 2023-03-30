@@ -113,12 +113,13 @@ export async function buildApiClients(
 
           // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
           const outFolder = g.output ?? path.join(outputFolder, "client");
-          const outFile = path.join(outFolder, `api-client-${g.api}.ts`);
+          const outFileName = `api-client-${g.api}.ts`;
+          const outPath = path.join(outFolder, outFileName);
 
           return (
             renderApiClient({ definition, entrypoints })
               .then((content) => {
-                return storeTemplateOutput(outFile, content);
+                return storeTemplateOutput(outPath, content);
               })
               // compile client TS file to JS and DTS files
               .then(async (templateChanged) => {
@@ -133,13 +134,13 @@ export async function buildApiClients(
                       noResolve: true,
                     },
                   });
-                  const sourceFile = project.addSourceFileAtPath(outFile);
+                  const sourceFile = project.addSourceFileAtPath(outPath);
 
                   const diagnostics = sourceFile.getPreEmitDiagnostics();
 
                   // no errors, we can emit files
                   if (diagnostics.length === 0) {
-                    console.log(`Compiling API client source file: ${outFile}`);
+                    console.log(`Compiling API client source file: "${outFileName}"`);
                     const t0 = Date.now();
                     sourceFile.formatText();
 
@@ -149,7 +150,7 @@ export async function buildApiClients(
                   }
                   // has errors, no emit
                   else {
-                    console.log(`Error compiling API client source file: ${outFile}`);
+                    console.log(`Error compiling API client source file: ${outPath}`);
 
                     for (const diagnostic of diagnostics) {
                       console.log(
@@ -162,7 +163,7 @@ export async function buildApiClients(
                     }
                   }
                 } else {
-                  console.log("API client not changed. Building skipped.");
+                  console.log(`API client not changed. Building skipped for: "${outFileName}".`);
                 }
               })
           );
