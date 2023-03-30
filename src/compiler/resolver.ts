@@ -50,7 +50,7 @@ import {
 import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
-import { kindFilter, kindFind, patternFind } from "@src/common/patternFilter";
+import { kindFilter, kindFind } from "@src/common/kindFilter";
 
 type Scope = {
   environment: "model" | "entrypoint";
@@ -927,7 +927,7 @@ export function resolve(projectASTs: ProjectASTs) {
         const model = findModel(previousType.model);
         if (!model) throw Error("Unexpected resolver error");
 
-        const atom = patternFind(model.atoms, { name: { text: name } });
+        const atom = model.atoms.find((m) => m.name.text === name);
 
         // Id of a reference in model can be targeted
         if (atom) {
@@ -938,9 +938,7 @@ export function resolve(projectASTs: ProjectASTs) {
         }
 
         if (name.endsWith("_id")) {
-          const referenceAtom = patternFind(model.atoms, {
-            name: { text: name.slice(0, -3) },
-          });
+          const referenceAtom = model.atoms.find((m) => m.name.text === name.slice(0, -3));
           if (referenceAtom?.kind === "reference") {
             identifier.ref = {
               kind: "modelAtom",
@@ -1037,7 +1035,7 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function findModel(name: string): Model | undefined {
-    return patternFind(getAllModels(), { name: { text: name } });
+    return getAllModels().find((m) => m.name.text === name);
   }
 
   function getBinaryOperatorType(op: BinaryOperator, lhs: Expr, rhs: Expr): Type {

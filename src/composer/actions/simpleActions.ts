@@ -1,6 +1,5 @@
 import _ from "lodash";
 
-import { FilteredKind } from "@src/common/patternFilter";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { Definition, ModelDef } from "@src/types/definition";
@@ -34,7 +33,7 @@ export function simplifyActionSpec(
   spec: ModelActionSpec,
   defaultActionAlias: string,
   model: ModelDef
-): FilteredKind<SimpleActionSpec, "create" | "update"> {
+): Extract<SimpleActionSpec, { kind: "create" | "update" }> {
   const atoms = spec.actionAtoms;
 
   /**

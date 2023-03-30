@@ -10,7 +10,7 @@ import { getTokenData, parser } from "./parser";
 import { AuthPlugin } from "./plugins/authenticator";
 import { resolve } from "./resolver";
 
-import { kindFind } from "@src/common/patternFilter";
+import { kindFind } from "@src/common/kindFilter";
 import { Specification } from "@src/types/specification";
 
 export type CompileResult = {

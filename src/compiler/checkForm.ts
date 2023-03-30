@@ -30,7 +30,7 @@ import {
 } from "./ast/ast";
 import { CompilerError, ErrorCode } from "./compilerError";
 
-import { kindFilter, kindFind } from "@src/common/patternFilter";
+import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 
 export function checkForm(projectASTs: ProjectASTs) {

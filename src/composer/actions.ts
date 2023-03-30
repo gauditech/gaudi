@@ -2,7 +2,6 @@ import _ from "lodash";
 
 import { SimpleActionAtoms, SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
 
-import { FilteredKind } from "@src/common/patternFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import {
   UnreachableError,
@@ -243,7 +242,7 @@ export function getInitialContext(
 
 function composeDeleteAction(
   def: Definition,
-  spec: FilteredKind<ActionSpec, "delete">,
+  spec: Extract<ActionSpec, { kind: "delete" }>,
   ctx: VarContext,
   target: TargetDef,
   endpointKind: EndpointType
@@ -264,7 +263,7 @@ function composeDeleteAction(
 
 function composeFetchAction(
   def: Definition,
-  spec: FilteredKind<ActionSpec, "fetch">,
+  spec: Extract<ActionSpec, { kind: "fetch" }>,
   ctx: VarContext
 ): FetchOneAction {
   const changeset: ChangesetDef = [];
@@ -293,7 +292,7 @@ function composeFetchAction(
 
 function composeExecuteAction(
   def: Definition,
-  spec: FilteredKind<ActionSpec, "execute">,
+  spec: Extract<ActionSpec, { kind: "execute" }>,
   ctx: VarContext
 ): ExecuteHookAction {
   const changeset: ChangesetDef = [];
