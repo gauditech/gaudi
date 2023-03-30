@@ -28,10 +28,18 @@ describe("mock client lib", () => {
   describe("entrypoint", () => {
     // ---------- 1st level API calls
 
-    describe(`successfully call API 1st level`, () => {
+    describe(`1st level API`, () => {
       it("get", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.get("slug1");
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          data: testData,
+          headers: {
+            "Gaudi-Test": "Response Foo Bar",
+          },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.get("slug1", {
+          headers: { "Gaudi-Test": "Request Foo Bar" },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -42,7 +50,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -54,7 +62,9 @@ describe("mock client lib", () => {
             "name": "test name",
             "slug": "slug1",
           },
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -67,8 +77,14 @@ describe("mock client lib", () => {
       });
 
       it("update", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.update("slug1", testData);
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          data: testData,
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.update("slug1", testData, {
+          headers: { "Gaudi-Test": "Request Foo Bar" },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -77,9 +93,9 @@ describe("mock client lib", () => {
           `API response is not "success" but "${resp.kind}`
         );
 
-        // rest request
+        // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -92,7 +108,9 @@ describe("mock client lib", () => {
             "name": "test name",
             "slug": "slug1",
           },
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -105,8 +123,16 @@ describe("mock client lib", () => {
       });
 
       it("create", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.create(testData);
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          data: testData,
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.create(testData, {
+          headers: {
+            "Gaudi-Test": "Request Foo Bar",
+          },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -117,7 +143,7 @@ describe("mock client lib", () => {
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -130,7 +156,9 @@ describe("mock client lib", () => {
             "name": "test name",
             "slug": "slug1",
           },
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -143,8 +171,19 @@ describe("mock client lib", () => {
       });
 
       it("list", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, data: [testData], headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.list();
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          data: [testData],
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.list(
+          {},
+          {
+            headers: {
+              "Gaudi-Test": "Request Foo Bar",
+            },
+          }
+        );
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -155,7 +194,7 @@ describe("mock client lib", () => {
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -169,7 +208,9 @@ describe("mock client lib", () => {
               "slug": "slug1",
             },
           ],
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -182,8 +223,13 @@ describe("mock client lib", () => {
       });
 
       it("delete", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.delete("slug1");
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.delete("slug1", {
+          headers: { "Gaudi-Test": "Request Foo Bar" },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -194,7 +240,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "DELETE",
         });
 
@@ -202,7 +248,9 @@ describe("mock client lib", () => {
         expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -217,8 +265,13 @@ describe("mock client lib", () => {
       // ----- custom endpoints
 
       it("customOneFeth", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.customOneFetch("slug1");
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.customOneFetch("slug1", {
+          headers: { "Gaudi-Test": "Request Foo Bar" },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -229,7 +282,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneFetch`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -237,7 +290,9 @@ describe("mock client lib", () => {
         expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -247,10 +302,14 @@ describe("mock client lib", () => {
       });
 
       it("customOneSubmit", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
         const resp = await createTestEntrypointClient(requestFn).api.org.customOneSubmit(
           "slug1",
-          testData
+          testData,
+          { headers: { "Gaudi-Test": "Request Foo Bar" } }
         );
 
         // type narrowing for simpler later code
@@ -262,7 +321,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneSubmit`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -271,7 +330,9 @@ describe("mock client lib", () => {
         expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -281,8 +342,15 @@ describe("mock client lib", () => {
       });
 
       it("customManyFetch", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.customManyFetch();
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.customManyFetch({
+          headers: {
+            "Gaudi-Test": "Request Foo Bar",
+          },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -293,7 +361,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManyFetch`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -301,7 +369,9 @@ describe("mock client lib", () => {
         expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -311,8 +381,18 @@ describe("mock client lib", () => {
       });
 
       it("customManySubmit", async () => {
-        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.customManySubmit(testData);
+        const requestFn = jest.fn(async () => ({
+          status: 200,
+          headers: { "Gaudi-Test": "Response Foo Bar" },
+        }));
+        const resp = await createTestEntrypointClient(requestFn).api.org.customManySubmit(
+          testData,
+          {
+            headers: {
+              "Gaudi-Test": "Request Foo Bar",
+            },
+          }
+        );
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -323,7 +403,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManySubmit`, {
-          headers: {},
+          headers: { "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -332,7 +412,9 @@ describe("mock client lib", () => {
         expect(resp).toMatchInlineSnapshot(`
         {
           "data": undefined,
-          "headers": {},
+          "headers": {
+            "Gaudi-Test": "Response Foo Bar",
+          },
           "kind": "success",
           "status": 200,
         }
@@ -344,7 +426,7 @@ describe("mock client lib", () => {
 
     // ---------- 2nd level API calls
 
-    describe(`successfully call API 2nd level"`, () => {
+    describe(`2nd level API"`, () => {
       it("get", async () => {
         const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn).api.org("slug1").repos.get(1);
