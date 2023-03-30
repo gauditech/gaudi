@@ -37,7 +37,9 @@ describe("mock client lib", () => {
             "Gaudi-Test": "Response Foo Bar",
           },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.get("slug1", {
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.get("slug1", {
           headers: { "Gaudi-Test": "Request Foo Bar" },
         });
 
@@ -50,7 +52,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -82,7 +84,9 @@ describe("mock client lib", () => {
           data: testData,
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.update("slug1", testData, {
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.update("slug1", testData, {
           headers: { "Gaudi-Test": "Request Foo Bar" },
         });
 
@@ -95,7 +99,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -128,7 +132,9 @@ describe("mock client lib", () => {
           data: testData,
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.create(testData, {
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.create(testData, {
           headers: {
             "Gaudi-Test": "Request Foo Bar",
           },
@@ -143,7 +149,7 @@ describe("mock client lib", () => {
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -176,7 +182,9 @@ describe("mock client lib", () => {
           data: [testData],
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.list(
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.list(
           {},
           {
             headers: {
@@ -194,7 +202,7 @@ describe("mock client lib", () => {
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -227,7 +235,9 @@ describe("mock client lib", () => {
           status: 200,
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.delete("slug1", {
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.delete("slug1", {
           headers: { "Gaudi-Test": "Request Foo Bar" },
         });
 
@@ -240,7 +250,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "DELETE",
         });
 
@@ -269,7 +279,9 @@ describe("mock client lib", () => {
           status: 200,
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.customOneFetch("slug1", {
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.customOneFetch("slug1", {
           headers: { "Gaudi-Test": "Request Foo Bar" },
         });
 
@@ -282,7 +294,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneFetch`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -306,11 +318,11 @@ describe("mock client lib", () => {
           status: 200,
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.customOneSubmit(
-          "slug1",
-          testData,
-          { headers: { "Gaudi-Test": "Request Foo Bar" } }
-        );
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.customOneSubmit("slug1", testData, {
+          headers: { "Gaudi-Test": "Request Foo Bar" },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -321,7 +333,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneSubmit`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -346,7 +358,9 @@ describe("mock client lib", () => {
           status: 200,
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.customManyFetch({
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.customManyFetch({
           headers: {
             "Gaudi-Test": "Request Foo Bar",
           },
@@ -361,7 +375,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManyFetch`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
 
@@ -385,14 +399,13 @@ describe("mock client lib", () => {
           status: 200,
           headers: { "Gaudi-Test": "Response Foo Bar" },
         }));
-        const resp = await createTestEntrypointClient(requestFn).api.org.customManySubmit(
-          testData,
-          {
-            headers: {
-              "Gaudi-Test": "Request Foo Bar",
-            },
-          }
-        );
+        const resp = await createTestEntrypointClient(requestFn, {
+          "Gaudi-Test-Default": "Default Foo Bar",
+        }).api.org.customManySubmit(testData, {
+          headers: {
+            "Gaudi-Test": "Request Foo Bar",
+          },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -403,7 +416,7 @@ describe("mock client lib", () => {
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManySubmit`, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
+          headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
@@ -1023,13 +1036,17 @@ describe("mock client lib", () => {
 /**
  * Create testing entrypoint client instance
  */
-function createTestEntrypointClient(requestFn: EntrypointApiRequestFn) {
+function createTestEntrypointClient(
+  requestFn: EntrypointApiRequestFn,
+  defaultHeaders?: Record<string, string>
+) {
   return createClientEntrypoint({
     rootPath: "/rootPath", // test root path
     // request implementation fn that returns hardcoded values
     requestFn: async function (url: string, init: EntrypointApiRequestInit) {
       return await requestFn(url, init);
     },
+    headers: defaultHeaders,
   });
 }
 
@@ -1043,5 +1060,6 @@ function createTestModelClient(requestFn: ModelApiRequestFn) {
     requestFn: async function (url: string, init: ModelApiRequestInit) {
       return await requestFn(url, init);
     },
+    // no need to test headers since this implementation is the same as for entrypoint API client
   });
 }

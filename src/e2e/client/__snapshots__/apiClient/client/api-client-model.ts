@@ -2,13 +2,28 @@
   // ----- API client
   
   export type ApiClientOptions = {
+    /** Server API path prefix */
     rootPath?: string;
+    /**
+     * Function that implements HTTP calls and returns it's result.
+     * 
+     * This lib does not implement it's own HTTP calls which allows users
+     * to use any HTTP client lib of their choice.
+     */
     requestFn: ApiRequestFn;
+    /** Default request headers which are added to all requests. */
+    headers?: Record<string, string>
   };
 
   export function createClient(options: ApiClientOptions) {
+    const internalOptions: ApiClientOptions = {
+      rootPath: options.rootPath,
+      requestFn: options.requestFn,
+      headers: {...(options.headers ?? {})},
+    }
+
     return {
-      api: buildApi(options ?? {}),
+      api: buildApi(internalOptions ?? {}),
     };
   }
 
@@ -451,15 +466,24 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     };
   }
   async function makeRequest<D, E extends string>(
-    options: ApiClientOptions,
+    clientOptions: ApiClientOptions,
     url: string,
     init: ApiRequestInit
   ): Promise<ApiResponse<D, E>> {
-    if (options.requestFn == null) {
+    if (clientOptions.requestFn == null) {
       throw new Error("Request function is required in API client");
     }
-  
-    return options.requestFn(url, init).then(({status, data, headers = {} }) => {
+
+    const reqUrl = url
+    const reqInit = {
+      ...init,
+      headers: {
+        ...clientOptions.headers,
+        ...(init.headers ?? {})
+      }
+    }
+
+    return clientOptions.requestFn(reqUrl, reqInit).then(({status, data, headers = {} }) => {
       if (status >= 200 && status < 300) {
         return {
           kind: "success",

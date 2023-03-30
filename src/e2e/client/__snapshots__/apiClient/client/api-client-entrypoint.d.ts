@@ -1,6 +1,15 @@
 export type ApiClientOptions = {
+    /** Server API path prefix */
     rootPath?: string;
+    /**
+     * Function that implements HTTP calls and returns it's result.
+     *
+     * This lib does not implement it's own HTTP calls which allows users
+     * to use any HTTP client lib of their choice.
+     */
     requestFn: ApiRequestFn;
+    /** Default request headers which are added to all requests. */
+    headers?: Record<string, string>;
 };
 export declare function createClient(options: ApiClientOptions): {
     api: {

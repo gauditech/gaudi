@@ -50,8 +50,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createClient = void 0;
 function createClient(options) {
+    var _a;
+    var internalOptions = {
+        rootPath: options.rootPath,
+        requestFn: options.requestFn,
+        headers: __assign({}, ((_a = options.headers) !== null && _a !== void 0 ? _a : {})),
+    };
     return {
-        api: buildApi(options !== null && options !== void 0 ? options : {}),
+        api: buildApi(internalOptions !== null && internalOptions !== void 0 ? internalOptions : {}),
     };
 }
 exports.createClient = createClient;
@@ -232,13 +238,17 @@ function buildCustomManySubmitFn(clientOptions, parentPath, path, method) {
         });
     }); };
 }
-function makeRequest(options, url, init) {
+function makeRequest(clientOptions, url, init) {
+    var _a;
     return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            if (options.requestFn == null) {
+        var reqUrl, reqInit;
+        return __generator(this, function (_b) {
+            if (clientOptions.requestFn == null) {
                 throw new Error("Request function is required in API client");
             }
-            return [2 /*return*/, options.requestFn(url, init).then(function (_a) {
+            reqUrl = url;
+            reqInit = __assign(__assign({}, init), { headers: __assign(__assign({}, clientOptions.headers), ((_a = init.headers) !== null && _a !== void 0 ? _a : {})) });
+            return [2 /*return*/, clientOptions.requestFn(reqUrl, reqInit).then(function (_a) {
                     var status = _a.status, data = _a.data, _b = _a.headers, headers = _b === void 0 ? {} : _b;
                     if (status >= 200 && status < 300) {
                         return {
