@@ -740,7 +740,7 @@ semantics.addOperation("parse()", {
   GeneratorClientBody_output(this, _output, value): GeneratorClientBodyAST {
     return {
       kind: "output",
-      value: value.sourceString,
+      value: value.parse(),
     };
   },
 });

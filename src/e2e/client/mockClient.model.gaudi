@@ -15,11 +15,15 @@ model Repo {
 generate client {
   target js
   api entrypoint
+  // test custom output folder
+  output "src/e2e/client/__snapshots__/mockClient/client"
 }
 
 generate client {
   target js
   api model
+  // test custom output folder
+  output "src/e2e/client/__snapshots__/mockClient/client"
 }
 
 entrypoint Org {

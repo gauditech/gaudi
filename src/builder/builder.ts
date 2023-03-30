@@ -94,11 +94,6 @@ export async function buildApiClients(
       const kind = g.target;
       switch (kind) {
         case "js": {
-          // check if definition output folder exists
-          if (g.output != null && !fs.existsSync(g.output)) {
-            throw new Error(`Client generator output path does not exist: "${g.output}"`);
-          }
-
           let entrypoints;
           switch (g.api) {
             case "entrypoint":
