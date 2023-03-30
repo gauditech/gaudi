@@ -101,7 +101,7 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
 function orderByToString(def: Definition, orderBy: QueryOrderByAtomDef[] | undefined): string {
   if (!orderBy?.length) return "";
   return `ORDER BY ${orderBy
-    .map((atom) => `${expressionToString(def, atom.exp)} ${atom.direction}`)
+    .map((atom) => `${expressionToString(def, expandExpression(def, atom.exp))} ${atom.direction}`)
     .join(", ")}`;
 }
 
