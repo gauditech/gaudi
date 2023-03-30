@@ -14,6 +14,7 @@ import { Vars } from "./vars";
 import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { Logger } from "@src/logger";
 import { executeEndpointActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
@@ -39,6 +40,8 @@ import {
   TypedFunction,
   UpdateEndpointDef,
 } from "@src/types/definition";
+
+const logger = Logger.specific("http");
 
 /** Create endpoint configs from entrypoints */
 export function buildEndpointConfig(definition: Definition, entrypoints: EntrypointDef[]) {
@@ -102,7 +105,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH INFO", req.user);
+          logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -175,7 +178,8 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH INFO", req.user);
+          logger.debug("AUTH INFO", req.user);
+
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -254,7 +258,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH INFO", req.user);
+          logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -283,13 +287,13 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           await authorizeEndpoint(endpoint, contextVars);
 
           const body = req.body;
-          console.log("CTX PARAMS", pathParamVars);
-          console.log("BODY", body);
+          logger.debug("CTX PARAMS", pathParamVars);
+          logger.debug("BODY", body);
 
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
           const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
-          console.log("Validation result", validationResult);
+          logger.debug("Validation result", validationResult);
 
           await executeEndpointActions(
             def,
@@ -308,7 +312,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
           }
-          console.log("Query result", targetId);
+          logger.debug("Query result", targetId);
 
           // Refetch target object by id using the response query. We ignore `target.identifyWith` because
           // actions may have modified the record. We can only reliably identify it via ID collected before
@@ -349,7 +353,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH INFO", req.user);
+          logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -381,14 +385,14 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           await authorizeEndpoint(endpoint, contextVars);
 
           const body = req.body;
-          console.log("CTX PARAMS", pathParamVars);
-          console.log("BODY", body);
+          logger.debug("CTX PARAMS", pathParamVars);
+          logger.debug("BODY", body);
 
-          console.log("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET", endpoint.fieldset);
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
           assignNoReferenceValidators(endpoint.fieldset, referenceIds);
           const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
-          console.log("Validation result", validationResult);
+          logger.debug("Validation result", validationResult);
 
           await executeEndpointActions(
             def,
@@ -407,7 +411,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           if (targetId === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
           }
-          console.log("Query result", targetId);
+          logger.debug("Query result", targetId);
 
           /* Refetch target object by id using the response query. We ignore `target.identifyWith` because
            * actions may have modified the record. We can only reliably identify it via ID collected before
@@ -449,7 +453,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH INFO", req.user);
+          logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -514,7 +518,7 @@ export function buildCustomOneEndpoint(
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH INFO", req.user);
+          logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -547,20 +551,20 @@ export function buildCustomOneEndpoint(
 
           // --- run custom actions
 
-          console.log("CTX PARAMS", pathParamVars);
+          logger.debug("CTX PARAMS", pathParamVars);
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          console.log("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET", endpoint.fieldset);
           if (endpoint.fieldset != null) {
             const body = req.body;
-            console.log("BODY", body);
+            logger.debug("BODY", body);
 
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             assignNoReferenceValidators(endpoint.fieldset, referenceIds);
 
             validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
-            console.log("Validation result", validationResult);
+            logger.debug("Validation result", validationResult);
           }
 
           if (endpoint.actions.length > 0) {
@@ -610,7 +614,7 @@ export function buildCustomManyEndpoint(
       async (req: Request, resp: Response) => {
         let tx;
         try {
-          console.log("AUTH INFO", req.user);
+          logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
@@ -643,20 +647,20 @@ export function buildCustomManyEndpoint(
 
           // --- run custom actions
 
-          console.log("CTX PARAMS", pathParamVars);
+          logger.debug("CTX PARAMS", pathParamVars);
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          console.log("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET", endpoint.fieldset);
           if (endpoint.fieldset != null) {
             const body = req.body;
-            console.log("BODY", body);
+            logger.debug("BODY", body);
 
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             assignNoReferenceValidators(endpoint.fieldset, referenceIds);
 
             validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
-            console.log("Validation result", validationResult);
+            logger.debug("Validation result", validationResult);
           }
 
           if (endpoint.actions.length > 0) {
