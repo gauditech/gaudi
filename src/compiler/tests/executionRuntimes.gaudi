@@ -1,0 +1,5 @@
+
+runtime MyRuntime {
+  default
+  source path "path/to/runtime"
+}

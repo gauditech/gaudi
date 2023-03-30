@@ -1,7 +1,5 @@
-import { compile } from "@src/compiler/compiler";
-import { compose } from "@src/composer/composer";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { parse } from "@src/parser/parser";
+import { compileToOldSpec, compose } from "@src/index";
 import { executeHook } from "@src/runtime/hooks";
 import { CreateEndpointDef, Definition } from "@src/types/definition";
 
@@ -75,20 +73,20 @@ describe("hooks", () => {
       const bp = `
       runtime MathRuntime {
         default
-        sourcePath "./src/runtime/test/hooks"
+        source path "./src/runtime/test/hooks"
       }
 
       runtime TextRuntime {
-        sourcePath "./src/runtime/test/hooks2"
+        source path "./src/runtime/test/hooks2"
       }
 
       model Result {
-        field name { type text }
+        field name { type string }
         field avg { type integer }
       }
 
       entrypoint Results {
-        target model Result
+        target Result
         create endpoint {
           action {
             create {
@@ -108,10 +106,10 @@ describe("hooks", () => {
           }
         }
       }
-  
+
     `;
 
-      const result = compose(compile(parse(bp)));
+      const result = compose(compileToOldSpec(bp));
       const action = result.entrypoints[0].endpoints
         .filter((ep): ep is CreateEndpointDef => ep.kind === "create")
         .shift()

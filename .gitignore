@@ -1,5 +1,2 @@
 node_modules
 dist
-
-*.ohm-bundle.js
-*.ohm-bundle.d.ts

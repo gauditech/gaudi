@@ -9,7 +9,13 @@ import {
 } from "./build";
 
 import { getRef } from "@src/common/refs";
-import { Definition, EndpointDef, TargetDef, TypedExprDef } from "@src/types/definition";
+import {
+  Definition,
+  EndpointDef,
+  QueryOrderByAtomDef,
+  TargetDef,
+  TypedExprDef,
+} from "@src/types/definition";
 
 /**
  * Endpoint query builder
@@ -49,6 +55,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
       : targetFilter;
 
     const select = transformSelectPath(target.select, target.namePath, namePath);
+
     const query = queryFromParts(def, target.alias, namePath, filter, select);
     return buildQueryTree(def, query);
   });
@@ -125,7 +132,20 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
         endpoint.target.namePath,
         namePath
       );
-      const responseQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, response);
+
+      // FIXME: Introduce a way to define ordering from the blueprint
+      // currently always sorting by id asc
+      const orderBy: QueryOrderByAtomDef[] = [
+        { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
+      ];
+      const responseQuery = queryFromParts(
+        def,
+        endpoint.target.alias,
+        namePath,
+        filter,
+        response,
+        orderBy
+      );
       return buildQueryTree(def, responseQuery);
     }
   }

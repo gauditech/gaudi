@@ -1,0 +1,45 @@
+model Org {
+  field name { type string }
+}
+
+entrypoint Orgs {
+  target Org as org
+
+  // custom-one endpoints
+  custom endpoint {
+    cardinality one
+    method GET
+    path "customGet"
+  }
+  custom endpoint {
+    cardinality one
+    method PATCH
+    path "customUpdate"
+    action {
+      update {}
+    }
+  }
+  custom endpoint {
+    cardinality one
+    method DELETE
+    path "customDelete"
+    action {
+      delete {}
+    }
+  }
+
+  // custom-many endpoints
+  custom endpoint {
+    cardinality many
+    method GET
+    path "customList"
+  }
+  custom endpoint {
+    cardinality many
+    method POST
+    path "customCreate"
+    action {
+      create {}
+    }
+  }
+}

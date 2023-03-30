@@ -4,40 +4,35 @@ auth {
 }
 
 runtime TestRuntime {
-  sourcePath "./src/e2e/api/hooks"
-}
-
-model Operator {
-  reference user { to AuthUser }
-  relation boxes { from Box, through owner }
+  source path "./src/e2e/api/hooks"
 }
 
 model Box {
-  field name { type text, unique }
+  field name { type string, unique }
   field is_public { type boolean }
-  reference owner { to Operator }
+  reference owner { to AuthUser }
   relation items { from Item, through box }
 }
 
 model Item {
-  field name { type text }
+  field name { type string }
   field is_public { type boolean }
   reference box { to Box }
 }
 
 entrypoint Boxes {
-  target model Box as box
+  target Box as box
   identify with name
 
   list endpoint {
     // user must be logged in
-    authorize { @auth.id }
+    authorize { @auth.id is not null }
   }
   get endpoint {
     authorize { box.is_public or @auth.id is box.owner.id }
   }
   create endpoint {
-    authorize { @auth.id }
+    authorize { @auth.id is not null }
     action {
       create {
         set owner_id @auth.id
@@ -64,7 +59,7 @@ entrypoint Boxes {
   }
 
   entrypoint Items {
-    target relation items as item
+    target items as item
     identify with name
 
     authorize { box.is_public or @auth.id is box.owner.id }

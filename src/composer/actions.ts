@@ -467,9 +467,7 @@ function expandSetterExpression(
         if (siblingOp) {
           return { kind: "changeset-reference", referenceName: siblingName };
         } else {
-          throw new Error(
-            `Unresolved expression path: ${path} (${exp.interval?.getLineAndColumnMessage()})`
-          );
+          throw new Error(`Unresolved expression path: ${path}`);
         }
       }
     }

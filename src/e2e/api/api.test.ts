@@ -296,9 +296,7 @@ describe("API endpoints", () => {
 
     it("create", async () => {
       const data = {
-        issue: {
-          title: "Issue 1",
-        },
+        title: "Issue 1",
         c: {
           body: "Comment body",
         },

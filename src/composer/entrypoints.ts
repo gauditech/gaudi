@@ -12,7 +12,6 @@ import {
 import { composeActionBlock, getInitialContext } from "@src/composer/actions";
 import { composeExpression } from "@src/composer/query";
 import { uniqueNamePaths } from "@src/runtime/query/build";
-import { SelectAST } from "@src/types/ast";
 import {
   ActionDef,
   Definition,
@@ -33,7 +32,7 @@ import {
   TargetWithSelectDef,
   TypedExprDef,
 } from "@src/types/definition";
-import { EndpointSpec, EntrypointSpec } from "@src/types/specification";
+import { EndpointSpec, EntrypointSpec, SelectAST } from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));

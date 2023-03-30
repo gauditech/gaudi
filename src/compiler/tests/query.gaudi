@@ -1,18 +1,23 @@
+runtime DefaultRuntime {
+  default
+  source path "path/to/runtime"
+}
+
 model Class {
   field year { type integer }
 
   relation students { from Student, through class}
 
   // test model queries
-  query active_students { from students, filter (is_active or is_registred) and true }
-  query good_students { from students, filter grade >= 3 or behaviour is not "bad" }
+  query active_students { from students, filter { (is_active or is_registred) and true } }
+  query good_students { from students, filter { grade >= 3 or behaviour is not "bad" } }
   query good_students_count { from good_students, count }
   query good_students_alt {
-    from students
+    from students,
     filter {
       grade >= 3
-    }
-    order by behaviour, grade desc
+    },
+    order by { behaviour, grade desc },
     limit 10
   }
 }
@@ -21,7 +26,7 @@ model Student {
   field is_active { type boolean }
   field is_registred { type boolean }
   field grade { type integer}
-  field behaviour { type text }
+  field behaviour { type string }
 
   reference class { to Class }
 
@@ -29,22 +34,22 @@ model Student {
 }
 
 entrypoint Ep {
-  target model Class
+  target Class
 
   create endpoint {
     action {
       // test query in fetch action
       fetch as fClass {
         query {
-          from Class, filter id is 1
+          from Class, filter { id is 1 }
         }
       }
 
       execute {
-        
+
         // test arg query
         hook {
-          arg prop2 query { from Class, filter id is 1 }
+          arg prop2 query { from Class, filter { id is 1 } }
 
           source foo from "bar"
         }

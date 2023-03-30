@@ -1,0 +1,19 @@
+model Class {
+  field year { type integer }
+  relation students { from Student, through class}
+}
+
+model Student {
+  field name { type string }
+  reference class { to Class }
+}
+
+entrypoint Class {
+  target Class
+  response { year, students { name } }
+}
+
+entrypoint Student {
+  target Student
+  response { name, class { year } }
+}

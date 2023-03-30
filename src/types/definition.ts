@@ -1,4 +1,4 @@
-import { BinaryOperator } from "./ast";
+import { BinaryOperator } from "./specification";
 
 export type Definition = {
   models: ModelDef[];

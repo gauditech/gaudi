@@ -1,18 +1,16 @@
-import { compile } from "@src/compiler/compiler";
-import { compose } from "@src/composer/composer";
-import { parse } from "@src/parser/parser";
+import { compileToOldSpec, compose } from "@src/index";
 import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose hooks", () => {
   it("composes source hooks", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       model Org {
         field name {
-          type text,
+          type string,
           validate {
             hook {
               default arg name
@@ -23,12 +21,12 @@ describe("compose hooks", () => {
         }
         hook description {
           runtime MyRuntime
-          source someHook from "githubc.js"        
+          source someHook from "githubc.js"
         }
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
@@ -40,9 +38,9 @@ describe("compose hooks", () => {
           }
         }
       }
-  
+
     `;
-    const result = compose(compile(parse(bp)));
+    const result = compose(compileToOldSpec(bp));
 
     expect(result).toMatchSnapshot();
   });
@@ -50,40 +48,40 @@ describe("compose hooks", () => {
   it("inline hooks", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       model Org {
         field name {
-          type text,
+          type string,
           validate {
             hook {
               default arg name
-              inline \`"test name"\`
+              inline "'test name'"
             }
           }
         }
         hook description {
           runtime MyRuntime
-          inline \`"some description"\`        
+          inline "'some description'"
         }
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
               set name hook {
-                inline \`"test name"\`
+                inline "'test name'"
               }
             }
           }
         }
       }
-  
+
     `;
-    const result = compose(compile(parse(bp)));
+    const result = compose(compileToOldSpec(bp));
 
     expect(result).toMatchSnapshot();
   });
@@ -92,17 +90,17 @@ describe("compose hooks", () => {
     const bp = `
       runtime MyRuntime {
         default
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       runtime MyRuntime2 {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
-      model Org { field name { type text } }
+      model Org { field name { type string } }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
@@ -113,10 +111,10 @@ describe("compose hooks", () => {
           }
         }
       }
-  
+
     `;
 
-    const result = compose(compile(parse(bp)));
+    const result = compose(compileToOldSpec(bp));
 
     expect(result.entrypoints[0].endpoints[0]).toMatchSnapshot();
   });
@@ -124,11 +122,11 @@ describe("compose hooks", () => {
   it("fails on invalid runtime name", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
         create endpoint {
           action {
             create {
@@ -140,26 +138,26 @@ describe("compose hooks", () => {
           }
         }
       }
-  
+
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
-      `"Unknown refkey: Org"`
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+      `"Can't resolve model with this name"`
     );
   });
 
   it("action hook", () => {
     const bp = `
       runtime MyRuntime {
-        sourcePath "some/path/to/file"
+        source path "some/path/to/file"
       }
 
       model Org {
-        field name { type text }
+        field name { type string }
       }
 
       entrypoint Orgs {
-        target model Org as org
+        target Org as org
 
         custom endpoint {
           path "somePath"
@@ -184,51 +182,18 @@ describe("compose hooks", () => {
         }
       }
     `;
-    const result = compose(compile(parse(bp)));
+    const result = compose(compileToOldSpec(bp));
 
     expect(result.entrypoints[0].endpoints).toMatchSnapshot();
   });
 
-  it("fails on inline action hook", () => {
-    const bp = `
-      runtime MyRuntime {
-        sourcePath "some/path/to/file"
-      }
-
-      model Org {}
-
-      entrypoint Orgs {
-        target model Org
-
-        custom endpoint {
-          path "somePath"
-          method POST
-          cardinality one
-
-          action {
-            execute {
-              hook {
-                runtime MyRuntime
-                inline \`"some return value"\`
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
-      `"Inline hooks cannot be used for "execute" actions"`
-    );
-  });
-
   it("composes action hook", () => {
     const bp = `
-      model Org { field name { type text} }
+      model Org { field name { type string} }
 
       entrypoint Org {
-        target model Org
- 
+        target Org
+
         // login
         custom endpoint {
           path "somePath"
@@ -238,11 +203,11 @@ describe("compose hooks", () => {
           action {
             execute {
 
-              virtual input prop { type text }
+              virtual input prop { type string }
 
               hook {
                 // action arg hook
-                arg user query { from Org, filter id is 1, select { id, name }} // TODO: read from ctx - id
+                arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id
 
                 runtime @GAUDI_INTERNAL
                 source login from "hooks/auth"
@@ -252,7 +217,7 @@ describe("compose hooks", () => {
         }
       }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const action = (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
 
     expect(action).toMatchSnapshot();

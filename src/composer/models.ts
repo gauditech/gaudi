@@ -4,7 +4,6 @@ import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
 import { ensureUnique } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
 import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query";
-import { LiteralValue } from "@src/types/ast";
 import {
   AggregateDef,
   ComputedDef,
@@ -23,6 +22,7 @@ import {
 import {
   ComputedSpec,
   FieldSpec,
+  LiteralValue,
   ModelHookSpec,
   ModelSpec,
   QuerySpec,

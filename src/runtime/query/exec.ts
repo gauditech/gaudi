@@ -7,7 +7,7 @@ import { QueryTree, selectableId } from "./build";
 import { queryToString } from "./stringify";
 
 import { DbConn } from "@src/runtime/server/dbConn";
-import { Definition, QueryDef } from "@src/types/definition";
+import { Definition, QueryDef, SelectItem } from "@src/types/definition";
 
 export type Result = {
   rowCount: number;
@@ -41,8 +41,23 @@ export async function executeQuery(
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
+  console.info(sqlTpl);
   const result: Result = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
-  return result.rows;
+  return result.rows.map((row: Row): Row => {
+    // FIXME find results of aggregates and cast to integers, since `node-postgres`
+    // makes them strings due to loss of precision (BigInt)
+
+    const cast = query.select.map((item: SelectItem): [string, string | number] => {
+      const value = row[item.alias];
+      if (item.kind === "aggregate" && typeof value === "string") {
+        return [item.alias, parseInt(value, 10)];
+      } else {
+        return [item.alias, value];
+      }
+    });
+    return Object.fromEntries(cast) as Row;
+  });
+  // return result.rows;
 }
 
 export async function executeQueryTree(
