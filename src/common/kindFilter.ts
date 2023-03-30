@@ -12,6 +12,18 @@ export function kindFilter<i extends { kind: Kind }, const k extends i["kind"]>(
   }) as Extract<i, { kind: k }>[];
 }
 
+export function kindReject<i extends { kind: Kind }, const k extends i["kind"]>(
+  input: i[],
+  ...kinds: k[]
+): Exclude<i, { kind: k }>[] {
+  return input.filter((i) => {
+    for (const kind of kinds) {
+      if (kind !== i.kind) return true;
+    }
+    return false;
+  }) as Exclude<i, { kind: k }>[];
+}
+
 export function kindFind<i extends { kind: Kind }, const k extends i["kind"]>(
   input: i[],
   ...kinds: k[]
