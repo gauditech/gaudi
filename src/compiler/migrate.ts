@@ -443,13 +443,26 @@ function migrateSelect(select: AST.Select): SelectAST {
 
 function migrateExpr(expr: AST.Expr): ExpSpec {
   switch (expr.kind) {
-    case "binary":
+    case "binary": {
+      // NOTE this is a quick fix to convert "+" to "concat" when strings are involved
+      if (
+        expr.lhs.type.kind === "primitive" &&
+        expr.lhs.type.primitiveKind === "string" &&
+        expr.operator === "+"
+      ) {
+        return {
+          kind: "function",
+          name: "concat",
+          args: [migrateExpr(expr.lhs), migrateExpr(expr.rhs)],
+        };
+      }
       return {
         kind: "binary",
         operator: expr.operator,
         lhs: migrateExpr(expr.lhs),
         rhs: migrateExpr(expr.rhs),
       };
+    }
     case "group":
       return migrateExpr(expr.expr);
     case "unary":
