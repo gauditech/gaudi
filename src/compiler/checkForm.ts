@@ -192,11 +192,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     if (endpoint.type === "custom") {
       containsAtoms(endpoint, "method", "cardinality", "path");
     } else {
-      const customAtoms = [
-        ...kindFilter(endpoint.atoms, "method"),
-        ...kindFilter(endpoint.atoms, "cardinality"),
-        ...kindFilter(endpoint.atoms, "path"),
-      ];
+      const customAtoms = kindFilter(endpoint.atoms, "method", "cardinality", "path");
       if (customAtoms.length > 0) {
         errors.push(
           new CompilerError(customAtoms[0].keyword, ErrorCode.ConfiguringNonCustomEndpoint)
@@ -304,10 +300,7 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkHook(hook: Hook<boolean, boolean>) {
     noDuplicateAtoms(hook, "default_arg", "runtime");
-    const sourceOrInline = [
-      ...kindFilter(hook.atoms, "source"),
-      ...kindFilter(hook.atoms, "inline"),
-    ];
+    const sourceOrInline = kindFilter(hook.atoms, "source", "inline");
     const internalExecRuntimeName = getInternalExecutionRuntimeName();
     if (sourceOrInline.length === 0) {
       errors.push(new CompilerError(hook.keyword, ErrorCode.HookMustContainSourceOrInline));
@@ -323,14 +316,10 @@ export function checkForm(projectASTs: ProjectASTs) {
       errors.push(new CompilerError(sourceOrInline[0].keyword, ErrorCode.NoRuntimeDefinedForHook));
     }
 
-    const queryArgs = kindFilter(hook.atoms, "arg_query");
-
-    const argIdentifiers = [...kindFilter(hook.atoms, "arg_expr"), ...queryArgs].map(
-      ({ name }) => name
-    );
+    const argIdentifiers = kindFilter(hook.atoms, "arg_expr", "arg_query").map(({ name }) => name);
     noDuplicateNames(argIdentifiers, ErrorCode.DuplicateHookArg);
 
-    queryArgs.forEach(({ query }) => checkQuery(query));
+    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => checkQuery(query));
   }
 
   function checkSelect(select: Select) {
