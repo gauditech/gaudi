@@ -100,7 +100,7 @@ function buildApi(def: Definition, entrypoints: EntrypointDef[], basePath: strin
     function buildApi(options: ApiClientOptions) {
       return {
         ${apiEntries
-          .map((sub) => `${sub.name}: ${sub.builderName}(options, "${sub.name}")`)
+          .map((sub) => `${sub.name}: ${sub.builderName}(options, "${sub.path}")`)
           .join(",\n")}
       }
     }
@@ -138,7 +138,7 @@ function buildEntrypointApi(
       const baseUrl = \`${basePath}\${parentPath}/\${id}\`;
       return {
         ${entrypointEntries
-          .map((sub) => `${sub.name}: ${sub.builderName}(options, \`\${baseUrl}/${sub.name}\`)`)
+          .map((sub) => `${sub.name}: ${sub.builderName}(options, \`\${baseUrl}/${sub.path}\`)`)
           .join(",\n")}
       }
     }
