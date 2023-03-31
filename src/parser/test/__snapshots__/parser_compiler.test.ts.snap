@@ -673,7 +673,7 @@ exports[`parser blueprint test/generator.gaudi 1`] = `
     {
       "api": "entrypoint",
       "kind": "generator-client",
-      "output": ""test/path/something"",
+      "output": "test/path/something",
       "target": "js",
     },
   ],

@@ -20,7 +20,7 @@ exports[`generator composer succeeds for multiple client generators 1`] = `
   {
     "api": "model",
     "kind": "generator-client",
-    "output": ""a/b/c"",
+    "output": "a/b/c",
     "target": "js",
   },
 ]
