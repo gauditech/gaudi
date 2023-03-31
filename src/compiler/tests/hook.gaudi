@@ -1,30 +1,38 @@
+runtime DefaultRuntime {
+  default
+  source path "path/to/runtime"
+}
+
+runtime OtherRuntime {
+  source path "path/to/runtime"
+}
+
 
 model User {
+  field name { type string }
   field fieldOne {
-    type text
+    type string,
     validate {
       hook {
         default arg fieldOne
-        runtime MyRuntime
-        source foo from "customHooks"
+        runtime OtherRuntime
+        source foo from "customValidateHook"
       }
     }
   }
   field fieldTwo {
-    type text
+    type string,
     validate {
       hook {
         default arg fieldTwo
-        inline `
-          return fieldTwo.toLowerCase() === "something";
-        `
+        inline "fieldTwo.toLowerCase() === 'something';"
       }
     }
   }
 }
 
 entrypoint UserEntry {
-  target model User
+  target User as user
   create endpoint {
     action {
       create {
@@ -45,7 +53,7 @@ entrypoint UserEntry {
       execute {
         responds
         hook {
-          arg name name
+          arg name user.name
           runtime MyRuntime
           source foo from "customHooks"
         }

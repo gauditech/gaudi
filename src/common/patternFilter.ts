@@ -4,8 +4,6 @@ import { InvertPattern } from "ts-pattern/dist/types/InvertPattern";
 import { MatchedValue } from "ts-pattern/dist/types/Match";
 import { NotP, Pattern } from "ts-pattern/dist/types/Pattern";
 
-import { AnyActionBodyAST } from "@src/types/ast";
-
 type Cast<A, B> = A extends B ? A : B;
 
 type Narrowable = string | number | bigint | boolean;

@@ -63,9 +63,22 @@ function createClient(options) {
 exports.createClient = createClient;
 function buildApi(options) {
     return {
-        box: buildBoxApi(options, "box"),
-        authUser: buildAuthuserApi(options, "auth_user")
+        authUser: buildAuthuserApi(options, "auth_user"),
+        box: buildBoxApi(options, "box")
     };
+}
+function buildAuthuserApi(options, parentPath) {
+    // entrypoint function
+    function api(id) {
+        var baseUrl = "".concat(parentPath, "/").concat(id);
+        return {};
+    }
+    // endpoint functions
+    return Object.assign(api, {
+        login: buildCustomManySubmitFn(options, parentPath, "login", "POST"),
+        logout: buildCustomManySubmitFn(options, parentPath, "logout", "POST"),
+        register: buildCustomManySubmitFn(options, parentPath, "register", "POST")
+    });
 }
 function buildBoxApi(options, parentPath) {
     // entrypoint function
@@ -92,19 +105,6 @@ function buildItemsApi(options, parentPath) {
     // endpoint functions
     return Object.assign(api, {
         get: buildGetFn(options, parentPath)
-    });
-}
-function buildAuthuserApi(options, parentPath) {
-    // entrypoint function
-    function api(id) {
-        var baseUrl = "".concat(parentPath, "/").concat(id);
-        return {};
-    }
-    // endpoint functions
-    return Object.assign(api, {
-        login: buildCustomManySubmitFn(options, parentPath, "login", "POST"),
-        logout: buildCustomManySubmitFn(options, parentPath, "logout", "POST"),
-        register: buildCustomManySubmitFn(options, parentPath, "register", "POST")
     });
 }
 // ----- API fn factories

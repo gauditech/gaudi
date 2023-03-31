@@ -13,7 +13,7 @@ slug String @unique
 description String
 optout String?
 
-repos repo[]
+repos repo[] @relation("Repoorg")
 
 
 }
@@ -26,6 +26,6 @@ org_id Int
 
 
 
-org org @relation(fields: [org_id], references: [id])
+org org @relation("Repoorg", fields: [org_id], references: [id])
 }"
 `;

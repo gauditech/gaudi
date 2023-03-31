@@ -4,11 +4,10 @@ import "../../common/setupAliases";
 import path from "path";
 
 import { buildApiClients } from "@src/builder/builder";
-import { compile } from "@src/compiler/compiler";
+import { compileToOldSpec } from "@src/compiler/";
 import { compose } from "@src/composer/composer";
 import { loadBlueprint } from "@src/e2e/api/setup";
 import { Logger } from "@src/logger";
-import { parse } from "@src/parser/parser";
 
 const CLIENT_LIB_DIST_FOLDER = path.join(__dirname, "__snapshots__");
 
@@ -43,7 +42,7 @@ async function setupClient(name: string, bpPath: string, appendGenerators = fals
   if (appendGenerators) {
     bp = appendClientGenerator(bp);
   }
-  const definition = compose(compile(parse(bp)));
+  const definition = compose(compileToOldSpec(bp));
 
   // build and output client lib
   await buildApiClients(definition, clientDest);
@@ -53,12 +52,12 @@ async function setupClient(name: string, bpPath: string, appendGenerators = fals
 function appendClientGenerator(bp: string) {
   return `
 generate client {
-  target js,
+  target js
   api entrypoint
 }
 
 generate client {
-  target js,
+  target js
   api model
 }
 

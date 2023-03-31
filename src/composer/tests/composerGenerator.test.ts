@@ -1,4 +1,4 @@
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 
 describe("generator composer", () => {
   it("succeeds for JS client generator", () => {
@@ -9,7 +9,7 @@ describe("generator composer", () => {
       }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const generator = def.generators[0];
 
     expect(generator).toMatchSnapshot();
@@ -30,7 +30,7 @@ describe("generator composer", () => {
       }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const generators = def.generators;
 
     expect(generators).toMatchSnapshot();
@@ -51,8 +51,8 @@ describe("generator composer", () => {
       }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
-      `"Found duplicate generator "generator-client", targeting the same target "js" and api "entrypoint""`
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+      `"Found duplicate generator "client", targeting the same target "js" and api "entrypoint""`
     );
   });
 });

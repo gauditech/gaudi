@@ -1,4 +1,4 @@
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose model queries", () => {
@@ -12,7 +12,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     expect(def.models[0].queries).toMatchSnapshot();
   });
   it("example with nested filters", () => {
@@ -26,7 +26,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
 
     expect(def.models[0].queries).toMatchSnapshot();
   });
@@ -36,8 +36,8 @@ describe("compose model queries", () => {
     model Org {
       relation repos { from Repo, through org }
       query recent_repos {
-        from repos
-        order by id desc
+        from repos,
+        order by { id desc },
         limit 5
       }
     }
@@ -45,7 +45,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     expect(def.models[0].queries[0]).toMatchSnapshot();
   });
 });
@@ -55,32 +55,32 @@ describe("compose action queries", () => {
     it("native endpoint", () => {
       const bp = `
       model Org {
-        field name { type text }
-        field description { type text }
+        field name { type string }
+        field description { type string }
       }
       model Repo {
       }
-  
+
       entrypoint Org {
-        target model Org  
+        target Org
 
         // test in native endpoint
         update endpoint {
           action {
-            // target model
+            // target
             fetch as cOrg {
-              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
+              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
             }
             // other model
             fetch as cRepo {
-              query { from Repo, filter id is 1 } // TODO: read from ctx - id
+              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
             }
           }
         }
       }
       `;
 
-      const def = compose(compile(parse(bp)));
+      const def = compose(compileToOldSpec(bp));
       expect(
         (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
@@ -88,36 +88,36 @@ describe("compose action queries", () => {
     it("custom endpoint", () => {
       const bp = `
       model Org {
-        field name { type text }
-        field description { type text }
+        field name { type string }
+        field description { type string }
       }
       model Repo {
       }
-  
+
       entrypoint Org {
-        target model Org
-  
+        target Org
+
         // test in custom endpoint
         custom endpoint {
           path "customPath"
           method POST
           cardinality one
-  
+
           action {
-            // target model
+            // target
             fetch as cOrg {
-              query { from Org, filter id is 1, select {name} } // TODO: read from ctx - id
+              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
             }
             // other model
             fetch as cRepo {
-              query { from Repo, filter id is 1 } // TODO: read from ctx - id
+              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
             }
           }
         }
       }
       `;
 
-      const def = compose(compile(parse(bp)));
+      const def = compose(compileToOldSpec(bp));
       expect(
         (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();

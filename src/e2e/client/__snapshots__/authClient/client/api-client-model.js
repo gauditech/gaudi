@@ -63,14 +63,28 @@ function createClient(options) {
 exports.createClient = createClient;
 function buildApi(options) {
     return {
-        operator: buildOperatorApi(options, "operator"),
-        box: buildBoxApi(options, "box"),
-        item: buildItemApi(options, "item"),
         authUser: buildAuthuserApi(options, "auth_user"),
-        authUserAccessToken: buildAuthuseraccesstokenApi(options, "auth_user_access_token")
+        authUserAccessToken: buildAuthuseraccesstokenApi(options, "auth_user_access_token"),
+        box: buildBoxApi(options, "box"),
+        item: buildItemApi(options, "item")
     };
 }
-function buildOperatorApi(options, parentPath) {
+function buildAuthuserApi(options, parentPath) {
+    // entrypoint function
+    function api(id) {
+        var baseUrl = "".concat(parentPath, "/").concat(id);
+        return {};
+    }
+    // endpoint functions
+    return Object.assign(api, {
+        get: buildGetFn(options, parentPath),
+        list: buildListFn(options, parentPath),
+        create: buildCreateFn(options, parentPath),
+        update: buildUpdateFn(options, parentPath),
+        delete: buildDeleteFn(options, parentPath)
+    });
+}
+function buildAuthuseraccesstokenApi(options, parentPath) {
     // entrypoint function
     function api(id) {
         var baseUrl = "".concat(parentPath, "/").concat(id);
@@ -101,36 +115,6 @@ function buildBoxApi(options, parentPath) {
     });
 }
 function buildItemApi(options, parentPath) {
-    // entrypoint function
-    function api(id) {
-        var baseUrl = "".concat(parentPath, "/").concat(id);
-        return {};
-    }
-    // endpoint functions
-    return Object.assign(api, {
-        get: buildGetFn(options, parentPath),
-        list: buildListFn(options, parentPath),
-        create: buildCreateFn(options, parentPath),
-        update: buildUpdateFn(options, parentPath),
-        delete: buildDeleteFn(options, parentPath)
-    });
-}
-function buildAuthuserApi(options, parentPath) {
-    // entrypoint function
-    function api(id) {
-        var baseUrl = "".concat(parentPath, "/").concat(id);
-        return {};
-    }
-    // endpoint functions
-    return Object.assign(api, {
-        get: buildGetFn(options, parentPath),
-        list: buildListFn(options, parentPath),
-        create: buildCreateFn(options, parentPath),
-        update: buildUpdateFn(options, parentPath),
-        delete: buildDeleteFn(options, parentPath)
-    });
-}
-function buildAuthuseraccesstokenApi(options, parentPath) {
     // entrypoint function
     function api(id) {
         var baseUrl = "".concat(parentPath, "/").concat(id);

@@ -1,4 +1,4 @@
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 import { CreateEndpointDef, CustomManyEndpointDef, ExecuteHookAction } from "@src/types/definition";
 
 describe("entrypoint", () => {
@@ -7,24 +7,24 @@ describe("entrypoint", () => {
     // Orgs.Repositories assumes default identifyWith; nested org select assuming all fields since not given
     const bp = `
     model Org {
-      field slug { type text, unique }
-      field name { type text }
+      field slug { type string, unique }
+      field name { type string }
       relation repos { from Repo, through org }
     }
     model Repo {
       reference org { to Org }
-      field title { type text }
+      field title { type string }
     }
 
     entrypoint Orgs {
-      target model Org
+      target Org
       identify with slug
-    
+
       list endpoint {}
       get endpoint {}
-    
+
       entrypoint Repositories {
-        target relation repos as repo
+        target repos as repo
         response { id, org }
 
         list endpoint {}
@@ -43,21 +43,21 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     expect(def.entrypoints).toMatchSnapshot();
   });
   it("adds validators into fieldsets", () => {
     const bp = `
     model Org {
-      field name { type text, validate { min 4, max 100 } }
+      field name { type string, validate { min 4, max 100 } }
     }
 
     entrypoint Orgs {
-      target model Org
+      target Org
       create endpoint {}
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.fieldset).toMatchSnapshot();
   });
@@ -65,13 +65,13 @@ describe("entrypoint", () => {
   it("action should send response", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       // endpoint W/ responding action
       custom endpoint {
@@ -92,7 +92,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
 
     const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
@@ -104,13 +104,13 @@ describe("entrypoint", () => {
   it("endpoint should send response", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       // endpoint W/O responding action
       custom endpoint {
@@ -129,7 +129,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
 
     const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
@@ -141,13 +141,13 @@ describe("entrypoint", () => {
   it("fail for multiple actions that want to respond", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       custom endpoint {
         path "somePath1"
@@ -174,7 +174,7 @@ describe("entrypoint", () => {
     }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
       `"At most one action in entrypoint can have "responds" attribute"`
     );
   });
@@ -182,13 +182,13 @@ describe("entrypoint", () => {
   it("fails if responds action is used in implicit endpoints", () => {
     const bp = `
     runtime MyRuntime {
-      sourcePath "some/source/path"
+      source path "some/source/path"
     }
 
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       create endpoint {
         action {
@@ -204,8 +204,8 @@ describe("entrypoint", () => {
     }
     `;
 
-    expect(() => compose(compile(parse(bp)))).toThrowErrorMatchingInlineSnapshot(
-      `"Actions with "responds" keyword are allowed only in "custom" endpoints, not in "create""`
+    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+      `"Actions with "responds" can only be used in custom endpoints"`
     );
   });
 
@@ -214,7 +214,7 @@ describe("entrypoint", () => {
     model Org {}
 
     entrypoint Orgs {
-      target model Org
+      target Org
 
       custom endpoint {
         path "somePath"
@@ -230,16 +230,15 @@ describe("entrypoint", () => {
     }
     `;
 
-    expect(() => compile(parse(bp))).toThrowErrorMatchingInlineSnapshot(`
-      "Unknown source position!
-      responds is not a valid model action"
-    `);
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"Expecting token of type --> RCurly <-- but found --> 'responds' <--"`
+    );
   });
   it("collects dependencies", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field desc { type text }
+      field name { type string }
+      field desc { type string }
 
       relation repos { from Repo, through org }
 
@@ -249,25 +248,25 @@ describe("entrypoint", () => {
     model Repo {
       reference org { to Org }
 
-      field name { type text }
+      field name { type string }
 
       relation issues { from Issue, through repo}
     }
     model Issue {
       reference repo { to Repo }
 
-      field source { type text }
-      field orgDesc { type text }
+      field source { type string }
+      field orgDesc { type string }
       field orgCoef { type integer }
     }
 
     entrypoint O {
-      target model Org as org
+      target Org as org
       entrypoint R {
-        target relation repos as repo
+        target repos as repo
         create endpoint {
           action {
-            create {}
+            create as repo {}
             create repo.issues as i {
               set source concat(org.name, repo.name)
               set orgDesc org.desc
@@ -278,7 +277,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     const orgSelect = endpoint.parentContext[0].select.map((s) => s.alias);
     const repoSelect = endpoint.target.select.map((s) => s.alias);

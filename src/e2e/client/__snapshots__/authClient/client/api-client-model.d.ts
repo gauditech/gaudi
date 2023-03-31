@@ -13,26 +13,73 @@ export type ApiClientOptions = {
 };
 export declare function createClient(options: ApiClientOptions): {
     api: {
-        operator: ((id: number) => {}) & {
+        authUser: ((id: number) => {}) & {
             get: GetApiClientFn<number, {
                 id: number;
-                user_id: number;
+                name: string;
+                username: string;
+                passwordHash: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             list: ListApiClientFn<{
                 id: number;
-                user_id: number;
+                name: string;
+                username: string;
+                passwordHash: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             create: CreateApiClientFn<{
-                user_id: number;
+                name: string;
+                username: string;
+                passwordHash: string;
             }, {
                 id: number;
-                user_id: number;
+                name: string;
+                username: string;
+                passwordHash: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             update: UpdateApiClientFn<number, {
-                user_id?: number | undefined;
+                name?: string | undefined;
+                username?: string | undefined;
+                passwordHash?: string | undefined;
             }, {
                 id: number;
-                user_id: number;
+                name: string;
+                username: string;
+                passwordHash: string;
+            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            delete: DeleteApiClientFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+        };
+        authUserAccessToken: ((id: number) => {}) & {
+            get: GetApiClientFn<number, {
+                id: number;
+                token: string;
+                expiryDate: string;
+                authUser_id: number;
+            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            list: ListApiClientFn<{
+                id: number;
+                token: string;
+                expiryDate: string;
+                authUser_id: number;
+            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            create: CreateApiClientFn<{
+                token: string;
+                expiryDate: string;
+                authUser_id: number;
+            }, {
+                id: number;
+                token: string;
+                expiryDate: string;
+                authUser_id: number;
+            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            update: UpdateApiClientFn<number, {
+                token?: string | undefined;
+                expiryDate?: string | undefined;
+                authUser_id?: number | undefined;
+            }, {
+                id: number;
+                token: string;
+                expiryDate: string;
+                authUser_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             delete: DeleteApiClientFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
         };
@@ -103,76 +150,6 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 is_public: boolean;
                 box_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            delete: DeleteApiClientFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-        };
-        authUser: ((id: number) => {}) & {
-            get: GetApiClientFn<number, {
-                id: number;
-                name: string;
-                username: string;
-                passwordHash: string;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            list: ListApiClientFn<{
-                id: number;
-                name: string;
-                username: string;
-                passwordHash: string;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                name: string;
-                username: string;
-                passwordHash: string;
-            }, {
-                id: number;
-                name: string;
-                username: string;
-                passwordHash: string;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                name?: string | undefined;
-                username?: string | undefined;
-                passwordHash?: string | undefined;
-            }, {
-                id: number;
-                name: string;
-                username: string;
-                passwordHash: string;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            delete: DeleteApiClientFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-        };
-        authUserAccessToken: ((id: number) => {}) & {
-            get: GetApiClientFn<number, {
-                id: number;
-                token: string;
-                expiryDate: string;
-                authUser_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            list: ListApiClientFn<{
-                id: number;
-                token: string;
-                expiryDate: string;
-                authUser_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                token: string;
-                expiryDate: string;
-                authUser_id: number;
-            }, {
-                id: number;
-                token: string;
-                expiryDate: string;
-                authUser_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                token?: string | undefined;
-                expiryDate?: string | undefined;
-                authUser_id?: number | undefined;
-            }, {
-                id: number;
-                token: string;
-                expiryDate: string;
-                authUser_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             delete: DeleteApiClientFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
         };

@@ -3,23 +3,23 @@ import _ from "lodash";
 import { queryFromParts } from "./build";
 import { nameToSelectable, queryToString } from "./stringify";
 
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 
 describe("Aggregates to queries", () => {
   it("composes a query with simple aggregate through relation", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
       relation repos { from Repo, through org }
       query repo_count { from repos, count }
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const q = queryFromParts(
       def,
       "orgs",
@@ -33,7 +33,7 @@ describe("Aggregates to queries", () => {
   it("composes a query with simple aggregate through query", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
       relation repos { from Repo, through org }
       query all_repos { from repos }
       query all_repos_nested { from all_repos }
@@ -41,11 +41,11 @@ describe("Aggregates to queries", () => {
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const q = queryFromParts(
       def,
       "orgs",
@@ -58,21 +58,21 @@ describe("Aggregates to queries", () => {
   it("composes a query with simple aggregate that has joins in the aggregate subquery", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
       relation repos { from Repo, through org }
       query total_issues { from repos.issues, count }
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
       relation issues { from Issue, through repo }
     }
     model Issue {
       reference repo { to Repo }
-      field name { type text }
+      field name { type string }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const q = queryFromParts(
       def,
       "orgs",
@@ -85,27 +85,27 @@ describe("Aggregates to queries", () => {
   it("composes a query that filters by aggregate field to produce another aggregate", () => {
     const bp = `
     model Org {
-      field name { type text }
+      field name { type string }
       relation repos { from Repo, through org }
       query total_issues { from repos.issues, filter { comment_count > 0 }, count }
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
       relation issues { from Issue, through repo }
     }
     model Issue {
       reference repo { to Repo }
-      field name { type text }
+      field name { type string }
       relation comments { from Comment, through issue }
       query comment_count { from comments, count }
     }
     model Comment {
       reference issue { to Issue }
-      field name { type text }
+      field name { type string }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const q = queryFromParts(
       def,
       "orgs",
@@ -123,7 +123,7 @@ describe("Expressions to queries", () => {
     model Source {
       relation items { from Item, through source }
       query calc {
-        from items
+        from items,
         filter {
           multiplier * (value + 1) / length(concat(textual, "tail")) > 100
         }
@@ -133,11 +133,11 @@ describe("Expressions to queries", () => {
       reference source { to Source }
       field value { type integer }
       field multiplier { type integer }
-      field textual { type text }
+      field textual { type string }
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const source = def.models.find((m) => m.name === "Source");
     const calc = source!.queries[0]!;
     expect(calc).toMatchSnapshot();
@@ -152,14 +152,14 @@ describe("Expressions to queries", () => {
       reference source { to Source }
       field value { type integer }
       field multiplier { type integer }
-      field textual { type text }
+      field textual { type string }
       computed worthiness {
         multiplier * (value + 1) / length(concat(textual, "tail"))
       }
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const item = def.models.find((m) => m.name === "Item");
     const worthiness = item!.computeds[0]!;
     expect(worthiness).toMatchSnapshot();
@@ -169,14 +169,14 @@ describe("Expressions to queries", () => {
     model Source {
       relation items { from Item, through source }
       query calc {
-        from items
+        from items,
         filter {
           worthiness > 100
         }
       }
       computed strength { 10 }
       query total_items {
-        from items
+        from items,
         count
       }
     }
@@ -184,7 +184,7 @@ describe("Expressions to queries", () => {
       reference source { to Source }
       field value { type integer }
       field multiplier { type integer }
-      field textual { type text }
+      field textual { type string }
       computed worthiness {
         multiplier * (value + 1) / text_tail_len + source.strength + source_items
       }
@@ -197,7 +197,7 @@ describe("Expressions to queries", () => {
     }
     `;
 
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const source = def.models.find((m) => m.name === "Source");
     const calc = source!.queries[0]!;
     calc.select = ["id", "value", "multiplier", "textual", "worthiness", "text_tail_len"].map(
@@ -210,16 +210,16 @@ describe("Expressions to queries", () => {
     const bp = `
 
     model Org {
-      field name { type text }
+      field name { type string }
       relation repos { from Repo, through org }
       query active_repos {
-        from repos
+        from repos,
         filter { issue_count > 0 }
       }
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
       relation issues { from Issue, through repo }
       query issue_count { from issues, count }
     }
@@ -227,7 +227,7 @@ describe("Expressions to queries", () => {
       reference repo { to Repo }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const org = def.models.find((m) => m.name === "Org");
     const q = org!.queries[0]!;
     q.select = ["id", "issue_count"].map((name) => nameToSelectable(def, [...q.fromPath, name]));
@@ -241,7 +241,7 @@ describe("Expression functions to queries", () => {
     model Org {
       relation repos { from Repo, through org }
       query repo_fns {
-        from repos
+        from repos,
         filter {
           // test SQL functions
           length(name) is 4
@@ -254,10 +254,10 @@ describe("Expression functions to queries", () => {
     }
     model Repo {
       reference org { to Org }
-      field name { type text }
+      field name { type string }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const q = def.models[0].queries[0];
     expect(queryToString(def, q)).toMatchSnapshot();
   });

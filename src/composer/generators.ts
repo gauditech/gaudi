@@ -4,8 +4,6 @@ import { GeneratorSpec } from "@src/types/specification";
 
 export function composeGenerators(def: Definition, generators: GeneratorSpec[]): void {
   def.generators = generators.map((g) => composeGenerator(def, g));
-
-  checkDuplicateGenerators(def.generators)
 }
 
 function composeGenerator(def: Definition, generator: GeneratorSpec): GeneratorDef {
@@ -37,17 +35,4 @@ function composeGenerator(def: Definition, generator: GeneratorSpec): GeneratorD
     default:
       assertUnreachable(kind);
   }
-}
-
-function checkDuplicateGenerators(generators:GeneratorDef[]): void {
-  const generatorTag : string[]=[]
-
-  generators.forEach((g)=> {
-    const tag = `${g.kind}-${g.target}-${g.api}`
-    if (generatorTag.includes(tag)) {
-      throw new Error(`Found duplicate generator "${g.kind}", targeting the same target "${g.target}" and api "${g.api}"`)
-    }
-
-    generatorTag.push(tag)
-  })
 }

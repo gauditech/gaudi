@@ -30,26 +30,72 @@
   
     function buildApi(options: ApiClientOptions) {
       return {
-        operator: buildOperatorApi(options, "operator"),
+        authUser: buildAuthuserApi(options, "auth_user"),
+authUserAccessToken: buildAuthuseraccesstokenApi(options, "auth_user_access_token"),
 box: buildBoxApi(options, "box"),
-item: buildItemApi(options, "item"),
-authUser: buildAuthuserApi(options, "auth_user"),
-authUserAccessToken: buildAuthuseraccesstokenApi(options, "auth_user_access_token")
+item: buildItemApi(options, "item")
       }
     }
 
     
-  function buildOperatorApi(options: ApiClientOptions, parentPath: string) {
+  function buildAuthuserApi(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type GetResp = { id: number,
-user_id: number };
+name: string,
+username: string,
+passwordHash: string };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListErrot = GetError;
-type CreateData = { user_id: number };
+type CreateData = { name: string,
+username: string,
+passwordHash: string };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { user_id?: number };
+type UpdateData = { name?: string,
+username?: string,
+passwordHash?: string };
+type UpdateResp = GetResp;
+type UpdateError = CreateError;
+type DeleteError = GetError;
+
+    // entrypoint function
+    function api(id: number) {
+      const baseUrl = `${parentPath}/${id}`;
+      return {
+        
+      }
+    }
+
+    // endpoint functions
+    return Object.assign(api, 
+      {
+        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
+list: buildListFn<ListResp, ListErrot>(options, parentPath),
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
+update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+delete: buildDeleteFn<number, DeleteError>(options, parentPath)
+      }
+    )
+  }
+
+  function buildAuthuseraccesstokenApi(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
+    type GetResp = { id: number,
+token: string,
+expiryDate: string,
+authUser_id: number };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type ListResp = GetResp;
+type ListErrot = GetError;
+type CreateData = { token: string,
+expiryDate: string,
+authUser_id: number };
+type CreateResp = GetResp;
+type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type UpdateData = { token?: string,
+expiryDate?: string,
+authUser_id?: number };
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;
@@ -132,88 +178,6 @@ type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUN
 type UpdateData = { name?: string,
 is_public?: boolean,
 box_id?: number };
-type UpdateResp = GetResp;
-type UpdateError = CreateError;
-type DeleteError = GetError;
-
-    // entrypoint function
-    function api(id: number) {
-      const baseUrl = `${parentPath}/${id}`;
-      return {
-        
-      }
-    }
-
-    // endpoint functions
-    return Object.assign(api, 
-      {
-        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
-list: buildListFn<ListResp, ListErrot>(options, parentPath),
-create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
-update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
-delete: buildDeleteFn<number, DeleteError>(options, parentPath)
-      }
-    )
-  }
-
-  function buildAuthuserApi(options: ApiClientOptions, parentPath: string) {
-    // endpoint types
-    type GetResp = { id: number,
-name: string,
-username: string,
-passwordHash: string };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type ListResp = GetResp;
-type ListErrot = GetError;
-type CreateData = { name: string,
-username: string,
-passwordHash: string };
-type CreateResp = GetResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { name?: string,
-username?: string,
-passwordHash?: string };
-type UpdateResp = GetResp;
-type UpdateError = CreateError;
-type DeleteError = GetError;
-
-    // entrypoint function
-    function api(id: number) {
-      const baseUrl = `${parentPath}/${id}`;
-      return {
-        
-      }
-    }
-
-    // endpoint functions
-    return Object.assign(api, 
-      {
-        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
-list: buildListFn<ListResp, ListErrot>(options, parentPath),
-create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
-update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
-delete: buildDeleteFn<number, DeleteError>(options, parentPath)
-      }
-    )
-  }
-
-  function buildAuthuseraccesstokenApi(options: ApiClientOptions, parentPath: string) {
-    // endpoint types
-    type GetResp = { id: number,
-token: string,
-expiryDate: string,
-authUser_id: number };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type ListResp = GetResp;
-type ListErrot = GetError;
-type CreateData = { token: string,
-expiryDate: string,
-authUser_id: number };
-type CreateResp = GetResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { token?: string,
-expiryDate?: string,
-authUser_id?: number };
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;

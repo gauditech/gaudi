@@ -1,15 +1,15 @@
 
 model Org {
-  field slug { type text }
-  field name { type text }
+  field slug { type string }
+  field name { type string }
   relation repos { from Repo, through org }
 }
 
 model Repo {
   reference org { to Org }
-  field slug { type text }
-  field name { type text }
-  field description { type text }
+  field slug { type string }
+  field name { type string }
+  field description { type string }
 }
 
 generate client {
@@ -27,7 +27,7 @@ generate client {
 }
 
 entrypoint Org {
-  target model Org
+  target Org
   identify with slug
 
   get endpoint {}
@@ -59,7 +59,7 @@ entrypoint Org {
 
   // repo entrypoints
   entrypoint Repo {
-    target relation repos
+    target repos
     // test non-default response
     response { slug, name }
 
@@ -68,7 +68,7 @@ entrypoint Org {
       action {
         create {
           // test changing input fields
-          virtual input virtProp { type text }
+          virtual input virtProp { type string }
         }
       }
     }

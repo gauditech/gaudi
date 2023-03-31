@@ -1,5 +1,0 @@
-
-runtime MyRuntime {
-  default
-  sourcePath "some/path/to/file.js"
-}

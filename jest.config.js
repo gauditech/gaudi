@@ -13,7 +13,6 @@ module.exports = async () => {
         moduleNameMapper: {
           "@src/(.*)": "<rootDir>/src/$1",
         },
-        snapshotSerializers: ["<rootDir>/src/tests/gaudiSerializer.js"],
       },
       // --- api tests
       {
@@ -24,7 +23,6 @@ module.exports = async () => {
         moduleNameMapper: {
           "@src/(.*)": "<rootDir>/src/$1",
         },
-        snapshotSerializers: ["<rootDir>/src/tests/gaudiSerializer.js"],
       },
       // --- client tests
       {
@@ -36,7 +34,6 @@ module.exports = async () => {
           "@src/(.*)": "<rootDir>/src/$1",
         },
         globalSetup: "<rootDir>/src/e2e/client/setupTests.ts",
-        snapshotSerializers: ["<rootDir>/src/tests/gaudiSerializer.js"],
       },
     ],
   };

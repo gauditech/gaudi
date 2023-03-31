@@ -1,14 +1,30 @@
-import {
-  BinaryOperator,
-  EndpointCardinality,
-  EndpointMethod,
-  EndpointTypeAST,
-  LiteralValue,
-  SelectAST,
-  UnaryOperator,
-} from "./ast";
+// old AST types
+export type EndpointCardinality = "one" | "many";
+export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
+export type EndpointTypeAST = "list" | "get" | "create" | "update" | "delete" | "custom";
 
-import { WithContext } from "@src/common/error";
+export type LiteralValue = null | boolean | number | string;
+
+export type SelectAST = {
+  select?: Record<string, SelectAST>;
+};
+
+export type UnaryOperator = "not";
+export type BinaryOperator =
+  | "or"
+  | "and"
+  | "is not"
+  | "is"
+  | "not in"
+  | "in"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "+"
+  | "-"
+  | "/"
+  | "*";
 
 export type Specification = {
   models: ModelSpec[];
@@ -19,7 +35,7 @@ export type Specification = {
   generators: GeneratorSpec[];
 };
 
-export type ModelSpec = WithContext<{
+export type ModelSpec = {
   name: string;
   alias?: string;
   fields: FieldSpec[];
@@ -28,35 +44,34 @@ export type ModelSpec = WithContext<{
   queries: QuerySpec[];
   computeds: ComputedSpec[];
   hooks: ModelHookSpec[];
-}>;
+};
 
-export type FieldSpec = WithContext<{
+export type FieldSpec = {
   name: string;
   type: string;
   default?: LiteralValue;
   unique?: boolean;
   nullable?: boolean;
   validators?: ValidatorSpec[];
-}>;
+};
 
-export type ValidatorSpec = WithContext<
+export type ValidatorSpec =
   | { kind: "hook"; hook: FieldValidatorHookSpec }
-  | { kind: "builtin"; name: string; args: LiteralValue[] }
->;
-export type ReferenceSpec = WithContext<{
+  | { kind: "builtin"; name: string; args: LiteralValue[] };
+export type ReferenceSpec = {
   name: string;
   toModel: string;
   unique?: boolean;
   nullable?: boolean;
-}>;
+};
 
-export type RelationSpec = WithContext<{
+export type RelationSpec = {
   name: string;
   fromModel: string;
   through: string;
-}>;
+};
 
-export type QuerySpec = WithContext<{
+export type QuerySpec = {
   name: string;
   fromModel: string[];
   fromAlias?: string[];
@@ -68,14 +83,14 @@ export type QuerySpec = WithContext<{
   aggregate?: {
     name: string;
   };
-}>;
+};
 
-export type ComputedSpec = WithContext<{
+export type ComputedSpec = {
   name: string;
   exp: ExpSpec;
-}>;
+};
 
-export type ExpSpec = WithContext<
+export type ExpSpec =
   | {
       kind: "binary";
       operator: BinaryOperator;
@@ -85,10 +100,9 @@ export type ExpSpec = WithContext<
   | { kind: "unary"; operator: UnaryOperator; exp: ExpSpec }
   | { kind: "identifier"; identifier: string[] }
   | { kind: "literal"; literal: LiteralValue }
-  | { kind: "function"; name: string; args: ExpSpec[] }
->;
+  | { kind: "function"; name: string; args: ExpSpec[] };
 
-export type EntrypointSpec = WithContext<{
+export type EntrypointSpec = {
   name: string;
   target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
@@ -96,18 +110,18 @@ export type EntrypointSpec = WithContext<{
   authorize?: ExpSpec;
   endpoints: EndpointSpec[];
   entrypoints: EntrypointSpec[];
-}>;
+};
 
-export type EndpointSpec = WithContext<{
+export type EndpointSpec = {
   type: EndpointTypeAST;
   actions?: ActionSpec[];
   authorize?: ExpSpec;
   cardinality?: EndpointCardinality;
   method?: EndpointMethod;
   path?: string;
-}>;
+};
 
-export type ActionSpec = WithContext<
+export type ActionSpec =
   | {
       kind: "create" | "update";
       targetPath: string[] | undefined;
@@ -130,18 +144,16 @@ export type ActionSpec = WithContext<
       alias: string | undefined;
       query: QuerySpec;
       atoms: ActionAtomSpecVirtualInput[];
-    }
->;
+    };
 
 export type ModelActionSpec = Extract<ActionSpec, { kind: "create" | "update" }>;
 
-export type ModelActionAtomSpec = WithContext<
+export type ModelActionAtomSpec =
   | ActionAtomSpecSet
   | ActionAtomSpecRefThrough
   | ActionAtomSpecDeny
   | ActionAtomSpecVirtualInput
-  | ActionAtomSpecInputList
->;
+  | ActionAtomSpecInputList;
 
 export type HookCodeSpec =
   | { kind: "inline"; inline: string }
@@ -177,36 +189,35 @@ export type InputFieldSpec = {
 export type ActionAtomSpecResponds = { kind: "responds" };
 export type ActionAtomSpecQuery = { kind: "query"; query: QuerySpec };
 
-export type HookSpec = WithContext<{
+export type HookSpec = {
   name?: string;
   runtimeName?: string;
   code: HookCodeSpec;
-}>;
+};
 
-export type RepeaterSpec = WithContext<
+export type RepeaterSpec =
   | { kind: "fixed"; alias?: string; value: number }
-  | { kind: "range"; alias?: string; range: { start?: number; end?: number } }
->;
+  | { kind: "range"; alias?: string; range: { start?: number; end?: number } };
 
-export type PopulatorSpec = WithContext<{
+export type PopulatorSpec = {
   name: string;
   populates: PopulateSpec[];
-}>;
+};
 
-export type PopulateSpec = WithContext<{
+export type PopulateSpec = {
   name: string;
   target: { kind: "model" | "relation"; identifier: string; alias?: string };
   identify?: string;
   setters: PopulateSetterSpec[];
   populates: PopulateSpec[];
   repeater?: RepeaterSpec;
-}>;
+};
 
-export type PopulateSetterSpec = WithContext<{
+export type PopulateSetterSpec = {
   kind: "set";
   target: string;
   set: { kind: "hook"; hook: ActionHookSpec } | { kind: "expression"; exp: ExpSpec };
-}>;
+};
 
 export type FieldValidatorHookSpec = HookSpec & {
   arg?: string;
@@ -223,24 +234,24 @@ export type ActionHookSpec = HookSpec & {
 
 // ----- Execution Runtime
 
-export type ExecutionRuntimeSpec = WithContext<{
+export type ExecutionRuntimeSpec = {
   name: string;
   default?: boolean;
   sourcePath: string;
-}>;
+};
 
 // ---------- authenticator
 
 export const AUTH_TARGET_MODEL_NAME = "AuthUser";
 
-export type AuthenticatorSpec = WithContext<{
+export type AuthenticatorSpec = {
   name?: string;
   authUserModelName: string;
   accessTokenModelName: string;
   method: AuthenticatorMethodSpec;
-}>;
+};
 
-export type AuthenticatorMethodSpec = WithContext<AuthenticatorBasicMethodSpec>;
+export type AuthenticatorMethodSpec = AuthenticatorBasicMethodSpec;
 
 export type AuthenticatorBasicMethodSpec = {
   kind: "basic";
@@ -248,9 +259,9 @@ export type AuthenticatorBasicMethodSpec = {
 
 // ----- Generators
 
-export type GeneratorSpec = WithContext<{
+export type GeneratorSpec = {
   kind: "generator-client";
   target: string;
   api: string;
   output?: string;
-}>;
+};

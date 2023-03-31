@@ -2,5 +2,5 @@ model Vehicle {
   reference make { to Make, nullable }
 }
 model Make {
-  field name { type text }
+  field name { type string }
 }

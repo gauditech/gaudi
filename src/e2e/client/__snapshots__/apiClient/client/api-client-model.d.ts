@@ -104,33 +104,33 @@ export declare function createClient(options: ApiClientOptions): {
         issue: ((id: number) => {}) & {
             get: GetApiClientFn<number, {
                 id: number;
-                number: string;
+                number: number;
                 title: string;
                 repo_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             list: ListApiClientFn<{
                 id: number;
-                number: string;
+                number: number;
                 title: string;
                 repo_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             create: CreateApiClientFn<{
-                number: string;
+                number: number;
                 title: string;
                 repo_id: number;
             }, {
                 id: number;
-                number: string;
+                number: number;
                 title: string;
                 repo_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             update: UpdateApiClientFn<number, {
-                number?: string | undefined;
+                number?: number | undefined;
                 title?: string | undefined;
                 repo_id?: number | undefined;
             }, {
                 id: number;
-                number: string;
+                number: number;
                 title: string;
                 repo_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;

@@ -28,7 +28,7 @@ export declare function createClient(options: ApiClientOptions): {
                             latest_num: number;
                             org_id: number;
                         };
-                        number: string;
+                        number: number;
                         comments: {
                             id: number;
                             body: string;
@@ -36,9 +36,7 @@ export declare function createClient(options: ApiClientOptions): {
                         }[];
                     }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
                     create: CreateApiClientFn<{
-                        issue: {
-                            title: string;
-                        };
+                        title: string;
                         repo2: {
                             name?: string | undefined;
                             slug?: string | undefined;
@@ -61,7 +59,7 @@ export declare function createClient(options: ApiClientOptions): {
                             latest_num: number;
                             org_id: number;
                         };
-                        number: string;
+                        number: number;
                         comments: {
                             id: number;
                             body: string;

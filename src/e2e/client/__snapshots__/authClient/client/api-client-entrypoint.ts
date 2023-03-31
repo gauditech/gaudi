@@ -30,12 +30,36 @@
   
     function buildApi(options: ApiClientOptions) {
       return {
-        box: buildBoxApi(options, "box"),
-authUser: buildAuthuserApi(options, "auth_user")
+        authUser: buildAuthuserApi(options, "auth_user"),
+box: buildBoxApi(options, "box")
       }
     }
 
     
+  function buildAuthuserApi(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
+    type LoginError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type LogoutError = LoginError;
+type RegisterError = LoginError;
+
+    // entrypoint function
+    function api(id: number) {
+      const baseUrl = `${parentPath}/${id}`;
+      return {
+        
+      }
+    }
+
+    // endpoint functions
+    return Object.assign(api, 
+      {
+        login: buildCustomManySubmitFn<any, any, LoginError>(options, parentPath, "login", "POST"),
+logout: buildCustomManySubmitFn<any, any, LogoutError>(options, parentPath, "logout", "POST"),
+register: buildCustomManySubmitFn<any, any, RegisterError>(options, parentPath, "register", "POST")
+      }
+    )
+  }
+
   function buildBoxApi(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type ListResp = { id: number,
@@ -90,30 +114,6 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     return Object.assign(api, 
       {
         get: buildGetFn<string, GetResp, GetError>(options, parentPath)
-      }
-    )
-  }
-
-  function buildAuthuserApi(options: ApiClientOptions, parentPath: string) {
-    // endpoint types
-    type LoginError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type LogoutError = LoginError;
-type RegisterError = LoginError;
-
-    // entrypoint function
-    function api(id: number) {
-      const baseUrl = `${parentPath}/${id}`;
-      return {
-        
-      }
-    }
-
-    // endpoint functions
-    return Object.assign(api, 
-      {
-        login: buildCustomManySubmitFn<any, any, LoginError>(options, parentPath, "login", "POST"),
-logout: buildCustomManySubmitFn<any, any, LogoutError>(options, parentPath, "logout", "POST"),
-register: buildCustomManySubmitFn<any, any, RegisterError>(options, parentPath, "register", "POST")
       }
     )
   }

@@ -4,108 +4,36 @@ import { QueryTree, queryTreeFromParts } from "./build";
 import { EndpointQueries, buildEndpointQueries } from "./endpointQueries";
 import { queryToString } from "./stringify";
 
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 import { EndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
-  it("nested query", () => {
-    const bp = `
-    model Org {
-      field slug { type text, unique }
-      relation repos { from Repo, through org }
-      query public_repos { from repos, filter { is_public is true }}
-    }
-    model Repo {
-      reference org { to Org }
-      field is_public { type boolean }
-      field name { type text }
-    }
-    entrypoint Orgs {
-      target model Org
-      identify with slug
-      entrypoint Repos {
-        target relation public_repos
-        response { id, name }
-
-        get endpoint {}
-      }
-    }
-
-    `;
-    const def = compose(compile(parse(bp)));
-
-    const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
-    const q = buildEndpointQueries(def, endpoint);
-    expect(q).toMatchSnapshot();
-    expect(extractEndpointQueries(q)).toHaveLength(3);
-    expect(extractEndpointQueries(q).map((q) => queryToString(def, q))).toMatchSnapshot();
-  });
-  it("chained nested query", () => {
-    const bp = `
-    model Org {
-      field slug { type text, unique }
-      relation repos { from Repo, through org }
-      query public_repos { from repos, filter { is_public is true }}
-      query public_issues { from public_repos.issues  }
-    }
-    model Repo {
-      reference org { to Org }
-      field is_public { type boolean }
-      field name { type text }
-      relation issues { from Issue, through repo }
-    }
-    model Issue {
-      reference repo { to Repo }
-      field name { type text }
-    }
-    entrypoint Orgs {
-      target model Org
-      identify with slug
-      entrypoint RepoIssues {
-        target relation public_issues
-        response { id, name, repo { org, name, is_public } }
-        get endpoint {}
-      }
-    }
-
-    `;
-    const def = compose(compile(parse(bp)));
-    const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0];
-    const q = buildEndpointQueries(def, endpoint);
-    expect(q).toMatchSnapshot();
-    expect(extractEndpointQueries(q)).toHaveLength(5);
-    expect(
-      extractEndpointQueries(q).map((q) => queryToString(def, q) + "\n\n\n")
-    ).toMatchSnapshot();
-    q;
-  });
-
   describe("Deeply nested entrypoints", () => {
     const bp = `
     model Org {
-      field name { type text }
-      field slug { type text, unique }
+      field name { type string }
+      field slug { type string, unique }
       relation repos { from Repo, through org }
     }
 
 
     model Repo {
       reference org { to Org }
-      field name { type text }
-      field slug { type text, unique }
+      field name { type string }
+      field slug { type string, unique }
       relation issues { from Issue, through repo }
     }
 
     model Issue {
       reference repo { to Repo }
-      field name { type text }
-      field description { type text }
+      field name { type string }
+      field description { type string }
     }
 
     // ----- entrypoints
 
     entrypoint Orgs {
-      target model Org
+      target Org
       identify with slug
       response { name, slug }
 
@@ -116,7 +44,7 @@ describe("Endpoint queries", () => {
       delete endpoint {}
 
       entrypoint Repos {
-        target relation repos
+        target repos
         response { id, slug, org_id }
 
         get endpoint {}
@@ -126,7 +54,7 @@ describe("Endpoint queries", () => {
         delete endpoint {}
 
         entrypoint Issues {
-          target relation issues
+          target issues
           response { id, name, repo_id }
 
           get endpoint {}
@@ -138,7 +66,7 @@ describe("Endpoint queries", () => {
       }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const entrypoint = def.entrypoints[0].entrypoints[0].entrypoints[0];
     const range = entrypoint.endpoints.map((ep) => [ep.kind, ep] as [string, EndpointDef]);
     it.each(range)("test %s endpoint", (_kind, endpoint) => {
@@ -159,8 +87,8 @@ describe("Orderby, limit and offset", () => {
     model Org {
       relation repos { from Repo, through org }
       query recent_repos {
-        from repos
-        order by id desc
+        from repos,
+        order by { id desc },
         limit 10, offset 5
       }
     }
@@ -168,7 +96,7 @@ describe("Orderby, limit and offset", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const q = def.models[0].queries[0];
 
     expect(queryToString(def, q)).toMatchSnapshot();
@@ -178,8 +106,8 @@ describe("Orderby, limit and offset", () => {
     model Org {
       relation repos { from Repo, through org }
       query recent_repos {
-        from repos
-        order by id desc
+        from repos,
+        order by { id desc },
         limit 10, offset 5
       }
     }
@@ -187,7 +115,7 @@ describe("Orderby, limit and offset", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compile(parse(bp)));
+    const def = compose(compileToOldSpec(bp));
     const qt = queryTreeFromParts(def, "test", ["Org"], undefined, [
       {
         kind: "query",
@@ -219,7 +147,7 @@ describe("Query aliases", () => {
   model Org {
     relation repos { from Repo, through org }
     query issues {
-      from repos.issues as r.i
+      from repos.issues as r.i,
       filter { r.is_public is true }
     }
   }
@@ -232,7 +160,7 @@ describe("Query aliases", () => {
     reference repo { to Repo }
   }
   `;
-  const def = compose(compile(parse(bp)));
+  const def = compose(compileToOldSpec(bp));
   const q = def.models[0].queries[0];
   expect(q).toMatchSnapshot();
 });

@@ -9,7 +9,7 @@ import _ from "lodash";
 
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { compile, compose, parse } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
@@ -173,8 +173,7 @@ function removeOutputFolder(path: string) {
 // ----- gaudi definition
 
 async function buildDefinition(blueprint: string, outputFolder: string) {
-  const definition = compose(compile(parse(blueprint)));
-
+  const definition = compose(compileToOldSpec(blueprint));
   // use output folder for both regular output and gaudi for simpler testing
   await build(definition, { outputFolder, gaudiFolder: outputFolder });
 

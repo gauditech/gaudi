@@ -132,18 +132,18 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
   function buildIssueApi(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type GetResp = { id: number,
-number: string,
+number: number,
 title: string,
 repo_id: number };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListErrot = GetError;
-type CreateData = { number: string,
+type CreateData = { number: number,
 title: string,
 repo_id: number };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { number?: string,
+type UpdateData = { number?: number,
 title?: string,
 repo_id?: number };
 type UpdateResp = GetResp;
