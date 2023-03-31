@@ -19,7 +19,8 @@
     "test:api": "jest ./src/e2e/api",
     "test:api:watch": "npm run test:api -- --watch",
     "// --- other": "",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
