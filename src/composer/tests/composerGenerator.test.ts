@@ -51,7 +51,7 @@ describe("generator composer", () => {
       }
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
       `"Found duplicate generator "client", targeting the same target "js" and api "entrypoint""`
     );
   });
