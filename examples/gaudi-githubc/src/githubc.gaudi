@@ -7,6 +7,12 @@ runtime HooksRuntime {
     sourcePath "hooks"
 }
 
+generate client {
+  target js,
+  api entrypoint
+  output "src/web/js "
+}
+
 // ----- models
 
 model Org {

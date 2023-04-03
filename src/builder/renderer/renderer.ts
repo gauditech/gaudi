@@ -19,6 +19,6 @@ export function renderTemplate(
   });
 }
 
-export function storeTemplateOutput(destination: string, content: string): void {
-  saveOutputFile(destination, content);
+export function storeTemplateOutput(destination: string, content: string): boolean {
+  return saveOutputFile(destination, content);
 }

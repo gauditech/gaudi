@@ -151,6 +151,7 @@ function createTestDefinition(): Definition {
       },
     ],
     authenticator: undefined,
+    generators: [],
   });
 
   return def;

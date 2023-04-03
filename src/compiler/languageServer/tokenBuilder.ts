@@ -18,6 +18,7 @@ import {
   FetchAction,
   Field,
   FieldValidationHook,
+  Generator,
   GlobalAtom,
   Identifier,
   IdentifierRef,
@@ -88,6 +89,7 @@ export function buildTokens(
         .with({ kind: "populator" }, buildPopulator)
         .with({ kind: "runtime" }, buildRuntime)
         .with({ kind: "authenticator" }, buildAuthenticator)
+        .with({ kind: "generator" }, buildGenerator)
         .exhaustive();
     });
   }
@@ -461,6 +463,35 @@ export function buildTokens(
         })
         .exhaustive()
     );
+  }
+
+  function buildGenerator(generator: Generator) {
+    buildKeyword(generator.keyword);
+    // buildKeyword(generator.type);
+    match(generator)
+      .with({ type: "client" }, (g) => {
+        buildKeyword(g.keywordType);
+        g.atoms.forEach((a) => {
+          match(a)
+            .with({ kind: "target" }, (a) => {
+              buildKeyword(a.keyword);
+              buildKeyword(a.keywordValue);
+            })
+            .with({ kind: "api" }, (a) => {
+              buildKeyword(a.keyword);
+              buildKeyword(a.keywordValue);
+            })
+            .with({ kind: "output" }, (a) => {
+              buildKeyword(a.keyword);
+              buildLiteral(a.value);
+            })
+            .exhaustive();
+        });
+
+        buildKeyword(g.keyword);
+        // actions.forEach(buildAction);
+      })
+      .exhaustive();
   }
 
   function buildModelHook(hook: ModelHook) {

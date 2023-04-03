@@ -32,6 +32,7 @@ export type Specification = {
   populators: PopulatorSpec[];
   runtimes: ExecutionRuntimeSpec[];
   authenticator: AuthenticatorSpec | undefined;
+  generators: GeneratorSpec[];
 };
 
 export type ModelSpec = {
@@ -254,4 +255,13 @@ export type AuthenticatorMethodSpec = AuthenticatorBasicMethodSpec;
 
 export type AuthenticatorBasicMethodSpec = {
   kind: "basic";
+};
+
+// ----- Generators
+
+export type GeneratorSpec = {
+  kind: "generator-client";
+  target: string;
+  api: string;
+  output?: string;
 };

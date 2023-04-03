@@ -69,6 +69,7 @@ export const Populator = createWeakKeyword("populator");
 export const Populate = createWeakKeyword("populate");
 export const Path = createWeakKeyword("path");
 export const PATCH = createWeakKeyword("PATCH");
+export const Output = createWeakKeyword("output");
 export const Order = createWeakKeyword("order");
 export const Optional = createWeakKeyword("optional");
 export const One = createWeakKeyword("one");
@@ -79,12 +80,14 @@ export const Method = createWeakKeyword("method");
 export const Many = createWeakKeyword("many");
 export const List = createWeakKeyword("list");
 export const Limit = createWeakKeyword("limit");
+export const Js = createWeakKeyword("js");
 export const Input = createWeakKeyword("input");
 export const Inline = createWeakKeyword("inline");
 export const Identify = createWeakKeyword("identify");
 export const Hook = createWeakKeyword("hook");
 export const GET = createWeakKeyword("GET");
 export const Get = createWeakKeyword("get");
+export const Generate = createWeakKeyword("generate");
 export const From = createWeakKeyword("from");
 export const First = createWeakKeyword("first");
 export const Filter = createWeakKeyword("filter");
@@ -103,6 +106,7 @@ export const Custom = createWeakKeyword("custom");
 export const Create = createWeakKeyword("create");
 export const Count = createWeakKeyword("count");
 export const Computed = createWeakKeyword("computed");
+export const Client = createWeakKeyword("client");
 export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
 export const Basic = createWeakKeyword("basic");
@@ -111,6 +115,7 @@ export const Auth = createWeakKeyword("auth");
 export const Asc = createWeakKeyword("asc");
 export const As = createWeakKeyword("as");
 export const Arg = createWeakKeyword("arg");
+export const Api = createWeakKeyword("api");
 export const Action = createWeakKeyword("action");
 
 export const Null = createKeyword("null");
@@ -190,6 +195,7 @@ export const GaudiTokens = [
   Populate,
   Path,
   PATCH,
+  Output,
   Order,
   Optional,
   One,
@@ -200,12 +206,14 @@ export const GaudiTokens = [
   Many,
   List,
   Limit,
+  Js,
   Input,
   Inline,
   Identify,
   Hook,
   GET,
   Get,
+  Generate,
   From,
   First,
   Filter,
@@ -224,6 +232,7 @@ export const GaudiTokens = [
   Create,
   Count,
   Computed,
+  Client,
   Cardinality,
   By,
   Basic,
@@ -232,6 +241,7 @@ export const GaudiTokens = [
   Asc,
   As,
   Arg,
+  Api,
   Action,
   Null,
   True,

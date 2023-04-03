@@ -4,9 +4,9 @@ import { Express, NextFunction, Request, Response, static as staticHandler } fro
 import { OpenAPIV3 } from "openapi-types";
 import { serve, setup } from "swagger-ui-express";
 
+import { buildEntrypoints } from "@src/builder/admin";
 import { buildOpenAPI } from "@src/builder/openAPI";
 import { saveOutputFile } from "@src/common/utils";
-import { buildEntrypoints } from "@src/runtime/server/admin";
 import { getAppContext } from "@src/runtime/server/context";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
 import { EndpointConfig } from "@src/runtime/server/types";

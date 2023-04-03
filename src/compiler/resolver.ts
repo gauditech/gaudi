@@ -218,6 +218,7 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "populator" }, resolvePopulator)
         .with({ kind: "runtime" }, () => undefined)
         .with({ kind: "authenticator" }, () => undefined)
+        .with({ kind: "generator" }, () => undefined)
         .exhaustive()
     );
   }

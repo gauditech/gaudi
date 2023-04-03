@@ -186,5 +186,6 @@
   "entrypoints": [],
   "populators": [],
   "resolveOrder": [],
-  "runtimes": []
+  "runtimes": [],
+  "generators": []
 }
