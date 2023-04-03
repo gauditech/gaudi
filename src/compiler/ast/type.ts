@@ -1,7 +1,7 @@
 export const primitiveTypes = ["integer", "float", "boolean", "null", "string"] as const;
 
 export type AnyType = { kind: "unknown" };
-export type PrimitiveType = { kind: "primitive"; primitiveKind: typeof primitiveTypes[number] };
+export type PrimitiveType = { kind: "primitive"; primitiveKind: (typeof primitiveTypes)[number] };
 export type ModelType = { kind: "model"; model: string };
 export type StructType = { kind: "struct"; types: Record<string, Type> };
 export type CollectionType = { kind: "collection"; type: Type };
@@ -11,7 +11,7 @@ export type Type = AnyType | PrimitiveType | ModelType | StructType | Collection
 
 export const unknownType: Type = { kind: "unknown" };
 
-// types are generated in a way that nesting will always be collection > unique > nullable
+// types are generated in a way that nesting will always be collection > nullable
 export type TypeModifier = "collection" | "nullable";
 
 export function addTypeModifier(type: Type, modifier: TypeModifier): Type {

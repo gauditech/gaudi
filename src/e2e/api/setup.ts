@@ -45,40 +45,51 @@ export function loadPopulatorData(filePath: string): PopulatorData[] {
   }
 }
 
+export type ApiTestSetupConfig = {
+  schemaName: string;
+  outputFolder: string;
+};
+export type ApiTestSetup = {
+  getServer: () => Server | undefined;
+  setup: () => Promise<ApiTestSetupConfig>;
+  destroy: () => Promise<void>;
+};
+
 export function createApiTestSetup(
   config: RuntimeConfig,
   blueprint: string,
   data: PopulatorData[]
-) {
+): ApiTestSetup {
   let server: Server | undefined;
 
   // test context
-  let schema: string;
+  let schemaName: string;
+  let outputFolder: string;
   let context: AppContext;
 
   /** Setup test env for execution. Call before running tests. */
-  async function setupApiTest() {
+  async function setupApiTest(): Promise<ApiTestSetupConfig> {
     // setup app context
-    schema = generateSchemaName();
+    schemaName = generateSchemaName();
     context = {
       config,
-      dbConn: createDbConn(config.dbConnUrl, { schema }),
+      dbConn: createDbConn(config.dbConnUrl, { schema: schemaName }),
     };
 
-    console.info(`Setup API tests ("${schema}")`);
+    console.info(`Setup API tests ("${schemaName}")`);
 
     // setup folders
-    const outputFolder = createOutputFolder(schema);
+    outputFolder = createOutputFolder(schemaName);
     console.info(`  created output folder ${outputFolder}`);
-    const def = buildDefinition(blueprint, outputFolder);
+    const def = await buildDefinition(blueprint, outputFolder);
     console.info(`  created definition`);
 
     // setup DB
-    await createDbSchema(context.dbConn, schema);
+    await createDbSchema(context.dbConn, schemaName);
     console.info(`  created DB schema`);
     await initializeDb(
       context.config.dbConnUrl,
-      schema,
+      schemaName,
       path.join(outputFolder, "db/schema.prisma")
     );
     console.info(`  initialized DB`);
@@ -96,21 +107,26 @@ export function createApiTestSetup(
     console.info(`  created app server`);
 
     console.info(`API tests setup finished`);
+
+    return {
+      schemaName,
+      outputFolder,
+    };
   }
 
   /** Cleanup test exec env. Call after running tests. */
   async function destroyApiTest() {
-    console.info(`Destroy API tests ("${schema}")`);
+    console.info(`Destroy API tests ("${schemaName}")`);
 
     if (server) {
       await closeAppServer(server);
       console.info(`  closed app server`);
     }
-    await removeDbSchema(context.dbConn, schema);
+    await removeDbSchema(context.dbConn, schemaName);
     console.info(`  removed DB schema`);
     context.dbConn.destroy();
     console.info(`  closed DB conn`);
-    removeOutputFolder(schema);
+    removeOutputFolder(outputFolder);
     console.info(`  removed output folder`);
 
     console.info(`API tests destroy finished`);
@@ -135,8 +151,8 @@ function generateSchemaName() {
 
 // ----- folders
 
-function createOutputFolder(schema: string) {
-  const folderPath = path.join(os.tmpdir(), `gaudi-${schema}`); // TODO: get system tmp path and create subfolder
+function createOutputFolder(name: string) {
+  const folderPath = path.join(os.tmpdir(), `gaudi-${name}`); // TODO: get system tmp path and create subfolder
 
   // clear output folder
   if (!fs.existsSync(folderPath)) {
@@ -156,10 +172,10 @@ function removeOutputFolder(path: string) {
 
 // ----- gaudi definition
 
-function buildDefinition(blueprint: string, outputFolder: string) {
+async function buildDefinition(blueprint: string, outputFolder: string) {
   const definition = compose(compileToOldSpec(blueprint));
   // use output folder for both regular output and gaudi for simpler testing
-  build(definition, { outputFolder, gaudiFolder: outputFolder });
+  await build(definition, { outputFolder, gaudiFolder: outputFolder });
 
   return definition;
 }

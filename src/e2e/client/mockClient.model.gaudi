@@ -1,0 +1,107 @@
+
+model Org {
+  field slug { type string }
+  field name { type string }
+  relation repos { from Repo, through org }
+}
+
+model Repo {
+  reference org { to Org }
+  field slug { type string }
+  field name { type string }
+  field description { type string }
+}
+
+generate client {
+  target js
+  api entrypoint
+  // test custom output folder
+  output "src/e2e/client/__snapshots__/mockClient/client"
+}
+
+generate client {
+  target js
+  api model
+  // test custom output folder
+  output "src/e2e/client/__snapshots__/mockClient/client"
+}
+
+entrypoint Org {
+  target Org
+  identify with slug
+
+  get endpoint {}
+  create endpoint {}
+  update endpoint {}
+  list endpoint {}
+  delete endpoint {}
+
+  custom endpoint {
+    path "customOneFetch"
+    method GET
+    cardinality one
+  }
+  custom endpoint {
+      path "customOneSubmit"
+      method PATCH
+      cardinality one
+  }
+  custom endpoint {
+      path "customManyFetch"
+      method GET
+      cardinality many
+  }
+  custom endpoint {
+      path "customManySubmit"
+      method POST
+      cardinality many
+  }
+
+  // repo entrypoints
+  entrypoint Repo {
+    target repos
+    // test non-default response
+    response { slug, name }
+
+    get endpoint {}
+    create endpoint {
+      action {
+        create {
+          // test changing input fields
+          virtual input virtProp { type string }
+        }
+      }
+    }
+    update endpoint {
+      action {
+        update {
+          // test denied input fields
+          deny { slug }
+        }
+      }
+    }
+    list endpoint {}
+    delete endpoint {}
+
+    custom endpoint {
+      path "customOneFetch"
+      method GET
+      cardinality one
+    }
+    custom endpoint {
+        path "customOneSubmit"
+        method PATCH
+        cardinality one
+    }
+    custom endpoint {
+        path "customManyFetch"
+        method GET
+        cardinality many
+    }
+    custom endpoint {
+        path "customManySubmit"
+        method POST
+        cardinality many
+    }
+  }
+}

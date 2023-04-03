@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { selectableId } from "../query/build";
+import { selectableId } from "../runtime/query/build";
 
 import { getRef } from "@src/common/refs";
 import { composeActionBlock } from "@src/composer/actions";

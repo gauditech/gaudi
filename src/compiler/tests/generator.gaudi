@@ -1,0 +1,6 @@
+
+generate client {
+  target js
+  api entrypoint
+  output "test/path/something"
+}

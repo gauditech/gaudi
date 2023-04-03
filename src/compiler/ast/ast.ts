@@ -5,7 +5,7 @@ export type ProjectASTs = {
   document: GlobalAtom[];
 };
 
-export type GlobalAtom = Model | Entrypoint | Populator | Runtime | Authenticator;
+export type GlobalAtom = Model | Entrypoint | Populator | Runtime | Authenticator | Generator;
 
 export type Model = {
   kind: "model";
@@ -274,6 +274,27 @@ export type RepeaterAtom = { keyword: TokenData } & (
   | { kind: "start"; value: IntegerLiteral }
   | { kind: "end"; value: IntegerLiteral }
 );
+
+export type GeneratorType = "client";
+export type Generator = {
+  kind: "generator";
+  keyword: TokenData;
+} & {
+  type: Extract<GeneratorType, "client">;
+  keywordType: TokenData;
+  atoms: GeneratorClientAtom[];
+};
+export type GeneratorClientAtom =
+  | {
+      kind: "target";
+      keyword: TokenData;
+      value: GeneratorClientAtomTarget;
+      keywordValue: TokenData;
+    }
+  | { kind: "api"; keyword: TokenData; value: GeneratorClientAtomApi; keywordValue: TokenData }
+  | { kind: "output"; keyword: TokenData; value: StringLiteral };
+export type GeneratorClientAtomTarget = "js";
+export type GeneratorClientAtomApi = "entrypoint" | "model";
 
 export type Runtime = {
   kind: "runtime";

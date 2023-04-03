@@ -22,6 +22,7 @@ import {
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
+  GeneratorSpec,
   HookCodeSpec,
   InputFieldSpec,
   ModelActionSpec,
@@ -48,6 +49,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Specification {
     populators: kindFilter(document, "populator").map(migratePopulator),
     runtimes: kindFilter(document, "runtime").map(migrateRuntime),
     authenticator: authenticator ? migrateAuthenticator(authenticator) : undefined,
+    generators: kindFilter(document, "generator").map(migrateGenerator),
   };
 
   return specification;
@@ -382,6 +384,23 @@ function migrateAuthenticator(_authenticator: AST.Authenticator): AuthenticatorS
   const accessTokenModelName = `${authUserModelName}AccessToken`;
 
   return { authUserModelName, accessTokenModelName, method: { kind: "basic" } };
+}
+
+function migrateGenerator(generator: AST.Generator): GeneratorSpec {
+  return match(generator)
+    .with({ type: "client" }, (g) => {
+      const target = kindFind(g.atoms, "target")!.value;
+      const api = kindFind(g.atoms, "api")!.value;
+      const output = kindFind(g.atoms, "output")?.value.value;
+
+      return {
+        kind: "generator-client" as const,
+        target,
+        api,
+        output,
+      };
+    })
+    .exhaustive();
 }
 
 function migrateModelHook(hook: AST.ModelHook): ModelHookSpec {

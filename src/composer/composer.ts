@@ -3,6 +3,7 @@ import { composeModels } from "./models";
 
 import { composeAuthenticator } from "@src/composer/authenticator";
 import { composeExecutionRuntimes } from "@src/composer/executionRuntimes";
+import { composeGenerators } from "@src/composer/generators";
 import { composePopulators } from "@src/composer/populators";
 import { Definition } from "@src/types/definition";
 import { Specification } from "@src/types/specification";
@@ -17,6 +18,7 @@ export function compose(input: Specification): Definition {
     populators: [],
     runtimes: [],
     authenticator: undefined,
+    generators: [],
   };
 
   // runtimes can be composed first because they don't have external deps
@@ -25,6 +27,7 @@ export function compose(input: Specification): Definition {
   composeAuthenticator(def, input.authenticator);
   composeEntrypoints(def, input.entrypoints);
   composePopulators(def, input.populators);
+  composeGenerators(def, input.generators);
 
   return def;
 }

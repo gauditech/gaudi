@@ -7,6 +7,7 @@ export type Definition = {
   populators: PopulatorDef[];
   runtimes: ExecutionRuntimeDef[];
   authenticator: AuthenticatorDef | undefined;
+  generators: GeneratorDef[];
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -631,4 +632,18 @@ export type AuthenticatorMethodDef = AuthenticatorBasicMethodDef;
 
 export type AuthenticatorBasicMethodDef = {
   kind: "basic";
+};
+
+// ----- Generators
+
+export type GeneratorDef = GeneratorClientDef;
+
+export type GeneratorClientTarget = "js";
+export type GeneratorClientApi = "entrypoint" | "model";
+
+export type GeneratorClientDef = {
+  kind: "generator-client";
+  target: GeneratorClientTarget;
+  api: GeneratorClientApi;
+  output?: string;
 };

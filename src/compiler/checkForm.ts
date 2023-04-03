@@ -12,6 +12,8 @@ import {
   ExecuteAction,
   FetchAction,
   Field,
+  Generator,
+  GeneratorType,
   GlobalAtom,
   Hook,
   Identifier,
@@ -99,8 +101,12 @@ export function checkForm(projectASTs: ProjectASTs) {
         .with({ kind: "populator" }, checkPopulator)
         .with({ kind: "runtime" }, () => undefined) // runtime is checked first
         .with({ kind: "authenticator" }, () => checkAuthenticator)
+        .with({ kind: "generator" }, () => checkGenerator)
         .exhaustive()
     );
+
+    const generators = kindFilter(document, "generator");
+    checkNoDuplicateGenerators(generators);
   }
 
   function checkModel(model: Model) {
@@ -296,6 +302,41 @@ export function checkForm(projectASTs: ProjectASTs) {
   function checkAuthenticator(authenticator: Authenticator) {
     containsAtoms(authenticator, "method");
     noDuplicateAtoms(authenticator, "method");
+  }
+
+  function checkGenerator(generator: Generator) {
+    match(generator).with({ type: "client" }, checkClientGenerator).exhaustive();
+  }
+  function checkClientGenerator(generator: Generator) {
+    containsAtoms(generator, "target", "api");
+    noDuplicateAtoms(generator, "target", "api");
+  }
+
+  function checkNoDuplicateGenerators(generators: Generator[]) {
+    const generatorTag: string[] = [];
+
+    generators.forEach((generator) => {
+      match(generator)
+        .with({ type: "client" }, (g) => {
+          const type = g.type;
+          const target = kindFind(g.atoms, "target")?.value;
+          const api = kindFind(g.atoms, "api")?.value;
+
+          const tag = `${type}-${target}-${api}`;
+          if (generatorTag.includes(tag)) {
+            errors.push(
+              new CompilerError(g.keyword, ErrorCode.DuplicateGenerator, {
+                type,
+                target,
+                api,
+              })
+            );
+          }
+
+          generatorTag.push(tag);
+        })
+        .exhaustive();
+    });
   }
 
   function checkHook(hook: Hook<boolean, boolean>) {

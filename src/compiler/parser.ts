@@ -33,6 +33,11 @@ import {
   FieldAtom,
   FieldValidationHook,
   FloatLiteral,
+  Generator,
+  GeneratorClientAtom,
+  GeneratorClientAtomApi,
+  GeneratorClientAtomTarget,
+  GeneratorType,
   GlobalAtom,
   Hook,
   Identifier,
@@ -97,6 +102,7 @@ class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => document.push(this.SUBRULE(this.populator)) },
         { ALT: () => document.push(this.SUBRULE(this.runtime)) },
         { ALT: () => document.push(this.SUBRULE(this.authenticator)) },
+        { ALT: () => document.push(this.SUBRULE(this.generator)) },
       ]);
     });
 
@@ -1024,6 +1030,51 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return { kind: "authenticator", atoms, keyword };
+  });
+
+  generator = this.RULE("generator", (): Generator => {
+    const atoms: GeneratorClientAtom[] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Generate));
+    const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Client) }]);
+    const keywordType = getTokenData(typeToken);
+    const type = typeToken.image as GeneratorType;
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR2([
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Target));
+            const typeToken = this.OR3([{ ALT: () => this.CONSUME(L.Js) }]);
+            const keywordValue = getTokenData(typeToken);
+            const value = typeToken.image as GeneratorClientAtomTarget;
+            atoms.push({ kind: "target", keyword, value, keywordValue });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Api));
+            const typeToken = this.OR4([
+              { ALT: () => this.CONSUME(L.Entrypoint) },
+              { ALT: () => this.CONSUME(L.Model) },
+            ]);
+            const keywordValue = getTokenData(typeToken);
+            const value = typeToken.image as GeneratorClientAtomApi;
+            atoms.push({ kind: "api", keyword, value, keywordValue });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Output));
+            const value = this.SUBRULE1(this.string);
+            atoms.push({ kind: "output", keyword, value });
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "generator", type, atoms, keyword, keywordType };
   });
 
   modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", true, false);
