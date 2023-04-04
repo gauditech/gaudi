@@ -17,7 +17,7 @@ describe("entrypoint", () => {
     }
 
     entrypoint Orgs {
-      target Org
+      target Org as org
       identify with slug
 
       list endpoint {}
@@ -37,7 +37,7 @@ describe("entrypoint", () => {
           path "somePath"
 
           action {
-            update {}
+            update org as newOrg {}
           }
         }
       }

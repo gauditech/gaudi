@@ -251,9 +251,8 @@ describe("populator composer", () => {
       }
       `;
 
-    const spec = compileToOldSpec(bp);
-    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-      `"Overlap between iterator context and targets context: myvar"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"This name is already defined in current scope"`
     );
   });
 
@@ -280,9 +279,8 @@ describe("populator composer", () => {
     }
     `;
 
-    const spec = compileToOldSpec(bp);
-    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-      `"Shadowing iterator names is not allowed: iter"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"This name is already defined in current scope"`
     );
   });
 

@@ -14,6 +14,7 @@ export enum ErrorCode {
   DuplicateAuthBlock,
   NoRuntimeDefinedForHook,
   DuplicateModelAtom,
+  DuplicateCustomEndpointPath,
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
@@ -35,10 +36,13 @@ export enum ErrorCode {
   CantResolveModelAtomWrongKind,
   CantResolveExpressionReference,
   SelectCantNest,
+  InvalidDefaultAction,
+  NonDefaultModelActionRequiresAlias,
   // Type Errors
   UnexpectedType,
   UnexpectedFieldType,
   VirtualInputType,
+  NameAlreadyInScope,
 }
 
 function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>): string {
@@ -63,8 +67,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Hook with source can't be used without a runtime`;
     case ErrorCode.DuplicateModelAtom:
       return `Duplicate model member definition`;
+    case ErrorCode.DuplicateCustomEndpointPath:
+      return `Custom endpoints on the same HTTP method must have unique paths in one entrypoint`;
     case ErrorCode.DuplicateActionAtom:
-      return `Field used twice in single action`;
+      return `Field used multiple times in a single action`;
     case ErrorCode.DuplicatePopulateSet:
       return `Duplicate populate set field`;
     case ErrorCode.DuplicateHookArg:
@@ -103,6 +109,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve expression reference`;
     case ErrorCode.SelectCantNest:
       return `Can't can't write nested select for this reference`;
+    case ErrorCode.InvalidDefaultAction:
+      return `When overriding default action it must match with current endpoint`;
+    case ErrorCode.NonDefaultModelActionRequiresAlias:
+      return `Non default "create" or "update" actions require alias`;
     case ErrorCode.UnexpectedType:
       return (
         `Unexpected type\n` +
@@ -115,6 +125,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Field type must be a non null primitive type`;
     case ErrorCode.VirtualInputType:
       return `Virtual input type must be a non null primitive type`;
+    case ErrorCode.NameAlreadyInScope:
+      return `This name is already defined in current scope`;
   }
 }
 

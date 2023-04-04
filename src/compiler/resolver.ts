@@ -19,6 +19,7 @@ import {
   FieldValidationHook,
   GlobalAtom,
   Hook,
+  Identifier,
   IdentifierRef,
   Model,
   ModelAction,
@@ -345,7 +346,7 @@ export function resolve(projectASTs: ProjectASTs) {
           const target = from.identifierPath[i];
           as.ref = target.ref;
           as.type = target.type;
-          scope.context[as.identifier.text] = as.type;
+          addToScope(scope, as.identifier, as.type);
         });
         scope.model = undefined;
       } else {
@@ -466,7 +467,7 @@ export function resolve(projectASTs: ProjectASTs) {
     scope: Scope
   ) {
     let currentModel: string | undefined;
-    let alias: { name: string; type: Type } | undefined;
+    let alias: { name: Identifier; type: Type } | undefined;
 
     const target = kindFind(entrypoint.atoms, "target");
     if (target) {
@@ -486,7 +487,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (target.as) {
         target.as.identifier.ref = target.identifier.ref;
         target.as.identifier.type = target.identifier.type;
-        alias = { name: target.as.identifier.identifier.text, type: target.identifier.type };
+        alias = { name: target.as.identifier.identifier, type: target.identifier.type };
       }
     }
 
@@ -508,7 +509,7 @@ export function resolve(projectASTs: ProjectASTs) {
     );
 
     const childEntrypointScope = _.cloneDeep(scope);
-    if (alias) childEntrypointScope.context[alias.name] = alias.type;
+    if (alias) addToScope(childEntrypointScope, alias.name, alias.type);
     kindFilter(entrypoint.atoms, "entrypoint").forEach((entrypoint) =>
       resolveEntrypoint(entrypoint, currentModel, childEntrypointScope)
     );
@@ -517,7 +518,7 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveEndpoint(
     endpoint: Endpoint,
     model: string | undefined,
-    alias: { name: string; type: Type } | undefined,
+    alias: { name: Identifier; type: Type } | undefined,
     scope: Scope
   ) {
     // add current target alias to all endpoints with cardinality one
@@ -530,7 +531,7 @@ export function resolve(projectASTs: ProjectASTs) {
       case "get":
       case "delete":
       case "update": {
-        if (alias) scope.context[alias.name] = alias.type;
+        if (alias) addToScope(scope, alias.name, alias.type);
         break;
       }
       default:
@@ -573,7 +574,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (currentModel && action.as) {
       action.as.identifier.ref = { kind: "model", model: currentModel };
       action.as.identifier.type = { kind: "model", model: currentModel };
-      scope.context[action.as.identifier.identifier.text] = action.as.identifier.type;
+      addToScope(scope, action.as.identifier.identifier, action.as.identifier.type);
     }
 
     scope = { ...scope, model: currentModel };
@@ -606,6 +607,25 @@ export function resolve(projectASTs: ProjectASTs) {
         })
         .exhaustive()
     );
+
+    const allIdentifiers = action.atoms.flatMap((a) =>
+      match(a)
+        .with({ kind: "virtualInput" }, ({ name, ref, type }) => [{ identifier: name, ref, type }])
+        .with({ kind: "set" }, ({ target }) => target)
+        .with({ kind: "referenceThrough" }, ({ target }) => target)
+        .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
+        .with({ kind: "input" }, ({ fields }) => fields.map(({ field }) => field))
+        .exhaustive()
+    );
+    const references = allIdentifiers.filter(
+      ({ ref }) => ref.kind === "modelAtom" && ref.atomKind === "reference"
+    );
+    references.forEach((r) => {
+      const idName = r.identifier.text + "_id";
+      if (allIdentifiers.map((i) => i.identifier.text).includes(idName)) {
+        errors.push(new CompilerError(r.identifier.token, ErrorCode.DuplicateActionAtom));
+      }
+    });
   }
 
   function resolveDeleteAction(action: DeleteAction, scope: Scope) {
@@ -630,7 +650,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (query) {
       resolveQuery(query, scope);
       // TODO: for now, we magicaly get non modified type from fetch query
-      scope.context[action.name.text] = removeTypeModifier(query.type, "collection", "nullable");
+      addToScope(scope, action.name, removeTypeModifier(query.type, "collection", "nullable"));
     }
   }
 
@@ -661,7 +681,7 @@ export function resolve(projectASTs: ProjectASTs) {
       type = addTypeModifier(type, "nullable");
     }
     virtualInput.type = type;
-    scope.context[virtualInput.name.text] = type;
+    addToScope(scope, virtualInput.name, type);
   }
 
   function resolvePopulator(populator: Populator) {
@@ -696,13 +716,13 @@ export function resolve(projectASTs: ProjectASTs) {
       if (target.as) {
         target.as.identifier.ref = target.identifier.ref;
         target.as.identifier.type = target.identifier.type;
-        scope.context[target.as.identifier.identifier.text] = target.identifier.type;
+        addToScope(scope, target.as.identifier.identifier, target.identifier.type);
       }
     }
 
     kindFilter(populate.atoms, "repeat").forEach((repeater) => {
       if (repeater.repeater.name) {
-        scope.context[repeater.repeater.name.text] = {
+        const type: Type = {
           kind: "struct",
           types: {
             start: { kind: "primitive", primitiveKind: "integer" },
@@ -710,6 +730,7 @@ export function resolve(projectASTs: ProjectASTs) {
             current: { kind: "primitive", primitiveKind: "integer" },
           },
         };
+        addToScope(scope, repeater.repeater.name, type);
       }
     });
 
@@ -1154,6 +1175,15 @@ export function resolve(projectASTs: ProjectASTs) {
       return false;
     }
     return true;
+  }
+
+  function addToScope(scope: Scope, name: Identifier, type: Type) {
+    // fails if name already exists in context or if there is a model defined with the same name
+    if (scope.context[name.text] || getAllModels().find((m) => m.name.text === name.text)) {
+      errors.push(new CompilerError(name.token, ErrorCode.NameAlreadyInScope));
+    } else {
+      scope.context[name.text] = type;
+    }
   }
 
   resolveDocument(projectASTs.document);
