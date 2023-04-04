@@ -3,7 +3,7 @@ import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
 
-import { kindFilter, kindFind } from "@src/common/patternFilter";
+import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureExists } from "@src/common/utils";
 import {
   AUTH_TARGET_MODEL_NAME,

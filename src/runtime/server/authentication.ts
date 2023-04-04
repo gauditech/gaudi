@@ -35,26 +35,30 @@ export function buildBasicAuthenticationHandler(def: Definition, options?: Authe
   return async (req: Request, resp: Response, next: NextFunction) => {
     // return promise to make this handler async since passport's `authenticate` is synchronous
     await new Promise((resolve, reject) => {
-      passportInstance.authenticate("bearer", { session: false }, (err, user) => {
-        try {
-          if (err) {
+      passportInstance.authenticate(
+        "bearer",
+        { session: false },
+        (err: unknown, user?: Express.User) => {
+          try {
+            if (err) {
+              reject(err);
+            }
+
+            // allow anonymous access
+            if (!user && !(options?.allowAnonymous ?? false)) {
+              throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
+            }
+
+            // share user with other handlers
+            req.user = user;
+
+            resolve(user); // this just resolves promise with some value (nobody will read this)
+          } catch (err: unknown) {
+            errorResponse(err);
             reject(err);
           }
-
-          // allow anonymous access
-          if (!user && !(options?.allowAnonymous ?? false)) {
-            throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
-          }
-
-          // share user with other handlers
-          req.user = user;
-
-          resolve(user); // this just resolves promise with some value (nobody will read this)
-        } catch (err: unknown) {
-          errorResponse(err);
-          reject(err);
         }
-      })(req, resp, next);
+      )(req, resp, next);
     });
   };
 }

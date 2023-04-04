@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { FilteredKind } from "@src/common/patternFilter";
+import { FilteredByKind } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
@@ -97,7 +97,7 @@ export function getTypedIterator(def: Definition, path: string[], ctx: VarContex
 export function getTypedChangesetContext(path: string[], ctx: VarContext): void {
   ensureEqual(path.length, 2, `Changeset path can't be nested: ${path.join(".")}`);
   const [name, value] = path;
-  const chx = ctx[name] as FilteredKind<ContextRecord, "changeset-value">;
+  const chx = ctx[name] as FilteredByKind<ContextRecord, "changeset-value">;
   ensureEqual(chx.kind, "changeset-value");
   ensureEqual(_.includes(chx.keys, value), true, `${value} is not in the changeset context`);
 }

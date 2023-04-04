@@ -65,6 +65,7 @@ export enum TokenTypes {
 }
 
 export enum TokenModifiers {
+  none = 0,
   declaration = 1,
   definition = 2,
   readonly = 4,
