@@ -309,7 +309,13 @@ export function resolve(projectASTs: ProjectASTs) {
     const fromModel = from?.identifier.ref.kind === "model" ? from.identifier.ref.model : undefined;
 
     const through = kindFind(relation.atoms, "through");
-    if (through) resolveModelAtomRef(through.identifier, fromModel, "reference");
+    if (through) {
+      resolveModelAtomRef(through.identifier, fromModel, "reference");
+      const throughModel = getTypeModel(through.identifier.type)
+      if (throughModel && throughModel !== model.name.text) {
+        errors.push(new CompilerError(through.identifier.identifier.token, ErrorCode.ThroughReferenceHasIncorrectModel))
+      }
+    }
 
     relation.ref = {
       kind: "modelAtom",

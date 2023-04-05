@@ -31,6 +31,7 @@ export enum ErrorCode {
   CantResolveAuthModel,
   CantResolveModelAtom,
   CantResolveStructMember,
+  ThroughReferenceHasIncorrectModel,
   TypeHasNoMembers,
   CantFindNameInScope,
   CantResolveModelAtomWrongKind,
@@ -100,6 +101,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve model member with this name`;
     case ErrorCode.CantResolveStructMember:
       return `Can't resolve member of primitive types`;
+    case ErrorCode.ThroughReferenceHasIncorrectModel:
+      return `This reference has incorrect model`;
     case ErrorCode.TypeHasNoMembers:
       return `This type has no members`;
     case ErrorCode.CantFindNameInScope:
