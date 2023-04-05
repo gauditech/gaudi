@@ -216,9 +216,8 @@ export type ApiResponseError<D, E extends string> = {
     error: ApiResponseErrorBody<E>;
 };
 export type ListData = {
-    filter?: Record<string, any>;
-    page?: number;
-    pageSize?: number;
+    limit?: number;
+    offset?: number;
 };
 export type GetApiClientFn<ID, R, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (data: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;

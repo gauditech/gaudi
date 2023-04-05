@@ -476,8 +476,8 @@ describe("compose actions", () => {
               }
             `;
 
-              expect(() => compose(compileToOldSpec(bp))).toThrowError(
-                `Only custom endpoint can have method, cardinality and path configuration`
+              expect(() => compileToOldSpec(bp)).toThrowError(
+                `'endpoint' cannot contain a '${property}'`
               );
             });
           })

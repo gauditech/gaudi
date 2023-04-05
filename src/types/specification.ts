@@ -119,6 +119,7 @@ export type EndpointSpec = {
   cardinality?: EndpointCardinality;
   method?: EndpointMethod;
   path?: string;
+  pageable: boolean;
 };
 
 export type ActionSpec =

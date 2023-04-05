@@ -6,6 +6,7 @@ export enum ErrorCode {
   ParserError,
   // Check form Errors
   MustContainAtom,
+  CannotContainAtom,
   DuplicateAtom,
   DuplicateModel,
   DuplicateRuntime,
@@ -21,7 +22,6 @@ export enum ErrorCode {
   RespondsCanOnlyBeUsedInCustomEndpoint,
   QueryFromAliasWrongLength,
   QueryMaxOneAggregate,
-  ConfiguringNonCustomEndpoint,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -47,6 +47,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `${params?.message}`;
     case ErrorCode.MustContainAtom:
       return `'${params?.parent}' must contain a '${params?.atom}'`;
+    case ErrorCode.CannotContainAtom:
+      return `'${params?.parent}' cannot contain a '${params?.atom}'`;
     case ErrorCode.DuplicateAtom:
       return `Duplicate '${params?.atom}' in a '${params?.parent}'`;
     case ErrorCode.DuplicateModel:
@@ -77,8 +79,6 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Query from alias must have same length as definition`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
-    case ErrorCode.ConfiguringNonCustomEndpoint:
-      return `Only custom endpoint can have method, cardinality and path configuration`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain 'source' or 'inline' definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:

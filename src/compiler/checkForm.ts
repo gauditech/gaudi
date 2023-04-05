@@ -193,21 +193,20 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkEndpoint(endpoint: Endpoint) {
-    noDuplicateAtoms(endpoint, "action", "authorize", "method", "cardinality", "path");
+    noDuplicateAtoms(endpoint, "action", "authorize", "method", "cardinality", "path", "pageable");
 
     if (endpoint.type === "custom") {
       containsAtoms(endpoint, "method", "cardinality", "path");
     } else {
-      const customAtoms = kindFilter(endpoint.atoms, "method", "cardinality", "path");
-      if (customAtoms.length > 0) {
-        errors.push(
-          new CompilerError(customAtoms[0].keyword, ErrorCode.ConfiguringNonCustomEndpoint)
-        );
-      }
+      cannotContainAtoms(endpoint, "method", "cardinality", "path");
     }
 
     const action = kindFind(endpoint.atoms, "action");
     if (action) action.actions.map((a) => checkAction(a, endpoint.type));
+
+    if (endpoint.type !== "list") {
+      cannotContainAtoms(endpoint, "pageable");
+    }
   }
 
   function checkAction(action: Action, endpointType: EndpointType) {
@@ -381,7 +380,6 @@ export function checkForm(projectASTs: ProjectASTs) {
       }
     });
   }
-
   function containsAtoms<
     ast extends { kind: string; keyword: TokenData; atoms: { kind: string }[] },
     k extends ast["atoms"][number]["kind"]
@@ -391,6 +389,23 @@ export function checkForm(projectASTs: ProjectASTs) {
       if (filteredAtoms.length === 0) {
         errors.push(
           new CompilerError(parent.keyword, ErrorCode.MustContainAtom, {
+            parent: parent.kind,
+            atom: kind,
+          })
+        );
+      }
+    });
+  }
+
+  function cannotContainAtoms<
+    ast extends { kind: string; keyword: TokenData; atoms: { kind: string }[] },
+    k extends ast["atoms"][number]["kind"]
+  >(parent: ast, ...kinds: k[]) {
+    kinds.forEach((kind) => {
+      const filteredAtoms = parent.atoms.filter((a) => a.kind === kind);
+      if (filteredAtoms.length !== 0) {
+        errors.push(
+          new CompilerError(parent.keyword, ErrorCode.CannotContainAtom, {
             parent: parent.kind,
             atom: kind,
           })

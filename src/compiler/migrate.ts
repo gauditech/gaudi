@@ -183,6 +183,7 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
   const method = kindFind(endpoint.atoms, "method");
   const cardinality = kindFind(endpoint.atoms, "cardinality");
   const path = kindFind(endpoint.atoms, "path");
+  const pageable = kindFind(endpoint.atoms, "pageable");
 
   return {
     type: endpoint.type,
@@ -191,6 +192,7 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
     method: method?.method,
     cardinality: cardinality?.cardinality,
     path: path?.path.value,
+    pageable: pageable != null,
   };
 }
 

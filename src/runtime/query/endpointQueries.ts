@@ -81,10 +81,8 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
 
   const select = transformSelectPath(endpoint.target.select, endpoint.target.namePath, namePath);
 
-  const { limit, offset } =
-    endpoint.kind === "list" || endpoint.kind === "custom-many"
-      ? buildEndpointLimit(def, endpoint)
-      : { limit: undefined, offset: undefined };
+  // querying target can have paging
+  const { limit, offset } = buildEndpointLimit(endpoint) ?? {};
 
   const targetQuery = queryFromParts(
     def,
@@ -157,7 +155,8 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
         { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
       ];
 
-      const { limit, offset } = buildEndpointLimit(def, endpoint);
+      // response query should fetch by ID(s) so we shouldn't need paging, but it doesn't do that so we need to apply paging here as well
+      const { limit, offset } = buildEndpointLimit(endpoint) ?? {};
 
       const responseQuery = queryFromParts(
         def,
@@ -193,21 +192,23 @@ const EndpointParamPageLimitVar = "limit";
 const EndpointParamPageOffsetVar = "offset";
 
 function buildEndpointLimit(
-  def: Definition,
   endpoint: EndpointDef
-): { limit: TypedExprDef; offset: TypedExprDef } {
+): { limit: TypedExprDef; offset: TypedExprDef } | undefined {
   // TODO: limit depends on the endpoint
+  if (endpoint.kind === "list" && endpoint.pageable) {
+    return {
+      limit: {
+        kind: "variable",
+        name: EndpointParamPageLimitVar,
+        type: { type: "integer", nullable: false },
+      },
+      offset: {
+        kind: "variable",
+        name: EndpointParamPageOffsetVar,
+        type: { type: "integer", nullable: false },
+      },
+    };
+  }
 
-  return {
-    limit: {
-      kind: "variable",
-      name: EndpointParamPageLimitVar,
-      type: { type: "integer", nullable: false },
-    },
-    offset: {
-      kind: "variable",
-      name: EndpointParamPageOffsetVar,
-      type: { type: "integer", nullable: false },
-    },
-  };
+  return;
 }

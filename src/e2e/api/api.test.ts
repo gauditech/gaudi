@@ -36,8 +36,14 @@ describe("API endpoints", () => {
     });
 
     it("list", async () => {
-      const response = await request(getServer()).get("/org?limit=30&offset=1");
-      console.log("--RESPONSE", response.body);
+      const response = await request(getServer()).get("/org");
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toMatchSnapshot();
+    });
+
+    it("list with paging", async () => {
+      const response = await request(getServer()).get("/org?offset=1&limit=2");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();

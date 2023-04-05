@@ -196,8 +196,8 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     error: ApiResponseErrorBody<E>;
   };
 
-      
-  export type ListData = { filter?: Record<string, any>; page?: number; pageSize?: number };
+// TODO: add list search/filter parameter
+  export type ListData = { limit?: number; offset?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
@@ -301,9 +301,14 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
   
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
     return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}`;
-      // TODO: add data to URL params with URLSearchParams
-  
+      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+
+      const params = new URLSearchParams()
+      Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
+      const urlParams = params.toString()
+
+      const url = urlPath + (urlParams ? '?' + urlParams : '')
+
       return (
         makeRequest(clientOptions, url, {
           method: "GET",

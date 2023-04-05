@@ -276,6 +276,9 @@ export function buildTokens(
           buildKeyword(keyword);
           buildLiteral(path);
         })
+        .with({ kind: "pageable" }, ({ keyword }) => {
+          buildKeyword(keyword);
+        })
         .exhaustive()
     );
   }

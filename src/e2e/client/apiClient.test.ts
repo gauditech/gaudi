@@ -142,6 +142,34 @@ describe("api client lib", () => {
       `);
     });
 
+    it("list with paging", async () => {
+      const response = await client.api.org.list({ offset: 1, limit: 2 });
+
+      ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
+
+      expect(response.status).toBe(200);
+      expect(response.data).toMatchInlineSnapshot(`
+        [
+          {
+            "description": "Org 2 description",
+            "id": 2,
+            "name": "Org 2",
+            "nameAndDesc": "Org 2: Org 2 description",
+            "slug": "org2",
+            "summary": "Org 2Org 2 description",
+          },
+          {
+            "description": "Org 3 description",
+            "id": 3,
+            "name": "Org 3",
+            "nameAndDesc": "Org 3: Org 3 description",
+            "slug": "org3",
+            "summary": "Org 3Org 3 description",
+          },
+        ]
+      `);
+    });
+
     it("create", async () => {
       const data = {
         name: "Org NEW",

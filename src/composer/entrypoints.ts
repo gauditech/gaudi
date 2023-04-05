@@ -259,6 +259,7 @@ function processEndpoints(
           kind: "list",
           authSelect,
           authorize,
+          pageable: endSpec.pageable,
           response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
           // actions,
           parentContext,

@@ -44,6 +44,7 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
     },
   ]);
 
+  // --- custom endpoint path suffix
   const targetNs: PathFragment = { kind: "namespace", name: _.snakeCase(endpoint.target.name) };
   // custom endpoint add their own suffix
   const customPathSuffix: PathFragment[] =
@@ -56,11 +57,25 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
         ]
       : [];
 
-  // path parameters
-  const limitDefault = 2;
+  // --- path parameters
+
+  // default page size
+  const limitDefault = 20; // TODO: put this in some config
+  const isPageable = endpoint.kind === "list" && endpoint.pageable;
   const pathParams: PathQueryParameter[] = [
-    { kind: "query", name: "limit", type: "integer", required: false, defaultValue: limitDefault },
-    { kind: "query", name: "offset", type: "integer", required: false, defaultValue: 0 },
+    // paging parameters
+    ...(isPageable
+      ? ([
+          {
+            kind: "query",
+            name: "limit",
+            type: "integer",
+            required: false,
+            defaultValue: limitDefault,
+          },
+          { kind: "query", name: "offset", type: "integer", required: false, defaultValue: 0 },
+        ] as const)
+      : []),
   ];
 
   switch (endpoint.kind) {

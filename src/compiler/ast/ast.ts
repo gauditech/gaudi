@@ -148,6 +148,7 @@ export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "method"; method: EndpointMethod; methodKeyword: TokenData }
   | { kind: "cardinality"; cardinality: EndpointCardinality; cardinalityKeyword: TokenData }
   | { kind: "path"; path: StringLiteral }
+  | { kind: "pageable" }
 );
 
 export type Action = ModelAction | DeleteAction | ExecuteAction | FetchAction;
