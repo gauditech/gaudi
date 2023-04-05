@@ -93,9 +93,11 @@ describe("API endpoints", () => {
 
     it("custom create", async () => {
       const data = {
-        name: "Org Custom NEW",
-        slug: "orgCustomNEW",
-        description: "Org custom NEW description",
+        newOrg: {
+          name: "Org Custom NEW",
+          slug: "orgCustomNEW",
+          description: "Org custom NEW description",
+        },
       };
       const postResp = await request(getServer()).post("/org/customCreate").send(data);
 
@@ -110,9 +112,11 @@ describe("API endpoints", () => {
 
     it("custom update", async () => {
       const data = {
-        slug: "org2",
-        name: "Org custom 2A",
-        description: "Org custom 2A description",
+        newOrg: {
+          slug: "org2",
+          name: "Org custom 2A",
+          description: "Org custom 2A description",
+        },
       };
 
       const patchResp = await request(getServer()).patch("/org/org2/customUpdate").send(data);

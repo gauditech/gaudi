@@ -224,7 +224,7 @@ entrypoint Orgs {
     method PATCH
     path "customUpdate"
     action {
-      update {}
+      update org as newOrg {}
     }
   }
   custom endpoint {
@@ -232,7 +232,7 @@ entrypoint Orgs {
     method DELETE
     path "customDelete"
     action {
-      delete {}
+      delete org {}
     }
   }
 
@@ -248,7 +248,7 @@ entrypoint Orgs {
     method POST
     path "customCreate"
     action {
-      create {}
+      create Org as newOrg {}
     }
   }
 
@@ -258,12 +258,12 @@ entrypoint Orgs {
   list endpoint {}
   create endpoint {
     action {
-      create as org {}
+      create {}
     }
   }
   update endpoint {
     action {
-      update as org {}
+      update {}
     }
   }
   delete endpoint {}
@@ -291,7 +291,7 @@ entrypoint Orgs {
     }
     update endpoint {
       action {
-        update repo {}
+        update {}
       }
     }
     delete endpoint {}
