@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { getRef } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
+import { ensureEqual } from "@src/common/utils";
 import { processSelect } from "@src/composer/entrypoints";
 import {
   VarContext,
@@ -77,16 +77,10 @@ export function composeQuery(
     })
   );
 
-  return queryFromParts(
-    def,
-    qspec.name,
-    fromPath,
-    filter,
-    select,
-    orderBy,
-    qspec.limit,
-    qspec.offset
-  );
+  const limit = qspec.limit && composeExpression(def, qspec.limit, fromPath, ctx, aliases);
+  const offset = qspec.offset && composeExpression(def, qspec.offset, fromPath, ctx, aliases);
+
+  return queryFromParts(def, qspec.name, fromPath, filter, select, orderBy, limit, offset);
 }
 
 export function composeAggregate(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {

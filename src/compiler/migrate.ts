@@ -143,8 +143,8 @@ function migrateQuery(query: AST.Query | AST.AnonymousQuery): QuerySpec {
     fromAlias: from?.as?.identifierPath.map((i) => i.identifier.text),
     filter: filter ? migrateExpr(filter.expr) : undefined,
     orderBy,
-    limit: limit?.value.value,
-    offset: offset?.value.value,
+    limit: limit && { kind: "literal", literal: limit.value.value },
+    offset: offset && { kind: "literal", literal: offset.value.value },
     select: select ? migrateSelect(select.select) : undefined,
     aggregate: aggregate ? { name: aggregate.aggregate } : undefined,
   };

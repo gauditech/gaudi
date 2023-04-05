@@ -1,8 +1,8 @@
-import { flatMap, mapValues } from "lodash";
+import _, { flatMap, mapValues } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
+import { match } from "ts-pattern";
 
-import { PathFragmentIdentifier, buildEndpointPath } from "./query";
-
+import { buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import {
   Definition,
@@ -102,26 +102,38 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
       pathPrefix +
       [
         "",
-        ...endpointPath.fragments.map((frag) => {
-          switch (frag.kind) {
-            case "namespace":
-              return frag.name;
-            case "identifier":
-              return `{${frag.alias}}`;
-          }
-        }),
+        ..._.chain(endpointPath.fragments)
+          .map((frag) => {
+            return match(frag)
+              .with({ kind: "namespace" }, (f) => f.name)
+              .with({ kind: "identifier" }, (f) => `{${f.name}}`)
+              .with({ kind: "query" }, () => null)
+              .exhaustive();
+          })
+          .compact() // remove nulls
+          .value(),
       ].join("/");
 
-    const parameters = endpointPath.fragments
-      .filter((f): f is PathFragmentIdentifier => f.kind === "identifier")
-      .map(
-        (f): OpenAPIV3.ParameterObject => ({
-          in: "path",
-          name: f.alias,
-          required: true,
-          schema: { type: convertToOpenAPIType(f.type) },
-        })
-      );
+    const parameters = _.chain(endpointPath.fragments)
+      .map((fragment): OpenAPIV3.ParameterObject | null => {
+        return match(fragment)
+          .with({ kind: "identifier" }, (f) => ({
+            in: "path",
+            name: f.name,
+            required: true,
+            schema: { type: convertToOpenAPIType(f.type) },
+          }))
+          .with({ kind: "query" }, (f) => ({
+            in: "query",
+            name: f.name,
+            required: true,
+            schema: { type: convertToOpenAPIType(f.type) },
+          }))
+          .with({ kind: "namespace" }, () => null)
+          .exhaustive();
+      })
+      .compact()
+      .value();
 
     const pathItem = paths[path] ?? { parameters };
     pathItem[method] = buildEndpointOperation(endpoint, parameters.length > 0);

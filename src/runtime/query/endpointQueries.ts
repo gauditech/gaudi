@@ -44,6 +44,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
     authQueryTree = buildQueryTree(def, query);
   }
 
+  // --- parent context queries
   const parentContextQueryTrees = endpoint.parentContext.map((target, index) => {
     const parentTarget = index === 0 ? null : endpoint.parentContext[index - 1];
     const namePath = parentTarget ? [parentTarget.retType, target.name] : [target.retType];
@@ -56,11 +57,14 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
 
     const select = transformSelectPath(target.select, target.namePath, namePath);
 
+    // these queries return records targeted by some unique identifier, so no need for limit/offset
+
     const query = queryFromParts(def, target.alias, namePath, filter, select);
+
     return buildQueryTree(def, query);
   });
 
-  // repeat the same for target
+  // --- target query
   const parentTarget = _.last(endpoint.parentContext);
   const namePath = parentTarget
     ? [parentTarget.retType, endpoint.target.name]
@@ -77,10 +81,24 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
 
   const select = transformSelectPath(endpoint.target.select, endpoint.target.namePath, namePath);
 
-  const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
+  const { limit, offset } =
+    endpoint.kind === "list" || endpoint.kind === "custom-many"
+      ? buildEndpointLimit(def, endpoint)
+      : { limit: undefined, offset: undefined };
+
+  const targetQuery = queryFromParts(
+    def,
+    endpoint.target.alias,
+    namePath,
+    filter,
+    select,
+    undefined,
+    limit,
+    offset
+  );
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  // response query
+  // --- response query
   const responseQueryTree = buildResponseQueryTree(def, endpoint);
 
   return { authQueryTree, parentContextQueryTrees, targetQueryTree, responseQueryTree };
@@ -138,13 +156,18 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
       const orderBy: QueryOrderByAtomDef[] = [
         { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
       ];
+
+      const { limit, offset } = buildEndpointLimit(def, endpoint);
+
       const responseQuery = queryFromParts(
         def,
         endpoint.target.alias,
         namePath,
         filter,
         response,
-        orderBy
+        orderBy,
+        limit,
+        offset
       );
       return buildQueryTree(def, responseQuery);
     }
@@ -163,5 +186,28 @@ function targetToFilter(target: TargetDef): TypedExprDef {
         name: target.identifyWith.paramName,
       },
     ],
+  };
+}
+
+const EndpointParamPageLimitVar = "limit";
+const EndpointParamPageOffsetVar = "offset";
+
+function buildEndpointLimit(
+  def: Definition,
+  endpoint: EndpointDef
+): { limit: TypedExprDef; offset: TypedExprDef } {
+  // TODO: limit depends on the endpoint
+
+  return {
+    limit: {
+      kind: "variable",
+      name: EndpointParamPageLimitVar,
+      type: { type: "integer", nullable: false },
+    },
+    offset: {
+      kind: "variable",
+      name: EndpointParamPageOffsetVar,
+      type: { type: "integer", nullable: false },
+    },
   };
 }

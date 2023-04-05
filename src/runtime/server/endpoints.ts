@@ -1,5 +1,6 @@
 import { Express, Request, Response } from "express";
 import _ from "lodash";
+import { match } from "ts-pattern";
 
 import { executeArithmetics } from "../common/arithmetics";
 import {
@@ -11,7 +12,12 @@ import {
 
 import { Vars } from "./vars";
 
-import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
+import {
+  EndpointPath,
+  PathFragmentIdentifier,
+  PathQueryParameter,
+  buildEndpointPath,
+} from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
@@ -179,10 +185,12 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
+          req.params;
 
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const params = Object.assign({}, req.params, req.query);
+          const pathParamVars = new Vars(extractPathParams(endpointPath, params));
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -197,6 +205,8 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             contextVars.set("@auth", result);
           }
 
+          console.log("PARENT CTX");
+
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
@@ -207,16 +217,19 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           await authorizeEndpoint(endpoint, contextVars);
 
+          console.log("TARGET");
           // fetch target query (list, so no findOne here)
           const tQt = queries.targetQueryTree;
           const results = await executeQueryTree(tx, def, tQt, pathParamVars, pids);
           contextVars.set(tQt.alias, results);
+          console.log("RESULTS", results);
 
           // FIXME run custom actions
 
           // After all actions are done, fetch the list of records again. Ignore contextVars
           // cache as custom actions may have modified the records.
 
+          console.log("RESPONSE");
           let parentIds: number[] = [];
           const parentTarget = _.last(endpoint.parentContext);
           if (parentTarget) {
@@ -695,22 +708,61 @@ export function buildCustomManyEndpoint(
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
-export function extractPathParams(path: EndpointPath, sourceMap: Record<string, string>): any {
-  const paramPairs = path.fragments
-    .filter((frag): frag is PathFragmentIdentifier => frag.kind === "identifier")
-    .map((frag): [string, string | number] => [
-      frag.alias,
-      validatePathIdentifier(frag, sourceMap[frag.alias]),
-    ]);
+export function extractPathParams(
+  path: EndpointPath,
+  sourceMap: Record<string, string>
+): Record<string, string | number> {
+  console.log("------------ SOURCE", sourceMap);
+  return _.chain(path.fragments)
+    .filter(
+      (frag): frag is PathFragmentIdentifier | PathQueryParameter =>
+        frag.kind === "identifier" || frag.kind === "query"
+    )
+    .map((frag): [string, string | number] | undefined => {
+      const val = validatePathIdentifier(frag, sourceMap[frag.name]);
+      if (val == null) return;
 
-  return Object.fromEntries(paramPairs);
+      return [frag.name, val];
+    })
+    .compact()
+    .fromPairs()
+    .value();
 }
 
 /**
  * Validate and convert an input to a proper type based on definition.
  */
-function validatePathIdentifier(fragment: PathFragmentIdentifier, val: string): string | number {
-  switch (fragment.type) {
+function validatePathIdentifier(
+  fragment: PathFragmentIdentifier | PathQueryParameter,
+  val: string
+): string | number | undefined {
+  console.log("-------- FRAG", fragment, val);
+  try {
+    return match(fragment)
+      .with({ kind: "identifier" }, (f) => {
+        return convertPathValue(val, f.type);
+      })
+      .with({ kind: "query" }, (f) => {
+        const cVal = convertPathValue(val, f.type, f.defaultValue);
+        if (cVal == null && f.required) {
+          throw new Error(`Missing required URL parameter ${f.name}`);
+        }
+        return cVal;
+      })
+      .exhaustive();
+  } catch (err: any) {
+    throw new Error(`Invalid value for URL parameter "${fragment.name}": ${err.message ?? err}`);
+  }
+}
+
+function convertPathValue(
+  val: string,
+  type: "text" | "integer",
+  defaultValue?: string | number
+): string | number {
+  if (val == null && defaultValue != null) return defaultValue;
+
+  switch (type) {
     case "integer": {
       const n = Number(val);
       if (Number.isNaN(n)) {

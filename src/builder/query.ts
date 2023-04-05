@@ -11,14 +11,25 @@ export type PathFragmentNamespace = { kind: "namespace"; name: string };
 export type PathFragmentIdentifier = {
   kind: "identifier";
   type: "integer" | "text";
-  alias: string;
+  name: string;
 };
-export type PathFragment = PathFragmentNamespace | PathFragmentIdentifier;
+export type PathQueryParameter = {
+  kind: "query";
+  name: string;
+  required: boolean;
+} & ({ type: "text"; defaultValue?: string } | { type: "integer"; defaultValue?: number });
+export type PathFragment = PathFragmentNamespace | PathFragmentIdentifier | PathQueryParameter;
 
 export function buildEndpointPath(endpoint: EndpointDef): EndpointPath {
   const fragments = buildFragments(endpoint);
   return {
-    fullPath: ["", ...fragments.map(fragmentToString)].join("/"),
+    fullPath: [
+      "",
+      ...fragments
+        // filter out non-path fragments
+        .filter((frag) => frag.kind === "namespace" || frag.kind === "identifier")
+        .map(fragmentToString),
+    ].join("/"),
     fragments,
   };
 }
@@ -29,7 +40,7 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
     {
       kind: "identifier",
       type: target.identifyWith.type,
-      alias: target.identifyWith.paramName,
+      name: target.identifyWith.paramName,
     },
   ]);
 
@@ -45,6 +56,13 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
         ]
       : [];
 
+  // path parameters
+  const limitDefault = 2;
+  const pathParams: PathQueryParameter[] = [
+    { kind: "query", name: "limit", type: "integer", required: false, defaultValue: limitDefault },
+    { kind: "query", name: "offset", type: "integer", required: false, defaultValue: 0 },
+  ];
+
   switch (endpoint.kind) {
     case "get":
     case "update":
@@ -56,7 +74,7 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
         {
           kind: "identifier",
           type: endpoint.target.identifyWith.type,
-          alias: endpoint.target.identifyWith.paramName,
+          name: endpoint.target.identifyWith.paramName,
         },
         ...customPathSuffix,
       ];
@@ -64,7 +82,7 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
     case "create":
     case "list":
     case "custom-many": {
-      return [...contextFragments, targetNs, ...customPathSuffix];
+      return [...contextFragments, targetNs, ...customPathSuffix, ...pathParams];
     }
   }
 }
@@ -74,6 +92,6 @@ function fragmentToString(fragment: PathFragment) {
     case "namespace":
       return fragment.name;
     case "identifier":
-      return `:${fragment.alias}`;
+      return `:${fragment.name}`;
   }
 }

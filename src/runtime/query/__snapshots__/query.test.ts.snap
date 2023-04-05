@@ -1278,10 +1278,24 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "issues",
     ],
     "kind": "query",
-    "limit": undefined,
+    "limit": {
+      "kind": "variable",
+      "name": "limit",
+      "type": {
+        "nullable": false,
+        "type": "integer",
+      },
+    },
     "modelRefKey": "Repo",
     "name": "$target_2",
-    "offset": undefined,
+    "offset": {
+      "kind": "variable",
+      "name": "offset",
+      "type": {
+        "nullable": false,
+        "type": "integer",
+      },
+    },
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
@@ -1413,6 +1427,10 @@ FROM
   JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo"."id" IN :@context_ids
+LIMIT
+  :limit
+OFFSET
+  :offset
 
 
 ",
@@ -1989,7 +2007,7 @@ FROM
           JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
       ) as topn
     WHERE
-      topn."__row_number" <= 15
+      topn."__row_number" <= (10 + 5)
       AND topn."__row_number" > 5
   ) AS "Org.recent_repos" ON "Org"."id" = "Org.recent_repos"."__join_connection"
 WHERE

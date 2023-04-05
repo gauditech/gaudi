@@ -66,7 +66,6 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
   const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
   const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
 
-  const offset = q.offset ?? 0;
   if (q.limit && isBatching) {
     return source`
     SELECT * FROM 
@@ -80,7 +79,7 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
         ${aggrJoins}
         ${joins}
         ${where}) as topn
-    WHERE topn."__row_number" <= ${q.limit + offset} AND topn."__row_number" > ${offset}
+    WHERE ${limitToBatchingString(def, q.limit, q.offset)}
     `;
   } else {
     const qstr = source`
@@ -91,7 +90,7 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
       ${joins}
       ${where}
       ${orderByToString(def, q.orderBy)}
-      ${limitToString(q.limit, offset)}`;
+      ${limitToString(def, q.limit, q.offset)}`;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
@@ -105,8 +104,32 @@ function orderByToString(def: Definition, orderBy: QueryOrderByAtomDef[] | undef
     .join(", ")}`;
 }
 
-function limitToString(limit: number | undefined, offset: number): string {
-  return limit ? `LIMIT ${limit} OFFSET ${offset}` : "";
+function limitToBatchingString(
+  def: Definition,
+  limit: TypedExprDef,
+  offset: TypedExprDef | undefined
+): string {
+  if (limit == null) return "";
+
+  const limitStr = expressionToString(def, limit);
+  const offsetStr = offset != null ? expressionToString(def, offset) : 0;
+
+  // topn."__row_number" <= ${q.limit + offset} AND topn."__row_number" > ${offset}
+  return `
+    topn."__row_number" <= (${limitStr} + ${offsetStr}) AND topn."__row_number" > ${offsetStr}
+  `;
+}
+
+function limitToString(
+  def: Definition,
+  limit: TypedExprDef | undefined,
+  offset: TypedExprDef | undefined
+): string {
+  if (limit == null) return "";
+
+  return `LIMIT ${expressionToString(def, limit)} ${
+    offset ? `OFFSET ${expressionToString(def, offset)}` : ""
+  }`;
 }
 
 function joinToString(

@@ -36,7 +36,8 @@ describe("API endpoints", () => {
     });
 
     it("list", async () => {
-      const response = await request(getServer()).get("/org");
+      const response = await request(getServer()).get("/org?limit=30&offset=1");
+      console.log("--RESPONSE", response.body);
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();

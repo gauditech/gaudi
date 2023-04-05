@@ -110,8 +110,8 @@ export function queryFromParts(
   filter: TypedExprDef,
   select: SelectDef,
   orderBy?: QueryOrderByAtomDef[],
-  limit?: number,
-  offset?: number
+  limit?: TypedExprDef,
+  offset?: TypedExprDef
 ): QueryDef {
   if (select.length === 0) {
     return queryFromParts(
@@ -233,6 +233,7 @@ function queriesFromSelect(def: Definition, model: ModelDef, select: SelectDef):
 }
 
 function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem): QueryDef {
+  // TODO: can we have limit/offset here
   const namePath = [model.name, select.name];
   return queryFromParts(
     def,
