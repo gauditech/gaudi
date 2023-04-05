@@ -38,6 +38,7 @@ export enum ErrorCode {
   SelectCantNest,
   InvalidDefaultAction,
   NonDefaultModelActionRequiresAlias,
+  UnsuportedTargetInCreateAction,
   // Type Errors
   UnexpectedType,
   UnexpectedFieldType,
@@ -113,6 +114,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `When overriding default action it must match with current endpoint`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
+    case ErrorCode.UnsuportedTargetInCreateAction:
+      return `This target is not supported in a 'create' action, 'create' can only have model and relation as a target`;
     case ErrorCode.UnexpectedType:
       return (
         `Unexpected type\n` +

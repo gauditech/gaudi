@@ -406,7 +406,15 @@ export type RefModelAtom = {
   model: string;
   unique: boolean;
 };
-export type RefContext = { kind: "context" };
+export type ContextKind =
+  | "entrypointTarget"
+  | "populateTarget"
+  | "fetch"
+  | "virtualInput"
+  | "repeater"
+  | "authToken"
+  | "struct";
+export type RefContext = { kind: "context"; contextKind: ContextKind };
 export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;
 
 export const unresolvedRef: Ref = { kind: "unresolved" };
