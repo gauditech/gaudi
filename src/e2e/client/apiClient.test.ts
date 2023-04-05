@@ -222,9 +222,11 @@ describe("api client lib", () => {
 
     it("custom create", async () => {
       const data = {
-        name: "Org Custom NEW",
-        slug: "orgCustomNEW",
-        description: "Org custom NEW description",
+        newOrg: {
+          name: "Org Custom NEW",
+          slug: "orgCustomNEW",
+          description: "Org custom NEW description",
+        },
       };
       const postResp = await client.api.org.customCreate(data);
 
@@ -249,9 +251,11 @@ describe("api client lib", () => {
 
     it("custom update", async () => {
       const data = {
-        slug: "org2",
-        name: "Org custom 2A",
-        description: "Org custom 2A description",
+        newOrg: {
+          slug: "org2",
+          name: "Org custom 2A",
+          description: "Org custom 2A description",
+        },
       };
 
       const patchResp = await client.api.org.customUpdate("org2", data);
