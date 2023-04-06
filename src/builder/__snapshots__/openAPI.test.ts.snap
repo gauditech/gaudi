@@ -32,9 +32,41 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Resource not found",
+          },
         },
       },
-      "parameters": [],
+      "parameters": [
+        {
+          "in": "query",
+          "name": "limit",
+          "required": true,
+          "schema": {
+            "type": "integer",
+          },
+        },
+        {
+          "in": "query",
+          "name": "offset",
+          "required": true,
+          "schema": {
+            "type": "integer",
+          },
+        },
+      ],
       "post": {
         "requestBody": {
           "content": {
@@ -256,6 +288,22 @@ exports[`openAPI build spec 1`] = `
           "required": true,
           "schema": {
             "type": "string",
+          },
+        },
+        {
+          "in": "query",
+          "name": "limit",
+          "required": true,
+          "schema": {
+            "type": "integer",
+          },
+        },
+        {
+          "in": "query",
+          "name": "offset",
+          "required": true,
+          "schema": {
+            "type": "integer",
           },
         },
       ],

@@ -18,7 +18,7 @@ describe("openAPI", () => {
       identify with slug
 
       get endpoint {}
-      list endpoint {}
+      list endpoint { pageable }
       create endpoint {}
       update endpoint {}
       delete endpoint {}
@@ -28,7 +28,7 @@ describe("openAPI", () => {
         response { id, name }
 
         get endpoint {}
-        list endpoint {}
+        list endpoint { pageable }
         create endpoint {}
         update endpoint {}
         delete endpoint {}
