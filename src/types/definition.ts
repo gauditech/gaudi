@@ -80,9 +80,8 @@ export type QueryDef = {
   filter: TypedExprDef;
   select: SelectDef;
   orderBy: QueryOrderByAtomDef[] | undefined;
-  // TODO: how to type TypedExprDef to make sure it ends with eg. "integer"?
-  limit?: TypedExprDef;
-  offset?: TypedExprDef;
+  limit: number | undefined;
+  offset: number | undefined;
 };
 
 export type QueryOrderByAtomDef = { exp: TypedExprDef; direction: "asc" | "desc" };

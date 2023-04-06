@@ -77,10 +77,16 @@ export function composeQuery(
     })
   );
 
-  const limit = qspec.limit && composeExpression(def, qspec.limit, fromPath, ctx, aliases);
-  const offset = qspec.offset && composeExpression(def, qspec.offset, fromPath, ctx, aliases);
-
-  return queryFromParts(def, qspec.name, fromPath, filter, select, orderBy, limit, offset);
+  return queryFromParts(
+    def,
+    qspec.name,
+    fromPath,
+    filter,
+    select,
+    orderBy,
+    qspec.limit,
+    qspec.offset
+  );
 }
 
 export function composeAggregate(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {

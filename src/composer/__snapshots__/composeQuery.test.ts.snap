@@ -173,11 +173,7 @@ exports[`compose model queries order and limit 1`] = `
     "repos",
   ],
   "kind": "query",
-  "limit": {
-    "kind": "literal",
-    "type": "integer",
-    "value": 5,
-  },
+  "limit": 5,
   "modelRefKey": "Org",
   "name": "recent_repos",
   "offset": undefined,

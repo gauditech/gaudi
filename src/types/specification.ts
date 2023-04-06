@@ -77,8 +77,8 @@ export type QuerySpec = {
   fromAlias?: string[];
   filter?: ExpSpec;
   orderBy?: { field: string[]; order?: "asc" | "desc" }[];
-  limit?: ExpSpec;
-  offset?: ExpSpec;
+  limit?: number;
+  offset?: number;
   select?: SelectAST;
   aggregate?: {
     name: string;

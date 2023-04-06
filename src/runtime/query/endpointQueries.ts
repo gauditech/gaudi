@@ -57,8 +57,6 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
 
     const select = transformSelectPath(target.select, target.namePath, namePath);
 
-    // these queries return records targeted by some unique identifier, so no need for limit/offset
-
     const query = queryFromParts(def, target.alias, namePath, filter, select);
 
     return buildQueryTree(def, query);
@@ -81,19 +79,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
 
   const select = transformSelectPath(endpoint.target.select, endpoint.target.namePath, namePath);
 
-  // querying target can have paging
-  const { limit, offset } = buildEndpointLimit(endpoint) ?? {};
-
-  const targetQuery = queryFromParts(
-    def,
-    endpoint.target.alias,
-    namePath,
-    filter,
-    select,
-    undefined,
-    limit,
-    offset
-  );
+  const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
   // --- response query
@@ -155,18 +141,13 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
         { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
       ];
 
-      // response query should fetch by ID(s) so we shouldn't need paging, but it doesn't do that so we need to apply paging here as well
-      const { limit, offset } = buildEndpointLimit(endpoint) ?? {};
-
       const responseQuery = queryFromParts(
         def,
         endpoint.target.alias,
         namePath,
         filter,
         response,
-        orderBy,
-        limit,
-        offset
+        orderBy
       );
       return buildQueryTree(def, responseQuery);
     }
@@ -186,29 +167,4 @@ function targetToFilter(target: TargetDef): TypedExprDef {
       },
     ],
   };
-}
-
-const EndpointParamPageLimitVar = "limit";
-const EndpointParamPageOffsetVar = "offset";
-
-function buildEndpointLimit(
-  endpoint: EndpointDef
-): { limit: TypedExprDef; offset: TypedExprDef } | undefined {
-  // TODO: limit depends on the endpoint
-  if (endpoint.kind === "list" && endpoint.pageable) {
-    return {
-      limit: {
-        kind: "variable",
-        name: EndpointParamPageLimitVar,
-        type: { type: "integer", nullable: false },
-      },
-      offset: {
-        kind: "variable",
-        name: EndpointParamPageOffsetVar,
-        type: { type: "integer", nullable: false },
-      },
-    };
-  }
-
-  return;
 }

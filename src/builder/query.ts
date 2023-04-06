@@ -60,7 +60,7 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
   // --- path parameters
 
   // default page size
-  const limitDefault = 20; // TODO: put this in some config
+  const limitDefault = 20; // TODO: put this in some config or validation
   const isPageable = endpoint.kind === "list" && endpoint.pageable;
   const pathParams: PathQueryParameter[] = [
     // paging parameters

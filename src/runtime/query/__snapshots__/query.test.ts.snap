@@ -1989,7 +1989,7 @@ FROM
           JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
       ) as topn
     WHERE
-      topn."__row_number" <= (10 + 5)
+      topn."__row_number" <= 15
       AND topn."__row_number" > 5
   ) AS "Org.recent_repos" ON "Org"."id" = "Org.recent_repos"."__join_connection"
 WHERE

@@ -23,6 +23,7 @@ import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
 import { executeEndpointActions } from "@src/runtime/common/action";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
+import { QueryTree } from "@src/runtime/query/build";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
 import { executeQueryTree } from "@src/runtime/query/exec";
 import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
@@ -205,8 +206,6 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             contextVars.set("@auth", result);
           }
 
-          console.log("PARENT CTX");
-
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
@@ -217,19 +216,16 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           await authorizeEndpoint(endpoint, contextVars);
 
-          console.log("TARGET");
           // fetch target query (list, so no findOne here)
-          const tQt = queries.targetQueryTree;
+          const tQt = decorateListQuery(queries.targetQueryTree, pathParamVars);
           const results = await executeQueryTree(tx, def, tQt, pathParamVars, pids);
           contextVars.set(tQt.alias, results);
-          console.log("RESULTS", results);
 
           // FIXME run custom actions
 
           // After all actions are done, fetch the list of records again. Ignore contextVars
           // cache as custom actions may have modified the records.
 
-          console.log("RESPONSE");
           let parentIds: number[] = [];
           const parentTarget = _.last(endpoint.parentContext);
           if (parentTarget) {
@@ -238,7 +234,8 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           const responseResults = await executeQueryTree(
             tx,
             def,
-            queries.responseQueryTree,
+            // repsonse query should fetch only by IDs but currently it doesn't so we have to decorate it as well
+            decorateListQuery(queries.responseQueryTree, pathParamVars),
             pathParamVars,
             parentIds
           );
@@ -712,7 +709,6 @@ export function extractPathParams(
   path: EndpointPath,
   sourceMap: Record<string, string>
 ): Record<string, string | number> {
-  console.log("------------ SOURCE", sourceMap);
   return _.chain(path.fragments)
     .filter(
       (frag): frag is PathFragmentIdentifier | PathQueryParameter =>
@@ -736,7 +732,6 @@ function validatePathIdentifier(
   fragment: PathFragmentIdentifier | PathQueryParameter,
   val: string
 ): string | number | undefined {
-  console.log("-------- FRAG", fragment, val);
   try {
     return match(fragment)
       .with({ kind: "identifier" }, (f) => {
@@ -846,4 +841,30 @@ async function executeTypedFunction(func: TypedFunction, contextVars: Vars): Pro
   }
 
   return executeArithmetics(func, getValue);
+}
+
+/**
+ * Queries are built statically so we have decorate them according to runtime params.
+ * This fn decorates list endpoint specific params
+ *
+ * Decorators:
+ *  - limit/offset - adds paging params when they appear in params
+ *  - search - TODO: list additional search filter
+ */
+function decorateListQuery(qt: QueryTree, params: Vars): QueryTree {
+  // TODO: read var names from central place/config/...
+  // use the same var names as when reading url params
+  const limit = params.get("limit") ?? qt.query.limit;
+  const offset = params.get("offset") ?? qt.query.offset;
+
+  return {
+    ...qt,
+    query: {
+      ...qt.query,
+
+      // decorate with limit/offset
+      limit,
+      offset,
+    },
+  };
 }

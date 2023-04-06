@@ -110,8 +110,8 @@ export function queryFromParts(
   filter: TypedExprDef,
   select: SelectDef,
   orderBy?: QueryOrderByAtomDef[],
-  limit?: TypedExprDef,
-  offset?: TypedExprDef
+  limit?: number,
+  offset?: number
 ): QueryDef {
   if (select.length === 0) {
     return queryFromParts(
