@@ -187,7 +187,6 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          req.params;
 
           tx = await getAppContext(req).dbConn.transaction();
 
