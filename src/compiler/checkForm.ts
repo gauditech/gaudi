@@ -273,7 +273,12 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkModelAction(action: ModelAction, endpointType: EndpointType) {
     if (!action.target && action.kind !== endpointType) {
-      errors.push(new CompilerError(action.keyword, ErrorCode.InvalidDefaultAction));
+      errors.push(
+        new CompilerError(action.keyword, ErrorCode.InvalidDefaultAction, {
+          action: action.kind,
+          endpoint: endpointType,
+        })
+      );
     }
     if (action.target && !action.as) {
       errors.push(
@@ -311,7 +316,12 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkDeleteAction(action: DeleteAction, endpointType: EndpointType) {
     if (!action.target && action.kind !== endpointType) {
-      errors.push(new CompilerError(action.keyword, ErrorCode.InvalidDefaultAction));
+      errors.push(
+        new CompilerError(action.keyword, ErrorCode.InvalidDefaultAction, {
+          action: "delete",
+          endpoint: endpointType,
+        })
+      );
     }
   }
 

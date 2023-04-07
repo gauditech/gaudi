@@ -127,7 +127,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.SelectCantNest:
       return `Can't write nested select for this reference`;
     case ErrorCode.InvalidDefaultAction:
-      return `When overriding default action it must match with current endpoint`;
+      return `When overriding default action, its kind must match with current endpoint kind. "${params?.action}" is not a valid default action override in "${params?.endpoint}" endpoint`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
     case ErrorCode.UnsuportedTargetInCreateAction:

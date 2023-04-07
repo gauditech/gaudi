@@ -71,7 +71,10 @@ describe("compiler errors", () => {
             }
           }
         }`;
-      expectError(bp, `When overriding default action it must match with current endpoint`);
+      expectError(
+        bp,
+        `When overriding default action, its kind must match with current endpoint kind. "create" is not a valid default action override in "update" endpoint`
+      );
     });
     it("fails when reference and its field are being set at the same time", () => {
       const bp = `
