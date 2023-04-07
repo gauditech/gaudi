@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { match } from "ts-pattern";
 
 import {
@@ -6,6 +7,7 @@ import {
   AnonymousQuery,
   Authenticator,
   Computed,
+  DeleteAction,
   Endpoint,
   EndpointType,
   Entrypoint,
@@ -13,7 +15,6 @@ import {
   FetchAction,
   Field,
   Generator,
-  GeneratorType,
   GlobalAtom,
   Hook,
   Identifier,
@@ -181,6 +182,46 @@ export function checkForm(projectASTs: ProjectASTs) {
     containsAtoms(entrypoint, "target");
     noDuplicateAtoms(entrypoint, "target", "identifyWith", "authorize", "response");
 
+    const endpoints = kindFilter(entrypoint.atoms, "endpoint");
+    const definedEndpoints = new Set<EndpointType>();
+    endpoints.forEach(({ type, keywordType }) => {
+      if (type === "custom") return;
+      if (definedEndpoints.has(type)) {
+        errors.push(new CompilerError(keywordType, ErrorCode.DuplicateEndpoint, { type }));
+      } else {
+        definedEndpoints.add(type);
+      }
+    });
+
+    // check custom endpoint unique path
+    const entrypointPaths = new Set(
+      _.compact(
+        kindFilter(entrypoint.atoms, "entrypoint").map(
+          (e) => kindFind(e.atoms, "target")?.identifier.identifier.text
+        )
+      )
+    );
+    const customPaths = new Set<string>();
+    endpoints.forEach((e) => {
+      if (e.type !== "custom") return;
+      const cardinality = kindFind(e.atoms, "cardinality")?.cardinality;
+      const method = kindFind(e.atoms, "method")?.method;
+      const path = kindFind(e.atoms, "path")?.path.value;
+      if (!cardinality || !method || !path) return;
+      const key = cardinality + "#" + method + "#" + path;
+      if (customPaths.has(key)) {
+        errors.push(new CompilerError(e.keywordType, ErrorCode.DuplicateCustomEndpointPath));
+      } else if (cardinality === "one" && entrypointPaths.has(path)) {
+        errors.push(
+          new CompilerError(e.keywordType, ErrorCode.CustomEndpointPathClashesWithEnrtrypoint, {
+            path,
+          })
+        );
+      } else {
+        customPaths.add(key);
+      }
+    });
+
     entrypoint.atoms.forEach((a) =>
       match(a)
         .with({ kind: "response" }, ({ select }) => checkSelect(select))
@@ -207,19 +248,47 @@ export function checkForm(projectASTs: ProjectASTs) {
     }
 
     const action = kindFind(endpoint.atoms, "action");
-    if (action) action.actions.map((a) => checkAction(a, endpoint.type));
+    if (action) {
+      action.actions.map((a) => checkAction(a, endpoint.type));
+
+      const responds = _.compact(
+        kindFilter(action.actions, "execute").map((a) => kindFind(a.atoms, "responds"))
+      );
+      if (responds.length > 1) {
+        errors.push(
+          new CompilerError(responds[1].keyword, ErrorCode.MoreThanOneRespondsInEndpoint)
+        );
+      }
+    }
   }
 
   function checkAction(action: Action, endpointType: EndpointType) {
     match(action)
-      .with({ kind: "create" }, { kind: "update" }, checkModelAction)
-      .with({ kind: "delete" }, () => undefined)
+      .with({ kind: "create" }, { kind: "update" }, (a) => checkModelAction(a, endpointType))
+      .with({ kind: "delete" }, (a) => checkDeleteAction(a, endpointType))
       .with({ kind: "execute" }, (a) => checkExecuteAction(a, endpointType))
       .with({ kind: "fetch" }, checkFetchAction)
       .exhaustive();
   }
 
-  function checkModelAction(action: ModelAction) {
+  function checkModelAction(action: ModelAction, endpointType: EndpointType) {
+    if (!action.target && action.kind !== endpointType) {
+      errors.push(
+        new CompilerError(action.keyword, ErrorCode.InvalidDefaultAction, {
+          action: action.kind,
+          endpoint: endpointType,
+        })
+      );
+    }
+    if (action.target && !action.as) {
+      errors.push(
+        new CompilerError(
+          action.target[0].identifier.token,
+          ErrorCode.NonDefaultModelActionRequiresAlias
+        )
+      );
+    }
+
     const allIdentifiers = action.atoms.flatMap((a) =>
       match(a)
         .with({ kind: "set" }, ({ target, set }) => {
@@ -243,6 +312,17 @@ export function checkForm(projectASTs: ProjectASTs) {
         .exhaustive()
     );
     noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+  }
+
+  function checkDeleteAction(action: DeleteAction, endpointType: EndpointType) {
+    if (!action.target && action.kind !== endpointType) {
+      errors.push(
+        new CompilerError(action.keyword, ErrorCode.InvalidDefaultAction, {
+          action: "delete",
+          endpoint: endpointType,
+        })
+      );
+    }
   }
 
   function checkExecuteAction(action: ExecuteAction, endpointType: EndpointType) {
@@ -373,7 +453,7 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function noDuplicateNames(identifiers: Identifier[], errorCode: ErrorCode) {
     const takenNames: Set<string> = new Set();
-    return identifiers.flatMap(({ text, token }) => {
+    identifiers.forEach(({ text, token }) => {
       if (takenNames.has(text)) {
         errors.push(new CompilerError(token, errorCode));
       } else {

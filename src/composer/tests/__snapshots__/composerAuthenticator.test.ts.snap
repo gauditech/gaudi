@@ -673,6 +673,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "name": "password",
                 "setter": {
                   "fieldsetAccess": [
+                    "authUser",
                     "password",
                   ],
                   "kind": "fieldset-virtual-input",
@@ -697,6 +698,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "name": "name",
                 "setter": {
                   "fieldsetAccess": [
+                    "authUser",
                     "name",
                   ],
                   "kind": "fieldset-input",
@@ -708,6 +710,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "name": "username",
                 "setter": {
                   "fieldsetAccess": [
+                    "authUser",
                     "username",
                   ],
                   "kind": "fieldset-input",
@@ -769,7 +772,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               },
             ],
             "targetPath": [
-              "authUser",
+              "AuthUser",
             ],
           },
           {
@@ -840,59 +843,65 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
           "kind": "record",
           "nullable": false,
           "record": {
-            "name": {
-              "kind": "field",
+            "authUser": {
+              "kind": "record",
               "nullable": false,
-              "required": true,
-              "type": "text",
-              "validators": [
-                {
-                  "args": [
+              "record": {
+                "name": {
+                  "kind": "field",
+                  "nullable": false,
+                  "required": true,
+                  "type": "text",
+                  "validators": [
                     {
-                      "type": "integer",
-                      "value": 1,
+                      "args": [
+                        {
+                          "type": "integer",
+                          "value": 1,
+                        },
+                      ],
+                      "inputType": "text",
+                      "name": "minLength",
                     },
                   ],
-                  "inputType": "text",
-                  "name": "minLength",
                 },
-              ],
-            },
-            "password": {
-              "kind": "field",
-              "nullable": false,
-              "required": true,
-              "type": "text",
-              "validators": [
-                {
-                  "args": [
+                "password": {
+                  "kind": "field",
+                  "nullable": false,
+                  "required": true,
+                  "type": "text",
+                  "validators": [
                     {
-                      "type": "integer",
-                      "value": 8,
+                      "args": [
+                        {
+                          "type": "integer",
+                          "value": 8,
+                        },
+                      ],
+                      "inputType": "text",
+                      "name": "minLength",
                     },
                   ],
-                  "inputType": "text",
-                  "name": "minLength",
                 },
-              ],
-            },
-            "username": {
-              "kind": "field",
-              "nullable": false,
-              "required": true,
-              "type": "text",
-              "validators": [
-                {
-                  "args": [
+                "username": {
+                  "kind": "field",
+                  "nullable": false,
+                  "required": true,
+                  "type": "text",
+                  "validators": [
                     {
-                      "type": "integer",
-                      "value": 8,
+                      "args": [
+                        {
+                          "type": "integer",
+                          "value": 8,
+                        },
+                      ],
+                      "inputType": "text",
+                      "name": "minLength",
                     },
                   ],
-                  "inputType": "text",
-                  "name": "minLength",
                 },
-              ],
+              },
             },
           },
         },

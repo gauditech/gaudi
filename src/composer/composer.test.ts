@@ -4,7 +4,6 @@ describe("compose models", () => {
   it("doesn't crash on empty blueprint", () => {
     expect(() => compose(compileToOldSpec(""))).not.toThrow();
   });
-
   it("fails on case insensitive duplicate field name", () => {
     const bp = `
     model Org {
@@ -12,66 +11,8 @@ describe("compose models", () => {
       field Name { type string }
     }
     `;
-
     expect(() => compose(compileToOldSpec(bp))).toThrowError("Items not unique!");
   });
-  it("fails on name colision between field and reference", () => {
-    const bp = `
-    model Org {
-      reference parent { to Org }
-      field parent { type string }
-    }
-    `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowError("Duplicate model member definition");
-  });
-  it("fails when relation doesn't point to a reference", () => {
-    const bp = `
-    model Org {
-      reference parent { to Org }
-      field name { type string }
-      relation children { from Org, through name }
-    }
-    `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Model member must be one of [reference], but field member was found"`
-    );
-  });
-  it("fails when relation points to a reference for another model", () => {
-    const bp = `
-    model Foo {
-      reference parent { to Foo }
-      reference baz { to Baz }
-    }
-    model Baz {
-      relation foos { from Foo, through parent }
-    }
-    `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Relation Baz.foos is pointing to a reference referencing a model Foo"`
-    );
-  });
-
-  it("correctly fail when not able to resolve a ref", () => {
-    const bp = `
-    model Org { reference no { to UnknownModel } }
-    `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Can't resolve model with this name"`
-    );
-  });
-
-  it("correctly fail when circular dependency is found", () => {
-    const bp = `
-    model Org {
-      computed foo { bar + 1 }
-      computed bar { foo - 1 }
-    }
-    `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Couldn't resolve the spec. The following refs are unresolved: Org.bar, Org.foo"`
-    );
-  });
-
   it("parses validators", () => {
     const bp = `
     model Org {

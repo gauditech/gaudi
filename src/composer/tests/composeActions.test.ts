@@ -87,30 +87,6 @@ describe("compose actions", () => {
       expect(endpoint.actions).toMatchSnapshot();
       expect(endpoint.fieldset).toMatchSnapshot();
     });
-    it("fails when reference and its field are being set at the same time", () => {
-      const bp = `
-    model Org { relation repos { from Repo, through org }}
-    model Repo { reference org { to Org }}
-    entrypoint Org {
-      target Org as org
-      entrypoint Repos {
-        target repos as repo
-        create endpoint {
-          action {
-            create as repo {
-              set org_id 1
-              set org org
-            }
-          }
-        }
-      }
-    }
-    `;
-      const spec = compileToOldSpec(bp);
-      expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-        `"Found duplicates: [org_id]"`
-      );
-    });
     it("correctly sets parent context", () => {
       const bp = `
     model Org {
@@ -166,7 +142,7 @@ describe("compose actions", () => {
       target Issue as issue
       update endpoint {
         action {
-          update issue {}
+          update {}
           update issue.repo.org as org {}
         }
       }
@@ -175,24 +151,6 @@ describe("compose actions", () => {
       const def = compose(compileToOldSpec(bp));
       const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
-    });
-    it("fails when default action override is invalid type", () => {
-      const bp = `
-    model Org {
-      field name { type string }
-    }
-    entrypoint Orgs {
-      target Org
-      update endpoint {
-        action {
-          create {}
-        }
-      }
-    }`;
-      const spec = compileToOldSpec(bp);
-      expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-        `"Mismatching context action: overriding update endpoint with a create action on default target"`
-      );
     });
     it("succeeds with custom inputs", () => {
       const bp = `
@@ -245,30 +203,6 @@ describe("compose actions", () => {
       const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
-    it("fails when input and reference are on the same field", () => {
-      const bp = `
-    model Org {
-      reference extras { to OrgExtra, unique }
-    }
-    model OrgExtra {
-      relation org { from Org, through extras }
-    }
-    entrypoint Orgs {
-      target Org as org
-      update endpoint {
-        action {
-          update org as ox {
-            input { extras_id }
-            reference extras through id
-          }
-        }
-      }
-    }`;
-      const spec = compileToOldSpec(bp);
-      expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(
-        `"Found duplicates: [extras_id]"`
-      );
-    });
     it("succeeds when virtual input is defined and referenced", () => {
       const bp = `
     model Org { field name { type string } }
@@ -290,27 +224,6 @@ describe("compose actions", () => {
       const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
-    it("fails when there's an input and deny for the same field", () => {
-      const bp = `
-    model Org {
-      field name { type string }
-    }
-    entrypoint Orgs {
-      target Org as org
-      update endpoint {
-        action {
-          update org as ox {
-            input { name }
-            deny { name }
-          }
-        }
-      }
-    }
-    `;
-      expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-        `"Field used twice in single action"`
-      );
-    });
     it.todo("succeeds to update through unique relation");
     it("sets default action if not given", () => {
       const bp = `
@@ -326,49 +239,6 @@ describe("compose actions", () => {
       const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
-    it("fails when custom action doesn't have an alias", () => {
-      const bp = `
-    model Org {
-      field name { type string }
-    }
-    entrypoint Orgs {
-      target Org as org
-      update endpoint {
-        action {
-          update {}
-          create Org {}
-        }
-      }
-    }
-    `;
-      expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-        `"Custom action must have an alias"`
-      );
-    });
-    test.each(["Repo", "repo", "org"])(
-      "fails when action alias uses existing model or context name %s",
-      (name) => {
-        const bp = `
-      model Org { relation repos { from Repo, through org }}
-      model Repo { reference org { to Org }}
-      entrypoint O {
-        target Org as org
-        entrypoint R {
-          target repos as repo
-          create endpoint {
-            action {
-              create as repo {}
-              create Repo as ${name} {}
-            }
-          }
-        }
-      }
-    `;
-        expect(() => compose(compileToOldSpec(bp))).toThrowError(
-          `Cannot name an action with ${name}, name already exists in the context`
-        );
-      }
-    );
     it.todo("gives proper error when nested cycle is detected");
     // create user { create profile { create user {} } }
   });
@@ -395,7 +265,7 @@ describe("compose actions", () => {
         path "customUpdate"
 
         action {
-          update {}
+          update org as newOrg {}
         }
       }
       custom endpoint {
@@ -404,7 +274,7 @@ describe("compose actions", () => {
         path "customDelete"
 
         action {
-          delete {}
+          delete org {}
         }
       }
 
@@ -419,7 +289,7 @@ describe("compose actions", () => {
         path "customCreate"
 
         action {
-          create {}
+          create Org as org {}
         }
       }
     }
@@ -429,137 +299,6 @@ describe("compose actions", () => {
       const endpoints = def.entrypoints[0].endpoints;
 
       expect(endpoints).toMatchSnapshot();
-    });
-
-    // --- test missing/unallowed endpoint properties
-    _.chain(["cardinality", "method", "path"])
-      .forEach((property) => {
-        it(`fails when "${property}" property is missing in custom endpoint`, () => {
-          const bp = `
-          model Org { field name { type string } }
-          model Log {}
-
-          entrypoint Orgs {
-            target Org as org
-            custom endpoint {
-              // in each iteration skip one property
-              ${property === "cardinality" ? "" : "cardinality many"}
-              ${property === "method" ? "" : "method POST"}
-              ${property === "path" ? "" : 'path "somePath"'}
-
-              action {
-                create Log as log {}
-              }
-            }
-          }
-        `;
-
-          expect(() => compose(compileToOldSpec(bp))).toThrowError(
-            `'endpoint' must contain a '${property}'`
-          );
-        });
-
-        _.chain(["get", "list", "create", "update", "delete"])
-          .forEach((epType) => {
-            it(`fails when "${property}" property is used in "${epType}" endpoint`, () => {
-              const bp = `
-              model Org {}
-
-              entrypoint Orgs {
-                target Org
-                ${epType} endpoint {
-                  // show one property in each iteration
-                  ${property === "cardinality" ? "cardinality many" : ""}
-                  ${property === "method" ? "method POST" : ""}
-                  ${property === "path" ? 'path "somePath"' : ""}
-                }
-              }
-            `;
-
-              expect(() => compose(compileToOldSpec(bp))).toThrowError(
-                `Only custom endpoint can have method, cardinality and path configuration`
-              );
-            });
-          })
-          .value();
-      })
-      .value();
-
-    // --- test invalid action types in custom endpoints
-    it(`fails when creating "one" endpoint with unallowed action "create"`, () => {
-      const bp = `
-        model Org {}
-        model Log {}
-
-        entrypoint Orgs {
-          target Org as org
-          custom endpoint {
-            cardinality one
-            method POST
-            path "somePath"
-
-            action {
-              create org {}
-            }
-          }
-        }
-        `;
-
-      expect(() => compose(compileToOldSpec(bp))).toThrowError(
-        `"custom-one" endpoint does not allow "create" action`
-      );
-    });
-
-    ["update", "delete"].forEach((action) => {
-      it(`fails when creating "many" endpoint with unallowed action "${action}"`, () => {
-        const bp = `
-      model Org {}
-      model Log {}
-
-      entrypoint Orgs {
-        target Org as org
-        custom endpoint {
-          cardinality many
-          method POST
-          path "somePath"
-
-          action {
-            ${action} org {}
-          }
-        }
-      }
-      `;
-
-        expect(() => compileToOldSpec(bp)).toThrowError(
-          `This name does not exist in current scope`
-        );
-      });
-    });
-
-    it(`fails on duplicate endpoint paths`, () => {
-      const bp = `
-      model Org {}
-
-      entrypoint Orgs {
-        target Org as org
-
-        custom endpoint {
-          cardinality many
-          method POST
-          path "someDuplicatePath"
-        }
-
-        custom endpoint {
-          cardinality many
-          method POST
-          path "someDuplicatePath"
-        }
-      }
-      `;
-
-      expect(() => compose(compileToOldSpec(bp))).toThrowError(
-        `Custom endpoints on the same HTTP method must have unique paths in one entrypoint ("Orgs")`
-      );
     });
   });
 });

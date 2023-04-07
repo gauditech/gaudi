@@ -35,24 +35,4 @@ describe("generator composer", () => {
 
     expect(generators).toMatchSnapshot();
   });
-
-  it("fails for multiple generators with the same target/api", () => {
-    const bp = `
-      generate client {
-        target js
-        api entrypoint
-        output "a/b/c"
-      }
-
-      generate client {
-        target js
-        api entrypoint
-        output "a/b/c"
-      }
-    `;
-
-    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
-      `"Found duplicate generator "client", targeting the same target "js" and api "entrypoint""`
-    );
-  });
 });

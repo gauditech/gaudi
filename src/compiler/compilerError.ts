@@ -12,8 +12,11 @@ export enum ErrorCode {
   DuplicateDefaultRuntime,
   MustHaveDefaultRuntime,
   DuplicateAuthBlock,
+  DuplicateEndpoint,
   NoRuntimeDefinedForHook,
   DuplicateModelAtom,
+  DuplicateCustomEndpointPath,
+  CustomEndpointPathClashesWithEnrtrypoint,
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
@@ -22,6 +25,7 @@ export enum ErrorCode {
   QueryFromAliasWrongLength,
   QueryMaxOneAggregate,
   ConfiguringNonCustomEndpoint,
+  MoreThanOneRespondsInEndpoint,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -30,15 +34,22 @@ export enum ErrorCode {
   CantResolveAuthModel,
   CantResolveModelAtom,
   CantResolveStructMember,
+  ThroughReferenceHasIncorrectModel,
+  CircularModelMemberDetected,
   TypeHasNoMembers,
   CantFindNameInScope,
   CantResolveModelAtomWrongKind,
   CantResolveExpressionReference,
   SelectCantNest,
+  InvalidDefaultAction,
+  NonDefaultModelActionRequiresAlias,
+  UnsuportedTargetInCreateAction,
+  PopulateIsMissingSetters,
   // Type Errors
   UnexpectedType,
   UnexpectedFieldType,
   VirtualInputType,
+  NameAlreadyInScope,
 }
 
 function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>): string {
@@ -46,9 +57,9 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.ParserError:
       return `${params?.message}`;
     case ErrorCode.MustContainAtom:
-      return `'${params?.parent}' must contain a '${params?.atom}'`;
+      return `"${params?.parent}" must contain a "${params?.atom}"`;
     case ErrorCode.DuplicateAtom:
-      return `Duplicate '${params?.atom}' in a '${params?.parent}'`;
+      return `Duplicate "${params?.atom}" in a "${params?.parent}"`;
     case ErrorCode.DuplicateModel:
       return `Duplicate model definition`;
     case ErrorCode.DuplicateRuntime:
@@ -59,12 +70,18 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `When using multiple runtimes one runtime must be set as default`;
     case ErrorCode.DuplicateAuthBlock:
       return `Can't have more than one auth block defined`;
+    case ErrorCode.DuplicateEndpoint:
+      return `Duplicate "${params?.type}" endpoint definition`;
     case ErrorCode.NoRuntimeDefinedForHook:
       return `Hook with source can't be used without a runtime`;
     case ErrorCode.DuplicateModelAtom:
       return `Duplicate model member definition`;
+    case ErrorCode.DuplicateCustomEndpointPath:
+      return `Custom endpoints on the same HTTP method must have unique paths in one entrypoint`;
+    case ErrorCode.CustomEndpointPathClashesWithEnrtrypoint:
+      return `Custom endpoint path clashes with entrypoint: "${params?.path}"`;
     case ErrorCode.DuplicateActionAtom:
-      return `Field used twice in single action`;
+      return `Field used multiple times in a single action`;
     case ErrorCode.DuplicatePopulateSet:
       return `Duplicate populate set field`;
     case ErrorCode.DuplicateHookArg:
@@ -72,17 +89,19 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.DuplicateGenerator:
       return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}" and api "${params?.api}"`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
-      return `Actions with "responds" can only be used in custom endpoints`;
+      return `Actions with "responds" can only be used in "custom" endpoints`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
     case ErrorCode.ConfiguringNonCustomEndpoint:
       return `Only custom endpoint can have method, cardinality and path configuration`;
+    case ErrorCode.MoreThanOneRespondsInEndpoint:
+      return `At most one action in endpoint can have "responds" attribute`;
     case ErrorCode.HookMustContainSourceOrInline:
-      return `Hook must contain 'source' or 'inline' definition`;
+      return `Hook must contain "source" or "inline" definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:
-      return `Hook can't have more than one 'source' or 'inline' definition`;
+      return `Hook can't have more than one "source" or "inline" definition`;
     case ErrorCode.DuplicateSelectField:
       return `Duplicate field in select`;
     case ErrorCode.CantResolveModel:
@@ -93,6 +112,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve model member with this name`;
     case ErrorCode.CantResolveStructMember:
       return `Can't resolve member of primitive types`;
+    case ErrorCode.ThroughReferenceHasIncorrectModel:
+      return `This reference has incorrect model`;
+    case ErrorCode.CircularModelMemberDetected:
+      return `Circular model definition detected in model member definition`;
     case ErrorCode.TypeHasNoMembers:
       return `This type has no members`;
     case ErrorCode.CantFindNameInScope:
@@ -102,7 +125,15 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.CantResolveExpressionReference:
       return `Can't resolve expression reference`;
     case ErrorCode.SelectCantNest:
-      return `Can't can't write nested select for this reference`;
+      return `Can't write nested select for this reference`;
+    case ErrorCode.InvalidDefaultAction:
+      return `When overriding default action, its kind must match with current endpoint kind. "${params?.action}" is not a valid default action override in "${params?.endpoint}" endpoint`;
+    case ErrorCode.NonDefaultModelActionRequiresAlias:
+      return `Non default "create" or "update" actions require alias`;
+    case ErrorCode.UnsuportedTargetInCreateAction:
+      return `This target is not supported in a "create" action, "create" can only have model and relation as a target`;
+    case ErrorCode.PopulateIsMissingSetters:
+      return `Populate block is missing setters for members: ${JSON.stringify(params?.atoms)}`;
     case ErrorCode.UnexpectedType:
       return (
         `Unexpected type\n` +
@@ -115,6 +146,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Field type must be a non null primitive type`;
     case ErrorCode.VirtualInputType:
       return `Virtual input type must be a non null primitive type`;
+    case ErrorCode.NameAlreadyInScope:
+      return `This name is already defined in current scope`;
   }
 }
 

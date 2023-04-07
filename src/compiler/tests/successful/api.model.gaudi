@@ -80,7 +80,7 @@ entrypoint Orgs {
   }
   update endpoint {
     action {
-      update org {}
+      update {}
     }
   }
   delete endpoint {}
@@ -106,7 +106,7 @@ entrypoint Orgs {
     }
     update endpoint {
       action {
-        update repo {}
+        update {}
       }
     }
     delete endpoint {}

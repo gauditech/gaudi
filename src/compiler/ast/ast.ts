@@ -22,7 +22,6 @@ export type Field = {
   ref: Ref;
   type: Type;
   atoms: FieldAtom[];
-  resolved?: true;
 };
 export type FieldAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
@@ -42,7 +41,6 @@ export type Reference = {
   ref: Ref;
   type: Type;
   atoms: ReferenceAtom[];
-  resolved?: true;
 };
 export type ReferenceAtom = { keyword: TokenData } & (
   | { kind: "to"; identifier: IdentifierRef }
@@ -57,7 +55,6 @@ export type Relation = {
   ref: Ref;
   type: Type;
   atoms: RelationAtom[];
-  resolved?: true;
 };
 export type RelationAtom = { keyword: TokenData } & (
   | { kind: "from"; identifier: IdentifierRef }
@@ -71,7 +68,6 @@ export type Query = {
   ref: Ref;
   type: Type;
   atoms: QueryAtom[];
-  resolved?: true;
 };
 export type QueryAtom = { keyword: TokenData } & (
   | {
@@ -108,7 +104,6 @@ export type Computed = {
   ref: Ref;
   type: Type;
   expr: Expr<Db>;
-  resolved?: true;
 };
 
 export type Entrypoint = {
@@ -338,7 +333,7 @@ export type Hook<named extends boolean, simple extends boolean> = {
     | { kind: "runtime"; keyword: TokenData; identifier: Identifier }
   )[];
 };
-export type ModelHook = Hook<true, false> & { type: Type; resolved?: true };
+export type ModelHook = Hook<true, false> & { type: Type };
 export type FieldValidationHook = Hook<false, true>;
 export type ActionHook = Hook<false, false>;
 
@@ -406,7 +401,15 @@ export type RefModelAtom = {
   model: string;
   unique: boolean;
 };
-export type RefContext = { kind: "context" };
+export type ContextKind =
+  | "entrypointTarget"
+  | "populateTarget"
+  | "fetch"
+  | "virtualInput"
+  | "repeater"
+  | "authToken"
+  | "struct";
+export type RefContext = { kind: "context"; contextKind: ContextKind };
 export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;
 
 export const unresolvedRef: Ref = { kind: "unresolved" };

@@ -119,33 +119,6 @@ describe("compose hooks", () => {
     expect(result.entrypoints[0].endpoints[0]).toMatchSnapshot();
   });
 
-  it("fails on invalid runtime name", () => {
-    const bp = `
-      runtime MyRuntime {
-        source path "some/path/to/file"
-      }
-
-      entrypoint Orgs {
-        target Org as org
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                runtime InvalidMyRuntime
-                source randomSlug from "hooks.js"
-              }
-            }
-          }
-        }
-      }
-
-    `;
-
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Can't resolve model with this name"`
-    );
-  });
-
   it("action hook", () => {
     const bp = `
       runtime MyRuntime {
