@@ -233,7 +233,6 @@ function queriesFromSelect(def: Definition, model: ModelDef, select: SelectDef):
 }
 
 function selectToQuery(def: Definition, model: ModelDef, select: DeepSelectItem): QueryDef {
-  // TODO: can we have limit/offset here
   const namePath = [model.name, select.name];
   return queryFromParts(
     def,
