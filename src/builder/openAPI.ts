@@ -56,7 +56,8 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
 
   function buildEndpointOperation(
     endpoint: EndpointDef,
-    hasParameters: boolean
+    parameters: OpenAPIV3.ParameterObject[],
+    hasContext: boolean
   ): OpenAPIV3.OperationObject {
     const properties = buildSchema(endpoint.response ?? []);
     const isArray = endpoint.kind === "list";
@@ -75,7 +76,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
       },
     };
 
-    if (hasParameters) {
+    if (hasContext) {
       operation.responses[404] = {
         description: "Resource not found",
         content: {
@@ -85,6 +86,8 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
         },
       };
     }
+
+    operation.parameters = parameters;
 
     if (endpoint.kind === "create" || endpoint.kind === "update") {
       const schema = buildSchemaFromFieldset(endpoint.fieldset);
@@ -126,7 +129,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
           .with({ kind: "query" }, (f) => ({
             in: "query",
             name: f.name,
-            required: true,
+            required: f.required,
             schema: { type: convertToOpenAPIType(f.type) },
           }))
           .with({ kind: "namespace" }, () => null)
@@ -135,8 +138,10 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
       .compact()
       .value();
 
-    const pathItem = paths[path] ?? { parameters };
-    pathItem[method] = buildEndpointOperation(endpoint, parameters.length > 0);
+    // has parent or target context iow. identifier in URL
+    const hasContext = endpointPath.fragments.some((f) => f.kind === "identifier");
+    const pathItem = paths[path] ?? {};
+    pathItem[method] = buildEndpointOperation(endpoint, parameters, hasContext);
     paths[path] = pathItem;
 
     return paths;
