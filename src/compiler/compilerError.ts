@@ -32,6 +32,7 @@ export enum ErrorCode {
   CantResolveModelAtom,
   CantResolveStructMember,
   ThroughReferenceHasIncorrectModel,
+  CircularModelMemberDetected,
   TypeHasNoMembers,
   CantFindNameInScope,
   CantResolveModelAtomWrongKind,
@@ -103,6 +104,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve member of primitive types`;
     case ErrorCode.ThroughReferenceHasIncorrectModel:
       return `This reference has incorrect model`;
+    case ErrorCode.CircularModelMemberDetected:
+      return `Circular model definition detected in model member definition`;
     case ErrorCode.TypeHasNoMembers:
       return `This type has no members`;
     case ErrorCode.CantFindNameInScope:

@@ -11,21 +11,8 @@ describe("compose models", () => {
       field Name { type string }
     }
     `;
-
     expect(() => compose(compileToOldSpec(bp))).toThrowError("Items not unique!");
   });
-  it("correctly fail when circular dependency is found", () => {
-    const bp = `
-    model Org {
-      computed foo { bar + 1 }
-      computed bar { foo - 1 }
-    }
-    `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Couldn't resolve the spec. The following refs are unresolved: Org.bar, Org.foo"`
-    );
-  });
-
   it("parses validators", () => {
     const bp = `
     model Org {
@@ -88,6 +75,17 @@ describe("compiler errors", () => {
     `;
     expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
       `"Can't resolve model with this name"`
+    );
+  });
+  it("correctly fail when circular dependency is found in model members", () => {
+    const bp = `
+    model Org {
+      computed foo { bar + 1 }
+      computed bar { foo - 1 }
+    }
+    `;
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"Circular model definition detected in model member definition"`
     );
   });
 });

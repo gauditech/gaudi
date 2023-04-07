@@ -189,6 +189,8 @@ function getTypeGuardOperation(expr: Expr): TypeGuardOperation | undefined {
 
 export function resolve(projectASTs: ProjectASTs) {
   const errors: CompilerError[] = [];
+  const resolvingModelAtoms = new Set<string>();
+  const resolvedModelAtoms = new Set<string>();
 
   function getSumDocument(): GlobalAtom[] {
     return Object.values(projectASTs.plugins)
@@ -229,8 +231,14 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveModelAtom(model: Model, atom: ModelAtom) {
-    if (atom.resolved) return;
-    atom.resolved = true;
+    const atomKey = model.name.text + "|" + atom.name.text;
+    if (resolvedModelAtoms.has(atomKey)) return;
+    // if atom is already resolving means there is circular reference somewhere
+    if (resolvingModelAtoms.has(atomKey)) {
+      errors.push(new CompilerError(atom.name.token, ErrorCode.CircularModelMemberDetected));
+      return;
+    }
+    resolvingModelAtoms.add(atomKey);
 
     const scope: Scope = {
       environment: "model",
@@ -246,6 +254,9 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "computed" }, (computed) => resolveComputed(model, computed))
       .with({ kind: "hook" }, (hook) => resolveModelHook(hook, scope))
       .exhaustive();
+
+    resolvedModelAtoms.add(atomKey);
+    resolvingModelAtoms.delete(atomKey);
   }
 
   function resolveField(model: Model, field: Field) {
@@ -311,9 +322,14 @@ export function resolve(projectASTs: ProjectASTs) {
     const through = kindFind(relation.atoms, "through");
     if (through) {
       resolveModelAtomRef(through.identifier, fromModel, "reference");
-      const throughModel = getTypeModel(through.identifier.type)
+      const throughModel = getTypeModel(through.identifier.type);
       if (throughModel && throughModel !== model.name.text) {
-        errors.push(new CompilerError(through.identifier.identifier.token, ErrorCode.ThroughReferenceHasIncorrectModel))
+        errors.push(
+          new CompilerError(
+            through.identifier.identifier.token,
+            ErrorCode.ThroughReferenceHasIncorrectModel
+          )
+        );
       }
     }
 
