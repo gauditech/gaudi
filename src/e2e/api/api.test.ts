@@ -43,7 +43,7 @@ describe("API endpoints", () => {
     });
 
     it("list with paging", async () => {
-      const response = await request(getServer()).get("/org?offset=1&limit=2");
+      const response = await request(getServer()).get("/org?page=2&pageSize=2");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();

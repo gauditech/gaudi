@@ -68,12 +68,12 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
       ? ([
           {
             kind: "query",
-            name: "limit",
+            name: "pageSize",
             type: "integer",
             required: false,
             defaultValue: limitDefault,
           },
-          { kind: "query", name: "offset", type: "integer", required: false, defaultValue: 0 },
+          { kind: "query", name: "page", type: "integer", required: false, defaultValue: 0 },
         ] as const)
       : []),
   ];

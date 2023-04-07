@@ -22,6 +22,7 @@ import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
 import { executeEndpointActions } from "@src/runtime/common/action";
+import { pagingToQueryLimit } from "@src/runtime/common/utils";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { QueryTree } from "@src/runtime/query/build";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
@@ -854,8 +855,13 @@ async function executeTypedFunction(func: TypedFunction, contextVars: Vars): Pro
 function decorateListQuery(qt: QueryTree, params: Vars): QueryTree {
   // TODO: read var names from central place/config/...
   // use the same var names as when reading url params
-  const limit = params.get("limit") ?? qt.query.limit;
-  const offset = params.get("offset") ?? qt.query.offset;
+
+  const { limit, offset } = pagingToQueryLimit(
+    params.get("page"),
+    params.get("pageSize"),
+    qt.query.offset,
+    qt.query.limit
+  );
 
   return {
     ...qt,

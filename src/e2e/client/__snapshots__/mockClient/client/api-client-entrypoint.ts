@@ -197,7 +197,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
   };
 
 // TODO: add list search/filter parameter
-  export type ListData = { limit?: number; offset?: number };
+  export type ListData = { pageSize?: number; page?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
