@@ -12,6 +12,7 @@ export enum ErrorCode {
   DuplicateDefaultRuntime,
   MustHaveDefaultRuntime,
   DuplicateAuthBlock,
+  DuplicateEndpoint,
   NoRuntimeDefinedForHook,
   DuplicateModelAtom,
   DuplicateCustomEndpointPath,
@@ -69,6 +70,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `When using multiple runtimes one runtime must be set as default`;
     case ErrorCode.DuplicateAuthBlock:
       return `Can't have more than one auth block defined`;
+    case ErrorCode.DuplicateEndpoint:
+      return `Duplicate "${params?.type}" endpoint definition`;
     case ErrorCode.NoRuntimeDefinedForHook:
       return `Hook with source can't be used without a runtime`;
     case ErrorCode.DuplicateModelAtom:

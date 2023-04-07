@@ -497,6 +497,17 @@ describe("compiler errors", () => {
   });
 
   describe("endpoint", () => {
+    it("fail for multiple endpoints of the same type", () => {
+      const bp = `
+        model Org {}
+        entrypoint Orgs {
+          target Org
+          create endpoint {}
+          create endpoint {}
+        }
+        `;
+      expectError(bp, `Duplicate "create" endpoint definition`);
+    });
     it("fail for multiple actions that want to respond", () => {
       const bp = `
         runtime MyRuntime {
