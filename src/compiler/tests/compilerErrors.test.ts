@@ -294,7 +294,7 @@ describe("compiler errors", () => {
         `Custom endpoints on the same HTTP method must have unique paths in one entrypoint`
       );
     });
-    it(`fails on duplicate endpoint paths`, () => {
+    it(`fails on custom endpoint path clashes with entrypoint`, () => {
       const bp = `
         model Org {
           relation repos { from Repo, through org }
@@ -323,18 +323,6 @@ describe("compiler errors", () => {
   });
 
   describe("authenticator", () => {
-    it("fails if authenticator model names are already taken", () => {
-      const bp1 = `
-        model ${AUTH_TARGET_MODEL_NAME} {}
-        auth { method basic {} }
-        `;
-      expectError(bp1, `Duplicate model definition`);
-      const bp2 = `
-        model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
-        auth { method basic {} }
-        `;
-      expectError(bp2, `Duplicate model definition`);
-    });
     it("fails if authenticator model names are already taken", () => {
       const bp1 = `
         model ${AUTH_TARGET_MODEL_NAME} {}
