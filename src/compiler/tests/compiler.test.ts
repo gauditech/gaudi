@@ -3,12 +3,11 @@ import * as path from "path";
 
 import _ from "lodash";
 
-import { compilerErrorsToString } from "./compilerError";
-import { migrate } from "./migrate";
+import { compileToAST } from "..";
+import { compilerErrorsToString } from "../compilerError";
+import { migrate } from "../migrate";
 
-import { compileToAST } from ".";
-
-const folder = "./src/compiler/tests";
+const folder = "./src/compiler/tests/successfull";
 const sources = fs.readdirSync(folder);
 
 describe("compiler", () => {
