@@ -7,7 +7,7 @@ import { compileToAST } from "..";
 import { compilerErrorsToString } from "../compilerError";
 import { migrate } from "../migrate";
 
-const folder = "./src/compiler/tests/successfull";
+const folder = "./src/compiler/tests/successful";
 const sources = fs.readdirSync(folder);
 
 describe("compiler", () => {
