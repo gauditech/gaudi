@@ -67,6 +67,9 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
   const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
 
   if (q.limit && isBatching) {
+    const limit = q.limit;
+    const offset = q.offset ?? 0;
+
     return source`
     SELECT * FROM 
       (SELECT ${selectableToString(def, selectable)},
@@ -79,7 +82,8 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
         ${aggrJoins}
         ${joins}
         ${where}) as topn
-    WHERE ${limitToBatchingString(q.limit, q.offset)}
+    WHERE topn."__row_number" <= ${limit + offset} AND topn."__row_number" > ${offset}
+
     `;
   } else {
     const qstr = source`
@@ -102,17 +106,6 @@ function orderByToString(def: Definition, orderBy: QueryOrderByAtomDef[] | undef
   return `ORDER BY ${orderBy
     .map((atom) => `${expressionToString(def, expandExpression(def, atom.exp))} ${atom.direction}`)
     .join(", ")}`;
-}
-
-function limitToBatchingString(limit: number, offset: number | undefined): string {
-  if (limit == null) return "";
-
-  const offsetVal = offset ?? 0;
-
-  // topn."__row_number" <= ${q.limit + offset} AND topn."__row_number" > ${offset}
-  return `
-    topn."__row_number" <= ${limit + offsetVal} AND topn."__row_number" > ${offsetVal}
-  `;
 }
 
 function limitToString(limit: number | undefined, offset: number | undefined): string {
