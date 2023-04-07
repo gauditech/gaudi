@@ -158,20 +158,20 @@ entrypoint Orgs {
       "fails when action alias uses existing model or context name %s",
       (name) => {
         const bp = `
-  model Org { relation repos { from Repo, through org }}
-  model Repo { reference org { to Org }}
-  entrypoint O {
-    target Org as org
-    entrypoint R {
-      target repos as repo
-      create endpoint {
-        action {
-          create as repo {}
-          create Repo as ${name} {}
-        }
+model Org { relation repos { from Repo, through org }}
+model Repo { reference org { to Org }}
+entrypoint O {
+  target Org as org
+  entrypoint R {
+    target repos as repo
+    create endpoint {
+      action {
+        create as repo {}
+        create Repo as ${name} {}
       }
     }
   }
+}
 `;
         expectError(bp, `This name is already defined in current scope`);
       }
@@ -271,28 +271,54 @@ entrypoint Orgs {
     });
     it(`fails on duplicate endpoint paths`, () => {
       const bp = `
-      model Org {}
+model Org {}
 
-      entrypoint Orgs {
-        target Org as org
+entrypoint Orgs {
+  target Org as org
 
-        custom endpoint {
-          cardinality many
-          method POST
-          path "someDuplicatePath"
-        }
+  custom endpoint {
+    cardinality many
+    method POST
+    path "someDuplicatePath"
+  }
 
-        custom endpoint {
-          cardinality many
-          method POST
-          path "someDuplicatePath"
-        }
-      }
-      `;
+  custom endpoint {
+    cardinality many
+    method POST
+    path "someDuplicatePath"
+  }
+}
+`;
       expectError(
         bp,
         `Custom endpoints on the same HTTP method must have unique paths in one entrypoint`
       );
+    });
+    it(`fails on duplicate endpoint paths`, () => {
+      const bp = `
+model Org {
+  relation repos { from Repo, through org }
+}
+
+model Repo {
+  reference org { to Org }
+}
+
+entrypoint Orgs {
+  target Org as org
+
+  entrypoint Repos {
+    target repos
+  }
+
+  custom endpoint {
+    cardinality one
+    method POST
+    path "repos"
+  }
+}
+`;
+      expectError(bp, `Custom endpoint path clashes with entrypoint: "repos"`);
     });
   });
 
@@ -311,8 +337,8 @@ auth { method basic {} }
     });
     it("fails if authenticator model names are already taken", () => {
       const bp1 = `
-        model ${AUTH_TARGET_MODEL_NAME} {}
-        auth { method basic {} }
+model ${AUTH_TARGET_MODEL_NAME} {}
+auth { method basic {} }
       `;
       expectError(bp1, `Duplicate model definition`);
       const bp2 = `

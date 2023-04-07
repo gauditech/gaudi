@@ -183,15 +183,29 @@ export function checkForm(projectASTs: ProjectASTs) {
     noDuplicateAtoms(entrypoint, "target", "identifyWith", "authorize", "response");
 
     // check custom endpoint unique path
+    const entrypointPaths = new Set(
+      _.compact(
+        kindFilter(entrypoint.atoms, "entrypoint").map(
+          (e) => kindFind(e.atoms, "target")?.identifier.identifier.text
+        )
+      )
+    );
     const customPaths = new Set<string>();
     kindFilter(entrypoint.atoms, "endpoint").forEach((e) => {
       if (e.type !== "custom") return;
+      const cardinality = kindFind(e.atoms, "cardinality")?.cardinality;
       const method = kindFind(e.atoms, "method")?.method;
       const path = kindFind(e.atoms, "path")?.path.value;
-      if (!method || !path) return;
-      const key = method + "#" + path;
+      if (!cardinality || !method || !path) return;
+      const key = cardinality + "#" + method + "#" + path;
       if (customPaths.has(key)) {
         errors.push(new CompilerError(e.keywordType, ErrorCode.DuplicateCustomEndpointPath));
+      } else if (cardinality === "one" && entrypointPaths.has(path)) {
+        errors.push(
+          new CompilerError(e.keywordType, ErrorCode.CustomEndpointPathClashesWithEnrtrypoint, {
+            path,
+          })
+        );
       } else {
         customPaths.add(key);
       }

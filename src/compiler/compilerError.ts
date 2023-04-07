@@ -15,6 +15,7 @@ export enum ErrorCode {
   NoRuntimeDefinedForHook,
   DuplicateModelAtom,
   DuplicateCustomEndpointPath,
+  CustomEndpointPathClashesWithEnrtrypoint,
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
@@ -74,6 +75,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate model member definition`;
     case ErrorCode.DuplicateCustomEndpointPath:
       return `Custom endpoints on the same HTTP method must have unique paths in one entrypoint`;
+    case ErrorCode.CustomEndpointPathClashesWithEnrtrypoint:
+      return `Custom endpoint path clashes with entrypoint: "${params?.path}"`;
     case ErrorCode.DuplicateActionAtom:
       return `Field used multiple times in a single action`;
     case ErrorCode.DuplicatePopulateSet:
