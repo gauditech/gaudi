@@ -301,8 +301,8 @@ describe("populator composer", () => {
       }
     }`;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Action create-one "org" is missing setters for fields: description,active"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"Populate block is missing setters for members: ["description","active"]"`
     );
   });
 });

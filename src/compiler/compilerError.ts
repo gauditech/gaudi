@@ -23,6 +23,7 @@ export enum ErrorCode {
   QueryFromAliasWrongLength,
   QueryMaxOneAggregate,
   ConfiguringNonCustomEndpoint,
+  MoreThanOneRespondsInEndpoint,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -41,6 +42,7 @@ export enum ErrorCode {
   InvalidDefaultAction,
   NonDefaultModelActionRequiresAlias,
   UnsuportedTargetInCreateAction,
+  PopulateIsMissingSetters,
   // Type Errors
   UnexpectedType,
   UnexpectedFieldType,
@@ -81,13 +83,15 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.DuplicateGenerator:
       return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}" and api "${params?.api}"`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
-      return `Actions with "responds" can only be used in custom endpoints`;
+      return `Actions with "responds" can only be used in "custom" endpoints`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
     case ErrorCode.ConfiguringNonCustomEndpoint:
       return `Only custom endpoint can have method, cardinality and path configuration`;
+    case ErrorCode.MoreThanOneRespondsInEndpoint:
+      return `At most one action in endpoint can have "responds" attribute`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain 'source' or 'inline' definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:
@@ -122,6 +126,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Non default "create" or "update" actions require alias`;
     case ErrorCode.UnsuportedTargetInCreateAction:
       return `This target is not supported in a 'create' action, 'create' can only have model and relation as a target`;
+    case ErrorCode.PopulateIsMissingSetters:
+      return `Populate block is missing setters for members: ${JSON.stringify(params?.atoms)}`;
     case ErrorCode.UnexpectedType:
       return (
         `Unexpected type\n` +

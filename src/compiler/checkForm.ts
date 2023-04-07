@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { match } from "ts-pattern";
 
 import {
@@ -222,7 +223,18 @@ export function checkForm(projectASTs: ProjectASTs) {
     }
 
     const action = kindFind(endpoint.atoms, "action");
-    if (action) action.actions.map((a) => checkAction(a, endpoint.type));
+    if (action) {
+      action.actions.map((a) => checkAction(a, endpoint.type));
+
+      const responds = _.compact(
+        kindFilter(action.actions, "execute").map((a) => kindFind(a.atoms, "responds"))
+      );
+      if (responds.length > 1) {
+        errors.push(
+          new CompilerError(responds[1].keyword, ErrorCode.MoreThanOneRespondsInEndpoint)
+        );
+      }
+    }
   }
 
   function checkAction(action: Action, endpointType: EndpointType) {

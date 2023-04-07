@@ -174,8 +174,8 @@ describe("entrypoint", () => {
     }
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"At most one action in entrypoint can have "responds" attribute"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"At most one action in endpoint can have "responds" attribute"`
     );
   });
 
@@ -204,8 +204,8 @@ describe("entrypoint", () => {
     }
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
-      `"Actions with "responds" can only be used in custom endpoints"`
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
+      `"Actions with "responds" can only be used in "custom" endpoints"`
     );
   });
 

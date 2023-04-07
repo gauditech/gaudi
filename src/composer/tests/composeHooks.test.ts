@@ -141,7 +141,7 @@ describe("compose hooks", () => {
 
     `;
 
-    expect(() => compose(compileToOldSpec(bp))).toThrowErrorMatchingInlineSnapshot(
+    expect(() => compileToOldSpec(bp)).toThrowErrorMatchingInlineSnapshot(
       `"Can't resolve model with this name"`
     );
   });
