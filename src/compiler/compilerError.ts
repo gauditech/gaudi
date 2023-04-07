@@ -55,9 +55,9 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.ParserError:
       return `${params?.message}`;
     case ErrorCode.MustContainAtom:
-      return `'${params?.parent}' must contain a '${params?.atom}'`;
+      return `"${params?.parent}" must contain a "${params?.atom}"`;
     case ErrorCode.DuplicateAtom:
-      return `Duplicate '${params?.atom}' in a '${params?.parent}'`;
+      return `Duplicate "${params?.atom}" in a "${params?.parent}"`;
     case ErrorCode.DuplicateModel:
       return `Duplicate model definition`;
     case ErrorCode.DuplicateRuntime:
@@ -93,9 +93,9 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.MoreThanOneRespondsInEndpoint:
       return `At most one action in endpoint can have "responds" attribute`;
     case ErrorCode.HookMustContainSourceOrInline:
-      return `Hook must contain 'source' or 'inline' definition`;
+      return `Hook must contain "source" or "inline" definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:
-      return `Hook can't have more than one 'source' or 'inline' definition`;
+      return `Hook can't have more than one "source" or "inline" definition`;
     case ErrorCode.DuplicateSelectField:
       return `Duplicate field in select`;
     case ErrorCode.CantResolveModel:
@@ -119,13 +119,13 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.CantResolveExpressionReference:
       return `Can't resolve expression reference`;
     case ErrorCode.SelectCantNest:
-      return `Can't can't write nested select for this reference`;
+      return `Can't write nested select for this reference`;
     case ErrorCode.InvalidDefaultAction:
       return `When overriding default action it must match with current endpoint`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
     case ErrorCode.UnsuportedTargetInCreateAction:
-      return `This target is not supported in a 'create' action, 'create' can only have model and relation as a target`;
+      return `This target is not supported in a "create" action, "create" can only have model and relation as a target`;
     case ErrorCode.PopulateIsMissingSetters:
       return `Populate block is missing setters for members: ${JSON.stringify(params?.atoms)}`;
     case ErrorCode.UnexpectedType:
