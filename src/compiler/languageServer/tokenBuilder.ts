@@ -476,7 +476,6 @@ export function buildTokens(
             .with({ kind: "target" }, (a) => {
               buildKeyword(a.keyword);
               buildKeyword(a.keywordValue);
-              console.log("generator3", a);
             })
             .with({ kind: "api" }, (a) => {
               buildKeyword(a.keyword);
