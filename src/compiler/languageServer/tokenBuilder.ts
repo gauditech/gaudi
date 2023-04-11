@@ -468,7 +468,6 @@ export function buildTokens(
 
   function buildGenerator(generator: Generator) {
     buildKeyword(generator.keyword);
-    // buildKeyword(generator.type);
     match(generator)
       .with({ type: "client" }, (g) => {
         buildKeyword(g.keywordType);
@@ -477,6 +476,7 @@ export function buildTokens(
             .with({ kind: "target" }, (a) => {
               buildKeyword(a.keyword);
               buildKeyword(a.keywordValue);
+              console.log("generator3", a);
             })
             .with({ kind: "api" }, (a) => {
               buildKeyword(a.keyword);
@@ -488,9 +488,6 @@ export function buildTokens(
             })
             .exhaustive();
         });
-
-        buildKeyword(g.keyword);
-        // actions.forEach(buildAction);
       })
       .exhaustive();
   }
