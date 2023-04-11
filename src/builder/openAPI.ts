@@ -15,12 +15,54 @@ import {
 export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAPIV3.Document {
   const endpoints = definition.entrypoints.map(extractEndpoints).flat();
 
-  function buildSchema(select: SelectItem[]) {
+  /**
+   * Builds a list of required prop names that is attached to the object schema.
+   *
+   * Property is required if not nullable. This follows current validation implementation.
+   */
+  function buildRequiredProperties(select: SelectItem[]) {
+    return select
+      .map((select): [string, boolean] => {
+        switch (select.kind) {
+          case "field": {
+            const field = getRef.field(definition, select.refKey);
+            return [select.alias, !field.nullable];
+          }
+          case "reference":
+          case "relation":
+          case "query": {
+            // reference/releation/query are always required themselves
+            // their properties are handled for each object separately
+            return [select.alias, true];
+          }
+          case "aggregate": {
+            // FIXME read the type from the `AggregateDef`
+            return [select.name, true];
+          }
+          case "computed": {
+            // FIXME - add required type to computeds
+            return [select.name, true];
+          }
+          case "model-hook": {
+            // FIXME - add required type to hooks
+            return [select.name, false]; // with hooks, everything is optional
+          }
+        }
+      })
+      .filter(([_name, required]) => required)
+      .map(([name]) => name);
+  }
+
+  /** Create OpenAPI schema properties. */
+  function buildSchemaProperties(select: SelectItem[]) {
     const schemaEntries = select.map((select): [string, OpenAPIV3.SchemaObject] => {
       switch (select.kind) {
         case "field": {
           const field = getRef.field(definition, select.refKey);
-          return [select.alias, { type: convertToOpenAPIType(field.type) }];
+          return [
+            select.alias,
+            { type: convertToOpenAPIType(field.type), nullable: field.nullable },
+          ];
         }
         // NOTE: not yet implemented; TODO: rename to `literal`
         // case "constant":
@@ -29,11 +71,15 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
         case "relation":
         case "query": {
           const isObject = select.kind === "reference";
-          const properties = buildSchema(select.select);
+          const properties = buildSchemaProperties(select.select);
+          const required = buildRequiredProperties(select.select);
           if (isObject) {
-            return [select.alias, { type: "object", properties }];
+            return [select.alias, { type: "object", properties, required }];
           } else {
-            return [select.alias, { type: "array", items: { type: "object", properties } }];
+            return [
+              select.alias,
+              { type: "array", items: { type: "object", properties, required } },
+            ];
           }
         }
         case "aggregate": {
@@ -59,10 +105,11 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
     parameters: OpenAPIV3.ParameterObject[],
     hasContext: boolean
   ): OpenAPIV3.OperationObject {
-    const properties = buildSchema(endpoint.response ?? []);
+    const properties = buildSchemaProperties(endpoint.response ?? []);
+    const required = buildRequiredProperties(endpoint.response ?? []);
     const isListResponse = endpoint.kind === "list";
 
-    const objectSchema: OpenAPIV3.SchemaObject = { type: "object", properties };
+    const objectSchema: OpenAPIV3.SchemaObject = { type: "object", properties, required };
     const schema: OpenAPIV3.SchemaObject = isListResponse
       ? {
           type: "object",
@@ -103,6 +150,8 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
       const schema = buildSchemaFromFieldset(endpoint.fieldset);
       operation.requestBody = { content: { "application/json": { schema } } };
     }
+
+    operation.operationId = _.camelCase(endpoint.kind + " " + endpoint.target.retType);
 
     return operation;
   }

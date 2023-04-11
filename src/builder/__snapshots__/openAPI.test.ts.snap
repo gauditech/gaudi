@@ -10,6 +10,7 @@ exports[`openAPI build spec 1`] = `
   "paths": {
     "/api-test/org": {
       "get": {
+        "operationId": "listOrg",
         "parameters": [
           {
             "in": "query",
@@ -38,12 +39,18 @@ exports[`openAPI build spec 1`] = `
                       "items": {
                         "properties": {
                           "id": {
+                            "nullable": false,
                             "type": "integer",
                           },
                           "slug": {
+                            "nullable": false,
                             "type": "string",
                           },
                         },
+                        "required": [
+                          "id",
+                          "slug",
+                        ],
                         "type": "object",
                       },
                       "type": "array",
@@ -61,6 +68,13 @@ exports[`openAPI build spec 1`] = `
                       "type": "integer",
                     },
                   },
+                  "required": [
+                    "page",
+                    "pageSize",
+                    "totalPages",
+                    "totalCount",
+                    "data",
+                  ],
                   "type": "object",
                 },
               },
@@ -70,6 +84,7 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "post": {
+        "operationId": "createOrg",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -95,12 +110,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "slug": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "slug",
+                  ],
                   "type": "object",
                 },
               },
@@ -112,6 +133,7 @@ exports[`openAPI build spec 1`] = `
     },
     "/api-test/org/{org_slug}": {
       "delete": {
+        "operationId": "deleteOrg",
         "parameters": [
           {
             "in": "path",
@@ -128,6 +150,7 @@ exports[`openAPI build spec 1`] = `
               "application/json": {
                 "schema": {
                   "properties": {},
+                  "required": [],
                   "type": "object",
                 },
               },
@@ -152,6 +175,7 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "get": {
+        "operationId": "getOrg",
         "parameters": [
           {
             "in": "path",
@@ -169,12 +193,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "slug": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "slug",
+                  ],
                   "type": "object",
                 },
               },
@@ -199,6 +229,7 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "patch": {
+        "operationId": "updateOrg",
         "parameters": [
           {
             "in": "path",
@@ -233,12 +264,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "slug": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "slug",
+                  ],
                   "type": "object",
                 },
               },
@@ -265,6 +302,7 @@ exports[`openAPI build spec 1`] = `
     },
     "/api-test/org/{org_slug}/repos": {
       "get": {
+        "operationId": "listRepo",
         "parameters": [
           {
             "in": "path",
@@ -301,12 +339,18 @@ exports[`openAPI build spec 1`] = `
                       "items": {
                         "properties": {
                           "id": {
+                            "nullable": false,
                             "type": "integer",
                           },
                           "name": {
+                            "nullable": false,
                             "type": "string",
                           },
                         },
+                        "required": [
+                          "id",
+                          "name",
+                        ],
                         "type": "object",
                       },
                       "type": "array",
@@ -324,6 +368,13 @@ exports[`openAPI build spec 1`] = `
                       "type": "integer",
                     },
                   },
+                  "required": [
+                    "page",
+                    "pageSize",
+                    "totalPages",
+                    "totalCount",
+                    "data",
+                  ],
                   "type": "object",
                 },
               },
@@ -348,6 +399,7 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "post": {
+        "operationId": "createRepo",
         "parameters": [
           {
             "in": "path",
@@ -382,12 +434,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "name": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
                   "type": "object",
                 },
               },
@@ -414,6 +472,7 @@ exports[`openAPI build spec 1`] = `
     },
     "/api-test/org/{org_slug}/repos/{repo_id}": {
       "delete": {
+        "operationId": "deleteRepo",
         "parameters": [
           {
             "in": "path",
@@ -438,6 +497,7 @@ exports[`openAPI build spec 1`] = `
               "application/json": {
                 "schema": {
                   "properties": {},
+                  "required": [],
                   "type": "object",
                 },
               },
@@ -462,6 +522,7 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "get": {
+        "operationId": "getRepo",
         "parameters": [
           {
             "in": "path",
@@ -487,12 +548,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "name": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
                   "type": "object",
                 },
               },
@@ -517,6 +584,7 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "patch": {
+        "operationId": "updateRepo",
         "parameters": [
           {
             "in": "path",
@@ -563,12 +631,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "name": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
                   "type": "object",
                 },
               },
