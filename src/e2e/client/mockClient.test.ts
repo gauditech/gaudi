@@ -2,6 +2,7 @@ import { ensureEqual } from "@src/common/utils";
 import {
   ApiRequestFn as EntrypointApiRequestFn,
   ApiRequestInit as EntrypointApiRequestInit,
+  ListResponse,
   createClient as createClientEntrypoint,
 } from "@src/e2e/client/__snapshots__/mockClient/client/api-client-entrypoint";
 import {
@@ -227,7 +228,7 @@ describe("mock client lib", () => {
         // test return type
         // @ts-expect-no-error
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const typeTest: RespData[] = resp.data;
+        const typeTest: ListResponse<RespData> = resp.data;
       });
 
       it("delete", async () => {
@@ -598,7 +599,7 @@ describe("mock client lib", () => {
         // test return type
         // @ts-expect-no-error
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const typeTest: RespData[] = resp.data;
+        const typeTest: ListResponse<RespData> = resp.data;
       });
 
       it("delete", async () => {
@@ -999,7 +1000,7 @@ describe("mock client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: RespData[] = resp.data;
+      const typeTest: ListResponse<RespData> = resp.data;
     });
 
     it("delete", async () => {

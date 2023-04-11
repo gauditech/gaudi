@@ -255,7 +255,16 @@ create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath)
     error: ApiResponseErrorBody<E>;
   };
 
-// TODO: add list search/filter parameter
+
+  export type ListResponse<T> = {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+    data: T[];
+  };  
+
+  // TODO: add list search/filter parameter
   export type ListData = { pageSize?: number; page?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
@@ -274,7 +283,7 @@ create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath)
   export type ListApiClientFn<R, E extends string> = (
     data?: ListData,
     options?: Partial<ApiRequestInit>
-  ) => Promise<ApiResponse<R[], E>>;
+  ) => Promise<ApiResponse<ListResponse<R>, E>>;
   export type DeleteApiClientFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>

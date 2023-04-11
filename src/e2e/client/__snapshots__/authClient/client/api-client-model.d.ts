@@ -212,6 +212,13 @@ export type ApiResponseError<D, E extends string> = {
     };
     error: ApiResponseErrorBody<E>;
 };
+export type ListResponse<T> = {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+    data: T[];
+};
 export type ListData = {
     pageSize?: number;
     page?: number;
@@ -219,7 +226,7 @@ export type ListData = {
 export type GetApiClientFn<ID, R, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (data: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type UpdateApiClientFn<ID, D, R, E extends string> = (id: ID, data: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
-export type ListApiClientFn<R, E extends string> = (data?: ListData, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R[], E>>;
+export type ListApiClientFn<R, E extends string> = (data?: ListData, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<ListResponse<R>, E>>;
 export type DeleteApiClientFn<ID, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<void, E>>;
 export type CustomOneFetchApiClientFn<ID, R, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (id: ID, data?: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;

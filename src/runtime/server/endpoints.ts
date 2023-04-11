@@ -216,10 +216,11 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           await authorizeEndpoint(endpoint, contextVars);
 
+          // TODO: this query is not doing anything at the time
           // fetch target query (list, so no findOne here)
-          const tQt = decorateListQuery(queries.targetQueryTree, pathParamVars);
-          const results = await executeQueryTree(tx, def, tQt, pathParamVars, pids);
-          contextVars.set(tQt.alias, results);
+          // const tQt = queries.targetQueryTree;
+          // const results = await executeQueryTree(tx, def, tQt, pathParamVars, pids);
+          // contextVars.set(tQt.alias, results);
 
           // FIXME run custom actions
 
@@ -231,11 +232,12 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           if (parentTarget) {
             parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
           }
-          const responseResults = await executeQueryTree(
+
+          const responseResults = await createListCountResponse(
             tx,
             def,
-            // repsonse query should fetch only by IDs but currently it doesn't so we have to decorate it as well
-            decorateListQuery(queries.responseQueryTree, pathParamVars),
+            endpoint,
+            queries.responseQueryTree,
             pathParamVars,
             parentIds
           );
@@ -844,32 +846,78 @@ async function executeTypedFunction(func: TypedFunction, contextVars: Vars): Pro
 }
 
 /**
- * Queries are built statically so we have decorate them according to runtime params.
- * This fn decorates list endpoint specific params
- *
- * Decorators:
- *  - limit/offset - adds paging params when they appear in params
- *  - search - TODO: list additional search filter
+ * Fetch list data and wrap it in a `ListReponse`.
  */
-function decorateListQuery(qt: QueryTree, params: Vars): QueryTree {
-  // TODO: read var names from central place/config/...
-  // use the same var names as when reading url params
+async function createListCountResponse(
+  conn: DbConn,
+  def: Definition,
+  endpoint: ListEndpointDef,
+  qt: QueryTree,
+  params: Vars,
+  contextIds: number[]
+): Promise<ListResponse> {
+  let page, pageSize, totalPages, totalCount, data;
 
-  const { limit, offset } = pagingToQueryLimit(
-    params.get("page"),
-    params.get("pageSize"),
-    qt.query.offset,
-    qt.query.limit
-  );
+  // --- paged list
+  if (endpoint.pageable) {
+    // resolve pagin data
+    const { limit, offset } = pagingToQueryLimit(
+      params.get("page"),
+      params.get("pageSize"),
+      qt.query.offset,
+      qt.query.limit
+    );
+
+    pageSize = limit ?? 0;
+    page = pageSize > 0 ? Math.floor((offset ?? 0) / pageSize) + 1 : 1;
+
+    const resultQuery = {
+      ...qt,
+      query: {
+        ...qt.query,
+
+        // decorate query with limit/offset
+        limit,
+        offset,
+      },
+    };
+
+    // data query
+    data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
+
+    // count query
+    // TODO: this query should be a "count query" but it's currently not possible
+    const totalData = await executeQueryTree(conn, def, qt, params, contextIds);
+
+    totalCount = totalData.length;
+    totalPages = Math.ceil(totalCount / pageSize);
+  }
+  // --- unpaged list (returns all data)
+  else {
+    // simply fetch all data
+    data = await executeQueryTree(conn, def, qt, params, contextIds);
+
+    // we fetch total data anyway so we'll just use that to set paging data
+    // TODO: not sure if it's the nices thing to fake paging data for non-paged lists
+    pageSize = data.length; // the same as total data count
+    page = 1; // always the first page
+    totalCount = data.length;
+    totalPages = 1; // alway only 1 page
+  }
 
   return {
-    ...qt,
-    query: {
-      ...qt.query,
-
-      // decorate with limit/offset
-      limit,
-      offset,
-    },
+    page,
+    pageSize,
+    totalPages,
+    totalCount,
+    data,
   };
 }
+
+type ListResponse<T = any> = {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  data: T[];
+};

@@ -60,11 +60,21 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
     hasContext: boolean
   ): OpenAPIV3.OperationObject {
     const properties = buildSchema(endpoint.response ?? []);
-    const isArray = endpoint.kind === "list";
+    const isListResponse = endpoint.kind === "list";
 
     const objectSchema: OpenAPIV3.SchemaObject = { type: "object", properties };
-    const schema: OpenAPIV3.SchemaObject = isArray
-      ? { type: "array", items: objectSchema }
+    const schema: OpenAPIV3.SchemaObject = isListResponse
+      ? {
+          type: "object",
+          properties: {
+            page: { type: convertToOpenAPIType("integer") },
+            pageSize: { type: convertToOpenAPIType("integer") },
+            totalPages: { type: convertToOpenAPIType("integer") },
+            totalCount: { type: convertToOpenAPIType("integer") },
+            data: { type: "array", items: objectSchema },
+          },
+          required: ["page", "pageSize", "totalPages", "totalCount", "data"],
+        }
       : objectSchema;
 
     const operation: OpenAPIV3.OperationObject = {

@@ -255,7 +255,7 @@ describe("API endpoints", () => {
       const response = await request(getServer()).get("/org/org1/repos");
 
       expect(response.statusCode).toBe(200);
-      expect(_.sortBy(response.body, "id")).toMatchSnapshot();
+      expect(response.body).toMatchSnapshot();
     });
 
     it("create", async () => {

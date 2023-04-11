@@ -33,18 +33,35 @@ exports[`openAPI build spec 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "properties": {
-                      "id": {
-                        "type": "integer",
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                          },
+                          "slug": {
+                            "type": "string",
+                          },
+                        },
+                        "type": "object",
                       },
-                      "slug": {
-                        "type": "string",
-                      },
+                      "type": "array",
                     },
-                    "type": "object",
+                    "page": {
+                      "type": "integer",
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                    },
                   },
-                  "type": "array",
+                  "type": "object",
                 },
               },
             },
@@ -279,18 +296,35 @@ exports[`openAPI build spec 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "properties": {
-                      "id": {
-                        "type": "integer",
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                        },
+                        "type": "object",
                       },
-                      "name": {
-                        "type": "string",
-                      },
+                      "type": "array",
                     },
-                    "type": "object",
+                    "page": {
+                      "type": "integer",
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                    },
                   },
-                  "type": "array",
+                  "type": "object",
                 },
               },
             },

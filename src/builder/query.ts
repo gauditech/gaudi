@@ -72,8 +72,9 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
             type: "integer",
             required: false,
             defaultValue: limitDefault,
+            // TODO: validate max size
           },
-          { kind: "query", name: "page", type: "integer", required: false, defaultValue: 0 },
+          { kind: "query", name: "page", type: "integer", required: false, defaultValue: 1 },
         ] as const)
       : []),
   ];
