@@ -151,8 +151,6 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
       operation.requestBody = { content: { "application/json": { schema } } };
     }
 
-    operation.operationId = _.camelCase(endpoint.kind + " " + endpoint.target.retType);
-
     return operation;
   }
 
