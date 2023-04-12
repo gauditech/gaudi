@@ -125,7 +125,7 @@ export declare function createClient(options: ApiClientOptions): {
                 summary: unknown;
                 nameAndDesc: unknown;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            list: ListApiClientFn<{
+            list: PaginatedListApiClientFn<{
                 name: string;
                 slug: string;
                 description: string;
@@ -215,21 +215,22 @@ export type ApiResponseError<D, E extends string> = {
     };
     error: ApiResponseErrorBody<E>;
 };
-export type ListResponse<T> = {
+export type PaginatedListResponse<T> = {
     page: number;
     pageSize: number;
     totalPages: number;
     totalCount: number;
     data: T[];
 };
-export type ListData = {
+export type PaginatedListData = {
     pageSize?: number;
     page?: number;
 };
 export type GetApiClientFn<ID, R, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (data: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type UpdateApiClientFn<ID, D, R, E extends string> = (id: ID, data: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
-export type ListApiClientFn<R, E extends string> = (data?: ListData, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<ListResponse<R>, E>>;
+export type ListApiClientFn<R, E extends string> = (options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R[], E>>;
+export type PaginatedListApiClientFn<R, E extends string> = (data?: PaginatedListData, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
 export type DeleteApiClientFn<ID, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<void, E>>;
 export type CustomOneFetchApiClientFn<ID, R, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (id: ID, data?: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;

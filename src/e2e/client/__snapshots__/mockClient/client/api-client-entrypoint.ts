@@ -50,7 +50,7 @@ name?: string };
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type ListResp = GetResp;
-type ListErrot = GetError;
+type ListError = GetError;
 type DeleteError = GetError;
 type CustomOneFetchError = GetError;
 type CustomOneSubmitError = CreateError;
@@ -71,7 +71,7 @@ type CustomManySubmitError = CreateError;
         get: buildGetFn<string, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
 update: buildUpdateFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath),
-list: buildListFn<ListResp, ListErrot>(options, parentPath),
+list: buildListFn<ListResp, ListError>(options, parentPath),
 delete: buildDeleteFn<string, DeleteError>(options, parentPath),
 customOneFetch: buildCustomOneFetchFn<string, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
 customOneSubmit: buildCustomOneSubmitFn<string, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
@@ -98,7 +98,7 @@ org_id?: number };
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type ListResp = GetResp;
-type ListErrot = GetError;
+type ListError = GetError;
 type DeleteError = GetError;
 type CustomOneFetchError = GetError;
 type CustomOneSubmitError = CreateError;
@@ -119,7 +119,7 @@ type CustomManySubmitError = CreateError;
         get: buildGetFn<number, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
 update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
-list: buildListFn<ListResp, ListErrot>(options, parentPath),
+list: buildPaginatedListFn<ListResp, ListError>(options, parentPath),
 delete: buildDeleteFn<number, DeleteError>(options, parentPath),
 customOneFetch: buildCustomOneFetchFn<number, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
 customOneSubmit: buildCustomOneSubmitFn<number, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
@@ -197,7 +197,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
   };
 
 
-  export type ListResponse<T> = {
+  export type PaginatedListResponse<T> = {
     page: number;
     pageSize: number;
     totalPages: number;
@@ -206,25 +206,33 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
   };  
 
   // TODO: add list search/filter parameter
-  export type ListData = { pageSize?: number; page?: number };
+  export type PaginatedListData = { pageSize?: number; page?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type UpdateApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type ListApiClientFn<R, E extends string> = (
-    data?: ListData,
     options?: Partial<ApiRequestInit>
-  ) => Promise<ApiResponse<ListResponse<R>, E>>;
+  ) => Promise<ApiResponse<R[], E>>;
+
+  export type PaginatedListApiClientFn<R, E extends string> = (
+    data?: PaginatedListData,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
+
   export type DeleteApiClientFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -234,14 +242,17 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomManyFetchApiClientFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
   export type CustomManySubmitApiClientFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
@@ -309,6 +320,19 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
   }
   
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
+    return async (options) => {
+      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+
+      return (
+        makeRequest(clientOptions, urlPath, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+  
+  function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
     return async (data, options) => {
       const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
 
@@ -326,7 +350,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildCustomOneFetchFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,

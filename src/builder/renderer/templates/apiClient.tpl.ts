@@ -299,16 +299,28 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseTypeName = `ListResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const errorTypeName = "ListErrot";
+      const errorTypeName = "ListError";
       const errorType = commonErrorTypes.join("|");
-      return {
-        name: "list",
-        builder: `buildListFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
-        types: [
-          { name: responseTypeName, body: responseType },
-          { name: errorTypeName, body: errorType },
-        ],
-      };
+
+      if (endpoint.pageable) {
+        return {
+          name: "list",
+          builder: `buildPaginatedListFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+          types: [
+            { name: responseTypeName, body: responseType },
+            { name: errorTypeName, body: errorType },
+          ],
+        };
+      } else {
+        return {
+          name: "list",
+          builder: `buildListFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+          types: [
+            { name: responseTypeName, body: responseType },
+            { name: errorTypeName, body: errorType },
+          ],
+        };
+      }
     }
     case "custom-one": {
       const targetInfo = createIdentifierTargetInfo(
@@ -467,7 +479,7 @@ function buildCommonCode(): string {
   };
 
 
-  export type ListResponse<T> = {
+  export type PaginatedListResponse<T> = {
     page: number;
     pageSize: number;
     totalPages: number;
@@ -476,25 +488,33 @@ function buildCommonCode(): string {
   };  
 
   // TODO: add list search/filter parameter
-  export type ListData = { pageSize?: number; page?: number };
+  export type PaginatedListData = { pageSize?: number; page?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type UpdateApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type ListApiClientFn<R, E extends string> = (
-    data?: ListData,
     options?: Partial<ApiRequestInit>
-  ) => Promise<ApiResponse<ListResponse<R>, E>>;
+  ) => Promise<ApiResponse<R[], E>>;
+
+  export type PaginatedListApiClientFn<R, E extends string> = (
+    data?: PaginatedListData,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
+
   export type DeleteApiClientFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -504,14 +524,17 @@ function buildCommonCode(): string {
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomManyFetchApiClientFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
   export type CustomManySubmitApiClientFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
@@ -579,6 +602,19 @@ function buildCommonCode(): string {
   }
   
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
+    return async (options) => {
+      const urlPath = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
+
+      return (
+        makeRequest(clientOptions, urlPath, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+  
+  function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
     return async (data, options) => {
       const urlPath = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
 
@@ -596,7 +632,7 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildCustomOneFetchFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,

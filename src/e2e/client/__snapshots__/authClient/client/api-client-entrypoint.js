@@ -168,6 +168,20 @@ function buildDeleteFn(clientOptions, parentPath) {
 }
 function buildListFn(clientOptions, parentPath) {
     var _this = this;
+    return function (options) { return __awaiter(_this, void 0, void 0, function () {
+        var urlPath;
+        var _a, _b;
+        return __generator(this, function (_c) {
+            urlPath = "".concat((_a = clientOptions.rootPath) !== null && _a !== void 0 ? _a : '', "/").concat(parentPath);
+            return [2 /*return*/, (makeRequest(clientOptions, urlPath, {
+                    method: "GET",
+                    headers: __assign({}, ((_b = options === null || options === void 0 ? void 0 : options.headers) !== null && _b !== void 0 ? _b : {})),
+                }))];
+        });
+    }); };
+}
+function buildPaginatedListFn(clientOptions, parentPath) {
+    var _this = this;
     return function (data, options) { return __awaiter(_this, void 0, void 0, function () {
         var urlPath, params, urlParams, url;
         var _a, _b;

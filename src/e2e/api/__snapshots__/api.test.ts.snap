@@ -96,7 +96,34 @@ exports[`API endpoints Org get 1`] = `
 }
 `;
 
-exports[`API endpoints Org list 1`] = `
+exports[`API endpoints Org list with non default paging 1`] = `
+{
+  "data": [
+    {
+      "description": "Org 3 description",
+      "id": 3,
+      "name": "Org 3",
+      "nameAndDesc": "Org 3: Org 3 description",
+      "slug": "org3",
+      "summary": "Org 3Org 3 description",
+    },
+    {
+      "description": "Org 4 description",
+      "id": 4,
+      "name": "Org 4",
+      "nameAndDesc": "Org 4: Org 4 description",
+      "slug": "org4",
+      "summary": "Org 4Org 4 description",
+    },
+  ],
+  "page": 2,
+  "pageSize": 2,
+  "totalCount": 4,
+  "totalPages": 2,
+}
+`;
+
+exports[`API endpoints Org list with paging 1`] = `
 {
   "data": [
     {
@@ -139,33 +166,6 @@ exports[`API endpoints Org list 1`] = `
 }
 `;
 
-exports[`API endpoints Org list with paging 1`] = `
-{
-  "data": [
-    {
-      "description": "Org 3 description",
-      "id": 3,
-      "name": "Org 3",
-      "nameAndDesc": "Org 3: Org 3 description",
-      "slug": "org3",
-      "summary": "Org 3Org 3 description",
-    },
-    {
-      "description": "Org 4 description",
-      "id": 4,
-      "name": "Org 4",
-      "nameAndDesc": "Org 4: Org 4 description",
-      "slug": "org4",
-      "summary": "Org 4Org 4 description",
-    },
-  ],
-  "page": 2,
-  "pageSize": 2,
-  "totalCount": 4,
-  "totalPages": 2,
-}
-`;
-
 exports[`API endpoints Org update 1`] = `
 {
   "description": "Org 2A description",
@@ -196,32 +196,26 @@ exports[`API endpoints Repo get 1`] = `
 `;
 
 exports[`API endpoints Repo list 1`] = `
-{
-  "data": [
-    {
-      "description": "Repo 1 description",
-      "id": 1,
-      "org_id": 1,
-      "slug": "repo1",
-    },
-    {
-      "description": "Repo 2 description",
-      "id": 2,
-      "org_id": 1,
-      "slug": "repo2",
-    },
-    {
-      "description": "Repo 3 description",
-      "id": 3,
-      "org_id": 1,
-      "slug": "repo3",
-    },
-  ],
-  "page": 1,
-  "pageSize": 3,
-  "totalCount": 3,
-  "totalPages": 1,
-}
+[
+  {
+    "description": "Repo 1 description",
+    "id": 1,
+    "org_id": 1,
+    "slug": "repo1",
+  },
+  {
+    "description": "Repo 2 description",
+    "id": 2,
+    "org_id": 1,
+    "slug": "repo2",
+  },
+  {
+    "description": "Repo 3 description",
+    "id": 3,
+    "org_id": 1,
+    "slug": "repo3",
+  },
+]
 `;
 
 exports[`API endpoints Repo update 1`] = `

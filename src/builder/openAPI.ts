@@ -107,11 +107,14 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
   ): OpenAPIV3.OperationObject {
     const properties = buildSchemaProperties(endpoint.response ?? []);
     const required = buildRequiredProperties(endpoint.response ?? []);
-    const isListResponse = endpoint.kind === "list";
 
     const objectSchema: OpenAPIV3.SchemaObject = { type: "object", properties, required };
-    const schema: OpenAPIV3.SchemaObject = isListResponse
-      ? {
+
+    let responseSchema: OpenAPIV3.SchemaObject;
+    if (endpoint.kind === "list") {
+      // pageable list response
+      if (endpoint.pageable) {
+        responseSchema = {
           type: "object",
           properties: {
             page: { type: convertToOpenAPIType("integer") },
@@ -121,14 +124,26 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
             data: { type: "array", items: objectSchema },
           },
           required: ["page", "pageSize", "totalPages", "totalCount", "data"],
-        }
-      : objectSchema;
+        };
+      }
+      // plain list response
+      else {
+        responseSchema = {
+          type: "array",
+          items: objectSchema,
+        };
+      }
+    }
+    // object response
+    else {
+      responseSchema = objectSchema;
+    }
 
     const operation: OpenAPIV3.OperationObject = {
       responses: {
         200: {
           description: "Successful response",
-          content: { "application/json": { schema } },
+          content: { "application/json": { schema: responseSchema } },
         },
       },
     };

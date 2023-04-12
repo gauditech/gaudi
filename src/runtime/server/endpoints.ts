@@ -26,7 +26,7 @@ import { pagingToQueryLimit } from "@src/runtime/common/utils";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { QueryTree } from "@src/runtime/query/build";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
-import { executeQueryTree } from "@src/runtime/query/exec";
+import { NestedRow, executeQueryTree } from "@src/runtime/query/exec";
 import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
@@ -233,7 +233,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
           }
 
-          const responseResults = await createListCountResponse(
+          const responseResults = await createListEndpointResponse(
             tx,
             def,
             endpoint,
@@ -848,14 +848,14 @@ async function executeTypedFunction(func: TypedFunction, contextVars: Vars): Pro
 /**
  * Fetch list data and wrap it in a `ListReponse`.
  */
-async function createListCountResponse(
+async function createListEndpointResponse(
   conn: DbConn,
   def: Definition,
   endpoint: ListEndpointDef,
   qt: QueryTree,
   params: Vars,
   contextIds: number[]
-): Promise<ListResponse> {
+): Promise<PaginatedListResponse<NestedRow> | NestedRow[]> {
   let page, pageSize, totalPages, totalCount, data;
 
   // --- paged list
@@ -895,14 +895,7 @@ async function createListCountResponse(
   // --- unpaged list (returns all data)
   else {
     // simply fetch all data
-    data = await executeQueryTree(conn, def, qt, params, contextIds);
-
-    // we fetch total data anyway so we'll just use that to set paging data
-    // TODO: not sure if it's the nices thing to fake paging data for non-paged lists
-    pageSize = data.length; // the same as total data count
-    page = 1; // always the first page
-    totalCount = data.length;
-    totalPages = 1; // alway only 1 page
+    return await executeQueryTree(conn, def, qt, params, contextIds);
   }
 
   return {
@@ -914,7 +907,7 @@ async function createListCountResponse(
   };
 }
 
-type ListResponse<T = any> = {
+type PaginatedListResponse<T = any> = {
   page: number;
   pageSize: number;
   totalPages: number;

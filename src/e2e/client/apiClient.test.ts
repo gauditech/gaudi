@@ -98,7 +98,7 @@ describe("api client lib", () => {
       `);
     });
 
-    it("list", async () => {
+    it("list with paging", async () => {
       const response = await client.api.org.list();
 
       ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
@@ -148,7 +148,7 @@ describe("api client lib", () => {
       `);
     });
 
-    it("list with paging", async () => {
+    it("list with non default paging", async () => {
       const response = await client.api.org.list({ page: 2, pageSize: 2 });
 
       ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
