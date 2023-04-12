@@ -455,7 +455,7 @@ describe("compose actions", () => {
         `;
 
           expect(() => compose(compileToOldSpec(bp))).toThrowError(
-            `'endpoint' must contain a '${property}'`
+            `Endpoint of type 'custom' must contain a '${property}'`
           );
         });
 
@@ -477,7 +477,7 @@ describe("compose actions", () => {
             `;
 
               expect(() => compileToOldSpec(bp)).toThrowError(
-                `'endpoint' cannot contain a '${property}'`
+                `Endpoint of type '${epType}' cannot contain a '${property}'`
               );
             });
           })

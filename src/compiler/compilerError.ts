@@ -6,7 +6,9 @@ export enum ErrorCode {
   ParserError,
   // Check form Errors
   MustContainAtom,
+  EndpointMustContainAtom,
   CannotContainAtom,
+  EndpointCannotContainAtom,
   DuplicateAtom,
   DuplicateModel,
   DuplicateRuntime,
@@ -47,8 +49,12 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `${params?.message}`;
     case ErrorCode.MustContainAtom:
       return `'${params?.parent}' must contain a '${params?.atom}'`;
+    case ErrorCode.EndpointMustContainAtom:
+      return `Endpoint of type '${params?.type}' must contain a '${params?.atom}'`;
     case ErrorCode.CannotContainAtom:
       return `'${params?.parent}' cannot contain a '${params?.atom}'`;
+    case ErrorCode.EndpointCannotContainAtom:
+      return `Endpoint of type '${params?.type}' cannot contain a '${params?.atom}'`;
     case ErrorCode.DuplicateAtom:
       return `Duplicate '${params?.atom}' in a '${params?.parent}'`;
     case ErrorCode.DuplicateModel:
