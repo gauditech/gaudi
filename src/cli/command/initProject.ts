@@ -165,13 +165,13 @@ To initialize a new starter project use Gaudi CLI anywhere where CLI is availabl
 npx gaudi-cli init <project-name>
 \`\`\`
 
-Project name will be used as a name for project folder, NPM package name, Gaudi blueprint file and DB name. As such it will be sanitized and all (regex) "non-word" characters will be replaced with "-".
+Project name will be used as a name for project folder, NPM package name, Gaudi source file and DB name. As such it will be sanitized and all (regex) "non-word" characters will be replaced with "-".
 Eg.
  * \`"new project 1\` -> \`"new-project-1"\`
  * \`"@myorg/acme_util"\` -> \`"myorg-acme_util"\`
 
 ## Building project
-Gaudi CLI is used to build Gaudi blueprints but since this project also contains Typescript hooks which are built independently from Gaudi blueprints, both are conveniently wrapped in NPM scripts:
+Gaudi CLI is used to build Gaudi source code but since this project also contains Typescript hooks which are built independently from Gaudi source code, both are conveniently wrapped in NPM scripts:
 
 ##### **Build**
 Builds hooks sources and run Gaudi build
@@ -219,7 +219,7 @@ Project can be configured through \`.env\` file. Available configuration options
 * \`GAUDI_DATABASE_URL\` [_"postgresql://gaudi:gaudip@localhost:5432/${projectName}"_] - DB connection string
 
 #### **Gaudi engine**
-* \`GAUDI_ENGINE_INPUT_PATH\` [_"./src/${projectName}.gaudi"_] - path to Gaudi blueprint file
+* \`GAUDI_ENGINE_INPUT_PATH\` [_"./src/${projectName}.gaudi"_] - path to Gaudi source code files
 * GAUDI_ENGINE_OUTPUT_PATH\` [_"./dist"_] - path to folder where Gaudi engine will output it's files
 
 #### **Runtime configuration**
@@ -234,8 +234,8 @@ Hooks allow extending Gaudi with custom code. Currently, Gaudi allows only JS ho
 
 Hooks code must be located in \`<root>/hooks\` folder in one or multiple files and/or subfolders.
 
-## Gaudi blueprints
-Gaudi blueprints are located in \`<root>/src/${projectName}.gaudi\` file. It is compiled by Gaudi engine and output to \`dist\` folder.
+## Gaudi source code
+Gaudi source code files are located in \`<root>/src/${projectName}.gaudi\` file. It is compiled by Gaudi engine and output to \`dist\` folder.
 
 Gaudi engine also produces DB schema and migration files. Since those files need to be source controlled they are output to \`<root>/gaudi\` folder and then copied to output folder so they are available to app.
 
@@ -338,7 +338,7 @@ function createGaudiBlueprint(outputDir: string, projectName: string) {
 function renderGaudiBlueprintTemplate() {
   return `
 //
-// Place your Gaudi blueprint code here ...
+// Place your Gaudi source code here ...
 //
 `;
 }
