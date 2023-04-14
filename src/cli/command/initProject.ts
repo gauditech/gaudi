@@ -1,5 +1,6 @@
 import path from "path";
 
+import _ from "lodash";
 import { ArgumentsCamelCase } from "yargs";
 
 import { createCommandRunner } from "@src/cli/runner";
@@ -7,61 +8,87 @@ import { createDir, sanitizeProjectName, storeTemplateOutput } from "@src/cli/ut
 import { saveOutputFile } from "@src/common/utils";
 import { EngineConfig } from "@src/config";
 
+type ProjectConfig = {
+  projectName: string;
+  rootDir: string;
+  // these dirs should be relative to root dir
+  hooksDir: string;
+  gaudiDir: string;
+  sourceDir: string;
+  distDir: string;
+};
+
 // --- init project
 
 export type InitProjectOptions = {
   name: string;
 };
 export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config: EngineConfig) {
-  console.log("Initializing new Gaudi project project ...");
-
   const projectName = sanitizeProjectName(args.name);
-  const outputDir = resolveOutputDirPath(projectName);
+  const rootDir = resolveRootDirPath(projectName);
+
+  console.log(`Initializing new Gaudi project "${projectName}" ...`);
+
+  const projectConfig: ProjectConfig = {
+    projectName,
+    rootDir,
+    // relative to root dir
+    hooksDir: "hooks",
+    gaudiDir: "gaudi",
+    sourceDir: "src",
+    distDir: "dist",
+  };
 
   return (
     Promise.resolve()
       // create project
-      .then(() => console.log(`  create folder "${projectName}"`))
-      .then(() => createProjectDir(outputDir))
+      .then(() => console.log(`  creating project folder "${rootDir}"`))
+      .then(() => createProject(projectConfig))
       .catch((err) => {
         console.error("Error creating project folder", err);
         throw "Error initializing project";
       })
+
       // create package.json
-      .then(() => console.log(`  init NPM package`))
-      .then(() => createNpmProject(outputDir, projectName))
+      .then(() => console.log(`  creating NPM package`))
+      .then(() => createNpmProject(projectConfig))
       .catch((err) => {
-        console.error("Error initializing NPM package", err);
+        console.error("Error creating NPM package", err);
         throw "Error initializing project";
       })
+
       // create .env config
-      .then(() => console.log(`  create .env config`))
-      .then(() => createEnvConfig(outputDir, projectName))
+      .then(() => console.log(`  creating .env config`))
+      .then(() => createEnvConfig(projectConfig))
       .catch((err) => {
         console.error("Error creating .env config", err);
         throw "Error initializing project";
       })
+
       // create README.md
-      .then(() => console.log(`  create README file`))
-      .then(() => createReadme(outputDir, projectName))
+      .then(() => console.log(`  creating README file`))
+      .then(() => createReadme(projectConfig))
       .catch((err) => {
         console.error("Error creating README", err);
         throw "Error initializing project";
       })
+
       // create hooks environment
-      .then(() => console.log(`  create hooks environment`))
-      .then(() => createHooksEnvironment(outputDir, projectName))
+      .then(() => console.log(`  creating hooks environment in "${projectConfig.hooksDir}"`))
+      .then(() => createHooksEnvironment(projectConfig))
       .catch((err) => {
         console.error("Error creating hooks environemnt", err);
         throw "Error initializing project";
       })
+
       // gaudi files
-      .then(() => console.log(`  create Gaudi files`))
-      .then(() => createGaudiFiles(outputDir, projectName))
+      .then(() => console.log(`  creating Gaudi source files in "${projectConfig.sourceDir}"`))
+      .then(() => createGaudiFiles(projectConfig))
       .catch((err) => {
         console.error("Error creating Gaudi files", err);
         throw "Error initializing project";
       })
+
       // TODO: docker (postgres, adminer, ...)
       .then(() => console.log(``))
       .then(() => console.log(`Project initialized succesfully`))
@@ -71,32 +98,50 @@ export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config
   );
 }
 
-function resolveOutputDirPath(name: string) {
+function resolveRootDirPath(name: string) {
   return path.resolve(name);
 }
 
-async function createProjectDir(dirPath: string) {
-  createDir(dirPath);
+// ----- Project dir
+
+async function createProject(projectConfig: ProjectConfig) {
+  createDir(projectConfig.rootDir);
+
+  createGitignore(projectConfig);
+}
+
+async function createGitignore(projectConfig: ProjectConfig) {
+  const gitignorePath = path.join(projectConfig.rootDir, ".gitignore");
+
+  storeTemplateOutput(
+    gitignorePath,
+    `
+node_modules
+${projectConfig.distDir}
+`
+  );
 }
 
 // ----- NPM project
 
-async function createNpmProject(outputDir: string, projectName: string) {
-  const packageJsonPath = path.join(outputDir, "package.json");
+async function createNpmProject(projectConfig: ProjectConfig) {
+  const rootDir = projectConfig.rootDir;
 
-  storeTemplateOutput(packageJsonPath, renderPackageJsonTemplate(projectName));
+  const packageJsonPath = path.join(rootDir, "package.json");
+
+  storeTemplateOutput(packageJsonPath, renderPackageJsonTemplate(projectConfig));
 
   // link local gaudi package
   // TODO: remove this once gaudi gets published on NPM
   await createCommandRunner("npm", ["link", "@gaudi/engine", "--silent"], {
-    cwd: outputDir,
+    cwd: rootDir,
   }).start();
 }
 
-function renderPackageJsonTemplate(projectName: string): string {
+function renderPackageJsonTemplate(projectConfig: ProjectConfig): string {
   return JSON.stringify(
     {
-      name: projectName,
+      name: projectConfig.projectName,
       version: "1.0.0",
       description: "",
       scripts: {
@@ -105,11 +150,11 @@ function renderPackageJsonTemplate(projectName: string): string {
         "build:hooks": "tsc --preserveWatchOutput",
         "// --- dev": "",
         dev: 'concurrently --names hooks,gaudi "npm run dev:hooks" "npx gaudi-cli dev --gaudi-dev"',
-        "dev:hooks": 'chokidar ./hooks  --debounce --initial --command "npm run build:hooks"',
+        "dev:hooks": `chokidar ${projectConfig.hooksDir}  --debounce --initial --command "npm run build:hooks"`,
         "// --- start": "",
         start: "npx gaudi-cli start",
         "// --- other": "",
-        clean: "rimraf ./dist",
+        clean: `rimraf ${projectConfig.distDir}`,
       },
       devDependencies: {
         "chokidar-cli": "^3.0.0",
@@ -125,21 +170,23 @@ function renderPackageJsonTemplate(projectName: string): string {
 
 // ----- Env config
 
-async function createEnvConfig(outputDir: string, projectName: string) {
+async function createEnvConfig(projectConfig: ProjectConfig) {
+  const outputDir = projectConfig.rootDir;
+
   const envConfigPath = path.join(outputDir, ".env");
 
-  storeTemplateOutput(envConfigPath, renderEnvConfigTemplate(projectName));
+  storeTemplateOutput(envConfigPath, renderEnvConfigTemplate(projectConfig));
 }
 
-function renderEnvConfigTemplate(projectName: string): string {
+function renderEnvConfigTemplate(projectConfig: ProjectConfig): string {
   return `
-GAUDI_DATABASE_URL=postgresql://gaudi:gaudip@localhost:5432/${projectName}
+GAUDI_DATABASE_URL=postgresql://gaudi:gaudip@localhost:5432/${projectConfig.projectName}
 
-GAUDI_ENGINE_INPUT_PATH=./src/${projectName}.gaudi
-GAUDI_ENGINE_OUTPUT_PATH=./dist
+GAUDI_ENGINE_INPUT_PATH=${projectConfig.sourceDir}/${projectConfig.projectName}.gaudi
+GAUDI_ENGINE_OUTPUT_PATH=${projectConfig.distDir}
 
-GAUDI_RUNTIME_DEFINITION_PATH=./dist/definition.json
-GAUDI_RUNTIME_OUTPUT_PATH=./dist
+GAUDI_RUNTIME_DEFINITION_PATH=${projectConfig.distDir}/definition.json
+GAUDI_RUNTIME_OUTPUT_PATH=${projectConfig.distDir}
 GAUDI_RUNTIME_SERVER_HOST=localhost
 GAUDI_RUNTIME_SERVER_PORT=3001
 `;
@@ -147,15 +194,17 @@ GAUDI_RUNTIME_SERVER_PORT=3001
 
 // ----- README
 
-async function createReadme(outputDir: string, projectName: string) {
+async function createReadme(projectConfig: ProjectConfig) {
+  const outputDir = projectConfig.rootDir;
+
   const envConfigPath = path.join(outputDir, "README.md");
 
-  storeTemplateOutput(envConfigPath, renderReadmeTemplate(projectName));
+  storeTemplateOutput(envConfigPath, renderReadmeTemplate(projectConfig));
 }
 
-function renderReadmeTemplate(projectName: string): string {
+function renderReadmeTemplate(projectConfig: ProjectConfig): string {
   return `
-# Welcome to **${projectName}** project
+# Welcome to **${projectConfig.projectName}** project
 
 This is a Gaudi starter project.
 
@@ -192,7 +241,7 @@ $ npm run start
 \`\`\`
 
 ### Building Gaudi engine
-If building Gaudi engine in parallel, Gaudi engine's output (\`dist\`) needs to be connected/linked to this project's dependencies.
+If building Gaudi engine in parallel, Gaudi engine's output (\`${projectConfig.distDir}\`) needs to be connected/linked to this project's dependencies.
 
 In Gaudi output folder run following
 \`\`\`
@@ -216,15 +265,15 @@ npm i file://path/to/gaudi/dist
 Project can be configured through \`.env\` file. Available configuration options:
 
 #### **Database**
-* \`GAUDI_DATABASE_URL\` [_"postgresql://gaudi:gaudip@localhost:5432/${projectName}"_] - DB connection string
+* \`GAUDI_DATABASE_URL\` [_"postgresql://gaudi:gaudip@localhost:5432/${projectConfig.projectName}"_] - DB connection string
 
 #### **Gaudi engine**
-* \`GAUDI_ENGINE_INPUT_PATH\` [_"./src/${projectName}.gaudi"_] - path to Gaudi source code files
-* GAUDI_ENGINE_OUTPUT_PATH\` [_"./dist"_] - path to folder where Gaudi engine will output it's files
+* \`GAUDI_ENGINE_INPUT_PATH\` [_"${projectConfig.sourceDir}/${projectConfig.projectName}.gaudi"_] - path to Gaudi source code files
+* GAUDI_ENGINE_OUTPUT_PATH\` [_"${projectConfig.distDir}"_] - path to folder where Gaudi engine will output it's files
 
 #### **Runtime configuration**
-* \`GAUDI_RUNTIME_DEFINITION_PATH\` [_"./dist/definition.json"_] - path to Gaudi definition file
-* \`GAUDI_RUNTIME_OUTPUT_PATH\` [_"./dist"_] - path to folder where Gaudi runtime will output it's files
+* \`GAUDI_RUNTIME_DEFINITION_PATH\` [_"${projectConfig.distDir}/definition.json"_] - path to Gaudi definition file
+* \`GAUDI_RUNTIME_OUTPUT_PATH\` [_"${projectConfig.distDir}"_] - path to folder where Gaudi runtime will output it's files
 * \`GAUDI_RUNTIME_SERVER_HOST\` [_"localhost"_] - Gaudi runtime app host name
 * \`GAUDI_RUNTIME_SERVER_PORT\` [_3001_] - Gaudi runtime app port
 
@@ -232,12 +281,12 @@ Project can be configured through \`.env\` file. Available configuration options
 ## Hooks
 Hooks allow extending Gaudi with custom code. Currently, Gaudi allows only JS hooks. This project is prepared with Typescript hooks which are compiled to JS. Typescript is completely configured through \`<root>/tsconfig.json\` file.
 
-Hooks code must be located in \`<root>/hooks\` folder in one or multiple files and/or subfolders.
+Hooks code must be located in \`<root>/${projectConfig.hooksDir}\` folder in one or multiple files and/or subfolders.
 
 ## Gaudi source code
-Gaudi source code files are located in \`<root>/src/${projectName}.gaudi\` file. It is compiled by Gaudi engine and output to \`dist\` folder.
+Gaudi source code files are located in \`<root>/${projectConfig.sourceDir}/${projectConfig.projectName}.gaudi\` file. It is compiled by Gaudi engine and output to \`${projectConfig.distDir}\` folder.
 
-Gaudi engine also produces DB schema and migration files. Since those files need to be source controlled they are output to \`<root>/gaudi\` folder and then copied to output folder so they are available to app.
+Gaudi engine also produces DB schema and migration files. Since those files need to be source controlled they are output to \`<root>/${projectConfig.gaudiDir}\` folder and then copied to output folder so they are available to app.
 
 ### API
 Gaudi engine produces following API resources:
@@ -250,20 +299,18 @@ Gaudi engine produces following API resources:
 
 // ----- Hooks
 
-async function createHooksEnvironment(outputDir: string, projectName: string) {
-  const hooksDir = createHooksDir(outputDir, projectName);
+async function createHooksEnvironment(projectConfig: ProjectConfig) {
+  createHooksDir(projectConfig);
 
-  createHooksFile(hooksDir);
-
-  createTypescriptConfig(outputDir, hooksDir);
+  createTypescriptConfig(projectConfig);
 }
 
-function createHooksDir(outputDir: string, _projectName: string) {
-  const hooksDir = path.join(outputDir, "hooks");
+function createHooksDir(projectConfig: ProjectConfig) {
+  const hooksDir = path.join(projectConfig.rootDir, projectConfig.hooksDir);
 
   createDir(hooksDir);
 
-  return hooksDir;
+  createHooksFile(hooksDir);
 }
 
 function createHooksFile(hooksDir: string) {
@@ -280,16 +327,13 @@ function renderHooksFileTemplate() {
   `;
 }
 
-function createTypescriptConfig(outputDir: string, hooksDir: string) {
-  const typescriptConfigPath = path.join(outputDir, "tsconfig.json");
+function createTypescriptConfig(projectConfig: ProjectConfig) {
+  const typescriptConfigPath = path.join(projectConfig.rootDir, "tsconfig.json");
 
-  // use relative path for more flexibility
-  const hooksRelativeDir = path.relative(outputDir, hooksDir);
-
-  saveOutputFile(typescriptConfigPath, renderTsconfigJsonTemplate(hooksRelativeDir));
+  saveOutputFile(typescriptConfigPath, renderTsconfigJsonTemplate(projectConfig));
 }
 
-function renderTsconfigJsonTemplate(hooksDir: string) {
+function renderTsconfigJsonTemplate(projectConfig: ProjectConfig) {
   return JSON.stringify(
     {
       compilerOptions: {
@@ -301,7 +345,7 @@ function renderTsconfigJsonTemplate(hooksDir: string) {
         noImplicitAny: true,
         moduleResolution: "node",
         sourceMap: true,
-        outDir: "dist",
+        outDir: projectConfig.distDir,
         rootDir: ".",
         baseUrl: ".",
         strict: true,
@@ -310,7 +354,7 @@ function renderTsconfigJsonTemplate(hooksDir: string) {
         },
         lib: ["es2020"],
       },
-      include: [hooksDir],
+      include: [projectConfig.hooksDir],
     },
     undefined,
     2
@@ -319,32 +363,41 @@ function renderTsconfigJsonTemplate(hooksDir: string) {
 
 // ------ Gaudi files
 
-async function createGaudiFiles(outputDir: string, projectName: string) {
-  createGaudiBlueprint(outputDir, projectName);
+async function createGaudiFiles(projectConfig: ProjectConfig) {
+  createGaudiBlueprint(projectConfig);
 
-  createGaudiDir(outputDir);
+  createGaudiDir(projectConfig);
 }
 
-function createGaudiBlueprint(outputDir: string, projectName: string) {
-  const gaudiSourceDir = path.join(outputDir, "src");
+function createGaudiBlueprint(projectConfig: ProjectConfig) {
+  const projectName = projectConfig.projectName;
+
+  const gaudiSourceDir = path.join(projectConfig.rootDir, projectConfig.sourceDir);
 
   createDir(gaudiSourceDir);
 
   const gaudiBlueprintPath = path.join(gaudiSourceDir, `${projectName}.gaudi`);
 
-  saveOutputFile(gaudiBlueprintPath, renderGaudiBlueprintTemplate());
+  saveOutputFile(gaudiBlueprintPath, renderGaudiBlueprintTemplate(projectConfig));
 }
 
-function renderGaudiBlueprintTemplate() {
+function renderGaudiBlueprintTemplate(projectConfig: ProjectConfig) {
+  const runtimeName = _.upperFirst(_.camelCase(projectConfig.projectName));
+
   return `
+runtime ${runtimeName} {
+  source path "${projectConfig.hooksDir}"
+}
+  
+
 //
 // Place your Gaudi source code here ...
 //
 `;
 }
 
-function createGaudiDir(outputDir: string) {
-  const gaudiDir = path.join(outputDir, "gaudi");
+function createGaudiDir(projectConfig: ProjectConfig) {
+  const gaudiDir = path.join(projectConfig.rootDir, projectConfig.gaudiDir);
 
   createDir(gaudiDir);
 }
