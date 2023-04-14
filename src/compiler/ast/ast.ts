@@ -109,22 +109,23 @@ export type Computed = {
 export type Entrypoint = {
   kind: "entrypoint";
   keyword: TokenData;
-  name: Identifier;
+  target: IdentifierRef[];
   atoms: EntrypointAtom[];
 };
+
+export type Identify = {
+  kind: "identify";
+  keyword: TokenData;
+  as?: { keyword: TokenData; identifier: IdentifierRef };
+  atoms: (EntrypointAtom | { kind: "through"; keyword: TokenData; identifier: IdentifierRef })[];
+};
+
 export type EntrypointAtom =
-  | ({ keyword: TokenData } & (
-      | {
-          kind: "target";
-          identifier: IdentifierRef;
-          as?: { keyword: TokenData; identifier: IdentifierRef };
-        }
-      | { kind: "identifyWith"; identifier: IdentifierRef }
-      | { kind: "response"; select: Select }
-      | { kind: "authorize"; expr: Expr<Code> }
-    ))
+  | { kind: "response"; select: Select; keyword: TokenData }
+  | { kind: "authorize"; expr: Expr<Code>; keyword: TokenData }
   | Endpoint
-  | Entrypoint;
+  | Entrypoint
+  | Identify;
 
 export type Endpoint = {
   kind: "endpoint";

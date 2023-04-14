@@ -9,11 +9,9 @@ model Student {
 }
 
 entrypoint Class {
-  target Class
   response { year, students { name } }
 }
 
 entrypoint Student {
-  target Student
   response { name, class { year } }
 }

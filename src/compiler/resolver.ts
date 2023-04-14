@@ -11,6 +11,7 @@ import {
   Computed,
   DeleteAction,
   Endpoint,
+  EndpointCardinality,
   Entrypoint,
   ExecuteAction,
   Expr,
@@ -20,6 +21,7 @@ import {
   GlobalAtom,
   Hook,
   IdentifierRef,
+  Identify,
   Model,
   ModelAction,
   ModelAtom,
@@ -484,37 +486,50 @@ export function resolve(projectASTs: ProjectASTs) {
 
   // passing null as a parent model means this is root model, while undefined means it is unresolved
   function resolveEntrypoint(
-    entrypoint: Entrypoint,
+    entrypoint: Entrypoint | Identify,
     parentModel: string | undefined | null,
     scope: Scope
   ) {
     let currentModel: string | undefined;
-    let alias: IdentifierRef | undefined;
+    let entrypointType: "one" | "many";
 
-    const target = kindFind(entrypoint.atoms, "target");
-    if (target) {
-      if (parentModel === null) {
-        resolveModelRef(target.identifier);
-        currentModel =
-          target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
-      } else {
-        resolveModelAtomRef(target.identifier, parentModel, "relation");
-        target.identifier.type = removeTypeModifier(
-          target.identifier.type,
-          "collection",
-          "nullable"
-        );
-        currentModel = getTypeModel(target.identifier.type);
+    if (entrypoint.kind === "entrypoint") {
+      resolveIdentifierRefPath(entrypoint.target, scope, true);
+      const targetType = entrypoint.target.at(-1)!.type;
+      currentModel = getTypeModel(targetType);
+      const cardinality = getTypeCardinality(targetType);
+      if (entrypoint.target.length > 1) {
+        throw Error("Entrypoint target.length > 1 not implemented");
+      } else if (cardinality !== "collection") {
+        throw Error("Entrypoint cardinality !== 'collection' not implemented");
       }
-      if (target.as) {
-        target.as.identifier.ref = { kind: "context", contextKind: "entrypointTarget" };
-        target.as.identifier.type = target.identifier.type;
-        alias = target.as.identifier;
+      entrypointType = "many";
+    } else {
+      if (entrypoint.as) {
+        entrypoint.as.identifier.ref = { kind: "context", contextKind: "entrypointTarget" };
+        if (parentModel) {
+          currentModel = parentModel;
+          scope.model = currentModel;
+          entrypoint.as.identifier.type = { kind: "model", model: currentModel };
+        }
+        addToScope(scope, entrypoint.as.identifier);
+      }
+      entrypointType = "one";
+    }
+
+    const endpointCardinality: EndpointCardinality = entrypointType;
+
+    const identify = kindFind(entrypoint.atoms, "identify");
+    if (identify) {
+      if (entrypointType === "many") {
+        resolveEntrypoint(identify, currentModel, _.cloneDeep(scope));
+      } else {
+        errors.push(new CompilerError(identify.keyword, ErrorCode.IdentifyInsideSingleEntrypoint));
       }
     }
 
-    const identifyWith = kindFind(entrypoint.atoms, "identifyWith");
-    if (identifyWith) resolveModelAtomRef(identifyWith.identifier, currentModel, "field");
+    const through = kindFind(entrypoint.atoms, "through");
+    if (through) resolveModelAtomRef(through.identifier, currentModel, "field");
 
     const authorize = kindFind(entrypoint.atoms, "authorize");
     if (authorize) {
@@ -527,37 +542,49 @@ export function resolve(projectASTs: ProjectASTs) {
     if (response) resolveSelect(response.select, currentModel, scope);
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
-      resolveEndpoint(endpoint, currentModel, alias, _.cloneDeep(scope))
+      resolveEndpoint(endpoint, currentModel, endpointCardinality, _.cloneDeep(scope))
     );
 
-    const childEntrypointScope = _.cloneDeep(scope);
-    if (alias) addToScope(childEntrypointScope, alias);
-    kindFilter(entrypoint.atoms, "entrypoint").forEach((entrypoint) =>
-      resolveEntrypoint(entrypoint, currentModel, childEntrypointScope)
-    );
+    const entrypoints = kindFilter(entrypoint.atoms, "entrypoint");
+    if (entrypoints.length > 0) {
+      if (entrypointType === "one") {
+        entrypoints.forEach((entrypoint) =>
+          resolveEntrypoint(entrypoint, currentModel, _.cloneDeep(scope))
+        );
+      } else {
+        errors.push(
+          new CompilerError(entrypoints[0].keyword, ErrorCode.EntrypointInsideManyEntrypoint)
+        );
+      }
+    }
   }
 
   function resolveEndpoint(
     endpoint: Endpoint,
     model: string | undefined,
-    alias: IdentifierRef | undefined,
+    parentCardinality: EndpointCardinality,
     scope: Scope
   ) {
-    // add current target alias to all endpoints with cardinality one
+    let cardinality: EndpointCardinality;
     switch (endpoint.type) {
-      case "custom": {
-        const cardinality = kindFind(endpoint.atoms, "cardinality")?.cardinality;
-        if (cardinality !== "one") break;
-        // fall through
-      }
+      case "list":
+      case "create":
+        cardinality = "many";
+        break;
       case "get":
+      case "update":
       case "delete":
-      case "update": {
-        if (alias) addToScope(scope, alias);
+        cardinality = "one";
         break;
-      }
-      default:
-        break;
+      case "custom":
+        cardinality = parentCardinality;
+    }
+    if (parentCardinality !== cardinality) {
+      const code =
+        parentCardinality === "one"
+          ? ErrorCode.UnsuportedEndpointInSingleEntrypoint
+          : ErrorCode.UnsuportedEndpointInManyEntrypoint;
+      errors.push(new CompilerError(endpoint.keywordType, code, { endpoint: endpoint.type }));
     }
 
     const authorize = kindFind(endpoint.atoms, "authorize");

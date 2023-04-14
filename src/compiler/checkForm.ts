@@ -18,6 +18,7 @@ import {
   GlobalAtom,
   Hook,
   Identifier,
+  Identify,
   Model,
   ModelAction,
   Populate,
@@ -178,9 +179,8 @@ export function checkForm(projectASTs: ProjectASTs) {
     // TODO: do nothing?
   }
 
-  function checkEntrypoint(entrypoint: Entrypoint) {
-    containsAtoms(entrypoint, "target");
-    noDuplicateAtoms(entrypoint, "target", "identifyWith", "authorize", "response");
+  function checkEntrypoint(entrypoint: Entrypoint | Identify) {
+    noDuplicateAtoms(entrypoint, "identify", "authorize", "response", "through");
 
     const endpoints = kindFilter(entrypoint.atoms, "endpoint");
     const definedEndpoints = new Set<EndpointType>();
@@ -196,9 +196,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     // check custom endpoint unique path
     const entrypointPaths = new Set(
       _.compact(
-        kindFilter(entrypoint.atoms, "entrypoint").map(
-          (e) => kindFind(e.atoms, "target")?.identifier.identifier.text
-        )
+        kindFilter(entrypoint.atoms, "entrypoint").map((e) => e.target.at(-1)!.identifier.text)
       )
     );
     const customPaths = new Set<string>();
@@ -226,7 +224,7 @@ export function checkForm(projectASTs: ProjectASTs) {
       match(a)
         .with({ kind: "response" }, ({ select }) => checkSelect(select))
         .with({ kind: "endpoint" }, checkEndpoint)
-        .with({ kind: "entrypoint" }, checkEntrypoint)
+        .with({ kind: "entrypoint" }, { kind: "identify" }, checkEntrypoint)
         .otherwise(() => {
           // TODO: do nothing?
         })

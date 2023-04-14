@@ -15,16 +15,10 @@ model Item {
   reference box { to Box }
 }
 
-entrypoint Boxes {
-  target Box as box
-  identify with name
-
+entrypoint Box {
   list endpoint {
     // user must be logged in
     authorize { @auth.id is not null }
-  }
-  get endpoint {
-    authorize { box.is_public or @auth.id is box.owner.id }
   }
   create endpoint {
     authorize { @auth.id is not null }
@@ -35,14 +29,20 @@ entrypoint Boxes {
     }
   }
 
-  entrypoint Items {
-    target items as item
-    identify with name
-
-    authorize { box.is_public or @auth.id is box.owner.id }
+  identify as box {
+    through name
 
     get endpoint {
-      authorize { item.is_public }
+      authorize { box.is_public or @auth.id is box.owner.id }
+    }
+    entrypoint items {
+      authorize { box.is_public or @auth.id is box.owner.id }
+
+      identify as item {
+        get endpoint {
+          authorize { item.is_public }
+        }
+      }
     }
   }
 }

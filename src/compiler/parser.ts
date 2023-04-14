@@ -42,6 +42,7 @@ import {
   Hook,
   Identifier,
   IdentifierRef,
+  Identify,
   InputAtom,
   IntegerLiteral,
   Literal,
@@ -490,60 +491,80 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: EntrypointAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Entrypoint));
-    const name = this.SUBRULE1(this.identifier);
-    this.CONSUME1(L.LCurly);
+    const target = this.SUBRULE(this.identifierRefPath);
+    this.CONSUME(L.LCurly);
+    this.MANY(() => atoms.push(this.SUBRULE(this.entrypointAtom)));
+    this.CONSUME(L.RCurly);
+
+    return { kind: "entrypoint", target, atoms, keyword };
+  });
+
+  identify = this.RULE("identify", (): Identify => {
+    const atoms: Identify["atoms"] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Identify));
+    const as = this.OPTION(() => {
+      const keyword = getTokenData(this.CONSUME(L.As));
+      const identifier = this.SUBRULE1(this.identifierRef);
+      return { identifier, keyword };
+    });
+
+    this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
         {
           ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Target));
-            const identifier = this.SUBRULE1(this.identifierRef);
-            const as = this.OPTION(() => {
-              const keyword = getTokenData(this.CONSUME(L.As));
-              const identifier = this.SUBRULE2(this.identifierRef);
-              return { keyword, identifier };
-            });
-            atoms.push({ kind: "target", identifier, as, keyword });
+            const keyword = getTokenData(this.CONSUME(L.Through));
+            const identifier = this.SUBRULE2(this.identifierRef);
+            atoms.push({ kind: "through", identifier, keyword });
           },
         },
         {
           ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Identify), this.CONSUME(L.With));
-            const identifier = this.SUBRULE3(this.identifierRef);
-            atoms.push({ kind: "identifyWith", identifier, keyword });
-          },
-        },
-        {
-          ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Response));
-            const select = this.SUBRULE(this.select);
-            atoms.push({ kind: "response", select, keyword });
-          },
-        },
-        {
-          ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Authorize));
-            this.CONSUME2(L.LCurly);
-            const expr = this.SUBRULE(this.expr);
-            this.CONSUME2(L.RCurly);
-            atoms.push({ kind: "authorize", expr, keyword });
-          },
-        },
-        {
-          ALT: () => {
-            atoms.push(this.SUBRULE(this.endpoint));
-          },
-        },
-        {
-          ALT: () => {
-            atoms.push(this.SUBRULE(this.entrypoint));
+            atoms.push(this.SUBRULE(this.entrypointAtom));
           },
         },
       ]);
     });
-    this.CONSUME1(L.RCurly);
+    this.CONSUME(L.RCurly);
 
-    return { kind: "entrypoint", name, atoms, keyword };
+    return { kind: "identify", as, atoms, keyword };
+  });
+
+  entrypointAtom = this.RULE("entrypointAtom", (): EntrypointAtom => {
+    return this.OR<EntrypointAtom>([
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME(L.Response));
+          const select = this.SUBRULE(this.select);
+          return { kind: "response", select, keyword };
+        },
+      },
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME(L.Authorize));
+          this.CONSUME2(L.LCurly);
+          const expr = this.SUBRULE(this.expr);
+          this.CONSUME2(L.RCurly);
+          return { kind: "authorize", expr, keyword };
+        },
+      },
+      {
+        ALT: () => {
+          return this.SUBRULE(this.endpoint);
+        },
+      },
+      {
+        ALT: () => {
+          return this.SUBRULE(this.entrypoint);
+        },
+      },
+      {
+        ALT: () => {
+          return this.SUBRULE(this.identify);
+        },
+      },
+    ]);
   });
 
   endpoint = this.RULE("endpoint", (): Endpoint => {

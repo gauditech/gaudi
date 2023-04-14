@@ -155,21 +155,22 @@ function migrateComputed(computed: AST.Computed): ComputedSpec {
 }
 
 function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {
-  const from = kindFind(entrypoint.atoms, "target")!;
-  const identify = kindFind(entrypoint.atoms, "identifyWith");
+  const identify = kindFind(entrypoint.atoms, "identify");
+  const identifyThrough = (identify && kindFind(identify.atoms, "through")) || undefined;
   const response = kindFind(entrypoint.atoms, "response");
   const authorize = kindFind(entrypoint.atoms, "authorize");
-  const endpoints = kindFilter(entrypoint.atoms, "endpoint").map(migrateEndpoint);
-  const entrypoints = kindFilter(entrypoint.atoms, "entrypoint").map(migrateEntrypoint);
+  const combinedAtoms = [...entrypoint.atoms, ...(identify?.atoms ?? [])];
+  const endpoints = kindFilter(combinedAtoms, "endpoint").map(migrateEndpoint);
+  const entrypoints = kindFilter(combinedAtoms, "entrypoint").map(migrateEntrypoint);
 
   return {
-    name: entrypoint.name.text,
+    name: "",
     target: {
-      kind: from.identifier.ref.kind === "model" ? "model" : "relation",
-      identifier: from.identifier.identifier.text,
-      alias: from.as?.identifier.identifier.text,
+      kind: entrypoint.target.at(-1)!.ref.kind === "model" ? "model" : "relation",
+      identifier: entrypoint.target.at(-1)!.identifier.text,
+      alias: identify?.as?.identifier.identifier.text,
     },
-    identify: identify?.identifier.identifier.text,
+    identify: identifyThrough?.identifier.identifier.text,
     response: response ? migrateSelect(response.select) : undefined,
     authorize: authorize ? migrateExpr(authorize.expr) : undefined,
     endpoints,

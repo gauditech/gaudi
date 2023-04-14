@@ -22,6 +22,7 @@ import {
   GlobalAtom,
   Identifier,
   IdentifierRef,
+  Identify,
   Literal,
   Model,
   ModelAction,
@@ -220,20 +221,19 @@ export function buildTokens(
       .exhaustive();
   }
 
-  function buildEntrypoint({ keyword, name, atoms }: Entrypoint) {
-    buildKeyword(keyword);
-    push(name.token, TokenTypes.property);
-    atoms.forEach((a) =>
+  function buildEntrypoint(entrypoint: Entrypoint | Identify) {
+    buildKeyword(entrypoint.keyword);
+    if (entrypoint.kind === "entrypoint") {
+      buildIdentifierPath(entrypoint.target);
+    } else {
+      if (entrypoint.as) {
+        buildKeyword(entrypoint.as.keyword);
+        buildIdentifierRef(entrypoint.as.identifier);
+      }
+    }
+    entrypoint.atoms.forEach((a) =>
       match(a)
-        .with({ kind: "target" }, ({ keyword, identifier, as }) => {
-          buildKeyword(keyword);
-          buildIdentifierRef(identifier);
-          if (as) {
-            buildKeyword(as.keyword);
-            buildIdentifierRef(as.identifier);
-          }
-        })
-        .with({ kind: "identifyWith" }, ({ keyword, identifier }) => {
+        .with({ kind: "through" }, ({ keyword, identifier }) => {
           buildKeyword(keyword);
           buildIdentifierRef(identifier);
         })
@@ -246,7 +246,7 @@ export function buildTokens(
           buildExpr(expr);
         })
         .with({ kind: "endpoint" }, buildEndpoint)
-        .with({ kind: "entrypoint" }, buildEntrypoint)
+        .with({ kind: "entrypoint" }, { kind: "identify" }, buildEntrypoint)
         .exhaustive()
     );
   }

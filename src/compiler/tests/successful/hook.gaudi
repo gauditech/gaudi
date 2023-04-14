@@ -31,8 +31,7 @@ model User {
   }
 }
 
-entrypoint UserEntry {
-  target User as user
+entrypoint User {
   create endpoint {
     action {
       create {
@@ -44,18 +43,20 @@ entrypoint UserEntry {
     }
   }
 
-  custom endpoint {
-    path "somePath"
-    method POST
-    cardinality one
+  identify as user {
+    custom endpoint {
+      path "somePath"
+      method POST
+      cardinality one
 
-    action {
-      execute {
-        responds
-        hook {
-          arg name user.name
-          runtime MyRuntime
-          source foo from "customHooks"
+      action {
+        execute {
+          responds
+          hook {
+            arg name user.name
+            runtime MyRuntime
+            source foo from "customHooks"
+          }
         }
       }
     }
