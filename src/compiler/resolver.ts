@@ -814,7 +814,13 @@ export function resolve(projectASTs: ProjectASTs) {
             const hasNullable = !!kindFind(a.atoms, "nullable");
             if (hasDefault || hasNullable) return;
 
-            const relatedSet = sets.find(({ target }) => target.identifier.text === a.name.text);
+            const relatedSet = sets.find(({ target }) => {
+              const isSet = target.identifier.text === a.name.text;
+              if (!isSet && a.kind === "reference") {
+                return target.identifier.text === a.name.text + "_id";
+              }
+              return isSet;
+            });
             if (!relatedSet) {
               missingSetters.push(a.name.text);
             }
