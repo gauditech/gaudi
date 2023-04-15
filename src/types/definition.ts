@@ -199,6 +199,7 @@ export type ListEndpointDef = {
   target: Omit<TargetWithSelectDef, "identifyWith">;
   authSelect: SelectDef;
   authorize: TypedExprDef;
+  pageable: boolean;
   response: SelectDef;
   // actions: ActionDef[];
 };

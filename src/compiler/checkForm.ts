@@ -67,8 +67,8 @@ export function checkForm(projectASTs: ProjectASTs) {
 
     const runtimes = kindFilter(document, "runtime");
     runtimes.forEach((runtime) => {
-      containsAtoms(runtime, "sourcePath");
-      noDuplicateAtoms(runtime, "default", "sourcePath");
+      containsAtoms(runtime, ["sourcePath"]);
+      noDuplicateAtoms(runtime, ["default", "sourcePath"]);
     });
 
     if (runtimes.length === 1) {
@@ -128,8 +128,8 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkField(field: Field) {
-    containsAtoms(field, "type");
-    noDuplicateAtoms(field, "type", "default", "nullable", "unique", "validate");
+    containsAtoms(field, ["type"]);
+    noDuplicateAtoms(field, ["type", "default", "nullable", "unique", "validate"]);
 
     kindFilter(field.atoms, "validate").map(({ validators }) => validators.forEach(checkValidator));
   }
@@ -143,20 +143,28 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkReference(reference: Reference) {
-    containsAtoms(reference, "to");
-    noDuplicateAtoms(reference, "to", "nullable", "unique");
+    containsAtoms(reference, ["to"]);
+    noDuplicateAtoms(reference, ["to", "nullable", "unique"]);
   }
 
   function checkRelation(relation: Relation) {
-    containsAtoms(relation, "from", "through");
-    noDuplicateAtoms(relation, "from", "through");
+    containsAtoms(relation, ["from", "through"]);
+    noDuplicateAtoms(relation, ["from", "through"]);
   }
 
   function checkQuery(query: Query | AnonymousQuery) {
     if (query.kind === "query") {
-      containsAtoms(query, "from");
+      containsAtoms(query, ["from"]);
     }
-    noDuplicateAtoms(query, "from", "filter", "orderBy", "limit", "offset", "select", "aggregate");
+    noDuplicateAtoms(query, [
+      "from",
+      "filter",
+      "orderBy",
+      "limit",
+      "offset",
+      "select",
+      "aggregate",
+    ]);
 
     const from = kindFind(query.atoms, "from");
     if (from && from.as) {
@@ -179,8 +187,8 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkEntrypoint(entrypoint: Entrypoint) {
-    containsAtoms(entrypoint, "target");
-    noDuplicateAtoms(entrypoint, "target", "identifyWith", "authorize", "response");
+    containsAtoms(entrypoint, ["target"]);
+    noDuplicateAtoms(entrypoint, ["target", "identifyWith", "authorize", "response"]);
 
     const endpoints = kindFilter(entrypoint.atoms, "endpoint");
     const definedEndpoints = new Set<EndpointType>();
@@ -234,17 +242,35 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkEndpoint(endpoint: Endpoint) {
-    noDuplicateAtoms(endpoint, "action", "authorize", "method", "cardinality", "path");
+    noDuplicateAtoms(endpoint, [
+      "action",
+      "authorize",
+      "method",
+      "cardinality",
+      "path",
+      "pageable",
+    ]);
 
     if (endpoint.type === "custom") {
-      containsAtoms(endpoint, "method", "cardinality", "path");
+      containsAtoms(
+        endpoint,
+        ["method", "cardinality", "path"],
+        (parent, kind) =>
+          new CompilerError(parent.keyword, ErrorCode.EndpointMustContainAtom, {
+            type: endpoint.type,
+            atom: kind,
+          })
+      );
     } else {
-      const customAtoms = kindFilter(endpoint.atoms, "method", "cardinality", "path");
-      if (customAtoms.length > 0) {
-        errors.push(
-          new CompilerError(customAtoms[0].keyword, ErrorCode.ConfiguringNonCustomEndpoint)
-        );
-      }
+      cannotContainAtoms(
+        endpoint,
+        ["method", "cardinality", "path"],
+        (parent, kind) =>
+          new CompilerError(parent.keyword, ErrorCode.EndpointCannotContainAtom, {
+            type: endpoint.type,
+            atom: kind,
+          })
+      );
     }
 
     const action = kindFind(endpoint.atoms, "action");
@@ -259,6 +285,18 @@ export function checkForm(projectASTs: ProjectASTs) {
           new CompilerError(responds[1].keyword, ErrorCode.MoreThanOneRespondsInEndpoint)
         );
       }
+    }
+
+    if (endpoint.type !== "list") {
+      cannotContainAtoms(
+        endpoint,
+        ["pageable"],
+        (parent, kind) =>
+          new CompilerError(parent.keyword, ErrorCode.EndpointCannotContainAtom, {
+            type: endpoint.type,
+            atom: kind,
+          })
+      );
     }
   }
 
@@ -305,7 +343,7 @@ export function checkForm(projectASTs: ProjectASTs) {
         )
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
-            noDuplicateAtoms({ ...field, kind: "input" }, "optional", "default");
+            noDuplicateAtoms({ ...field, kind: "input" }, ["optional", "default"]);
             return field.field.identifier;
           })
         )
@@ -326,8 +364,8 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkExecuteAction(action: ExecuteAction, endpointType: EndpointType) {
-    containsAtoms(action, "hook");
-    noDuplicateAtoms(action, "hook", "responds");
+    containsAtoms(action, ["hook"]);
+    noDuplicateAtoms(action, ["hook", "responds"]);
     const allIdentifiers = kindFilter(action.atoms, "virtualInput").map((virtualInput) => {
       checkActionAtomVirtualInput(virtualInput);
       return virtualInput.name;
@@ -345,7 +383,7 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkFetchAction(action: FetchAction) {
-    containsAtoms(action, "anonymousQuery");
+    containsAtoms(action, ["anonymousQuery"]);
     const allIdentifiers = kindFilter(action.atoms, "virtualInput").map((virtualInput) => {
       checkActionAtomVirtualInput(virtualInput);
       return virtualInput.name;
@@ -357,8 +395,8 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput) {
-    containsAtoms(virtualInput, "type");
-    noDuplicateAtoms(virtualInput, "type", "nullable", "validate");
+    containsAtoms(virtualInput, ["type"]);
+    noDuplicateAtoms(virtualInput, ["type", "nullable", "validate"]);
     kindFilter(virtualInput.atoms, "validate").map(({ validators }) =>
       validators.forEach(checkValidator)
     );
@@ -369,8 +407,8 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkPopulate(populate: Populate) {
-    containsAtoms(populate, "target");
-    noDuplicateAtoms(populate, "target", "repeat");
+    containsAtoms(populate, ["target"]);
+    noDuplicateAtoms(populate, ["target", "repeat"]);
     const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
       if (set.kind === "hook") checkHook(set);
       return target.identifier;
@@ -380,16 +418,16 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkAuthenticator(authenticator: Authenticator) {
-    containsAtoms(authenticator, "method");
-    noDuplicateAtoms(authenticator, "method");
+    containsAtoms(authenticator, ["method"]);
+    noDuplicateAtoms(authenticator, ["method"]);
   }
 
   function checkGenerator(generator: Generator) {
     match(generator).with({ type: "client" }, checkClientGenerator).exhaustive();
   }
   function checkClientGenerator(generator: Generator) {
-    containsAtoms(generator, "target", "api");
-    noDuplicateAtoms(generator, "target", "api");
+    containsAtoms(generator, ["target", "api"]);
+    noDuplicateAtoms(generator, ["target", "api"]);
   }
 
   function checkNoDuplicateGenerators(generators: Generator[]) {
@@ -420,7 +458,7 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkHook(hook: Hook<boolean, boolean>) {
-    noDuplicateAtoms(hook, "default_arg", "runtime");
+    noDuplicateAtoms(hook, ["default_arg", "runtime"]);
     const sourceOrInline = kindFilter(hook.atoms, "source", "inline");
     const internalExecRuntimeName = getInternalExecutionRuntimeName();
     if (sourceOrInline.length === 0) {
@@ -461,19 +499,37 @@ export function checkForm(projectASTs: ProjectASTs) {
       }
     });
   }
-
   function containsAtoms<
     ast extends { kind: string; keyword: TokenData; atoms: { kind: string }[] },
     k extends ast["atoms"][number]["kind"]
-  >(parent: ast, ...kinds: k[]) {
+  >(parent: ast, kinds: k[], errorFn?: (parent: ast, kind: k) => CompilerError) {
     kinds.forEach((kind) => {
       const filteredAtoms = parent.atoms.filter((a) => a.kind === kind);
       if (filteredAtoms.length === 0) {
         errors.push(
-          new CompilerError(parent.keyword, ErrorCode.MustContainAtom, {
-            parent: parent.kind,
-            atom: kind,
-          })
+          errorFn?.(parent, kind) ??
+            new CompilerError(parent.keyword, ErrorCode.MustContainAtom, {
+              parent: parent.kind,
+              atom: kind,
+            })
+        );
+      }
+    });
+  }
+
+  function cannotContainAtoms<
+    ast extends { kind: string; keyword: TokenData; atoms: { kind: string }[] },
+    k extends ast["atoms"][number]["kind"]
+  >(parent: ast, kinds: k[], errorFn?: (parent: ast, kind: k) => CompilerError) {
+    kinds.forEach((kind) => {
+      const filteredAtoms = parent.atoms.filter((a) => a.kind === kind);
+      if (filteredAtoms.length !== 0) {
+        errors.push(
+          errorFn?.(parent, kind) ??
+            new CompilerError(parent.keyword, ErrorCode.CannotContainAtom, {
+              parent: parent.kind,
+              atom: kind,
+            })
         );
       }
     });
@@ -482,17 +538,18 @@ export function checkForm(projectASTs: ProjectASTs) {
   function noDuplicateAtoms<
     ast extends { kind: string; atoms: { kind: string; keyword: TokenData }[] },
     k extends ast["atoms"][number]["kind"]
-  >(parent: ast, ...kinds: k[]) {
+  >(parent: ast, kinds: k[], errorFn?: (parent: ast, kind: k) => CompilerError) {
     kinds.forEach((kind) => {
       const filteredAtoms = parent.atoms.filter((a) => a.kind === kind);
       if (filteredAtoms.length > 1) {
         const [_first, ...other] = filteredAtoms;
         other.forEach((a) => {
           errors.push(
-            new CompilerError(a.keyword, ErrorCode.DuplicateAtom, {
-              parent: parent.kind,
-              atom: kind,
-            })
+            errorFn?.(parent, kind) ??
+              new CompilerError(a.keyword, ErrorCode.DuplicateAtom, {
+                parent: parent.kind,
+                atom: kind,
+              })
           );
         });
       }

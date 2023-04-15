@@ -1,5 +1,6 @@
 import { Express, Request, Response } from "express";
 import _ from "lodash";
+import { match } from "ts-pattern";
 
 import { executeArithmetics } from "../common/arithmetics";
 import {
@@ -11,14 +12,21 @@ import {
 
 import { Vars } from "./vars";
 
-import { EndpointPath, PathFragmentIdentifier, buildEndpointPath } from "@src/builder/query";
+import {
+  EndpointPath,
+  PathFragmentIdentifier,
+  PathQueryParameter,
+  buildEndpointPath,
+} from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
 import { executeEndpointActions } from "@src/runtime/common/action";
+import { pagingToQueryLimit } from "@src/runtime/common/utils";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
+import { QueryTree } from "@src/runtime/query/build";
 import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
-import { executeQueryTree } from "@src/runtime/query/exec";
+import { NestedRow, executeQueryTree } from "@src/runtime/query/exec";
 import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
@@ -182,7 +190,8 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const params = Object.assign({}, req.params, req.query);
+          const pathParamVars = new Vars(extractPathParams(endpointPath, params));
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -207,10 +216,11 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
 
           await authorizeEndpoint(endpoint, contextVars);
 
+          // TODO: this query is not doing anything at the time
           // fetch target query (list, so no findOne here)
-          const tQt = queries.targetQueryTree;
-          const results = await executeQueryTree(tx, def, tQt, pathParamVars, pids);
-          contextVars.set(tQt.alias, results);
+          // const tQt = queries.targetQueryTree;
+          // const results = await executeQueryTree(tx, def, tQt, pathParamVars, pids);
+          // contextVars.set(tQt.alias, results);
 
           // FIXME run custom actions
 
@@ -222,9 +232,11 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           if (parentTarget) {
             parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
           }
-          const responseResults = await executeQueryTree(
+
+          const responseResults = await createListEndpointResponse(
             tx,
             def,
+            endpoint,
             queries.responseQueryTree,
             pathParamVars,
             parentIds
@@ -695,22 +707,59 @@ export function buildCustomManyEndpoint(
 /**
  * Extract/filter only required props from source map (eg. from request params).
  */
-export function extractPathParams(path: EndpointPath, sourceMap: Record<string, string>): any {
-  const paramPairs = path.fragments
-    .filter((frag): frag is PathFragmentIdentifier => frag.kind === "identifier")
-    .map((frag): [string, string | number] => [
-      frag.alias,
-      validatePathIdentifier(frag, sourceMap[frag.alias]),
-    ]);
+export function extractPathParams(
+  path: EndpointPath,
+  sourceMap: Record<string, string>
+): Record<string, string | number> {
+  return _.chain(path.fragments)
+    .filter(
+      (frag): frag is PathFragmentIdentifier | PathQueryParameter =>
+        frag.kind === "identifier" || frag.kind === "query"
+    )
+    .map((frag): [string, string | number] | undefined => {
+      const val = validatePathIdentifier(frag, sourceMap[frag.name]);
+      if (val == null) return;
 
-  return Object.fromEntries(paramPairs);
+      return [frag.name, val];
+    })
+    .compact()
+    .fromPairs()
+    .value();
 }
 
 /**
  * Validate and convert an input to a proper type based on definition.
  */
-function validatePathIdentifier(fragment: PathFragmentIdentifier, val: string): string | number {
-  switch (fragment.type) {
+function validatePathIdentifier(
+  fragment: PathFragmentIdentifier | PathQueryParameter,
+  val: string
+): string | number | undefined {
+  try {
+    return match(fragment)
+      .with({ kind: "identifier" }, (f) => {
+        return convertPathValue(val, f.type);
+      })
+      .with({ kind: "query" }, (f) => {
+        const cVal = convertPathValue(val, f.type, f.defaultValue);
+        if (cVal == null && f.required) {
+          throw new Error(`Missing required URL parameter ${f.name}`);
+        }
+        return cVal;
+      })
+      .exhaustive();
+  } catch (err: any) {
+    throw new Error(`Invalid value for URL parameter "${fragment.name}": ${err.message ?? err}`);
+  }
+}
+
+function convertPathValue(
+  val: string,
+  type: "text" | "integer",
+  defaultValue?: string | number
+): string | number {
+  if (val == null && defaultValue != null) return defaultValue;
+
+  switch (type) {
     case "integer": {
       const n = Number(val);
       if (Number.isNaN(n)) {
@@ -795,3 +844,73 @@ async function executeTypedFunction(func: TypedFunction, contextVars: Vars): Pro
 
   return executeArithmetics(func, getValue);
 }
+
+/**
+ * Fetch list data and wrap it in a `ListReponse`.
+ */
+async function createListEndpointResponse(
+  conn: DbConn,
+  def: Definition,
+  endpoint: ListEndpointDef,
+  qt: QueryTree,
+  params: Vars,
+  contextIds: number[]
+): Promise<PaginatedListResponse<NestedRow> | NestedRow[]> {
+  let page, pageSize, totalPages, totalCount, data;
+
+  // --- paged list
+  if (endpoint.pageable) {
+    // resolve pagin data
+    const { limit, offset } = pagingToQueryLimit(
+      params.get("page"),
+      params.get("pageSize"),
+      qt.query.offset,
+      qt.query.limit
+    );
+
+    pageSize = limit ?? 0;
+    page = pageSize > 0 ? Math.floor((offset ?? 0) / pageSize) + 1 : 1;
+
+    const resultQuery = {
+      ...qt,
+      query: {
+        ...qt.query,
+
+        // decorate query with limit/offset
+        limit,
+        offset,
+      },
+    };
+
+    // data query
+    data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
+
+    // count query
+    // TODO: this query should be a "count query" but it's currently not possible
+    const totalData = await executeQueryTree(conn, def, qt, params, contextIds);
+
+    totalCount = totalData.length;
+    totalPages = Math.ceil(totalCount / pageSize);
+  }
+  // --- unpaged list (returns all data)
+  else {
+    // simply fetch all data
+    return await executeQueryTree(conn, def, qt, params, contextIds);
+  }
+
+  return {
+    page,
+    pageSize,
+    totalPages,
+    totalCount,
+    data,
+  };
+}
+
+type PaginatedListResponse<T = any> = {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  data: T[];
+};

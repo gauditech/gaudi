@@ -66,8 +66,10 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
   const aggrJoins = aggrSelects.map((a) => makeAggregateJoin(def, a.namePath));
   const where = expandedFilter ? `WHERE ${expressionToString(def, expandedFilter)}` : "";
 
-  const offset = q.offset ?? 0;
   if (q.limit && isBatching) {
+    const limit = q.limit;
+    const offset = q.offset ?? 0;
+
     return source`
     SELECT * FROM 
       (SELECT ${selectableToString(def, selectable)},
@@ -80,7 +82,8 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
         ${aggrJoins}
         ${joins}
         ${where}) as topn
-    WHERE topn."__row_number" <= ${q.limit + offset} AND topn."__row_number" > ${offset}
+    WHERE topn."__row_number" <= ${limit + offset} AND topn."__row_number" > ${offset}
+
     `;
   } else {
     const qstr = source`
@@ -91,7 +94,7 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
       ${joins}
       ${where}
       ${orderByToString(def, q.orderBy)}
-      ${limitToString(q.limit, offset)}`;
+      ${limitToString(q.limit, q.offset)}`;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return format(qstr, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
@@ -105,8 +108,10 @@ function orderByToString(def: Definition, orderBy: QueryOrderByAtomDef[] | undef
     .join(", ")}`;
 }
 
-function limitToString(limit: number | undefined, offset: number): string {
-  return limit ? `LIMIT ${limit} OFFSET ${offset}` : "";
+function limitToString(limit: number | undefined, offset: number | undefined): string {
+  if (limit == null) return "";
+
+  return `LIMIT ${limit} ${offset ? `OFFSET ${offset}` : ""}`;
 }
 
 function joinToString(

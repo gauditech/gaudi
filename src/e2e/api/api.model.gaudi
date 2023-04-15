@@ -255,7 +255,9 @@ entrypoint Orgs {
   // --- regular endpoints
 
   get endpoint {}
-  list endpoint {}
+  list endpoint {
+    pageable
+  }
   create endpoint {
     action {
       create {}

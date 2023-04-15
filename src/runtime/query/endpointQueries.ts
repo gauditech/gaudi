@@ -44,6 +44,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
     authQueryTree = buildQueryTree(def, query);
   }
 
+  // --- parent context queries
   const parentContextQueryTrees = endpoint.parentContext.map((target, index) => {
     const parentTarget = index === 0 ? null : endpoint.parentContext[index - 1];
     const namePath = parentTarget ? [parentTarget.retType, target.name] : [target.retType];
@@ -57,10 +58,11 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
     const select = transformSelectPath(target.select, target.namePath, namePath);
 
     const query = queryFromParts(def, target.alias, namePath, filter, select);
+
     return buildQueryTree(def, query);
   });
 
-  // repeat the same for target
+  // --- target query
   const parentTarget = _.last(endpoint.parentContext);
   const namePath = parentTarget
     ? [parentTarget.retType, endpoint.target.name]
@@ -80,7 +82,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
   const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  // response query
+  // --- response query
   const responseQueryTree = buildResponseQueryTree(def, endpoint);
 
   return { authQueryTree, parentContextQueryTrees, targetQueryTree, responseQueryTree };
@@ -138,6 +140,7 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
       const orderBy: QueryOrderByAtomDef[] = [
         { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
       ];
+
       const responseQuery = queryFromParts(
         def,
         endpoint.target.alias,

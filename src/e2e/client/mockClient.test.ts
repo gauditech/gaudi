@@ -2,6 +2,7 @@ import { ensureEqual } from "@src/common/utils";
 import {
   ApiRequestFn as EntrypointApiRequestFn,
   ApiRequestInit as EntrypointApiRequestInit,
+  PaginatedListResponse,
   createClient as createClientEntrypoint,
 } from "@src/e2e/client/__snapshots__/mockClient/client/api-client-entrypoint";
 import {
@@ -184,14 +185,11 @@ describe("mock client lib", () => {
         }));
         const resp = await createTestEntrypointClient(requestFn, {
           "Gaudi-Test-Default": "Default Foo Bar",
-        }).api.org.list(
-          {},
-          {
-            headers: {
-              "Gaudi-Test": "Request Foo Bar",
-            },
-          }
-        );
+        }).api.org.list({
+          headers: {
+            "Gaudi-Test": "Request Foo Bar",
+          },
+        });
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -562,7 +560,7 @@ describe("mock client lib", () => {
         const typeTest: RespData = resp.data;
       });
 
-      it("list", async () => {
+      it("list with paging", async () => {
         const requestFn = jest.fn(async () => ({ status: 200, data: [testData], headers: {} }));
         const resp = await createTestEntrypointClient(requestFn).api.org("slug1").repos.list();
 
@@ -598,7 +596,7 @@ describe("mock client lib", () => {
         // test return type
         // @ts-expect-no-error
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const typeTest: RespData[] = resp.data;
+        const typeTest: PaginatedListResponse<RespData> = resp.data;
       });
 
       it("delete", async () => {
@@ -999,7 +997,7 @@ describe("mock client lib", () => {
       // test return type
       // @ts-expect-no-error
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const typeTest: RespData[] = resp.data;
+      const typeTest: PaginatedListResponse<RespData> = resp.data;
     });
 
     it("delete", async () => {

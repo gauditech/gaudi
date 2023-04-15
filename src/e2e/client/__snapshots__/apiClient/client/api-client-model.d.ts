@@ -20,7 +20,7 @@ export declare function createClient(options: ApiClientOptions): {
                 slug: string;
                 description: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            list: ListApiClientFn<{
+            list: PaginatedListApiClientFn<{
                 id: number;
                 name: string;
                 slug: string;
@@ -58,7 +58,7 @@ export declare function createClient(options: ApiClientOptions): {
                 latest_num: number;
                 org_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            list: ListApiClientFn<{
+            list: PaginatedListApiClientFn<{
                 id: number;
                 name: string;
                 slug: string;
@@ -108,7 +108,7 @@ export declare function createClient(options: ApiClientOptions): {
                 title: string;
                 repo_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            list: ListApiClientFn<{
+            list: PaginatedListApiClientFn<{
                 id: number;
                 number: number;
                 title: string;
@@ -142,7 +142,7 @@ export declare function createClient(options: ApiClientOptions): {
                 body: string;
                 issue_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            list: ListApiClientFn<{
+            list: PaginatedListApiClientFn<{
                 id: number;
                 body: string;
                 issue_id: number;
@@ -224,15 +224,22 @@ export type ApiResponseError<D, E extends string> = {
     };
     error: ApiResponseErrorBody<E>;
 };
-export type ListData = {
-    filter?: Record<string, any>;
-    page?: number;
+export type PaginatedListResponse<T> = {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+    data: T[];
+};
+export type PaginatedListData = {
     pageSize?: number;
+    page?: number;
 };
 export type GetApiClientFn<ID, R, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (data: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type UpdateApiClientFn<ID, D, R, E extends string> = (id: ID, data: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
-export type ListApiClientFn<R, E extends string> = (data?: ListData, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R[], E>>;
+export type ListApiClientFn<R, E extends string> = (options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R[], E>>;
+export type PaginatedListApiClientFn<R, E extends string> = (data?: PaginatedListData, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
 export type DeleteApiClientFn<ID, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<void, E>>;
 export type CustomOneFetchApiClientFn<ID, R, E extends string> = (id: ID, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;
 export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (id: ID, data?: D, options?: Partial<ApiRequestInit>) => Promise<ApiResponse<R, E>>;

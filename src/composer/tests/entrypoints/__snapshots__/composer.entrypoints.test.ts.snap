@@ -68,6 +68,7 @@ exports[`entrypoint composes basic example 1`] = `
         "authSelect": [],
         "authorize": undefined,
         "kind": "list",
+        "pageable": false,
         "parentContext": [],
         "response": [
           {
@@ -176,6 +177,7 @@ exports[`entrypoint composes basic example 1`] = `
             "authSelect": [],
             "authorize": undefined,
             "kind": "list",
+            "pageable": false,
             "parentContext": [
               {
                 "alias": "org",

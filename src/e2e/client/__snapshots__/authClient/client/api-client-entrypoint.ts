@@ -66,9 +66,9 @@ register: buildCustomManySubmitFn<any, any, RegisterError>(options, parentPath, 
 name: string,
 is_public: boolean,
 owner_id: number };
-type ListErrot = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type ListError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type GetResp = ListResp;
-type GetError = ListErrot;
+type GetError = ListError;
 type CreateData = { name: string,
 is_public: boolean };
 type CreateResp = ListResp;
@@ -86,7 +86,7 @@ type FetchAuthTokenError = CreateError;
     // endpoint functions
     return Object.assign(api, 
       {
-        list: buildListFn<ListResp, ListErrot>(options, parentPath),
+        list: buildListFn<ListResp, ListError>(options, parentPath),
 get: buildGetFn<string, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
 fetchAuthToken: buildCustomManySubmitFn<any, any, FetchAuthTokenError>(options, parentPath, "fetchAuthToken", "POST")
@@ -185,26 +185,43 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     error: ApiResponseErrorBody<E>;
   };
 
-      
-  export type ListData = { filter?: Record<string, any>; page?: number; pageSize?: number };
+
+  export type PaginatedListResponse<T> = {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+    data: T[];
+  };  
+
+  // TODO: add list search/filter parameter
+  export type PaginatedListData = { pageSize?: number; page?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type UpdateApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type ListApiClientFn<R, E extends string> = (
-    data?: ListData,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
+  export type PaginatedListApiClientFn<R, E extends string> = (
+    data?: PaginatedListData,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
+
   export type DeleteApiClientFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -214,14 +231,17 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomManyFetchApiClientFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
   export type CustomManySubmitApiClientFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
@@ -289,10 +309,28 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
   }
   
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
-    return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}`;
-      // TODO: add data to URL params with URLSearchParams
+    return async (options) => {
+      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+
+      return (
+        makeRequest(clientOptions, urlPath, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
   
+  function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
+    return async (data, options) => {
+      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+
+      const params = new URLSearchParams()
+      Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
+      const urlParams = params.toString()
+
+      const url = urlPath + (urlParams ? '?' + urlParams : '')
+
       return (
         makeRequest(clientOptions, url, {
           method: "GET",
@@ -301,7 +339,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildCustomOneFetchFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,

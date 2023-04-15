@@ -200,7 +200,7 @@ describe("compiler errors", () => {
             }
           }
           `;
-        expectError(bp, `"endpoint" must contain a "${property}"`);
+        expectError(bp, `Endpoint of type "custom" must contain a "${property}"`);
       });
       ["get", "list", "create", "update", "delete"].forEach((epType) => {
         it(`fails when "${property}" property is used in "${epType}" endpoint`, () => {
@@ -217,10 +217,7 @@ describe("compiler errors", () => {
               }
             }
             `;
-          expectError(
-            bp,
-            `Only custom endpoint can have method, cardinality and path configuration`
-          );
+          expectError(bp, `Endpoint of type "${epType}" cannot contain a "${property}"`);
         });
       });
     });
