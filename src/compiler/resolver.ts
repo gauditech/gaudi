@@ -28,6 +28,7 @@ import {
   Populator,
   ProjectASTs,
   Query,
+  Ref,
   Reference,
   Relation,
   Runtime,
@@ -50,7 +51,7 @@ import {
 import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
-import { kindFilter, kindFind } from "@src/common/kindFilter";
+import { FilteredByKind, kindFilter, kindFind } from "@src/common/kindFilter";
 
 type Scope = {
   environment: "model" | "entrypoint";
@@ -58,7 +59,7 @@ type Scope = {
   context: ScopeContext;
   typeGuard: TypeGuard;
 };
-type ScopeContext = { [P in string]?: Type };
+type ScopeContext = { [P in string]?: { type: Type; ref: Ref } };
 
 type TypeGuardOperation = "null" | "notNull";
 // key is a path joined with '|'
@@ -188,6 +189,8 @@ function getTypeGuardOperation(expr: Expr): TypeGuardOperation | undefined {
 
 export function resolve(projectASTs: ProjectASTs) {
   const errors: CompilerError[] = [];
+  const resolvingModelAtoms = new Set<string>();
+  const resolvedModelAtoms = new Set<string>();
 
   function getSumDocument(): GlobalAtom[] {
     return Object.values(projectASTs.plugins)
@@ -228,8 +231,14 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveModelAtom(model: Model, atom: ModelAtom) {
-    if (atom.resolved) return;
-    atom.resolved = true;
+    const atomKey = model.name.text + "|" + atom.name.text;
+    if (resolvedModelAtoms.has(atomKey)) return;
+    // if atom is already resolving means there is circular reference somewhere
+    if (resolvingModelAtoms.has(atomKey)) {
+      errors.push(new CompilerError(atom.name.token, ErrorCode.CircularModelMemberDetected));
+      return;
+    }
+    resolvingModelAtoms.add(atomKey);
 
     const scope: Scope = {
       environment: "model",
@@ -245,6 +254,9 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "computed" }, (computed) => resolveComputed(model, computed))
       .with({ kind: "hook" }, (hook) => resolveModelHook(hook, scope))
       .exhaustive();
+
+    resolvedModelAtoms.add(atomKey);
+    resolvingModelAtoms.delete(atomKey);
   }
 
   function resolveField(model: Model, field: Field) {
@@ -308,7 +320,18 @@ export function resolve(projectASTs: ProjectASTs) {
     const fromModel = from?.identifier.ref.kind === "model" ? from.identifier.ref.model : undefined;
 
     const through = kindFind(relation.atoms, "through");
-    if (through) resolveModelAtomRef(through.identifier, fromModel, "reference");
+    if (through) {
+      resolveModelAtomRef(through.identifier, fromModel, "reference");
+      const throughModel = getTypeModel(through.identifier.type);
+      if (throughModel && throughModel !== model.name.text) {
+        errors.push(
+          new CompilerError(
+            through.identifier.identifier.token,
+            ErrorCode.ThroughReferenceHasIncorrectModel
+          )
+        );
+      }
+    }
 
     relation.ref = {
       kind: "modelAtom",
@@ -345,7 +368,7 @@ export function resolve(projectASTs: ProjectASTs) {
           const target = from.identifierPath[i];
           as.ref = target.ref;
           as.type = target.type;
-          scope.context[as.identifier.text] = as.type;
+          addToScope(scope, as);
         });
         scope.model = undefined;
       } else {
@@ -466,7 +489,7 @@ export function resolve(projectASTs: ProjectASTs) {
     scope: Scope
   ) {
     let currentModel: string | undefined;
-    let alias: { name: string; type: Type } | undefined;
+    let alias: IdentifierRef | undefined;
 
     const target = kindFind(entrypoint.atoms, "target");
     if (target) {
@@ -484,9 +507,9 @@ export function resolve(projectASTs: ProjectASTs) {
         currentModel = getTypeModel(target.identifier.type);
       }
       if (target.as) {
-        target.as.identifier.ref = target.identifier.ref;
+        target.as.identifier.ref = { kind: "context", contextKind: "entrypointTarget" };
         target.as.identifier.type = target.identifier.type;
-        alias = { name: target.as.identifier.identifier.text, type: target.identifier.type };
+        alias = target.as.identifier;
       }
     }
 
@@ -508,7 +531,7 @@ export function resolve(projectASTs: ProjectASTs) {
     );
 
     const childEntrypointScope = _.cloneDeep(scope);
-    if (alias) childEntrypointScope.context[alias.name] = alias.type;
+    if (alias) addToScope(childEntrypointScope, alias);
     kindFilter(entrypoint.atoms, "entrypoint").forEach((entrypoint) =>
       resolveEntrypoint(entrypoint, currentModel, childEntrypointScope)
     );
@@ -517,7 +540,7 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveEndpoint(
     endpoint: Endpoint,
     model: string | undefined,
-    alias: { name: string; type: Type } | undefined,
+    alias: IdentifierRef | undefined,
     scope: Scope
   ) {
     // add current target alias to all endpoints with cardinality one
@@ -530,7 +553,7 @@ export function resolve(projectASTs: ProjectASTs) {
       case "get":
       case "delete":
       case "update": {
-        if (alias) scope.context[alias.name] = alias.type;
+        if (alias) addToScope(scope, alias);
         break;
       }
       default:
@@ -569,11 +592,32 @@ export function resolve(projectASTs: ProjectASTs) {
       resolveIdentifierRefPath(action.target, scope, action.kind === "create");
       const lastTarget = action.target.at(-1);
       currentModel = getTypeModel(lastTarget?.type);
+
+      if (lastTarget && action.kind === "create") {
+        switch (lastTarget.ref.kind) {
+          case "unresolved":
+          case "model":
+            break;
+          case "modelAtom": {
+            if (lastTarget.ref.atomKind === "relation") {
+              break;
+            }
+            // fall through
+          }
+          case "context":
+            errors.push(
+              new CompilerError(
+                lastTarget.identifier.token,
+                ErrorCode.UnsuportedTargetInCreateAction
+              )
+            );
+        }
+      }
     }
     if (currentModel && action.as) {
       action.as.identifier.ref = { kind: "model", model: currentModel };
       action.as.identifier.type = { kind: "model", model: currentModel };
-      scope.context[action.as.identifier.identifier.text] = action.as.identifier.type;
+      addToScope(scope, action.as.identifier);
     }
 
     scope = { ...scope, model: currentModel };
@@ -606,6 +650,25 @@ export function resolve(projectASTs: ProjectASTs) {
         })
         .exhaustive()
     );
+
+    const allIdentifiers = action.atoms.flatMap((a) =>
+      match(a)
+        .with({ kind: "virtualInput" }, ({ name, ref, type }) => [{ identifier: name, ref, type }])
+        .with({ kind: "set" }, ({ target }) => target)
+        .with({ kind: "referenceThrough" }, ({ target }) => target)
+        .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
+        .with({ kind: "input" }, ({ fields }) => fields.map(({ field }) => field))
+        .exhaustive()
+    );
+    const references = allIdentifiers.filter(
+      ({ ref }) => ref.kind === "modelAtom" && ref.atomKind === "reference"
+    );
+    references.forEach((r) => {
+      const idName = r.identifier.text + "_id";
+      if (allIdentifiers.map((i) => i.identifier.text).includes(idName)) {
+        errors.push(new CompilerError(r.identifier.token, ErrorCode.DuplicateActionAtom));
+      }
+    });
   }
 
   function resolveDeleteAction(action: DeleteAction, scope: Scope) {
@@ -630,7 +693,12 @@ export function resolve(projectASTs: ProjectASTs) {
     if (query) {
       resolveQuery(query, scope);
       // TODO: for now, we magicaly get non modified type from fetch query
-      scope.context[action.name.text] = removeTypeModifier(query.type, "collection", "nullable");
+      const identifier: IdentifierRef = {
+        identifier: action.name,
+        ref: { kind: "context", contextKind: "fetch" },
+        type: removeTypeModifier(query.type, "collection", "nullable"),
+      };
+      addToScope(scope, identifier);
     }
   }
 
@@ -647,7 +715,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput, scope: Scope) {
     let type = unknownType;
-    virtualInput.ref = { kind: "context" };
+    virtualInput.ref = { kind: "context", contextKind: "virtualInput" };
     const typeAtom = kindFind(virtualInput.atoms, "type");
     if (typeAtom) {
       const typeText = typeAtom.identifier.text;
@@ -661,7 +729,12 @@ export function resolve(projectASTs: ProjectASTs) {
       type = addTypeModifier(type, "nullable");
     }
     virtualInput.type = type;
-    scope.context[virtualInput.name.text] = type;
+    const identifier: IdentifierRef = {
+      identifier: virtualInput.name,
+      ref: virtualInput.ref,
+      type,
+    };
+    addToScope(scope, identifier);
   }
 
   function resolvePopulator(populator: Populator) {
@@ -681,6 +754,7 @@ export function resolve(projectASTs: ProjectASTs) {
     scope: Scope
   ) {
     let currentModel: string | undefined;
+    let through: string | undefined;
 
     const target = kindFind(populate.atoms, "target");
     if (target) {
@@ -689,20 +763,23 @@ export function resolve(projectASTs: ProjectASTs) {
         currentModel =
           target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
       } else {
-        resolveModelAtomRef(target.identifier, parentModel, "relation");
+        const relation = resolveModelAtomRef(target.identifier, parentModel, "relation");
+        if (relation) {
+          through = kindFind(relation.atoms, "through")?.identifier.identifier.text;
+        }
         currentModel = getTypeModel(target.identifier.type);
       }
       scope.model = currentModel;
       if (target.as) {
-        target.as.identifier.ref = target.identifier.ref;
+        target.as.identifier.ref = { kind: "context", contextKind: "populateTarget" };
         target.as.identifier.type = target.identifier.type;
-        scope.context[target.as.identifier.identifier.text] = target.identifier.type;
+        addToScope(scope, target.as.identifier);
       }
     }
 
     kindFilter(populate.atoms, "repeat").forEach((repeater) => {
       if (repeater.repeater.name) {
-        scope.context[repeater.repeater.name.text] = {
+        const type: Type = {
           kind: "struct",
           types: {
             start: { kind: "primitive", primitiveKind: "integer" },
@@ -710,12 +787,57 @@ export function resolve(projectASTs: ProjectASTs) {
             current: { kind: "primitive", primitiveKind: "integer" },
           },
         };
+        const identifier: IdentifierRef = {
+          identifier: repeater.repeater.name,
+          ref: { kind: "context", contextKind: "repeater" },
+          type,
+        };
+        addToScope(scope, identifier);
       }
     });
 
-    kindFilter(populate.atoms, "set").forEach((set) =>
-      resolveActionAtomSet(set, currentModel, scope)
-    );
+    const sets = kindFilter(populate.atoms, "set");
+    sets.forEach((set) => resolveActionAtomSet(set, currentModel, scope));
+    const model = (currentModel && findModel(currentModel)) || undefined;
+    if (model) {
+      const missingSetters: string[] = [];
+      // model atoms should already be resolved
+
+      model.atoms.forEach((a) => {
+        switch (a.kind) {
+          case "field":
+          case "reference": {
+            // don't need to set reference that can be set from parent
+            if (a.name.text === through) return;
+
+            const hasDefault = !!kindFind(a.atoms, "default");
+            const hasNullable = !!kindFind(a.atoms, "nullable");
+            if (hasDefault || hasNullable) return;
+
+            const relatedSet = sets.find(({ target }) => {
+              const isSet = target.identifier.text === a.name.text;
+              if (!isSet && a.kind === "reference") {
+                return target.identifier.text === a.name.text + "_id";
+              }
+              return isSet;
+            });
+            if (!relatedSet) {
+              missingSetters.push(a.name.text);
+            }
+            return;
+          }
+          default:
+            return;
+        }
+      });
+      if (missingSetters.length > 0) {
+        errors.push(
+          new CompilerError(populate.keyword, ErrorCode.PopulateIsMissingSetters, {
+            atoms: missingSetters,
+          })
+        );
+      }
+    }
 
     kindFilter(populate.atoms, "populate").forEach((populate) =>
       resolvePopulate(populate, currentModel, _.cloneDeep(scope))
@@ -790,11 +912,17 @@ export function resolve(projectASTs: ProjectASTs) {
           errors.push(new CompilerError(errorToken, ErrorCode.SelectCantNest));
           return;
         }
-        const name = target.kind === "short" ? target.name.identifier.text : target.name.text;
-        const nestedScope: Scope =
-          target.kind === "short"
-            ? { ..._.cloneDeep(scope), model }
-            : { ..._.cloneDeep(scope), context: { ...scope.context, [name]: type } };
+        const nestedScope = _.cloneDeep(scope);
+        if (target.kind === "short") {
+          nestedScope.model = model;
+        } else {
+          const identifier: IdentifierRef = {
+            identifier: target.name,
+            ref: target.identifierPath.at(-1)!.ref,
+            type,
+          };
+          addToScope(nestedScope, identifier);
+        }
         resolveSelect(select, model, nestedScope);
       }
     });
@@ -844,12 +972,12 @@ export function resolve(projectASTs: ProjectASTs) {
 
     // try to resolve from model scope
     if (scope.model && !tryResolveNextRef(head, { kind: "model", model: scope.model })) {
-      // we don't set ref and type because it is set in tryResolveNextRef
+      // don't set ref and type because it is set in tryResolveNextRef
     }
     // try to resolve from context
     else if (context) {
-      head.ref = { kind: "context" };
-      head.type = context;
+      head.ref = context.ref;
+      head.type = context.type;
     }
     // try to resolve from global models, if global is allowed
     else if (allowGlobal && findModel(headName)) {
@@ -870,7 +998,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
     // simple nullable string, we don't check if auth plugin is present for this for now
     else if (headName === "@requestAuthToken") {
-      head.ref = { kind: "context" };
+      head.ref = { kind: "context", contextKind: "authToken" };
       head.type = addTypeModifier({ kind: "primitive", primitiveKind: "string" }, "nullable");
     } else {
       // fail resolve
@@ -921,64 +1049,16 @@ export function resolve(projectASTs: ProjectASTs) {
     identifier: IdentifierRef,
     previousType: Type
   ): CompilerError | undefined {
-    const name = identifier.identifier.text;
-
     switch (previousType.kind) {
       case "model": {
-        const model = findModel(previousType.model);
-        if (!model) throw Error("Unexpected resolver error");
-
-        const atom = model.atoms.find((m) => m.name.text === name);
-
-        // Id of a reference in model can be targeted
-        if (atom) {
-          resolveModelAtom(model, atom);
-          identifier.ref = atom.ref;
-          identifier.type = atom.type;
-          return undefined;
-        }
-
-        if (name.endsWith("_id")) {
-          const referenceAtom = model.atoms.find((m) => m.name.text === name.slice(0, -3));
-          if (referenceAtom?.kind === "reference") {
-            identifier.ref = {
-              kind: "modelAtom",
-              atomKind: "field",
-              model: previousType.model,
-              name,
-              unique: false,
-            };
-            const baseType: Type = { kind: "primitive", primitiveKind: "integer" };
-            identifier.type =
-              referenceAtom.type.kind === "nullable"
-                ? addTypeModifier(baseType, "nullable")
-                : baseType;
-            return undefined;
-          }
-        }
-        // Model id can be targeted
-        if (name === "id") {
-          identifier.ref = {
-            kind: "modelAtom",
-            atomKind: "field",
-            model: previousType.model,
-            name,
-            unique: true,
-          };
-          identifier.type = {
-            kind: "primitive",
-            primitiveKind: "integer",
-          };
-          identifier.type;
-          return undefined;
-        }
-
-        return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom);
+        const result = tryResolveModelAtomRef(identifier, previousType.model);
+        if (result instanceof CompilerError) return result;
+        return undefined;
       }
       case "struct": {
-        const type = previousType.types[name];
+        const type = previousType.types[identifier.identifier.text];
         if (type) {
-          identifier.ref = { kind: "context" };
+          identifier.ref = { kind: "context", contextKind: "struct" };
           identifier.type = type;
           return undefined;
         } else {
@@ -1011,19 +1091,77 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveModelAtomRef(
+  function tryResolveModelAtomRef(
+    identifier: IdentifierRef,
+    modelName: string
+  ): ModelAtom | undefined | CompilerError {
+    const model = findModel(modelName);
+    if (!model) throw Error("Unexpected resolver error");
+    const name = identifier.identifier.text;
+
+    const atom = model.atoms.find((m) => m.name.text === name);
+
+    // Id of a reference in model can be targeted
+    if (atom) {
+      resolveModelAtom(model, atom);
+      identifier.ref = atom.ref;
+      identifier.type = atom.type;
+      return atom;
+    }
+
+    if (name.endsWith("_id")) {
+      const referenceAtom = model.atoms.find((m) => m.name.text === name.slice(0, -3));
+      if (referenceAtom?.kind === "reference") {
+        identifier.ref = {
+          kind: "modelAtom",
+          atomKind: "field",
+          model: model.name.text,
+          name,
+          unique: false,
+        };
+        const baseType: Type = { kind: "primitive", primitiveKind: "integer" };
+        identifier.type =
+          referenceAtom.type.kind === "nullable" ? addTypeModifier(baseType, "nullable") : baseType;
+        return undefined;
+      }
+    }
+    // Model id can be targeted
+    if (name === "id") {
+      identifier.ref = {
+        kind: "modelAtom",
+        atomKind: "field",
+        model: model.name.text,
+        name,
+        unique: true,
+      };
+      identifier.type = {
+        kind: "primitive",
+        primitiveKind: "integer",
+      };
+      identifier.type;
+      return undefined;
+    }
+
+    return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom);
+  }
+
+  function resolveModelAtomRef<k extends ModelAtom["kind"]>(
     identifier: IdentifierRef,
     model: string | undefined,
-    ...kinds: ModelAtom["kind"][]
-  ) {
-    if (!model) return;
-    resolveNextRef(identifier, { kind: "model", model });
+    ...kinds: k[]
+  ): FilteredByKind<ModelAtom, k> | undefined {
+    if (!model) return undefined;
+    const resultOrError = tryResolveModelAtomRef(identifier, model);
+    if (resultOrError instanceof CompilerError) errors.push(resultOrError);
+    const result = resultOrError instanceof CompilerError ? undefined : resultOrError;
 
     const resolvedKind =
       (identifier.ref.kind === "modelAtom" && identifier.ref.atomKind) || undefined;
     for (const kind of kinds) {
       if (kind === resolvedKind) {
-        return;
+        return (kind === result?.kind ? result : undefined) as
+          | FilteredByKind<ModelAtom, k>
+          | undefined;
       }
     }
 
@@ -1033,6 +1171,7 @@ export function resolve(projectASTs: ProjectASTs) {
         expected: kinds,
       })
     );
+    return undefined;
   }
 
   function findModel(name: string): Model | undefined {
@@ -1154,6 +1293,16 @@ export function resolve(projectASTs: ProjectASTs) {
       return false;
     }
     return true;
+  }
+
+  function addToScope(scope: Scope, identifier: IdentifierRef) {
+    const text = identifier.identifier.text;
+    // fails if name already exists in context or if there is a model defined with the same name
+    if (scope.context[text] || getAllModels().find((m) => m.name.text === text)) {
+      errors.push(new CompilerError(identifier.identifier.token, ErrorCode.NameAlreadyInScope));
+    } else {
+      scope.context[text] = { type: identifier.type, ref: identifier.ref };
+    }
   }
 
   resolveDocument(projectASTs.document);

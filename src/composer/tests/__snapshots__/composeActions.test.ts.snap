@@ -34,12 +34,13 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
   {
     "actions": [
       {
-        "alias": "$org",
+        "alias": "newOrg",
         "changeset": [
           {
             "name": "name",
             "setter": {
               "fieldsetAccess": [
+                "newOrg",
                 "name",
               ],
               "kind": "fieldset-input",
@@ -63,12 +64,18 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "kind": "record",
       "nullable": false,
       "record": {
-        "name": {
-          "kind": "field",
+        "newOrg": {
+          "kind": "record",
           "nullable": false,
-          "required": false,
-          "type": "text",
-          "validators": [],
+          "record": {
+            "name": {
+              "kind": "field",
+              "nullable": false,
+              "required": false,
+              "type": "text",
+              "validators": [],
+            },
+          },
         },
       },
     },
@@ -176,6 +183,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
             "name": "name",
             "setter": {
               "fieldsetAccess": [
+                "org",
                 "name",
               ],
               "kind": "fieldset-input",
@@ -188,7 +196,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "model": "Org",
         "select": [],
         "targetPath": [
-          "org",
+          "Org",
         ],
       },
     ],
@@ -198,12 +206,18 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "kind": "record",
       "nullable": false,
       "record": {
-        "name": {
-          "kind": "field",
+        "org": {
+          "kind": "record",
           "nullable": false,
-          "required": true,
-          "type": "text",
-          "validators": [],
+          "record": {
+            "name": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "text",
+              "validators": [],
+            },
+          },
         },
       },
     },

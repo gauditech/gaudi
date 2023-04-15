@@ -9,38 +9,38 @@ export type RejectedByKind<T extends { kind: Kind }, kind = T["kind"]> = Exclude
   { kind: kind }
 >;
 
-export function kindFilter<i extends { kind: Kind }, const k extends i["kind"]>(
-  input: i[],
+export function kindFilter<i extends { kind: Kind }[], const k extends i[number]["kind"]>(
+  input: i,
   ...kinds: k[]
-): FilteredByKind<i, k>[] {
+): FilteredByKind<i[number], k>[] {
   return input.filter((i) => {
     for (const kind of kinds) {
       if (kind === i.kind) return true;
     }
     return false;
-  }) as FilteredByKind<i, k>[];
+  }) as FilteredByKind<i[number], k>[];
 }
 
-export function kindReject<i extends { kind: Kind }, const k extends i["kind"]>(
-  input: i[],
+export function kindReject<i extends { kind: Kind }[], const k extends i[number]["kind"]>(
+  input: i,
   ...kinds: k[]
-): RejectedByKind<i, k>[] {
+): RejectedByKind<i[number], k>[] {
   return input.filter((i) => {
     for (const kind of kinds) {
       if (kind !== i.kind) return true;
     }
     return false;
-  }) as RejectedByKind<i, k>[];
+  }) as RejectedByKind<i[number], k>[];
 }
 
-export function kindFind<i extends { kind: Kind }, const k extends i["kind"]>(
-  input: i[],
+export function kindFind<i extends { kind: Kind }[], const k extends i[number]["kind"]>(
+  input: i,
   ...kinds: k[]
-): FilteredByKind<i, k> | undefined {
+): FilteredByKind<i[number], k> | undefined {
   return input.find((i) => {
     for (const kind of kinds) {
       if (kind === i.kind) return true;
     }
     return false;
-  }) as FilteredByKind<i, k> | undefined;
+  }) as FilteredByKind<i[number], k> | undefined;
 }

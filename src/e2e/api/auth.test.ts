@@ -188,10 +188,12 @@ describe("Auth", () => {
       const registerResponse = await request(getServer())
         .post("/auth_user/register")
         .send({
-          name: "some name",
-          username: "somename@example.com",
-          password: "some password",
-          userProfile: { displayName: "Profile Display Name" },
+          authUser: {
+            name: "some name",
+            username: "somename@example.com",
+            password: "some password",
+            userProfile: { displayName: "Profile Display Name" },
+          },
         });
 
       expect(registerResponse.statusCode).toBe(201);
@@ -215,10 +217,12 @@ describe("Auth", () => {
 
     it("should fail when creating user with existing username", async () => {
       const data = {
-        name: "some name",
-        username: "somename@example.com",
-        password: "some password",
-        userProfile: { displayName: "Profile Display Name" },
+        authUser: {
+          name: "some name",
+          username: "somename@example.com",
+          password: "some password",
+          userProfile: { displayName: "Profile Display Name" },
+        },
       };
 
       await request(getServer()).post("/auth_user/register").send(data);

@@ -16,7 +16,7 @@ entrypoint Orgs {
     method PATCH
     path "customUpdate"
     action {
-      update {}
+      update org as newOrg {}
     }
   }
   custom endpoint {
@@ -24,7 +24,7 @@ entrypoint Orgs {
     method DELETE
     path "customDelete"
     action {
-      delete {}
+      delete org {}
     }
   }
 
@@ -39,7 +39,7 @@ entrypoint Orgs {
     method POST
     path "customCreate"
     action {
-      create {}
+      create Org as org {}
     }
   }
 }

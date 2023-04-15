@@ -471,7 +471,6 @@ export function buildTokens(
 
   function buildGenerator(generator: Generator) {
     buildKeyword(generator.keyword);
-    // buildKeyword(generator.type);
     match(generator)
       .with({ type: "client" }, (g) => {
         buildKeyword(g.keywordType);
@@ -491,9 +490,6 @@ export function buildTokens(
             })
             .exhaustive();
         });
-
-        buildKeyword(g.keyword);
-        // actions.forEach(buildAction);
       })
       .exhaustive();
   }

@@ -103,7 +103,7 @@ exports[`entrypoint composes basic example 1`] = `
           },
         ],
         "target": {
-          "alias": "$target_0",
+          "alias": "org",
           "kind": "model",
           "name": "Org",
           "namePath": [
@@ -152,7 +152,7 @@ exports[`entrypoint composes basic example 1`] = `
           },
         ],
         "target": {
-          "alias": "$target_0",
+          "alias": "org",
           "identifyWith": {
             "name": "slug",
             "paramName": "org_slug",
@@ -180,7 +180,7 @@ exports[`entrypoint composes basic example 1`] = `
             "pageable": false,
             "parentContext": [
               {
-                "alias": "$target_0",
+                "alias": "org",
                 "identifyWith": {
                   "name": "slug",
                   "paramName": "org_slug",
@@ -277,7 +277,7 @@ exports[`entrypoint composes basic example 1`] = `
             "kind": "get",
             "parentContext": [
               {
-                "alias": "$target_0",
+                "alias": "org",
                 "identifyWith": {
                   "name": "slug",
                   "paramName": "org_slug",
@@ -398,7 +398,7 @@ exports[`entrypoint composes basic example 1`] = `
                         "access": [
                           "id",
                         ],
-                        "alias": "$target_0",
+                        "alias": "org",
                       },
                     },
                   },
@@ -429,7 +429,7 @@ exports[`entrypoint composes basic example 1`] = `
             "kind": "create",
             "parentContext": [
               {
-                "alias": "$target_0",
+                "alias": "org",
                 "identifyWith": {
                   "name": "slug",
                   "paramName": "org_slug",
@@ -534,13 +534,14 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "actions": [
               {
-                "alias": "$repo",
+                "alias": "newOrg",
                 "changeset": [
                   {
-                    "name": "title",
+                    "name": "slug",
                     "setter": {
                       "fieldsetAccess": [
-                        "title",
+                        "newOrg",
+                        "slug",
                       ],
                       "kind": "fieldset-input",
                       "required": false,
@@ -548,23 +549,24 @@ exports[`entrypoint composes basic example 1`] = `
                     },
                   },
                   {
-                    "name": "org_id",
+                    "name": "name",
                     "setter": {
                       "fieldsetAccess": [
-                        "org_id",
+                        "newOrg",
+                        "name",
                       ],
                       "kind": "fieldset-input",
                       "required": false,
-                      "type": "integer",
+                      "type": "text",
                     },
                   },
                 ],
                 "filter": undefined,
                 "kind": "update-one",
-                "model": "Repo",
+                "model": "Org",
                 "select": [],
                 "targetPath": [
-                  "repo",
+                  "org",
                 ],
               },
             ],
@@ -574,19 +576,25 @@ exports[`entrypoint composes basic example 1`] = `
               "kind": "record",
               "nullable": false,
               "record": {
-                "org_id": {
-                  "kind": "field",
+                "newOrg": {
+                  "kind": "record",
                   "nullable": false,
-                  "required": false,
-                  "type": "integer",
-                  "validators": [],
-                },
-                "title": {
-                  "kind": "field",
-                  "nullable": false,
-                  "required": false,
-                  "type": "text",
-                  "validators": [],
+                  "record": {
+                    "name": {
+                      "kind": "field",
+                      "nullable": false,
+                      "required": false,
+                      "type": "text",
+                      "validators": [],
+                    },
+                    "slug": {
+                      "kind": "field",
+                      "nullable": false,
+                      "required": false,
+                      "type": "text",
+                      "validators": [],
+                    },
+                  },
                 },
               },
             },
@@ -594,7 +602,7 @@ exports[`entrypoint composes basic example 1`] = `
             "method": "PATCH",
             "parentContext": [
               {
-                "alias": "$target_0",
+                "alias": "org",
                 "identifyWith": {
                   "name": "slug",
                   "paramName": "org_slug",
@@ -608,7 +616,18 @@ exports[`entrypoint composes basic example 1`] = `
                 ],
                 "refKey": "Org",
                 "retType": "Org",
-                "select": [],
+                "select": [
+                  {
+                    "alias": "id",
+                    "kind": "field",
+                    "name": "id",
+                    "namePath": [
+                      "Org",
+                      "id",
+                    ],
+                    "refKey": "Org.id",
+                  },
+                ],
               },
             ],
             "path": "somePath",
@@ -630,19 +649,7 @@ exports[`entrypoint composes basic example 1`] = `
               ],
               "refKey": "Org.repos",
               "retType": "Repo",
-              "select": [
-                {
-                  "alias": "id",
-                  "kind": "field",
-                  "name": "id",
-                  "namePath": [
-                    "Org",
-                    "repos",
-                    "id",
-                  ],
-                  "refKey": "Repo.id",
-                },
-              ],
+              "select": [],
             },
           },
         ],
@@ -669,7 +676,7 @@ exports[`entrypoint composes basic example 1`] = `
     ],
     "name": "Orgs",
     "target": {
-      "alias": "$target_0",
+      "alias": "org",
       "identifyWith": {
         "name": "slug",
         "paramName": "org_slug",

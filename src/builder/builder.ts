@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { DiagnosticCategory, Project, ScriptTarget } from "ts-morph";
+import { DiagnosticCategory, ModuleKind, Project, ScriptTarget } from "ts-morph";
 
 import { buildEntrypoints } from "@src/builder/admin";
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
@@ -121,8 +121,10 @@ export async function buildApiClients(
                 if (templateChanged) {
                   const project = new Project({
                     compilerOptions: {
+                      // let's support max 3 years old systax level
+                      target: ScriptTarget.ES2020,
+                      module: ModuleKind.CommonJS,
                       declaration: true,
-                      target: ScriptTarget.ES5,
                       strict: true,
                       // these settings make emitting much faster (https://github.com/dsherret/ts-morph/issues/149)
                       isolatedModules: true,
