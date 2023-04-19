@@ -5,6 +5,7 @@ import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureExists } from "@src/common/utils";
+import { PrimitiveType } from "@src/compiler/ast/type";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
@@ -151,7 +152,18 @@ function migrateQuery(query: AST.Query | AST.AnonymousQuery): QuerySpec {
 }
 
 function migrateComputed(computed: AST.Computed): ComputedSpec {
-  return { name: computed.name.text, exp: migrateExpr(computed.expr) };
+  const exprType = computed.expr.type;
+  const nullable = exprType.kind === "nullable";
+  const targetType = nullable ? exprType.type : exprType;
+  // this type should resolve only to primitive or unknown (see resolver)
+  const type = targetType.kind === "primitive" ? targetType.primitiveKind : "unknown";
+
+  return {
+    name: computed.name.text,
+    exp: migrateExpr(computed.expr),
+    type: type === "string" ? "text" : type,
+    nullable,
+  };
 }
 
 function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {

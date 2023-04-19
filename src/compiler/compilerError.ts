@@ -52,6 +52,7 @@ export enum ErrorCode {
   UnexpectedType,
   UnexpectedFieldType,
   VirtualInputType,
+  ComputedType,
   NameAlreadyInScope,
 }
 
@@ -155,6 +156,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Field type must be a non null primitive type`;
     case ErrorCode.VirtualInputType:
       return `Virtual input type must be a non null primitive type`;
+    case ErrorCode.ComputedType:
+      return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:
       return `This name is already defined in current scope`;
   }

@@ -810,7 +810,7 @@ function createTargetInfo(name: string, retTypeName: string): TargetName {
 }
 
 type SchemaField = {
-  type: "string" | "number" | "boolean" | "number[]" | "unknown";
+  type: "string" | "number" | "boolean" | "unknown" | "null";
   optional: boolean;
   nullable: boolean;
 };
@@ -829,19 +829,23 @@ type SchemaArray = {
 type SchemaItem = SchemaField | SchemaObject | SchemaArray;
 
 function convertFieldToSchemaType(
-  type: "boolean" | "integer" | "text" | "list-integer"
+  type: "boolean" | "integer" | "text" | "unknown" | "null"
 ): SchemaField["type"] {
   switch (type) {
-    case "boolean":
-      return type;
-    case "integer":
+    case "integer": {
       return "number";
-    case "list-integer":
-      return "number[]";
-    case "text":
+    }
+    case "text": {
       return "string";
-    default:
+    }
+    case "boolean":
+    case "unknown":
+    case "null": {
+      return type;
+    }
+    default: {
       assertUnreachable(type);
+    }
   }
 }
 
@@ -886,7 +890,7 @@ function buildFieldsetFieldSchema(def: Definition, field: FieldsetFieldDef): Sch
 function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
   return {
     type: "object",
-    properties: Object.fromEntries(
+    properties: Object.fromEntries<SchemaField | SchemaObject | SchemaArray>(
       select.map((item) => {
         const selectKind = item.kind;
         switch (selectKind) {
@@ -923,10 +927,12 @@ function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
           case "computed": {
             // TODO: check optional/nullable
             const computed = getRef.computed(def, item.refKey);
-            const computedType =
-              computed.type != null ? convertFieldToSchemaType(computed.type.type) : "unknown";
+            const computedType = convertFieldToSchemaType(computed.type.kind);
 
-            return [item.name, { type: computedType, nullable: false, optional: false }];
+            return [
+              item.name,
+              { type: computedType, nullable: computed.type.nullable, optional: false },
+            ];
           }
           case "model-hook": {
             // FIXME - add return type to hooks
@@ -963,9 +969,11 @@ function renderSchemaItem(name: string, item: SchemaItem): string {
     case "boolean":
     case "number":
     case "string":
-    case "number[]":
     case "unknown": {
       return `${name}${item.optional ? "?" : ""}: ${itemType}${item.nullable ? "|null" : ""}`;
+    }
+    case "null": {
+      return `${name}${item.optional ? "?" : ""}: ${itemType}`;
     }
     case "array": {
       return `${name}: ${renderSchemaObject(item.items)}[]`;
@@ -973,7 +981,8 @@ function renderSchemaItem(name: string, item: SchemaItem): string {
     case "object": {
       return `${name}: ${renderSchemaObject(item)}`;
     }
-    default:
+    default: {
       assertUnreachable(itemType);
+    }
   }
 }

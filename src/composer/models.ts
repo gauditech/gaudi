@@ -150,7 +150,7 @@ function defineField(def: Definition, mdef: ModelDef, fspec: FieldSpec): FieldDe
   const ex = getDefinition(def, refKey, "field");
   if (ex) return ex;
 
-  const type = validateType(fspec.type);
+  const type = validateFieldType(fspec.type);
 
   const f: FieldDef = {
     kind: "field",
@@ -175,12 +175,18 @@ function defineComputed(def: Definition, mdef: ModelDef, cspec: ComputedSpec): C
   const ex = getDefinition(def, refKey, "computed");
   if (ex) return ex;
 
+  const type = validateComputedType(cspec.type);
+
   const c: ComputedDef = {
     kind: "computed",
     refKey,
     modelRefKey: mdef.refKey,
     name: cspec.name,
     exp: composeExpression(def, cspec.exp, [mdef.name]),
+    type: {
+      kind: type,
+      nullable: !!cspec.nullable,
+    },
   };
   mdef.computeds.push(c);
   def.resolveOrder.push(c.refKey);
@@ -368,7 +374,7 @@ function aggregateFromSpec(def: Definition, mdef: ModelDef, qspec: QuerySpec): A
   return composeAggregate(def, mdef, qspec);
 }
 
-export function validateType(type: string): FieldDef["type"] {
+export function validateFieldType(type: string): FieldDef["type"] {
   switch (type) {
     case "integer":
       return "integer";
@@ -378,6 +384,22 @@ export function validateType(type: string): FieldDef["type"] {
       return "boolean";
     default:
       throw new Error(`Field type ${type} is not a valid type`);
+  }
+}
+
+export function validateComputedType(type: string): ComputedDef["type"]["kind"] {
+  switch (type) {
+    case "text":
+    case "integer":
+    case "boolean":
+    case "unknown":
+    case "null":
+      return type;
+    // unsupported types are mapped to "unknown"
+    case "float":
+      return "unknown";
+    default:
+      throw new Error(`Invalid computed field type: "${type}"`);
   }
 }
 

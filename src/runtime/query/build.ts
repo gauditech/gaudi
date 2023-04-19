@@ -58,7 +58,11 @@ export function applyFilterIdInContext(namePath: NamePath, filter?: TypedExprDef
     name: "in",
     args: [
       { kind: "alias", namePath: [...namePath, "id"] },
-      { kind: "variable", type: { type: "list-integer", nullable: false }, name: "@context_ids" },
+      {
+        kind: "variable",
+        type: { kind: "collection", type: { kind: "integer", nullable: false } },
+        name: "@context_ids",
+      },
     ],
   };
   return filter === undefined

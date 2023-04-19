@@ -54,8 +54,8 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
+            "kind": "text",
             "nullable": false,
-            "type": "text",
           },
         },
       ],
@@ -103,8 +103,8 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
               "kind": "variable",
               "name": "repo_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -124,8 +124,11 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -176,8 +179,11 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
@@ -224,8 +230,11 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
@@ -409,8 +418,8 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
+            "kind": "text",
             "nullable": false,
-            "type": "text",
           },
         },
       ],
@@ -458,8 +467,8 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
               "kind": "variable",
               "name": "repo_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -479,8 +488,11 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -534,8 +546,8 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
               "kind": "variable",
               "name": "issue_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -555,8 +567,11 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -607,8 +622,11 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
@@ -765,8 +783,8 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
+            "kind": "text",
             "nullable": false,
-            "type": "text",
           },
         },
       ],
@@ -814,8 +832,8 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
               "kind": "variable",
               "name": "repo_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -835,8 +853,11 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -890,8 +911,8 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
               "kind": "variable",
               "name": "issue_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -911,8 +932,11 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -963,8 +987,11 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
@@ -1143,8 +1170,8 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
+            "kind": "text",
             "nullable": false,
-            "type": "text",
           },
         },
       ],
@@ -1192,8 +1219,8 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
               "kind": "variable",
               "name": "repo_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -1213,8 +1240,11 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -1265,8 +1295,11 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
@@ -1313,8 +1346,11 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
@@ -1505,8 +1541,8 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
+            "kind": "text",
             "nullable": false,
-            "type": "text",
           },
         },
       ],
@@ -1554,8 +1590,8 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
               "kind": "variable",
               "name": "repo_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -1575,8 +1611,11 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -1630,8 +1669,8 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
               "kind": "variable",
               "name": "issue_id",
               "type": {
+                "kind": "integer",
                 "nullable": false,
-                "type": "integer",
               },
             },
           ],
@@ -1651,8 +1690,11 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
               "kind": "variable",
               "name": "@context_ids",
               "type": {
-                "nullable": false,
-                "type": "list-integer",
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             },
           ],
@@ -1703,8 +1745,11 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
@@ -1911,8 +1956,11 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
           "kind": "variable",
           "name": "@context_ids",
           "type": {
-            "nullable": false,
-            "type": "list-integer",
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         },
       ],
