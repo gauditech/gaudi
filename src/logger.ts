@@ -42,7 +42,7 @@ interface LogConfig {
 }
 
 const LOG_CATEGORIES: LogConfig = {
-  "": "debug",
+  "": "silly",
   sql: "debug",
   http: "debug",
   debug: "silly",
@@ -57,6 +57,17 @@ export class Logger {
   constructor(category?: string, level?: LogLevel) {
     this._category = category ?? null;
     this._forceLevel = level;
+  }
+
+  silly(label: Loggable, message: Loggable): void;
+  silly(message: Loggable): void;
+  silly(...args: Loggable[]) {
+    if (args.length > 1) {
+      this._log("silly", args[1], args[0]);
+    } else {
+      // only message is passed
+      this._log("silly", args[0], undefined);
+    }
   }
 
   debug(label: Loggable, message: Loggable): void;
@@ -104,7 +115,7 @@ export class Logger {
   }
 
   private _log(level: LogLevel, message: Loggable, label: Loggable | undefined) {
-    const minLogLevel = this._forceLevel ?? LOG_CATEGORIES[this._category || ""] ?? "debug";
+    const minLogLevel = this._forceLevel ?? LOG_CATEGORIES[this._category || ""] ?? "silly";
     if (Logger.compareLevels(level, minLogLevel)) {
       this._do_log(level, message, label);
     }
@@ -112,7 +123,9 @@ export class Logger {
 
   protected _do_log(level: LogLevel, message: Loggable, label: Loggable | undefined): void {
     const msgObj =
-      message instanceof Error ? message : util.inspect(message, { depth: 10, colors: true });
+      message instanceof Error || typeof message === "string"
+        ? message
+        : util.inspect(message, { depth: 10, colors: true });
     winstonLogger.log(level, msgObj as any, { label });
   }
 
@@ -132,11 +145,14 @@ export default logger;
 function coloredLevel(level: string): string {
   const l = chalk.bold(chalk.white(` ${level.toUpperCase().padEnd(5)} `));
   switch (level) {
-    case "info": {
-      return chalk.bgGreen(l);
+    case "silly": {
+      return chalk.bgYellow(l);
     }
     case "debug": {
       return chalk.bgBlue(l);
+    }
+    case "info": {
+      return chalk.bgGreen(l);
     }
     case "error": {
       return chalk.bgRed(l);
