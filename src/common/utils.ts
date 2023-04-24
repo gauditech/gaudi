@@ -178,12 +178,12 @@ export function nameInitials(input: string): string {
 
 /** Function that ensures exhaustivness of conditional statements. */
 export function assertUnreachable(value: never): never {
-  throw new UnreachableError(`Unreachable value detected: "${value}"`);
+  throw new UnreachableError(`Unexpected value: "${value}"`);
 }
 
 export class UnreachableError extends Error {
   constructor(message: string) {
-    super(`Unreachable code path executed: ${message}`);
+    super(`Unreachable code path. ${message}`);
   }
 }
 
