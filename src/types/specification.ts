@@ -88,6 +88,8 @@ export type QuerySpec = {
 export type ComputedSpec = {
   name: string;
   exp: ExpSpec;
+  type: string;
+  nullable: boolean;
 };
 
 export type ExpSpec =

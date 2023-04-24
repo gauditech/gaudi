@@ -52,7 +52,7 @@ type CustomCreateError = CustomOneActionError;
 type GetResp = { name: string,
 slug: string,
 description: string,
-summary: unknown,
+summary: string,
 nameAndDesc: unknown };
 type GetError = CustomGetError;
 type ListResp = GetResp;

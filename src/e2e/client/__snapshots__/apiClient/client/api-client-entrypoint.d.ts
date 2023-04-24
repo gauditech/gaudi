@@ -122,14 +122,14 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 slug: string;
                 description: string;
-                summary: unknown;
+                summary: string;
                 nameAndDesc: unknown;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             list: PaginatedListApiClientFn<{
                 name: string;
                 slug: string;
                 description: string;
-                summary: unknown;
+                summary: string;
                 nameAndDesc: unknown;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             create: CreateApiClientFn<{
@@ -140,7 +140,7 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 slug: string;
                 description: string;
-                summary: unknown;
+                summary: string;
                 nameAndDesc: unknown;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             update: UpdateApiClientFn<string, {
@@ -151,7 +151,7 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 slug: string;
                 description: string;
-                summary: unknown;
+                summary: string;
                 nameAndDesc: unknown;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             delete: DeleteApiClientFn<string, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;

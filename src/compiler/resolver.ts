@@ -479,7 +479,18 @@ export function resolve(projectASTs: ProjectASTs) {
       unique: false,
     };
 
-    computed.type = computed.expr.type;
+    const exprType = computed.expr.type;
+    if (
+      exprType.kind === "primitive" ||
+      (exprType.kind === "nullable" && exprType.type.kind === "primitive") ||
+      exprType.kind === "unknown"
+    ) {
+      computed.type = computed.expr.type;
+    } else {
+      errors.push(
+        new CompilerError(computed.keyword, ErrorCode.ComputedType, { exprType: exprType.kind })
+      );
+    }
   }
 
   // passing null as a parent model means this is root model, while undefined means it is unresolved

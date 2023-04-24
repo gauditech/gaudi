@@ -40,8 +40,8 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
             return [select.name, true];
           }
           case "computed": {
-            // FIXME - add required type to computeds
-            return [select.name, true];
+            const computed = getRef.computed(definition, select.refKey);
+            return [select.name, computed.type.nullable];
           }
           case "model-hook": {
             // FIXME - add required type to hooks
@@ -87,8 +87,12 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
           return [select.name, { type: "integer" }];
         }
         case "computed": {
+          const computed = getRef.computed(definition, select.refKey);
           // FIXME - add return type to computeds
-          return [select.name, {}];
+          return [
+            select.name,
+            { type: convertToOpenAPIType(computed.type.kind), nullable: computed.type.nullable },
+          ];
         }
         case "model-hook": {
           // FIXME - add return type to hooks
@@ -240,7 +244,7 @@ function buildSchemaFromFieldset(fieldset: FieldsetDef): OpenAPIV3.SchemaObject 
 }
 
 function convertToOpenAPIType(
-  type: "boolean" | "integer" | "text"
+  type: "boolean" | "integer" | "text" | "unknown" | "null"
 ): OpenAPIV3.NonArraySchemaObjectType {
   switch (type) {
     case "boolean":
@@ -248,6 +252,10 @@ function convertToOpenAPIType(
       return type;
     case "text":
       return "string";
+    case "unknown":
+    case "null":
+      // arbitrary type is "object"
+      return "object";
   }
 }
 

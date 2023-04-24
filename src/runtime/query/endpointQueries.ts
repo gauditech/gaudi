@@ -162,7 +162,7 @@ function targetToFilter(target: TargetDef): TypedExprDef {
       { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
       {
         kind: "variable",
-        type: { type: target.identifyWith.type, nullable: false },
+        type: { kind: target.identifyWith.type, nullable: false },
         name: target.identifyWith.paramName,
       },
     ],
