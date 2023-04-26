@@ -1,11 +1,14 @@
-import _ from "lodash";
-
 import { QueryTree, queryTreeFromParts } from "./build";
-import { EndpointQueries, buildEndpointQueries } from "./endpointQueries";
+import {
+  EndpointQueries,
+  buildEndpointQueries,
+  decorateWithOrderBy,
+  decorateWithPaging,
+} from "./endpointQueries";
 import { queryToString } from "./stringify";
 
 import { compileToOldSpec, compose } from "@src/index";
-import { EndpointDef, QueryDef } from "@src/types/definition";
+import { EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
   describe("Deeply nested entrypoints", () => {
@@ -77,6 +80,56 @@ describe("Endpoint queries", () => {
       ).toMatchSnapshot();
       expect(endpoint.target).toMatchSnapshot();
       expect(endpoint.parentContext).toMatchSnapshot();
+    });
+  });
+
+  describe("List endpoint response queries", () => {
+    /** Function that builds query for specific options combo. */
+    function buildBp(options?: { paging?: boolean; orderBy?: boolean }) {
+      const bp = `
+      model Item {
+        field name { type string }
+      }
+
+      entrypoint Items {
+        target Item
+        list endpoint {
+          ${options?.paging ? "pageable" : ""}
+          ${options?.orderBy ? "order by { name desc }" : ""}
+        }
+      }
+    `;
+
+      const def = compose(compileToOldSpec(bp));
+      const ep = def.entrypoints[0].endpoints[0] as ListEndpointDef;
+      let qt = buildEndpointQueries(def, ep).responseQueryTree;
+
+      if (options?.paging) {
+        qt = decorateWithPaging(ep, qt, { page: 2, pageSize: 10 });
+      }
+      if (options?.orderBy) {
+        qt = decorateWithOrderBy(ep, qt);
+      }
+
+      return { qt, def };
+    }
+
+    // build plain separately so we can use it's def in assertions
+    const plainBp = buildBp();
+
+    // build possible query combos
+    const queries = {
+      plain: plainBp.qt,
+      paging: buildBp({ paging: true }).qt,
+      orderBy: buildBp({ orderBy: true }).qt,
+      "paging and order": buildBp({ paging: true, orderBy: true }).qt,
+    };
+
+    it.each(Object.entries(queries))("test %s query endpoint", (_name, q) => {
+      expect(extractQueryTree(q)).toMatchSnapshot();
+      expect(
+        extractQueryTree(q).map((q) => queryToString(plainBp.def, q) + "\n\n\n")
+      ).toMatchSnapshot();
     });
   });
 });

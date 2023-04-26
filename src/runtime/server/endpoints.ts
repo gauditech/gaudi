@@ -2,13 +2,13 @@ import { Express, Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { executeArithmetics } from "../common/arithmetics";
+import { executeArithmetics } from "@src/runtime//common/arithmetics";
 import {
   ReferenceIdResult,
   ValidReferenceIdResult,
   assignNoReferenceValidators,
   fetchReferenceIds,
-} from "../common/constraintValidation";
+} from "@src/runtime/common/constraintValidation";
 
 import { Vars } from "./vars";
 
@@ -22,10 +22,13 @@ import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
 import { executeEndpointActions } from "@src/runtime/common/action";
-import { pagingToQueryLimit } from "@src/runtime/common/utils";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { QueryTree } from "@src/runtime/query/build";
-import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
+import {
+  buildEndpointQueries,
+  decorateWithOrderBy,
+  decorateWithPaging,
+} from "@src/runtime/query/endpointQueries";
 import { NestedRow, executeQueryTree } from "@src/runtime/query/exec";
 import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
@@ -856,53 +859,30 @@ async function createListEndpointResponse(
   params: Vars,
   contextIds: number[]
 ): Promise<PaginatedListResponse<NestedRow> | NestedRow[]> {
-  let resultQuery = qt;
+  let resultQuery: QueryTree = qt;
 
-  // --- order by
-  if (endpoint.orderBy) {
-    resultQuery = {
-      ...resultQuery,
-      query: {
-        ...resultQuery.query,
-
-        // decorate query with "order by"
-        orderBy: endpoint.orderBy,
-      },
-    };
-  }
+  // add order by
+  resultQuery = decorateWithOrderBy(endpoint, resultQuery);
 
   // --- paged list
   if (endpoint.pageable) {
-    // resolve pagin data
-    const { limit, offset } = pagingToQueryLimit(
-      params.get("page"),
-      params.get("pageSize"),
-      resultQuery.query.offset,
-      resultQuery.query.limit
-    );
+    // add paging
+    resultQuery = decorateWithPaging(endpoint, resultQuery, {
+      pageSize: params.get("pageSize"),
+      page: params.get("page"),
+    });
 
-    const pageSize = limit ?? 0;
-    const page = pageSize > 0 ? Math.floor((offset ?? 0) / pageSize) + 1 : 1;
-
-    resultQuery = {
-      ...resultQuery,
-      query: {
-        ...resultQuery.query,
-
-        // decorate query with limit/offset
-        limit,
-        offset,
-      },
-    };
-
-    // data query
+    // exec data query
     const data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
 
-    // count query
+    // exec count query
     // using original `qt` var without any paging/ordering/...
     // TODO: this query should be a "count query" but it's currently not possible
     const totalData = await executeQueryTree(conn, def, qt, params, contextIds);
 
+    // resolve paging data
+    const pageSize = resultQuery.query.limit ?? 0;
+    const page = pageSize > 0 ? Math.floor((resultQuery.query.offset ?? 0) / pageSize) + 1 : 1;
     const totalCount = totalData.length;
     const totalPages = Math.ceil(totalCount / pageSize);
 

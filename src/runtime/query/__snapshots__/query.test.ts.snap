@@ -1366,19 +1366,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "modelRefKey": "Repo",
     "name": "$target_2",
     "offset": undefined,
-    "orderBy": [
-      {
-        "direction": "asc",
-        "exp": {
-          "kind": "alias",
-          "namePath": [
-            "Repo",
-            "issues",
-            "id",
-          ],
-        },
-      },
-    ],
+    "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
     "select": [
@@ -1461,8 +1449,6 @@ FROM
   JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo"."id" IN :@context_ids
-ORDER BY
-  "Repo.issues"."id" asc
 
 
 ",
@@ -1922,6 +1908,256 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
     "retType": "Repo",
     "select": [],
   },
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test orderBy query endpoint 1`] = `
+[
+  {
+    "filter": undefined,
+    "fromPath": [
+      "Item",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Item",
+    "name": "$target_0",
+    "offset": undefined,
+    "orderBy": [
+      {
+        "direction": "desc",
+        "exp": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "name",
+          ],
+        },
+      },
+    ],
+    "refKey": "N/A",
+    "retType": "Item",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item",
+          "id",
+        ],
+        "refKey": "Item.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item",
+          "name",
+        ],
+        "refKey": "Item.name",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test orderBy query endpoint 2`] = `
+[
+  "SELECT
+  "Item"."id" AS "id",
+  "Item"."name" AS "name"
+FROM
+  "item" AS "Item"
+ORDER BY
+  "Item"."name" desc
+
+
+",
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test paging and order query endpoint 1`] = `
+[
+  {
+    "filter": undefined,
+    "fromPath": [
+      "Item",
+    ],
+    "kind": "query",
+    "limit": 10,
+    "modelRefKey": "Item",
+    "name": "$target_0",
+    "offset": 10,
+    "orderBy": [
+      {
+        "direction": "desc",
+        "exp": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "name",
+          ],
+        },
+      },
+    ],
+    "refKey": "N/A",
+    "retType": "Item",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item",
+          "id",
+        ],
+        "refKey": "Item.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item",
+          "name",
+        ],
+        "refKey": "Item.name",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test paging and order query endpoint 2`] = `
+[
+  "SELECT
+  "Item"."id" AS "id",
+  "Item"."name" AS "name"
+FROM
+  "item" AS "Item"
+ORDER BY
+  "Item"."name" desc
+LIMIT
+  10
+OFFSET
+  10
+
+
+",
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test paging query endpoint 1`] = `
+[
+  {
+    "filter": undefined,
+    "fromPath": [
+      "Item",
+    ],
+    "kind": "query",
+    "limit": 10,
+    "modelRefKey": "Item",
+    "name": "$target_0",
+    "offset": 10,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retType": "Item",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item",
+          "id",
+        ],
+        "refKey": "Item.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item",
+          "name",
+        ],
+        "refKey": "Item.name",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test paging query endpoint 2`] = `
+[
+  "SELECT
+  "Item"."id" AS "id",
+  "Item"."name" AS "name"
+FROM
+  "item" AS "Item"
+LIMIT
+  10
+OFFSET
+  10
+
+
+",
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test plain query endpoint 1`] = `
+[
+  {
+    "filter": undefined,
+    "fromPath": [
+      "Item",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Item",
+    "name": "$target_0",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retType": "Item",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item",
+          "id",
+        ],
+        "refKey": "Item.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item",
+          "name",
+        ],
+        "refKey": "Item.name",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test plain query endpoint 2`] = `
+[
+  "SELECT
+  "Item"."id" AS "id",
+  "Item"."name" AS "name"
+FROM
+  "item" AS "Item"
+
+
+",
 ]
 `;
 
