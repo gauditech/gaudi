@@ -11,7 +11,6 @@ import {
   ensureEqual,
   ensureExists,
   ensureNot,
-  ensureThrow,
   resolveItems,
 } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
@@ -67,27 +66,7 @@ export function composeActionBlock(
    */
   iteratorCtx: VarContext = {}
 ): ActionDef[] {
-  // we currently allow actions only on create, update and custom endpoints
-  if (!_.includes<EndpointType>(["create", "update", "custom-one", "custom-many"], endpointKind)) {
-    ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
-  }
-
   const targetsCtx = getInitialContext(def, targets, endpointKind);
-
-  /**
-   * Ensure no overlap between target context and iterator context.
-   * Current target may not be in the context, but we can't reuse the alias, so we take aliases
-   * directly from `targets` rather than from the `targetsCtx` keys.
-   */
-  const targetAliases = targets.map((t) => t.alias);
-  ensureEqual(
-    _.intersection(targetAliases, _.keys(iteratorCtx)).length,
-    0,
-    `Overlap between iterator context and targets context: ${_.intersection(
-      targetAliases,
-      _.keys(iteratorCtx)
-    ).join(", ")}`
-  );
   const initialCtx = _.merge(targetsCtx, iteratorCtx);
 
   // Collect actions from the spec, updating the context during the pass through.
@@ -97,12 +76,12 @@ export function composeActionBlock(
       switch (atom.kind) {
         case "create":
         case "update": {
-          const action = composeModelAction(def, atom, currentCtx, targets, endpointKind);
+          const action = composeModelAction(def, atom, currentCtx, targets);
           currentCtx[action.alias] = { kind: "record", modelName: action.model };
           return [currentCtx, [...actions, action]];
         }
         case "delete": {
-          const action = composeDeleteAction(def, atom, currentCtx, _.last(targets)!, endpointKind);
+          const action = composeDeleteAction(def, atom, currentCtx, _.last(targets)!);
           // FIXME delete an alias from `currentCtx`
           return [currentCtx, [...actions, action]];
         }
@@ -122,18 +101,15 @@ export function composeActionBlock(
 
   // Create a default context action if not specified in blueprint.
   const target = _.last(targets)!;
-  const defaultActions = specs.filter(
+  const defaultAction = specs.find(
     // action must target "target model" and not be "fetch" action since they don't change model
     (spec) =>
       getActionTargetScope(def, spec, target.alias, ctx) === "target" && spec.kind !== "fetch"
   );
 
-  if (defaultActions.length === 1) {
+  if (defaultAction) {
     return actions;
-  } else if (defaultActions.length > 1) {
-    throw new Error(`Multiple default action definitions`);
   } else {
-    ensureEqual(defaultActions.length, 0);
     switch (endpointKind) {
       case "get":
       case "list": {
@@ -153,8 +129,7 @@ export function composeActionBlock(
             targetPath: undefined,
           },
           ctx,
-          _.last(targets)!,
-          endpointKind
+          _.last(targets)!
         );
         return [action, ...actions];
       }
@@ -162,15 +137,6 @@ export function composeActionBlock(
       case "update": {
         /**
          * Make custom default action and insert at the beginning.
-         *
-         *
-         * NOTE for `create`, this inserts default action at the beginning,
-         *      however we didn't account for that in the `initialContext` so
-         *      other actions can't reference the alias unless in this case.
-         *      We could improve it, but it would require us to know if user defined
-         *      a default target action some time later - in order to be able to decide
-         *      if user is referencing a default target alias before it's initialisation
-         *      or after.
          */
         const action: CreateOneAction | UpdateOneAction = composeModelAction(
           def,
@@ -181,8 +147,7 @@ export function composeActionBlock(
             actionAtoms: [],
           },
           ctx,
-          targets,
-          endpointKind
+          targets
         );
 
         return [action, ...actions];
@@ -245,15 +210,8 @@ function composeDeleteAction(
   def: Definition,
   spec: FilteredByKind<ActionSpec, "delete">,
   ctx: VarContext,
-  target: TargetDef,
-  endpointKind: EndpointType
+  target: TargetDef
 ): DeleteOneAction {
-  // Targeting model, context-path or reimplementing a default action?
-  const actionTargetScope = getActionTargetScope(def, spec, target.alias, ctx);
-  // Reimplementing a default action
-  if (actionTargetScope === "target") {
-    ensureAllowedTargetAction(spec, target, endpointKind);
-  }
   const targetPath = spec.targetPath ?? [target.alias];
   return {
     kind: "delete-one",
@@ -329,27 +287,13 @@ function composeModelAction(
   def: Definition,
   spec: ModelActionSpec,
   ctx: VarContext,
-  targets: TargetDef[],
-  endpointKind: EndpointType
+  targets: TargetDef[]
 ): CreateOneAction | UpdateOneAction {
   const target = _.last(targets)!;
   const model = findChangesetModel(def, ctx, spec.targetPath, target);
 
   // Targeting model, context-path or reimplementing a default action?
   const actionTargetScope = getActionTargetScope(def, spec, target.alias, ctx);
-  // Reimplementing a default action
-  if (actionTargetScope === "target") {
-    ensureAllowedTargetAction(spec, target, endpointKind);
-  } else {
-    // check alias
-    ensureNot(spec.alias, undefined, `Custom action must have an alias`);
-    // ensure alias doesn't reuse an existing name
-    const message = `Cannot name an action with ${spec.alias}, name already exists in the context`;
-
-    // FIXME not sure if this logic works
-    ensureThrow(() => getRef(def, spec.alias!), message);
-    ensureEqual(spec.alias! in ctx, false, message);
-  }
 
   const specWithParentSetter = assignParentContextSetter(def, spec, ctx, targets);
   const simpleSpec = simplifyActionSpec(def, specWithParentSetter, target.alias, model);
@@ -585,56 +529,6 @@ function atomToChangesetOperation(
     }
     case "set": {
       return setterToChangesetOperation(def, atom, ctx, changeset);
-    }
-  }
-}
-
-/**
- * Ensures that a action kind is allowed in given endpoint.
- *
- * Eg. on `create endpoint` there can only be a `create` specification
- * for a default action.
- *
- * Eg. `custom-one` endpoints allow only `update`, `delete`, `execute` and `fetch` actions.
- */
-function ensureAllowedTargetAction(
-  spec: ActionSpec,
-  target: TargetDef,
-  endpointKind: EndpointType
-) {
-  // --- check endpoint action types
-  // custom endpoint action types depend on their cardinality
-  if (endpointKind === "custom-one" || endpointKind === "custom-many") {
-    if (
-      endpointKind === "custom-many" &&
-      !_.includes<ActionSpec["kind"]>(["create", "execute", "fetch"], spec.kind)
-    ) {
-      throw new Error(
-        `"custom-many" endpoint does not allow "${spec.kind}" action on default target`
-      );
-    }
-    if (
-      endpointKind === "custom-one" &&
-      !_.includes<ActionSpec["kind"]>(["update", "delete", "execute", "fetch"], spec.kind)
-    ) {
-      throw new Error(
-        `"custom-one" endpoint does not allow "${spec.kind}" action on default target`
-      );
-    }
-  } else {
-    // standard endpoint action types' cardinality is implicit and reflects on allowed default action type
-    if (spec.kind !== endpointKind) {
-      throw new Error(
-        `Mismatching context action: overriding ${endpointKind} endpoint with a ${spec.kind} action on default target`
-      );
-    }
-  }
-
-  if (spec.kind === "create") {
-    if (spec.alias && spec.alias !== target.alias) {
-      throw new Error(
-        `Default target create action cannot be re-aliased: expected ${target.alias}, got ${spec.alias}`
-      );
     }
   }
 }
