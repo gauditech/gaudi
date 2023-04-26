@@ -584,6 +584,19 @@ export function resolve(projectASTs: ProjectASTs) {
         resolveAction(action, model, scope);
       });
     }
+
+    const orderBy = kindFind(endpoint.atoms, "orderBy");
+    if (orderBy) {
+      // order by will be executed in query which means it will be used in "model" scope
+      const scope: Scope = {
+        environment: "model",
+        model: model!,
+        context: {},
+        typeGuard: {},
+      };
+
+      orderBy.orderBy.forEach((orderBy) => resolveIdentifierRefPath(orderBy.identifierPath, scope));
+    }
   }
 
   function resolveAction(action: Action, parentModel: string | undefined, scope: Scope) {
@@ -1013,7 +1026,9 @@ export function resolve(projectASTs: ProjectASTs) {
       head.type = addTypeModifier({ kind: "primitive", primitiveKind: "string" }, "nullable");
     } else {
       // fail resolve
-      errors.push(new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope));
+      errors.push(
+        new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope, { name: headName })
+      );
       return;
     }
 

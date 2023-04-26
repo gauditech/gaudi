@@ -144,6 +144,7 @@ export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "cardinality"; cardinality: EndpointCardinality; cardinalityKeyword: TokenData }
   | { kind: "path"; path: StringLiteral }
   | { kind: "pageable" }
+  | { kind: "orderBy"; orderBy: OrderBy }
 );
 
 export type Action = ModelAction | DeleteAction | ExecuteAction | FetchAction;

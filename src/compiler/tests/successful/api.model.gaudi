@@ -90,7 +90,10 @@ entrypoint Orgs {
     response { id, slug, description, org_id }
 
     get endpoint {}
-    list endpoint { pageable }
+    list endpoint {
+      pageable
+      order by { name desc }
+    }
     create endpoint {
       action {
         create as repo {

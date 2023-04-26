@@ -257,6 +257,7 @@ entrypoint Orgs {
   get endpoint {}
   list endpoint {
     pageable
+    order by { slug desc }
   }
   create endpoint {
     action {

@@ -856,23 +856,38 @@ async function createListEndpointResponse(
   params: Vars,
   contextIds: number[]
 ): Promise<PaginatedListResponse<NestedRow> | NestedRow[]> {
+  let resultQuery = qt;
+
+  // --- order by
+  if (endpoint.orderBy) {
+    resultQuery = {
+      ...resultQuery,
+      query: {
+        ...resultQuery.query,
+
+        // decorate query with "order by"
+        orderBy: endpoint.orderBy,
+      },
+    };
+  }
+
   // --- paged list
   if (endpoint.pageable) {
     // resolve pagin data
     const { limit, offset } = pagingToQueryLimit(
       params.get("page"),
       params.get("pageSize"),
-      qt.query.offset,
-      qt.query.limit
+      resultQuery.query.offset,
+      resultQuery.query.limit
     );
 
     const pageSize = limit ?? 0;
     const page = pageSize > 0 ? Math.floor((offset ?? 0) / pageSize) + 1 : 1;
 
-    const resultQuery = {
-      ...qt,
+    resultQuery = {
+      ...resultQuery,
       query: {
-        ...qt.query,
+        ...resultQuery.query,
 
         // decorate query with limit/offset
         limit,
@@ -884,6 +899,7 @@ async function createListEndpointResponse(
     const data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
 
     // count query
+    // using original `qt` var without any paging/ordering/...
     // TODO: this query should be a "count query" but it's currently not possible
     const totalData = await executeQueryTree(conn, def, qt, params, contextIds);
 
@@ -901,7 +917,7 @@ async function createListEndpointResponse(
   // --- unpaged list (returns all data)
   else {
     // simply fetch all data
-    return await executeQueryTree(conn, def, qt, params, contextIds);
+    return await executeQueryTree(conn, def, resultQuery, params, contextIds);
   }
 }
 

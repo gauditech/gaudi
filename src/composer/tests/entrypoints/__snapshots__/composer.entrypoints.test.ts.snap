@@ -68,7 +68,19 @@ exports[`entrypoint composes basic example 1`] = `
         "authSelect": [],
         "authorize": undefined,
         "kind": "list",
-        "pageable": false,
+        "orderBy": [
+          {
+            "direction": "desc",
+            "exp": {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "slug",
+              ],
+            },
+          },
+        ],
+        "pageable": true,
         "parentContext": [],
         "response": [
           {
@@ -177,6 +189,7 @@ exports[`entrypoint composes basic example 1`] = `
             "authSelect": [],
             "authorize": undefined,
             "kind": "list",
+            "orderBy": undefined,
             "pageable": false,
             "parentContext": [
               {

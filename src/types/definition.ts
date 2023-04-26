@@ -208,6 +208,7 @@ export type ListEndpointDef = {
   authorize: TypedExprDef;
   pageable: boolean;
   response: SelectDef;
+  orderBy: QueryOrderByAtomDef[] | undefined;
   // actions: ActionDef[];
 };
 
