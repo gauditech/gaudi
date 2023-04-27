@@ -2,14 +2,6 @@ import { Express, Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { executeArithmetics } from "@src/runtime//common/arithmetics";
-import {
-  ReferenceIdResult,
-  ValidReferenceIdResult,
-  assignNoReferenceValidators,
-  fetchReferenceIds,
-} from "@src/runtime/common/constraintValidation";
-
 import { Vars } from "./vars";
 
 import {
@@ -21,11 +13,19 @@ import {
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
+import { executeArithmetics } from "@src/runtime//common/arithmetics";
 import { executeEndpointActions } from "@src/runtime/common/action";
+import {
+  ReferenceIdResult,
+  ValidReferenceIdResult,
+  assignNoReferenceValidators,
+  fetchReferenceIds,
+} from "@src/runtime/common/constraintValidation";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { QueryTree } from "@src/runtime/query/build";
 import {
   buildEndpointQueries,
+  decorateWithFilter,
   decorateWithOrderBy,
   decorateWithPaging,
 } from "@src/runtime/query/endpointQueries";
@@ -71,8 +71,11 @@ export function flattenEndpoints(entrypoints: EntrypointDef[]): EndpointDef[] {
 
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
+  const epPath = pathPrefix + epConfig.path;
+  logger.info(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
+
   app[epConfig.method](
-    pathPrefix + epConfig.path,
+    epPath,
     endpointGuardHandler(async (req, resp, next) => {
       // we have to manually chain (await) our handlers since express' `next` can't do it for us (it's sync)
       for (const h of epConfig.handlers) {
@@ -863,6 +866,8 @@ async function createListEndpointResponse(
 
   // add order by
   resultQuery = decorateWithOrderBy(endpoint, resultQuery);
+  // add filter
+  resultQuery = decorateWithFilter(endpoint, resultQuery);
 
   // --- paged list
   if (endpoint.pageable) {

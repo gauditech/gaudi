@@ -92,6 +92,7 @@ entrypoint Orgs {
     get endpoint {}
     list endpoint {
       pageable
+      filter { name is "asdf" }
       order by { name desc }
     }
     create endpoint {

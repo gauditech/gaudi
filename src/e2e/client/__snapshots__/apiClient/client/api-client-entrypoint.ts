@@ -30,7 +30,8 @@
   
     function buildApi(options: ApiClientOptions) {
       return {
-        org: buildOrgApi(options, "org")
+        org: buildOrgApi(options, "org"),
+repo: buildRepoApi(options, "repo")
       }
     }
 
@@ -184,6 +185,33 @@ type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUN
       {
         get: buildGetFn<number, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath)
+      }
+    )
+  }
+
+  function buildRepoApi(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
+    type ListResp = { id: number,
+slug: string,
+description: string,
+org_id: number };
+type ListError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetResp = ListResp;
+type GetError = ListError;
+
+    // entrypoint function
+    function api(id: number) {
+      const baseUrl = `${parentPath}/${id}`;
+      return {
+        
+      }
+    }
+
+    // endpoint functions
+    return Object.assign(api, 
+      {
+        list: buildListFn<ListResp, ListError>(options, parentPath),
+get: buildGetFn<number, GetResp, GetError>(options, parentPath)
       }
     )
   }

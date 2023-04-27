@@ -119,7 +119,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.CantResolveAuthModel:
       return `Can't resolve @auth model, is auth block used?`;
     case ErrorCode.CantResolveModelAtom:
-      return `Can't resolve model member with this name`;
+      return `Can't resolve model member with name: "${params?.name}"`;
     case ErrorCode.CantResolveStructMember:
       return `Can't resolve member of primitive types`;
     case ErrorCode.ThroughReferenceHasIncorrectModel:

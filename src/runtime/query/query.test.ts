@@ -2,6 +2,7 @@ import { QueryTree, queryTreeFromParts } from "./build";
 import {
   EndpointQueries,
   buildEndpointQueries,
+  decorateWithFilter,
   decorateWithOrderBy,
   decorateWithPaging,
 } from "./endpointQueries";
@@ -85,7 +86,7 @@ describe("Endpoint queries", () => {
 
   describe("List endpoint response queries", () => {
     /** Function that builds query for specific options combo. */
-    function buildBp(options?: { paging?: boolean; orderBy?: boolean }) {
+    function buildBp(options?: { paging?: boolean; orderBy?: boolean; filter?: boolean }) {
       const bp = `
       model Item {
         field name { type string }
@@ -96,6 +97,7 @@ describe("Endpoint queries", () => {
         list endpoint {
           ${options?.paging ? "pageable" : ""}
           ${options?.orderBy ? "order by { name desc }" : ""}
+          ${options?.filter ? 'filter { name is "asdf" }' : ""}
         }
       }
     `;
@@ -110,6 +112,9 @@ describe("Endpoint queries", () => {
       if (options?.orderBy) {
         qt = decorateWithOrderBy(ep, qt);
       }
+      if (options?.filter) {
+        qt = decorateWithFilter(ep, qt);
+      }
 
       return { qt, def };
     }
@@ -122,7 +127,70 @@ describe("Endpoint queries", () => {
       plain: plainBp.qt,
       paging: buildBp({ paging: true }).qt,
       orderBy: buildBp({ orderBy: true }).qt,
-      "paging and order": buildBp({ paging: true, orderBy: true }).qt,
+      "paging/order/filter": buildBp({ paging: true, orderBy: true, filter: true }).qt,
+    };
+
+    it.each(Object.entries(queries))("test %s query endpoint", (_name, q) => {
+      expect(extractQueryTree(q)).toMatchSnapshot();
+      expect(
+        extractQueryTree(q).map((q) => queryToString(plainBp.def, q) + "\n\n\n")
+      ).toMatchSnapshot();
+    });
+  });
+
+  describe("List nested endpoint response queries", () => {
+    /** Function that builds query for specific options combo. */
+    function buildBp(options?: { paging?: boolean; orderBy?: boolean; filter?: boolean }) {
+      const bp = `
+      model Item1 {
+        field name { type string }
+        relation item2 { from Item2, through item1 }
+      }
+      model Item2 {
+        reference item1 { to Item1 }
+        field name { type string }
+      }
+
+      entrypoint Items2 {
+        target Item1
+
+        entrypoint Items2 {
+          target item2
+          list endpoint {
+            ${options?.paging ? "pageable" : ""}
+            ${options?.orderBy ? "order by { name desc }" : ""}
+            ${options?.filter ? 'filter { name is "asdf" }' : ""}
+          }
+        }
+      }
+    `;
+
+      const def = compose(compileToOldSpec(bp));
+      const ep = def.entrypoints[0].entrypoints[0].endpoints[0] as ListEndpointDef;
+      let qt = buildEndpointQueries(def, ep).responseQueryTree;
+
+      if (options?.paging) {
+        qt = decorateWithPaging(ep, qt, { page: 2, pageSize: 10 });
+      }
+      if (options?.orderBy) {
+        qt = decorateWithOrderBy(ep, qt);
+      }
+      if (options?.filter) {
+        qt = decorateWithFilter(ep, qt);
+      }
+
+      return { qt, def };
+    }
+
+    // build plain separately so we can use it's def in assertions
+    const plainBp = buildBp();
+
+    // build possible query combos
+    const queries = {
+      plain: plainBp.qt,
+      paging: buildBp({ paging: true }).qt,
+      orderBy: buildBp({ orderBy: true }).qt,
+      "paging/order/filter": buildBp({ paging: true, orderBy: true, filter: true }).qt,
     };
 
     it.each(Object.entries(queries))("test %s query endpoint", (_name, q) => {

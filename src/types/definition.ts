@@ -209,6 +209,7 @@ export type ListEndpointDef = {
   pageable: boolean;
   response: SelectDef;
   orderBy: QueryOrderByAtomDef[] | undefined;
+  filter: TypedExprDef | undefined;
   // actions: ActionDef[];
 };
 

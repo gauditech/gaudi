@@ -1978,77 +1978,6 @@ ORDER BY
 ]
 `;
 
-exports[`Endpoint queries List endpoint response queries test paging and order query endpoint 1`] = `
-[
-  {
-    "filter": undefined,
-    "fromPath": [
-      "Item",
-    ],
-    "kind": "query",
-    "limit": 10,
-    "modelRefKey": "Item",
-    "name": "$target_0",
-    "offset": 10,
-    "orderBy": [
-      {
-        "direction": "desc",
-        "exp": {
-          "kind": "alias",
-          "namePath": [
-            "Item",
-            "name",
-          ],
-        },
-      },
-    ],
-    "refKey": "N/A",
-    "retType": "Item",
-    "select": [
-      {
-        "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item",
-          "id",
-        ],
-        "refKey": "Item.id",
-      },
-      {
-        "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item",
-          "name",
-        ],
-        "refKey": "Item.name",
-      },
-    ],
-  },
-]
-`;
-
-exports[`Endpoint queries List endpoint response queries test paging and order query endpoint 2`] = `
-[
-  "SELECT
-  "Item"."id" AS "id",
-  "Item"."name" AS "name"
-FROM
-  "item" AS "Item"
-ORDER BY
-  "Item"."name" desc
-LIMIT
-  10
-OFFSET
-  10
-
-
-",
-]
-`;
-
 exports[`Endpoint queries List endpoint response queries test paging query endpoint 1`] = `
 [
   {
@@ -2107,6 +2036,103 @@ OFFSET
 ]
 `;
 
+exports[`Endpoint queries List endpoint response queries test paging/order/filter query endpoint 1`] = `
+[
+  {
+    "filter": {
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Item",
+                "name",
+              ],
+            },
+            {
+              "kind": "literal",
+              "type": "text",
+              "value": "asdf",
+            },
+          ],
+          "kind": "function",
+          "name": "is",
+        },
+      ],
+      "kind": "function",
+      "name": "and",
+    },
+    "fromPath": [
+      "Item",
+    ],
+    "kind": "query",
+    "limit": 10,
+    "modelRefKey": "Item",
+    "name": "$target_0",
+    "offset": 10,
+    "orderBy": [
+      {
+        "direction": "desc",
+        "exp": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "name",
+          ],
+        },
+      },
+    ],
+    "refKey": "N/A",
+    "retType": "Item",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item",
+          "id",
+        ],
+        "refKey": "Item.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item",
+          "name",
+        ],
+        "refKey": "Item.name",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List endpoint response queries test paging/order/filter query endpoint 2`] = `
+[
+  "SELECT
+  "Item"."id" AS "id",
+  "Item"."name" AS "name"
+FROM
+  "item" AS "Item"
+WHERE
+  "Item"."name" = 'asdf'
+  AND TRUE = TRUE
+ORDER BY
+  "Item"."name" desc
+LIMIT
+  10
+OFFSET
+  10
+
+
+",
+]
+`;
+
 exports[`Endpoint queries List endpoint response queries test plain query endpoint 1`] = `
 [
   {
@@ -2155,6 +2181,448 @@ exports[`Endpoint queries List endpoint response queries test plain query endpoi
   "Item"."name" AS "name"
 FROM
   "item" AS "Item"
+
+
+",
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test orderBy query endpoint 1`] = `
+[
+  {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
+    },
+    "fromPath": [
+      "Item1",
+      "item2",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Item1",
+    "name": "$target_1",
+    "offset": undefined,
+    "orderBy": [
+      {
+        "direction": "desc",
+        "exp": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "name",
+          ],
+        },
+      },
+    ],
+    "refKey": "N/A",
+    "retType": "Item2",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "id",
+        ],
+        "refKey": "Item2.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item1",
+          "item2",
+          "name",
+        ],
+        "refKey": "Item2.name",
+      },
+      {
+        "alias": "item1_id",
+        "kind": "field",
+        "name": "item1_id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "item1_id",
+        ],
+        "refKey": "Item2.item1_id",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test orderBy query endpoint 2`] = `
+[
+  "SELECT
+  "Item1.item2"."id" AS "id",
+  "Item1.item2"."name" AS "name",
+  "Item1.item2"."item1_id" AS "item1_id"
+FROM
+  "item1" AS "Item1"
+  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+WHERE
+  "Item1"."id" IN :@context_ids
+ORDER BY
+  "Item1.item2"."name" desc
+
+
+",
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test paging query endpoint 1`] = `
+[
+  {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
+    },
+    "fromPath": [
+      "Item1",
+      "item2",
+    ],
+    "kind": "query",
+    "limit": 10,
+    "modelRefKey": "Item1",
+    "name": "$target_1",
+    "offset": 10,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retType": "Item2",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "id",
+        ],
+        "refKey": "Item2.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item1",
+          "item2",
+          "name",
+        ],
+        "refKey": "Item2.name",
+      },
+      {
+        "alias": "item1_id",
+        "kind": "field",
+        "name": "item1_id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "item1_id",
+        ],
+        "refKey": "Item2.item1_id",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test paging query endpoint 2`] = `
+[
+  "SELECT
+  "Item1.item2"."id" AS "id",
+  "Item1.item2"."name" AS "name",
+  "Item1.item2"."item1_id" AS "item1_id"
+FROM
+  "item1" AS "Item1"
+  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+WHERE
+  "Item1"."id" IN :@context_ids
+LIMIT
+  10
+OFFSET
+  10
+
+
+",
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test paging/order/filter query endpoint 1`] = `
+[
+  {
+    "filter": {
+      "args": [
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Item1",
+                "item2",
+                "name",
+              ],
+            },
+            {
+              "kind": "literal",
+              "type": "text",
+              "value": "asdf",
+            },
+          ],
+          "kind": "function",
+          "name": "is",
+        },
+        {
+          "args": [
+            {
+              "kind": "alias",
+              "namePath": [
+                "Item1",
+                "id",
+              ],
+            },
+            {
+              "kind": "variable",
+              "name": "@context_ids",
+              "type": {
+                "kind": "collection",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
+              },
+            },
+          ],
+          "kind": "function",
+          "name": "in",
+        },
+      ],
+      "kind": "function",
+      "name": "and",
+    },
+    "fromPath": [
+      "Item1",
+      "item2",
+    ],
+    "kind": "query",
+    "limit": 10,
+    "modelRefKey": "Item1",
+    "name": "$target_1",
+    "offset": 10,
+    "orderBy": [
+      {
+        "direction": "desc",
+        "exp": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "name",
+          ],
+        },
+      },
+    ],
+    "refKey": "N/A",
+    "retType": "Item2",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "id",
+        ],
+        "refKey": "Item2.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item1",
+          "item2",
+          "name",
+        ],
+        "refKey": "Item2.name",
+      },
+      {
+        "alias": "item1_id",
+        "kind": "field",
+        "name": "item1_id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "item1_id",
+        ],
+        "refKey": "Item2.item1_id",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test paging/order/filter query endpoint 2`] = `
+[
+  "SELECT
+  "Item1.item2"."id" AS "id",
+  "Item1.item2"."name" AS "name",
+  "Item1.item2"."item1_id" AS "item1_id"
+FROM
+  "item1" AS "Item1"
+  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+WHERE
+  "Item1.item2"."name" = 'asdf'
+  AND "Item1"."id" IN :@context_ids
+ORDER BY
+  "Item1.item2"."name" desc
+LIMIT
+  10
+OFFSET
+  10
+
+
+",
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test plain query endpoint 1`] = `
+[
+  {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "id",
+          ],
+        },
+        {
+          "kind": "variable",
+          "name": "@context_ids",
+          "type": {
+            "kind": "collection",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "in",
+    },
+    "fromPath": [
+      "Item1",
+      "item2",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Item1",
+    "name": "$target_1",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retType": "Item2",
+    "select": [
+      {
+        "alias": "id",
+        "kind": "field",
+        "name": "id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "id",
+        ],
+        "refKey": "Item2.id",
+      },
+      {
+        "alias": "name",
+        "kind": "field",
+        "name": "name",
+        "namePath": [
+          "Item1",
+          "item2",
+          "name",
+        ],
+        "refKey": "Item2.name",
+      },
+      {
+        "alias": "item1_id",
+        "kind": "field",
+        "name": "item1_id",
+        "namePath": [
+          "Item1",
+          "item2",
+          "item1_id",
+        ],
+        "refKey": "Item2.item1_id",
+      },
+    ],
+  },
+]
+`;
+
+exports[`Endpoint queries List nested endpoint response queries test plain query endpoint 2`] = `
+[
+  "SELECT
+  "Item1.item2"."id" AS "id",
+  "Item1.item2"."name" AS "name",
+  "Item1.item2"."item1_id" AS "item1_id"
+FROM
+  "item1" AS "Item1"
+  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+WHERE
+  "Item1"."id" IN :@context_ids
 
 
 ",

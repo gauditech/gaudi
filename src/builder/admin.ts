@@ -91,6 +91,7 @@ function listEndpointForModel(model: ModelDef, target: TargetWithSelectDef): Lis
     authSelect: [],
     pageable: true,
     orderBy: undefined,
+    filter: undefined,
   };
 }
 

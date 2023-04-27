@@ -290,7 +290,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     if (endpoint.type !== "list") {
       cannotContainAtoms(
         endpoint,
-        ["pageable", "orderBy"],
+        ["pageable", "orderBy", "filter"],
         (parent, kind) =>
           new CompilerError(parent.keyword, ErrorCode.EndpointCannotContainAtom, {
             type: endpoint.type,

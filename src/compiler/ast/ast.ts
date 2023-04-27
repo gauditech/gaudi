@@ -145,6 +145,7 @@ export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "path"; path: StringLiteral }
   | { kind: "pageable" }
   | { kind: "orderBy"; orderBy: OrderBy }
+  | { kind: "filter"; expr: Expr<Db> }
 );
 
 export type Action = ModelAction | DeleteAction | ExecuteAction | FetchAction;

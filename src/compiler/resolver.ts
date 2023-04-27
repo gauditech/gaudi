@@ -584,18 +584,22 @@ export function resolve(projectASTs: ProjectASTs) {
         resolveAction(action, model, scope);
       });
     }
-
     const orderBy = kindFind(endpoint.atoms, "orderBy");
     if (orderBy) {
-      // order by will be executed in query which means it will be used in "model" scope
-      const scope: Scope = {
-        environment: "model",
-        model: model!,
-        context: {},
-        typeGuard: {},
-      };
+      // this will be executed in query which means it will be used in "model" scope
+      // TODO: should model be in entire endpoint scope?
+      const modelScope = { ...scope, model };
+      orderBy.orderBy.forEach((orderBy) =>
+        resolveIdentifierRefPath(orderBy.identifierPath, modelScope)
+      );
+    }
 
-      orderBy.orderBy.forEach((orderBy) => resolveIdentifierRefPath(orderBy.identifierPath, scope));
+    const filter = kindFind(endpoint.atoms, "filter");
+    if (filter) {
+      // this will be executed in query which means it will be used in "model" scope
+      // TODO: should model be in entire endpoint scope?
+      const modelScope = { ...scope, model };
+      resolveExpression(filter.expr, modelScope);
     }
   }
 
@@ -1168,7 +1172,7 @@ export function resolve(projectASTs: ProjectASTs) {
       return undefined;
     }
 
-    return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom);
+    return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom, { name });
   }
 
   function resolveModelAtomRef<k extends ModelAtom["kind"]>(

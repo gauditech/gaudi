@@ -15,7 +15,8 @@ function createClient(options) {
 exports.createClient = createClient;
 function buildApi(options) {
     return {
-        org: buildOrgApi(options, "org")
+        org: buildOrgApi(options, "org"),
+        repo: buildRepoApi(options, "repo")
     };
 }
 function buildOrgApi(options, parentPath) {
@@ -74,6 +75,18 @@ function buildIssuesApi(options, parentPath) {
     return Object.assign(api, {
         get: buildGetFn(options, parentPath),
         create: buildCreateFn(options, parentPath)
+    });
+}
+function buildRepoApi(options, parentPath) {
+    // entrypoint function
+    function api(id) {
+        const baseUrl = `${parentPath}/${id}`;
+        return {};
+    }
+    // endpoint functions
+    return Object.assign(api, {
+        list: buildListFn(options, parentPath),
+        get: buildGetFn(options, parentPath)
     });
 }
 // ----- API fn factories

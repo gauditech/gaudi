@@ -200,6 +200,7 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
     field: a.identifierPath.map((i) => i.identifier.text),
     order: a.order,
   }));
+  const filter = kindFind(endpoint.atoms, "filter");
 
   return {
     type: endpoint.type,
@@ -210,6 +211,7 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
     path: path?.path.value,
     pageable: pageable != null,
     orderBy,
+    filter: filter ? migrateExpr(filter.expr) : undefined,
   };
 }
 

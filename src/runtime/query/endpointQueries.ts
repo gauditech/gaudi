@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+import { getRef } from "@src/common/refs";
+import { pagingToQueryLimit } from "@src/runtime/common/utils";
 import {
   QueryTree,
   applyFilterIdInContext,
@@ -7,8 +9,6 @@ import {
   queryFromParts,
   transformSelectPath,
 } from "@src/runtime/query/build";
-
-import { getRef } from "@src/common/refs";
 import {
   Definition,
   EndpointDef,
@@ -17,7 +17,6 @@ import {
   TargetDef,
   TypedExprDef,
 } from "@src/types/definition";
-import { pagingToQueryLimit } from "@src/runtime/common/utils";
 
 /**
  * Endpoint query builder
@@ -91,6 +90,16 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
 }
 
 // ----- query decorators
+
+export function decorateWithFilter(endpoint: ListEndpointDef, qt: QueryTree): QueryTree {
+  return {
+    ...qt,
+    query: {
+      ...qt.query,
+      filter: combineFilters(endpoint.filter, qt.query.filter),
+    },
+  };
+}
 
 /** Decorate query with ordering when required. */
 export function decorateWithOrderBy(endpoint: ListEndpointDef, qt: QueryTree): QueryTree {
@@ -211,5 +220,23 @@ function targetToFilter(target: TargetDef): TypedExprDef {
         name: target.identifyWith.paramName,
       },
     ],
+  };
+}
+
+/**
+ * Take a list of expressions, remove the empty ones and joins others using "AND" function.
+ *
+ * TODO: allow custom expr function name (eg. "OR")
+ */
+function combineFilters(...expressions: (TypedExprDef | undefined)[]): TypedExprDef | undefined {
+  const exprList = _.compact(expressions);
+  if (exprList.length === 0) {
+    return;
+  }
+
+  return {
+    kind: "function",
+    name: "and",
+    args: exprList,
   };
 }

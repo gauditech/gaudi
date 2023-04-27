@@ -67,6 +67,7 @@ exports[`entrypoint composes basic example 1`] = `
       {
         "authSelect": [],
         "authorize": undefined,
+        "filter": undefined,
         "kind": "list",
         "orderBy": [
           {
@@ -188,6 +189,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "authSelect": [],
             "authorize": undefined,
+            "filter": undefined,
             "kind": "list",
             "orderBy": undefined,
             "pageable": false,

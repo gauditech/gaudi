@@ -36,6 +36,7 @@ import {
 import {
   EndpointSpec,
   EntrypointSpec,
+  ExpSpec,
   QueryOrderBySpec,
   SelectAST,
 } from "@src/types/specification";
@@ -271,6 +272,7 @@ function processEndpoints(
           parentContext,
           target: _.omit(target, "identifyWith"),
           orderBy: processOrderBy(context.target.namePath, endSpec.orderBy),
+          filter: processFilter(def, targets, context.target.namePath, endSpec.filter),
         };
       }
       case "create": {
@@ -425,6 +427,17 @@ export function processOrderBy(
       direction: order ?? "asc",
     })
   );
+}
+
+export function processFilter(
+  def: Definition,
+  targets: TargetDef[],
+  fromPath: string[],
+  filter: ExpSpec | undefined
+): TypedExprDef | undefined {
+  const context = getInitialContext(def, targets, "list");
+
+  return filter && composeExpression(def, filter, fromPath, context);
 }
 
 export function processSelect(

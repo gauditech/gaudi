@@ -286,6 +286,10 @@ export function buildTokens(
             if (orderBy.keyword) buildKeyword(orderBy.keyword);
           });
         })
+        .with({ kind: "filter" }, ({ keyword, expr }) => {
+          buildKeyword(keyword);
+          buildExpr(expr);
+        })
         .exhaustive()
     );
   }

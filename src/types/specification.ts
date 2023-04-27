@@ -125,6 +125,7 @@ export type EndpointSpec = {
   path?: string;
   pageable: boolean;
   orderBy?: QueryOrderBySpec[];
+  filter?: ExpSpec;
 };
 
 export type ActionSpec =
