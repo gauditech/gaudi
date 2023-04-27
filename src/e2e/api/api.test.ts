@@ -320,4 +320,20 @@ describe("API endpoints", () => {
       expect(getResp.body).toMatchSnapshot();
     });
   });
+
+  describe("PublicRepo", () => {
+    beforeAll(async () => {
+      await setup();
+    });
+    afterAll(async () => {
+      await destroy();
+    });
+
+    it("list", async () => {
+      const response = await request(getServer()).get("/repo");
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toMatchSnapshot();
+    });
+  });
 });

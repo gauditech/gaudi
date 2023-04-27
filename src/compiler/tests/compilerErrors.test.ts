@@ -266,7 +266,7 @@ describe("compiler errors", () => {
             }
           }
           `;
-        expectError(bp, `This name does not exist in current scope`);
+        expectError(bp, `Name "org" does not exist in current scope`);
       });
     });
     it(`fails on duplicate endpoint paths`, () => {

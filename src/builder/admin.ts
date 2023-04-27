@@ -90,6 +90,8 @@ function listEndpointForModel(model: ModelDef, target: TargetWithSelectDef): Lis
     authorize: undefined,
     authSelect: [],
     pageable: true,
+    orderBy: undefined,
+    filter: undefined,
   };
 }
 

@@ -279,6 +279,17 @@ export function buildTokens(
         .with({ kind: "pageable" }, ({ keyword }) => {
           buildKeyword(keyword);
         })
+        .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
+          buildKeyword(keyword);
+          orderBy.forEach((orderBy) => {
+            buildIdentifierPath(orderBy.identifierPath);
+            if (orderBy.keyword) buildKeyword(orderBy.keyword);
+          });
+        })
+        .with({ kind: "filter" }, ({ keyword, expr }) => {
+          buildKeyword(keyword);
+          buildExpr(expr);
+        })
         .exhaustive()
     );
   }

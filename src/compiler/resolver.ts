@@ -585,6 +585,23 @@ export function resolve(projectASTs: ProjectASTs) {
         resolveAction(action, model, scope);
       });
     }
+    const orderBy = kindFind(endpoint.atoms, "orderBy");
+    if (orderBy) {
+      // this will be executed in query which means it will be used in "model" scope
+      // TODO: should model be in entire endpoint scope?
+      const modelScope = { ...scope, model };
+      orderBy.orderBy.forEach((orderBy) =>
+        resolveIdentifierRefPath(orderBy.identifierPath, modelScope)
+      );
+    }
+
+    const filter = kindFind(endpoint.atoms, "filter");
+    if (filter) {
+      // this will be executed in query which means it will be used in "model" scope
+      // TODO: should model be in entire endpoint scope?
+      const modelScope = { ...scope, model };
+      resolveExpression(filter.expr, modelScope);
+    }
   }
 
   function resolveAction(action: Action, parentModel: string | undefined, scope: Scope) {
@@ -1034,7 +1051,9 @@ export function resolve(projectASTs: ProjectASTs) {
       head.type = addTypeModifier({ kind: "primitive", primitiveKind: "string" }, "nullable");
     } else {
       // fail resolve
-      errors.push(new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope));
+      errors.push(
+        new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope, { name: headName })
+      );
       return;
     }
 
@@ -1174,7 +1193,7 @@ export function resolve(projectASTs: ProjectASTs) {
       return undefined;
     }
 
-    return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom);
+    return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom, { name });
   }
 
   function resolveModelAtomRef<k extends ModelAtom["kind"]>(

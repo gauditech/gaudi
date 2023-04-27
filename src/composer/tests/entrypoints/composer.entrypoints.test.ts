@@ -20,7 +20,10 @@ describe("entrypoint", () => {
       target Org as org
       identify with slug
 
-      list endpoint {}
+      list endpoint {
+        pageable
+        order by { slug desc }
+      }
       get endpoint {}
 
       entrypoint Repositories {

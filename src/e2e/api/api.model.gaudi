@@ -257,6 +257,7 @@ entrypoint Orgs {
   get endpoint {}
   list endpoint {
     pageable
+    order by { slug desc }
   }
   create endpoint {
     action {
@@ -319,4 +320,16 @@ entrypoint Orgs {
       }
     }
   }
+}
+
+// --- Repos
+entrypoint PublicRepos {
+  target Repo
+  response { id, slug, description, org_id }
+
+  list endpoint {
+    // test filtered 
+    filter { is_public is true and org.slug is "org2" }
+  }
+  get endpoint {}
 }

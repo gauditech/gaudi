@@ -125,7 +125,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.CantResolveAuthModel:
       return `Can't resolve @auth model, is auth block used?`;
     case ErrorCode.CantResolveModelAtom:
-      return `Can't resolve model member with this name`;
+      return `Can't resolve model member with name: "${params?.name}"`;
     case ErrorCode.CantResolveStructMember:
       return `Can't resolve member of primitive types`;
     case ErrorCode.ThroughReferenceHasIncorrectModel:
@@ -135,7 +135,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.TypeHasNoMembers:
       return `This type has no members`;
     case ErrorCode.CantFindNameInScope:
-      return `This name does not exist in current scope`;
+      return `Name "${params?.name}" does not exist in current scope`;
     case ErrorCode.CantResolveModelAtomWrongKind:
       return `Model member must be one of [${params?.expected}], but ${params?.atom} member was found`;
     case ErrorCode.CantResolveExpressionReference:

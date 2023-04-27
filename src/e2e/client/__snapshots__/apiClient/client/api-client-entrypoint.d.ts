@@ -156,6 +156,20 @@ export declare function createClient(options: ApiClientOptions): {
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             delete: DeleteApiClientFn<string, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
         };
+        repo: ((id: number) => {}) & {
+            list: ListApiClientFn<{
+                id: number;
+                slug: string;
+                description: string;
+                org_id: number;
+            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            get: GetApiClientFn<number, {
+                id: number;
+                slug: string;
+                description: string;
+                org_id: number;
+            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+        };
     };
 };
 export type EndpointHttpMethod = "GET" | "POST" | /*"PUT" |*/ "PATCH" | "DELETE";

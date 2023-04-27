@@ -2,14 +2,6 @@ import { Express, Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { executeArithmetics } from "../common/arithmetics";
-import {
-  ReferenceIdResult,
-  ValidReferenceIdResult,
-  assignNoReferenceValidators,
-  fetchReferenceIds,
-} from "../common/constraintValidation";
-
 import { Vars } from "./vars";
 
 import {
@@ -21,11 +13,22 @@ import {
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
+import { executeArithmetics } from "@src/runtime//common/arithmetics";
 import { executeEndpointActions } from "@src/runtime/common/action";
-import { pagingToQueryLimit } from "@src/runtime/common/utils";
+import {
+  ReferenceIdResult,
+  ValidReferenceIdResult,
+  assignNoReferenceValidators,
+  fetchReferenceIds,
+} from "@src/runtime/common/constraintValidation";
 import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { QueryTree } from "@src/runtime/query/build";
-import { buildEndpointQueries } from "@src/runtime/query/endpointQueries";
+import {
+  buildEndpointQueries,
+  decorateWithFilter,
+  decorateWithOrderBy,
+  decorateWithPaging,
+} from "@src/runtime/query/endpointQueries";
 import { NestedRow, executeQueryTree } from "@src/runtime/query/exec";
 import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
@@ -68,8 +71,11 @@ export function flattenEndpoints(entrypoints: EntrypointDef[]): EndpointDef[] {
 
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
+  const epPath = pathPrefix + epConfig.path;
+  logger.info(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
+
   app[epConfig.method](
-    pathPrefix + epConfig.path,
+    epPath,
     endpointGuardHandler(async (req, resp, next) => {
       // we have to manually chain (await) our handlers since express' `next` can't do it for us (it's sync)
       for (const h of epConfig.handlers) {
@@ -856,55 +862,48 @@ async function createListEndpointResponse(
   params: Vars,
   contextIds: number[]
 ): Promise<PaginatedListResponse<NestedRow> | NestedRow[]> {
-  let page, pageSize, totalPages, totalCount, data;
+  let resultQuery: QueryTree = qt;
+
+  // add order by
+  resultQuery = decorateWithOrderBy(endpoint, resultQuery);
+  // add filter
+  resultQuery = decorateWithFilter(endpoint, resultQuery);
 
   // --- paged list
   if (endpoint.pageable) {
-    // resolve pagin data
-    const { limit, offset } = pagingToQueryLimit(
-      params.get("page"),
-      params.get("pageSize"),
-      qt.query.offset,
-      qt.query.limit
-    );
+    // add paging
+    resultQuery = decorateWithPaging(endpoint, resultQuery, {
+      pageSize: params.get("pageSize"),
+      page: params.get("page"),
+    });
 
-    pageSize = limit ?? 0;
-    page = pageSize > 0 ? Math.floor((offset ?? 0) / pageSize) + 1 : 1;
+    // exec data query
+    const data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
 
-    const resultQuery = {
-      ...qt,
-      query: {
-        ...qt.query,
-
-        // decorate query with limit/offset
-        limit,
-        offset,
-      },
-    };
-
-    // data query
-    data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
-
-    // count query
+    // exec count query
+    // using original `qt` var without any paging/ordering/...
     // TODO: this query should be a "count query" but it's currently not possible
     const totalData = await executeQueryTree(conn, def, qt, params, contextIds);
 
-    totalCount = totalData.length;
-    totalPages = Math.ceil(totalCount / pageSize);
+    // resolve paging data
+    const pageSize = resultQuery.query.limit ?? 0;
+    const page = pageSize > 0 ? Math.floor((resultQuery.query.offset ?? 0) / pageSize) + 1 : 1;
+    const totalCount = totalData.length;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      page,
+      pageSize,
+      totalPages,
+      totalCount,
+      data,
+    };
   }
   // --- unpaged list (returns all data)
   else {
     // simply fetch all data
-    return await executeQueryTree(conn, def, qt, params, contextIds);
+    return await executeQueryTree(conn, def, resultQuery, params, contextIds);
   }
-
-  return {
-    page,
-    pageSize,
-    totalPages,
-    totalCount,
-    data,
-  };
 }
 
 type PaginatedListResponse<T = any> = {

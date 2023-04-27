@@ -196,6 +196,11 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
   const cardinality = kindFind(endpoint.atoms, "cardinality");
   const path = kindFind(endpoint.atoms, "path");
   const pageable = kindFind(endpoint.atoms, "pageable");
+  const orderBy = kindFind(endpoint.atoms, "orderBy")?.orderBy.map((a) => ({
+    field: a.identifierPath.map((i) => i.identifier.text),
+    order: a.order,
+  }));
+  const filter = kindFind(endpoint.atoms, "filter");
 
   return {
     type: endpoint.type,
@@ -205,6 +210,8 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
     cardinality: cardinality?.cardinality,
     path: path?.path.value,
     pageable: pageable != null,
+    orderBy,
+    filter: filter ? migrateExpr(filter.expr) : undefined,
   };
 }
 
