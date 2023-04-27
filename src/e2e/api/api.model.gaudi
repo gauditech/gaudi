@@ -283,7 +283,7 @@ entrypoint Orgs {
         create as repo {
           set latest_num 0
           virtual input raw_description { type string }
-          set description concat("Description: ", raw_description)
+          set description "Description: " + raw_description
           set slug hook {
             arg org org.name
             source randomSlug from "hooks.js"
