@@ -174,7 +174,7 @@ populator Dev {
         target repos as repo
 
         // fields
-        set name concat("Repo 1 at ", org.slug)
+        set name "Repo 1 at " + org.slug
         set slug hook {
             arg orgSlug org.slug
             inline "'repo-1-' + orgSlug"

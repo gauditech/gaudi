@@ -36,6 +36,7 @@ import {
   UnaryOperator,
   Validator,
 } from "./ast/ast";
+import { builtinFunctions } from "./ast/functions";
 import {
   Type,
   TypeCardinality,
@@ -971,6 +972,26 @@ export function resolve(projectASTs: ProjectASTs) {
       })
       .with({ kind: "function" }, (function_) => {
         function_.args.forEach((arg) => resolveExpression(arg, scope));
+        const builtin = builtinFunctions.find((builtin) => builtin.name === function_.name.text);
+        if (builtin) {
+          if (function_.args.length === builtin.args.length) {
+            for (let i = 0; i < builtin.args.length; i++) {
+              const expected = builtin.args[i];
+              const got = function_.args[i];
+              checkExprType(got, expected);
+            }
+          } else {
+            errors.push(
+              new CompilerError(function_.name.token, ErrorCode.UnexpectedFunctionArgumentCount, {
+                name: builtin.name,
+                expected: builtin.args.length,
+                got: function_.args.length,
+              })
+            );
+          }
+        } else {
+          errors.push(new CompilerError(function_.name.token, ErrorCode.UnknownFunction));
+        }
       })
       .exhaustive();
   }

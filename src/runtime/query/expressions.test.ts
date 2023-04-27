@@ -125,7 +125,7 @@ describe("Expressions to queries", () => {
       query calc {
         from items,
         filter {
-          multiplier * (value + 1) / length(concat(textual, "tail")) > 100
+          multiplier * (value + 1) / length(textual + "tail") > 100
         }
       }
     }
@@ -154,7 +154,7 @@ describe("Expressions to queries", () => {
       field multiplier { type integer }
       field textual { type string }
       computed worthiness {
-        multiplier * (value + 1) / length(concat(textual, "tail"))
+        multiplier * (value + 1) / length(textual + "tail")
       }
     }
     `;
@@ -189,7 +189,7 @@ describe("Expressions to queries", () => {
         multiplier * (value + 1) / text_tail_len + source.strength + source_items
       }
       computed text_tail_len {
-        length(concat(textual, "tail"))
+        length(textual + "tail")
       }
       computed source_items {
         source.total_items
@@ -245,7 +245,7 @@ describe("Expression functions to queries", () => {
         filter {
           // test SQL functions
           length(name) is 4
-          or concat(name, name) is "foofoo"
+          or name + name is "foofoo"
           or lower(name) is lower("FOO")
           or upper(name) is upper("BAR")
           or now() > 123456789

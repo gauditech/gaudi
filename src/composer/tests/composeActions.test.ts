@@ -193,7 +193,7 @@ describe("compose actions", () => {
         action {
           create {
             set name "new name"
-            set description concat(name, " is great")
+            set description name + " is great"
             set descLength length(description) + 1
           }
         }
@@ -213,7 +213,7 @@ describe("compose actions", () => {
         action {
           create as org {
             virtual input iname { type string, validate { min 4 } }
-            set name concat("Mr/Mrs ", iname)
+            set name "Mr/Mrs " + iname
           }
         }
       }

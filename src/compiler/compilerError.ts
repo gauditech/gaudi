@@ -33,6 +33,8 @@ export enum ErrorCode {
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
   // Resolver Errors
+  UnknownFunction,
+  UnexpectedFunctionArgumentCount,
   CantResolveModel,
   CantResolveAuthModel,
   CantResolveModelAtom,
@@ -114,6 +116,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Hook can't have more than one "source" or "inline" definition`;
     case ErrorCode.DuplicateSelectField:
       return `Duplicate field in select`;
+    case ErrorCode.UnknownFunction:
+      return `Function with this name doesn't exist`;
+    case ErrorCode.UnexpectedFunctionArgumentCount:
+      return `Function "${params?.name}" expects ${params?.expected} arguments, but got ${params?.got}`;
     case ErrorCode.CantResolveModel:
       return `Can't resolve model with this name`;
     case ErrorCode.CantResolveAuthModel:
