@@ -25,8 +25,7 @@ describe("compose hooks", () => {
         }
       }
 
-      entrypoint Orgs {
-        target Org as org
+      entrypoint Org {
         create endpoint {
           action {
             create {
@@ -67,8 +66,7 @@ describe("compose hooks", () => {
         }
       }
 
-      entrypoint Orgs {
-        target Org as org
+      entrypoint Org {
         create endpoint {
           action {
             create {
@@ -99,8 +97,7 @@ describe("compose hooks", () => {
 
       model Org { field name { type string } }
 
-      entrypoint Orgs {
-        target Org as org
+      entrypoint Org {
         create endpoint {
           action {
             create {
@@ -129,8 +126,8 @@ describe("compose hooks", () => {
         field name { type string }
       }
 
-      entrypoint Orgs {
-        target Org as org
+      entrypoint Org {
+        identify as org
 
         custom endpoint {
           path "somePath"
@@ -165,7 +162,6 @@ describe("compose hooks", () => {
       model Org { field name { type string} }
 
       entrypoint Org {
-        target Org
 
         // login
         custom endpoint {

@@ -67,9 +67,8 @@ model Comment {
 // ----- entrypoints
 
 // Orgs
-entrypoint Orgs {
-  target Org as org
-  identify with slug
+entrypoint Org {
+  identify as org { through slug }
   response { name, slug, description, summary, nameAndDesc }
 
   // --- endpoints with "execute" actions
@@ -273,8 +272,8 @@ entrypoint Orgs {
 
 
   // --- Repos
-  entrypoint Repos {
-    target repos as repo
+  entrypoint repos {
+    identify as repo
     response { id, slug, description, org_id }
 
     get endpoint {}
@@ -300,8 +299,8 @@ entrypoint Orgs {
     delete endpoint {}
 
     // Issues
-    entrypoint Issues {
-      target issues as issue
+    entrypoint issues {
+      identify as issue
       response { id, title, repo, number, comments }
 
       get endpoint {}
@@ -323,12 +322,11 @@ entrypoint Orgs {
 }
 
 // --- Repos
-entrypoint PublicRepos {
-  target Repo
+entrypoint Repo {
   response { id, slug, description, org_id }
 
   list endpoint {
-    // test filtered 
+    // test filtered
     filter { is_public is true and org.slug is "org2" }
   }
   get endpoint {}

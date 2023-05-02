@@ -29,8 +29,7 @@ generate client {
 }
 
 entrypoint Org {
-  target Org
-  identify with slug
+  identify { through slug }
 
   get endpoint {}
   create endpoint {}
@@ -60,8 +59,7 @@ entrypoint Org {
   }
 
   // repo entrypoints
-  entrypoint Repo {
-    target repos
+  entrypoint repos {
     // test non-default response
     response { slug, name }
 

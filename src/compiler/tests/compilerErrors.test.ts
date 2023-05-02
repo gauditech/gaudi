@@ -63,8 +63,7 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        entrypoint Orgs {
-          target Org
+        entrypoint Org {
           update endpoint {
             action {
               create {}
@@ -81,12 +80,11 @@ describe("compiler errors", () => {
         model Org { relation repos { from Repo, through org }}
         model Repo { reference org { to Org }}
         entrypoint Org {
-          target Org as org
-          entrypoint Repos {
-            target repos as repo
+          identify as org
+          entrypoint repos {
             create endpoint {
               action {
-                create as repo {
+                create {
                   set org_id 1
                   set org org
                 }
@@ -105,8 +103,8 @@ describe("compiler errors", () => {
         model OrgExtra {
           relation org { from Org, through extras }
         }
-        entrypoint Orgs {
-          target Org as org
+        entrypoint Org {
+          identify as org
           update endpoint {
             action {
               update org as ox {
@@ -124,8 +122,8 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        entrypoint Orgs {
-          target Org as org
+        entrypoint Org {
+          identify as org
           update endpoint {
             action {
               update org as ox {
@@ -144,8 +142,7 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        entrypoint Orgs {
-          target Org as org
+        entrypoint Org {
           update endpoint {
             action {
               update {}
@@ -163,10 +160,10 @@ describe("compiler errors", () => {
         const bp = `
           model Org { relation repos { from Repo, through org }}
           model Repo { reference org { to Org }}
-          entrypoint O {
-            target Org as org
-            entrypoint R {
-              target repos as repo
+          entrypoint Org {
+            identify as org
+            entrypoint repos {
+              identify as repo
               create endpoint {
                 action {
                   create as repo {}
@@ -186,8 +183,7 @@ describe("compiler errors", () => {
           model Org { field name { type string } }
           model Log {}
 
-          entrypoint Orgs {
-            target Org as org
+          entrypoint Org {
             custom endpoint {
               // in each iteration skip one property
               ${property === "cardinality" ? "" : "cardinality many"}
@@ -207,8 +203,7 @@ describe("compiler errors", () => {
           const bp = `
             model Org {}
 
-            entrypoint Orgs {
-              target Org
+            entrypoint Org {
               ${epType} endpoint {
                 // show one property in each iteration
                 ${property === "cardinality" ? "cardinality many" : ""}
@@ -228,8 +223,8 @@ describe("compiler errors", () => {
         model Org {}
         model Log {}
 
-        entrypoint Orgs {
-          target Org as org
+        entrypoint Org {
+          identify as org
           custom endpoint {
             cardinality one
             method POST
@@ -253,8 +248,8 @@ describe("compiler errors", () => {
           model Org {}
           model Log {}
 
-          entrypoint Orgs {
-            target Org as org
+          entrypoint Org {
+            identify as org
             custom endpoint {
               cardinality many
               method POST
@@ -273,8 +268,7 @@ describe("compiler errors", () => {
       const bp = `
         model Org {}
 
-        entrypoint Orgs {
-          target Org as org
+        entrypoint Org {
 
           custom endpoint {
             cardinality many
@@ -304,11 +298,9 @@ describe("compiler errors", () => {
           reference org { to Org }
         }
 
-        entrypoint Orgs {
-          target Org as org
+        entrypoint Org {
 
-          entrypoint Repos {
-            target repos
+          entrypoint repos {
           }
 
           custom endpoint {
@@ -478,8 +470,7 @@ describe("compiler errors", () => {
           source path "some/path/to/file"
         }
 
-        entrypoint Orgs {
-          target Org as org
+        entrypoint Org {
           create endpoint {
             action {
               create {
@@ -500,8 +491,7 @@ describe("compiler errors", () => {
     it("fail for multiple endpoints of the same type", () => {
       const bp = `
         model Org {}
-        entrypoint Orgs {
-          target Org
+        entrypoint Org {
           create endpoint {}
           create endpoint {}
         }
@@ -516,8 +506,7 @@ describe("compiler errors", () => {
 
         model Org {}
 
-        entrypoint Orgs {
-          target Org
+        entrypoint Org {
 
           custom endpoint {
             path "somePath1"
@@ -553,8 +542,7 @@ describe("compiler errors", () => {
 
         model Org {}
 
-        entrypoint Orgs {
-          target Org
+        entrypoint Org {
 
           create endpoint {
             action {
@@ -575,8 +563,7 @@ describe("compiler errors", () => {
       const bp = `
         model Org {}
 
-        entrypoint Orgs {
-          target Org
+        entrypoint Org {
 
           custom endpoint {
             path "somePath"

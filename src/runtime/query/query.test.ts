@@ -36,9 +36,8 @@ describe("Endpoint queries", () => {
 
     // ----- entrypoints
 
-    entrypoint Orgs {
-      target Org
-      identify with slug
+    entrypoint Org {
+      identify { through slug }
       response { name, slug }
 
       get endpoint {}
@@ -47,8 +46,7 @@ describe("Endpoint queries", () => {
       update endpoint {}
       delete endpoint {}
 
-      entrypoint Repos {
-        target repos
+      entrypoint repos {
         response { id, slug, org_id }
 
         get endpoint {}
@@ -57,8 +55,7 @@ describe("Endpoint queries", () => {
         update endpoint {}
         delete endpoint {}
 
-        entrypoint Issues {
-          target issues
+        entrypoint issues {
           response { id, name, repo_id }
 
           get endpoint {}
@@ -92,8 +89,7 @@ describe("Endpoint queries", () => {
         field name { type string }
       }
 
-      entrypoint Items {
-        target Item
+      entrypoint Item {
         list endpoint {
           ${options?.paging ? "pageable" : ""}
           ${options?.orderBy ? "order by { name desc }" : ""}
@@ -151,11 +147,9 @@ describe("Endpoint queries", () => {
         field name { type string }
       }
 
-      entrypoint Items2 {
-        target Item1
+      entrypoint Item1 {
 
-        entrypoint Items2 {
-          target item2
+        entrypoint item2 {
           list endpoint {
             ${options?.paging ? "pageable" : ""}
             ${options?.orderBy ? "order by { name desc }" : ""}
