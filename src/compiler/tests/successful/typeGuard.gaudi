@@ -9,7 +9,7 @@ model Bar {
 }
 
 entrypoint Bar {
-  identify as bar {}
+  identify as bar
   update endpoint {
     authorize { bar.b is not null and bar.foo.a1 is bar.b }
     action {

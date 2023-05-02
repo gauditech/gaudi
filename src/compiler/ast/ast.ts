@@ -113,19 +113,19 @@ export type Entrypoint = {
   atoms: EntrypointAtom[];
 };
 
-export type Identify = {
-  kind: "identify";
-  keyword: TokenData;
-  as?: { keyword: TokenData; identifier: IdentifierRef };
-  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef }[];
-};
-
 export type EntrypointAtom =
   | { kind: "response"; select: Select; keyword: TokenData }
   | { kind: "authorize"; expr: Expr<Code>; keyword: TokenData }
   | Endpoint
   | Entrypoint
   | Identify;
+
+export type Identify = {
+  kind: "identify";
+  keyword: TokenData;
+  as?: { keyword: TokenData; identifier: IdentifierRef };
+  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef }[];
+};
 
 export type Endpoint = {
   kind: "endpoint";

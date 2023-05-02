@@ -199,6 +199,7 @@ export function checkForm(projectASTs: ProjectASTs) {
         definedEndpoints.add(type);
       }
     });
+
     // check custom endpoint unique path
     const entrypointPaths = new Set(
       _.compact(kindFilter(entrypoint.atoms, "entrypoint").map((e) => e.target.identifier.text))

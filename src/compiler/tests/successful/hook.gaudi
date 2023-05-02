@@ -32,7 +32,7 @@ model User {
 }
 
 entrypoint User {
-  identify as user {}
+  identify as user
   create endpoint {
     action {
       create {

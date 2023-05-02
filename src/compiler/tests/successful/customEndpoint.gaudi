@@ -3,7 +3,7 @@ model Org {
 }
 
 entrypoint Org {
-  identify as org {}
+  identify as org
 
   // custom-one endpoints
   custom endpoint {
