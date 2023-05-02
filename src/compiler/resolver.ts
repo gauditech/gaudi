@@ -40,7 +40,6 @@ import { builtinFunctions } from "./ast/functions";
 import {
   Type,
   TypeCardinality,
-  TypeCategory,
   addTypeModifier,
   getTypeCardinality,
   getTypeModel,
@@ -990,24 +989,37 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "function" }, (function_) => {
         function_.args.forEach((arg) => resolveExpression(arg, scope));
         const builtin = builtinFunctions.find((builtin) => builtin.name === function_.name.text);
-        if (builtin) {
-          if (function_.args.length === builtin.args.length) {
-            for (let i = 0; i < builtin.args.length; i++) {
-              const expected = builtin.args[i];
-              const got = function_.args[i];
-              checkExprType(got, expected);
-            }
-          } else {
-            errors.push(
-              new CompilerError(function_.name.token, ErrorCode.UnexpectedFunctionArgumentCount, {
-                name: builtin.name,
-                expected: builtin.args.length,
-                got: function_.args.length,
-              })
-            );
+        if (!builtin) {
+          errors.push(new CompilerError(function_.name.token, ErrorCode.UnknownFunction));
+          return;
+        }
+        if (function_.args.length !== builtin.args.length) {
+          errors.push(
+            new CompilerError(function_.name.token, ErrorCode.UnexpectedFunctionArgumentCount, {
+              name: builtin.name,
+              expected: builtin.args.length,
+              got: function_.args.length,
+            })
+          );
+          return;
+        }
+
+        // typecheck arguments
+        for (let i = 0; i < builtin.args.length; i++) {
+          const expected = builtin.args[i];
+          const got = function_.args[i];
+          checkExprType(got, expected);
+        }
+
+        // sum is a special case as it is 'generic'
+        if (builtin.name === "sum") {
+          const argType = function_.args[0].type;
+          const targetType = (argType.kind === "collection" && argType.type) || undefined;
+          if (targetType && isExpectedType(targetType, { kind: "group", group: "number" })) {
+            function_.type = targetType;
           }
         } else {
-          errors.push(new CompilerError(function_.name.token, ErrorCode.UnknownFunction));
+          function_.type = builtin.result;
         }
       })
       .exhaustive();
@@ -1233,6 +1245,9 @@ export function resolve(projectASTs: ProjectASTs) {
     const booleanType: Type = { kind: "primitive", primitiveKind: "boolean" };
     const integerType: Type = { kind: "primitive", primitiveKind: "integer" };
     const floatType: Type = { kind: "primitive", primitiveKind: "float" };
+    const numberType: Type = { kind: "group", group: "number" };
+    const comparableType: Type = { kind: "group", group: "comparable" };
+    const addableType: Type = { kind: "group", group: "addable" };
 
     switch (op) {
       case "or":
@@ -1258,11 +1273,11 @@ export function resolve(projectASTs: ProjectASTs) {
       case "<=":
       case ">":
       case ">=": {
-        const lhsOk = checkExprType(lhs, "comparable");
-        const rhsOk = checkExprType(rhs, "comparable");
+        const lhsOk = checkExprType(lhs, comparableType);
+        const rhsOk = checkExprType(rhs, comparableType);
         if (lhsOk && rhsOk) {
-          if (isExpectedType(lhs.type, "number")) {
-            checkExprType(rhs, "number");
+          if (isExpectedType(lhs.type, numberType)) {
+            checkExprType(rhs, numberType);
           } else {
             checkExprType(rhs, lhs.type);
           }
@@ -1272,11 +1287,11 @@ export function resolve(projectASTs: ProjectASTs) {
       case "+": {
         if (lhs.type.kind === "unknown") return unknownType;
         if (rhs.type.kind === "unknown") return unknownType;
-        const lhsOk = checkExprType(lhs, "addable");
-        const rhsOk = checkExprType(rhs, "addable");
+        const lhsOk = checkExprType(lhs, addableType);
+        const rhsOk = checkExprType(rhs, addableType);
         if (lhsOk && rhsOk) {
-          if (isExpectedType(lhs.type, "number")) {
-            checkExprType(rhs, "number");
+          if (isExpectedType(lhs.type, numberType)) {
+            checkExprType(rhs, numberType);
             if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
               return floatType;
             } else {
@@ -1298,8 +1313,8 @@ export function resolve(projectASTs: ProjectASTs) {
       case "*": {
         if (lhs.type.kind === "unknown") return unknownType;
         if (rhs.type.kind === "unknown") return unknownType;
-        const lhsOk = checkExprType(lhs, "number");
-        const rhsOk = checkExprType(rhs, "number");
+        const lhsOk = checkExprType(lhs, numberType);
+        const rhsOk = checkExprType(rhs, numberType);
         if (lhsOk && rhsOk) {
           if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
             return floatType;
@@ -1315,8 +1330,8 @@ export function resolve(projectASTs: ProjectASTs) {
         }
       }
       case "/": {
-        checkExprType(lhs, "number");
-        checkExprType(rhs, "number");
+        checkExprType(lhs, numberType);
+        checkExprType(rhs, numberType);
         return floatType;
       }
     }
@@ -1333,7 +1348,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function checkExprType(expr: Expr, expected: Type | TypeCategory): boolean {
+  function checkExprType(expr: Expr, expected: Type): boolean {
     if (!isExpectedType(expr.type, expected)) {
       errors.push(
         new CompilerError(expr.sourcePos, ErrorCode.UnexpectedType, {

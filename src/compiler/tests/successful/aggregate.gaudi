@@ -1,0 +1,13 @@
+model Book {
+  field name { type string }
+  relation reviews { from Review, through book }
+  computed reviews_count { count(reviews) }
+  computed reviews_sum { sum(reviews.rating) }
+  computed review_avg { reviews_sum / reviews_count }
+}
+
+model Review {
+  field rating { type float }
+  field comment { type string }
+  reference book { to Book }
+}

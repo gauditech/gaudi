@@ -5,7 +5,6 @@ import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureExists } from "@src/common/utils";
-import { PrimitiveType } from "@src/compiler/ast/type";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,

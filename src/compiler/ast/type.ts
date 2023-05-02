@@ -7,7 +7,22 @@ export type StructType = { kind: "struct"; types: Record<string, Type> };
 export type CollectionType = { kind: "collection"; type: Type };
 export type NullableType = { kind: "nullable"; type: Type };
 
-export type Type = AnyType | PrimitiveType | ModelType | StructType | CollectionType | NullableType;
+const typeGroups = {
+  comparable: ["integer", "float", "string"],
+  addable: ["integer", "float", "string"],
+  number: ["integer", "float"],
+} as const;
+
+export type GroupType = { kind: "group"; group: keyof typeof typeGroups };
+
+export type Type =
+  | AnyType
+  | PrimitiveType
+  | ModelType
+  | StructType
+  | CollectionType
+  | NullableType
+  | GroupType;
 
 export const unknownType: Type = { kind: "unknown" };
 
@@ -36,6 +51,7 @@ export function removeTypeModifier(type: Type, ...modifiers: TypeModifier[]): Ty
     case "model":
     case "struct":
     case "primitive":
+    case "group":
       return type;
     default: {
       return modifiers.includes(type.kind)
@@ -51,6 +67,7 @@ export function getTypeModel(type?: Type): string | undefined {
     case "unknown":
     case "primitive":
     case "struct":
+    case "group":
       return undefined;
     case "model":
       return type.model;
@@ -73,49 +90,53 @@ export function getTypeCardinality(
     case "model":
     case "struct":
     case "primitive":
+    case "group":
       return baseCardinality;
     case "nullable":
       return getTypeCardinality(type.type, "nullable");
   }
 }
 
-const typeCategories = {
-  comparable: ["integer", "float", "string"],
-  addable: ["integer", "float", "string"],
-  number: ["integer", "float"],
-} as const;
-
-export type TypeCategory = keyof typeof typeCategories;
-
-export function isExpectedType(type: Type, expected: Type | TypeCategory): boolean {
+export function isExpectedType(type: Type, expected: Type): boolean {
   if (type.kind === "unknown") return true;
-
-  // typeof string means expected is a `TypeCategory`
-  if (typeof expected === "string") {
-    const expectedKinds: readonly string[] = typeCategories[expected];
-    return type.kind === "primitive" && expectedKinds.includes(type.primitiveKind);
-  }
-
   if (expected.kind === "unknown") return true;
 
-  if (expected.kind === "collection" && type.kind === "collection") {
-    return isExpectedType(type.type, expected.type);
-  }
-  if (expected.kind === "nullable") {
-    if (type.kind === "nullable") {
-      return isExpectedType(type.type, expected.type);
+  switch (expected.kind) {
+    case "primitive": {
+      return type.kind === "primitive" && expected.primitiveKind === type.primitiveKind;
     }
-    if (type.kind === "primitive" && type.primitiveKind === "null") {
+    case "model": {
+      return type.kind === "model" && expected.model === type.model;
+    }
+    case "struct": {
+      if (type.kind !== "struct") return false;
+      for (const key in expected.types) {
+        if (Object.prototype.hasOwnProperty.call(expected.types, key)) {
+          const expectedInner = expected.types[key];
+          const gotInner = type.types[key];
+          if (!isExpectedType(gotInner, expectedInner)) {
+            return false;
+          }
+        }
+      }
       return true;
     }
-    return isExpectedType(type, expected.type);
+    case "collection": {
+      return type.kind === "collection" && isExpectedType(type.type, expected.type);
+    }
+    case "nullable": {
+      if (type.kind === "nullable") {
+        return isExpectedType(type.type, expected.type);
+      }
+      if (type.kind === "primitive" && type.primitiveKind === "null") {
+        return true;
+      }
+      return isExpectedType(type, expected.type);
+    }
+    case "group": {
+      if (type.kind === "group") return expected.group === type.group;
+      const expectedKinds: readonly string[] = typeGroups[expected.group];
+      return type.kind === "primitive" && expectedKinds.includes(type.primitiveKind);
+    }
   }
-  if (expected.kind === "model" && type.kind === "model") {
-    return expected.model === type.model;
-  }
-  if (expected.kind === "primitive" && type.kind === "primitive") {
-    return expected.primitiveKind === type.primitiveKind;
-  }
-
-  return false;
 }
