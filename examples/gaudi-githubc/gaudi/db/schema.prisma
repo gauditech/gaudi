@@ -10,8 +10,8 @@ slug String @unique
 description String
 optout String?
 
-repos repo[]
-memberships orgmembership[]
+repos repo[] @relation("Repoorg")
+memberships orgmembership[] @relation("OrgMembershiporg")
 
 
 }
@@ -22,8 +22,8 @@ user_id Int
 
 
 
-org org @relation(fields: [org_id], references: [id])
-user user @relation(fields: [user_id], references: [id])
+org org @relation("OrgMembershiporg", fields: [org_id], references: [id])
+user user @relation("OrgMembershipuser", fields: [user_id], references: [id])
 }
     model repo {
 id Int @id @unique @default(autoincrement())
@@ -33,9 +33,9 @@ description String
 is_public Boolean
 org_id Int
 
-issues issue[]
+issues issue[] @relation("Issuerepo")
 
-org org @relation(fields: [org_id], references: [id])
+org org @relation("Repoorg", fields: [org_id], references: [id])
 }
     model issue {
 id Int @id @unique @default(autoincrement())
@@ -45,15 +45,15 @@ repo_id Int
 
 
 
-repo repo @relation(fields: [repo_id], references: [id])
+repo repo @relation("Issuerepo", fields: [repo_id], references: [id])
 }
     model user {
 id Int @id @unique @default(autoincrement())
 name String
 
-authLocal userauthlocal[]
-accessToken useraccesstoken[]
-org_memberships orgmembership[]
+authLocal userauthlocal[] @relation("UserAuthLocaluser")
+accessToken useraccesstoken[] @relation("UserAccessTokenuser")
+org_memberships orgmembership[] @relation("OrgMembershipuser")
 
 
 }
@@ -65,7 +65,7 @@ user_id Int
 
 
 
-user user @relation(fields: [user_id], references: [id])
+user user @relation("UserAuthLocaluser", fields: [user_id], references: [id])
 }
     model useraccesstoken {
 id Int @id @unique @default(autoincrement())
@@ -75,5 +75,5 @@ user_id Int
 
 
 
-user user @relation(fields: [user_id], references: [id])
+user user @relation("UserAccessTokenuser", fields: [user_id], references: [id])
 }

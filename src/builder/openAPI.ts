@@ -1,8 +1,8 @@
-import { flatMap, mapValues } from "lodash";
+import _, { flatMap, mapValues } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
+import { match } from "ts-pattern";
 
-import { PathFragmentIdentifier, buildEndpointPath } from "./query";
-
+import { buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
 import {
   Definition,
@@ -15,12 +15,54 @@ import {
 export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAPIV3.Document {
   const endpoints = definition.entrypoints.map(extractEndpoints).flat();
 
-  function buildSchema(select: SelectItem[]) {
+  /**
+   * Builds a list of required prop names that is attached to the object schema.
+   *
+   * Property is required if not nullable. This follows current validation implementation.
+   */
+  function buildRequiredProperties(select: SelectItem[]) {
+    return select
+      .map((select): [string, boolean] => {
+        switch (select.kind) {
+          case "field": {
+            const field = getRef.field(definition, select.refKey);
+            return [select.alias, !field.nullable];
+          }
+          case "reference":
+          case "relation":
+          case "query": {
+            // reference/releation/query are always required themselves
+            // their properties are handled for each object separately
+            return [select.alias, true];
+          }
+          case "aggregate": {
+            // FIXME read the type from the `AggregateDef`
+            return [select.name, true];
+          }
+          case "computed": {
+            const computed = getRef.computed(definition, select.refKey);
+            return [select.name, computed.type.nullable];
+          }
+          case "model-hook": {
+            // FIXME - add required type to hooks
+            return [select.name, false]; // with hooks, everything is optional
+          }
+        }
+      })
+      .filter(([_name, required]) => required)
+      .map(([name]) => name);
+  }
+
+  /** Create OpenAPI schema properties. */
+  function buildSchemaProperties(select: SelectItem[]) {
     const schemaEntries = select.map((select): [string, OpenAPIV3.SchemaObject] => {
       switch (select.kind) {
         case "field": {
           const field = getRef.field(definition, select.refKey);
-          return [select.alias, { type: convertToOpenAPIType(field.type) }];
+          return [
+            select.alias,
+            { type: convertToOpenAPIType(field.type), nullable: field.nullable },
+          ];
         }
         // NOTE: not yet implemented; TODO: rename to `literal`
         // case "constant":
@@ -29,11 +71,15 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
         case "relation":
         case "query": {
           const isObject = select.kind === "reference";
-          const properties = buildSchema(select.select);
+          const properties = buildSchemaProperties(select.select);
+          const required = buildRequiredProperties(select.select);
           if (isObject) {
-            return [select.alias, { type: "object", properties }];
+            return [select.alias, { type: "object", properties, required }];
           } else {
-            return [select.alias, { type: "array", items: { type: "object", properties } }];
+            return [
+              select.alias,
+              { type: "array", items: { type: "object", properties, required } },
+            ];
           }
         }
         case "aggregate": {
@@ -41,8 +87,12 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
           return [select.name, { type: "integer" }];
         }
         case "computed": {
+          const computed = getRef.computed(definition, select.refKey);
           // FIXME - add return type to computeds
-          return [select.name, {}];
+          return [
+            select.name,
+            { type: convertToOpenAPIType(computed.type.kind), nullable: computed.type.nullable },
+          ];
         }
         case "model-hook": {
           // FIXME - add return type to hooks
@@ -56,26 +106,53 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
 
   function buildEndpointOperation(
     endpoint: EndpointDef,
-    hasParameters: boolean
+    parameters: OpenAPIV3.ParameterObject[],
+    hasContext: boolean
   ): OpenAPIV3.OperationObject {
-    const properties = buildSchema(endpoint.response ?? []);
-    const isArray = endpoint.kind === "list";
+    const properties = buildSchemaProperties(endpoint.response ?? []);
+    const required = buildRequiredProperties(endpoint.response ?? []);
 
-    const objectSchema: OpenAPIV3.SchemaObject = { type: "object", properties };
-    const schema: OpenAPIV3.SchemaObject = isArray
-      ? { type: "array", items: objectSchema }
-      : objectSchema;
+    const objectSchema: OpenAPIV3.SchemaObject = { type: "object", properties, required };
+
+    let responseSchema: OpenAPIV3.SchemaObject;
+    if (endpoint.kind === "list") {
+      // pageable list response
+      if (endpoint.pageable) {
+        responseSchema = {
+          type: "object",
+          properties: {
+            page: { type: convertToOpenAPIType("integer") },
+            pageSize: { type: convertToOpenAPIType("integer") },
+            totalPages: { type: convertToOpenAPIType("integer") },
+            totalCount: { type: convertToOpenAPIType("integer") },
+            data: { type: "array", items: objectSchema },
+          },
+          required: ["page", "pageSize", "totalPages", "totalCount", "data"],
+        };
+      }
+      // plain list response
+      else {
+        responseSchema = {
+          type: "array",
+          items: objectSchema,
+        };
+      }
+    }
+    // object response
+    else {
+      responseSchema = objectSchema;
+    }
 
     const operation: OpenAPIV3.OperationObject = {
       responses: {
         200: {
           description: "Successful response",
-          content: { "application/json": { schema } },
+          content: { "application/json": { schema: responseSchema } },
         },
       },
     };
 
-    if (hasParameters) {
+    if (hasContext) {
       operation.responses[404] = {
         description: "Resource not found",
         content: {
@@ -85,6 +162,8 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
         },
       };
     }
+
+    operation.parameters = parameters;
 
     if (endpoint.kind === "create" || endpoint.kind === "update") {
       const schema = buildSchemaFromFieldset(endpoint.fieldset);
@@ -102,29 +181,43 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
       pathPrefix +
       [
         "",
-        ...endpointPath.fragments.map((frag) => {
-          switch (frag.kind) {
-            case "namespace":
-              return frag.name;
-            case "identifier":
-              return `{${frag.alias}}`;
-          }
-        }),
+        ..._.chain(endpointPath.fragments)
+          .map((frag) => {
+            return match(frag)
+              .with({ kind: "namespace" }, (f) => f.name)
+              .with({ kind: "identifier" }, (f) => `{${f.name}}`)
+              .with({ kind: "query" }, () => null)
+              .exhaustive();
+          })
+          .compact() // remove nulls
+          .value(),
       ].join("/");
 
-    const parameters = endpointPath.fragments
-      .filter((f): f is PathFragmentIdentifier => f.kind === "identifier")
-      .map(
-        (f): OpenAPIV3.ParameterObject => ({
-          in: "path",
-          name: f.alias,
-          required: true,
-          schema: { type: convertToOpenAPIType(f.type) },
-        })
-      );
+    const parameters = _.chain(endpointPath.fragments)
+      .map((fragment): OpenAPIV3.ParameterObject | null => {
+        return match(fragment)
+          .with({ kind: "identifier" }, (f) => ({
+            in: "path",
+            name: f.name,
+            required: true,
+            schema: { type: convertToOpenAPIType(f.type) },
+          }))
+          .with({ kind: "query" }, (f) => ({
+            in: "query",
+            name: f.name,
+            required: f.required,
+            schema: { type: convertToOpenAPIType(f.type) },
+          }))
+          .with({ kind: "namespace" }, () => null)
+          .exhaustive();
+      })
+      .compact()
+      .value();
 
-    const pathItem = paths[path] ?? { parameters };
-    pathItem[method] = buildEndpointOperation(endpoint, parameters.length > 0);
+    // has parent or target context iow. identifier in URL
+    const hasContext = endpointPath.fragments.some((f) => f.kind === "identifier");
+    const pathItem = paths[path] ?? {};
+    pathItem[method] = buildEndpointOperation(endpoint, parameters, hasContext);
     paths[path] = pathItem;
 
     return paths;
@@ -151,7 +244,7 @@ function buildSchemaFromFieldset(fieldset: FieldsetDef): OpenAPIV3.SchemaObject 
 }
 
 function convertToOpenAPIType(
-  type: "boolean" | "integer" | "text"
+  type: "boolean" | "integer" | "text" | "unknown" | "null"
 ): OpenAPIV3.NonArraySchemaObjectType {
   switch (type) {
     case "boolean":
@@ -159,6 +252,10 @@ function convertToOpenAPIType(
       return type;
     case "text":
       return "string";
+    case "unknown":
+    case "null":
+      // arbitrary type is "object"
+      return "object";
   }
 }
 

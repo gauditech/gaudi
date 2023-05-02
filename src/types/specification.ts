@@ -76,7 +76,7 @@ export type QuerySpec = {
   fromModel: string[];
   fromAlias?: string[];
   filter?: ExpSpec;
-  orderBy?: { field: string[]; order?: "asc" | "desc" }[];
+  orderBy?: QueryOrderBySpec[];
   limit?: number;
   offset?: number;
   select?: SelectAST;
@@ -85,9 +85,13 @@ export type QuerySpec = {
   };
 };
 
+export type QueryOrderBySpec = { field: string[]; order?: "asc" | "desc" };
+
 export type ComputedSpec = {
   name: string;
   exp: ExpSpec;
+  type: string;
+  nullable: boolean;
 };
 
 export type ExpSpec =
@@ -119,6 +123,9 @@ export type EndpointSpec = {
   cardinality?: EndpointCardinality;
   method?: EndpointMethod;
   path?: string;
+  pageable: boolean;
+  orderBy?: QueryOrderBySpec[];
+  filter?: ExpSpec;
 };
 
 export type ActionSpec =

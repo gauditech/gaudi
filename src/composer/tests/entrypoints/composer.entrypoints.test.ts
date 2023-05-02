@@ -20,7 +20,10 @@ describe("entrypoint", () => {
       target Org as org
       identify with slug
 
-      list endpoint {}
+      list endpoint {
+        pageable
+        order by { slug desc }
+      }
       get endpoint {}
 
       entrypoint Repositories {
@@ -172,7 +175,7 @@ describe("entrypoint", () => {
           action {
             create as repo {}
             create repo.issues as i {
-              set source concat(org.name, repo.name)
+              set source org.name + repo.name
               set orgDesc org.desc
               set orgCoef org.repoCount * org.coef
             }

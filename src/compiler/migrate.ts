@@ -5,6 +5,7 @@ import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureExists } from "@src/common/utils";
+import { PrimitiveType } from "@src/compiler/ast/type";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
@@ -151,7 +152,18 @@ function migrateQuery(query: AST.Query | AST.AnonymousQuery): QuerySpec {
 }
 
 function migrateComputed(computed: AST.Computed): ComputedSpec {
-  return { name: computed.name.text, exp: migrateExpr(computed.expr) };
+  const exprType = computed.expr.type;
+  const nullable = exprType.kind === "nullable";
+  const targetType = nullable ? exprType.type : exprType;
+  // this type should resolve only to primitive or unknown (see resolver)
+  const type = targetType.kind === "primitive" ? targetType.primitiveKind : "unknown";
+
+  return {
+    name: computed.name.text,
+    exp: migrateExpr(computed.expr),
+    type: type === "string" ? "text" : type,
+    nullable,
+  };
 }
 
 function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {
@@ -184,6 +196,12 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
   const method = kindFind(endpoint.atoms, "method");
   const cardinality = kindFind(endpoint.atoms, "cardinality");
   const path = kindFind(endpoint.atoms, "path");
+  const pageable = kindFind(endpoint.atoms, "pageable");
+  const orderBy = kindFind(endpoint.atoms, "orderBy")?.orderBy.map((a) => ({
+    field: a.identifierPath.map((i) => i.identifier.text),
+    order: a.order,
+  }));
+  const filter = kindFind(endpoint.atoms, "filter");
 
   return {
     type: endpoint.type,
@@ -192,6 +210,9 @@ function migrateEndpoint(endpoint: AST.Endpoint): EndpointSpec {
     method: method?.method,
     cardinality: cardinality?.cardinality,
     path: path?.path.value,
+    pageable: pageable != null,
+    orderBy,
+    filter: filter ? migrateExpr(filter.expr) : undefined,
   };
 }
 

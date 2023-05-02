@@ -1,17 +1,18 @@
 import _ from "lodash";
 
+import { getRef } from "@src/common/refs";
+import { pagingToQueryLimit } from "@src/runtime/common/utils";
 import {
   QueryTree,
   applyFilterIdInContext,
   buildQueryTree,
   queryFromParts,
   transformSelectPath,
-} from "./build";
-
-import { getRef } from "@src/common/refs";
+} from "@src/runtime/query/build";
 import {
   Definition,
   EndpointDef,
+  ListEndpointDef,
   QueryOrderByAtomDef,
   TargetDef,
   TypedExprDef,
@@ -44,6 +45,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
     authQueryTree = buildQueryTree(def, query);
   }
 
+  // --- parent context queries
   const parentContextQueryTrees = endpoint.parentContext.map((target, index) => {
     const parentTarget = index === 0 ? null : endpoint.parentContext[index - 1];
     const namePath = parentTarget ? [parentTarget.retType, target.name] : [target.retType];
@@ -57,10 +59,11 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
     const select = transformSelectPath(target.select, target.namePath, namePath);
 
     const query = queryFromParts(def, target.alias, namePath, filter, select);
+
     return buildQueryTree(def, query);
   });
 
-  // repeat the same for target
+  // --- target query
   const parentTarget = _.last(endpoint.parentContext);
   const namePath = parentTarget
     ? [parentTarget.retType, endpoint.target.name]
@@ -80,10 +83,76 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
   const targetQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, select);
   const targetQueryTree = buildQueryTree(def, targetQuery);
 
-  // response query
+  // --- response query
   const responseQueryTree = buildResponseQueryTree(def, endpoint);
 
   return { authQueryTree, parentContextQueryTrees, targetQueryTree, responseQueryTree };
+}
+
+// ----- query decorators
+
+export function decorateWithFilter(endpoint: ListEndpointDef, qt: QueryTree): QueryTree {
+  return {
+    ...qt,
+    query: {
+      ...qt.query,
+      filter: combineFilters(endpoint.filter, qt.query.filter),
+    },
+  };
+}
+
+/** Decorate query with ordering when required. */
+export function decorateWithOrderBy(endpoint: ListEndpointDef, qt: QueryTree): QueryTree {
+  const parentTarget = _.last(endpoint.parentContext);
+
+  const namePath = parentTarget
+    ? [parentTarget.retType, endpoint.target.name]
+    : [endpoint.target.retType];
+
+  const defaultOrderBy: QueryOrderByAtomDef[] = [
+    { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
+  ];
+
+  // order: endpoint -> query -> default
+  // we're forcing default for now, no sure if it's needed
+  const orderBy: QueryOrderByAtomDef[] | undefined =
+    endpoint.orderBy ?? qt.query.orderBy ?? defaultOrderBy;
+
+  return {
+    ...qt,
+    query: {
+      ...qt.query,
+
+      // decorate
+      orderBy,
+    },
+  };
+}
+
+/** Decorate query with paging when required. */
+export function decorateWithPaging(
+  endpoint: ListEndpointDef,
+  qt: QueryTree,
+  params: { pageSize: number | undefined; page: number | undefined }
+): QueryTree {
+  // resolve paging data
+  const { limit, offset } = pagingToQueryLimit(
+    params.page,
+    params.pageSize,
+    qt.query.offset,
+    qt.query.limit
+  );
+
+  return {
+    ...qt,
+    query: {
+      ...qt.query,
+
+      // decorate
+      limit,
+      offset,
+    },
+  };
 }
 
 /**
@@ -133,19 +202,7 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
         namePath
       );
 
-      // FIXME: Introduce a way to define ordering from the blueprint
-      // currently always sorting by id asc
-      const orderBy: QueryOrderByAtomDef[] = [
-        { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
-      ];
-      const responseQuery = queryFromParts(
-        def,
-        endpoint.target.alias,
-        namePath,
-        filter,
-        response,
-        orderBy
-      );
+      const responseQuery = queryFromParts(def, endpoint.target.alias, namePath, filter, response);
       return buildQueryTree(def, responseQuery);
     }
   }
@@ -159,9 +216,27 @@ function targetToFilter(target: TargetDef): TypedExprDef {
       { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
       {
         kind: "variable",
-        type: { type: target.identifyWith.type, nullable: false },
+        type: { kind: target.identifyWith.type, nullable: false },
         name: target.identifyWith.paramName,
       },
     ],
+  };
+}
+
+/**
+ * Take a list of expressions, remove the empty ones and joins others using "AND" function.
+ *
+ * TODO: allow custom expr function name (eg. "OR")
+ */
+function combineFilters(...expressions: (TypedExprDef | undefined)[]): TypedExprDef | undefined {
+  const exprList = _.compact(expressions);
+  if (exprList.length === 0) {
+    return;
+  }
+
+  return {
+    kind: "function",
+    name: "and",
+    args: exprList,
   };
 }

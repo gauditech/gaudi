@@ -26,7 +26,7 @@ model Org {
 
   relation repos { from Repo, through org }
 
-  computed summary { concat(name, "", description) }
+  computed summary { name + description }
 
   hook nameAndDesc {
     arg test query {
@@ -255,7 +255,10 @@ entrypoint Orgs {
   // --- regular endpoints
 
   get endpoint {}
-  list endpoint {}
+  list endpoint {
+    pageable
+    order by { slug desc }
+  }
   create endpoint {
     action {
       create {}
@@ -281,7 +284,7 @@ entrypoint Orgs {
         create as repo {
           set latest_num 0
           virtual input raw_description { type string }
-          set description concat("Description: ", raw_description)
+          set description "Description: " + raw_description
           set slug hook {
             arg org org.name
             source randomSlug from "hooks.js"
@@ -317,4 +320,16 @@ entrypoint Orgs {
       }
     }
   }
+}
+
+// --- Repos
+entrypoint PublicRepos {
+  target Repo
+  response { id, slug, description, org_id }
+
+  list endpoint {
+    // test filtered 
+    filter { is_public is true and org.slug is "org2" }
+  }
+  get endpoint {}
 }

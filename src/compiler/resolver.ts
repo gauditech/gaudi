@@ -38,6 +38,7 @@ import {
   UnaryOperator,
   Validator,
 } from "./ast/ast";
+import { builtinFunctions } from "./ast/functions";
 import {
   Type,
   TypeCardinality,
@@ -481,7 +482,18 @@ export function resolve(projectASTs: ProjectASTs) {
       unique: false,
     };
 
-    computed.type = computed.expr.type;
+    const exprType = computed.expr.type;
+    if (
+      exprType.kind === "primitive" ||
+      (exprType.kind === "nullable" && exprType.type.kind === "primitive") ||
+      exprType.kind === "unknown"
+    ) {
+      computed.type = computed.expr.type;
+    } else {
+      errors.push(
+        new CompilerError(computed.keyword, ErrorCode.ComputedType, { exprType: exprType.kind })
+      );
+    }
   }
 
   // passing null as a parent model means this is root model, while undefined means it is unresolved
@@ -599,6 +611,23 @@ export function resolve(projectASTs: ProjectASTs) {
       action.actions.forEach((action) => {
         resolveAction(action, model, scope);
       });
+    }
+    const orderBy = kindFind(endpoint.atoms, "orderBy");
+    if (orderBy) {
+      // this will be executed in query which means it will be used in "model" scope
+      // TODO: should model be in entire endpoint scope?
+      const modelScope = { ...scope, model };
+      orderBy.orderBy.forEach((orderBy) =>
+        resolveIdentifierRefPath(orderBy.identifierPath, modelScope)
+      );
+    }
+
+    const filter = kindFind(endpoint.atoms, "filter");
+    if (filter) {
+      // this will be executed in query which means it will be used in "model" scope
+      // TODO: should model be in entire endpoint scope?
+      const modelScope = { ...scope, model };
+      resolveExpression(filter.expr, modelScope);
     }
   }
 
@@ -841,7 +870,13 @@ export function resolve(projectASTs: ProjectASTs) {
             const hasNullable = !!kindFind(a.atoms, "nullable");
             if (hasDefault || hasNullable) return;
 
-            const relatedSet = sets.find(({ target }) => target.identifier.text === a.name.text);
+            const relatedSet = sets.find(({ target }) => {
+              const isSet = target.identifier.text === a.name.text;
+              if (!isSet && a.kind === "reference") {
+                return target.identifier.text === a.name.text + "_id";
+              }
+              return isSet;
+            });
             if (!relatedSet) {
               missingSetters.push(a.name.text);
             }
@@ -981,6 +1016,26 @@ export function resolve(projectASTs: ProjectASTs) {
       })
       .with({ kind: "function" }, (function_) => {
         function_.args.forEach((arg) => resolveExpression(arg, scope));
+        const builtin = builtinFunctions.find((builtin) => builtin.name === function_.name.text);
+        if (builtin) {
+          if (function_.args.length === builtin.args.length) {
+            for (let i = 0; i < builtin.args.length; i++) {
+              const expected = builtin.args[i];
+              const got = function_.args[i];
+              checkExprType(got, expected);
+            }
+          } else {
+            errors.push(
+              new CompilerError(function_.name.token, ErrorCode.UnexpectedFunctionArgumentCount, {
+                name: builtin.name,
+                expected: builtin.args.length,
+                got: function_.args.length,
+              })
+            );
+          }
+        } else {
+          errors.push(new CompilerError(function_.name.token, ErrorCode.UnknownFunction));
+        }
       })
       .exhaustive();
   }
@@ -1023,7 +1078,9 @@ export function resolve(projectASTs: ProjectASTs) {
       head.type = addTypeModifier({ kind: "primitive", primitiveKind: "string" }, "nullable");
     } else {
       // fail resolve
-      errors.push(new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope));
+      errors.push(
+        new CompilerError(head.identifier.token, ErrorCode.CantFindNameInScope, { name: headName })
+      );
       return;
     }
 
@@ -1163,7 +1220,7 @@ export function resolve(projectASTs: ProjectASTs) {
       return undefined;
     }
 
-    return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom);
+    return new CompilerError(identifier.identifier.token, ErrorCode.CantResolveModelAtom, { name });
   }
 
   function resolveModelAtomRef<k extends ModelAtom["kind"]>(

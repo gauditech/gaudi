@@ -26,13 +26,20 @@ import {
   FieldsetDef,
   FieldsetFieldDef,
   ModelDef,
+  QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
   TargetDef,
   TargetWithSelectDef,
   TypedExprDef,
 } from "@src/types/definition";
-import { EndpointSpec, EntrypointSpec, SelectAST } from "@src/types/specification";
+import {
+  EndpointSpec,
+  EntrypointSpec,
+  ExpSpec,
+  QueryOrderBySpec,
+  SelectAST,
+} from "@src/types/specification";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
@@ -259,10 +266,13 @@ function processEndpoints(
           kind: "list",
           authSelect,
           authorize,
+          pageable: endSpec.pageable,
           response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
           // actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
+          orderBy: processOrderBy(context.target.namePath, endSpec.orderBy),
+          filter: processFilter(def, targets, context.target.namePath, endSpec.filter),
         };
       }
       case "create": {
@@ -403,6 +413,31 @@ function mapEndpointSpecToDefType(endSpec: EndpointSpec): EndpointType {
 
     return endSpec.type;
   }
+}
+
+export function processOrderBy(
+  fromPath: string[],
+  orderBy: QueryOrderBySpec[] | undefined
+): QueryOrderByAtomDef[] | undefined {
+  if (orderBy == null) return;
+
+  return orderBy?.map(
+    ({ field, order }): QueryOrderByAtomDef => ({
+      exp: { kind: "alias", namePath: [...fromPath, ...field] },
+      direction: order ?? "asc",
+    })
+  );
+}
+
+export function processFilter(
+  def: Definition,
+  targets: TargetDef[],
+  fromPath: string[],
+  filter: ExpSpec | undefined
+): TypedExprDef | undefined {
+  const context = getInitialContext(def, targets, "list");
+
+  return filter && composeExpression(def, filter, fromPath, context);
 }
 
 export function processSelect(

@@ -47,7 +47,7 @@ export async function fetchReferenceIds(
         {
           kind: "variable",
           name: varName,
-          type: { type: field.type, nullable: field.nullable },
+          type: { kind: field.type, nullable: field.nullable },
         },
       ],
     };

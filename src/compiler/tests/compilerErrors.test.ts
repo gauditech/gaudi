@@ -200,7 +200,7 @@ describe("compiler errors", () => {
             }
           }
           `;
-        expectError(bp, `"endpoint" must contain a "${property}"`);
+        expectError(bp, `Endpoint of type "custom" must contain a "${property}"`);
       });
       ["get", "list", "create", "update", "delete"].forEach((epType) => {
         it(`fails when "${property}" property is used in "${epType}" endpoint`, () => {
@@ -217,10 +217,7 @@ describe("compiler errors", () => {
               }
             }
             `;
-          expectError(
-            bp,
-            `Only custom endpoint can have method, cardinality and path configuration`
-          );
+          expectError(bp, `Endpoint of type "${epType}" cannot contain a "${property}"`);
         });
       });
     });
@@ -269,7 +266,7 @@ describe("compiler errors", () => {
             }
           }
           `;
-        expectError(bp, `This name does not exist in current scope`);
+        expectError(bp, `Name "org" does not exist in current scope`);
       });
     });
     it(`fails on duplicate endpoint paths`, () => {
@@ -595,6 +592,36 @@ describe("compiler errors", () => {
         }
         `;
       expectError(bp, `Expecting token of type --> RCurly <-- but found --> 'responds' <--`);
+    });
+  });
+
+  describe("function", () => {
+    it("fail if function doesn't exist", () => {
+      const bp = `
+        model Org {
+          computed test { foobar(4) }
+        }
+        `;
+      expectError(bp, `Function with this name doesn't exist`);
+    });
+    it("fail if using function with incorrect number of arguments", () => {
+      const bp = `
+        model Org {
+          computed test { length("test", 4) }
+        }
+        `;
+      expectError(bp, `Function "length" expects 1 arguments, but got 2`);
+    });
+    it("fail if using wrong argument type in function", () => {
+      const bp = `
+        model Org {
+          computed test { length(4) }
+        }
+        `;
+      expectError(
+        bp,
+        `Unexpected type\nexpected:\n{"kind":"primitive","primitiveKind":"string"}\ngot:\n{"kind":"primitive","primitiveKind":"integer"}`
+      );
     });
   });
 });

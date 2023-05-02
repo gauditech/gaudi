@@ -101,7 +101,7 @@ export type ComputedDef = {
   modelRefKey: string;
   name: string;
   exp: TypedExprDef;
-  type?: NaiveType;
+  type: VariablePrimitiveType;
 };
 
 export type ModelHookDef = {
@@ -112,10 +112,17 @@ export type ModelHookDef = {
   hook: HookDef;
 };
 
-type NaiveType = {
-  type: "integer" | "list-integer" | "text" | "boolean";
+type VariablePrimitiveType = {
+  kind: "integer" | "text" | "boolean" | "unknown" | "null";
   nullable: boolean;
 };
+
+type VariableCollectionType<T extends VariablePrimitiveType = VariablePrimitiveType> = {
+  kind: "collection";
+  type: T;
+};
+
+type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 
 export type LiteralValueDef =
   | LiteralIntegerDef
@@ -123,8 +130,8 @@ export type LiteralValueDef =
   | LiteralTextDef
   | LiteralBooleanDef;
 
-type TypedAlias = { kind: "alias"; namePath: string[]; type?: NaiveType };
-type TypedVariable = { kind: "variable"; type?: NaiveType; name: string };
+type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
+type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
 
 export type FunctionName =
   | BinaryOperator
@@ -142,7 +149,7 @@ export type TypedFunction = {
   kind: "function";
   name: FunctionName;
   args: TypedExprDef[];
-  type?: NaiveType;
+  type?: TypedVariableType;
 };
 
 export type TypedExprDef = LiteralValueDef | TypedAlias | TypedVariable | TypedFunction | undefined;
@@ -199,7 +206,10 @@ export type ListEndpointDef = {
   target: Omit<TargetWithSelectDef, "identifyWith">;
   authSelect: SelectDef;
   authorize: TypedExprDef;
+  pageable: boolean;
   response: SelectDef;
+  orderBy: QueryOrderByAtomDef[] | undefined;
+  filter: TypedExprDef | undefined;
   // actions: ActionDef[];
 };
 

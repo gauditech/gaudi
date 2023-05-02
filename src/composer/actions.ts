@@ -15,7 +15,7 @@ import {
   resolveItems,
 } from "@src/common/utils";
 import { composeHook } from "@src/composer/hooks";
-import { composeValidators, validateType } from "@src/composer/models";
+import { composeValidators, validateFieldType } from "@src/composer/models";
 import { composeQuery } from "@src/composer/query";
 import {
   VarContext,
@@ -549,11 +549,11 @@ function atomToChangesetOperation(
         name: atom.name,
         setter: {
           kind: "fieldset-virtual-input",
-          type: validateType(atom.type),
+          type: validateFieldType(atom.type),
           required: !atom.optional,
           nullable: atom.nullable,
           fieldsetAccess: [...fieldsetNamespace, atom.name],
-          validators: composeValidators(def, validateType(atom.type), atom.validators),
+          validators: composeValidators(def, validateFieldType(atom.type), atom.validators),
         },
       };
     }

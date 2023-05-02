@@ -4,20 +4,20 @@
 // }
 
 runtime HooksRuntime {
-    sourcePath "hooks"
+    source path "hooks"
 }
 
 generate client {
-  target js,
+  target js
   api entrypoint
-  output "src/web/js "
+  output "src/web/js"
 }
 
 // ----- models
 
 model Org {
     field name {
-        type text
+        type string,
         validate {
             hook {
                 default arg name
@@ -26,17 +26,17 @@ model Org {
         }
     }
     field slug {
-        type text,
+        type string,
         unique,
         validate {
-            hook noSpace { // hook can be named for documentation. Maybe use the name for hook code?
+            hook { // hook can be named for documentation. Maybe use the name for hook code?
                 default arg slug
-                inline `!/\s/.test(slug)`
+                inline "!/\\s/.test(slug)"
             }
         }
     }
-    field description { type text }
-    field optOut { type text, nullable }
+    field description { type string }
+    field optOut { type string, nullable }
 
     relation repos { from Repo, through org }
     relation memberships { from OrgMembership, through org }
@@ -49,7 +49,7 @@ model Org {
         arg test query {
             select { name, description }
         }
-        inline `test.name + ": " + test.description`
+        inline "test.name + ': ' + test.description"
     }
 }
 
@@ -61,53 +61,53 @@ model OrgMembership {
 model Repo {
     reference org { to Org }
 
-    field name { type text }
-    field slug { type text, unique }
-    field description { type text }
+    field name { type string }
+    field slug { type string, unique }
+    field description { type string }
     field is_public { type boolean, default true }
 
     relation issues { from Issue, through repo }
 }
 
 model Issue {
-    field title { type text }
-    field body { type text }
+    field title { type string }
+    field body { type string }
     reference repo { to Repo }
 }
 
 // ----- start auth model
 model User {
-    field name { type text }
+    field name { type string }
     relation authLocal { from UserAuthLocal, through user }
     relation accessToken { from UserAccessToken, through user }
     relation org_memberships { from OrgMembership, through user }
 }
 model UserAuthLocal {
     reference user { to User }
-    field username { type text, unique }
-    field password { type text }
+    field username { type string, unique }
+    field password { type string }
 }
 model UserAccessToken {
     reference user { to User }
-    field token { type text, unique }
-    field expiryDate { type text }
+    field token { type string, unique }
+    field expiryDate { type string }
 }
 // ----- end auth model
 
 // ----- entrypoints
 
 entrypoint Orgs {
-    target model Org as org
+    target Org as org
     identify with slug
     response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, nameAndDesc }
 
     get endpoint {}
-    list endpoint {}
+    list endpoint { pageable }
     create endpoint {}
     update endpoint {}
 
     entrypoint Repos {
-        target relation repos
+        target repos
         response { id, slug, description, org_id, issues { repo } }
 
         get endpoint {}
@@ -117,27 +117,27 @@ entrypoint Orgs {
         delete endpoint {}
     }
 
-    entrypoint PublicRepos {
-        target relation public_repos
-        response { id, slug, description, org_id }
-
-        get endpoint {}
-        list endpoint {}
-        // create endpoint {}
-    }
-
-    entrypoint AllIssues {
-        target relation public_issues
-        response { id, title, body }
-        list endpoint {}
-    }
-
-    entrypoint Members {
-        target relation members
-        response { id, name }
-        list endpoint {}
-        get endpoint {}
-    }
+//    entrypoint PublicRepos {
+//        target public_repos
+//        response { id, slug, description, org_id }
+//
+//        get endpoint {}
+//        list endpoint {}
+//        // create endpoint {}
+//    }
+//
+//    entrypoint AllIssues {
+//        target public_issues
+//        response { id, title, body }
+//        list endpoint {}
+//    }
+//
+//    entrypoint Members {
+//        target members
+//        response { id, name }
+//        list endpoint {}
+//        get endpoint {}
+//    }
 }
 
 // ----- populators
@@ -145,7 +145,7 @@ entrypoint Orgs {
 populator Dev {
   // org without repos and users
   populate EmptyOrg {
-    target model Org as org
+    target Org as org
 
     // org
     set name "Organization 1"
@@ -156,32 +156,32 @@ populator Dev {
 
   // org without repos and users
   populate OrgWith1RepoAnd1Member {
-    target model Org as org
+    target Org as org
 
     // org
     set name "Organization 2"
     set slug "org-2"
     set description hook {
         arg slug slug
-        inline `"Description of " + slug`
+        inline "'Description of ' + slug"
     }
     set optOut hook {
         arg slug slug
-        inline `"Opt out from org " + slug`
+        inline "'Opt out from org ' + slug"
     }
 
     populate Repos {
-        target relation repos as repo
+        target repos as repo
 
         // fields
-        set name concat("Repo 1 at ", org.slug)
+        set name "Repo 1 at " + org.slug
         set slug hook {
             arg orgSlug org.slug
-            inline `"repo-1-" + orgSlug`
+            inline "'repo-1-' + orgSlug"
         }
         set description hook {
             arg slug slug
-            inline `"Description for " + slug`
+            inline "'Description for ' + slug"
         }
         set is_public true
     }
@@ -189,47 +189,47 @@ populator Dev {
 
   // org without repos and users
   populate OrgWithMultipleReposAndMembers {
-    target model Org as org
+    target Org as org
 
-    repeat { start 3, end 5 } as iter
+    repeater iter { start 3, end 5 }
 
     // org
     set name hook {
         arg iter iter
-        inline `"Organization " + iter.current`
+        inline "'Organization ' + iter.current"
     }
     set slug hook {
         arg iter iter
-        inline `"org-" + iter.current`
+        inline "'org-' + iter.current"
     }
     set description hook {
         arg slug slug
-        inline `"Description of " + slug`
+        inline "'Description of ' + slug"
     }
     set optOut hook {
         arg slug slug
-        inline `"Opt out from org " + slug`
+        inline "'Opt out from org ' + slug"
     }
 
     populate Repos {
-        target relation repos as repo
+        target repos as repo
 
-        repeat { start 1, end 3 } as riter
+        repeater riter { start 1, end 3 }
 
         // fields
         set name hook {
             arg riter riter
             arg orgSlug org.slug
-            inline `"Repo " + riter.current + " at " + orgSlug`
+            inline "'Repo ' + riter.current + ' at ' + orgSlug"
         }
         set slug hook {
             arg riter riter
             arg orgSlug org.slug
-            inline `"repo-" + riter.current + "-" + orgSlug`
+            inline "'repo-' + riter.current + '-' + orgSlug"
         }
         set description hook {
             arg slug slug
-            inline `"Description for " + slug`
+            inline "'Description for ' + slug"
         }
         set is_public true
     }

@@ -14,6 +14,7 @@ model Repo {
 
 generate client {
   target js
+  // test entrypoint API
   api entrypoint
   // test custom output folder
   output "src/e2e/client/__snapshots__/mockClient/client"
@@ -21,6 +22,7 @@ generate client {
 
 generate client {
   target js
+  // test modela API
   api model
   // test custom output folder
   output "src/e2e/client/__snapshots__/mockClient/client"
@@ -80,7 +82,7 @@ entrypoint Org {
         }
       }
     }
-    list endpoint {}
+    list endpoint { pageable }
     delete endpoint {}
 
     custom endpoint {

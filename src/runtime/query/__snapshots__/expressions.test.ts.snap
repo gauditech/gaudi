@@ -299,6 +299,10 @@ exports[`Expressions to queries composes a complex local computed expression 1`]
   "modelRefKey": "Item",
   "name": "worthiness",
   "refKey": "Item.worthiness",
+  "type": {
+    "kind": "unknown",
+    "nullable": false,
+  },
 }
 `;
 

@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { getRef } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
+import { ensureEqual } from "@src/common/utils";
 import { processSelect } from "@src/composer/entrypoints";
 import {
   VarContext,

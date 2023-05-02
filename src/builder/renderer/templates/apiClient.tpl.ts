@@ -299,16 +299,28 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseTypeName = `ListResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const errorTypeName = "ListErrot";
+      const errorTypeName = "ListError";
       const errorType = commonErrorTypes.join("|");
-      return {
-        name: "list",
-        builder: `buildListFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
-        types: [
-          { name: responseTypeName, body: responseType },
-          { name: errorTypeName, body: errorType },
-        ],
-      };
+
+      if (endpoint.pageable) {
+        return {
+          name: "list",
+          builder: `buildPaginatedListFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+          types: [
+            { name: responseTypeName, body: responseType },
+            { name: errorTypeName, body: errorType },
+          ],
+        };
+      } else {
+        return {
+          name: "list",
+          builder: `buildListFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+          types: [
+            { name: responseTypeName, body: responseType },
+            { name: errorTypeName, body: errorType },
+          ],
+        };
+      }
     }
     case "custom-one": {
       const targetInfo = createIdentifierTargetInfo(
@@ -466,26 +478,43 @@ function buildCommonCode(): string {
     error: ApiResponseErrorBody<E>;
   };
 
-      
-  export type ListData = { filter?: Record<string, any>; page?: number; pageSize?: number };
+
+  export type PaginatedListResponse<T> = {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+    data: T[];
+  };  
+
+  // TODO: add list search/filter parameter
+  export type PaginatedListData = { pageSize?: number; page?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type UpdateApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type ListApiClientFn<R, E extends string> = (
-    data?: ListData,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
+  export type PaginatedListApiClientFn<R, E extends string> = (
+    data?: PaginatedListData,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
+
   export type DeleteApiClientFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -495,14 +524,17 @@ function buildCommonCode(): string {
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomManyFetchApiClientFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
   export type CustomManySubmitApiClientFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
@@ -570,10 +602,28 @@ function buildCommonCode(): string {
   }
   
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
-    return async (data, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
-      // TODO: add data to URL params with URLSearchParams
+    return async (options) => {
+      const urlPath = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
+
+      return (
+        makeRequest(clientOptions, urlPath, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
   
+  function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
+    return async (data, options) => {
+      const urlPath = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
+
+      const params = new URLSearchParams()
+      Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
+      const urlParams = params.toString()
+
+      const url = urlPath + (urlParams ? '?' + urlParams : '')
+
       return (
         makeRequest(clientOptions, url, {
           method: "GET",
@@ -582,7 +632,7 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildCustomOneFetchFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -760,7 +810,7 @@ function createTargetInfo(name: string, retTypeName: string): TargetName {
 }
 
 type SchemaField = {
-  type: "string" | "number" | "boolean" | "number[]" | "unknown";
+  type: "string" | "number" | "boolean" | "unknown" | "null";
   optional: boolean;
   nullable: boolean;
 };
@@ -779,19 +829,23 @@ type SchemaArray = {
 type SchemaItem = SchemaField | SchemaObject | SchemaArray;
 
 function convertFieldToSchemaType(
-  type: "boolean" | "integer" | "text" | "list-integer"
+  type: "boolean" | "integer" | "text" | "unknown" | "null"
 ): SchemaField["type"] {
   switch (type) {
-    case "boolean":
-      return type;
-    case "integer":
+    case "integer": {
       return "number";
-    case "list-integer":
-      return "number[]";
-    case "text":
+    }
+    case "text": {
       return "string";
-    default:
+    }
+    case "boolean":
+    case "unknown":
+    case "null": {
+      return type;
+    }
+    default: {
       assertUnreachable(type);
+    }
   }
 }
 
@@ -836,7 +890,7 @@ function buildFieldsetFieldSchema(def: Definition, field: FieldsetFieldDef): Sch
 function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
   return {
     type: "object",
-    properties: Object.fromEntries(
+    properties: Object.fromEntries<SchemaField | SchemaObject | SchemaArray>(
       select.map((item) => {
         const selectKind = item.kind;
         switch (selectKind) {
@@ -873,10 +927,12 @@ function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
           case "computed": {
             // TODO: check optional/nullable
             const computed = getRef.computed(def, item.refKey);
-            const computedType =
-              computed.type != null ? convertFieldToSchemaType(computed.type.type) : "unknown";
+            const computedType = convertFieldToSchemaType(computed.type.kind);
 
-            return [item.name, { type: computedType, nullable: false, optional: false }];
+            return [
+              item.name,
+              { type: computedType, nullable: computed.type.nullable, optional: false },
+            ];
           }
           case "model-hook": {
             // FIXME - add return type to hooks
@@ -913,9 +969,11 @@ function renderSchemaItem(name: string, item: SchemaItem): string {
     case "boolean":
     case "number":
     case "string":
-    case "number[]":
     case "unknown": {
       return `${name}${item.optional ? "?" : ""}: ${itemType}${item.nullable ? "|null" : ""}`;
+    }
+    case "null": {
+      return `${name}${item.optional ? "?" : ""}: ${itemType}`;
     }
     case "array": {
       return `${name}: ${renderSchemaObject(item.items)}[]`;
@@ -923,7 +981,8 @@ function renderSchemaItem(name: string, item: SchemaItem): string {
     case "object": {
       return `${name}: ${renderSchemaObject(item)}`;
     }
-    default:
+    default: {
       assertUnreachable(itemType);
+    }
   }
 }

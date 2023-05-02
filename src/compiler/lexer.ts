@@ -69,6 +69,7 @@ export const Populator = createWeakKeyword("populator");
 export const Populate = createWeakKeyword("populate");
 export const Path = createWeakKeyword("path");
 export const PATCH = createWeakKeyword("PATCH");
+export const Pageable = createWeakKeyword("pageable");
 export const Output = createWeakKeyword("output");
 export const Order = createWeakKeyword("order");
 export const Optional = createWeakKeyword("optional");
@@ -195,6 +196,7 @@ export const GaudiTokens = [
   Populate,
   Path,
   PATCH,
+  Pageable,
   Output,
   Order,
   Optional,

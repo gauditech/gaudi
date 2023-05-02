@@ -6,6 +6,9 @@ export enum ErrorCode {
   ParserError,
   // Check form Errors
   MustContainAtom,
+  EndpointMustContainAtom,
+  CannotContainAtom,
+  EndpointCannotContainAtom,
   DuplicateAtom,
   DuplicateModel,
   DuplicateRuntime,
@@ -30,6 +33,8 @@ export enum ErrorCode {
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
   // Resolver Errors
+  UnknownFunction,
+  UnexpectedFunctionArgumentCount,
   CantResolveModel,
   CantResolveAuthModel,
   CantResolveModelAtom,
@@ -53,6 +58,7 @@ export enum ErrorCode {
   UnexpectedType,
   UnexpectedFieldType,
   VirtualInputType,
+  ComputedType,
   NameAlreadyInScope,
 }
 
@@ -62,6 +68,12 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `${params?.message}`;
     case ErrorCode.MustContainAtom:
       return `"${params?.parent}" must contain a "${params?.atom}"`;
+    case ErrorCode.EndpointMustContainAtom:
+      return `Endpoint of type "${params?.type}" must contain a "${params?.atom}"`;
+    case ErrorCode.CannotContainAtom:
+      return `"${params?.parent}" cannot contain a "${params?.atom}"`;
+    case ErrorCode.EndpointCannotContainAtom:
+      return `Endpoint of type "${params?.type}" cannot contain a "${params?.atom}"`;
     case ErrorCode.DuplicateAtom:
       return `Duplicate "${params?.atom}" in a "${params?.parent}"`;
     case ErrorCode.DuplicateModel:
@@ -108,12 +120,16 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Hook can't have more than one "source" or "inline" definition`;
     case ErrorCode.DuplicateSelectField:
       return `Duplicate field in select`;
+    case ErrorCode.UnknownFunction:
+      return `Function with this name doesn't exist`;
+    case ErrorCode.UnexpectedFunctionArgumentCount:
+      return `Function "${params?.name}" expects ${params?.expected} arguments, but got ${params?.got}`;
     case ErrorCode.CantResolveModel:
       return `Can't resolve model with this name`;
     case ErrorCode.CantResolveAuthModel:
       return `Can't resolve @auth model, is auth block used?`;
     case ErrorCode.CantResolveModelAtom:
-      return `Can't resolve model member with this name`;
+      return `Can't resolve model member with name: "${params?.name}"`;
     case ErrorCode.CantResolveStructMember:
       return `Can't resolve member of primitive types`;
     case ErrorCode.ThroughReferenceHasIncorrectModel:
@@ -123,7 +139,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.TypeHasNoMembers:
       return `This type has no members`;
     case ErrorCode.CantFindNameInScope:
-      return `This name does not exist in current scope`;
+      return `Name "${params?.name}" does not exist in current scope`;
     case ErrorCode.CantResolveModelAtomWrongKind:
       return `Model member must be one of [${params?.expected}], but ${params?.atom} member was found`;
     case ErrorCode.CantResolveExpressionReference:
@@ -158,6 +174,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Field type must be a non null primitive type`;
     case ErrorCode.VirtualInputType:
       return `Virtual input type must be a non null primitive type`;
+    case ErrorCode.ComputedType:
+      return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:
       return `This name is already defined in current scope`;
   }

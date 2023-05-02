@@ -18,7 +18,7 @@ describe("populator composer", () => {
         target Org as org
 
         set slug "custom-org" // literal setter
-        set name concat("test name ", slug) // arithmetics setter
+        set name "test name " + slug // arithmetics setter
         set description hook { // hook setter
           arg name name // (translates to) changeset reference setter
           inline "'Description of' + name"

@@ -10,23 +10,71 @@ exports[`openAPI build spec 1`] = `
   "paths": {
     "/api-test/org": {
       "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "type": "integer",
+            },
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+            },
+          },
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "properties": {
-                      "id": {
-                        "type": "integer",
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "nullable": false,
+                            "type": "integer",
+                          },
+                          "slug": {
+                            "nullable": false,
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "id",
+                          "slug",
+                        ],
+                        "type": "object",
                       },
-                      "slug": {
-                        "type": "string",
-                      },
+                      "type": "array",
                     },
-                    "type": "object",
+                    "page": {
+                      "type": "integer",
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                    },
                   },
-                  "type": "array",
+                  "required": [
+                    "page",
+                    "pageSize",
+                    "totalPages",
+                    "totalCount",
+                    "data",
+                  ],
+                  "type": "object",
                 },
               },
             },
@@ -34,8 +82,8 @@ exports[`openAPI build spec 1`] = `
           },
         },
       },
-      "parameters": [],
       "post": {
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
@@ -60,12 +108,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "slug": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "slug",
+                  ],
                   "type": "object",
                 },
               },
@@ -77,12 +131,23 @@ exports[`openAPI build spec 1`] = `
     },
     "/api-test/org/{org_slug}": {
       "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {},
+                  "required": [],
                   "type": "object",
                 },
               },
@@ -107,6 +172,16 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
         "responses": {
           "200": {
             "content": {
@@ -114,12 +189,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "slug": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "slug",
+                  ],
                   "type": "object",
                 },
               },
@@ -143,17 +224,17 @@ exports[`openAPI build spec 1`] = `
           },
         },
       },
-      "parameters": [
-        {
-          "in": "path",
-          "name": "org_slug",
-          "required": true,
-          "schema": {
-            "type": "string",
-          },
-        },
-      ],
       "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -178,12 +259,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "slug": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "slug",
+                  ],
                   "type": "object",
                 },
               },
@@ -210,23 +297,79 @@ exports[`openAPI build spec 1`] = `
     },
     "/api-test/org/{org_slug}/repos": {
       "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "type": "integer",
+            },
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+            },
+          },
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "properties": {
-                      "id": {
-                        "type": "integer",
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "nullable": false,
+                            "type": "integer",
+                          },
+                          "name": {
+                            "nullable": false,
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                        ],
+                        "type": "object",
                       },
-                      "name": {
-                        "type": "string",
-                      },
+                      "type": "array",
                     },
-                    "type": "object",
+                    "page": {
+                      "type": "integer",
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                    },
                   },
-                  "type": "array",
+                  "required": [
+                    "page",
+                    "pageSize",
+                    "totalPages",
+                    "totalCount",
+                    "data",
+                  ],
+                  "type": "object",
                 },
               },
             },
@@ -249,17 +392,17 @@ exports[`openAPI build spec 1`] = `
           },
         },
       },
-      "parameters": [
-        {
-          "in": "path",
-          "name": "org_slug",
-          "required": true,
-          "schema": {
-            "type": "string",
-          },
-        },
-      ],
       "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -284,12 +427,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "name": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
                   "type": "object",
                 },
               },
@@ -316,12 +465,31 @@ exports[`openAPI build spec 1`] = `
     },
     "/api-test/org/{org_slug}/repos/{repo_id}": {
       "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+          {
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+            },
+          },
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {},
+                  "required": [],
                   "type": "object",
                 },
               },
@@ -346,6 +514,24 @@ exports[`openAPI build spec 1`] = `
         },
       },
       "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+          {
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+            },
+          },
+        ],
         "responses": {
           "200": {
             "content": {
@@ -353,12 +539,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "name": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
                   "type": "object",
                 },
               },
@@ -382,25 +574,25 @@ exports[`openAPI build spec 1`] = `
           },
         },
       },
-      "parameters": [
-        {
-          "in": "path",
-          "name": "org_slug",
-          "required": true,
-          "schema": {
-            "type": "string",
-          },
-        },
-        {
-          "in": "path",
-          "name": "repo_id",
-          "required": true,
-          "schema": {
-            "type": "integer",
-          },
-        },
-      ],
       "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+          {
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+            },
+          },
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -429,12 +621,18 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "id": {
+                      "nullable": false,
                       "type": "integer",
                     },
                     "name": {
+                      "nullable": false,
                       "type": "string",
                     },
                   },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
                   "type": "object",
                 },
               },

@@ -62,7 +62,7 @@ repo_id: number }[],
 nameAndDesc: unknown };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
-type ListErrot = GetError;
+type ListError = GetError;
 type CreateData = { name: string,
 slug: string,
 description: string,
@@ -80,10 +80,7 @@ type UpdateError = CreateError;
     function api(id: string) {
       const baseUrl = `${parentPath}/${id}`;
       return {
-        repos: buildReposApi(options, `${baseUrl}/repos`),
-publicRepos: buildPublicReposApi(options, `${baseUrl}/public_repos`),
-publicIssues: buildPublicIssuesApi(options, `${baseUrl}/public_issues`),
-members: buildMembersApi(options, `${baseUrl}/members`)
+        repos: buildReposApi(options, `${baseUrl}/repos`)
       }
     }
 
@@ -91,7 +88,7 @@ members: buildMembersApi(options, `${baseUrl}/members`)
     return Object.assign(api, 
       {
         get: buildGetFn<string, GetResp, GetError>(options, parentPath),
-list: buildListFn<ListResp, ListErrot>(options, parentPath),
+list: buildPaginatedListFn<ListResp, ListError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
 update: buildUpdateFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath)
       }
@@ -112,7 +109,7 @@ is_public: boolean,
 org_id: number } }[] };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
-type ListErrot = GetError;
+type ListError = GetError;
 type CreateData = { name: string,
 slug: string,
 description: string,
@@ -140,85 +137,10 @@ type DeleteError = GetError;
     return Object.assign(api, 
       {
         get: buildGetFn<number, GetResp, GetError>(options, parentPath),
-list: buildListFn<ListResp, ListErrot>(options, parentPath),
+list: buildListFn<ListResp, ListError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
 update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
 delete: buildDeleteFn<number, DeleteError>(options, parentPath)
-      }
-    )
-  }
-
-  function buildPublicReposApi(options: ApiClientOptions, parentPath: string) {
-    // endpoint types
-    type GetResp = { id: number,
-slug: string,
-description: string,
-org_id: number };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type ListResp = GetResp;
-type ListErrot = GetError;
-
-    // entrypoint function
-    function api(id: number) {
-      const baseUrl = `${parentPath}/${id}`;
-      return {
-        
-      }
-    }
-
-    // endpoint functions
-    return Object.assign(api, 
-      {
-        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
-list: buildListFn<ListResp, ListErrot>(options, parentPath)
-      }
-    )
-  }
-
-  function buildPublicIssuesApi(options: ApiClientOptions, parentPath: string) {
-    // endpoint types
-    type ListResp = { id: number,
-title: string,
-body: string };
-type ListErrot = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-
-    // entrypoint function
-    function api(id: number) {
-      const baseUrl = `${parentPath}/${id}`;
-      return {
-        
-      }
-    }
-
-    // endpoint functions
-    return Object.assign(api, 
-      {
-        list: buildListFn<ListResp, ListErrot>(options, parentPath)
-      }
-    )
-  }
-
-  function buildMembersApi(options: ApiClientOptions, parentPath: string) {
-    // endpoint types
-    type ListResp = { id: number,
-name: string };
-type ListErrot = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type GetResp = ListResp;
-type GetError = ListErrot;
-
-    // entrypoint function
-    function api(id: number) {
-      const baseUrl = `${parentPath}/${id}`;
-      return {
-        
-      }
-    }
-
-    // endpoint functions
-    return Object.assign(api, 
-      {
-        list: buildListFn<ListResp, ListErrot>(options, parentPath),
-get: buildGetFn<number, GetResp, GetError>(options, parentPath)
       }
     )
   }
@@ -290,26 +212,43 @@ get: buildGetFn<number, GetResp, GetError>(options, parentPath)
     error: ApiResponseErrorBody<E>;
   };
 
-      
-  export type ListData = { filter?: Record<string, any>; page?: number; pageSize?: number };
+
+  export type PaginatedListResponse<T> = {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+    data: T[];
+  };  
+
+  // TODO: add list search/filter parameter
+  export type PaginatedListData = { pageSize?: number; page?: number };
   
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CreateApiClientFn<D extends ApiRequestBody, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type UpdateApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type ListApiClientFn<R, E extends string> = (
-    data?: ListData,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
+  export type PaginatedListApiClientFn<R, E extends string> = (
+    data?: PaginatedListData,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
+
   export type DeleteApiClientFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -319,14 +258,17 @@ get: buildGetFn<number, GetResp, GetError>(options, parentPath)
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
     id: ID,
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
+
   export type CustomManyFetchApiClientFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R[], E>>;
+
   export type CustomManySubmitApiClientFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
@@ -394,10 +336,28 @@ get: buildGetFn<number, GetResp, GetError>(options, parentPath)
   }
   
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
-    return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}`;
-      // TODO: add data to URL params with URLSearchParams
+    return async (options) => {
+      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+
+      return (
+        makeRequest(clientOptions, urlPath, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
   
+  function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
+    return async (data, options) => {
+      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+
+      const params = new URLSearchParams()
+      Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
+      const urlParams = params.toString()
+
+      const url = urlPath + (urlParams ? '?' + urlParams : '')
+
       return (
         makeRequest(clientOptions, url, {
           method: "GET",
@@ -406,7 +366,7 @@ get: buildGetFn<number, GetResp, GetError>(options, parentPath)
       );
     };
   }
-  
+
   function buildCustomOneFetchFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,

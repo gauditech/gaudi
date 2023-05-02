@@ -6,6 +6,9 @@ import { Vars } from "../server/vars";
 import { QueryTree, selectableId } from "./build";
 import { queryToString } from "./stringify";
 
+import { ensureEqual } from "@src/common/utils";
+import { getTypedPath } from "@src/composer/utils";
+import logger from "@src/logger";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { Definition, QueryDef, SelectItem } from "@src/types/definition";
 
@@ -79,7 +82,20 @@ export async function executeQueryTree(
       const relResultsForId = (groupedById[r.id] ?? []).map((relR) =>
         _.omit(relR, "__join_connection")
       );
-      Object.assign(r, { [rel.name]: relResultsForId });
+      // if property kind is reference (todo: unique relationships in general)
+      // unwrap from the array
+      const tpath = getTypedPath(def, rel.query.fromPath, {});
+      logger.silly("Rel kind", _.last(tpath.nodes)?.kind);
+      if (_.last(tpath.nodes)?.kind === "reference") {
+        ensureEqual(
+          relResultsForId.length <= 1,
+          true,
+          `Expected a single element but found multiple in a list`
+        );
+        Object.assign(r, { [rel.name]: relResultsForId[0] ?? null });
+      } else {
+        Object.assign(r, { [rel.name]: relResultsForId });
+      }
     });
   }
 

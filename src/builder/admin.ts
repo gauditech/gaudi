@@ -63,7 +63,7 @@ function endpointsForModel(
 ): EndpointDef[] {
   return [
     getEndpointForModel(model, target),
-    listEnpointForModel(model, target),
+    listEndpointForModel(model, target),
     createEndpointForModel(def, model, target),
     updateEndpointForModel(def, model, target),
     deleteEndpointForModel(model, target),
@@ -81,7 +81,7 @@ function getEndpointForModel(model: ModelDef, target: TargetWithSelectDef): GetE
   };
 }
 
-function listEnpointForModel(model: ModelDef, target: TargetWithSelectDef): ListEndpointDef {
+function listEndpointForModel(model: ModelDef, target: TargetWithSelectDef): ListEndpointDef {
   return {
     kind: "list",
     parentContext: [],
@@ -89,6 +89,9 @@ function listEnpointForModel(model: ModelDef, target: TargetWithSelectDef): List
     response: modelToSelect(model),
     authorize: undefined,
     authSelect: [],
+    pageable: true,
+    orderBy: undefined,
+    filter: undefined,
   };
 }
 

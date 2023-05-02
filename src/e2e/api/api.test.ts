@@ -35,8 +35,15 @@ describe("API endpoints", () => {
       expect(response.body).toMatchSnapshot();
     });
 
-    it("list", async () => {
+    it("list with paging", async () => {
       const response = await request(getServer()).get("/org");
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toMatchSnapshot();
+    });
+
+    it("list with non default paging", async () => {
+      const response = await request(getServer()).get("/org?page=2&pageSize=2");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();
@@ -252,7 +259,7 @@ describe("API endpoints", () => {
       const response = await request(getServer()).get("/org/org1/repos");
 
       expect(response.statusCode).toBe(200);
-      expect(_.sortBy(response.body, "id")).toMatchSnapshot();
+      expect(response.body).toMatchSnapshot();
     });
 
     it("create", async () => {
@@ -311,6 +318,22 @@ describe("API endpoints", () => {
       const getResp = await request(getServer()).get("/org/org1/repos/1/issues/1");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
+    });
+  });
+
+  describe("PublicRepo", () => {
+    beforeAll(async () => {
+      await setup();
+    });
+    afterAll(async () => {
+      await destroy();
+    });
+
+    it("list", async () => {
+      const response = await request(getServer()).get("/repo");
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toMatchSnapshot();
     });
   });
 });

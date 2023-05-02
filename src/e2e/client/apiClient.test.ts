@@ -88,57 +88,97 @@ describe("api client lib", () => {
       expect(response.status).toBe(200);
       expect(response.data).toMatchInlineSnapshot(`
         {
-          "description": "Org 1 description",
+          "description": "Org 1 description (odd)",
           "id": 1,
           "name": "Org 1",
-          "nameAndDesc": "Org 1: Org 1 description",
+          "nameAndDesc": "Org 1: Org 1 description (odd)",
           "slug": "org1",
-          "summary": "Org 1Org 1 description",
+          "summary": "Org 1Org 1 description (odd)",
         }
       `);
     });
 
-    it("list", async () => {
+    it("list with paging", async () => {
       const response = await client.api.org.list();
 
       ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
 
       expect(response.status).toBe(200);
       expect(response.data).toMatchInlineSnapshot(`
-        [
-          {
-            "description": "Org 1 description",
-            "id": 1,
-            "name": "Org 1",
-            "nameAndDesc": "Org 1: Org 1 description",
-            "slug": "org1",
-            "summary": "Org 1Org 1 description",
-          },
-          {
-            "description": "Org 2 description",
-            "id": 2,
-            "name": "Org 2",
-            "nameAndDesc": "Org 2: Org 2 description",
-            "slug": "org2",
-            "summary": "Org 2Org 2 description",
-          },
-          {
-            "description": "Org 3 description",
-            "id": 3,
-            "name": "Org 3",
-            "nameAndDesc": "Org 3: Org 3 description",
-            "slug": "org3",
-            "summary": "Org 3Org 3 description",
-          },
-          {
-            "description": "Org 4 description",
-            "id": 4,
-            "name": "Org 4",
-            "nameAndDesc": "Org 4: Org 4 description",
-            "slug": "org4",
-            "summary": "Org 4Org 4 description",
-          },
-        ]
+        {
+          "data": [
+            {
+              "description": "Org 4 description (even)",
+              "id": 4,
+              "name": "Org 4",
+              "nameAndDesc": "Org 4: Org 4 description (even)",
+              "slug": "org4",
+              "summary": "Org 4Org 4 description (even)",
+            },
+            {
+              "description": "Org 3 description (odd)",
+              "id": 3,
+              "name": "Org 3",
+              "nameAndDesc": "Org 3: Org 3 description (odd)",
+              "slug": "org3",
+              "summary": "Org 3Org 3 description (odd)",
+            },
+            {
+              "description": "Org 2 description (even)",
+              "id": 2,
+              "name": "Org 2",
+              "nameAndDesc": "Org 2: Org 2 description (even)",
+              "slug": "org2",
+              "summary": "Org 2Org 2 description (even)",
+            },
+            {
+              "description": "Org 1 description (odd)",
+              "id": 1,
+              "name": "Org 1",
+              "nameAndDesc": "Org 1: Org 1 description (odd)",
+              "slug": "org1",
+              "summary": "Org 1Org 1 description (odd)",
+            },
+          ],
+          "page": 1,
+          "pageSize": 20,
+          "totalCount": 4,
+          "totalPages": 1,
+        }
+      `);
+    });
+
+    it("list with non default paging", async () => {
+      const response = await client.api.org.list({ page: 2, pageSize: 2 });
+
+      ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
+
+      expect(response.status).toBe(200);
+      expect(response.data).toMatchInlineSnapshot(`
+        {
+          "data": [
+            {
+              "description": "Org 2 description (even)",
+              "id": 2,
+              "name": "Org 2",
+              "nameAndDesc": "Org 2: Org 2 description (even)",
+              "slug": "org2",
+              "summary": "Org 2Org 2 description (even)",
+            },
+            {
+              "description": "Org 1 description (odd)",
+              "id": 1,
+              "name": "Org 1",
+              "nameAndDesc": "Org 1: Org 1 description (odd)",
+              "slug": "org1",
+              "summary": "Org 1Org 1 description (odd)",
+            },
+          ],
+          "page": 2,
+          "pageSize": 2,
+          "totalCount": 4,
+          "totalPages": 2,
+        }
       `);
     });
 
