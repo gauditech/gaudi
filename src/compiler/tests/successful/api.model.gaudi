@@ -67,24 +67,29 @@ model Comment {
 // ----- entrypoints
 
 entrypoint Org {
+  identify { through slug }
   response { name, slug, description, summary, nameAndDesc }
 
+  get endpoint {}
   list endpoint {}
   create endpoint {
     action {
-      create {}
+      create as org {}
     }
   }
+  update endpoint {
+    action {
+      update {}
+    }
+  }
+  delete endpoint {}
 
-  identify as org {
-    through slug
+  entrypoint repos {
+    identify as repo {}
+    response { id, slug, description, org_id }
 
     get endpoint {}
-    list endpoint {
-      pageable
-      filter { name is "asdf" }
-      order by { name desc }
-    }
+    list endpoint {}
     create endpoint {
       action {
         create as repo {
@@ -105,53 +110,22 @@ entrypoint Org {
     }
     delete endpoint {}
 
-    entrypoint repos {
-      response { id, slug, description, org_id }
+    entrypoint issues {
+      identify as issue {}
+      response { id, title, repo, number, comments }
 
-      list endpoint {}
+      get endpoint {}
       create endpoint {
         action {
-          create as repo {
-            set latest_num 0
-            virtual input raw_description { type string }
-            set description concat("Description: ", raw_description)
-            set slug hook {
-              arg org org.name
-              source randomSlug from "hooks.js"
-            }
-          }
-        }
-      }
-
-      identify as repo {
-        get endpoint {}
-        update endpoint {
-          action {
-            update {}
-          }
-        }
-        delete endpoint {}
-
-        entrypoint issues {
-          response { id, title, repo, number, comments }
-
-          create endpoint {
-            action {
-              create as issue {
-                set number repo.latest_num + 1
-              }
-
-              update repo as repo2 {
-                set latest_num repo.latest_num + 1
-              }
-
-              create issue.comments as c {}
-            }
+          create as issue {
+            set number repo.latest_num + 1
           }
 
-          identify {
-            get endpoint {}
+          update repo as repo2 {
+            set latest_num repo.latest_num + 1
           }
+
+          create issue.comments as c {}
         }
       }
     }

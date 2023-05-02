@@ -22,7 +22,6 @@ import {
   GlobalAtom,
   Identifier,
   IdentifierRef,
-  Identify,
   Literal,
   Model,
   ModelAction,
@@ -221,21 +220,25 @@ export function buildTokens(
       .exhaustive();
   }
 
-  function buildEntrypoint(entrypoint: Entrypoint | Identify) {
-    buildKeyword(entrypoint.keyword);
-    if (entrypoint.kind === "entrypoint") {
-      buildIdentifierPath(entrypoint.target);
-    } else {
-      if (entrypoint.as) {
-        buildKeyword(entrypoint.as.keyword);
-        buildIdentifierRef(entrypoint.as.identifier);
-      }
-    }
-    entrypoint.atoms.forEach((a) =>
+  function buildEntrypoint({ keyword, target, atoms }: Entrypoint) {
+    buildKeyword(keyword);
+    buildIdentifierRef(target);
+    atoms.forEach((a) =>
       match(a)
-        .with({ kind: "through" }, ({ keyword, identifier }) => {
+        .with({ kind: "identify" }, ({ keyword, as, atoms }) => {
           buildKeyword(keyword);
-          buildIdentifierRef(identifier);
+          if (as) {
+            buildKeyword(as.keyword);
+            buildIdentifierRef(as.identifier);
+          }
+          atoms.forEach((a) =>
+            match(a)
+              .with({ kind: "through" }, ({ keyword, identifier }) => {
+                buildKeyword(keyword);
+                buildIdentifierRef(identifier);
+              })
+              .exhaustive()
+          );
         })
         .with({ kind: "response" }, ({ keyword, select }) => {
           buildKeyword(keyword);
@@ -246,7 +249,7 @@ export function buildTokens(
           buildExpr(expr);
         })
         .with({ kind: "endpoint" }, buildEndpoint)
-        .with({ kind: "entrypoint" }, { kind: "identify" }, buildEntrypoint)
+        .with({ kind: "entrypoint" }, buildEntrypoint)
         .exhaustive()
     );
   }

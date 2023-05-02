@@ -48,10 +48,6 @@ export enum ErrorCode {
   SelectCantNest,
   InvalidDefaultAction,
   NonDefaultModelActionRequiresAlias,
-  IdentifyInsideSingleEntrypoint,
-  EntrypointInsideManyEntrypoint,
-  UnsuportedEndpointInSingleEntrypoint,
-  UnsuportedEndpointInManyEntrypoint,
   UnsuportedTargetInCreateAction,
   PopulateIsMissingSetters,
   // Type Errors
@@ -150,14 +146,6 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `When overriding default action, its kind must match with current endpoint kind. "${params?.action}" is not a valid default action override in "${params?.endpoint}" endpoint`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
-    case ErrorCode.IdentifyInsideSingleEntrypoint:
-      return `"identify" is not supported in single cardinality entrypoint`;
-    case ErrorCode.EntrypointInsideManyEntrypoint:
-      return `"entrypoint" is not supported in many cardinality entrypoint`;
-    case ErrorCode.UnsuportedEndpointInSingleEntrypoint:
-      return `${params?.endpoint} is not supported in single cardinality entrypoint`;
-    case ErrorCode.UnsuportedEndpointInManyEntrypoint:
-      return `${params?.endpoint} is not supported in many cardinality entrypoint`;
     case ErrorCode.UnsuportedTargetInCreateAction:
       return `This target is not supported in a "create" action, "create" can only have model and relation as a target`;
     case ErrorCode.PopulateIsMissingSetters:

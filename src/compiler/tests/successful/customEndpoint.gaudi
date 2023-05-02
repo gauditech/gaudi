@@ -3,6 +3,31 @@ model Org {
 }
 
 entrypoint Org {
+  identify as org {}
+
+  // custom-one endpoints
+  custom endpoint {
+    cardinality one
+    method GET
+    path "customGet"
+  }
+  custom endpoint {
+    cardinality one
+    method PATCH
+    path "customUpdate"
+    action {
+      update org as newOrg {}
+    }
+  }
+  custom endpoint {
+    cardinality one
+    method DELETE
+    path "customDelete"
+    action {
+      delete org {}
+    }
+  }
+
   // custom-many endpoints
   custom endpoint {
     cardinality many
@@ -15,31 +40,6 @@ entrypoint Org {
     path "customCreate"
     action {
       create Org as org {}
-    }
-  }
-
-  identify as org {
-    // custom-one endpoints
-    custom endpoint {
-      cardinality one
-      method GET
-      path "customGet"
-    }
-    custom endpoint {
-      cardinality one
-      method PATCH
-      path "customUpdate"
-      action {
-        update org as newOrg {}
-      }
-    }
-    custom endpoint {
-      cardinality one
-      method DELETE
-      path "customDelete"
-      action {
-        delete org {}
-      }
     }
   }
 }

@@ -5,7 +5,6 @@ import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureExists } from "@src/common/utils";
-import { PrimitiveType } from "@src/compiler/ast/type";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
@@ -168,21 +167,21 @@ function migrateComputed(computed: AST.Computed): ComputedSpec {
 
 function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {
   const identify = kindFind(entrypoint.atoms, "identify");
-  const identifyThrough = (identify && kindFind(identify.atoms, "through")) || undefined;
   const response = kindFind(entrypoint.atoms, "response");
   const authorize = kindFind(entrypoint.atoms, "authorize");
-  const combinedAtoms = [...entrypoint.atoms, ...(identify?.atoms ?? [])];
-  const endpoints = kindFilter(combinedAtoms, "endpoint").map(migrateEndpoint);
-  const entrypoints = kindFilter(combinedAtoms, "entrypoint").map(migrateEntrypoint);
+  const endpoints = kindFilter(entrypoint.atoms, "endpoint").map(migrateEndpoint);
+  const entrypoints = kindFilter(entrypoint.atoms, "entrypoint").map(migrateEntrypoint);
 
   return {
     name: "",
     target: {
-      kind: entrypoint.target.at(-1)!.ref.kind === "model" ? "model" : "relation",
-      identifier: entrypoint.target.at(-1)!.identifier.text,
+      kind: entrypoint.target.ref.kind === "model" ? "model" : "relation",
+      identifier: entrypoint.target.identifier.text,
       alias: identify?.as?.identifier.identifier.text,
     },
-    identify: identifyThrough?.identifier.identifier.text,
+    identify: identify
+      ? kindFind(identify.atoms, "through")?.identifier.identifier.text
+      : undefined,
     response: response ? migrateSelect(response.select) : undefined,
     authorize: authorize ? migrateExpr(authorize.expr) : undefined,
     endpoints,

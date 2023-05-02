@@ -9,16 +9,15 @@ model Bar {
 }
 
 entrypoint Bar {
-  identify as bar {
-    update endpoint {
-      authorize { bar.b is not null and bar.foo.a1 is bar.b }
-      action {
-        update bar.foo as foo {
-          set a bar.foo.a1
-        }
-        update {
-          set foo foo
-        }
+  identify as bar {}
+  update endpoint {
+    authorize { bar.b is not null and bar.foo.a1 is bar.b }
+    action {
+      update bar.foo as foo {
+        set a bar.foo.a1
+      }
+      update {
+        set foo foo
       }
     }
   }
