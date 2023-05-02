@@ -191,7 +191,7 @@ populator Dev {
   populate OrgWithMultipleReposAndMembers {
     target Org as org
 
-    repeater iter { start 3, end 5 }
+    repeat as iter { start 3, end 5 }
 
     // org
     set name hook {
@@ -214,7 +214,7 @@ populator Dev {
     populate Repos {
         target repos as repo
 
-        repeater riter { start 1, end 3 }
+        repeat as riter { start 1, end 3 }
 
         // fields
         set name hook {

@@ -410,7 +410,7 @@ describe("compiler errors", () => {
 
         populator Dev {
           populate Orgs {
-            repeater myvar 10
+            repeat as myvar 10
             target Org as myvar
             set name "myname"
           }
@@ -431,11 +431,11 @@ describe("compiler errors", () => {
         populator Dev {
           populate Orgs {
             target Org as org
-            repeater iter 10
+            repeat as iter 10
 
             populate Repos {
               target repos as repo
-              repeater iter 5
+              repeat as iter 5
             }
           }
         }

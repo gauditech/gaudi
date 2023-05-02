@@ -352,7 +352,9 @@ function migratePopulate(populate: AST.Populate): PopulateSpec {
   const from = kindFind(populate.atoms, "target")!;
   const setters = kindFilter(populate.atoms, "set").map(migratePopulateSetter);
   const populates = kindFilter(populate.atoms, "populate").map(migratePopulate);
-  const repeater = kindFind(populate.atoms, "repeat")?.repeater;
+  const repeat = kindFind(populate.atoms, "repeat");
+  const repeatValue = repeat?.repeatValue;
+  const repeatAlias = repeat?.as?.identifier.identifier.text;
 
   return {
     name: populate.name.text,
@@ -363,7 +365,7 @@ function migratePopulate(populate: AST.Populate): PopulateSpec {
     },
     setters,
     populates,
-    repeater: repeater ? migrateRepeater(repeater) : undefined,
+    repeater: repeatValue ? migrateRepeatValue(repeatValue, repeatAlias) : undefined,
   };
 }
 
@@ -378,14 +380,14 @@ function migratePopulateSetter(set: AST.ActionAtomSet): PopulateSetterSpec {
   };
 }
 
-function migrateRepeater(repeater: AST.Repeater): RepeaterSpec {
-  switch (repeater.kind) {
-    case "simple":
-      return { kind: "fixed", value: repeater.value.value, alias: repeater.name?.text };
-    case "body": {
-      const start = kindFind(repeater.atoms, "start")?.value.value;
-      const end = kindFind(repeater.atoms, "end")?.value.value;
-      return { kind: "range", range: { start, end }, alias: repeater.name?.text };
+function migrateRepeatValue(repeatValue: AST.RepeatValue, alias?: string): RepeaterSpec {
+  switch (repeatValue.kind) {
+    case "short":
+      return { kind: "fixed", value: repeatValue.value.value, alias };
+    case "long": {
+      const start = kindFind(repeatValue.atoms, "start")?.value.value;
+      const end = kindFind(repeatValue.atoms, "end")?.value.value;
+      return { kind: "range", range: { start, end }, alias };
     }
   }
 }

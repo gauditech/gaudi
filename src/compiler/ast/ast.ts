@@ -255,21 +255,25 @@ export type Populate = {
   atoms: PopulateAtom[];
 };
 export type PopulateAtom =
-  | ({ keyword: TokenData } & (
-      | {
-          kind: "target";
-          identifier: IdentifierRef;
-          as?: { keyword: TokenData; identifier: IdentifierRef };
-        }
-      | { kind: "repeat"; repeater: Repeater }
-    ))
+  | {
+      kind: "target";
+      keyword: TokenData;
+      identifier: IdentifierRef;
+      as?: { keyword: TokenData; identifier: IdentifierRef };
+    }
+  | {
+      kind: "repeat";
+      keyword: TokenData;
+      as?: { keyword: TokenData; identifier: IdentifierRef };
+      repeatValue: RepeatValue;
+    }
   | ActionAtomSet
   | Populate;
 
-export type Repeater =
-  | { name?: Identifier; kind: "body"; atoms: RepeaterAtom[] }
-  | { name?: Identifier; kind: "simple"; value: IntegerLiteral };
-export type RepeaterAtom = { keyword: TokenData } & (
+export type RepeatValue =
+  | { kind: "long"; atoms: RepeatAtom[] }
+  | { kind: "short"; value: IntegerLiteral };
+export type RepeatAtom = { keyword: TokenData } & (
   | { kind: "start"; value: IntegerLiteral }
   | { kind: "end"; value: IntegerLiteral }
 );
@@ -410,7 +414,7 @@ export type ContextKind =
   | "populateTarget"
   | "fetch"
   | "virtualInput"
-  | "repeater"
+  | "repeat"
   | "authToken"
   | "struct";
 export type RefContext = { kind: "context"; contextKind: ContextKind };

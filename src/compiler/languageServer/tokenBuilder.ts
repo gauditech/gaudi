@@ -31,7 +31,7 @@ import {
   Query,
   Reference,
   Relation,
-  Repeater,
+  RepeatValue,
   Runtime,
   Select,
   TokenData,
@@ -435,9 +435,13 @@ export function buildTokens(
             buildIdentifierRef(as.identifier);
           }
         })
-        .with({ kind: "repeat" }, ({ keyword, repeater }) => {
+        .with({ kind: "repeat" }, ({ keyword, as, repeatValue }) => {
           buildKeyword(keyword);
-          buildRepeater(repeater);
+          if (as) {
+            buildKeyword(as.keyword);
+            buildIdentifierRef(as.identifier);
+          }
+          buildRepeatValue(repeatValue);
         })
         .with({ kind: "set" }, buildActionAtomSet)
         .with({ kind: "populate" }, buildPopulate)
@@ -445,15 +449,15 @@ export function buildTokens(
     );
   }
 
-  function buildRepeater(repeater: Repeater) {
-    match(repeater)
-      .with({ kind: "body" }, ({ atoms }) =>
+  function buildRepeatValue(repeatValue: RepeatValue) {
+    match(repeatValue)
+      .with({ kind: "long" }, ({ atoms }) =>
         atoms.forEach(({ keyword, value }) => {
           buildKeyword(keyword);
           buildLiteral(value);
         })
       )
-      .with({ kind: "simple" }, ({ value }) => buildLiteral(value))
+      .with({ kind: "short" }, ({ value }) => buildLiteral(value))
       .exhaustive();
   }
 

@@ -90,7 +90,7 @@ describe("populator composer", () => {
       populate Orgs {
         target Org as org
 
-        repeater 5
+        repeat 5
 
         set is_new true
         set name "test name"
@@ -114,7 +114,7 @@ describe("populator composer", () => {
       populate Orgs {
         target Org as org
 
-        repeater { start 1, end 3 }
+        repeat { start 1, end 3 }
 
         set is_new true
         set name "test name"
@@ -138,7 +138,7 @@ describe("populator composer", () => {
       populate Orgs {
         target Org as org
 
-        repeater { end 3 }
+        repeat { end 3 }
 
         set is_new true
         set name "test name"
@@ -170,7 +170,7 @@ describe("populator composer", () => {
       populate Orgs {
         target Org as org
 
-        repeater 4
+        repeat 4
 
         set is_new true
         set name "test name"
@@ -178,7 +178,7 @@ describe("populator composer", () => {
         populate repos {
           target repos as repo
 
-          repeater { start 20, end 2000 }
+          repeat { start 20, end 2000 }
 
           set name "test name"
         }
@@ -213,7 +213,7 @@ describe("populator composer", () => {
       populator Dev {
         populate Orgs {
           target Org as org
-          repeater oIter 10
+          repeat as oIter 10
           set name2 name
           set index oIter.current
           set name hook {
@@ -222,7 +222,7 @@ describe("populator composer", () => {
           }
           populate Repos {
             target repos as repo
-            repeater rIter 5
+            repeat as rIter 5
             set index rIter.current
             set org_index oIter.current
           }

@@ -64,8 +64,8 @@ import {
   ReferenceAtom,
   Relation,
   RelationAtom,
-  Repeater,
-  RepeaterAtom,
+  RepeatAtom,
+  RepeatValue,
   Runtime,
   RuntimeAtom,
   Select,
@@ -955,8 +955,8 @@ class GaudiParser extends EmbeddedActionsParser {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Target));
             const identifier = this.SUBRULE(this.identifierRef);
-            const as = this.OPTION(() => {
-              const keyword = getTokenData(this.CONSUME(L.As));
+            const as = this.OPTION1(() => {
+              const keyword = getTokenData(this.CONSUME1(L.As));
               const identifier = this.SUBRULE2(this.identifierRef);
               return { keyword, identifier };
             });
@@ -965,9 +965,14 @@ class GaudiParser extends EmbeddedActionsParser {
         },
         {
           ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Repeater));
-            const repeater = this.SUBRULE(this.repeater);
-            atoms.push({ kind: "repeat", repeater, keyword });
+            const keyword = getTokenData(this.CONSUME(L.Repeat));
+            const as = this.OPTION2(() => {
+              const keyword = getTokenData(this.CONSUME2(L.As));
+              const identifier = this.SUBRULE3(this.identifierRef);
+              return { keyword, identifier };
+            });
+            const repeatValue = this.SUBRULE(this.repeatValue);
+            atoms.push({ kind: "repeat", as, repeatValue, keyword });
           },
         },
         {
@@ -988,18 +993,17 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "populate", name, atoms, keyword };
   });
 
-  repeater = this.RULE("repeater", (): Repeater => {
-    const name = this.OPTION(() => this.SUBRULE(this.identifier));
-    return this.OR1<Repeater>([
+  repeatValue = this.RULE("repeat", (): RepeatValue => {
+    return this.OR1<RepeatValue>([
       {
         ALT: () => {
           const value = this.SUBRULE1(this.integer);
-          return { name, kind: "simple", value };
+          return { kind: "short", value };
         },
       },
       {
         ALT: () => {
-          const atoms: RepeaterAtom[] = [];
+          const atoms: RepeatAtom[] = [];
           this.CONSUME(L.LCurly);
           this.MANY_SEP({
             SEP: L.Comma,
@@ -1015,7 +1019,7 @@ class GaudiParser extends EmbeddedActionsParser {
             },
           });
           this.CONSUME(L.RCurly);
-          return { name, kind: "body", atoms };
+          return { kind: "long", atoms };
         },
       },
     ]);

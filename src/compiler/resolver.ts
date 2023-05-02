@@ -802,9 +802,10 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
 
-    kindFilter(populate.atoms, "repeat").forEach((repeater) => {
-      if (repeater.repeater.name) {
-        const type: Type = {
+    kindFilter(populate.atoms, "repeat").forEach((repeat) => {
+      if (repeat.as) {
+        repeat.as.identifier.ref = { kind: "context", contextKind: "repeat" };
+        repeat.as.identifier.type = {
           kind: "struct",
           types: {
             start: { kind: "primitive", primitiveKind: "integer" },
@@ -812,12 +813,7 @@ export function resolve(projectASTs: ProjectASTs) {
             current: { kind: "primitive", primitiveKind: "integer" },
           },
         };
-        const identifier: IdentifierRef = {
-          identifier: repeater.repeater.name,
-          ref: { kind: "context", contextKind: "repeater" },
-          type,
-        };
-        addToScope(scope, identifier);
+        addToScope(scope, repeat.as.identifier);
       }
     });
 
