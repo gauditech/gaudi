@@ -177,7 +177,7 @@ function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {
     target: {
       kind: entrypoint.target.ref.kind === "model" ? "model" : "relation",
       identifier: entrypoint.target.identifier.text,
-      alias: identify?.as?.identifier.identifier.text,
+      alias: entrypoint.as?.identifier.identifier.text,
     },
     identify: identify
       ? kindFind(identify.atoms, "through")?.identifier.identifier.text

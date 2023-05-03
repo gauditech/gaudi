@@ -67,8 +67,8 @@ model Comment {
 // ----- entrypoints
 
 // Orgs
-entrypoint Org {
-  identify as org { through slug }
+entrypoint Org as org {
+  identify { through slug }
   response { name, slug, description, summary, nameAndDesc }
 
   // --- endpoints with "execute" actions
@@ -272,8 +272,7 @@ entrypoint Org {
 
 
   // --- Repos
-  entrypoint repos {
-    identify as repo
+  entrypoint repos as repo {
     response { id, slug, description, org_id }
 
     get endpoint {}
@@ -299,8 +298,7 @@ entrypoint Org {
     delete endpoint {}
 
     // Issues
-    entrypoint issues {
-      identify as issue
+    entrypoint issues as issue {
       response { id, title, repo, number, comments }
 
       get endpoint {}

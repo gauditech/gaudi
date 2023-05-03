@@ -512,14 +512,14 @@ export function resolve(projectASTs: ProjectASTs) {
       entrypoint.target.type = removeTypeModifier(entrypoint.target.type, "collection", "nullable");
       currentModel = getTypeModel(entrypoint.target.type);
     }
+    if (entrypoint.as) {
+      entrypoint.as.identifier.ref = { kind: "context", contextKind: "entrypointTarget" };
+      entrypoint.as.identifier.type = entrypoint.target.type;
+      alias = entrypoint.as.identifier;
+    }
 
     const identify = kindFind(entrypoint.atoms, "identify");
     if (identify) {
-      if (identify.as) {
-        identify.as.identifier.ref = { kind: "context", contextKind: "entrypointTarget" };
-        identify.as.identifier.type = entrypoint.target.type;
-        alias = identify.as.identifier;
-      }
       const through = kindFind(identify.atoms, "through");
       if (through) resolveModelAtomRef(through.identifier, currentModel, "field");
     }

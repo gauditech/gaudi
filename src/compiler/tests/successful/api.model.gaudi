@@ -84,8 +84,7 @@ entrypoint Org {
   }
   delete endpoint {}
 
-  entrypoint repos {
-    identify as repo
+  entrypoint repos as repo {
     response { id, slug, description, org_id }
 
     get endpoint {}
@@ -114,8 +113,7 @@ entrypoint Org {
     }
     delete endpoint {}
 
-    entrypoint issues {
-      identify as issue
+    entrypoint issues as issue {
       response { id, title, repo, number, comments }
 
       get endpoint {}

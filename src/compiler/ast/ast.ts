@@ -110,6 +110,7 @@ export type Entrypoint = {
   kind: "entrypoint";
   keyword: TokenData;
   target: IdentifierRef;
+  as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: EntrypointAtom[];
 };
 
@@ -123,7 +124,6 @@ export type EntrypointAtom =
 export type Identify = {
   kind: "identify";
   keyword: TokenData;
-  as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef }[];
 };
 

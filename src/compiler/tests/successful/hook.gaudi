@@ -31,8 +31,7 @@ model User {
   }
 }
 
-entrypoint User {
-  identify as user
+entrypoint User as user{
   create endpoint {
     action {
       create {

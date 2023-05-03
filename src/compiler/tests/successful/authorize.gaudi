@@ -15,8 +15,8 @@ model Item {
   reference box { to Box }
 }
 
-entrypoint Box {
-  identify as box { through name }
+entrypoint Box as box {
+  identify { through name }
 
   list endpoint {
     // user must be logged in
@@ -34,8 +34,8 @@ entrypoint Box {
     }
   }
 
-  entrypoint items {
-    identify as item { through name }
+  entrypoint items as item {
+    identify { through name }
 
     authorize { box.is_public or @auth.id is box.owner.id }
 

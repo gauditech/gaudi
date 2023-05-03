@@ -16,8 +16,8 @@ describe("entrypoint", () => {
       field title { type string }
     }
 
-    entrypoint Org {
-      identify as org { through slug }
+    entrypoint Org as org {
+      identify { through slug }
 
       list endpoint {
         pageable
@@ -162,10 +162,8 @@ describe("entrypoint", () => {
       field orgCoef { type integer }
     }
 
-    entrypoint Org {
-      identify as org
-      entrypoint repos {
-        identify as repo
+    entrypoint Org as org {
+      entrypoint repos as repo {
         create endpoint {
           action {
             create as repo {}

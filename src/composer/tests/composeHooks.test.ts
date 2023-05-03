@@ -126,8 +126,7 @@ describe("compose hooks", () => {
         field name { type string }
       }
 
-      entrypoint Org {
-        identify as org
+      entrypoint Org as org {
 
         custom endpoint {
           path "somePath"

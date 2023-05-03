@@ -220,17 +220,17 @@ export function buildTokens(
       .exhaustive();
   }
 
-  function buildEntrypoint({ keyword, target, atoms }: Entrypoint) {
+  function buildEntrypoint({ keyword, target, as, atoms }: Entrypoint) {
     buildKeyword(keyword);
     buildIdentifierRef(target);
+    if (as) {
+      buildKeyword(as.keyword);
+      buildIdentifierRef(as.identifier);
+    }
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "identify" }, ({ keyword, as, atoms }) => {
+        .with({ kind: "identify" }, ({ keyword, atoms }) => {
           buildKeyword(keyword);
-          if (as) {
-            buildKeyword(as.keyword);
-            buildIdentifierRef(as.identifier);
-          }
           atoms.forEach((a) =>
             match(a)
               .with({ kind: "through" }, ({ keyword, identifier }) => {

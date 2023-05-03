@@ -491,7 +491,12 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: EntrypointAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Entrypoint));
-    const target = this.SUBRULE(this.identifierRef);
+    const target = this.SUBRULE1(this.identifierRef);
+    const as = this.OPTION(() => {
+      const keyword = getTokenData(this.CONSUME(L.As));
+      const identifier = this.SUBRULE2(this.identifierRef);
+      return { identifier, keyword };
+    });
     this.CONSUME1(L.LCurly);
     this.MANY(() => {
       this.OR([
@@ -530,36 +535,29 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME1(L.RCurly);
 
-    return { kind: "entrypoint", target, atoms, keyword };
+    return { kind: "entrypoint", target, as, atoms, keyword };
   });
 
   identify = this.RULE("identify", (): Identify => {
     const atoms: Identify["atoms"] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Identify));
-    const as = this.OPTION1(() => {
-      const keyword = getTokenData(this.CONSUME(L.As));
-      const identifier = this.SUBRULE1(this.identifierRef);
-      return { identifier, keyword };
-    });
 
-    this.OPTION2(() => {
-      this.CONSUME(L.LCurly);
-      this.MANY(() => {
-        this.OR([
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Through));
-              const identifier = this.SUBRULE2(this.identifierRef);
-              atoms.push({ kind: "through", identifier, keyword });
-            },
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Through));
+            const identifier = this.SUBRULE(this.identifierRef);
+            atoms.push({ kind: "through", identifier, keyword });
           },
-        ]);
-      });
-      this.CONSUME(L.RCurly);
+        },
+      ]);
     });
+    this.CONSUME(L.RCurly);
 
-    return { kind: "identify", as, atoms, keyword };
+    return { kind: "identify", atoms, keyword };
   });
 
   endpoint = this.RULE("endpoint", (): Endpoint => {

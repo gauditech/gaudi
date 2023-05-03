@@ -79,8 +79,7 @@ describe("compiler errors", () => {
       const bp = `
         model Org { relation repos { from Repo, through org }}
         model Repo { reference org { to Org }}
-        entrypoint Org {
-          identify as org
+        entrypoint Org as org {
           entrypoint repos {
             create endpoint {
               action {
@@ -103,8 +102,7 @@ describe("compiler errors", () => {
         model OrgExtra {
           relation org { from Org, through extras }
         }
-        entrypoint Org {
-          identify as org
+        entrypoint Org as org {
           update endpoint {
             action {
               update org as ox {
@@ -122,8 +120,7 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        entrypoint Org {
-          identify as org
+        entrypoint Org as org {
           update endpoint {
             action {
               update org as ox {
@@ -160,10 +157,8 @@ describe("compiler errors", () => {
         const bp = `
           model Org { relation repos { from Repo, through org }}
           model Repo { reference org { to Org }}
-          entrypoint Org {
-            identify as org
-            entrypoint repos {
-              identify as repo
+          entrypoint Org as org {
+            entrypoint repos as repo{
               create endpoint {
                 action {
                   create as repo {}
@@ -223,8 +218,7 @@ describe("compiler errors", () => {
         model Org {}
         model Log {}
 
-        entrypoint Org {
-          identify as org
+        entrypoint Org as org {
           custom endpoint {
             cardinality one
             method POST
@@ -248,8 +242,7 @@ describe("compiler errors", () => {
           model Org {}
           model Log {}
 
-          entrypoint Org {
-            identify as org
+          entrypoint Org as org {
             custom endpoint {
               cardinality many
               method POST
