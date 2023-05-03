@@ -349,7 +349,6 @@ function migratePopulator(populator: AST.Populator): PopulatorSpec {
 }
 
 function migratePopulate(populate: AST.Populate): PopulateSpec {
-  const from = kindFind(populate.atoms, "target")!;
   const setters = kindFilter(populate.atoms, "set").map(migratePopulateSetter);
   const populates = kindFilter(populate.atoms, "populate").map(migratePopulate);
   const repeat = kindFind(populate.atoms, "repeat");
@@ -357,11 +356,11 @@ function migratePopulate(populate: AST.Populate): PopulateSpec {
   const repeatAlias = repeat?.as?.identifier.identifier.text;
 
   return {
-    name: populate.name.text,
+    name: "",
     target: {
-      kind: from.identifier.ref.kind === "model" ? "model" : "relation",
-      identifier: from.identifier.identifier.text,
-      alias: from.as?.identifier.identifier.text,
+      kind: populate.target.ref.kind === "model" ? "model" : "relation",
+      identifier: populate.target.identifier.text,
+      alias: populate.as?.identifier.identifier.text,
     },
     setters,
     populates,

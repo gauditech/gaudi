@@ -423,18 +423,15 @@ export function buildTokens(
     atoms.forEach((a) => match(a).with({ kind: "populate" }, buildPopulate).exhaustive());
   }
 
-  function buildPopulate({ keyword, atoms }: Populate) {
+  function buildPopulate({ keyword, target, as, atoms }: Populate) {
     buildKeyword(keyword);
+    buildIdentifierRef(target);
+    if (as) {
+      buildKeyword(as.keyword);
+      buildIdentifierRef(as.identifier);
+    }
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "target" }, ({ keyword, identifier, as }) => {
-          buildKeyword(keyword);
-          buildIdentifierRef(identifier);
-          if (as) {
-            buildKeyword(as.keyword);
-            buildIdentifierRef(as.identifier);
-          }
-        })
         .with({ kind: "repeat" }, ({ keyword, as, repeatValue }) => {
           buildKeyword(keyword);
           if (as) {

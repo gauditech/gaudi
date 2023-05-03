@@ -781,25 +781,21 @@ export function resolve(projectASTs: ProjectASTs) {
     let currentModel: string | undefined;
     let through: string | undefined;
 
-    const target = kindFind(populate.atoms, "target");
-    if (target) {
-      if (parentModel === null) {
-        resolveModelRef(target.identifier);
-        currentModel =
-          target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
-      } else {
-        const relation = resolveModelAtomRef(target.identifier, parentModel, "relation");
-        if (relation) {
-          through = kindFind(relation.atoms, "through")?.identifier.identifier.text;
-        }
-        currentModel = getTypeModel(target.identifier.type);
+    if (parentModel === null) {
+      resolveModelRef(populate.target);
+      currentModel = populate.target.ref.kind === "model" ? populate.target.ref.model : undefined;
+    } else {
+      const relation = resolveModelAtomRef(populate.target, parentModel, "relation");
+      if (relation) {
+        through = kindFind(relation.atoms, "through")?.identifier.identifier.text;
       }
-      scope.model = currentModel;
-      if (target.as) {
-        target.as.identifier.ref = { kind: "context", contextKind: "populateTarget" };
-        target.as.identifier.type = target.identifier.type;
-        addToScope(scope, target.as.identifier);
-      }
+      currentModel = getTypeModel(populate.target.type);
+    }
+    scope.model = currentModel;
+    if (populate.as) {
+      populate.as.identifier.ref = { kind: "context", contextKind: "populateTarget" };
+      populate.as.identifier.type = populate.target.type;
+      addToScope(scope, populate.as.identifier);
     }
 
     kindFilter(populate.atoms, "repeat").forEach((repeat) => {

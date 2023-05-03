@@ -945,22 +945,15 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: PopulateAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Populate));
-    const name = this.SUBRULE(this.identifier);
+    const target = this.SUBRULE1(this.identifierRef);
+    const as = this.OPTION1(() => {
+      const keyword = getTokenData(this.CONSUME1(L.As));
+      const identifier = this.SUBRULE2(this.identifierRef);
+      return { identifier, keyword };
+    });
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
-        {
-          ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Target));
-            const identifier = this.SUBRULE(this.identifierRef);
-            const as = this.OPTION1(() => {
-              const keyword = getTokenData(this.CONSUME1(L.As));
-              const identifier = this.SUBRULE2(this.identifierRef);
-              return { keyword, identifier };
-            });
-            atoms.push({ kind: "target", identifier, as, keyword });
-          },
-        },
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Repeat));
@@ -988,7 +981,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "populate", name, atoms, keyword };
+    return { kind: "populate", target, as, atoms, keyword };
   });
 
   repeatValue = this.RULE("repeat", (): RepeatValue => {

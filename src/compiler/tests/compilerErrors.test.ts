@@ -402,9 +402,8 @@ describe("compiler errors", () => {
         }
 
         populator Dev {
-          populate Orgs {
+          populate Org as myvar {
             repeat as myvar 10
-            target Org as myvar
             set name "myname"
           }
         }
@@ -422,12 +421,10 @@ describe("compiler errors", () => {
         }
 
         populator Dev {
-          populate Orgs {
-            target Org as org
+          populate Org as org {
             repeat as iter 10
 
-            populate Repos {
-              target repos as repo
+            populate repos as repo {
               repeat as iter 5
             }
           }
@@ -444,8 +441,7 @@ describe("compiler errors", () => {
         }
 
         populator DevData {
-          populate Orgs {
-            target Org as org
+          populate Org as org {
 
             set name "test name"
             // missing field setters for "description" and "active" fields

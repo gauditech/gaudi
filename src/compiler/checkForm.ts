@@ -403,8 +403,7 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkPopulate(populate: Populate) {
-    containsAtoms(populate, ["target"]);
-    noDuplicateAtoms(populate, ["target", "repeat"]);
+    noDuplicateAtoms(populate, ["repeat"]);
     const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
       if (set.kind === "hook") checkHook(set);
       return target.identifier;

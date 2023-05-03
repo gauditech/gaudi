@@ -251,16 +251,11 @@ export type Populator = {
 export type Populate = {
   kind: "populate";
   keyword: TokenData;
-  name: Identifier;
+  target: IdentifierRef;
+  as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: PopulateAtom[];
 };
 export type PopulateAtom =
-  | {
-      kind: "target";
-      keyword: TokenData;
-      identifier: IdentifierRef;
-      as?: { keyword: TokenData; identifier: IdentifierRef };
-    }
   | {
       kind: "repeat";
       keyword: TokenData;
