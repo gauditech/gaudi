@@ -24,6 +24,7 @@ import {
   Populator,
   ProjectASTs,
   Query,
+  QueryView,
   Reference,
   Relation,
   Runtime,
@@ -98,6 +99,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     document.forEach((a) =>
       match(a)
         .with({ kind: "model" }, checkModel)
+        .with({ kind: "queryView" }, () => checkQuery)
         .with({ kind: "entrypoint" }, checkEntrypoint)
         .with({ kind: "populator" }, checkPopulator)
         .with({ kind: "runtime" }, () => undefined) // runtime is checked first
@@ -152,9 +154,12 @@ export function checkForm(projectASTs: ProjectASTs) {
     noDuplicateAtoms(relation, ["from", "through"]);
   }
 
-  function checkQuery(query: Query | AnonymousQuery) {
-    if (query.kind === "query") {
+  function checkQuery(query: Query | AnonymousQuery | QueryView) {
+    if (query.kind === "query" || query.kind === "queryView") {
       containsAtoms(query, ["from"]);
+    }
+    if (query.kind === "queryView") {
+      throw new Error("Queryview found!");
     }
     noDuplicateAtoms(query, [
       "from",

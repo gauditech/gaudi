@@ -64,6 +64,7 @@ export const Repeater = createWeakKeyword("repeater");
 export const Relation = createWeakKeyword("relation");
 export const Reference = createWeakKeyword("reference");
 export const Query = createWeakKeyword("query");
+// export const QueryView = createWeakKeyword("view");
 export const POST = createWeakKeyword("POST");
 export const Populator = createWeakKeyword("populator");
 export const Populate = createWeakKeyword("populate");

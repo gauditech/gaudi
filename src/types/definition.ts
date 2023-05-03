@@ -8,6 +8,7 @@ export type Definition = {
   runtimes: ExecutionRuntimeDef[];
   authenticator: AuthenticatorDef | undefined;
   generators: GeneratorDef[];
+  views?: QueryDef[];
 };
 
 export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
@@ -284,6 +285,7 @@ export type CustomManyEndpointDef = {
 };
 
 export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
+// | SelectExpressionItem;
 
 export type SelectFieldItem = {
   kind: "field";
@@ -301,6 +303,12 @@ export type SelectComputedItem = {
   alias: string;
   namePath: string[];
   // nullable: boolean
+};
+
+export type SelectExpressionItem = {
+  kind: "expression";
+  alias: string;
+  expr: TypedExprDef;
 };
 
 export type SelectAggregateItem = {

@@ -59,6 +59,7 @@ import {
   ProjectASTs,
   Query,
   QueryAtom,
+  QueryView,
   Reference,
   ReferenceAtom,
   Relation,
@@ -103,6 +104,7 @@ class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => document.push(this.SUBRULE(this.runtime)) },
         { ALT: () => document.push(this.SUBRULE(this.authenticator)) },
         { ALT: () => document.push(this.SUBRULE(this.generator)) },
+        { ALT: () => document.push(this.SUBRULE(this.queryView)) },
       ]);
     });
 
@@ -1186,6 +1188,13 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = getTokenData(this.CONSUME(L.Query));
     const atoms = this.SUBRULE(this.queryAtoms);
     return { kind: "anonymousQuery", atoms, type: unknownType, keyword };
+  });
+
+  queryView = this.RULE("queryView", (): QueryView => {
+    const keyword = getTokenData(this.CONSUME(L.Query));
+    const name = this.SUBRULE1(this.identifier);
+    const atoms = this.SUBRULE(this.queryAtoms);
+    return { kind: "queryView", name, atoms, type: unknownType, keyword };
   });
 
   select = this.RULE("select", (): Select => {

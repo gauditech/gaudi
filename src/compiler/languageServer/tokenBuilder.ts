@@ -29,6 +29,7 @@ import {
   Populate,
   Populator,
   Query,
+  QueryView,
   Reference,
   Relation,
   Repeater,
@@ -91,6 +92,7 @@ export function buildTokens(
         .with({ kind: "runtime" }, buildRuntime)
         .with({ kind: "authenticator" }, buildAuthenticator)
         .with({ kind: "generator" }, buildGenerator)
+        .with({ kind: "queryView" }, buildQuery)
         .exhaustive();
     });
   }
@@ -165,7 +167,7 @@ export function buildTokens(
     );
   }
 
-  function buildQuery(query: Query | AnonymousQuery) {
+  function buildQuery(query: Query | AnonymousQuery | QueryView) {
     buildKeyword(query.keyword);
     if (query.kind === "query") push(query.name.token, TokenTypes.property);
     query.atoms.forEach((a) =>

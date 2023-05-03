@@ -5,7 +5,6 @@ import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureExists } from "@src/common/utils";
-import { PrimitiveType } from "@src/compiler/ast/type";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
@@ -51,6 +50,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Specification {
     runtimes: kindFilter(document, "runtime").map(migrateRuntime),
     authenticator: authenticator ? migrateAuthenticator(authenticator) : undefined,
     generators: kindFilter(document, "generator").map(migrateGenerator),
+    views: kindFilter(document, "queryView").map(migrateQuery),
   };
 
   return specification;
@@ -126,7 +126,7 @@ function migrateRelation(relation: AST.Relation): RelationSpec {
   };
 }
 
-function migrateQuery(query: AST.Query | AST.AnonymousQuery): QuerySpec {
+function migrateQuery(query: AST.Query | AST.AnonymousQuery | AST.QueryView): QuerySpec {
   const from = kindFind(query.atoms, "from");
   const filter = kindFind(query.atoms, "filter");
   const orderBy = kindFind(query.atoms, "orderBy")?.orderBy.map((a) => ({

@@ -1,0 +1,17 @@
+model Org {
+  field name { type string }
+  relation repos { from Repo, through org }
+}
+
+model Repo {
+  field name { type string }
+  reference org { to Org }
+}
+
+query OrgsWithRepos {
+  from Org,
+  filter {
+    count(repos) > 0
+  },
+  select { id, name }
+}

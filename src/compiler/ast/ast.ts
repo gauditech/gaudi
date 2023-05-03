@@ -5,7 +5,14 @@ export type ProjectASTs = {
   document: GlobalAtom[];
 };
 
-export type GlobalAtom = Model | Entrypoint | Populator | Runtime | Authenticator | Generator;
+export type GlobalAtom =
+  | Model
+  | Entrypoint
+  | Populator
+  | Runtime
+  | Authenticator
+  | Generator
+  | QueryView;
 
 export type Model = {
   kind: "model";
@@ -342,6 +349,14 @@ export type ActionHook = Hook<false, false>;
 
 export type AnonymousQuery = {
   kind: "anonymousQuery";
+  keyword: TokenData;
+  atoms: QueryAtom[];
+  type: Type;
+};
+
+export type QueryView = {
+  kind: "queryView";
+  name: Identifier;
   keyword: TokenData;
   atoms: QueryAtom[];
   type: Type;

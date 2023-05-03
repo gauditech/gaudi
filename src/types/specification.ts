@@ -33,6 +33,7 @@ export type Specification = {
   runtimes: ExecutionRuntimeSpec[];
   authenticator: AuthenticatorSpec | undefined;
   generators: GeneratorSpec[];
+  views?: QuerySpec[];
 };
 
 export type ModelSpec = {

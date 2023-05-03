@@ -6,12 +6,47 @@ import { nameToSelectable, queryToString } from "./stringify";
 import { compileToOldSpec, compose } from "@src/index";
 
 describe("Aggregates to queries", () => {
+  it("new aggregates", () => {
+    const bp = `
+    model Org {
+      field name { type string }
+      relation repos { from Repo, through org }
+      query public_repos { from repos, filter { is_public is true } }
+      computed public_repo_count { count(public_repos) }
+    }
+    model Repo {
+      reference org { to Org }
+      field name { type string }
+      field is_public { type boolean }
+    }
+
+    view MyOrgs {
+      from Org,
+      filter { count(repos) - 2 * public_repo_count > 0 },
+      select {
+        id,
+        name,
+        public_repos_count,
+        total_repos: count(repos)
+      }
+    }
+
+    `;
+    const def = compose(compileToOldSpec(bp));
+    const q = queryFromParts(
+      def,
+      "orgs",
+      ["Org"],
+      undefined,
+      ["id", "name", "repo_count"].map((name) => nameToSelectable(def, ["Org", name]))
+    );
+  });
   it("composes a query with simple aggregate through relation", () => {
     const bp = `
     model Org {
       field name { type string }
       relation repos { from Repo, through org }
-      query repo_count { from repos, count }
+      computed repo_count { count(repos) }
     }
     model Repo {
       reference org { to Org }
@@ -37,7 +72,7 @@ describe("Aggregates to queries", () => {
       relation repos { from Repo, through org }
       query all_repos { from repos }
       query all_repos_nested { from all_repos }
-      query repo_count { from all_repos_nested, count }
+      computed repo_count { count(all_repos_nested) }
     }
     model Repo {
       reference org { to Org }
@@ -60,7 +95,7 @@ describe("Aggregates to queries", () => {
     model Org {
       field name { type string }
       relation repos { from Repo, through org }
-      query total_issues { from repos.issues, count }
+      computed total_issues { count(repos.issues) }
     }
     model Repo {
       reference org { to Org }
@@ -87,7 +122,8 @@ describe("Aggregates to queries", () => {
     model Org {
       field name { type string }
       relation repos { from Repo, through org }
-      query total_issues { from repos.issues, filter { comment_count > 0 }, count }
+      query issues_with_comments { from repos.issues, filter { comment_count > 0 } }
+      computed total_issues { count(issues_with_comments) }
     }
     model Repo {
       reference org { to Org }
@@ -98,7 +134,7 @@ describe("Aggregates to queries", () => {
       reference repo { to Repo }
       field name { type string }
       relation comments { from Comment, through issue }
-      query comment_count { from comments, count }
+      computed comment_count { count(comments) }
     }
     model Comment {
       reference issue { to Issue }
@@ -221,7 +257,7 @@ describe("Expressions to queries", () => {
       reference org { to Org }
       field name { type string }
       relation issues { from Issue, through repo }
-      query issue_count { from issues, count }
+      computed issue_count { count(issues) }
     }
     model Issue {
       reference repo { to Repo }

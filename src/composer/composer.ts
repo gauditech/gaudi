@@ -19,6 +19,7 @@ export function compose(input: Specification): Definition {
     runtimes: [],
     authenticator: undefined,
     generators: [],
+    views: [],
   };
 
   // runtimes can be composed first because they don't have external deps
@@ -28,6 +29,7 @@ export function compose(input: Specification): Definition {
   composeEntrypoints(def, input.entrypoints);
   composePopulators(def, input.populators);
   composeGenerators(def, input.generators);
+  composeQueryViews(def, input.views ?? []);
 
   return def;
 }

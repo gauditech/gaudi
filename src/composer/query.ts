@@ -27,6 +27,10 @@ import {
 } from "@src/types/definition";
 import { ExpSpec, QuerySpec } from "@src/types/specification";
 
+export function composeQueryViews(def: Definition, qvspecs: QuerySpec[]): QueryDef[] {
+  return [];
+}
+
 export function composeQuery(
   def: Definition,
   mdef: ModelDef,

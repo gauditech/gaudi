@@ -223,6 +223,7 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "runtime" }, () => undefined)
         .with({ kind: "authenticator" }, () => undefined)
         .with({ kind: "generator" }, () => undefined)
+        .with({ kind: "queryView" }, () => undefined)
         .exhaustive()
     );
   }
@@ -1007,7 +1008,7 @@ export function resolve(projectASTs: ProjectASTs) {
             );
           }
         } else {
-          errors.push(new CompilerError(function_.name.token, ErrorCode.UnknownFunction));
+          // errors.push(new CompilerError(function_.name.token, ErrorCode.UnknownFunction));
         }
       })
       .exhaustive();
