@@ -21,7 +21,7 @@ function getCode(): string {
       reference authUser { to ${authUserModelName} }
     }
 
-    entrypoint ${authUserModelName} {
+    entrypoint ${authUserModelName} as authUser {
 
       // login
       custom endpoint {

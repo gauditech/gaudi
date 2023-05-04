@@ -66,11 +66,11 @@ function processEntrypoint(
   const name = spec.name;
   const targetModel = getRef.model(def, target.retType);
 
-  const authorizeContext = getInitialContext(
-    def,
-    [...parents.map(({ target }) => target), target],
-    "create"
-  );
+  // fixme is parents already filtered based on cardinality?
+  const authorizeContext = getInitialContext(def, [
+    ..._.initial(parents).map(({ target }) => target),
+    target,
+  ]);
   const authorizeExpr = spec.authorize
     ? composeExpression(def, spec.authorize, [], authorizeContext)
     : undefined;
@@ -185,13 +185,28 @@ function calculateIdentifyWith(
   }
 }
 
+function getEndpointTargets(parents: TargetContext[], endpointType: EndpointType): TargetDef[] {
+  switch (endpointType) {
+    case "create":
+    case "custom-many":
+    case "list": {
+      return _.initial(parents).map((p) => p.target);
+    }
+    case "get":
+    case "update":
+    case "delete":
+    case "custom-one": {
+      return parents.map((p) => p.target);
+    }
+  }
+}
+
 function processEndpoints(
   def: Definition,
   parents: TargetContext[],
   entrySpec: EntrypointSpec
 ): EndpointDef[] {
   const context = _.last(parents)!;
-  const targets = parents.map((p) => p.target);
   const parentAuthorizes = parents.map((p) => p.authorize.expr);
   const parentAuthorizeDeps = parents.flatMap((p) => p.authorize.deps);
 
@@ -203,12 +218,13 @@ function processEndpoints(
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const endpointType = mapEndpointSpecToDefType(endSpec);
+    const targets = getEndpointTargets(parents, endpointType);
 
     const rawActions = composeActionBlock(def, endSpec.actions ?? [], targets, endpointType);
     const actionDeps = collectActionDeps(def, rawActions);
 
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
-    const authorizeContext = getInitialContext(def, targets, endpointType);
+    const authorizeContext = getInitialContext(def, targets);
     const currentAuthorize = endSpec.authorize
       ? composeExpression(def, endSpec.authorize, [], authorizeContext)
       : undefined;
@@ -435,7 +451,7 @@ export function processFilter(
   fromPath: string[],
   filter: ExpSpec | undefined
 ): TypedExprDef | undefined {
-  const context = getInitialContext(def, targets, "list");
+  const context = getInitialContext(def, _.initial(targets));
 
   return filter && composeExpression(def, filter, fromPath, context);
 }

@@ -72,7 +72,7 @@ export function composeActionBlock(
     ensureEqual(specs.length, 0, `${endpointKind} endpoint doesn't support action block`);
   }
 
-  const targetsCtx = getInitialContext(def, targets, endpointKind);
+  const targetsCtx = getInitialContext(def, targets);
 
   /**
    * Ensure no overlap between target context and iterator context.
@@ -195,50 +195,26 @@ export function composeActionBlock(
 }
 
 /**
- * Calculates initial context variables available in the endpoint, based on `TargetDef`s and
- * endpoint kind. For example, `create` endpoints don't see their own target in the context
- * until it's created by an action, while `update` sees is immediately, as it already exists
- * in the database.
+ * Calculates initial context variables available in the endpoint.
  */
-export function getInitialContext(
-  def: Definition,
-  targets: TargetDef[],
-  endpointKind: EndpointType
-): VarContext {
-  const parentContext: VarContext = _.fromPairs(
-    _.initial(targets).map((t): [string, VarContext[string]] => [
+export function getInitialContext(def: Definition, targets: TargetDef[]): VarContext {
+  const context: VarContext = _.fromPairs(
+    targets.map((t): [string, VarContext[string]] => [
       t.alias,
       { kind: "record", modelName: t.retType },
     ])
   );
 
   if (def.authenticator) {
-    parentContext["@auth"] = {
+    context["@auth"] = {
       kind: "record",
       modelName: def.authenticator.authUserModel.name,
     };
-    parentContext["@requestAuthToken"] = {
+    context["@requestAuthToken"] = {
       kind: "requestAuthToken",
     };
   }
-
-  switch (endpointKind) {
-    case "create":
-    case "list":
-    case "custom-many": {
-      return parentContext;
-    }
-    case "update":
-    case "delete":
-    case "get":
-    case "custom-one": {
-      const thisTarget = _.last(targets)!;
-      return {
-        ...parentContext,
-        [thisTarget.alias]: { kind: "record", modelName: thisTarget.retType },
-      };
-    }
-  }
+  return context;
 }
 
 function composeDeleteAction(
