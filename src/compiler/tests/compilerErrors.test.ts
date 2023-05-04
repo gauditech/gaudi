@@ -63,13 +63,16 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        entrypoint Org {
-          update endpoint {
-            action {
-              create {}
+        api Client {
+          entrypoint Org {
+            update endpoint {
+              action {
+                create {}
+              }
             }
           }
-        }`;
+        }
+        `;
       expectError(
         bp,
         `When overriding default action, its kind must match with current endpoint kind. "create" is not a valid default action override in "update" endpoint`
@@ -79,13 +82,15 @@ describe("compiler errors", () => {
       const bp = `
         model Org { relation repos { from Repo, through org }}
         model Repo { reference org { to Org }}
-        entrypoint Org as org {
-          entrypoint repos {
-            create endpoint {
-              action {
-                create {
-                  set org_id 1
-                  set org org
+        api Client {
+          entrypoint Org as org {
+            entrypoint repos {
+              create endpoint {
+                action {
+                  create {
+                    set org_id 1
+                    set org org
+                  }
                 }
               }
             }
@@ -102,16 +107,19 @@ describe("compiler errors", () => {
         model OrgExtra {
           relation org { from Org, through extras }
         }
-        entrypoint Org as org {
-          update endpoint {
-            action {
-              update org as ox {
-                input { extras_id }
-                reference extras through id
+        api Client {
+          entrypoint Org as org {
+            update endpoint {
+              action {
+                update org as ox {
+                  input { extras_id }
+                  reference extras through id
+                }
               }
             }
           }
-        }`;
+        }
+        `;
       expectError(bp, `Field used multiple times in a single action`);
     });
 
@@ -120,12 +128,14 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        entrypoint Org as org {
-          update endpoint {
-            action {
-              update org as ox {
-                input { name }
-                deny { name }
+        api Client {
+          entrypoint Org as org {
+            update endpoint {
+              action {
+                update org as ox {
+                  input { name }
+                  deny { name }
+                }
               }
             }
           }
@@ -139,11 +149,13 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        entrypoint Org {
-          update endpoint {
-            action {
-              update {}
-              create Org {}
+        api Client {
+          entrypoint Org {
+            update endpoint {
+              action {
+                update {}
+                create Org {}
+              }
             }
           }
         }
@@ -157,12 +169,14 @@ describe("compiler errors", () => {
         const bp = `
           model Org { relation repos { from Repo, through org }}
           model Repo { reference org { to Org }}
-          entrypoint Org as org {
-            entrypoint repos as repo{
-              create endpoint {
-                action {
-                  create as repo {}
-                  create Repo as ${name} {}
+          api Client {
+            entrypoint Org as org {
+              entrypoint repos as repo{
+                create endpoint {
+                  action {
+                    create as repo {}
+                    create Repo as ${name} {}
+                  }
                 }
               }
             }
@@ -178,15 +192,17 @@ describe("compiler errors", () => {
           model Org { field name { type string } }
           model Log {}
 
-          entrypoint Org {
-            custom endpoint {
-              // in each iteration skip one property
-              ${property === "cardinality" ? "" : "cardinality many"}
-              ${property === "method" ? "" : "method POST"}
-              ${property === "path" ? "" : 'path "somePath"'}
+          api Client {
+            entrypoint Org {
+              custom endpoint {
+                // in each iteration skip one property
+                ${property === "cardinality" ? "" : "cardinality many"}
+                ${property === "method" ? "" : "method POST"}
+                ${property === "path" ? "" : 'path "somePath"'}
 
-              action {
-                create Log as log {}
+                action {
+                  create Log as log {}
+                }
               }
             }
           }
@@ -198,12 +214,14 @@ describe("compiler errors", () => {
           const bp = `
             model Org {}
 
-            entrypoint Org {
-              ${epType} endpoint {
-                // show one property in each iteration
-                ${property === "cardinality" ? "cardinality many" : ""}
-                ${property === "method" ? "method POST" : ""}
-                ${property === "path" ? 'path "somePath"' : ""}
+            api Client {
+              entrypoint Org {
+                ${epType} endpoint {
+                  // show one property in each iteration
+                  ${property === "cardinality" ? "cardinality many" : ""}
+                  ${property === "method" ? "method POST" : ""}
+                  ${property === "path" ? 'path "somePath"' : ""}
+                }
               }
             }
             `;
@@ -218,14 +236,16 @@ describe("compiler errors", () => {
         model Org {}
         model Log {}
 
-        entrypoint Org as org {
-          custom endpoint {
-            cardinality one
-            method POST
-            path "somePath"
+        api Client {
+          entrypoint Org as org {
+            custom endpoint {
+              cardinality one
+              method POST
+              path "somePath"
 
-            action {
-              create org as org2 {}
+              action {
+                create org as org2 {}
+              }
             }
           }
         }
@@ -242,14 +262,16 @@ describe("compiler errors", () => {
           model Org {}
           model Log {}
 
-          entrypoint Org as org {
-            custom endpoint {
-              cardinality many
-              method POST
-              path "somePath"
+          api Client {
+            entrypoint Org as org {
+              custom endpoint {
+                cardinality many
+                method POST
+                path "somePath"
 
-              action {
-                ${action} {}
+                action {
+                  ${action} {}
+                }
               }
             }
           }
@@ -261,18 +283,20 @@ describe("compiler errors", () => {
       const bp = `
         model Org {}
 
-        entrypoint Org {
+        api Client {
+          entrypoint Org {
 
-          custom endpoint {
-            cardinality many
-            method POST
-            path "someDuplicatePath"
-          }
+            custom endpoint {
+              cardinality many
+              method POST
+              path "someDuplicatePath"
+            }
 
-          custom endpoint {
-            cardinality many
-            method POST
-            path "someDuplicatePath"
+            custom endpoint {
+              cardinality many
+              method POST
+              path "someDuplicatePath"
+            }
           }
         }
         `;
@@ -291,15 +315,17 @@ describe("compiler errors", () => {
           reference org { to Org }
         }
 
-        entrypoint Org {
+        api Client {
+          entrypoint Org {
 
-          entrypoint repos {
-          }
+            entrypoint repos {
+            }
 
-          custom endpoint {
-            cardinality one
-            method POST
-            path "repos"
+            custom endpoint {
+              cardinality one
+              method POST
+              path "repos"
+            }
           }
         }
         `;
@@ -459,13 +485,15 @@ describe("compiler errors", () => {
           source path "some/path/to/file"
         }
 
-        entrypoint Org {
-          create endpoint {
-            action {
-              create {
-                set name hook {
-                  runtime InvalidMyRuntime
-                  source randomSlug from "hooks.js"
+        api Client {
+          entrypoint Org {
+            create endpoint {
+              action {
+                create {
+                  set name hook {
+                    runtime InvalidMyRuntime
+                    source randomSlug from "hooks.js"
+                  }
                 }
               }
             }
@@ -480,9 +508,11 @@ describe("compiler errors", () => {
     it("fail for multiple endpoints of the same type", () => {
       const bp = `
         model Org {}
-        entrypoint Org {
-          create endpoint {}
-          create endpoint {}
+        api Client {
+          entrypoint Org {
+            create endpoint {}
+            create endpoint {}
+          }
         }
         `;
       expectError(bp, `Duplicate "create" endpoint definition`);
@@ -495,26 +525,28 @@ describe("compiler errors", () => {
 
         model Org {}
 
-        entrypoint Org {
+        api Client {
+          entrypoint Org {
 
-          custom endpoint {
-            path "somePath1"
-            method POST
-            cardinality many
+            custom endpoint {
+              path "somePath1"
+              method POST
+              cardinality many
 
-            action {
-              execute {
-                responds
-                hook {
-                  runtime MyRuntime
-                  source testFn from "t/h/p"
+              action {
+                execute {
+                  responds
+                  hook {
+                    runtime MyRuntime
+                    source testFn from "t/h/p"
+                  }
                 }
-              }
-              execute {
-                responds
-                hook {
-                  runtime MyRuntime
-                  source testFn from "t/h/p"
+                execute {
+                  responds
+                  hook {
+                    runtime MyRuntime
+                    source testFn from "t/h/p"
+                  }
                 }
               }
             }
@@ -531,15 +563,17 @@ describe("compiler errors", () => {
 
         model Org {}
 
-        entrypoint Org {
+        api Client {
+          entrypoint Org {
 
-          create endpoint {
-            action {
-              execute {
-                responds
-                hook {
-                  runtime MyRuntime
-                  source testFn from "t/h/p"
+            create endpoint {
+              action {
+                execute {
+                  responds
+                  hook {
+                    runtime MyRuntime
+                    source testFn from "t/h/p"
+                  }
                 }
               }
             }
@@ -552,16 +586,18 @@ describe("compiler errors", () => {
       const bp = `
         model Org {}
 
-        entrypoint Org {
+        api Client {
+          entrypoint Org {
 
-          custom endpoint {
-            path "somePath"
-            method POST
-            cardinality many
+            custom endpoint {
+              path "somePath"
+              method POST
+              cardinality many
 
-            action {
-              create {
-                responds
+              action {
+                create {
+                  responds
+                }
               }
             }
           }

@@ -13,23 +13,25 @@ describe("openAPI", () => {
       reference org { to Org }
       field name { type string }
     }
-    entrypoint Org {
-      identify { through slug }
-
-      get endpoint {}
-      list endpoint { pageable }
-      create endpoint {}
-      update endpoint {}
-      delete endpoint {}
-
-      entrypoint repos {
-        response { id, name }
+    api Client {
+      entrypoint Org {
+        identify { through slug }
 
         get endpoint {}
         list endpoint { pageable }
         create endpoint {}
         update endpoint {}
         delete endpoint {}
+
+        entrypoint repos {
+          response { id, name }
+
+          get endpoint {}
+          list endpoint { pageable }
+          create endpoint {}
+          update endpoint {}
+          delete endpoint {}
+        }
       }
     }
     `;

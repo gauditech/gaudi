@@ -61,18 +61,20 @@ describe("compose action queries", () => {
       model Repo {
       }
 
-      entrypoint Org {
+      api Client {
+        entrypoint Org {
 
-        // test in native endpoint
-        update endpoint {
-          action {
-            // target
-            fetch as cOrg {
-              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-            }
-            // other model
-            fetch as cRepo {
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+          // test in native endpoint
+          update endpoint {
+            action {
+              // target
+              fetch as cOrg {
+                query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
+              }
+              // other model
+              fetch as cRepo {
+                query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+              }
             }
           }
         }
@@ -93,22 +95,24 @@ describe("compose action queries", () => {
       model Repo {
       }
 
-      entrypoint Org {
+      api Client {
+        entrypoint Org {
 
-        // test in custom endpoint
-        custom endpoint {
-          path "customPath"
-          method POST
-          cardinality one
+          // test in custom endpoint
+          custom endpoint {
+            path "customPath"
+            method POST
+            cardinality one
 
-          action {
-            // target
-            fetch as cOrg {
-              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-            }
-            // other model
-            fetch as cRepo {
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+            action {
+              // target
+              fetch as cOrg {
+                query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
+              }
+              // other model
+              fetch as cRepo {
+                query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+              }
             }
           }
         }

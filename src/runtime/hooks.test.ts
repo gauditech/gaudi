@@ -85,21 +85,23 @@ describe("hooks", () => {
         field avg { type integer }
       }
 
-      entrypoint Result {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                runtime TextRuntime
-                arg value "First Last"
-                arg prefix "Mr. "
-                source prefix from "hooks2.js"
-              }
-              set avg hook {
-                // thisi is from the default runtime
-                arg x 100
-                arg y 20
-                source prefix from "hooks.js"
+      api Client {
+        entrypoint Result {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  runtime TextRuntime
+                  arg value "First Last"
+                  arg prefix "Mr. "
+                  source prefix from "hooks2.js"
+                }
+                set avg hook {
+                  // thisi is from the default runtime
+                  arg x 100
+                  arg y 20
+                  source prefix from "hooks.js"
+                }
               }
             }
           }

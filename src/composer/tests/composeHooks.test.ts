@@ -25,13 +25,15 @@ describe("compose hooks", () => {
         }
       }
 
-      entrypoint Org {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                runtime MyRuntime
-                source someHook from "hooks.js"
+      api Client {
+        entrypoint Org {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  runtime MyRuntime
+                  source someHook from "hooks.js"
+                }
               }
             }
           }
@@ -66,12 +68,14 @@ describe("compose hooks", () => {
         }
       }
 
-      entrypoint Org {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                inline "'test name'"
+      api Client {
+        entrypoint Org {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  inline "'test name'"
+                }
               }
             }
           }
@@ -97,12 +101,14 @@ describe("compose hooks", () => {
 
       model Org { field name { type string } }
 
-      entrypoint Org {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                source randomSlug from "hooks.js"
+      api Client {
+        entrypoint Org {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  source randomSlug from "hooks.js"
+                }
               }
             }
           }
@@ -126,25 +132,27 @@ describe("compose hooks", () => {
         field name { type string }
       }
 
-      entrypoint Org as org {
+      api Client {
+        entrypoint Org as org {
 
-        custom endpoint {
-          path "somePath"
-          method POST
-          cardinality one
+          custom endpoint {
+            path "somePath"
+            method POST
+            cardinality one
 
-          action {
-            execute {
-              // test action inputs
-              virtual input termsOfUse { type boolean }
+            action {
+              execute {
+                // test action inputs
+                virtual input termsOfUse { type boolean }
 
-              hook {
-                // test hook args
-                arg name org.name
-                arg terms termsOfUse
+                hook {
+                  // test hook args
+                  arg name org.name
+                  arg terms termsOfUse
 
-                runtime MyRuntime
-                source someHook from "hooks.js"
+                  runtime MyRuntime
+                  source someHook from "hooks.js"
+                }
               }
             }
           }
@@ -160,25 +168,27 @@ describe("compose hooks", () => {
     const bp = `
       model Org { field name { type string} }
 
-      entrypoint Org {
+      api Client {
+        entrypoint Org {
 
-        // login
-        custom endpoint {
-          path "somePath"
-          method POST
-          cardinality one
+          // login
+          custom endpoint {
+            path "somePath"
+            method POST
+            cardinality one
 
-          action {
-            execute {
+            action {
+              execute {
 
-              virtual input prop { type string }
+                virtual input prop { type string }
 
-              hook {
-                // action arg hook
-                arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id
+                hook {
+                  // action arg hook
+                  arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id
 
-                runtime @GAUDI_INTERNAL
-                source login from "hooks/auth"
+                  runtime @GAUDI_INTERNAL
+                  source login from "hooks/auth"
+                }
               }
             }
           }

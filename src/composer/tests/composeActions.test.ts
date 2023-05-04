@@ -17,16 +17,18 @@ describe("compose actions", () => {
     }
     model OrgOwner { reference org { to Org } }
 
-    entrypoint Org as org {
-      create endpoint {
-        action {
-          create OrgExtra as e {}
-          create as org {
-            set is_new true
-            set extras e
-          }
-          create OrgOwner as oo {
-            set org_id org.id
+    api Client {
+      entrypoint Org as org {
+        create endpoint {
+          action {
+            create OrgExtra as e {}
+            create as org {
+              set is_new true
+              set extras e
+            }
+            create OrgOwner as oo {
+              set org_id org.id
+            }
           }
         }
       }
@@ -47,12 +49,14 @@ describe("compose actions", () => {
     model OrgExtra {
       relation org { from Org, through extras }
     }
-    entrypoint Org as org {
-      update endpoint {
-        action {
-          update org as ox {
-            set name "new name"
-            deny { uuid }
+    api Client {
+      entrypoint Org as org {
+        update endpoint {
+          action {
+            update org as ox {
+              set name "new name"
+              deny { uuid }
+            }
           }
         }
       }
@@ -68,12 +72,14 @@ describe("compose actions", () => {
       field name2 { type string }
       field name3 { type string }
     }
-    entrypoint Org {
-      create endpoint {
-        action {
-          create {
-            set name3 name2
-            set name2 name
+    api Client {
+      entrypoint Org {
+        create endpoint {
+          action {
+            create {
+              set name3 name2
+              set name2 name
+            }
           }
         }
       }
@@ -93,9 +99,11 @@ describe("compose actions", () => {
       reference org { to Org }
       field name { type string }
     }
-    entrypoint Org as myorg {
-      entrypoint repos as myrepo {
-        create endpoint {}
+    api Client {
+      entrypoint Org as myorg {
+        entrypoint repos as myrepo {
+          create endpoint {}
+        }
       }
     }
     `;
@@ -110,11 +118,13 @@ describe("compose actions", () => {
     model Repo { reference org { to Org } field name { type string } }
     model OrgLog { reference org { to Org } }
 
-    entrypoint Repo as repo {
-      create endpoint {
-        action {
-          create as repo {}
-          create repo.org.logs as log {}
+    api Client {
+      entrypoint Repo as repo {
+        create endpoint {
+          action {
+            create as repo {}
+            create repo.org.logs as log {}
+          }
         }
       }
     }
@@ -132,11 +142,13 @@ describe("compose actions", () => {
     model Repo { reference org { to Org } relation issues { from Issue, through repo } }
     model Issue { reference repo { to Repo } }
 
-    entrypoint Issue as issue {
-      update endpoint {
-        action {
-          update {}
-          update issue.repo.org as org {}
+    api Client {
+      entrypoint Issue as issue {
+        update endpoint {
+          action {
+            update {}
+            update issue.repo.org as org {}
+          }
         }
       }
     }
@@ -157,13 +169,15 @@ describe("compose actions", () => {
       field name { type string }
       relation org { from Org, through extras }
     }
-    entrypoint Org as org {
-      update endpoint {
-        action {
-          update org as ox {
-            set name "new name"
-            input { description { optional } }
-            reference extras through name
+    api Client {
+      entrypoint Org as org {
+        update endpoint {
+          action {
+            update org as ox {
+              set name "new name"
+              input { description { optional } }
+              reference extras through name
+            }
           }
         }
       }
@@ -179,13 +193,15 @@ describe("compose actions", () => {
       field description { type string }
       field descLength { type integer }
     }
-    entrypoint Org as org {
-      create endpoint {
-        action {
-          create {
-            set name "new name"
-            set description name + " is great"
-            set descLength length(description) + 1
+    api Client {
+      entrypoint Org as org {
+        create endpoint {
+          action {
+            create {
+              set name "new name"
+              set description name + " is great"
+              set descLength length(description) + 1
+            }
           }
         }
       }
@@ -198,12 +214,14 @@ describe("compose actions", () => {
       const bp = `
     model Org { field name { type string } }
 
-    entrypoint Org as org {
-      create endpoint {
-        action {
-          create as org {
-            virtual input iname { type string, validate { min 4 } }
-            set name "Mr/Mrs " + iname
+    api Client {
+      entrypoint Org as org {
+        create endpoint {
+          action {
+            create as org {
+              virtual input iname { type string, validate { min 4 } }
+              set name "Mr/Mrs " + iname
+            }
           }
         }
       }
@@ -220,8 +238,10 @@ describe("compose actions", () => {
     model Org {
       field name { type string }
     }
-    entrypoint Org as org {
-      update endpoint {}
+    api Client {
+      entrypoint Org as org {
+        update endpoint {}
+      }
     }
     `;
       const def = compose(compileToOldSpec(bp));
@@ -240,44 +260,46 @@ describe("compose actions", () => {
     model Org { field name { type string } }
     model Log {}
 
-    entrypoint Org as org {
+    api Client {
+      entrypoint Org as org {
 
-      custom endpoint {
-        cardinality one
-        method GET
-        path "customGet"
-      }
-      custom endpoint {
-        cardinality one
-        method PATCH
-        path "customUpdate"
-
-        action {
-          update org as newOrg {}
+        custom endpoint {
+          cardinality one
+          method GET
+          path "customGet"
         }
-      }
-      custom endpoint {
-        cardinality one
-        method DELETE
-        path "customDelete"
+        custom endpoint {
+          cardinality one
+          method PATCH
+          path "customUpdate"
 
-        action {
-          delete org {}
+          action {
+            update org as newOrg {}
+          }
         }
-      }
+        custom endpoint {
+          cardinality one
+          method DELETE
+          path "customDelete"
 
-      custom endpoint {
-        cardinality many
-        method GET
-        path "customList"
-      }
-      custom endpoint {
-        cardinality many
-        method POST
-        path "customCreate"
+          action {
+            delete org {}
+          }
+        }
 
-        action {
-          create Org as org {}
+        custom endpoint {
+          cardinality many
+          method GET
+          path "customList"
+        }
+        custom endpoint {
+          cardinality many
+          method POST
+          path "customCreate"
+
+          action {
+            create Org as org {}
+          }
         }
       }
     }

@@ -16,29 +16,31 @@ describe("entrypoint", () => {
       field title { type string }
     }
 
-    entrypoint Org as org {
-      identify { through slug }
+    api Client {
+      entrypoint Org as org {
+        identify { through slug }
 
-      list endpoint {
-        pageable
-        order by { slug desc }
-      }
-      get endpoint {}
-
-      entrypoint repos {
-        response { id, org }
-
-        list endpoint {}
+        list endpoint {
+          pageable
+          order by { slug desc }
+        }
         get endpoint {}
-        create endpoint {}
 
-        custom endpoint {
-          cardinality one
-          method PATCH
-          path "somePath"
+        entrypoint repos {
+          response { id, org }
 
-          action {
-            update org as newOrg {}
+          list endpoint {}
+          get endpoint {}
+          create endpoint {}
+
+          custom endpoint {
+            cardinality one
+            method PATCH
+            path "somePath"
+
+            action {
+              update org as newOrg {}
+            }
           }
         }
       }
@@ -53,8 +55,10 @@ describe("entrypoint", () => {
       field name { type string, validate { min 4, max 100 } }
     }
 
-    entrypoint Org {
-      create endpoint {}
+    api Client {
+      entrypoint Org {
+        create endpoint {}
+      }
     }
     `;
     const def = compose(compileToOldSpec(bp));
@@ -70,21 +74,23 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    entrypoint Org {
+    api Client {
+      entrypoint Org {
 
-      // endpoint W/ responding action
-      custom endpoint {
-        path "somePath1"
-        method POST
-        cardinality many
+        // endpoint W/ responding action
+        custom endpoint {
+          path "somePath1"
+          method POST
+          cardinality many
 
-        action {
-          execute {
-            responds
-            hook {
-              runtime MyRuntime
-              source testFn from "t/h/p"
+          action {
+            execute {
+              responds
+              hook {
+                runtime MyRuntime
+                source testFn from "t/h/p"
 
+              }
             }
           }
         }
@@ -108,19 +114,21 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    entrypoint Org {
+    api Client {
+      entrypoint Org {
 
-      // endpoint W/O responding action
-      custom endpoint {
-        path "somePath1"
-        method POST
-        cardinality many
+        // endpoint W/O responding action
+        custom endpoint {
+          path "somePath1"
+          method POST
+          cardinality many
 
-        action {
-          execute {
-            hook {
-              runtime MyRuntime
-              source testFn from "t/h/p"
+          action {
+            execute {
+              hook {
+                runtime MyRuntime
+                source testFn from "t/h/p"
+              }
             }
           }
         }
@@ -162,15 +170,17 @@ describe("entrypoint", () => {
       field orgCoef { type integer }
     }
 
-    entrypoint Org as org {
-      entrypoint repos as repo {
-        create endpoint {
-          action {
-            create as repo {}
-            create repo.issues as i {
-              set source org.name + repo.name
-              set orgDesc org.desc
-              set orgCoef org.repoCount * org.coef
+    api Client {
+      entrypoint Org as org {
+        entrypoint repos as repo {
+          create endpoint {
+            action {
+              create as repo {}
+              create repo.issues as i {
+                set source org.name + repo.name
+                set orgDesc org.desc
+                set orgCoef org.repoCount * org.coef
+              }
             }
           }
         }

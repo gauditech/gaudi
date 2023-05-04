@@ -2,43 +2,45 @@ model Org {
   field name { type string }
 }
 
-entrypoint Org as org {
+api Client {
+  entrypoint Org as org {
 
-  // custom-one endpoints
-  custom endpoint {
-    cardinality one
-    method GET
-    path "customGet"
-  }
-  custom endpoint {
-    cardinality one
-    method PATCH
-    path "customUpdate"
-    action {
-      update org as newOrg {}
+    // custom-one endpoints
+    custom endpoint {
+      cardinality one
+      method GET
+      path "customGet"
     }
-  }
-  custom endpoint {
-    cardinality one
-    method DELETE
-    path "customDelete"
-    action {
-      delete org {}
+    custom endpoint {
+      cardinality one
+      method PATCH
+      path "customUpdate"
+      action {
+        update org as newOrg {}
+      }
     }
-  }
+    custom endpoint {
+      cardinality one
+      method DELETE
+      path "customDelete"
+      action {
+        delete org {}
+      }
+    }
 
-  // custom-many endpoints
-  custom endpoint {
-    cardinality many
-    method GET
-    path "customList"
-  }
-  custom endpoint {
-    cardinality many
-    method POST
-    path "customCreate"
-    action {
-      create Org as org {}
+    // custom-many endpoints
+    custom endpoint {
+      cardinality many
+      method GET
+      path "customList"
+    }
+    custom endpoint {
+      cardinality many
+      method POST
+      path "customCreate"
+      action {
+        create Org as org {}
+      }
     }
   }
 }

@@ -28,59 +28,14 @@ generate client {
   output "src/e2e/client/__snapshots__/mockClient/client"
 }
 
-entrypoint Org {
-  identify { through slug }
-
-  get endpoint {}
-  create endpoint {}
-  update endpoint {}
-  list endpoint {}
-  delete endpoint {}
-
-  custom endpoint {
-    path "customOneFetch"
-    method GET
-    cardinality one
-  }
-  custom endpoint {
-      path "customOneSubmit"
-      method PATCH
-      cardinality one
-  }
-  custom endpoint {
-      path "customManyFetch"
-      method GET
-      cardinality many
-  }
-  custom endpoint {
-      path "customManySubmit"
-      method POST
-      cardinality many
-  }
-
-  // repo entrypoints
-  entrypoint repos {
-    // test non-default response
-    response { slug, name }
+api Client {
+  entrypoint Org {
+    identify { through slug }
 
     get endpoint {}
-    create endpoint {
-      action {
-        create {
-          // test changing input fields
-          virtual input virtProp { type string }
-        }
-      }
-    }
-    update endpoint {
-      action {
-        update {
-          // test denied input fields
-          deny { slug }
-        }
-      }
-    }
-    list endpoint { pageable }
+    create endpoint {}
+    update endpoint {}
+    list endpoint {}
     delete endpoint {}
 
     custom endpoint {
@@ -102,6 +57,53 @@ entrypoint Org {
         path "customManySubmit"
         method POST
         cardinality many
+    }
+
+    // repo entrypoints
+    entrypoint repos {
+      // test non-default response
+      response { slug, name }
+
+      get endpoint {}
+      create endpoint {
+        action {
+          create {
+            // test changing input fields
+            virtual input virtProp { type string }
+          }
+        }
+      }
+      update endpoint {
+        action {
+          update {
+            // test denied input fields
+            deny { slug }
+          }
+        }
+      }
+      list endpoint { pageable }
+      delete endpoint {}
+
+      custom endpoint {
+        path "customOneFetch"
+        method GET
+        cardinality one
+      }
+      custom endpoint {
+          path "customOneSubmit"
+          method PATCH
+          cardinality one
+      }
+      custom endpoint {
+          path "customManyFetch"
+          method GET
+          cardinality many
+      }
+      custom endpoint {
+          path "customManySubmit"
+          method POST
+          cardinality many
+      }
     }
   }
 }
