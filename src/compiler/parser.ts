@@ -10,6 +10,7 @@ import {
   ActionHook,
   AggregateType,
   AnonymousQuery,
+  Api,
   Authenticator,
   AuthenticatorAtom,
   BinaryOperator,
@@ -99,7 +100,7 @@ class GaudiParser extends EmbeddedActionsParser {
     this.MANY(() => {
       this.OR([
         { ALT: () => document.push(this.SUBRULE(this.model)) },
-        { ALT: () => document.push(this.SUBRULE(this.entrypoint)) },
+        { ALT: () => document.push(this.SUBRULE(this.api)) },
         { ALT: () => document.push(this.SUBRULE(this.populator)) },
         { ALT: () => document.push(this.SUBRULE(this.runtime)) },
         { ALT: () => document.push(this.SUBRULE(this.authenticator)) },
@@ -485,6 +486,27 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return orderBy;
+  });
+
+  api = this.RULE("api", (): Api => {
+    const atoms: Api["atoms"] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Api));
+    const name = this.SUBRULE(this.identifier);
+
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        {
+          ALT: () => {
+            atoms.push(this.SUBRULE(this.entrypoint));
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "api", keyword, name, atoms };
   });
 
   entrypoint = this.RULE("entrypoint", (): Entrypoint => {

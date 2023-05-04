@@ -45,7 +45,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Specification {
   const authenticator = kindFind(document, "authenticator");
   const specification: Specification = {
     models: kindFilter(document, "model").map(migrateModel),
-    entrypoints: kindFilter(document, "entrypoint").map(migrateEntrypoint),
+    entrypoints: _.concat(...kindFilter(document, "api").map(migrateApi)),
     populators: kindFilter(document, "populator").map(migratePopulator),
     runtimes: kindFilter(document, "runtime").map(migrateRuntime),
     authenticator: authenticator ? migrateAuthenticator(authenticator) : undefined,
@@ -163,6 +163,10 @@ function migrateComputed(computed: AST.Computed): ComputedSpec {
     type: type === "string" ? "text" : type,
     nullable,
   };
+}
+
+function migrateApi(api: AST.Api): EntrypointSpec[] {
+  return api.atoms.map(migrateEntrypoint);
 }
 
 function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {

@@ -5,6 +5,7 @@ import {
   Action,
   ActionAtomVirtualInput,
   AnonymousQuery,
+  Api,
   Authenticator,
   Computed,
   DeleteAction,
@@ -98,7 +99,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     document.forEach((a) =>
       match(a)
         .with({ kind: "model" }, checkModel)
-        .with({ kind: "entrypoint" }, checkEntrypoint)
+        .with({ kind: "api" }, checkApi)
         .with({ kind: "populator" }, checkPopulator)
         .with({ kind: "runtime" }, () => undefined) // runtime is checked first
         .with({ kind: "authenticator" }, () => checkAuthenticator)
@@ -184,6 +185,10 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkComputed(_computed: Computed) {
     // TODO: do nothing?
+  }
+
+  function checkApi(api: Api) {
+    api.atoms.forEach((a) => match(a).with({ kind: "entrypoint" }, checkEntrypoint).exhaustive());
   }
 
   function checkEntrypoint(entrypoint: Entrypoint) {
