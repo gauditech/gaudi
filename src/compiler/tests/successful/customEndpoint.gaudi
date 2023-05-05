@@ -2,8 +2,7 @@ model Org {
   field name { type string }
 }
 
-entrypoint Orgs {
-  target Org as org
+entrypoint Org as org {
 
   // custom-one endpoints
   custom endpoint {

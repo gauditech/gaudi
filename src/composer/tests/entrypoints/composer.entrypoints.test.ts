@@ -16,9 +16,8 @@ describe("entrypoint", () => {
       field title { type string }
     }
 
-    entrypoint Orgs {
-      target Org as org
-      identify with slug
+    entrypoint Org as org {
+      identify { through slug }
 
       list endpoint {
         pageable
@@ -26,8 +25,7 @@ describe("entrypoint", () => {
       }
       get endpoint {}
 
-      entrypoint Repositories {
-        target repos as repo
+      entrypoint repos {
         response { id, org }
 
         list endpoint {}
@@ -55,8 +53,7 @@ describe("entrypoint", () => {
       field name { type string, validate { min 4, max 100 } }
     }
 
-    entrypoint Orgs {
-      target Org
+    entrypoint Org {
       create endpoint {}
     }
     `;
@@ -73,8 +70,7 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    entrypoint Orgs {
-      target Org
+    entrypoint Org {
 
       // endpoint W/ responding action
       custom endpoint {
@@ -112,8 +108,7 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    entrypoint Orgs {
-      target Org
+    entrypoint Org {
 
       // endpoint W/O responding action
       custom endpoint {
@@ -167,10 +162,8 @@ describe("entrypoint", () => {
       field orgCoef { type integer }
     }
 
-    entrypoint O {
-      target Org as org
-      entrypoint R {
-        target repos as repo
+    entrypoint Org as org {
+      entrypoint repos as repo {
         create endpoint {
           action {
             create as repo {}

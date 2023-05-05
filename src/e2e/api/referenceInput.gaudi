@@ -8,13 +8,11 @@ model Extra {
   relation element { from Element, through extra }
 }
 
-entrypoint Extras {
-  target Extra as extra
+entrypoint Extra {
   create endpoint {}
 }
 
-entrypoint Elements {
-  target Element
+entrypoint Element {
   create endpoint {
     action {
       create {

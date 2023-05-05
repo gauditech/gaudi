@@ -17,8 +17,7 @@ describe("compose actions", () => {
     }
     model OrgOwner { reference org { to Org } }
 
-    entrypoint Orgs {
-      target Org as org
+    entrypoint Org as org {
       create endpoint {
         action {
           create OrgExtra as e {}
@@ -48,8 +47,7 @@ describe("compose actions", () => {
     model OrgExtra {
       relation org { from Org, through extras }
     }
-    entrypoint Orgs {
-      target Org as org
+    entrypoint Org as org {
       update endpoint {
         action {
           update org as ox {
@@ -71,7 +69,6 @@ describe("compose actions", () => {
       field name3 { type string }
     }
     entrypoint Org {
-      target Org
       create endpoint {
         action {
           create {
@@ -96,10 +93,8 @@ describe("compose actions", () => {
       reference org { to Org }
       field name { type string }
     }
-    entrypoint Orgs {
-      target Org as myorg
-      entrypoint Repos {
-        target repos as myrepo
+    entrypoint Org as myorg {
+      entrypoint repos as myrepo {
         create endpoint {}
       }
     }
@@ -115,8 +110,7 @@ describe("compose actions", () => {
     model Repo { reference org { to Org } field name { type string } }
     model OrgLog { reference org { to Org } }
 
-    entrypoint R {
-      target Repo as repo
+    entrypoint Repo as repo {
       create endpoint {
         action {
           create as repo {}
@@ -138,8 +132,7 @@ describe("compose actions", () => {
     model Repo { reference org { to Org } relation issues { from Issue, through repo } }
     model Issue { reference repo { to Repo } }
 
-    entrypoint I {
-      target Issue as issue
+    entrypoint Issue as issue {
       update endpoint {
         action {
           update {}
@@ -164,8 +157,7 @@ describe("compose actions", () => {
       field name { type string }
       relation org { from Org, through extras }
     }
-    entrypoint Orgs {
-      target Org as org
+    entrypoint Org as org {
       update endpoint {
         action {
           update org as ox {
@@ -187,8 +179,7 @@ describe("compose actions", () => {
       field description { type string }
       field descLength { type integer }
     }
-    entrypoint Orgs {
-      target Org as org
+    entrypoint Org as org {
       create endpoint {
         action {
           create {
@@ -207,8 +198,7 @@ describe("compose actions", () => {
       const bp = `
     model Org { field name { type string } }
 
-    entrypoint Orgs {
-      target Org as org
+    entrypoint Org as org {
       create endpoint {
         action {
           create as org {
@@ -230,8 +220,7 @@ describe("compose actions", () => {
     model Org {
       field name { type string }
     }
-    entrypoint Orgs {
-      target Org as org
+    entrypoint Org as org {
       update endpoint {}
     }
     `;
@@ -251,8 +240,7 @@ describe("compose actions", () => {
     model Org { field name { type string } }
     model Log {}
 
-    entrypoint Orgs {
-      target Org as org
+    entrypoint Org as org {
 
       custom endpoint {
         cardinality one

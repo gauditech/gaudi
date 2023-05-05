@@ -13,9 +13,8 @@ describe("openAPI", () => {
       reference org { to Org }
       field name { type string }
     }
-    entrypoint Orgs {
-      target Org
-      identify with slug
+    entrypoint Org {
+      identify { through slug }
 
       get endpoint {}
       list endpoint { pageable }
@@ -23,8 +22,7 @@ describe("openAPI", () => {
       update endpoint {}
       delete endpoint {}
 
-      entrypoint Repos {
-        target repos
+      entrypoint repos {
         response { id, name }
 
         get endpoint {}

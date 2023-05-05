@@ -14,9 +14,7 @@ describe("populator composer", () => {
     }
 
     populator DevData {
-      populate Orgs {
-        target Org as org
-
+      populate Org as org {
         set slug "custom-org" // literal setter
         set name "test name " + slug // arithmetics setter
         set description hook { // hook setter
@@ -54,19 +52,13 @@ describe("populator composer", () => {
     }
 
     populator DevData {
-      populate Orgs {
-        target Org as org
-
+      populate Org as org {
         set name "test name"
 
-        populate Repos {
-          target repos as repo
-
+        populate repos as repo {
           set name org.name // nested reference
 
-          populate Issues {
-            target issues as issue
-
+          populate issues as issue {
             set title repo.name // nested reference
           }
         }
@@ -87,10 +79,8 @@ describe("populator composer", () => {
     }
 
     populator DevData {
-      populate Orgs {
-        target Org as org
-
-        repeater 5
+      populate Org as org {
+        repeat 5
 
         set is_new true
         set name "test name"
@@ -111,10 +101,8 @@ describe("populator composer", () => {
     }
 
     populator DevData {
-      populate Orgs {
-        target Org as org
-
-        repeater { start 1, end 3 }
+      populate Org as org {
+        repeat { start 1, end 3 }
 
         set is_new true
         set name "test name"
@@ -135,10 +123,8 @@ describe("populator composer", () => {
     }
 
     populator DevData {
-      populate Orgs {
-        target Org as org
-
-        repeater { end 3 }
+      populate Org as org {
+        repeat { end 3 }
 
         set is_new true
         set name "test name"
@@ -167,18 +153,14 @@ describe("populator composer", () => {
     }
 
     populator DevData {
-      populate Orgs {
-        target Org as org
-
-        repeater 4
+      populate Org as org {
+        repeat 4
 
         set is_new true
         set name "test name"
 
-        populate repos {
-          target repos as repo
-
-          repeater { start 20, end 2000 }
+        populate repos as repo {
+          repeat { start 20, end 2000 }
 
           set name "test name"
         }
@@ -211,18 +193,16 @@ describe("populator composer", () => {
       }
 
       populator Dev {
-        populate Orgs {
-          target Org as org
-          repeater oIter 10
+        populate Org as org {
+          repeat as oIter 10
           set name2 name
           set index oIter.current
           set name hook {
             arg oIter oIter
             inline "'Org ' + oIter.current"
           }
-          populate Repos {
-            target repos as repo
-            repeater rIter 5
+          populate repos as repo {
+            repeat as rIter 5
             set index rIter.current
             set org_index oIter.current
           }
