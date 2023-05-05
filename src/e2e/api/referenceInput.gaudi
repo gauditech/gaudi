@@ -8,7 +8,7 @@ model Extra {
   relation element { from Element, through extra }
 }
 
-api Client {
+api {
   entrypoint Extra {
     create endpoint {}
   }

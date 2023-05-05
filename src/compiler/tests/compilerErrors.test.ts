@@ -63,7 +63,7 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        api Client {
+        api {
           entrypoint Org {
             update endpoint {
               action {
@@ -82,7 +82,7 @@ describe("compiler errors", () => {
       const bp = `
         model Org { relation repos { from Repo, through org }}
         model Repo { reference org { to Org }}
-        api Client {
+        api {
           entrypoint Org as org {
             entrypoint repos {
               create endpoint {
@@ -107,7 +107,7 @@ describe("compiler errors", () => {
         model OrgExtra {
           relation org { from Org, through extras }
         }
-        api Client {
+        api {
           entrypoint Org as org {
             update endpoint {
               action {
@@ -128,7 +128,7 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        api Client {
+        api {
           entrypoint Org as org {
             update endpoint {
               action {
@@ -149,7 +149,7 @@ describe("compiler errors", () => {
         model Org {
           field name { type string }
         }
-        api Client {
+        api {
           entrypoint Org {
             update endpoint {
               action {
@@ -169,7 +169,7 @@ describe("compiler errors", () => {
         const bp = `
           model Org { relation repos { from Repo, through org }}
           model Repo { reference org { to Org }}
-          api Client {
+          api {
             entrypoint Org as org {
               entrypoint repos as repo{
                 create endpoint {
@@ -192,7 +192,7 @@ describe("compiler errors", () => {
           model Org { field name { type string } }
           model Log {}
 
-          api Client {
+          api {
             entrypoint Org {
               custom endpoint {
                 // in each iteration skip one property
@@ -214,7 +214,7 @@ describe("compiler errors", () => {
           const bp = `
             model Org {}
 
-            api Client {
+            api {
               entrypoint Org {
                 ${epType} endpoint {
                   // show one property in each iteration
@@ -236,7 +236,7 @@ describe("compiler errors", () => {
         model Org {}
         model Log {}
 
-        api Client {
+        api {
           entrypoint Org as org {
             custom endpoint {
               cardinality one
@@ -262,7 +262,7 @@ describe("compiler errors", () => {
           model Org {}
           model Log {}
 
-          api Client {
+          api {
             entrypoint Org as org {
               custom endpoint {
                 cardinality many
@@ -283,7 +283,7 @@ describe("compiler errors", () => {
       const bp = `
         model Org {}
 
-        api Client {
+        api {
           entrypoint Org {
 
             custom endpoint {
@@ -315,7 +315,7 @@ describe("compiler errors", () => {
           reference org { to Org }
         }
 
-        api Client {
+        api {
           entrypoint Org {
 
             entrypoint repos {
@@ -485,7 +485,7 @@ describe("compiler errors", () => {
           source path "some/path/to/file"
         }
 
-        api Client {
+        api {
           entrypoint Org {
             create endpoint {
               action {
@@ -508,7 +508,7 @@ describe("compiler errors", () => {
     it("fail for multiple endpoints of the same type", () => {
       const bp = `
         model Org {}
-        api Client {
+        api {
           entrypoint Org {
             create endpoint {}
             create endpoint {}
@@ -525,7 +525,7 @@ describe("compiler errors", () => {
 
         model Org {}
 
-        api Client {
+        api {
           entrypoint Org {
 
             custom endpoint {
@@ -563,7 +563,7 @@ describe("compiler errors", () => {
 
         model Org {}
 
-        api Client {
+        api {
           entrypoint Org {
 
             create endpoint {
@@ -586,7 +586,7 @@ describe("compiler errors", () => {
       const bp = `
         model Org {}
 
-        api Client {
+        api {
           entrypoint Org {
 
             custom endpoint {

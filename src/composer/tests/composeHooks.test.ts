@@ -25,7 +25,7 @@ describe("compose hooks", () => {
         }
       }
 
-      api Client {
+      api {
         entrypoint Org {
           create endpoint {
             action {
@@ -68,7 +68,7 @@ describe("compose hooks", () => {
         }
       }
 
-      api Client {
+      api {
         entrypoint Org {
           create endpoint {
             action {
@@ -101,7 +101,7 @@ describe("compose hooks", () => {
 
       model Org { field name { type string } }
 
-      api Client {
+      api {
         entrypoint Org {
           create endpoint {
             action {
@@ -132,7 +132,7 @@ describe("compose hooks", () => {
         field name { type string }
       }
 
-      api Client {
+      api {
         entrypoint Org as org {
 
           custom endpoint {
@@ -168,7 +168,7 @@ describe("compose hooks", () => {
     const bp = `
       model Org { field name { type string} }
 
-      api Client {
+      api {
         entrypoint Org {
 
           // login

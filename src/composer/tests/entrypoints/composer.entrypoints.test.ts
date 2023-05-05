@@ -16,7 +16,7 @@ describe("entrypoint", () => {
       field title { type string }
     }
 
-    api Client {
+    api {
       entrypoint Org as org {
         identify { through slug }
 
@@ -55,7 +55,7 @@ describe("entrypoint", () => {
       field name { type string, validate { min 4, max 100 } }
     }
 
-    api Client {
+    api {
       entrypoint Org {
         create endpoint {}
       }
@@ -74,7 +74,7 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    api Client {
+    api {
       entrypoint Org {
 
         // endpoint W/ responding action
@@ -114,7 +114,7 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    api Client {
+    api {
       entrypoint Org {
 
         // endpoint W/O responding action
@@ -170,7 +170,7 @@ describe("entrypoint", () => {
       field orgCoef { type integer }
     }
 
-    api Client {
+    api {
       entrypoint Org as org {
         entrypoint repos as repo {
           create endpoint {

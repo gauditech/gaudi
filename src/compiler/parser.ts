@@ -492,7 +492,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: Api["atoms"] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Api));
-    const name = this.SUBRULE(this.identifier);
+    const name = this.OPTION(() => this.SUBRULE(this.identifier));
 
     this.CONSUME(L.LCurly);
     this.MANY(() => {

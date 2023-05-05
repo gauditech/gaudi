@@ -8,7 +8,7 @@ model Bar {
   reference foo { to Foo }
 }
 
-api Client {
+api {
   entrypoint Bar as bar {
     update endpoint {
       authorize { bar.b is not null and bar.foo.a1 is bar.b }

@@ -31,7 +31,7 @@ model User {
   }
 }
 
-api Client {
+api {
   entrypoint User as user{
     create endpoint {
       action {

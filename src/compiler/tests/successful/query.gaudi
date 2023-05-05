@@ -33,7 +33,7 @@ model Student {
   computed is_senior { class.year >= 4 }
 }
 
-api Client {
+api {
   entrypoint Class {
     create endpoint {
       action {

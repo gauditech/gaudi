@@ -13,7 +13,7 @@ describe("openAPI", () => {
       reference org { to Org }
       field name { type string }
     }
-    api Client {
+    api {
       entrypoint Org {
         identify { through slug }
 

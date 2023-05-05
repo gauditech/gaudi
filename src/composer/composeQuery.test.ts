@@ -61,7 +61,7 @@ describe("compose action queries", () => {
       model Repo {
       }
 
-      api Client {
+      api {
         entrypoint Org {
 
           // test in native endpoint
@@ -95,7 +95,7 @@ describe("compose action queries", () => {
       model Repo {
       }
 
-      api Client {
+      api {
         entrypoint Org {
 
           // test in custom endpoint

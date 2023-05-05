@@ -17,7 +17,7 @@ describe("compose actions", () => {
     }
     model OrgOwner { reference org { to Org } }
 
-    api Client {
+    api {
       entrypoint Org as org {
         create endpoint {
           action {
@@ -49,7 +49,7 @@ describe("compose actions", () => {
     model OrgExtra {
       relation org { from Org, through extras }
     }
-    api Client {
+    api {
       entrypoint Org as org {
         update endpoint {
           action {
@@ -72,7 +72,7 @@ describe("compose actions", () => {
       field name2 { type string }
       field name3 { type string }
     }
-    api Client {
+    api {
       entrypoint Org {
         create endpoint {
           action {
@@ -99,7 +99,7 @@ describe("compose actions", () => {
       reference org { to Org }
       field name { type string }
     }
-    api Client {
+    api {
       entrypoint Org as myorg {
         entrypoint repos as myrepo {
           create endpoint {}
@@ -118,7 +118,7 @@ describe("compose actions", () => {
     model Repo { reference org { to Org } field name { type string } }
     model OrgLog { reference org { to Org } }
 
-    api Client {
+    api {
       entrypoint Repo as repo {
         create endpoint {
           action {
@@ -142,7 +142,7 @@ describe("compose actions", () => {
     model Repo { reference org { to Org } relation issues { from Issue, through repo } }
     model Issue { reference repo { to Repo } }
 
-    api Client {
+    api {
       entrypoint Issue as issue {
         update endpoint {
           action {
@@ -169,7 +169,7 @@ describe("compose actions", () => {
       field name { type string }
       relation org { from Org, through extras }
     }
-    api Client {
+    api {
       entrypoint Org as org {
         update endpoint {
           action {
@@ -193,7 +193,7 @@ describe("compose actions", () => {
       field description { type string }
       field descLength { type integer }
     }
-    api Client {
+    api {
       entrypoint Org as org {
         create endpoint {
           action {
@@ -214,7 +214,7 @@ describe("compose actions", () => {
       const bp = `
     model Org { field name { type string } }
 
-    api Client {
+    api {
       entrypoint Org as org {
         create endpoint {
           action {
@@ -238,7 +238,7 @@ describe("compose actions", () => {
     model Org {
       field name { type string }
     }
-    api Client {
+    api {
       entrypoint Org as org {
         update endpoint {}
       }
@@ -260,7 +260,7 @@ describe("compose actions", () => {
     model Org { field name { type string } }
     model Log {}
 
-    api Client {
+    api {
       entrypoint Org as org {
 
         custom endpoint {

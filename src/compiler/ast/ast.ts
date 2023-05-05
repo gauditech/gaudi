@@ -109,7 +109,7 @@ export type Computed = {
 export type Api = {
   kind: "api";
   keyword: TokenData;
-  name: Identifier;
+  name?: Identifier;
   atoms: Entrypoint[];
 };
 

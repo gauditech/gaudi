@@ -2,7 +2,7 @@ model Org {
   field name { type string }
 }
 
-api Client {
+api {
   entrypoint Org as org {
 
     // custom-one endpoints

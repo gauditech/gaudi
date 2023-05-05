@@ -20,7 +20,7 @@ model Item {
   reference box { to Box }
 }
 
-api Client {
+api {
   entrypoint Box as box {
     identify { through name }
 

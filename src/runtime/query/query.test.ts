@@ -36,7 +36,7 @@ describe("Endpoint queries", () => {
 
     // ----- entrypoints
 
-    api Client {
+    api {
       entrypoint Org {
         identify { through slug }
         response { name, slug }
@@ -91,7 +91,7 @@ describe("Endpoint queries", () => {
         field name { type string }
       }
 
-      api Client {
+      api {
         entrypoint Item {
           list endpoint {
             ${options?.paging ? "pageable" : ""}
@@ -151,7 +151,7 @@ describe("Endpoint queries", () => {
         field name { type string }
       }
 
-      api Client {
+      api {
         entrypoint Item1 {
 
           entrypoint item2 {

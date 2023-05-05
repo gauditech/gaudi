@@ -28,7 +28,7 @@ generate client {
   output "src/e2e/client/__snapshots__/mockClient/client"
 }
 
-api Client {
+api {
   entrypoint Org {
     identify { through slug }
 
