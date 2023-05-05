@@ -223,7 +223,7 @@ export function buildTokens(
 
   function buildApi({ keyword, name, atoms }: Api) {
     buildKeyword(keyword);
-    push(name.token, TokenTypes.variable);
+    if (name) push(name.token, TokenTypes.variable);
     atoms.forEach((a) => match(a).with({ kind: "entrypoint" }, buildEntrypoint).exhaustive());
   }
 
