@@ -3,9 +3,9 @@ import path from "path";
 import _ from "lodash";
 import request from "supertest";
 
-import { DATA } from "@src/e2e/api/auth.data";
-import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup";
-import { readConfig } from "@src/runtime/config";
+import { DATA } from "@src/e2e/api/auth.data.js";
+import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup.js";
+import { readConfig } from "@src/runtime/config.js";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(60000);
@@ -20,9 +20,8 @@ describe("Auth", () => {
   );
 
   async function loginTestUser() {
-    const loginResponse = await request(getServer())
-      .post("/auth_user/login")
-      .send({ username: "first", password: "1234" });
+    const st = request(getServer());
+    const loginResponse = st.post("/auth_user/login").send({ username: "first", password: "1234" });
     return loginResponse.body.token;
   }
 

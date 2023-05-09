@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-import { GAUDI_FOLDER_NAME } from "@src/const";
+import { GAUDI_FOLDER_NAME } from "@src/const.js";
 
 export type EngineConfig = {
   /** Path to Gaudi blueprint file */

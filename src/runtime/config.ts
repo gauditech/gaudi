@@ -2,7 +2,7 @@ import fs from "fs";
 
 import dotenv from "dotenv";
 
-import { Definition } from "@src/types/definition";
+import { Definition } from "@src/types/definition.js";
 
 export type RuntimeConfig = {
   /** Runtime server host name */

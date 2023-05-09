@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { EndpointDef } from "@src/types/definition";
+import { EndpointDef } from "@src/types/definition.js";
 
 export type EndpointPath = {
   fullPath: string;

@@ -3,19 +3,19 @@ import path from "path";
 
 import { DiagnosticCategory, ModuleKind, Project, ScriptTarget } from "ts-morph";
 
-import { buildEntrypoints } from "@src/builder/admin";
-import { storeTemplateOutput } from "@src/builder/renderer/renderer";
+import { buildEntrypoints } from "@src/builder/admin.js";
+import { storeTemplateOutput } from "@src/builder/renderer/renderer.js";
 import {
   BuildApiClientData,
   render as renderApiClientTpl,
-} from "@src/builder/renderer/templates/apiClient.tpl";
+} from "@src/builder/renderer/templates/apiClient.tpl.js";
 import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
-} from "@src/builder/renderer/templates/schema.prisma.tpl";
-import { kindFilter } from "@src/common/kindFilter";
-import { assertUnreachable } from "@src/common/utils";
-import { Definition } from "@src/types/definition";
+} from "@src/builder/renderer/templates/schema.prisma.tpl.js";
+import { kindFilter } from "@src/common/kindFilter.js";
+import { assertUnreachable } from "@src/common/utils.js";
+import { Definition } from "@src/types/definition.js";
 
 const DB_PROVIDER = "postgresql";
 

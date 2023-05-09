@@ -1,4 +1,4 @@
-import { Type } from "./type";
+import { Type } from "./type.js";
 
 const stringT: Type = { kind: "primitive", primitiveKind: "string" };
 const integerT: Type = { kind: "primitive", primitiveKind: "integer" };

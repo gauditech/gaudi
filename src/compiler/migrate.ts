@@ -1,10 +1,10 @@
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import * as AST from "./ast/ast";
+import * as AST from "./ast/ast.js";
 
-import { kindFilter, kindFind } from "@src/common/kindFilter";
-import { ensureExists } from "@src/common/utils";
+import { kindFilter, kindFind } from "@src/common/kindFilter.js";
+import { ensureExists } from "@src/common/utils.js";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
@@ -38,7 +38,7 @@ import {
   SelectAST,
   Specification,
   ValidatorSpec,
-} from "@src/types/specification";
+} from "@src/types/specification.js";
 
 export function migrate(projectASTs: AST.ProjectASTs): Specification {
   const document = _.concat(...Object.values(projectASTs.plugins), projectASTs.document);

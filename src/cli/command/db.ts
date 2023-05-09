@@ -1,20 +1,20 @@
 import _ from "lodash";
-import { ArgumentsCamelCase } from "yargs";
+import { Arguments } from "yargs";
 
 import {
   GAUDI_SCRIPTS,
   appendBinPath,
   getDbSchemaPath,
   getDefaultNodeOptions,
-} from "@src/cli/config";
-import { createCommandRunner } from "@src/cli/runner";
-import { EngineConfig } from "@src/config";
+} from "@src/cli/config.js";
+import { createCommandRunner } from "@src/cli/runner.js";
+import { EngineConfig } from "@src/config.js";
 
 // ---------- DB commands
 
 // --- DB push
 
-export function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
+export function dbPush(_args: Arguments, config: EngineConfig) {
   console.log("Pushing DB change ...");
 
   return createCommandRunner(appendBinPath("prisma"), [
@@ -28,7 +28,7 @@ export function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
 
 // --- DB reset
 
-export function dbReset(_args: ArgumentsCamelCase, config: EngineConfig) {
+export function dbReset(_args: Arguments, config: EngineConfig) {
   console.log("Resetting DB ...");
 
   return createCommandRunner(appendBinPath("prisma"), [
@@ -47,7 +47,7 @@ export type DbPopulateOptions = {
   populator?: string;
 };
 
-export function dbPopulate(args: ArgumentsCamelCase<DbPopulateOptions>, _config: EngineConfig) {
+export function dbPopulate(args: Arguments<DbPopulateOptions>, _config: EngineConfig) {
   const populatorName = args.populator!;
 
   if (_.isEmpty(populatorName)) throw "Populator name cannot be empty";
@@ -68,7 +68,7 @@ export type DbMigrateOptions = {
   name?: string;
 };
 
-export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+export function dbMigrate(args: Arguments<DbMigrateOptions>, config: EngineConfig) {
   const migrationName = args.name;
 
   if (_.isEmpty(migrationName)) throw "Migration name cannot be empty";
@@ -85,7 +85,7 @@ export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 
 // --- DB deploy
 
-export function dbDeploy(_args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+export function dbDeploy(_args: Arguments<DbMigrateOptions>, config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
   return createCommandRunner(appendBinPath("prisma"), [

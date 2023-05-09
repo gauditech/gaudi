@@ -1,12 +1,12 @@
 import path from "path";
 
 import _ from "lodash";
-import { ArgumentsCamelCase } from "yargs";
+import { Arguments } from "yargs";
 
-import { createCommandRunner } from "@src/cli/runner";
-import { createDir, sanitizeProjectName, storeTemplateOutput } from "@src/cli/utils";
-import { saveOutputFile } from "@src/common/utils";
-import { EngineConfig } from "@src/config";
+import { createCommandRunner } from "@src/cli/runner.js";
+import { createDir, sanitizeProjectName, storeTemplateOutput } from "@src/cli/utils.js";
+import { saveOutputFile } from "@src/common/utils.js";
+import { EngineConfig } from "@src/config.js";
 
 type ProjectConfig = {
   projectName: string;
@@ -23,7 +23,7 @@ type ProjectConfig = {
 export type InitProjectOptions = {
   name: string;
 };
-export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config: EngineConfig) {
+export function initProject(args: Arguments<InitProjectOptions>, config: EngineConfig) {
   const projectName = sanitizeProjectName(args.name);
   const rootDir = resolveRootDirPath(projectName);
 

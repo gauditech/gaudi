@@ -8,11 +8,11 @@ import {
   transformExpressionPaths,
   transformNamePaths,
   uniqueNamePaths,
-} from "./build";
+} from "./build.js";
 
-import { getRef, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
-import { getTypedPath, getTypedPathWithLeaf } from "@src/composer/utils";
+import { getRef, getTargetModel } from "@src/common/refs.js";
+import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils.js";
+import { getTypedPath, getTypedPathWithLeaf } from "@src/composer/utils.js";
 import {
   AggregateDef,
   Definition,
@@ -27,7 +27,7 @@ import {
   SelectableItem,
   TypedExprDef,
   TypedFunction,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 // FIXME this should accept Queryable
 export function queryToString(def: Definition, q: QueryDef, isBatching = false): string {

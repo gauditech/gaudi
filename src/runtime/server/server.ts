@@ -1,10 +1,16 @@
+import AdminJsExpress from "@adminjs/express";
+import AdminJS from "adminjs";
 import express, { json } from "express";
 
-import { RuntimeConfig } from "@src/runtime/config";
-import { setupServerApis } from "@src/runtime/server/api";
-import { createDbConn } from "@src/runtime/server/dbConn";
-import { bindAppContextHandler, errorHandler, requestLogger } from "@src/runtime/server/middleware";
-import { Definition } from "@src/types/definition";
+import { RuntimeConfig } from "@src/runtime/config.js";
+import { setupServerApis } from "@src/runtime/server/api.js";
+import { createDbConn } from "@src/runtime/server/dbConn.js";
+import {
+  bindAppContextHandler,
+  errorHandler,
+  requestLogger,
+} from "@src/runtime/server/middleware.js";
+import { Definition } from "@src/types/definition.js";
 
 export type CreateServerConfig = {
   port: number;
@@ -18,6 +24,11 @@ export function createServer(definition: Definition, config: RuntimeConfig) {
 
   const port = config.port || 3000;
   const host = config.host || "0.0.0.0";
+
+  // create admin before we add our middleware
+  const admin = new AdminJS({ rootPath: "/admin" });
+  const adminRouter = AdminJsExpress.buildRouter(admin);
+  app.use(admin.options.rootPath, adminRouter);
 
   const ctx = createAppContext(config);
   app.use(bindAppContextHandler(app, ctx));

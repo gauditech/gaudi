@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "../index";
+import { compileToOldSpec, compose } from "../index.js";
 
 describe("compose models", () => {
   it("doesn't crash on empty blueprint", () => {

@@ -3,9 +3,9 @@ import * as path from "path";
 
 import _ from "lodash";
 
-import { compileToAST } from "..";
-import { compilerErrorsToString } from "../compilerError";
-import { migrate } from "../migrate";
+import { compileToAST } from "../index.js";
+import { compilerErrorsToString } from "../compilerError.js";
+import { migrate } from "../migrate.js";
 
 const folder = "./src/compiler/tests/successful";
 const sources = fs.readdirSync(folder);

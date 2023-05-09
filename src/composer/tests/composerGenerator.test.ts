@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index.js";
 
 describe("generator composer", () => {
   it("succeeds for JS client generator", () => {

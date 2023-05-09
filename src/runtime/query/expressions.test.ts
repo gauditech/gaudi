@@ -1,9 +1,9 @@
 import _ from "lodash";
 
-import { queryFromParts } from "./build";
-import { nameToSelectable, queryToString } from "./stringify";
+import { queryFromParts } from "./build.js";
+import { nameToSelectable, queryToString } from "./stringify.js";
 
-import { compileToOldSpec, compose } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index.js";
 
 describe("Aggregates to queries", () => {
   it("composes a query with simple aggregate through relation", () => {

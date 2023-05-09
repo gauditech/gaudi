@@ -1,3 +1,3 @@
-export { compileToOldSpec } from "./compiler";
-export { compose } from "./composer/composer";
-export { build } from "./builder/builder";
+export { compileToOldSpec } from "./compiler/index.js";
+export { compose } from "./composer/composer.js";
+export { build } from "./builder/builder.js";

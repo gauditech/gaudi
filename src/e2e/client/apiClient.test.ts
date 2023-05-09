@@ -2,13 +2,13 @@ import path from "path";
 
 import request from "supertest";
 
-import { assertUnreachable, ensureEqual } from "@src/common/utils";
-import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@src/e2e/api/setup";
+import { assertUnreachable, ensureEqual } from "@src/common/utils.js";
+import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@src/e2e/api/setup.js";
 import {
   ApiRequestInit,
   createClient,
-} from "@src/e2e/client/__snapshots__/apiClient/client/api-client-entrypoint";
-import { readConfig } from "@src/runtime/config";
+} from "@src/e2e/client/__snapshots__/apiClient/client/api-client-entrypoint.js";
+import { readConfig } from "@src/runtime/config.js";
 
 // test are slow
 jest.setTimeout(10000);

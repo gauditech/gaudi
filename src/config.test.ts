@@ -1,6 +1,6 @@
 import path from "path";
 
-import { EngineConfig, readConfig } from "@src/config";
+import { EngineConfig, readConfig } from "@src/config.js";
 
 describe("engine", () => {
   describe("config", () => {

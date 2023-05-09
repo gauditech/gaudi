@@ -1,4 +1,4 @@
-import { BinaryOperator } from "./specification";
+import { BinaryOperator } from "./specification.js";
 
 export type Definition = {
   models: ModelDef[];

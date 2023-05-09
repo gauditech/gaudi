@@ -1,6 +1,6 @@
-import { compileToAST } from "../index";
+import { compileToAST } from "../index.js";
 
-import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
+import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification.js";
 
 function expectError(source: string, errorMessage: string) {
   const { errors } = compileToAST(source);

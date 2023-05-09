@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index.js";
 
 describe("populator composer", () => {
   it("succeeds for simple populator", () => {

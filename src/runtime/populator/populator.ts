@@ -5,12 +5,12 @@ import "../../common/setupAliases";
 
 import _ from "lodash";
 
-import { ActionContext, executeActions } from "@src/runtime/common/action";
-import { createIterator } from "@src/runtime/common/iterator";
-import { RuntimeConfig, loadDefinition, readConfig } from "@src/runtime/config";
-import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
-import { Vars } from "@src/runtime/server/vars";
-import { Definition, PopulateDef, PopulatorDef } from "@src/types/definition";
+import { ActionContext, executeActions } from "@src/runtime/common/action.js";
+import { createIterator } from "@src/runtime/common/iterator.js";
+import { RuntimeConfig, loadDefinition, readConfig } from "@src/runtime/config.js";
+import { DbConn, createDbConn } from "@src/runtime/server/dbConn.js";
+import { Vars } from "@src/runtime/server/vars.js";
+import { Definition, PopulateDef, PopulatorDef } from "@src/types/definition.js";
 
 // read environment
 const config = readConfig();

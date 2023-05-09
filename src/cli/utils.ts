@@ -1,6 +1,6 @@
 import fs from "fs";
 
-import { saveOutputFile } from "@src/common/utils";
+import { saveOutputFile } from "@src/common/utils.js";
 
 export function sanitizeProjectName(name: string): string {
   return (

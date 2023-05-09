@@ -1,10 +1,10 @@
 import _ from "lodash";
 
-import { selectableId } from "../runtime/query/build";
+import { selectableId } from "../runtime/query/build.js";
 
-import { getRef } from "@src/common/refs";
-import { composeActionBlock } from "@src/composer/actions";
-import { fieldsetFromActions } from "@src/composer/entrypoints";
+import { getRef } from "@src/common/refs.js";
+import { composeActionBlock } from "@src/composer/actions.js";
+import { fieldsetFromActions } from "@src/composer/entrypoints.js";
 import {
   CreateEndpointDef,
   Definition,
@@ -19,7 +19,7 @@ import {
   SelectItem,
   TargetWithSelectDef,
   UpdateEndpointDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 /**
  * Build and return list of admin entrpoints.

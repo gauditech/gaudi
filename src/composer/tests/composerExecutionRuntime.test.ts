@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index.js";
 
 describe("execution runtime composer", () => {
   it("composes single execution runtime", () => {

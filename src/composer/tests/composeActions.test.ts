@@ -1,7 +1,7 @@
 import _ from "lodash";
 
-import { compileToOldSpec, compose } from "@src/index";
-import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
+import { compileToOldSpec, compose } from "@src/index.js";
+import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition.js";
 
 describe("compose actions", () => {
   describe("native actions", () => {

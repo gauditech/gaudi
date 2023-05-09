@@ -1,10 +1,10 @@
-import { compose } from "@src/composer/composer";
+import { compose } from "@src/composer/composer.js";
 import {
   buildFieldsetValidationSchema,
   validateEndpointFieldset,
-} from "@src/runtime/common/validation";
-import { BusinessError } from "@src/runtime/server/error";
-import { Definition, FieldsetDef } from "@src/types/definition";
+} from "@src/runtime/common/validation.js";
+import { BusinessError } from "@src/runtime/server/error.js";
+import { Definition, FieldsetDef } from "@src/types/definition.js";
 
 describe("runtime", () => {
   describe("validation", () => {

@@ -1,4 +1,4 @@
-import { pagingToQueryLimit } from "@src/runtime/common/utils";
+import { pagingToQueryLimit } from "@src/runtime/common/utils.js";
 
 describe("runtime common utils", () => {
   describe("paging", () => {

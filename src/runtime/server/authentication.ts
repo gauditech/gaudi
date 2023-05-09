@@ -2,12 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-http-bearer";
 
-import { dataToFieldDbnames, dataToFieldModelNames, getRef } from "@src/common/refs";
-import { assertUnreachable, ensureNot } from "@src/common/utils";
-import { getAppContext } from "@src/runtime/server/context";
-import { DbConn } from "@src/runtime/server/dbConn";
-import { BusinessError, errorResponse } from "@src/runtime/server/error";
-import { Definition } from "@src/types/definition";
+import { dataToFieldDbnames, dataToFieldModelNames, getRef } from "@src/common/refs.js";
+import { assertUnreachable, ensureNot } from "@src/common/utils.js";
+import { getAppContext } from "@src/runtime/server/context.js";
+import { DbConn } from "@src/runtime/server/dbConn.js";
+import { BusinessError, errorResponse } from "@src/runtime/server/error.js";
+import { Definition } from "@src/types/definition.js";
 
 export type AuthenticationOptions = {
   allowAnonymous?: boolean;

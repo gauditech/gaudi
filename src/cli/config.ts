@@ -1,6 +1,6 @@
 import path from "path";
 
-import { EngineConfig } from "@src/config";
+import { EngineConfig } from "@src/config.js";
 
 // -------------------- Various configs, constants and defaults
 

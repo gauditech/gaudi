@@ -1,17 +1,17 @@
 import { ILexingError, IRecognitionException } from "chevrotain";
 import _ from "lodash";
 
-import { ProjectASTs, TokenData } from "./ast/ast";
-import { checkForm } from "./checkForm";
-import { CompilerError, ErrorCode, compilerErrorsToString } from "./compilerError";
-import * as L from "./lexer";
-import { migrate } from "./migrate";
-import { getTokenData, parser } from "./parser";
-import { AuthPlugin } from "./plugins/authenticator";
-import { resolve } from "./resolver";
+import { ProjectASTs, TokenData } from "./ast/ast.js";
+import { checkForm } from "./checkForm.js";
+import { CompilerError, ErrorCode, compilerErrorsToString } from "./compilerError.js";
+import * as L from "./lexer.js";
+import { migrate } from "./migrate.js";
+import { getTokenData, parser } from "./parser.js";
+import { AuthPlugin } from "./plugins/authenticator.js";
+import { resolve } from "./resolver.js";
 
-import { kindFind } from "@src/common/kindFilter";
-import { Specification } from "@src/types/specification";
+import { kindFind } from "@src/common/kindFilter.js";
+import { Specification } from "@src/types/specification.js";
 
 export type CompileResult = {
   ast: ProjectASTs | undefined;

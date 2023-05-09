@@ -2,13 +2,13 @@ import path from "path";
 
 import copyfiles from "copyfiles";
 import _ from "lodash";
-import { ArgumentsCamelCase } from "yargs";
+import { Arguments } from "yargs";
 
-import { EngineConfig } from "@src/config";
+import { EngineConfig } from "@src/config.js";
 
 // --- copy static
 
-export function copyStatic(_args: ArgumentsCamelCase, config: EngineConfig) {
+export function copyStatic(_args: Arguments, config: EngineConfig) {
   console.log("Copying static resources ...");
 
   return new Promise((resolve, reject) => {

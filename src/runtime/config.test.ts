@@ -1,6 +1,6 @@
 import path from "path";
 
-import { RuntimeConfig, readConfig } from "@src/runtime/config";
+import { RuntimeConfig, readConfig } from "@src/runtime/config.js";
 
 describe("runtime", () => {
   describe("config", () => {

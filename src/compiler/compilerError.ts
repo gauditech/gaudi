@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { TokenData } from "./ast/ast";
+import { TokenData } from "./ast/ast.js";
 
 export enum ErrorCode {
   ParserError,

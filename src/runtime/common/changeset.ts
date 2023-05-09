@@ -1,14 +1,14 @@
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 
-import { buildQueryTree } from "../query/build";
+import { buildQueryTree } from "../query/build.js";
 
-import { executeArithmetics } from "./arithmetics";
+import { executeArithmetics } from "./arithmetics.js";
 
-import { assertUnreachable, ensureEqual, ensureExists, ensureNot } from "@src/common/utils";
-import { ActionContext } from "@src/runtime/common/action";
-import { HookActionContext, executeHook } from "@src/runtime/hooks";
-import { QueryExecutor } from "@src/runtime/query/exec";
-import { ChangesetDef, Definition, FieldDef, FieldSetter } from "@src/types/definition";
+import { assertUnreachable, ensureEqual, ensureExists, ensureNot } from "@src/common/utils.js";
+import { ActionContext } from "@src/runtime/common/action.js";
+import { HookActionContext, executeHook } from "@src/runtime/hooks.js";
+import { QueryExecutor } from "@src/runtime/query/exec.js";
+import { ChangesetDef, Definition, FieldDef, FieldSetter } from "@src/types/definition.js";
 
 type Changeset = Record<string, unknown>;
 

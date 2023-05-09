@@ -3,19 +3,19 @@ import {
   buildQueryTree,
   queryTreeFromParts,
   transformSelectPath,
-} from "../query/build";
-import { createQueryExecutor, executeQueryTree } from "../query/exec";
+} from "../query/build.js";
+import { createQueryExecutor, executeQueryTree } from "../query/exec.js";
 
-import { ValidReferenceIdResult } from "./constraintValidation";
+import { ValidReferenceIdResult } from "./constraintValidation.js";
 
-import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { assertUnreachable, ensureExists } from "@src/common/utils";
-import { buildChangeset, buildStrictChangeset } from "@src/runtime/common/changeset";
-import { HookActionContext, executeActionHook } from "@src/runtime/hooks";
-import { DbConn } from "@src/runtime/server/dbConn";
-import { HookError } from "@src/runtime/server/error";
-import { Vars } from "@src/runtime/server/vars";
-import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition";
+import { dataToFieldDbnames, getRef } from "@src/common/refs.js";
+import { assertUnreachable, ensureExists } from "@src/common/utils.js";
+import { buildChangeset, buildStrictChangeset } from "@src/runtime/common/changeset.js";
+import { HookActionContext, executeActionHook } from "@src/runtime/hooks.js";
+import { DbConn } from "@src/runtime/server/dbConn.js";
+import { HookError } from "@src/runtime/server/error.js";
+import { Vars } from "@src/runtime/server/vars.js";
+import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition.js";
 
 export type ActionContext = {
   input: Record<string, unknown>;

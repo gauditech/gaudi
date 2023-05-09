@@ -1,7 +1,7 @@
 import { oneLine, source } from "common-tags";
 
-import { getFieldDbType, getRef } from "@src/common/refs";
-import { Definition } from "@src/types/definition";
+import { getFieldDbType, getRef } from "@src/common/refs.js";
+import { Definition } from "@src/types/definition.js";
 
 export type BuildDbSchemaData = {
   definition: Definition;

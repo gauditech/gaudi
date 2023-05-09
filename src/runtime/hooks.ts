@@ -3,11 +3,11 @@ import path from "path";
 
 import { Request, Response } from "express";
 
-import { Vars } from "./server/vars";
+import { Vars } from "./server/vars.js";
 
-import { getExecutionRuntime } from "@src/common/refs";
-import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { Definition, ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition";
+import { getExecutionRuntime } from "@src/common/refs.js";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes.js";
+import { Definition, ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition.js";
 
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 

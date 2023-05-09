@@ -3,11 +3,11 @@ import "../../common/setupAliases";
 
 import path from "path";
 
-import { buildApiClients } from "@src/builder/builder";
-import { compileToOldSpec } from "@src/compiler/";
-import { compose } from "@src/composer/composer";
-import { loadBlueprint } from "@src/e2e/api/setup";
-import { Logger } from "@src/logger";
+import { buildApiClients } from "@src/builder/builder.js";
+import { compileToOldSpec } from "@src/compiler/index.js";
+import { compose } from "@src/composer/composer.js";
+import { loadBlueprint } from "@src/e2e/api/setup.js";
+import { Logger } from "@src/logger.js";
 
 const CLIENT_LIB_DIST_FOLDER = path.join(__dirname, "__snapshots__");
 

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@src/builder/migrator/prismaClient";
+import { PrismaClient } from "@src/builder/migrator/prismaClient.js";
 
 export type ApplySchemaProps = {
   schema: string;

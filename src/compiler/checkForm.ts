@@ -30,11 +30,11 @@ import {
   Select,
   TokenData,
   Validator,
-} from "./ast/ast";
-import { CompilerError, ErrorCode } from "./compilerError";
+} from "./ast/ast.js";
+import { CompilerError, ErrorCode } from "./compilerError.js";
 
-import { kindFilter, kindFind } from "@src/common/kindFilter";
-import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
+import { kindFilter, kindFind } from "@src/common/kindFilter.js";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes.js";
 
 export function checkForm(projectASTs: ProjectASTs) {
   const document = projectASTs.document;

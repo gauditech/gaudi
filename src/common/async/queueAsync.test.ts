@@ -1,6 +1,6 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 
-import { createAsyncQueueContext } from "@src/common/async/queueAsync";
+import { createAsyncQueueContext } from "@src/common/async/queueAsync.js";
 
 const sleep = (delay: number) => new Promise((resolve) => setTimeout(resolve, delay));
 

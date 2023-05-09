@@ -1,6 +1,6 @@
-import { ensureUnique } from "@src/common/utils";
-import { Definition, ExecutionRuntimeDef } from "@src/types/definition";
-import { ExecutionRuntimeSpec } from "@src/types/specification";
+import { ensureUnique } from "@src/common/utils.js";
+import { Definition, ExecutionRuntimeDef } from "@src/types/definition.js";
+import { ExecutionRuntimeSpec } from "@src/types/specification.js";
 
 const EXECUTION_RUNTIME_GAUDI_INTERNAL = "@GAUDI_INTERNAL";
 

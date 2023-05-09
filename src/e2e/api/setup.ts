@@ -7,15 +7,19 @@ import path from "path";
 import express, { Express, json } from "express";
 import _ from "lodash";
 
-import { build } from "@src/builder/builder";
-import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { compileToOldSpec, compose } from "@src/index";
-import { RuntimeConfig } from "@src/runtime/config";
-import { AppContext, bindAppContext } from "@src/runtime/server/context";
-import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
-import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
-import { bindAppContextHandler, errorHandler, requestLogger } from "@src/runtime/server/middleware";
-import { Definition } from "@src/types/definition";
+import { build } from "@src/builder/builder.js";
+import { dataToFieldDbnames, getRef } from "@src/common/refs.js";
+import { compileToOldSpec, compose } from "@src/index.js";
+import { RuntimeConfig } from "@src/runtime/config.js";
+import { AppContext, bindAppContext } from "@src/runtime/server/context.js";
+import { DbConn, createDbConn } from "@src/runtime/server/dbConn.js";
+import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints.js";
+import {
+  bindAppContextHandler,
+  errorHandler,
+  requestLogger,
+} from "@src/runtime/server/middleware.js";
+import { Definition } from "@src/types/definition.js";
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
 

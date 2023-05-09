@@ -1,7 +1,7 @@
 import _ from "lodash";
 
-import { getRef } from "@src/common/refs";
-import { assertUnreachable } from "@src/common/utils";
+import { getRef } from "@src/common/refs.js";
+import { assertUnreachable } from "@src/common/utils.js";
 import {
   Definition,
   EndpointDef,
@@ -11,7 +11,7 @@ import {
   FieldsetRecordDef,
   SelectItem,
   TargetDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 export type BuildApiClientData = {
   definition: Definition;

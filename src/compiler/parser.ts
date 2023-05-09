@@ -73,9 +73,9 @@ import {
   TokenData,
   Validator,
   unresolvedRef,
-} from "./ast/ast";
-import { unknownType } from "./ast/type";
-import * as L from "./lexer";
+} from "./ast/ast.js";
+import { unknownType } from "./ast/type.js";
+import * as L from "./lexer.js";
 
 export function getTokenData(...tokens: IToken[]): TokenData {
   const positions = tokens.map((t) => ({

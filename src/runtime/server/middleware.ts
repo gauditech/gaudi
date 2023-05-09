@@ -1,8 +1,8 @@
 import { Express, NextFunction, Request, Response } from "express";
 
-import { AppContext, bindAppContext, getAppContext } from "@src/runtime/server/context";
-import { HttpResponseError } from "@src/runtime/server/error";
-import { ServerRequestHandler } from "@src/runtime/server/types";
+import { AppContext, bindAppContext, getAppContext } from "@src/runtime/server/context.js";
+import { HttpResponseError } from "@src/runtime/server/error.js";
+import { ServerRequestHandler } from "@src/runtime/server/types.js";
 
 // ----- middleware
 

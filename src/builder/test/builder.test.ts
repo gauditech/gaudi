@@ -1,6 +1,6 @@
-import { renderDbSchema } from "@src/builder/builder";
+import { renderDbSchema } from "@src/builder/builder.js";
 import definition from "@src/composer/tests/data/definition.json";
-import { Definition } from "@src/types/definition";
+import { Definition } from "@src/types/definition.js";
 
 describe("builder", () => {
   describe("build DB schema", () => {

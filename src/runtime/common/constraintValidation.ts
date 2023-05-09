@@ -1,18 +1,18 @@
 import _ from "lodash";
 
-import { queryFromParts } from "../query/build";
-import { executeQuery } from "../query/exec";
-import { DbConn } from "../server/dbConn";
-import { Vars } from "../server/vars";
+import { queryFromParts } from "../query/build.js";
+import { executeQuery } from "../query/exec.js";
+import { DbConn } from "../server/dbConn.js";
+import { Vars } from "../server/vars.js";
 
-import { getRef } from "@src/common/refs";
+import { getRef } from "@src/common/refs.js";
 import {
   ActionDef,
   Definition,
   FieldsetDef,
   FieldsetFieldDef,
   TypedExprDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 export type ReferenceIdResult = ValidReferenceIdResult | InvalidReferenceIdResult;
 export type ValidReferenceIdResult = { fieldsetAccess: string[]; value: number };

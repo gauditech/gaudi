@@ -1,6 +1,6 @@
-import { execWithPromise } from "./utils";
+import { execWithPromise } from "./utils.js";
 
-import { concatKeys } from "@src/common/utils";
+import { concatKeys } from "@src/common/utils.js";
 
 // ----- dev
 

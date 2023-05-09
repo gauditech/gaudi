@@ -36,7 +36,7 @@ import {
   Select,
   TokenData,
   Validator,
-} from "../ast/ast";
+} from "../ast/ast.js";
 
 export enum TokenTypes {
   namespace = 0,

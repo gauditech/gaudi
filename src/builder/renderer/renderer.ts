@@ -1,4 +1,4 @@
-import { saveOutputFile } from "@src/common/utils";
+import { saveOutputFile } from "@src/common/utils.js";
 
 export function render(
   srcFilename: string,

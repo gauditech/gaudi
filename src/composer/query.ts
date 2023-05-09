@@ -1,21 +1,21 @@
 import _ from "lodash";
 
-import { getRef } from "@src/common/refs";
-import { ensureEqual } from "@src/common/utils";
-import { processSelect } from "@src/composer/entrypoints";
+import { getRef } from "@src/common/refs.js";
+import { ensureEqual } from "@src/common/utils.js";
+import { processSelect } from "@src/composer/entrypoints.js";
 import {
   VarContext,
   getTypedChangesetContext,
   getTypedLiteralValue,
   getTypedPath,
-} from "@src/composer/utils";
+} from "@src/composer/utils.js";
 import {
   NamePath,
   getDirectChildren,
   getFilterPaths,
   queryFromParts,
   uniqueNamePaths,
-} from "@src/runtime/query/build";
+} from "@src/runtime/query/build.js";
 import {
   AggregateDef,
   Definition,
@@ -24,8 +24,8 @@ import {
   QueryDef,
   QueryOrderByAtomDef,
   TypedExprDef,
-} from "@src/types/definition";
-import { ExpSpec, QuerySpec } from "@src/types/specification";
+} from "@src/types/definition.js";
+import { ExpSpec, QuerySpec } from "@src/types/specification.js";
 
 export function composeQuery(
   def: Definition,

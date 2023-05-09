@@ -1,4 +1,4 @@
-import { QueryDef, SelectFieldItem } from "@src/types/definition";
+import { QueryDef, SelectFieldItem } from "@src/types/definition.js";
 
 export function debugQuery(q: QueryDef): void {
   const from = q.fromPath.join(".");

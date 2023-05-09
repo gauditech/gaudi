@@ -1,9 +1,13 @@
 import _ from "lodash";
 
-import { SimpleActionAtoms, SimpleActionSpec, simplifyActionSpec } from "./actions/simpleActions";
+import {
+  SimpleActionAtoms,
+  SimpleActionSpec,
+  simplifyActionSpec,
+} from "./actions/simpleActions.js";
 
-import { FilteredByKind } from "@src/common/kindFilter";
-import { getRef, getTargetModel } from "@src/common/refs";
+import { FilteredByKind } from "@src/common/kindFilter.js";
+import { getRef, getTargetModel } from "@src/common/refs.js";
 import {
   UnreachableError,
   assertUnreachable,
@@ -12,10 +16,10 @@ import {
   ensureExists,
   ensureNot,
   resolveItems,
-} from "@src/common/utils";
-import { composeHook } from "@src/composer/hooks";
-import { composeValidators, validateFieldType } from "@src/composer/models";
-import { composeQuery } from "@src/composer/query";
+} from "@src/common/utils.js";
+import { composeHook } from "@src/composer/hooks.js";
+import { composeValidators, validateFieldType } from "@src/composer/models.js";
+import { composeQuery } from "@src/composer/query.js";
 import {
   VarContext,
   getTypedIterator,
@@ -23,7 +27,7 @@ import {
   getTypedPath,
   getTypedPathWithLeaf,
   getTypedRequestPath,
-} from "@src/composer/utils";
+} from "@src/composer/utils.js";
 import {
   ActionDef,
   ActionHookDef,
@@ -41,14 +45,14 @@ import {
   QueryDef,
   TargetDef,
   UpdateOneAction,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 import {
   ActionAtomSpecSet,
   ActionSpec,
   ExpSpec,
   ModelActionSpec,
   QuerySpec,
-} from "@src/types/specification";
+} from "@src/types/specification.js";
 
 /**
  * Composes the custom actions block for an endpoint. Adds a default action

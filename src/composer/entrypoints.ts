@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getRef, getTargetModel } from "@src/common/refs";
+import { getRef, getTargetModel } from "@src/common/refs.js";
 import {
   UnreachableError,
   assertUnreachable,
@@ -8,10 +8,10 @@ import {
   ensureEqual,
   ensureExists,
   ensureUnique,
-} from "@src/common/utils";
-import { composeActionBlock, getInitialContext } from "@src/composer/actions";
-import { composeExpression } from "@src/composer/query";
-import { uniqueNamePaths } from "@src/runtime/query/build";
+} from "@src/common/utils.js";
+import { composeActionBlock, getInitialContext } from "@src/composer/actions.js";
+import { composeExpression } from "@src/composer/query.js";
+import { uniqueNamePaths } from "@src/runtime/query/build.js";
 import {
   ActionDef,
   Definition,
@@ -32,14 +32,14 @@ import {
   TargetDef,
   TargetWithSelectDef,
   TypedExprDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 import {
   EndpointSpec,
   EntrypointSpec,
   ExpSpec,
   QueryOrderBySpec,
   SelectAST,
-} from "@src/types/specification";
+} from "@src/types/specification.js";
 
 export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));

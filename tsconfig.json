@@ -1,21 +1,22 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "nodenext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "target": "es6",
+    "target": "esnext",
     "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "sourceMap": true,
     "outDir": "dist",
     "baseUrl": ".",
     "strict": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "*": ["node_modules/*"],
       "@src/*": ["src/*"]
     },
-    "lib": ["es2020"]
+    "lib": ["esnext"]
   },
   "include": ["src"]
 }

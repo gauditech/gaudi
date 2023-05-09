@@ -96,9 +96,8 @@ model UserAccessToken {
 
 // ----- entrypoints
 
-entrypoint Orgs {
-    target Org as org
-    identify with slug
+entrypoint Org {
+    identify { through slug }
     response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, nameAndDesc }
 
     get endpoint {}
@@ -106,8 +105,7 @@ entrypoint Orgs {
     create endpoint {}
     update endpoint {}
 
-    entrypoint Repos {
-        target repos
+    entrypoint repos {
         response { id, slug, description, org_id, issues { repo } }
 
         get endpoint {}
@@ -144,8 +142,7 @@ entrypoint Orgs {
 
 populator Dev {
   // org without repos and users
-  populate EmptyOrg {
-    target Org as org
+  populate Org {
 
     // org
     set name "Organization 1"
@@ -155,8 +152,7 @@ populator Dev {
   }
 
   // org without repos and users
-  populate OrgWith1RepoAnd1Member {
-    target Org as org
+  populate Org {
 
     // org
     set name "Organization 2"
@@ -170,8 +166,7 @@ populator Dev {
         inline "'Opt out from org ' + slug"
     }
 
-    populate Repos {
-        target repos as repo
+    populate repos {
 
         // fields
         set name "Repo 1 at " + org.slug
@@ -188,9 +183,7 @@ populator Dev {
   }
 
   // org without repos and users
-  populate OrgWithMultipleReposAndMembers {
-    target Org as org
-
+  populate Org {
     repeat as iter { start 3, end 5 }
 
     // org
@@ -211,8 +204,7 @@ populator Dev {
         inline "'Opt out from org ' + slug"
     }
 
-    populate Repos {
-        target repos as repo
+    populate repos {
 
         repeat as riter { start 1, end 3 }
 

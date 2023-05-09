@@ -1,9 +1,9 @@
 import _ from "lodash";
 
-import { FilteredByKind } from "@src/common/kindFilter";
-import { getRef } from "@src/common/refs";
-import { assertUnreachable, ensureEqual } from "@src/common/utils";
-import { Definition, ModelDef } from "@src/types/definition";
+import { FilteredByKind } from "@src/common/kindFilter.js";
+import { getRef } from "@src/common/refs.js";
+import { assertUnreachable, ensureEqual } from "@src/common/utils.js";
+import { Definition, ModelDef } from "@src/types/definition.js";
 import {
   ActionAtomSpecDeny,
   ActionAtomSpecInput,
@@ -12,7 +12,7 @@ import {
   ActionAtomSpecSet,
   ActionAtomSpecVirtualInput,
   ModelActionSpec,
-} from "@src/types/specification";
+} from "@src/types/specification.js";
 
 export type SimpleActionSpec = {
   kind: "create" | "update";

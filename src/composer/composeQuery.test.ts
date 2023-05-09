@@ -1,5 +1,5 @@
-import { compileToOldSpec, compose } from "@src/index";
-import { CustomOneEndpointDef } from "@src/types/definition";
+import { compileToOldSpec, compose } from "@src/index.js";
+import { CustomOneEndpointDef } from "@src/types/definition.js";
 
 describe("compose model queries", () => {
   it("nested example without filters", () => {

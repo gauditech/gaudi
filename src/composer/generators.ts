@@ -1,6 +1,6 @@
-import { assertUnreachable } from "@src/common/utils";
-import { Definition, GeneratorDef } from "@src/types/definition";
-import { GeneratorSpec } from "@src/types/specification";
+import { assertUnreachable } from "@src/common/utils.js";
+import { Definition, GeneratorDef } from "@src/types/definition.js";
+import { GeneratorSpec } from "@src/types/specification.js";
 
 export function composeGenerators(def: Definition, generators: GeneratorSpec[]): void {
   def.generators = generators.map((g) => composeGenerator(def, g));

@@ -1,10 +1,10 @@
 import _ from "lodash";
 
-import { FilteredByKind } from "@src/common/kindFilter";
-import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot } from "@src/common/utils";
-import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
-import { LiteralValue } from "@src/types/specification";
+import { FilteredByKind } from "@src/common/kindFilter.js";
+import { getRef, getTargetModel } from "@src/common/refs.js";
+import { ensureEqual, ensureNot } from "@src/common/utils.js";
+import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition.js";
+import { LiteralValue } from "@src/types/specification.js";
 
 export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
   if (typeof literal === "string") {

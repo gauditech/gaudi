@@ -1,5 +1,9 @@
-import { compileToOldSpec, compose } from "@src/index";
-import { CreateEndpointDef, CustomManyEndpointDef, ExecuteHookAction } from "@src/types/definition";
+import { compileToOldSpec, compose } from "@src/index.js";
+import {
+  CreateEndpointDef,
+  CustomManyEndpointDef,
+  ExecuteHookAction,
+} from "@src/types/definition.js";
 
 describe("entrypoint", () => {
   it("composes basic example", () => {

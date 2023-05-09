@@ -1,9 +1,9 @@
 import _ from "lodash";
 
-import { mkJoinConnection } from "./stringify";
+import { mkJoinConnection } from "./stringify.js";
 
-import { getRef, getTargetModel } from "@src/common/refs";
-import { assertUnreachable, ensureEqual } from "@src/common/utils";
+import { getRef, getTargetModel } from "@src/common/refs.js";
+import { assertUnreachable, ensureEqual } from "@src/common/utils.js";
 import {
   DeepSelectItem,
   Definition,
@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectableItem,
   TypedExprDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 // FIXME introduce Queryable with SelectableItem[]?
 export type QueryTree = {

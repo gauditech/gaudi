@@ -5,9 +5,9 @@ import "./common/setupAliases";
 
 import fs from "fs";
 
-import { build, compileToOldSpec, compose } from "./index";
+import { build, compileToOldSpec, compose } from "./index.js";
 
-import { readConfig } from "@src/config";
+import { readConfig } from "@src/config.js";
 
 const { inputPath, outputFolder, gaudiFolder } = readConfig();
 

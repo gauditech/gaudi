@@ -4,13 +4,13 @@ import { Express, NextFunction, Request, Response, static as staticHandler } fro
 import { OpenAPIV3 } from "openapi-types";
 import { serve, setup } from "swagger-ui-express";
 
-import { buildEntrypoints } from "@src/builder/admin";
-import { buildOpenAPI } from "@src/builder/openAPI";
-import { saveOutputFile } from "@src/common/utils";
-import { getAppContext } from "@src/runtime/server/context";
-import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
-import { EndpointConfig } from "@src/runtime/server/types";
-import { Definition, EntrypointDef } from "@src/types/definition";
+import { buildEntrypoints } from "@src/builder/admin.js";
+import { buildOpenAPI } from "@src/builder/openAPI.js";
+import { saveOutputFile } from "@src/common/utils.js";
+import { getAppContext } from "@src/runtime/server/context.js";
+import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints.js";
+import { EndpointConfig } from "@src/runtime/server/types.js";
+import { Definition, EntrypointDef } from "@src/types/definition.js";
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {

@@ -1,24 +1,24 @@
 import _ from "lodash";
 
-import { VarContext } from "./utils";
+import { VarContext } from "./utils.js";
 
-import { getRef } from "@src/common/refs";
-import { assertUnreachable, ensureNot } from "@src/common/utils";
-import { composeActionBlock } from "@src/composer/actions";
+import { getRef } from "@src/common/refs.js";
+import { assertUnreachable, ensureNot } from "@src/common/utils.js";
+import { composeActionBlock } from "@src/composer/actions.js";
 import {
   TargetContext,
   calculateTarget,
   collectActionDeps,
   wrapActionsWithSelect,
-} from "@src/composer/entrypoints";
+} from "@src/composer/entrypoints.js";
 import {
   ActionDef,
   Definition,
   PopulateDef,
   PopulatorDef,
   RepeaterDef,
-} from "@src/types/definition";
-import { ActionSpec, PopulateSpec, PopulatorSpec, RepeaterSpec } from "@src/types/specification";
+} from "@src/types/definition.js";
+import { ActionSpec, PopulateSpec, PopulatorSpec, RepeaterSpec } from "@src/types/specification.js";
 
 export function composePopulators(def: Definition, populators: PopulatorSpec[]): void {
   def.populators = populators.map((p) => processPopulator(def, p));

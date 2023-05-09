@@ -35,8 +35,8 @@ import {
   Select,
   UnaryOperator,
   Validator,
-} from "./ast/ast";
-import { builtinFunctions } from "./ast/functions";
+} from "./ast/ast.js";
+import { builtinFunctions } from "./ast/functions.js";
 import {
   Type,
   TypeCardinality,
@@ -48,11 +48,11 @@ import {
   primitiveTypes,
   removeTypeModifier,
   unknownType,
-} from "./ast/type";
-import { CompilerError, ErrorCode } from "./compilerError";
-import { authUserModelName } from "./plugins/authenticator";
+} from "./ast/type.js";
+import { CompilerError, ErrorCode } from "./compilerError.js";
+import { authUserModelName } from "./plugins/authenticator.js";
 
-import { FilteredByKind, kindFilter, kindFind } from "@src/common/kindFilter";
+import { FilteredByKind, kindFilter, kindFind } from "@src/common/kindFilter.js";
 
 type Scope = {
   environment: "model" | "entrypoint";

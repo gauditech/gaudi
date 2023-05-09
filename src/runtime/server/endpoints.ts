@@ -2,40 +2,40 @@ import { Express, Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { Vars } from "./vars";
+import { Vars } from "./vars.js";
 
 import {
   EndpointPath,
   PathFragmentIdentifier,
   PathQueryParameter,
   buildEndpointPath,
-} from "@src/builder/query";
-import { getRef } from "@src/common/refs";
-import { assertUnreachable } from "@src/common/utils";
-import { Logger } from "@src/logger";
-import { executeArithmetics } from "@src/runtime//common/arithmetics";
-import { executeEndpointActions } from "@src/runtime/common/action";
+} from "@src/builder/query.js";
+import { getRef } from "@src/common/refs.js";
+import { assertUnreachable } from "@src/common/utils.js";
+import { Logger } from "@src/logger.js";
+import { executeArithmetics } from "@src/runtime//common/arithmetics.js";
+import { executeEndpointActions } from "@src/runtime/common/action.js";
 import {
   ReferenceIdResult,
   ValidReferenceIdResult,
   assignNoReferenceValidators,
   fetchReferenceIds,
-} from "@src/runtime/common/constraintValidation";
-import { validateEndpointFieldset } from "@src/runtime/common/validation";
-import { QueryTree } from "@src/runtime/query/build";
+} from "@src/runtime/common/constraintValidation.js";
+import { validateEndpointFieldset } from "@src/runtime/common/validation.js";
+import { QueryTree } from "@src/runtime/query/build.js";
 import {
   buildEndpointQueries,
   decorateWithFilter,
   decorateWithOrderBy,
   decorateWithPaging,
-} from "@src/runtime/query/endpointQueries";
-import { NestedRow, executeQueryTree } from "@src/runtime/query/exec";
-import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
-import { getAppContext } from "@src/runtime/server/context";
-import { DbConn } from "@src/runtime/server/dbConn";
-import { BusinessError, errorResponse } from "@src/runtime/server/error";
-import { endpointGuardHandler } from "@src/runtime/server/middleware";
-import { EndpointConfig } from "@src/runtime/server/types";
+} from "@src/runtime/query/endpointQueries.js";
+import { NestedRow, executeQueryTree } from "@src/runtime/query/exec.js";
+import { buildAuthenticationHandler } from "@src/runtime/server/authentication.js";
+import { getAppContext } from "@src/runtime/server/context.js";
+import { DbConn } from "@src/runtime/server/dbConn.js";
+import { BusinessError, errorResponse } from "@src/runtime/server/error.js";
+import { endpointGuardHandler } from "@src/runtime/server/middleware.js";
+import { EndpointConfig } from "@src/runtime/server/types.js";
 import {
   CreateEndpointDef,
   CustomManyEndpointDef,
@@ -50,7 +50,7 @@ import {
   TypedExprDef,
   TypedFunction,
   UpdateEndpointDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 const logger = Logger.specific("http");
 

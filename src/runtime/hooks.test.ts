@@ -1,7 +1,7 @@
-import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { compileToOldSpec, compose } from "@src/index";
-import { executeHook } from "@src/runtime/hooks";
-import { CreateEndpointDef, Definition } from "@src/types/definition";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes.js";
+import { compileToOldSpec, compose } from "@src/index.js";
+import { executeHook } from "@src/runtime/hooks.js";
+import { CreateEndpointDef, Definition } from "@src/types/definition.js";
 
 describe("hooks", () => {
   const def = createTestDefinition();

@@ -1,7 +1,7 @@
-import { QueryTree } from "@src/runtime/query/build";
-import { NestedRow, QueryExecutor } from "@src/runtime/query/exec";
-import { Vars } from "@src/runtime/server/vars";
-import { Definition, QueryDef } from "@src/types/definition";
+import { QueryTree } from "@src/runtime/query/build.js";
+import { NestedRow, QueryExecutor } from "@src/runtime/query/exec.js";
+import { Vars } from "@src/runtime/server/vars.js";
+import { Definition, QueryDef } from "@src/types/definition.js";
 
 /**
  * Creates dummy query executor wich always return empty row.

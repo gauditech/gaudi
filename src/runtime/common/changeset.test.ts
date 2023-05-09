@@ -2,9 +2,9 @@ import crypto from "crypto";
 
 import bcrypt, { hash } from "bcrypt";
 
-import { compose } from "@src/composer/composer";
-import { getTypedLiteralValue } from "@src/composer/utils";
-import { ActionContext } from "@src/runtime/common/action";
+import { compose } from "@src/composer/composer.js";
+import { getTypedLiteralValue } from "@src/composer/utils.js";
+import { ActionContext } from "@src/runtime/common/action.js";
 import {
   buildChangeset,
   buildStrictChangeset,
@@ -12,9 +12,9 @@ import {
   formatFieldValue,
   getFieldsetProperty,
   setFieldsetProperty,
-} from "@src/runtime/common/changeset";
-import { mockQueryExecutor } from "@src/runtime/common/testUtils";
-import { Vars } from "@src/runtime/server/vars";
+} from "@src/runtime/common/changeset.js";
+import { mockQueryExecutor } from "@src/runtime/common/testUtils.js";
+import { Vars } from "@src/runtime/server/vars.js";
 import {
   ChangesetDef,
   Definition,
@@ -22,7 +22,7 @@ import {
   FieldSetterChangesetReference,
   FieldSetterFunction,
   FunctionName,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 describe("runtime", () => {
   describe("changeset", () => {

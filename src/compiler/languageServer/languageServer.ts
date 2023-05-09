@@ -14,12 +14,12 @@ import {
   TextDocumentSyncKind,
   TextDocuments,
   createConnection,
-} from "vscode-languageserver/node";
+} from "vscode-languageserver/node.js";
 
-import { CompileResult, compileToAST } from "..";
-import { TokenData } from "../ast/ast";
+import { CompileResult, compileToAST } from "../index.js";
+import { TokenData } from "../ast/ast.js";
 
-import { TokenModifiers, TokenTypes, buildTokens } from "./tokenBuilder";
+import { TokenModifiers, TokenTypes, buildTokens } from "./tokenBuilder.js";
 
 const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);

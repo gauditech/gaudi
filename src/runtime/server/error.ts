@@ -2,7 +2,7 @@
 
 import _ from "lodash";
 
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable } from "@src/common/utils.js";
 
 //** Error reponse codes  */
 export type ErrorCode =

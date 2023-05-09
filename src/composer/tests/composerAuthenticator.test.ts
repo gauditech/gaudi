@@ -1,5 +1,5 @@
-import { getRef } from "@src/common/refs";
-import { compileToOldSpec, compose } from "@src/index";
+import { getRef } from "@src/common/refs.js";
+import { compileToOldSpec, compose } from "@src/index.js";
 
 describe("authenticator composer", () => {
   it("succeeds for simple authenticator", () => {

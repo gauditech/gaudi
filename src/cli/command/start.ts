@@ -1,13 +1,13 @@
 import _ from "lodash";
-import { ArgumentsCamelCase } from "yargs";
+import { Arguments } from "yargs";
 
-import { GAUDI_SCRIPTS, appendBinPath, getDefaultNodeOptions } from "@src/cli/config";
-import { createCommandRunner } from "@src/cli/runner";
-import { EngineConfig } from "@src/config";
+import { GAUDI_SCRIPTS, appendBinPath, getDefaultNodeOptions } from "@src/cli/config.js";
+import { createCommandRunner } from "@src/cli/runner.js";
+import { EngineConfig } from "@src/config.js";
 
 // --- server commands
 
-export function start(_args: ArgumentsCamelCase, _config: EngineConfig) {
+export function start(_args: Arguments, _config: EngineConfig) {
   console.log("Starting Gaudi project ... ", process.cwd());
 
   // use `nodemon` to control (start, reload, shutdown) runtime process

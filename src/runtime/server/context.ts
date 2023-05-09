@@ -1,7 +1,7 @@
 import { Express, Request } from "express";
 
-import { RuntimeConfig } from "@src/runtime/config";
-import { DbConn } from "@src/runtime/server/dbConn";
+import { RuntimeConfig } from "@src/runtime/config.js";
+import { DbConn } from "@src/runtime/server/dbConn.js";
 
 // ----- app specific context
 

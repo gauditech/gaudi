@@ -1,11 +1,11 @@
-import { getRef } from "@src/common/refs";
-import { assertUnreachable } from "@src/common/utils";
+import { getRef } from "@src/common/refs.js";
+import { assertUnreachable } from "@src/common/utils.js";
 import {
   AuthenticatorMethodDef,
   AuthenticatorNamedModelDef,
   Definition,
-} from "@src/types/definition";
-import { AuthenticatorMethodSpec, AuthenticatorSpec } from "@src/types/specification";
+} from "@src/types/definition.js";
+import { AuthenticatorMethodSpec, AuthenticatorSpec } from "@src/types/specification.js";
 
 /**
  * Compose authenticator block.

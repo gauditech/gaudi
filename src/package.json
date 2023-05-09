@@ -3,6 +3,7 @@
   "description": "Gaudi app builder",
   "version": "0.0.1",
   "main": "engine.js",
+  "type": "module",
   "scripts": {},
   "bin": {
     "gaudi-engine": "./engine.js",
@@ -25,5 +26,8 @@
     "prisma": "^4.4.0",
     "yargs": "^17.6.2",
     "yup": "^0.32.11"
+  },
+  "devDependencies": {
+    "@types/module-alias": "^2.0.1"
   }
 }

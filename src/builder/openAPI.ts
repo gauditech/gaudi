@@ -2,15 +2,15 @@ import _, { flatMap, mapValues } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
 import { match } from "ts-pattern";
 
-import { buildEndpointPath } from "@src/builder/query";
-import { getRef } from "@src/common/refs";
+import { buildEndpointPath } from "@src/builder/query.js";
+import { getRef } from "@src/common/refs.js";
 import {
   Definition,
   EndpointDef,
   EntrypointDef,
   FieldsetDef,
   SelectItem,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAPIV3.Document {
   const endpoints = definition.entrypoints.map(extractEndpoints).flat();

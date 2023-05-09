@@ -1,15 +1,15 @@
-import { ensureEqual } from "@src/common/utils";
+import { ensureEqual } from "@src/common/utils.js";
 import {
   ApiRequestFn as EntrypointApiRequestFn,
   ApiRequestInit as EntrypointApiRequestInit,
   PaginatedListResponse,
   createClient as createClientEntrypoint,
-} from "@src/e2e/client/__snapshots__/mockClient/client/api-client-entrypoint";
+} from "@src/e2e/client/__snapshots__/mockClient/client/api-client-entrypoint.js";
 import {
   ApiRequestFn as ModelApiRequestFn,
   ApiRequestInit as ModelApiRequestInit,
   createClient as createClientModel,
-} from "@src/e2e/client/__snapshots__/mockClient/client/api-client-model";
+} from "@src/e2e/client/__snapshots__/mockClient/client/api-client-model.js";
 
 // test are slow
 jest.setTimeout(20000);

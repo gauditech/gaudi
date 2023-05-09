@@ -1,15 +1,15 @@
-import { QueryTree, queryTreeFromParts } from "./build";
+import { QueryTree, queryTreeFromParts } from "./build.js";
 import {
   EndpointQueries,
   buildEndpointQueries,
   decorateWithFilter,
   decorateWithOrderBy,
   decorateWithPaging,
-} from "./endpointQueries";
-import { queryToString } from "./stringify";
+} from "./endpointQueries.js";
+import { queryToString } from "./stringify.js";
 
-import { compileToOldSpec, compose } from "@src/index";
-import { EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
+import { compileToOldSpec, compose } from "@src/index.js";
+import { EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition.js";
 
 describe("Endpoint queries", () => {
   describe("Deeply nested entrypoints", () => {

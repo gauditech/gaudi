@@ -6,11 +6,12 @@ import "../common/setupAliases";
 import path from "path";
 
 import _ from "lodash";
-import yargs, { ArgumentsCamelCase } from "yargs";
+import yargs, { Arguments } from "yargs";
+
 import { hideBin } from "yargs/helpers";
 
-import { compile } from "@src/cli/command/compile";
-import { copyStatic } from "@src/cli/command/copyStatic";
+import { compile } from "@src/cli/command/compile.js";
+import { copyStatic } from "@src/cli/command/copyStatic.js";
 import {
   DbMigrateOptions,
   DbPopulateOptions,
@@ -19,14 +20,14 @@ import {
   dbPopulate,
   dbPush,
   dbReset,
-} from "@src/cli/command/db";
-import { InitProjectOptions, initProject } from "@src/cli/command/initProject";
-import { start } from "@src/cli/command/start";
-import { attachProcessCleanup } from "@src/cli/process";
-import { Stoppable } from "@src/cli/types";
-import { watchResources } from "@src/cli/watcher";
-import { createAsyncQueueContext } from "@src/common/async/queueAsync";
-import { EngineConfig, readConfig } from "@src/config";
+} from "@src/cli/command/db.js";
+import { InitProjectOptions, initProject } from "@src/cli/command/initProject.js";
+import { start } from "@src/cli/command/start.js";
+import { attachProcessCleanup } from "@src/cli/process.js";
+import { Stoppable } from "@src/cli/types.js";
+import { watchResources } from "@src/cli/watcher.js";
+import { createAsyncQueueContext } from "@src/common/async/queueAsync.js";
+import { EngineConfig, readConfig } from "@src/config.js";
 
 const engineConfig = readConfig();
 
@@ -142,7 +143,7 @@ function parseArguments(config: EngineConfig) {
     .command({
       command: "*",
       handler() {
-        yargs.showHelp();
+        // yargs.showHelp(); FIXME MARIN
       },
     })
 
@@ -165,7 +166,7 @@ function parseArguments(config: EngineConfig) {
 
 // --- build command
 
-async function buildCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+async function buildCommandHandler(args: Arguments, config: EngineConfig) {
   console.log("Building entire project ...");
 
   await compile(args, config).start();
@@ -180,7 +181,7 @@ type DevOptions = {
   gaudiDev?: boolean;
 };
 
-async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: EngineConfig) {
+async function devCommandHandler(args: Arguments<DevOptions>, config: EngineConfig) {
   console.log("Starting project dev build ...");
   if (args.gaudiDev) {
     console.log("Gaudi dev mode enabled.");
@@ -212,10 +213,7 @@ async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: E
   children.push(watchStartCommand(args, config));
 }
 
-function watchCompileCommand(
-  args: ArgumentsCamelCase<DevOptions>,
-  config: EngineConfig
-): Stoppable {
+function watchCompileCommand(args: Arguments<DevOptions>, config: EngineConfig): Stoppable {
   // create async queue to serialize multiple command calls
   const enqueue = createAsyncQueueContext();
 
@@ -240,7 +238,7 @@ function watchCompileCommand(
   return watchResources(resources, run);
 }
 
-function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+function watchDbPushCommand(args: Arguments, config: EngineConfig): Stoppable {
   // create async queue to serialize multiple command calls
   const enqueue = createAsyncQueueContext();
 
@@ -264,7 +262,7 @@ function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Sto
   return watchResources(resources, run);
 }
 
-function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig): Stoppable {
+function watchCopyStaticCommand(args: Arguments, config: EngineConfig): Stoppable {
   // create async queue to serialize multiple command calls
   const enqueue = createAsyncQueueContext();
 
@@ -287,7 +285,7 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
   return watchResources(resources, run);
 }
 
-function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineConfig): Stoppable {
+function watchStartCommand(args: Arguments<DevOptions>, config: EngineConfig): Stoppable {
   // no need for async enqueueing since `nodemon` is a long running process and we cannot await for it to finish
 
   const command = start(args, config);
@@ -325,36 +323,30 @@ function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineC
 
 // --- start command
 
-async function startCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+async function startCommandHandler(args: Arguments, config: EngineConfig) {
   return start(args, config).start();
 }
 
 // --- init project command
 
-async function initCommandHandler(
-  args: ArgumentsCamelCase<InitProjectOptions>,
-  config: EngineConfig
-) {
+async function initCommandHandler(args: Arguments<InitProjectOptions>, config: EngineConfig) {
   return initProject(args, config);
 }
 
 // -- DB push command
-function dbPushCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+function dbPushCommandHandler(args: Arguments, config: EngineConfig) {
   return dbPush(args, config).start();
 }
 
 // --- DB reset
 
-function dbResetCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+function dbResetCommandHandler(args: Arguments, config: EngineConfig) {
   return dbReset(args, config).start();
 }
 
 // --- DB populate
 
-function dbPopulateCommandHandler(
-  args: ArgumentsCamelCase<DbPopulateOptions>,
-  config: EngineConfig
-) {
+function dbPopulateCommandHandler(args: Arguments<DbPopulateOptions>, config: EngineConfig) {
   return dbPopulate(args, config)
     .start()
     .catch((err) => {
@@ -366,12 +358,12 @@ function dbPopulateCommandHandler(
 
 // --- DB migrate
 
-function dbMigrateCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+function dbMigrateCommandHandler(args: Arguments<DbMigrateOptions>, config: EngineConfig) {
   return dbMigrate(args, config).start();
 }
 
 // --- DB deploy
 
-function dbDeployCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+function dbDeployCommandHandler(args: Arguments<DbMigrateOptions>, config: EngineConfig) {
   return dbDeploy(args, config).start();
 }

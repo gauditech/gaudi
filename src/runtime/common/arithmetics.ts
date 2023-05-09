@@ -3,8 +3,8 @@ import crypto from "crypto";
 import { compare, hash } from "bcrypt";
 import _ from "lodash";
 
-import { assertUnreachable, ensureEqual } from "@src/common/utils";
-import { FunctionName } from "@src/types/definition";
+import { assertUnreachable, ensureEqual } from "@src/common/utils.js";
+import { FunctionName } from "@src/types/definition.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknown {

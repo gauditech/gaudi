@@ -3,14 +3,14 @@ import path from "path";
 import _ from "lodash";
 import request from "supertest";
 
-import { assertUnreachable, ensureEqual } from "@src/common/utils";
-import { DATA } from "@src/e2e/api/auth.data";
-import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup";
+import { assertUnreachable, ensureEqual } from "@src/common/utils.js";
+import { DATA } from "@src/e2e/api/auth.data.js";
+import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup.js";
 import {
   ApiRequestInit,
   createClient,
-} from "@src/e2e/client/__snapshots__/authClient/client/api-client-entrypoint";
-import { readConfig } from "@src/runtime/config";
+} from "@src/e2e/client/__snapshots__/authClient/client/api-client-entrypoint.js";
+import { readConfig } from "@src/runtime/config.js";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(20000);

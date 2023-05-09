@@ -1,5 +1,5 @@
-import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes.js";
+import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification.js";
 
 export const authUserModelName = AUTH_TARGET_MODEL_NAME;
 

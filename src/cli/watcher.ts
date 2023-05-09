@@ -1,8 +1,8 @@
 import chokidar, { WatchOptions } from "chokidar";
 import _ from "lodash";
 
-import { RESOURCE_WATCH_DELAY } from "@src/cli/config";
-import { Stoppable } from "@src/cli/types";
+import { RESOURCE_WATCH_DELAY } from "@src/cli/config.js";
+import { Stoppable } from "@src/cli/types.js";
 
 // -------------------- Resource file watcher
 

@@ -1,16 +1,16 @@
 import _ from "lodash";
 
-import { executeHook } from "../hooks";
-import { Vars } from "../server/vars";
+import { executeHook } from "../hooks.js";
+import { Vars } from "../server/vars.js";
 
-import { QueryTree, selectableId } from "./build";
-import { queryToString } from "./stringify";
+import { QueryTree, selectableId } from "./build.js";
+import { queryToString } from "./stringify.js";
 
-import { ensureEqual } from "@src/common/utils";
-import { getTypedPath } from "@src/composer/utils";
-import logger from "@src/logger";
-import { DbConn } from "@src/runtime/server/dbConn";
-import { Definition, QueryDef, SelectItem } from "@src/types/definition";
+import { ensureEqual } from "@src/common/utils.js";
+import { getTypedPath } from "@src/composer/utils.js";
+import logger from "@src/logger.js";
+import { DbConn } from "@src/runtime/server/dbConn.js";
+import { Definition, QueryDef, SelectItem } from "@src/types/definition.js";
 
 export type Result = {
   rowCount: number;

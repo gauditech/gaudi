@@ -1,14 +1,14 @@
 import _ from "lodash";
 
-import { getRef } from "@src/common/refs";
-import { pagingToQueryLimit } from "@src/runtime/common/utils";
+import { getRef } from "@src/common/refs.js";
+import { pagingToQueryLimit } from "@src/runtime/common/utils.js";
 import {
   QueryTree,
   applyFilterIdInContext,
   buildQueryTree,
   queryFromParts,
   transformSelectPath,
-} from "@src/runtime/query/build";
+} from "@src/runtime/query/build.js";
 import {
   Definition,
   EndpointDef,
@@ -16,7 +16,7 @@ import {
   QueryOrderByAtomDef,
   TargetDef,
   TypedExprDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 /**
  * Endpoint query builder

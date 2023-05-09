@@ -1,4 +1,4 @@
-import { Type } from "./type";
+import { Type } from "./type.js";
 
 export type ProjectASTs = {
   plugins: Record<string, GlobalAtom[]>;

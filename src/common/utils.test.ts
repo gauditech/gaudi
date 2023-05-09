@@ -1,4 +1,4 @@
-import { ensureEqual, nameInitials, resolveItems } from "./utils";
+import { ensureEqual, nameInitials, resolveItems } from "./utils.js";
 
 describe("nameInitials", () => {
   it("succeeds for camelCase examples", () => {

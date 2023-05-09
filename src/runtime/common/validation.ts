@@ -11,17 +11,17 @@ import {
   string,
 } from "yup";
 
-import { executeHook } from "../hooks";
+import { executeHook } from "../hooks.js";
 
-import { assertUnreachable } from "@src/common/utils";
-import { BusinessError } from "@src/runtime/server/error";
+import { assertUnreachable } from "@src/common/utils.js";
+import { BusinessError } from "@src/runtime/server/error.js";
 import {
   Definition,
   FieldsetDef,
   FieldsetFieldDef,
   FieldsetRecordDef,
   HookValidator,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 // ----- validation&transformation
 

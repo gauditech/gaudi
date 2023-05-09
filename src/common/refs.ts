@@ -11,7 +11,7 @@ import {
   QueryDef,
   ReferenceDef,
   RelationDef,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 
 export type RefKind =
   | "model"

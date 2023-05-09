@@ -1,6 +1,6 @@
-import { buildOpenAPI } from "./openAPI";
+import { buildOpenAPI } from "./openAPI.js";
 
-import { compileToOldSpec, compose } from "@src/index";
+import { compileToOldSpec, compose } from "@src/index.js";
 
 describe("openAPI", () => {
   it("build spec", () => {

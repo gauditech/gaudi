@@ -1,9 +1,9 @@
 import _ from "lodash";
 
-import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs";
-import { ensureUnique } from "@src/common/utils";
-import { composeHook } from "@src/composer/hooks";
-import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query";
+import { Ref, RefKind, UnknownRefKeyError, getRef } from "@src/common/refs.js";
+import { ensureUnique } from "@src/common/utils.js";
+import { composeHook } from "@src/composer/hooks.js";
+import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query.js";
 import {
   AggregateDef,
   ComputedDef,
@@ -18,7 +18,7 @@ import {
   RelationDef,
   ValidatorDef,
   ValidatorDefinition,
-} from "@src/types/definition";
+} from "@src/types/definition.js";
 import {
   ComputedSpec,
   FieldSpec,
@@ -29,7 +29,7 @@ import {
   ReferenceSpec,
   RelationSpec,
   Specification,
-} from "@src/types/specification";
+} from "@src/types/specification.js";
 
 export function composeModels(def: Definition, spec: Specification, modelSpecs: ModelSpec[]): void {
   const unresolvedRefs = new Set<string>();

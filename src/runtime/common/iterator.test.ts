@@ -1,4 +1,4 @@
-import { createIterator } from "@src/runtime/common/iterator";
+import { createIterator } from "@src/runtime/common/iterator.js";
 
 describe("iterator", () => {
   it("should iterate given amount of times", () => {
