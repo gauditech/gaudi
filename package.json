@@ -70,7 +70,10 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@adminjs/express": "^6.0.0",
+    "@adminjs/sql": "^2.0.1",
     "@sinonjs/fake-timers": "^10.0.2",
+    "adminjs": "^7.0.0",
     "bcrypt": "^5.1.0",
     "chalk": "^4.1.2",
     "chevrotain": "^10.5.0",
