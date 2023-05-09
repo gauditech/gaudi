@@ -2,8 +2,8 @@ import crypto from "crypto";
 
 import bcrypt, { hash } from "bcrypt";
 
-import { compose } from "@src/composer/composer";
 import { getTypedLiteralValue } from "@src/composer/utils";
+import { compileToOldSpec, compose } from "@src/index";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
@@ -319,20 +319,5 @@ describe("runtime", () => {
  * Creates dummy definition struct
  */
 function createTestDefinition(): Definition {
-  const def = compose({
-    projectASTs: { document: [], plugins: {} },
-    entrypoints: [],
-    models: [],
-    populators: [],
-    runtimes: [
-      {
-        name: "TestRuntime",
-        sourcePath: "./src/runtime/test/hooks",
-      },
-    ],
-    authenticator: undefined,
-    generators: [],
-  });
-
-  return def;
+  return compose(compileToOldSpec(""));
 }

@@ -1,4 +1,4 @@
-import { compose } from "@src/composer/composer";
+import { compileToOldSpec, compose } from "@src/index";
 import {
   buildFieldsetValidationSchema,
   validateEndpointFieldset,
@@ -348,20 +348,5 @@ describe("runtime", () => {
  * Creates dummy definition struct
  */
 function createTestDefinition(): Definition {
-  const def = compose({
-    projectASTs: { document: [], plugins: {} },
-    entrypoints: [],
-    models: [],
-    populators: [],
-    runtimes: [
-      {
-        name: "TestRuntime",
-        sourcePath: "./src/runtime/test/hooks",
-      },
-    ],
-    authenticator: undefined,
-    generators: [],
-  });
-
-  return def;
+  return compose(compileToOldSpec(""));
 }

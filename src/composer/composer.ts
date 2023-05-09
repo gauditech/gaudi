@@ -21,7 +21,7 @@ export function compose(input: Specification): Definition {
   };
 
   // runtimes can be composed first because they don't have external deps
-  composeExecutionRuntimes(def, input.runtimes);
+  composeExecutionRuntimes(def, input.projectASTs);
   composeModels(def, input.projectASTs);
   composeAuthenticator(def, input.authenticator);
   composeEntrypoints(def, input.entrypoints);

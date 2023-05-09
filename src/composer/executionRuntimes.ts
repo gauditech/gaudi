@@ -1,18 +1,24 @@
+import _ from "lodash";
+
+import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureUnique } from "@src/common/utils";
+import * as AST from "@src/compiler/ast/ast";
 import { Definition, ExecutionRuntimeDef } from "@src/types/definition";
-import { ExecutionRuntimeSpec } from "@src/types/specification";
 
 const EXECUTION_RUNTIME_GAUDI_INTERNAL = "@GAUDI_INTERNAL";
 
-export function composeExecutionRuntimes(def: Definition, runtimes: ExecutionRuntimeSpec[]): void {
-  def.runtimes = runtimes.map((p) => composeRuntime(def, p));
+export function composeExecutionRuntimes(def: Definition, projectASTs: AST.ProjectASTs): void {
+  const globalAtoms = _.concat(...Object.values(projectASTs.plugins), projectASTs.document);
+  const runtimes = kindFilter(globalAtoms, "runtime");
+
+  def.runtimes = runtimes.map((r) => composeRuntime(r));
 
   // there must be one and only one default runtime
   // do this BEFORE injecting internal runtime
   processDefaultRuntime(def);
 
   // inject gaudi internal runtime
-  def.runtimes.push(composeInternalExecutionRuntime(def));
+  def.runtimes.push(composeInternalExecutionRuntime());
 
   // check for duplicate names
   ensureUnique(
@@ -25,23 +31,24 @@ export function getInternalExecutionRuntimeName(): string {
   return EXECUTION_RUNTIME_GAUDI_INTERNAL;
 }
 
-function composeInternalExecutionRuntime(def: Definition): ExecutionRuntimeDef {
-  return composeRuntime(def, {
+function composeInternalExecutionRuntime(): ExecutionRuntimeDef {
+  return {
     name: getInternalExecutionRuntimeName(),
+    type: "node",
     default: false,
     sourcePath: "./internalExecutionRuntime",
-  });
+  };
 }
 
-function composeRuntime(def: Definition, runtime: ExecutionRuntimeSpec): ExecutionRuntimeDef {
-  const name = runtime.name;
-  const sourcePath = runtime.sourcePath;
+function composeRuntime(runtime: AST.Runtime): ExecutionRuntimeDef {
+  const name = runtime.name.text;
+  const sourcePath = kindFind(runtime.atoms, "sourcePath")!.path.value;
 
   return {
     name,
     // only "node" type is currently available
     type: "node",
-    default: !!runtime.default,
+    default: !!kindFind(runtime.atoms, "default"),
     sourcePath,
   };
 }

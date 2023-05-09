@@ -33,7 +33,6 @@ export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
-  runtimes: ExecutionRuntimeSpec[];
   authenticator: AuthenticatorSpec | undefined;
   generators: GeneratorSpec[];
 };
@@ -240,14 +239,6 @@ export type ModelHookSpec = HookSpec & {
 
 export type ActionHookSpec = HookSpec & {
   args: Record<string, { kind: "expression"; exp: ExpSpec } | { kind: "query"; query: QuerySpec }>;
-};
-
-// ----- Execution Runtime
-
-export type ExecutionRuntimeSpec = {
-  name: string;
-  default?: boolean;
-  sourcePath: string;
 };
 
 // ---------- authenticator

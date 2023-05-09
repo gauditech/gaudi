@@ -124,21 +124,11 @@ describe("hooks", () => {
  * Creates test definition struct
  */
 function createTestDefinition(): Definition {
-  const def = compose({
-    projectASTs: { document: [], plugins: {} },
-    entrypoints: [],
-    models: [],
-    populators: [],
-    runtimes: [
-      {
-        name: "TestRuntime",
-        default: true,
-        sourcePath: "./src/runtime/test/hooks",
-      },
-    ],
-    authenticator: undefined,
-    generators: [],
-  });
-
-  return def;
+  const bp = `
+    runtime TestRuntime {
+      default
+      source path "./src/runtime/test/hooks"
+    }
+  `;
+  return compose(compileToOldSpec(bp));
 }

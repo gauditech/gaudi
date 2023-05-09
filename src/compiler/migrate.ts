@@ -17,7 +17,6 @@ import {
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
-  ExecutionRuntimeSpec,
   ExpSpec,
   FieldSpec,
   FieldValidatorHookSpec,
@@ -47,7 +46,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Specification {
     models: kindFilter(document, "model").map(migrateModel),
     entrypoints: kindFilter(document, "entrypoint").map(migrateEntrypoint),
     populators: kindFilter(document, "populator").map(migratePopulator),
-    runtimes: kindFilter(document, "runtime").map(migrateRuntime),
     authenticator: authenticator ? migrateAuthenticator(authenticator) : undefined,
     generators: kindFilter(document, "generator").map(migrateGenerator),
   };
@@ -389,14 +387,6 @@ function migrateRepeatValue(repeatValue: AST.RepeatValue, alias?: string): Repea
       return { kind: "range", range: { start, end }, alias };
     }
   }
-}
-
-function migrateRuntime(runtime: AST.Runtime): ExecutionRuntimeSpec {
-  return {
-    name: runtime.name.text,
-    sourcePath: kindFind(runtime.atoms, "sourcePath")!.path.value,
-    default: !!kindFind(runtime.atoms, "default"),
-  };
 }
 
 function migrateAuthenticator(_authenticator: AST.Authenticator): AuthenticatorSpec {
