@@ -108,13 +108,7 @@ describe("runtime", () => {
               { name: "x", setter: { kind: "literal", type: "integer", value: 6 } },
               { name: "y", setter: { kind: "literal", type: "integer", value: 2 } },
             ],
-            hook: {
-              runtimeName: "TestRuntime",
-              code: {
-                kind: "inline",
-                inline: "x / y",
-              },
-            },
+            hook: { kind: "inline", inline: "x / y" },
           },
         },
       ];
@@ -326,6 +320,7 @@ describe("runtime", () => {
  */
 function createTestDefinition(): Definition {
   const def = compose({
+    projectASTs: { document: [], plugins: {} },
     entrypoints: [],
     models: [],
     populators: [],

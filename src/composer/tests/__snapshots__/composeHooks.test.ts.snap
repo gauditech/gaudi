@@ -43,12 +43,10 @@ exports[`compose hooks action hook 1`] = `
             },
           ],
           "hook": {
-            "code": {
-              "file": "hooks.js",
-              "kind": "source",
-              "target": "someHook",
-            },
+            "file": "hooks.js",
+            "kind": "source",
             "runtimeName": "MyRuntime",
+            "target": "someHook",
           },
         },
         "kind": "execute-hook",
@@ -188,12 +186,10 @@ exports[`compose hooks composes action hook 1`] = `
       },
     ],
     "hook": {
-      "code": {
-        "file": "hooks/auth",
-        "kind": "source",
-        "target": "login",
-      },
+      "file": "hooks/auth",
+      "kind": "source",
       "runtimeName": "@GAUDI_INTERNAL",
+      "target": "login",
     },
   },
   "kind": "execute-hook",
@@ -217,12 +213,10 @@ exports[`compose hooks composes source hooks 1`] = `
                   "setter": {
                     "args": [],
                     "hook": {
-                      "code": {
-                        "file": "hooks.js",
-                        "kind": "source",
-                        "target": "someHook",
-                      },
+                      "file": "hooks.js",
+                      "kind": "source",
                       "runtimeName": "MyRuntime",
+                      "target": "someHook",
                     },
                     "kind": "fieldset-hook",
                   },
@@ -335,12 +329,10 @@ exports[`compose hooks composes source hooks 1`] = `
             {
               "arg": "name",
               "hook": {
-                "code": {
-                  "file": "githubc.js",
-                  "kind": "source",
-                  "target": "someHook",
-                },
+                "file": "githubc.js",
+                "kind": "source",
                 "runtimeName": "MyRuntime",
+                "target": "someHook",
               },
               "name": "hook",
             },
@@ -351,12 +343,10 @@ exports[`compose hooks composes source hooks 1`] = `
         {
           "args": [],
           "hook": {
-            "code": {
-              "file": "githubc.js",
-              "kind": "source",
-              "target": "someHook",
-            },
+            "file": "githubc.js",
+            "kind": "source",
             "runtimeName": "MyRuntime",
+            "target": "someHook",
           },
           "kind": "model-hook",
           "name": "description",
@@ -372,11 +362,6 @@ exports[`compose hooks composes source hooks 1`] = `
     },
   ],
   "populators": [],
-  "resolveOrder": [
-    "Org",
-    "Org.name",
-    "Org.description",
-  ],
   "runtimes": [
     {
       "default": true,
@@ -405,12 +390,10 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
           "setter": {
             "args": [],
             "hook": {
-              "code": {
-                "file": "hooks.js",
-                "kind": "source",
-                "target": "randomSlug",
-              },
+              "file": "hooks.js",
+              "kind": "source",
               "runtimeName": "MyRuntime",
+              "target": "randomSlug",
             },
             "kind": "fieldset-hook",
           },
@@ -485,11 +468,8 @@ exports[`compose hooks inline hooks 1`] = `
                   "setter": {
                     "args": [],
                     "hook": {
-                      "code": {
-                        "inline": "'test name'",
-                        "kind": "inline",
-                      },
-                      "runtimeName": "MyRuntime",
+                      "inline": "'test name'",
+                      "kind": "inline",
                     },
                     "kind": "fieldset-hook",
                   },
@@ -602,11 +582,8 @@ exports[`compose hooks inline hooks 1`] = `
             {
               "arg": "name",
               "hook": {
-                "code": {
-                  "inline": "'test name'",
-                  "kind": "inline",
-                },
-                "runtimeName": "MyRuntime",
+                "inline": "'test name'",
+                "kind": "inline",
               },
               "name": "hook",
             },
@@ -617,11 +594,8 @@ exports[`compose hooks inline hooks 1`] = `
         {
           "args": [],
           "hook": {
-            "code": {
-              "inline": "'some description'",
-              "kind": "inline",
-            },
-            "runtimeName": "MyRuntime",
+            "inline": "'some description'",
+            "kind": "inline",
           },
           "kind": "model-hook",
           "name": "description",
@@ -637,11 +611,6 @@ exports[`compose hooks inline hooks 1`] = `
     },
   ],
   "populators": [],
-  "resolveOrder": [
-    "Org",
-    "Org.name",
-    "Org.description",
-  ],
   "runtimes": [
     {
       "default": true,

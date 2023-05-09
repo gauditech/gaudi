@@ -23,9 +23,9 @@ export function composeHook(def: Definition, hookSpec: HookSpec): HookDef {
 
   const kind = hookSpec.code.kind;
   if (kind === "source") {
-    return { runtimeName, code: { ...hookSpec.code } };
+    return { ...hookSpec.code, runtimeName };
   } else if (kind === "inline") {
-    return { runtimeName, code: { ...hookSpec.code } };
+    return { ...hookSpec.code };
   } else {
     assertUnreachable(kind);
   }

@@ -168,6 +168,67 @@ export function queryFromParts(
   };
 }
 
+export function queryFromParts2(
+  targetModel: string,
+  name: string,
+  fromPath: NamePath,
+  filter: TypedExprDef,
+  select: SelectDef,
+  orderBy?: QueryOrderByAtomDef[],
+  limit?: number,
+  offset?: number
+): QueryDef {
+  if (select.length === 0) {
+    const selectableId: SelectableItem = {
+      kind: "field",
+      alias: "id",
+      name: "id",
+      namePath: [...fromPath, "id"],
+      refKey: `${targetModel}.id`,
+    };
+    return queryFromParts2(
+      targetModel,
+      name,
+      fromPath,
+      filter,
+      [selectableId],
+      orderBy,
+      limit,
+      offset
+    );
+  }
+  select.forEach((selItem) => {
+    if (selItem.alias === "__join_connection") {
+      /* We currently make exception for `__join_connection` field as it's the only selectable
+        not being in `fromPath`.
+        Otherwise, we ensure that only the leaf of the `fromPath` can be selected,
+        since we expect `retType` to match leaf model, we can't select from other (non-leaf) models.
+       */
+      return;
+    }
+    ensureEqual(
+      _.isEqual(fromPath, _.initial(selItem.namePath)),
+      true,
+      `Path ${fromPath.join(".")} selects ${selItem.namePath.join(".")} as ${selItem.alias}`
+    );
+  });
+
+  return {
+    kind: "query",
+    refKey: "N/A",
+    modelRefKey: fromPath[0],
+    filter,
+    fromPath,
+    name,
+    // retCardinality: "many", // FIXME,
+    retType: targetModel,
+    select,
+    orderBy,
+    limit,
+    offset,
+  };
+}
+
 export function getDirectChildren(paths: NamePath[]): string[] {
   return _.chain(paths)
     .map((p) => p[0])
@@ -201,22 +262,25 @@ export function getFilterPaths(filter: TypedExprDef): string[][] {
 
 export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
-  const hooks = selectToHooks(q.select).map(({ name, args, hook }) => ({
-    name,
-    args: args.map(({ name, query }) => {
-      // apply a batching filter
-      const filter = applyFilterIdInContext(query.fromPath, query.filter);
-      // select the __join_connection
-      const conn = mkJoinConnection(getRef.model(def, _.first(query.fromPath)!));
-      const select = [...query.select, conn];
+  const hooks = selectToHooks(q.select).map(({ name, refKey }) => {
+    const modelHook = getRef.modelHook(def, refKey);
+    return {
+      name,
+      args: modelHook.args.map(({ name, query }) => {
+        // apply a batching filter
+        const filter = applyFilterIdInContext(query.fromPath, query.filter);
+        // select the __join_connection
+        const conn = mkJoinConnection(getRef.model(def, _.first(query.fromPath)!));
+        const select = [...query.select, conn];
 
-      return {
-        name,
-        query: buildQueryTree(def, { ...query, filter, select }),
-      };
-    }),
-    hook,
-  }));
+        return {
+          name,
+          query: buildQueryTree(def, { ...query, filter, select }),
+        };
+      }),
+      hook: modelHook.hook,
+    };
+  });
   const model = getRef.model(def, query.retType);
 
   return {

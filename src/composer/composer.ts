@@ -1,5 +1,5 @@
 import { composeEntrypoints } from "./entrypoints";
-import { composeModels } from "./models";
+import { composeModels } from "./models2";
 
 import { composeAuthenticator } from "@src/composer/authenticator";
 import { composeExecutionRuntimes } from "@src/composer/executionRuntimes";
@@ -14,7 +14,6 @@ export function compose(input: Specification): Definition {
   const def: Definition = {
     models: [],
     entrypoints: [],
-    resolveOrder: [],
     populators: [],
     runtimes: [],
     authenticator: undefined,
@@ -23,7 +22,7 @@ export function compose(input: Specification): Definition {
 
   // runtimes can be composed first because they don't have external deps
   composeExecutionRuntimes(def, input.runtimes);
-  composeModels(def, input, input.models);
+  composeModels(def, input.projectASTs);
   composeAuthenticator(def, input.authenticator);
   composeEntrypoints(def, input.entrypoints);
   composePopulators(def, input.populators);

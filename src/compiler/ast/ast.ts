@@ -318,6 +318,7 @@ export type Hook<named extends boolean, simple extends boolean> = {
   keyword: TokenData;
   name: named extends true ? Identifier : undefined;
   ref: named extends true ? Ref : undefined;
+  runtime?: string;
   atoms: (
     | (simple extends true
         ? { kind: "default_arg"; keyword: TokenData; name: Identifier }
@@ -330,6 +331,7 @@ export type Hook<named extends boolean, simple extends boolean> = {
         keywordFrom: TokenData;
         name: Identifier;
         file: StringLiteral;
+        runtime?: string;
         runtimePath?: string;
       }
     | { kind: "inline"; keyword: TokenData; code: StringLiteral }
@@ -404,6 +406,10 @@ export type RefModelAtom = {
   model: string;
   unique: boolean;
 };
+export type RefQueryTarget = {
+  kind: "queryTarget";
+  path: string[];
+};
 export type ContextKind =
   | "entrypointTarget"
   | "populateTarget"
@@ -413,7 +419,7 @@ export type ContextKind =
   | "authToken"
   | "struct";
 export type RefContext = { kind: "context"; contextKind: ContextKind };
-export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;
+export type Ref = RefUnresolved | RefModel | RefModelAtom | RefQueryTarget | RefContext;
 
 export const unresolvedRef: Ref = { kind: "unresolved" };
 

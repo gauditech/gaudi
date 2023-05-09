@@ -203,8 +203,13 @@ export function resolve(projectASTs: ProjectASTs) {
     return kindFilter(getSumDocument(), "model");
   }
 
-  function getAllRuntimes(): Runtime[] {
-    return kindFilter(getSumDocument(), "runtime");
+  /**
+   * Note that code can't see runtimes of plugins. This is on purpose so that
+   * Code can have one runtime and that would be a default runtime without
+   * using default keyword.
+   */
+  function getRuntimes(): Runtime[] {
+    return kindFilter(projectASTs.document, "runtime");
   }
 
   function resolveDocument(document: GlobalAtom[]) {
@@ -365,9 +370,16 @@ export function resolve(projectASTs: ProjectASTs) {
       });
 
       if (from.as) {
+        const rootRef = from.identifierPath[0].ref;
+        // TODO: what if root is "context" or another "queryTarget"
+        const initialPath = rootRef.kind === "modelAtom" ? [rootRef.model] : [];
         from.as.identifierPath.forEach((as, i) => {
           const target = from.identifierPath[i];
-          as.ref = target.ref;
+          const path = [
+            ...initialPath,
+            ...from.identifierPath.slice(0, i + 1).map((i) => i.identifier.text),
+          ];
+          as.ref = { kind: "queryTarget", path };
           as.type = target.type;
           addToScope(scope, as);
         });
@@ -421,12 +433,12 @@ export function resolve(projectASTs: ProjectASTs) {
           break;
       }
 
-      if (query.kind === "query") {
+      if (query.kind === "query" && parentScope.model) {
         query.ref = {
           kind: "modelAtom",
           atomKind: "query",
           name: query.name.text,
-          model: currentModel,
+          model: parentScope.model,
           unique: false,
         };
       }
@@ -889,7 +901,7 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveHook(hook: Hook<boolean, boolean>) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
-      const runtimes = kindFilter(getAllRuntimes(), "runtime");
+      const runtimes = getRuntimes();
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
       let runtime: Runtime | undefined = undefined;
@@ -897,11 +909,15 @@ export function resolve(projectASTs: ProjectASTs) {
         runtime = runtimes.find((r) => r.name.text === runtimeAtom.identifier.text);
       } else {
         runtime = runtimes.find((r) => kindFind(r.atoms, "default"));
+        if (!runtime && runtimes.length === 1) {
+          runtime = runtimes[0];
+        }
       }
 
       if (runtime) {
         const runtimePath = kindFind(runtime.atoms, "sourcePath")?.path.value;
         if (runtimePath) {
+          source.runtime = runtime.name.text;
           source.runtimePath = runtimePath;
         }
       }

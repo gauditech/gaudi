@@ -364,12 +364,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               ],
               "hook": {
-                "code": {
-                  "file": "hooks/actions.js",
-                  "kind": "source",
-                  "target": "authenticateUser",
-                },
+                "file": "hooks/actions.js",
+                "kind": "source",
                 "runtimeName": "@GAUDI_INTERNAL",
+                "target": "authenticateUser",
               },
             },
             "kind": "execute-hook",
@@ -474,12 +472,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               ],
               "hook": {
-                "code": {
-                  "file": "hooks/actions.js",
-                  "kind": "source",
-                  "target": "sendResponse",
-                },
+                "file": "hooks/actions.js",
+                "kind": "source",
                 "runtimeName": "@GAUDI_INTERNAL",
+                "target": "sendResponse",
               },
             },
             "kind": "execute-hook",
@@ -627,12 +623,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               ],
               "hook": {
-                "code": {
-                  "file": "hooks/actions.js",
-                  "kind": "source",
-                  "target": "sendResponse",
-                },
+                "file": "hooks/actions.js",
+                "kind": "source",
                 "runtimeName": "@GAUDI_INTERNAL",
+                "target": "sendResponse",
               },
             },
             "kind": "execute-hook",
@@ -825,12 +819,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               ],
               "hook": {
-                "code": {
-                  "file": "hooks/actions.js",
-                  "kind": "source",
-                  "target": "sendResponse",
-                },
+                "file": "hooks/actions.js",
+                "kind": "source",
                 "runtimeName": "@GAUDI_INTERNAL",
+                "target": "sendResponse",
               },
             },
             "kind": "execute-hook",

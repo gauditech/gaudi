@@ -3,7 +3,6 @@ import { BinaryOperator } from "./specification";
 export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];
-  resolveOrder: string[];
   populators: PopulatorDef[];
   runtimes: ExecutionRuntimeDef[];
   authenticator: AuthenticatorDef | undefined;
@@ -314,12 +313,10 @@ export type SelectAggregateItem = {
 // FIXME add refKey instead of args and code
 export type SelectHookItem = {
   kind: "model-hook";
-  // refKey: string;
+  refKey: string;
   name: string;
   alias: string;
   namePath: string[];
-  args: { name: string; query: QueryDef }[];
-  hook: HookDef;
 };
 
 export type DeepSelectItem = {
@@ -606,14 +603,9 @@ export type FieldSetter =
   | FieldSetterContextReference
   | FieldSetterQuery;
 
-export type HookDef = {
-  runtimeName: string;
-  code: HookCodeDef;
-};
-
-export type HookCodeDef =
-  | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string };
+export type HookDef = HookInline | HookSource;
+export type HookInline = { kind: "inline"; inline: string };
+export type HookSource = { kind: "source"; target: string; file: string; runtimeName: string };
 
 export type ExecutionRuntimeDef = {
   name: string;

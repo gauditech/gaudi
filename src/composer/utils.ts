@@ -3,8 +3,23 @@ import _ from "lodash";
 import { FilteredByKind } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { ensureEqual, ensureNot } from "@src/common/utils";
+import * as AST from "@src/compiler/ast/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 import { LiteralValue } from "@src/types/specification";
+
+export function getTypedLiteralValue2(literal: AST.Literal): LiteralValueDef {
+  switch (literal.kind) {
+    case "string":
+      return { type: "text", value: literal.value, kind: "literal" };
+    case "boolean":
+      return { kind: "literal", type: "boolean", value: literal.value };
+    case "integer":
+    case "float":
+      return { kind: "literal", type: "integer", value: literal.value };
+    case "null":
+      return { kind: "literal", type: "null", value: literal.value };
+  }
+}
 
 export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
   if (typeof literal === "string") {

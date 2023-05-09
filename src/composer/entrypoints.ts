@@ -483,12 +483,10 @@ export function processSelect(
       } else if (ref.kind === "model-hook") {
         return {
           kind: ref.kind,
-          // refKey: ref.refKey,
+          refKey: ref.refKey,
           name,
           alias: name,
           namePath: [...namePath, name],
-          args: ref.args,
-          hook: ref.hook,
         };
       } else if (ref.kind === "computed") {
         return {

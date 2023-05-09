@@ -1,3 +1,5 @@
+import { ProjectASTs } from "@src/compiler/ast/ast";
+
 // old AST types
 export type EndpointCardinality = "one" | "many";
 export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
@@ -27,6 +29,7 @@ export type BinaryOperator =
   | "*";
 
 export type Specification = {
+  projectASTs: ProjectASTs;
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];

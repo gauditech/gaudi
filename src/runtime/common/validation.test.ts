@@ -251,10 +251,7 @@ describe("runtime", () => {
               {
                 name: "hook",
                 arg: "value",
-                hook: {
-                  runtimeName: "TestRuntime",
-                  code: { kind: "inline", inline: "value === 'expected text'" },
-                },
+                hook: { kind: "inline", inline: "value === 'expected text'" },
               },
             ],
           },
@@ -352,6 +349,7 @@ describe("runtime", () => {
  */
 function createTestDefinition(): Definition {
   const def = compose({
+    projectASTs: { document: [], plugins: {} },
     entrypoints: [],
     models: [],
     populators: [],

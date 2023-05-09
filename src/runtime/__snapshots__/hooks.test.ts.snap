@@ -26,12 +26,10 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
           },
         ],
         "hook": {
-          "code": {
-            "file": "hooks2.js",
-            "kind": "source",
-            "target": "prefix",
-          },
+          "file": "hooks2.js",
+          "kind": "source",
           "runtimeName": "TextRuntime",
+          "target": "prefix",
         },
         "kind": "fieldset-hook",
       },
@@ -58,12 +56,10 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
           },
         ],
         "hook": {
-          "code": {
-            "file": "hooks.js",
-            "kind": "source",
-            "target": "prefix",
-          },
+          "file": "hooks.js",
+          "kind": "source",
           "runtimeName": "MathRuntime",
+          "target": "prefix",
         },
         "kind": "fieldset-hook",
       },

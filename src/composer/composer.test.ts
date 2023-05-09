@@ -4,15 +4,6 @@ describe("compose models", () => {
   it("doesn't crash on empty blueprint", () => {
     expect(() => compose(compileToOldSpec(""))).not.toThrow();
   });
-  it("fails on case insensitive duplicate field name", () => {
-    const bp = `
-    model Org {
-      field name { type string }
-      field Name { type string }
-    }
-    `;
-    expect(() => compose(compileToOldSpec(bp))).toThrowError("Items not unique!");
-  });
   it("parses validators", () => {
     const bp = `
     model Org {

@@ -4,7 +4,6 @@ import { match } from "ts-pattern";
 import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
-import { ensureExists } from "@src/common/utils";
 import {
   AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
@@ -44,6 +43,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Specification {
   const document = _.concat(...Object.values(projectASTs.plugins), projectASTs.document);
   const authenticator = kindFind(document, "authenticator");
   const specification: Specification = {
+    projectASTs,
     models: kindFilter(document, "model").map(migrateModel),
     entrypoints: kindFilter(document, "entrypoint").map(migrateEntrypoint),
     populators: kindFilter(document, "populator").map(migratePopulator),
@@ -392,11 +392,9 @@ function migrateRepeatValue(repeatValue: AST.RepeatValue, alias?: string): Repea
 }
 
 function migrateRuntime(runtime: AST.Runtime): ExecutionRuntimeSpec {
-  const sourcePath = kindFind(runtime.atoms, "sourcePath")?.path.value;
-  ensureExists(sourcePath, "Runtime source path cannot be empty");
   return {
     name: runtime.name.text,
-    sourcePath,
+    sourcePath: kindFind(runtime.atoms, "sourcePath")!.path.value,
     default: !!kindFind(runtime.atoms, "default"),
   };
 }
@@ -475,7 +473,7 @@ function migrateSelect(select: AST.Select): SelectAST {
   const migrated: Record<string, SelectAST> = {};
   select.forEach((s) => {
     if (s.target.kind === "long") {
-      throw Error("Long select form unsupported in old spec");
+      throw Error("Long select form unsupported composer");
     }
     migrated[s.target.name.identifier.text] = s.select ? migrateSelect(s.select) : {};
   });

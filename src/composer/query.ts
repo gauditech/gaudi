@@ -17,7 +17,6 @@ import {
   uniqueNamePaths,
 } from "@src/runtime/query/build";
 import {
-  AggregateDef,
   Definition,
   FunctionName,
   ModelDef,
@@ -87,32 +86,6 @@ export function composeQuery(
     qspec.limit,
     qspec.offset
   );
-}
-
-export function composeAggregate(def: Definition, mdef: ModelDef, qspec: QuerySpec): AggregateDef {
-  const aggregate = qspec.aggregate?.name;
-  if (!aggregate) {
-    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
-  }
-  if (qspec.select) {
-    throw new Error(`Aggregate query can't have a select`);
-  }
-  const qdef = composeQuery(def, mdef, { ...qspec, aggregate: undefined }, {});
-  const { refKey } = qdef;
-  const query = _.omit(qdef, ["refKey", "name", "select"]);
-
-  if (aggregate !== "sum" && aggregate !== "count") {
-    throw new Error(`Unknown aggregate function ${aggregate}`);
-  }
-
-  return {
-    refKey,
-    kind: "aggregate",
-    aggrFnName: aggregate,
-    targetPath: [mdef.refKey, "id"],
-    name: qspec.name,
-    query,
-  };
 }
 
 function typedFunctionFromParts(
