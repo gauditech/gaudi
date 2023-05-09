@@ -4,6 +4,7 @@ import { match } from "ts-pattern";
 import { kindFilter, kindFind } from "@src/common/kindFilter";
 import { ensureEqual } from "@src/common/utils";
 import * as AST from "@src/compiler/ast/ast";
+import { accessTokenModelName, authUserModelName } from "@src/compiler/plugins/authenticator";
 import { composeHook } from "@src/composer/hooks2";
 import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query2";
 import {
@@ -22,7 +23,6 @@ import {
   ValidatorDef,
   ValidatorDefinition,
 } from "@src/types/definition";
-import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
 
 export function composeModels(def: Definition, projectASTs: AST.ProjectASTs): void {
   const globalAtoms = _.concat(...Object.values(projectASTs.plugins), projectASTs.document);
@@ -337,8 +337,6 @@ function defineImplicitRelation(projectASTs: AST.ProjectASTs, def: Definition) {
   const authenticator = kindFind(projectASTs.document, "authenticator");
   if (!authenticator) return;
 
-  const authUserModelName = AUTH_TARGET_MODEL_NAME;
-  const accessTokenModelName = `${authUserModelName}AccessToken`;
   const implicitModelNames = [authUserModelName, accessTokenModelName];
   const implicitModels = def.models.filter((m) => implicitModelNames.includes(m.name));
 

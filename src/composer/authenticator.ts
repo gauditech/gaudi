@@ -1,25 +1,23 @@
-import { getRef } from "@src/common/refs";
-import { assertUnreachable } from "@src/common/utils";
+import { kindFind } from "@src/common/kindFilter";
+import * as AST from "@src/compiler/ast/ast";
+import { accessTokenModelName, authUserModelName } from "@src/compiler/plugins/authenticator";
 import {
   AuthenticatorMethodDef,
   AuthenticatorNamedModelDef,
   Definition,
 } from "@src/types/definition";
-import { AuthenticatorMethodSpec, AuthenticatorSpec } from "@src/types/specification";
 
 /**
  * Compose authenticator block.
  */
-export function composeAuthenticator(def: Definition, spec: AuthenticatorSpec | undefined): void {
-  if (spec == undefined) {
-    return;
-  }
+export function composeAuthenticator(def: Definition, projectASTs: AST.ProjectASTs): void {
+  if (!kindFind(projectASTs.document, "authenticator")) return;
 
-  // hardcoded authenticator name - not exposed through blueprint cause we don't support multiple auth blocks yet
+  // for now we hardcode this stuff
   const name = "Auth";
-  const authUserModel = composeTargetModel(def, spec.authUserModelName);
-  const accessTokenModel = composeTargetModel(def, spec.accessTokenModelName);
-  const method = composeMethod(def, spec.method);
+  const authUserModel = composeTargetModel(authUserModelName);
+  const accessTokenModel = composeTargetModel(accessTokenModelName);
+  const method: AuthenticatorMethodDef = { kind: "basic" };
 
   def.authenticator = {
     name,
@@ -29,26 +27,9 @@ export function composeAuthenticator(def: Definition, spec: AuthenticatorSpec | 
   };
 }
 
-function composeTargetModel(def: Definition, modelName: string): AuthenticatorNamedModelDef {
-  // get authenticator target model (injected in compiler)
-  const model = getRef.model(def, modelName);
-
+function composeTargetModel(modelName: string): AuthenticatorNamedModelDef {
   return {
     name: modelName,
-    refKey: model.refKey,
+    refKey: modelName,
   };
-}
-
-function composeMethod(
-  def: Definition,
-  methodSpec: AuthenticatorMethodSpec
-): AuthenticatorMethodDef {
-  const kind = methodSpec.kind;
-  if (kind === "basic") {
-    return {
-      kind,
-    };
-  } else {
-    assertUnreachable(kind);
-  }
 }

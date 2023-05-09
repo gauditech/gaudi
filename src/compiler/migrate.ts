@@ -5,7 +5,6 @@ import * as AST from "./ast/ast";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
 import {
-  AUTH_TARGET_MODEL_NAME,
   ActionAtomSpecDeny,
   ActionAtomSpecInputList,
   ActionAtomSpecRefThrough,
@@ -13,7 +12,6 @@ import {
   ActionAtomSpecVirtualInput,
   ActionHookSpec,
   ActionSpec,
-  AuthenticatorSpec,
   ComputedSpec,
   EndpointSpec,
   EntrypointSpec,
@@ -40,13 +38,11 @@ import {
 
 export function migrate(projectASTs: AST.ProjectASTs): Specification {
   const document = _.concat(...Object.values(projectASTs.plugins), projectASTs.document);
-  const authenticator = kindFind(document, "authenticator");
   const specification: Specification = {
     projectASTs,
     models: kindFilter(document, "model").map(migrateModel),
     entrypoints: kindFilter(document, "entrypoint").map(migrateEntrypoint),
     populators: kindFilter(document, "populator").map(migratePopulator),
-    authenticator: authenticator ? migrateAuthenticator(authenticator) : undefined,
     generators: kindFilter(document, "generator").map(migrateGenerator),
   };
 
@@ -387,13 +383,6 @@ function migrateRepeatValue(repeatValue: AST.RepeatValue, alias?: string): Repea
       return { kind: "range", range: { start, end }, alias };
     }
   }
-}
-
-function migrateAuthenticator(_authenticator: AST.Authenticator): AuthenticatorSpec {
-  const authUserModelName = AUTH_TARGET_MODEL_NAME;
-  const accessTokenModelName = `${authUserModelName}AccessToken`;
-
-  return { authUserModelName, accessTokenModelName, method: { kind: "basic" } };
 }
 
 function migrateGenerator(generator: AST.Generator): GeneratorSpec {

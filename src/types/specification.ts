@@ -33,7 +33,6 @@ export type Specification = {
   models: ModelSpec[];
   entrypoints: EntrypointSpec[];
   populators: PopulatorSpec[];
-  authenticator: AuthenticatorSpec | undefined;
   generators: GeneratorSpec[];
 };
 
@@ -239,23 +238,6 @@ export type ModelHookSpec = HookSpec & {
 
 export type ActionHookSpec = HookSpec & {
   args: Record<string, { kind: "expression"; exp: ExpSpec } | { kind: "query"; query: QuerySpec }>;
-};
-
-// ---------- authenticator
-
-export const AUTH_TARGET_MODEL_NAME = "AuthUser";
-
-export type AuthenticatorSpec = {
-  name?: string;
-  authUserModelName: string;
-  accessTokenModelName: string;
-  method: AuthenticatorMethodSpec;
-};
-
-export type AuthenticatorMethodSpec = AuthenticatorBasicMethodSpec;
-
-export type AuthenticatorBasicMethodSpec = {
-  kind: "basic";
 };
 
 // ----- Generators
