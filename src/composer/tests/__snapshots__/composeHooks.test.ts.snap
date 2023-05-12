@@ -210,7 +210,7 @@ exports[`compose hooks composes source hooks 1`] = `
         {
           "actions": [
             {
-              "alias": "org",
+              "alias": "$target_0",
               "changeset": [
                 {
                   "name": "name",
@@ -232,7 +232,7 @@ exports[`compose hooks composes source hooks 1`] = `
               "model": "Org",
               "select": [],
               "targetPath": [
-                "org",
+                "$target_0",
               ],
             },
           ],
@@ -268,7 +268,7 @@ exports[`compose hooks composes source hooks 1`] = `
             },
           ],
           "target": {
-            "alias": "org",
+            "alias": "$target_0",
             "kind": "model",
             "name": "Org",
             "namePath": [
@@ -281,9 +281,9 @@ exports[`compose hooks composes source hooks 1`] = `
         },
       ],
       "entrypoints": [],
-      "name": "Orgs",
+      "name": "",
       "target": {
-        "alias": "org",
+        "alias": "$target_0",
         "identifyWith": {
           "name": "id",
           "paramName": "org_id",
@@ -398,7 +398,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
 {
   "actions": [
     {
-      "alias": "org",
+      "alias": "$target_0",
       "changeset": [
         {
           "name": "name",
@@ -420,7 +420,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
       "model": "Org",
       "select": [],
       "targetPath": [
-        "org",
+        "$target_0",
       ],
     },
   ],
@@ -456,7 +456,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
     },
   ],
   "target": {
-    "alias": "org",
+    "alias": "$target_0",
     "kind": "model",
     "name": "Org",
     "namePath": [
@@ -478,7 +478,7 @@ exports[`compose hooks inline hooks 1`] = `
         {
           "actions": [
             {
-              "alias": "org",
+              "alias": "$target_0",
               "changeset": [
                 {
                   "name": "name",
@@ -499,7 +499,7 @@ exports[`compose hooks inline hooks 1`] = `
               "model": "Org",
               "select": [],
               "targetPath": [
-                "org",
+                "$target_0",
               ],
             },
           ],
@@ -535,7 +535,7 @@ exports[`compose hooks inline hooks 1`] = `
             },
           ],
           "target": {
-            "alias": "org",
+            "alias": "$target_0",
             "kind": "model",
             "name": "Org",
             "namePath": [
@@ -548,9 +548,9 @@ exports[`compose hooks inline hooks 1`] = `
         },
       ],
       "entrypoints": [],
-      "name": "Orgs",
+      "name": "",
       "target": {
-        "alias": "org",
+        "alias": "$target_0",
         "identifyWith": {
           "name": "id",
           "paramName": "org_id",

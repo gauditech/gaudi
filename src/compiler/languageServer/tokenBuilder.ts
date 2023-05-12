@@ -32,7 +32,7 @@ import {
   QueryView,
   Reference,
   Relation,
-  Repeater,
+  RepeatValue,
   Runtime,
   Select,
   TokenData,
@@ -222,22 +222,25 @@ export function buildTokens(
       .exhaustive();
   }
 
-  function buildEntrypoint({ keyword, name, atoms }: Entrypoint) {
+  function buildEntrypoint({ keyword, target, as, atoms }: Entrypoint) {
     buildKeyword(keyword);
-    push(name.token, TokenTypes.property);
+    buildIdentifierRef(target);
+    if (as) {
+      buildKeyword(as.keyword);
+      buildIdentifierRef(as.identifier);
+    }
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "target" }, ({ keyword, identifier, as }) => {
+        .with({ kind: "identify" }, ({ keyword, atoms }) => {
           buildKeyword(keyword);
-          buildIdentifierRef(identifier);
-          if (as) {
-            buildKeyword(as.keyword);
-            buildIdentifierRef(as.identifier);
-          }
-        })
-        .with({ kind: "identifyWith" }, ({ keyword, identifier }) => {
-          buildKeyword(keyword);
-          buildIdentifierRef(identifier);
+          atoms.forEach((a) =>
+            match(a)
+              .with({ kind: "through" }, ({ keyword, identifier }) => {
+                buildKeyword(keyword);
+                buildIdentifierRef(identifier);
+              })
+              .exhaustive()
+          );
         })
         .with({ kind: "response" }, ({ keyword, select }) => {
           buildKeyword(keyword);
@@ -422,21 +425,22 @@ export function buildTokens(
     atoms.forEach((a) => match(a).with({ kind: "populate" }, buildPopulate).exhaustive());
   }
 
-  function buildPopulate({ keyword, atoms }: Populate) {
+  function buildPopulate({ keyword, target, as, atoms }: Populate) {
     buildKeyword(keyword);
+    buildIdentifierRef(target);
+    if (as) {
+      buildKeyword(as.keyword);
+      buildIdentifierRef(as.identifier);
+    }
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "target" }, ({ keyword, identifier, as }) => {
+        .with({ kind: "repeat" }, ({ keyword, as, repeatValue }) => {
           buildKeyword(keyword);
-          buildIdentifierRef(identifier);
           if (as) {
             buildKeyword(as.keyword);
             buildIdentifierRef(as.identifier);
           }
-        })
-        .with({ kind: "repeat" }, ({ keyword, repeater }) => {
-          buildKeyword(keyword);
-          buildRepeater(repeater);
+          buildRepeatValue(repeatValue);
         })
         .with({ kind: "set" }, buildActionAtomSet)
         .with({ kind: "populate" }, buildPopulate)
@@ -444,15 +448,15 @@ export function buildTokens(
     );
   }
 
-  function buildRepeater(repeater: Repeater) {
-    match(repeater)
-      .with({ kind: "body" }, ({ atoms }) =>
+  function buildRepeatValue(repeatValue: RepeatValue) {
+    match(repeatValue)
+      .with({ kind: "long" }, ({ atoms }) =>
         atoms.forEach(({ keyword, value }) => {
           buildKeyword(keyword);
           buildLiteral(value);
         })
       )
-      .with({ kind: "simple" }, ({ value }) => buildLiteral(value))
+      .with({ kind: "short" }, ({ value }) => buildLiteral(value))
       .exhaustive();
   }
 

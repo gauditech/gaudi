@@ -33,9 +33,7 @@ model Student {
   computed is_senior { class.year >= 4 }
 }
 
-entrypoint Ep {
-  target Class
-
+entrypoint Class {
   create endpoint {
     action {
       // test query in fetch action

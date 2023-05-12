@@ -192,8 +192,7 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkEntrypoint(entrypoint: Entrypoint) {
-    containsAtoms(entrypoint, ["target"]);
-    noDuplicateAtoms(entrypoint, ["target", "identifyWith", "authorize", "response"]);
+    noDuplicateAtoms(entrypoint, ["identify", "authorize", "response"]);
 
     const endpoints = kindFilter(entrypoint.atoms, "endpoint");
     const definedEndpoints = new Set<EndpointType>();
@@ -208,11 +207,7 @@ export function checkForm(projectASTs: ProjectASTs) {
 
     // check custom endpoint unique path
     const entrypointPaths = new Set(
-      _.compact(
-        kindFilter(entrypoint.atoms, "entrypoint").map(
-          (e) => kindFind(e.atoms, "target")?.identifier.identifier.text
-        )
-      )
+      _.compact(kindFilter(entrypoint.atoms, "entrypoint").map((e) => e.target.identifier.text))
     );
     const customPaths = new Set<string>();
     endpoints.forEach((e) => {
@@ -238,6 +233,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     entrypoint.atoms.forEach((a) =>
       match(a)
         .with({ kind: "response" }, ({ select }) => checkSelect(select))
+        .with({ kind: "identify" }, (identify) => noDuplicateAtoms(identify, ["through"]))
         .with({ kind: "endpoint" }, checkEndpoint)
         .with({ kind: "entrypoint" }, checkEntrypoint)
         .otherwise(() => {
@@ -412,8 +408,7 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkPopulate(populate: Populate) {
-    containsAtoms(populate, ["target"]);
-    noDuplicateAtoms(populate, ["target", "repeat"]);
+    noDuplicateAtoms(populate, ["repeat"]);
     const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
       if (set.kind === "hook") checkHook(set);
       return target.identifier;

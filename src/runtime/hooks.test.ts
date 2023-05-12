@@ -85,8 +85,7 @@ describe("hooks", () => {
         field avg { type integer }
       }
 
-      entrypoint Results {
-        target Result
+      entrypoint Result {
         create endpoint {
           action {
             create {

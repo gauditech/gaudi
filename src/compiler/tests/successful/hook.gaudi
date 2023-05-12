@@ -31,8 +31,7 @@ model User {
   }
 }
 
-entrypoint UserEntry {
-  target User as user
+entrypoint User as user{
   create endpoint {
     action {
       create {

@@ -504,30 +504,26 @@ export function resolve(projectASTs: ProjectASTs) {
     let currentModel: string | undefined;
     let alias: IdentifierRef | undefined;
 
-    const target = kindFind(entrypoint.atoms, "target");
-    if (target) {
-      if (parentModel === null) {
-        resolveModelRef(target.identifier);
-        currentModel =
-          target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
-      } else {
-        resolveModelAtomRef(target.identifier, parentModel, "relation");
-        target.identifier.type = removeTypeModifier(
-          target.identifier.type,
-          "collection",
-          "nullable"
-        );
-        currentModel = getTypeModel(target.identifier.type);
-      }
-      if (target.as) {
-        target.as.identifier.ref = { kind: "context", contextKind: "entrypointTarget" };
-        target.as.identifier.type = target.identifier.type;
-        alias = target.as.identifier;
-      }
+    if (parentModel === null) {
+      resolveModelRef(entrypoint.target);
+      currentModel =
+        entrypoint.target.ref.kind === "model" ? entrypoint.target.ref.model : undefined;
+    } else {
+      resolveModelAtomRef(entrypoint.target, parentModel, "relation");
+      entrypoint.target.type = removeTypeModifier(entrypoint.target.type, "collection", "nullable");
+      currentModel = getTypeModel(entrypoint.target.type);
+    }
+    if (entrypoint.as) {
+      entrypoint.as.identifier.ref = { kind: "context", contextKind: "entrypointTarget" };
+      entrypoint.as.identifier.type = entrypoint.target.type;
+      alias = entrypoint.as.identifier;
     }
 
-    const identifyWith = kindFind(entrypoint.atoms, "identifyWith");
-    if (identifyWith) resolveModelAtomRef(identifyWith.identifier, currentModel, "field");
+    const identify = kindFind(entrypoint.atoms, "identify");
+    if (identify) {
+      const through = kindFind(identify.atoms, "through");
+      if (through) resolveModelAtomRef(through.identifier, currentModel, "field");
+    }
 
     const authorize = kindFind(entrypoint.atoms, "authorize");
     if (authorize) {
@@ -786,30 +782,27 @@ export function resolve(projectASTs: ProjectASTs) {
     let currentModel: string | undefined;
     let through: string | undefined;
 
-    const target = kindFind(populate.atoms, "target");
-    if (target) {
-      if (parentModel === null) {
-        resolveModelRef(target.identifier);
-        currentModel =
-          target.identifier.ref.kind === "model" ? target.identifier.ref.model : undefined;
-      } else {
-        const relation = resolveModelAtomRef(target.identifier, parentModel, "relation");
-        if (relation) {
-          through = kindFind(relation.atoms, "through")?.identifier.identifier.text;
-        }
-        currentModel = getTypeModel(target.identifier.type);
+    if (parentModel === null) {
+      resolveModelRef(populate.target);
+      currentModel = populate.target.ref.kind === "model" ? populate.target.ref.model : undefined;
+    } else {
+      const relation = resolveModelAtomRef(populate.target, parentModel, "relation");
+      if (relation) {
+        through = kindFind(relation.atoms, "through")?.identifier.identifier.text;
       }
-      scope.model = currentModel;
-      if (target.as) {
-        target.as.identifier.ref = { kind: "context", contextKind: "populateTarget" };
-        target.as.identifier.type = target.identifier.type;
-        addToScope(scope, target.as.identifier);
-      }
+      currentModel = getTypeModel(populate.target.type);
+    }
+    scope.model = currentModel;
+    if (populate.as) {
+      populate.as.identifier.ref = { kind: "context", contextKind: "populateTarget" };
+      populate.as.identifier.type = populate.target.type;
+      addToScope(scope, populate.as.identifier);
     }
 
-    kindFilter(populate.atoms, "repeat").forEach((repeater) => {
-      if (repeater.repeater.name) {
-        const type: Type = {
+    kindFilter(populate.atoms, "repeat").forEach((repeat) => {
+      if (repeat.as) {
+        repeat.as.identifier.ref = { kind: "context", contextKind: "repeat" };
+        repeat.as.identifier.type = {
           kind: "struct",
           types: {
             start: { kind: "primitive", primitiveKind: "integer" },
@@ -817,12 +810,7 @@ export function resolve(projectASTs: ProjectASTs) {
             current: { kind: "primitive", primitiveKind: "integer" },
           },
         };
-        const identifier: IdentifierRef = {
-          identifier: repeater.repeater.name,
-          ref: { kind: "context", contextKind: "repeater" },
-          type,
-        };
-        addToScope(scope, identifier);
+        addToScope(scope, repeat.as.identifier);
       }
     });
 

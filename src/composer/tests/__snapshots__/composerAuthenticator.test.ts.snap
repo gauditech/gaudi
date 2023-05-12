@@ -515,7 +515,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "responds": false,
         "response": undefined,
         "target": {
-          "alias": "authUser",
+          "alias": "$target_0",
           "kind": "model",
           "name": "AuthUser",
           "namePath": [
@@ -653,7 +653,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "responds": false,
         "response": undefined,
         "target": {
-          "alias": "authUser",
+          "alias": "$target_0",
           "kind": "model",
           "name": "AuthUser",
           "namePath": [
@@ -912,7 +912,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "responds": false,
         "response": undefined,
         "target": {
-          "alias": "authUser",
+          "alias": "$target_0",
           "kind": "model",
           "name": "AuthUser",
           "namePath": [
@@ -920,45 +920,14 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
           ],
           "refKey": "AuthUser",
           "retType": "AuthUser",
-          "select": [
-            {
-              "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "AuthUser",
-                "id",
-              ],
-              "refKey": "AuthUser.id",
-            },
-            {
-              "alias": "name",
-              "kind": "field",
-              "name": "name",
-              "namePath": [
-                "AuthUser",
-                "name",
-              ],
-              "refKey": "AuthUser.name",
-            },
-            {
-              "alias": "username",
-              "kind": "field",
-              "name": "username",
-              "namePath": [
-                "AuthUser",
-                "username",
-              ],
-              "refKey": "AuthUser.username",
-            },
-          ],
+          "select": [],
         },
       },
     ],
     "entrypoints": [],
-    "name": "Auth",
+    "name": "",
     "target": {
-      "alias": "authUser",
+      "alias": "$target_0",
       "identifyWith": {
         "name": "id",
         "paramName": "authuser_id",

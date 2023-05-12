@@ -34,7 +34,7 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
           ],
         },
       ],
-      "name": "Orgs",
+      "name": "",
       "populates": [],
       "repeater": {
         "alias": undefined,
@@ -107,7 +107,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
           ],
         },
       ],
-      "name": "Orgs",
+      "name": "",
       "populates": [
         {
           "actions": [
@@ -143,7 +143,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
               ],
             },
           ],
-          "name": "repos",
+          "name": "",
           "populates": [],
           "repeater": {
             "alias": undefined,
@@ -242,7 +242,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
           ],
         },
       ],
-      "name": "Orgs",
+      "name": "",
       "populates": [
         {
           "actions": [
@@ -303,7 +303,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
               ],
             },
           ],
-          "name": "Repos",
+          "name": "",
           "populates": [
             {
               "actions": [
@@ -343,7 +343,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
                   ],
                 },
               ],
-              "name": "Issues",
+              "name": "",
               "populates": [],
               "repeater": {
                 "end": 1,
@@ -451,7 +451,7 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
           ],
         },
       ],
-      "name": "Orgs",
+      "name": "",
       "populates": [],
       "repeater": {
         "alias": undefined,
@@ -513,7 +513,7 @@ exports[`populator composer succeeds for range iteration 1`] = `
           ],
         },
       ],
-      "name": "Orgs",
+      "name": "",
       "populates": [],
       "repeater": {
         "alias": undefined,
@@ -607,7 +607,7 @@ exports[`populator composer succeeds for simple populator 1`] = `
           ],
         },
       ],
-      "name": "Orgs",
+      "name": "",
       "populates": [],
       "repeater": {
         "end": 1,
@@ -707,7 +707,7 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
           ],
         },
       ],
-      "name": "Orgs",
+      "name": "",
       "populates": [
         {
           "actions": [
@@ -759,7 +759,7 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
               ],
             },
           ],
-          "name": "Repos",
+          "name": "",
           "populates": [],
           "repeater": {
             "alias": "rIter",

@@ -167,21 +167,22 @@ function migrateComputed(computed: AST.Computed): ComputedSpec {
 }
 
 function migrateEntrypoint(entrypoint: AST.Entrypoint): EntrypointSpec {
-  const from = kindFind(entrypoint.atoms, "target")!;
-  const identify = kindFind(entrypoint.atoms, "identifyWith");
+  const identify = kindFind(entrypoint.atoms, "identify");
   const response = kindFind(entrypoint.atoms, "response");
   const authorize = kindFind(entrypoint.atoms, "authorize");
   const endpoints = kindFilter(entrypoint.atoms, "endpoint").map(migrateEndpoint);
   const entrypoints = kindFilter(entrypoint.atoms, "entrypoint").map(migrateEntrypoint);
 
   return {
-    name: entrypoint.name.text,
+    name: "",
     target: {
-      kind: from.identifier.ref.kind === "model" ? "model" : "relation",
-      identifier: from.identifier.identifier.text,
-      alias: from.as?.identifier.identifier.text,
+      kind: entrypoint.target.ref.kind === "model" ? "model" : "relation",
+      identifier: entrypoint.target.identifier.text,
+      alias: entrypoint.as?.identifier.identifier.text,
     },
-    identify: identify?.identifier.identifier.text,
+    identify: identify
+      ? kindFind(identify.atoms, "through")?.identifier.identifier.text
+      : undefined,
     response: response ? migrateSelect(response.select) : undefined,
     authorize: authorize ? migrateExpr(authorize.expr) : undefined,
     endpoints,
@@ -349,21 +350,22 @@ function migratePopulator(populator: AST.Populator): PopulatorSpec {
 }
 
 function migratePopulate(populate: AST.Populate): PopulateSpec {
-  const from = kindFind(populate.atoms, "target")!;
   const setters = kindFilter(populate.atoms, "set").map(migratePopulateSetter);
   const populates = kindFilter(populate.atoms, "populate").map(migratePopulate);
-  const repeater = kindFind(populate.atoms, "repeat")?.repeater;
+  const repeat = kindFind(populate.atoms, "repeat");
+  const repeatValue = repeat?.repeatValue;
+  const repeatAlias = repeat?.as?.identifier.identifier.text;
 
   return {
-    name: populate.name.text,
+    name: "",
     target: {
-      kind: from.identifier.ref.kind === "model" ? "model" : "relation",
-      identifier: from.identifier.identifier.text,
-      alias: from.as?.identifier.identifier.text,
+      kind: populate.target.ref.kind === "model" ? "model" : "relation",
+      identifier: populate.target.identifier.text,
+      alias: populate.as?.identifier.identifier.text,
     },
     setters,
     populates,
-    repeater: repeater ? migrateRepeater(repeater) : undefined,
+    repeater: repeatValue ? migrateRepeatValue(repeatValue, repeatAlias) : undefined,
   };
 }
 
@@ -378,14 +380,14 @@ function migratePopulateSetter(set: AST.ActionAtomSet): PopulateSetterSpec {
   };
 }
 
-function migrateRepeater(repeater: AST.Repeater): RepeaterSpec {
-  switch (repeater.kind) {
-    case "simple":
-      return { kind: "fixed", value: repeater.value.value, alias: repeater.name?.text };
-    case "body": {
-      const start = kindFind(repeater.atoms, "start")?.value.value;
-      const end = kindFind(repeater.atoms, "end")?.value.value;
-      return { kind: "range", range: { start, end }, alias: repeater.name?.text };
+function migrateRepeatValue(repeatValue: AST.RepeatValue, alias?: string): RepeaterSpec {
+  switch (repeatValue.kind) {
+    case "short":
+      return { kind: "fixed", value: repeatValue.value.value, alias };
+    case "long": {
+      const start = kindFind(repeatValue.atoms, "start")?.value.value;
+      const end = kindFind(repeatValue.atoms, "end")?.value.value;
+      return { kind: "range", range: { start, end }, alias };
     }
   }
 }
