@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getRef } from "@src/common/refs";
+import { getRef, getResultModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import { processSelect } from "@src/composer/entrypoints";
 import {
@@ -26,10 +26,6 @@ import {
   TypedExprDef,
 } from "@src/types/definition";
 import { ExpSpec, QuerySpec } from "@src/types/specification";
-
-export function composeQueryViews(def: Definition, qvspecs: QuerySpec[]): QueryDef[] {
-  return [];
-}
 
 export function composeQuery(
   def: Definition,
@@ -70,9 +66,9 @@ export function composeQuery(
   const filterPaths = getFilterPaths(filter);
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
-  ensureEqual(direct.length, 1);
-  const targetModel = getRef.model(def, direct[0]);
-  const select = processSelect(def, targetModel, qspec.select, fromPath);
+  ensureEqual(direct.length, 1, `Query paths shouldn't have more than one root source`);
+  const resultModel = getResultModel(def, fromPath, {});
+  const select = processSelect(def, resultModel, qspec.select, fromPath);
 
   const orderBy = qspec.orderBy?.map(
     ({ field, order }): QueryOrderByAtomDef => ({

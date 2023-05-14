@@ -1,5 +1,8 @@
 import _, { chain } from "lodash";
 
+import { ensureEqual, ensureNot } from "./utils";
+
+import { VarContext, getTypedPath } from "@src/composer/utils";
 import {
   AggregateDef,
   ComputedDef,
@@ -176,6 +179,21 @@ getRef.modelHook = function getRefModelHook(
 ): ModelHookDef {
   return getRef(def, modelName, hookName, ["model-hook"]);
 };
+
+export function getResultModel(def: Definition, path: string[], ctx: VarContext): ModelDef {
+  const tpath = getTypedPath(def, path, ctx);
+  ensureEqual(tpath.leaf, null);
+  if (tpath.nodes.length) {
+    const refKey = _.last(tpath.nodes)!.refKey;
+    return getTargetModel(def, refKey);
+  } else {
+    if (tpath.source.kind === "model") {
+      return getRef.model(def, tpath.source.refKey);
+    } else {
+      return getRef.model(def, tpath.source.model.refKey);
+    }
+  }
+}
 
 export function getTargetModel(def: Definition, refKey: string): ModelDef {
   const prop = getRef(def, refKey);

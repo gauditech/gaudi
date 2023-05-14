@@ -134,6 +134,8 @@ export type LiteralValueDef =
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
 type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
 
+type AggregateFunction = "count" | "sum";
+
 export type FunctionName =
   | BinaryOperator
   | "length"
@@ -144,13 +146,21 @@ export type FunctionName =
   | "cryptoHash"
   | "cryptoCompare"
   | "cryptoToken"
-  | "stringify";
+  | "stringify"
+  | AggregateFunction; // FIXME remove this, use TypedAggregateFunction
 
 export type TypedFunction = {
   kind: "function";
   name: FunctionName;
   args: TypedExprDef[];
   type?: TypedVariableType;
+};
+
+export type TypedAggregateFunction = {
+  kind: "aggregate-function";
+  name: AggregateFunction;
+  entry: string[];
+  target: string[];
 };
 
 export type TypedExprDef = LiteralValueDef | TypedAlias | TypedVariable | TypedFunction | undefined;

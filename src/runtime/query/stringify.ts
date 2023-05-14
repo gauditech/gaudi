@@ -9,6 +9,7 @@ import {
   transformNamePaths,
   uniqueNamePaths,
 } from "./build";
+import { expandExpression } from "./expandExpression";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
@@ -149,48 +150,6 @@ function joinToString(
 `;
 }
 
-/**
- * Expands computeds in the expression to build an expression consisting only
- * of fields.
- */
-function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
-  if (exp === undefined) {
-    return undefined;
-  }
-  switch (exp.kind) {
-    case "literal":
-    case "variable":
-      return exp;
-    case "alias": {
-      const tpath = getTypedPath(def, exp.namePath, {});
-      ensureNot(tpath.leaf, null);
-      switch (tpath.leaf.kind) {
-        case "aggregate":
-        case "field": {
-          return exp;
-        }
-        case "computed": {
-          const computed = getRef.computed(def, tpath.leaf.refKey);
-          const newExp = expandExpression(def, computed.exp);
-          return transformExpressionPaths(newExp, [computed.modelRefKey], _.initial(exp.namePath));
-        }
-        default: {
-          return assertUnreachable(tpath.leaf);
-        }
-      }
-    }
-    case "function": {
-      return {
-        ...exp,
-        args: exp.args.map((arg) => expandExpression(def, arg)),
-      };
-    }
-    default: {
-      assertUnreachable(exp);
-    }
-  }
-}
-
 /** this should go together with the join plan */
 export function nameToSelectable(def: Definition, namePath: string[]): SelectableItem {
   const typedPath = getTypedPath(def, namePath, {});
@@ -211,7 +170,7 @@ export function nameToSelectable(def: Definition, namePath: string[]): Selectabl
  * for a query to evaluate. This will turn in a list of joins needed for a query to
  * evaluate.
  */
-function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
+export function collectPaths(def: Definition, q: QueryDef | AggregateDef): string[][] {
   const selectables = q.kind === "query" ? selectToSelectable(q.select) : [];
   const { filter, fromPath } = q.kind === "query" ? q : q.query;
   const computeds = selectables.filter(
@@ -260,7 +219,8 @@ type QueryJoinPlan = {
 type Join = {
   scope: "left" | "";
   relname: string;
-  selectable: string[];
+  // aggregate: null | "count" | "sum";
+  selectable: string[]; // FIXME is this needed? I don't think so.
   joins: Join[];
 };
 
@@ -310,7 +270,7 @@ function getJoins(paths: string[][], namespace: string[], leftJoin: boolean): Jo
   });
 }
 
-export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[][] {
+function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[][] {
   if (exp === undefined) {
     return [];
   }
@@ -338,7 +298,14 @@ export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[
       }
     }
     case "function": {
-      return exp.args.flatMap((arg) => collectPathsFromExp(def, arg));
+      switch (exp.name) {
+        case "sum":
+        case "count": {
+          return [];
+        }
+        default:
+          return exp.args.flatMap((arg) => collectPathsFromExp(def, arg));
+      }
     }
   }
 }
@@ -540,18 +507,15 @@ function functionToString(def: Definition, exp: TypedFunction): string {
     case "length": {
       return stringifyFn("char_length", exp.args);
     }
-    case "concat": {
-      return stringifyFn("concat", exp.args);
+    case "concat":
+    case "lower":
+    case "upper":
+    case "now":
+    case "count":
+    case "sum": {
+      return stringifyFn(exp.name, exp.args);
     }
-    case "lower": {
-      return stringifyFn("lower", exp.args);
-    }
-    case "upper": {
-      return stringifyFn("upper", exp.args);
-    }
-    case "now": {
-      return stringifyFn("now", exp.args);
-    }
+
     case "stringify":
     case "cryptoCompare":
     case "cryptoHash":
