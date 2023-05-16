@@ -457,7 +457,7 @@ export type RefQueryTarget = {
 export type ContextKind =
   | "entrypointTarget"
   | "populateTarget"
-  | "fetch"
+  | "actionAlias"
   | "virtualInput"
   | "repeat"
   | "authToken"

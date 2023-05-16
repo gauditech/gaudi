@@ -66,7 +66,7 @@ model Comment {
 
 // ----- entrypoints
 
-entrypoint Org {
+entrypoint Org as org {
   identify { through slug }
   response { name, slug, description, summary, nameAndDesc }
 
