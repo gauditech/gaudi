@@ -220,7 +220,6 @@ function composeModelAction(
     spec.actionAtoms,
     // item name resolver
     (atom: Spec.ModelActionAtom) => {
-      console.dir(atom, { depth: 20 });
       switch (atom.kind) {
         case "input":
           return atom.target.text;
