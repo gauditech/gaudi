@@ -87,7 +87,6 @@ exports[`compose hooks action hook 1`] = `
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [
         {
@@ -269,7 +268,6 @@ exports[`compose hooks composes source hooks 1`] = `
             "namePath": [
               "Org",
             ],
-            "refKey": "Org",
             "retType": "Org",
             "select": [],
           },
@@ -290,7 +288,6 @@ exports[`compose hooks composes source hooks 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },
@@ -445,7 +442,6 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
     "namePath": [
       "Org",
     ],
-    "refKey": "Org",
     "retType": "Org",
     "select": [],
   },
@@ -522,7 +518,6 @@ exports[`compose hooks inline hooks 1`] = `
             "namePath": [
               "Org",
             ],
-            "refKey": "Org",
             "retType": "Org",
             "select": [],
           },
@@ -543,7 +538,6 @@ exports[`compose hooks inline hooks 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },

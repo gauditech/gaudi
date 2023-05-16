@@ -344,7 +344,6 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 3`] = `
     "repos",
     "issues",
   ],
-  "refKey": "Repo.issues",
   "retType": "Issue",
   "select": [],
 }
@@ -365,7 +364,6 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
     "namePath": [
       "Org",
     ],
-    "refKey": "Org",
     "retType": "Org",
     "select": [],
   },
@@ -383,7 +381,6 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
       "Org",
       "repos",
     ],
-    "refKey": "Org.repos",
     "retType": "Repo",
     "select": [
       {
@@ -721,7 +718,6 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 3`] = `
     "repos",
     "issues",
   ],
-  "refKey": "Repo.issues",
   "retType": "Issue",
   "select": [],
 }
@@ -742,7 +738,6 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
     "namePath": [
       "Org",
     ],
-    "refKey": "Org",
     "retType": "Org",
     "select": [],
   },
@@ -760,7 +755,6 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
       "Org",
       "repos",
     ],
-    "refKey": "Org.repos",
     "retType": "Repo",
     "select": [],
   },
@@ -1108,7 +1102,6 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 3`] = `
     "repos",
     "issues",
   ],
-  "refKey": "Repo.issues",
   "retType": "Issue",
   "select": [],
 }
@@ -1129,7 +1122,6 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
     "namePath": [
       "Org",
     ],
-    "refKey": "Org",
     "retType": "Org",
     "select": [],
   },
@@ -1147,7 +1139,6 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
       "Org",
       "repos",
     ],
-    "refKey": "Org.repos",
     "retType": "Repo",
     "select": [],
   },
@@ -1465,7 +1456,6 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 3`] = `
     "repos",
     "issues",
   ],
-  "refKey": "Repo.issues",
   "retType": "Issue",
   "select": [],
 }
@@ -1486,7 +1476,6 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
     "namePath": [
       "Org",
     ],
-    "refKey": "Org",
     "retType": "Org",
     "select": [],
   },
@@ -1504,7 +1493,6 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
       "Org",
       "repos",
     ],
-    "refKey": "Org.repos",
     "retType": "Repo",
     "select": [],
   },
@@ -1852,7 +1840,6 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 3`] = `
     "repos",
     "issues",
   ],
-  "refKey": "Repo.issues",
   "retType": "Issue",
   "select": [
     {
@@ -1886,7 +1873,6 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
     "namePath": [
       "Org",
     ],
-    "refKey": "Org",
     "retType": "Org",
     "select": [],
   },
@@ -1904,7 +1890,6 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
       "Org",
       "repos",
     ],
-    "refKey": "Org.repos",
     "retType": "Repo",
     "select": [],
   },

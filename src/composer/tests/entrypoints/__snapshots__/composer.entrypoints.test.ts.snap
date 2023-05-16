@@ -122,7 +122,6 @@ exports[`entrypoint composes basic example 1`] = `
           "namePath": [
             "Org",
           ],
-          "refKey": "Org",
           "retType": "Org",
           "select": [],
         },
@@ -177,7 +176,6 @@ exports[`entrypoint composes basic example 1`] = `
           "namePath": [
             "Org",
           ],
-          "refKey": "Org",
           "retType": "Org",
           "select": [],
         },
@@ -207,7 +205,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [],
               },
@@ -281,7 +278,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -304,7 +300,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [],
               },
@@ -384,7 +379,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -457,7 +451,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [
                   {
@@ -542,7 +535,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -631,7 +623,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [
                   {
@@ -664,7 +655,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -686,7 +676,6 @@ exports[`entrypoint composes basic example 1`] = `
             "Org",
             "repos",
           ],
-          "refKey": "Org.repos",
           "retType": "Repo",
         },
       },
@@ -705,7 +694,6 @@ exports[`entrypoint composes basic example 1`] = `
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
     },
   },

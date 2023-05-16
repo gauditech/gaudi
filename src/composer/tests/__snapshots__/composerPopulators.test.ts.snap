@@ -54,7 +54,6 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },
@@ -164,7 +163,6 @@ exports[`populator composer succeeds for nested iterations 1`] = `
               "Org",
               "repos",
             ],
-            "refKey": "Org.repos",
             "retType": "Repo",
           },
         },
@@ -187,7 +185,6 @@ exports[`populator composer succeeds for nested iterations 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },
@@ -364,7 +361,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
                   "repos",
                   "issues",
                 ],
-                "refKey": "Repo.issues",
                 "retType": "Issue",
               },
             },
@@ -387,7 +383,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
               "Org",
               "repos",
             ],
-            "refKey": "Org.repos",
             "retType": "Repo",
           },
         },
@@ -409,7 +404,6 @@ exports[`populator composer succeeds for nested populators 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },
@@ -471,7 +465,6 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },
@@ -533,7 +526,6 @@ exports[`populator composer succeeds for range iteration 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },
@@ -623,7 +615,6 @@ exports[`populator composer succeeds for simple populator 1`] = `
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },
@@ -774,7 +765,6 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
               "Org",
               "repos",
             ],
-            "refKey": "Org.repos",
             "retType": "Repo",
           },
         },
@@ -797,7 +787,6 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
         "namePath": [
           "Org",
         ],
-        "refKey": "Org",
         "retType": "Org",
       },
     },

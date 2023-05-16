@@ -35,34 +35,26 @@ export function composeEntrypoints(def: Definition, input: Spec.Entrypoint[]): v
 }
 
 export type TargetContext = {
-  model: ModelDef;
   target: TargetDef;
 };
 
 function processEntrypoint(
   def: Definition,
   spec: Spec.Entrypoint,
-  parents: TargetContext[],
+  parentTargets: TargetDef[],
   parentNamePath: string[]
 ): EntrypointDef {
   const namePath = [...parentNamePath, spec.target.text];
   const target = calculateTarget(spec, namePath);
   const name = spec.name;
-  const targetModel = getRef.model(def, target.retType);
 
-  const thisContext: TargetContext = {
-    model: targetModel,
-    target,
-  };
-  const targetParents = [...parents, thisContext];
+  const targets = [...parentTargets, target];
 
   return {
     name,
     target,
-    endpoints: processEndpoints(def, targetParents, spec),
-    entrypoints: spec.entrypoints.map((ispec) =>
-      processEntrypoint(def, ispec, targetParents, namePath)
-    ),
+    endpoints: processEndpoints(def, targets, spec),
+    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(def, ispec, targets, namePath)),
   };
 }
 
@@ -86,7 +78,6 @@ export function calculateTarget(
     name: spec.target.text,
     namePath,
     retType: model,
-    refKey: refKeyFromRef(spec.target.ref),
     identifyWith,
     alias: spec.alias.text,
   };
@@ -112,11 +103,10 @@ function calculateIdentifyWith(
 
 function processEndpoints(
   def: Definition,
-  parents: TargetContext[],
+  targets: TargetDef[],
   entrySpec: Spec.Entrypoint
 ): EndpointDef[] {
-  const context = _.last(parents)!;
-  const targets = parents.map((p) => p.target);
+  const context = _.last(targets)!;
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const endpointType = mapEndpointSpecToDefType(endSpec);
@@ -152,7 +142,7 @@ function processEndpoints(
           kind: "get",
           authSelect,
           authorize,
-          response: processSelect(endSpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
           // actions,
           parentContext,
           target,
@@ -164,12 +154,12 @@ function processEndpoints(
           authSelect,
           authorize,
           pageable: endSpec.pageable,
-          response: processSelect(endSpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
           // actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
-          orderBy: processOrderBy(context.target.namePath, endSpec.orderBy),
-          filter: processFilter(context.target.namePath, endSpec.filter),
+          orderBy: processOrderBy(context.namePath, endSpec.orderBy),
+          filter: processFilter(context.namePath, endSpec.filter),
         };
       }
       case "create": {
@@ -182,7 +172,7 @@ function processEndpoints(
           target: _.omit(target, "identifyWith"),
           authSelect,
           authorize,
-          response: processSelect(endSpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
         };
       }
       case "update": {
@@ -195,7 +185,7 @@ function processEndpoints(
           target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
           authSelect,
           authorize,
-          response: processSelect(endSpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
         };
       }
       case "delete": {

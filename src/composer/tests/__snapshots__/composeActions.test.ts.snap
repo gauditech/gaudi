@@ -26,7 +26,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },
@@ -99,7 +98,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [
         {
@@ -147,7 +145,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },
@@ -170,7 +167,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },
@@ -236,7 +232,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },

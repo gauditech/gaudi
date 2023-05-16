@@ -34,7 +34,6 @@ export function buildEntrypoints(def: Definition): EntrypointDef[] {
 function entrypointForModel(def: Definition, model: ModelDef): EntrypointDef {
   const name = `admin:${model.name}Entrypoint`;
   const target: TargetWithSelectDef = {
-    refKey: "N/A",
     kind: "model",
     name: model.name,
     alias: "model",

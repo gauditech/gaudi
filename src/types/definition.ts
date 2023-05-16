@@ -188,7 +188,6 @@ export type TargetDef = {
   kind: "model" | "reference" | "relation" | "query";
   name: string;
   namePath: string[];
-  refKey: string;
   retType: string;
   alias: string;
   identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
