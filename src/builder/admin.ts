@@ -99,7 +99,7 @@ function createEndpointForModel(
   model: ModelDef,
   target: TargetWithSelectDef
 ): CreateEndpointDef {
-  const actions = composeActionBlock(def, [], [target], "create");
+  const actions = composeActionBlock([]);
 
   return {
     kind: "create",
@@ -118,7 +118,7 @@ function updateEndpointForModel(
   model: ModelDef,
   target: TargetWithSelectDef
 ): UpdateEndpointDef {
-  const actions = composeActionBlock(def, [], [target], "update");
+  const actions = composeActionBlock([]);
 
   return {
     kind: "update",

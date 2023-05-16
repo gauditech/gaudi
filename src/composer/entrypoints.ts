@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureEqual, ensureExists } from "@src/common/utils";
+import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
 import { RefModelField } from "@src/compiler/ast/ast";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression } from "@src/composer/query";
@@ -13,7 +13,6 @@ import {
   DeleteOneAction,
   EndpointDef,
   EndpointHttpMethod,
-  EndpointType,
   EntrypointDef,
   ExecuteHookAction,
   FieldSetter,
@@ -33,10 +32,6 @@ import * as Spec from "@src/types/specification";
 export function composeEntrypoints(def: Definition, input: Spec.Entrypoint[]): void {
   def.entrypoints = input.map((spec) => processEntrypoint(def, spec, [], []));
 }
-
-export type TargetContext = {
-  target: TargetDef;
-};
 
 function processEntrypoint(
   def: Definition,
@@ -109,9 +104,7 @@ function processEndpoints(
   const context = _.last(targets)!;
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    const endpointType = mapEndpointSpecToDefType(endSpec);
-
-    const rawActions = composeActionBlock(def, endSpec.actions, targets, endpointType);
+    const rawActions = composeActionBlock(endSpec.actions);
     const actionDeps = collectActionDeps(def, rawActions);
 
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
@@ -251,22 +244,6 @@ function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
       return true;
     default:
       assertUnreachable(method);
-  }
-}
-
-function mapEndpointSpecToDefType(endSpec: Spec.Endpoint): EndpointType {
-  if (endSpec.kind === "custom") {
-    ensureExists(endSpec.cardinality, `Property "cardinality" is required for custom endpoints`);
-
-    if (endSpec.cardinality === "one") {
-      return "custom-one";
-    } else if (endSpec.cardinality === "many") {
-      return "custom-many";
-    } else {
-      assertUnreachable(endSpec.cardinality);
-    }
-  } else {
-    return endSpec.kind;
   }
 }
 

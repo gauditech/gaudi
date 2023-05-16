@@ -471,8 +471,3 @@ export type Identifier = { text: string; token: TokenData };
 export type IdentifierRef = { identifier: Identifier; ref: Ref; type: Type };
 
 export type TokenData = { start: number; end: number };
-
-export type Parsed = "parsed";
-export type Resolved = "resolved";
-export type Typed = "typed";
-export type Stage = Parsed | Resolved | Typed;

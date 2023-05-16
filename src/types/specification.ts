@@ -221,10 +221,6 @@ export type ActionAtomVirtualInput = {
   validators: Validator[];
 };
 
-export type ActionAtomHook = { kind: "hook"; hook: ActionHook };
-export type ActionAtomResponds = { kind: "responds" };
-export type ActionAtomQuery = { kind: "query"; query: Query };
-
 export type Repeater =
   | { kind: "fixed"; alias?: string; value: number }
   | { kind: "range"; alias?: string; range: { start?: number; end?: number } };
