@@ -17,7 +17,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
 
-  const fromPath = qspec.fromModel.map((i) => i.text);
+  const fromPath = qspec.from.map((i) => i.text);
 
   const filter = qspec.filter && composeExpression(qspec.filter, fromPath);
 

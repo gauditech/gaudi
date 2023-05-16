@@ -73,7 +73,7 @@ export type Query = {
   name: string;
   sourceModel: string;
   targetModel: string;
-  fromModel: IdentifierRef[];
+  from: IdentifierRef[];
   fromAlias?: IdentifierRef[];
   filter?: Expr;
   orderBy?: QueryOrderBy[];

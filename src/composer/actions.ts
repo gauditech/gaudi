@@ -480,8 +480,8 @@ function modelActionFromParts(
 export function queryFromSpec(qspec: Spec.Query): QueryDef {
   ensureEmpty(qspec.aggregate, "Aggregates are not yet supported in action queries");
 
-  const pathPrefix = _.first(qspec.fromModel);
-  ensureExists(pathPrefix, `Action query "fromModel" path is empty ${qspec.fromModel}`);
+  const pathPrefix = _.first(qspec.from);
+  ensureExists(pathPrefix, `Action query "fromModel" path is empty ${qspec.from}`);
 
   return composeQuery(qspec);
 }

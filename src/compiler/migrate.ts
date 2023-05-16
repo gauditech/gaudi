@@ -218,10 +218,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       name,
       sourceModel,
       targetModel,
-      fromModel: [
-        ...initialPath,
-        ...(from?.identifierPath.map((i) => migrateIdentifierRef(i)) ?? []),
-      ],
+      from: [...initialPath, ...(from?.identifierPath.map((i) => migrateIdentifierRef(i)) ?? [])],
       fromAlias: from?.as?.identifierPath.map((i) => migrateIdentifierRef(i)),
       filter: filter ? migrateExpr(filter.expr) : undefined,
       orderBy,
