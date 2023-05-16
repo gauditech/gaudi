@@ -10,11 +10,6 @@ import {
 import { Type } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
 
-// old AST types
-export type EndpointCardinality = "one" | "many";
-export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
-export type EndpointTypeAST = "list" | "get" | "create" | "update" | "delete" | "custom";
-
 export type LiteralValue = null | boolean | number | string;
 
 export type Select = SingleSelect[];
@@ -147,6 +142,9 @@ export type EndpointDelete = {
   actions: Action[];
   authorize?: Expr;
 };
+
+export type EndpointCardinality = "one" | "many";
+export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 export type EndpointCustom = {
   kind: "custom";

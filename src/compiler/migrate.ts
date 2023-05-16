@@ -62,11 +62,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
                 model: implicitModel.name,
                 from: reference.ref.model,
                 through: reference.ref.name,
-                unique: false,
               },
               through: reference.ref,
-              unique: false,
-              nullable: false,
+              unique: reference.unique,
+              nullable: reference.unique && reference.nullable,
             };
             implicitModel.relations.push(relation);
           }
@@ -159,21 +158,20 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateRelation(relation: AST.Relation): Spec.Relation {
     const through = kindFind(relation.atoms, "through")!;
-    const throughRef = migrateRef(through.identifier.ref, "modelAtom");
-    ensureEqual(throughRef.atomKind, "reference");
+    const throughRef = migrateRefModelAtom(through.identifier.ref, "reference");
 
     return {
       name: relation.name.text,
       ref: migrateRefModelAtom(relation.ref, "relation"),
       through: throughRef,
       unique: throughRef.unique,
-      nullable: through.identifier.type.kind === "nullable",
+      nullable: throughRef.unique && through.identifier.type.kind === "nullable",
     };
   }
 
   function migrateModelQuery(query: AST.Query) {
-    ensureEqual(query.ref.kind, "modelAtom");
-    const model = query.ref.model;
+    const ref = migrateRefModelAtom(query.ref, "query");
+    const model = ref.model;
     const initialPath: Spec.IdentifierRef[] = [
       { text: model, ref: { kind: "model", model }, type: { kind: "model", model } },
     ];
@@ -724,10 +722,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     // model spec does not support expression hooks
     const _args = kindFilter(hook.atoms, "arg_expr").map((a) => ({ name: a.name.text }));
     const args = kindFilter(hook.atoms, "arg_query").map((a) => {
-      ensureEqual(hook.ref.kind, "modelAtom");
+      const ref = migrateRefModelAtom(hook.ref, "hook");
       return {
         name: a.name.text,
-        query: migrateAnonymousQuery(a.query, hook.ref.model),
+        query: migrateAnonymousQuery(a.query, ref.model),
       };
     });
     return { name: hook.name.text, ref: migrateRef(hook.ref, "modelAtom"), code, args };

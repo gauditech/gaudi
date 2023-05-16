@@ -351,7 +351,6 @@ export function resolve(projectASTs: ProjectASTs) {
         atomKind: "relation",
         name: relation.name.text,
         model: model.name.text,
-        unique: false,
         from: from.identifier.ref.model,
         through: through.identifier.ref.name,
       };

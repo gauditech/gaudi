@@ -326,7 +326,6 @@ export type SelectAggregateItem = {
   namePath: string[];
 };
 
-// FIXME add refKey instead of args and code
 export type SelectHookItem = {
   kind: "model-hook";
   refKey: string;
