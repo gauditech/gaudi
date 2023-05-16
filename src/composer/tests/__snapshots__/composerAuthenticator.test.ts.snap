@@ -428,6 +428,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               },
             ],
+            "isPrimary": false,
             "kind": "create-one",
             "model": "AuthUserAccessToken",
             "select": [
@@ -731,6 +732,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               },
             ],
+            "isPrimary": false,
             "kind": "create-one",
             "model": "AuthUser",
             "select": [

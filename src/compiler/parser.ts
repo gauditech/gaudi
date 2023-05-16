@@ -365,6 +365,7 @@ class GaudiParser extends EmbeddedActionsParser {
             ALT: () => {
               const aggregateToken = this.OR2([
                 { ALT: () => this.CONSUME(L.Count) },
+                { ALT: () => this.CONSUME(L.Sum) },
                 { ALT: () => this.CONSUME(L.One) },
                 { ALT: () => this.CONSUME(L.First) },
               ]);

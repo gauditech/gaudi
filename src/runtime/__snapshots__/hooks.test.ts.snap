@@ -2,7 +2,7 @@
 
 exports[`hooks execution runtime should execute hooks from multiple exec runtimes 1`] = `
 {
-  "alias": "$target_0",
+  "alias": "$action_0",
   "changeset": [
     {
       "name": "name",
@@ -65,11 +65,12 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
       },
     },
   ],
+  "isPrimary": true,
   "kind": "create-one",
   "model": "Result",
   "select": [],
   "targetPath": [
-    "$target_0",
+    "Result",
   ],
 }
 `;

@@ -1,4 +1,4 @@
-import { BinaryOperator } from "./specification";
+import { HookCode } from "@src/types/common";
 
 export type Definition = {
   models: ModelDef[];
@@ -108,10 +108,10 @@ export type ModelHookDef = {
   refKey: string;
   name: string;
   args: { name: string; query: QueryDef }[];
-  hook: HookDef;
+  hook: HookCode;
 };
 
-type VariablePrimitiveType = {
+export type VariablePrimitiveType = {
   kind: "integer" | "text" | "boolean" | "unknown" | "null";
   nullable: boolean;
 };
@@ -131,6 +131,22 @@ export type LiteralValueDef =
 
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
 type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
+
+export type BinaryOperator =
+  | "or"
+  | "and"
+  | "is not"
+  | "is"
+  | "not in"
+  | "in"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "+"
+  | "-"
+  | "/"
+  | "*";
 
 export type FunctionName =
   | BinaryOperator
@@ -427,7 +443,7 @@ export interface IsTextEqual extends IValidatorDef {
 export interface HookValidator {
   name: "hook";
   arg?: string;
-  hook: HookDef;
+  hook: HookCode;
 }
 export interface NoReferenceValidator {
   name: "noReference";
@@ -453,6 +469,7 @@ export type CreateOneAction = {
   targetPath: string[];
   changeset: ChangesetDef;
   select: SelectDef;
+  isPrimary: boolean;
 };
 
 export type UpdateOneAction = {
@@ -463,6 +480,7 @@ export type UpdateOneAction = {
   filter: TypedExprDef;
   changeset: ChangesetDef;
   select: SelectDef;
+  isPrimary: boolean;
 };
 
 export type DeleteOneAction = {
@@ -492,7 +510,7 @@ export type FetchOneAction = {
 };
 
 export type ActionHookDef = {
-  hook: HookDef;
+  hook: HookCode;
   args: ChangesetDef;
 };
 
@@ -535,7 +553,6 @@ export type PopulatorDef = {
 };
 
 export type PopulateDef = {
-  name: string;
   target: TargetDef;
   actions: ActionDef[];
   populates: PopulateDef[];
@@ -580,7 +597,7 @@ export type FieldSetterContextReference = {
 
 export type FieldSetterHook = {
   kind: "fieldset-hook";
-  hook: HookDef;
+  hook: HookCode;
   args: ChangesetDef;
 };
 
@@ -603,14 +620,9 @@ export type FieldSetter =
   | FieldSetterContextReference
   | FieldSetterQuery;
 
-export type HookDef = HookInline | HookSource;
-export type HookInline = { kind: "inline"; inline: string };
-export type HookSource = { kind: "source"; target: string; file: string; runtimeName: string };
-
 export type ExecutionRuntimeDef = {
   name: string;
   type: RuntimeEngineType;
-  default: boolean;
   sourcePath: string;
 };
 

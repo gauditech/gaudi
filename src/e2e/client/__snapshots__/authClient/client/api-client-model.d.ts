@@ -26,21 +26,13 @@ export declare function createClient(options: ApiClientOptions): {
                 username: string;
                 passwordHash: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                name: string;
-                username: string;
-                passwordHash: string;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 name: string;
                 username: string;
                 passwordHash: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                name?: string | undefined;
-                username?: string | undefined;
-                passwordHash?: string | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 name: string;
                 username: string;
@@ -61,21 +53,13 @@ export declare function createClient(options: ApiClientOptions): {
                 expiryDate: string;
                 authUser_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                token: string;
-                expiryDate: string;
-                authUser_id: number;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 token: string;
                 expiryDate: string;
                 authUser_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                token?: string | undefined;
-                expiryDate?: string | undefined;
-                authUser_id?: number | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 token: string;
                 expiryDate: string;
@@ -96,21 +80,13 @@ export declare function createClient(options: ApiClientOptions): {
                 is_public: boolean;
                 owner_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                name: string;
-                is_public: boolean;
-                owner_id: number;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 name: string;
                 is_public: boolean;
                 owner_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                name?: string | undefined;
-                is_public?: boolean | undefined;
-                owner_id?: number | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 name: string;
                 is_public: boolean;
@@ -131,21 +107,13 @@ export declare function createClient(options: ApiClientOptions): {
                 is_public: boolean;
                 box_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                name: string;
-                is_public: boolean;
-                box_id: number;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 name: string;
                 is_public: boolean;
                 box_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                name?: string | undefined;
-                is_public?: boolean | undefined;
-                box_id?: number | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 name: string;
                 is_public: boolean;

@@ -26,21 +26,13 @@ export declare function createClient(options: ApiClientOptions): {
                 slug: string;
                 description: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                name: string;
-                slug: string;
-                description: string;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 name: string;
                 slug: string;
                 description: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                name?: string | undefined;
-                slug?: string | undefined;
-                description?: string | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 name: string;
                 slug: string;
@@ -67,14 +59,7 @@ export declare function createClient(options: ApiClientOptions): {
                 latest_num: number;
                 org_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                name: string;
-                slug: string;
-                description: string;
-                is_public: boolean;
-                latest_num: number;
-                org_id: number;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 name: string;
                 slug: string;
@@ -83,14 +68,7 @@ export declare function createClient(options: ApiClientOptions): {
                 latest_num: number;
                 org_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                name?: string | undefined;
-                slug?: string | undefined;
-                description?: string | undefined;
-                is_public?: boolean | undefined;
-                latest_num?: number | undefined;
-                org_id?: number | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 name: string;
                 slug: string;
@@ -114,21 +92,13 @@ export declare function createClient(options: ApiClientOptions): {
                 title: string;
                 repo_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                number: number;
-                title: string;
-                repo_id: number;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 number: number;
                 title: string;
                 repo_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                number?: number | undefined;
-                title?: string | undefined;
-                repo_id?: number | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 number: number;
                 title: string;
@@ -147,18 +117,12 @@ export declare function createClient(options: ApiClientOptions): {
                 body: string;
                 issue_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                body: string;
-                issue_id: number;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 body: string;
                 issue_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                body?: string | undefined;
-                issue_id?: number | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 body: string;
                 issue_id: number;

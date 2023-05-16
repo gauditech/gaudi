@@ -7,18 +7,8 @@ import * as AST from "@src/compiler/ast/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 import { LiteralValue } from "@src/types/specification";
 
-export function getTypedLiteralValue2(literal: AST.Literal): LiteralValueDef {
-  switch (literal.kind) {
-    case "string":
-      return { type: "text", value: literal.value, kind: "literal" };
-    case "boolean":
-      return { kind: "literal", type: "boolean", value: literal.value };
-    case "integer":
-    case "float":
-      return { kind: "literal", type: "integer", value: literal.value };
-    case "null":
-      return { kind: "literal", type: "null", value: literal.value };
-  }
+export function refKeyFromRef(ref: AST.RefModelAtom): string {
+  return `${ref.model}.${ref.name}`;
 }
 
 export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {

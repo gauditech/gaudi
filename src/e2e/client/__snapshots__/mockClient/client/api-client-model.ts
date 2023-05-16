@@ -44,12 +44,10 @@ name: string };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListError = GetError;
-type CreateData = { slug: string,
-name: string };
+type CreateData = {  };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { slug?: string,
-name?: string };
+type UpdateData = CreateData;
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;
@@ -84,16 +82,10 @@ org_id: number };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListError = GetError;
-type CreateData = { slug: string,
-name: string,
-description: string,
-org_id: number };
+type CreateData = {  };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { slug?: string,
-name?: string,
-description?: string,
-org_id?: number };
+type UpdateData = CreateData;
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;

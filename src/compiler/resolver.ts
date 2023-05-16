@@ -11,6 +11,7 @@ import {
   Computed,
   DeleteAction,
   Endpoint,
+  EndpointType,
   Entrypoint,
   ExecuteAction,
   Expr,
@@ -53,6 +54,7 @@ import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
 import { FilteredByKind, kindFilter, kindFind } from "@src/common/kindFilter";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 
 type Scope = {
   environment: "model" | "entrypoint";
@@ -179,10 +181,8 @@ function getTypeGuardOperation(expr: Expr): TypeGuardOperation | undefined {
     case "unknown":
     case "nullable":
       return undefined;
-    case "primitive": {
-      if (expr.type.primitiveKind === "null") return "null";
-      else return "notNull";
-    }
+    case "null":
+      return "null";
     default:
       return "notNull";
   }
@@ -302,17 +302,19 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveReference(model: Model, reference: Reference) {
     const to = kindFind(reference.atoms, "to");
-    if (to) resolveModelRef(to.identifier);
-
-    reference.ref = {
-      kind: "modelAtom",
-      atomKind: "reference",
-      name: reference.name.text,
-      model: model.name.text,
-      unique: !!kindFind(reference.atoms, "unique"),
-    };
+    if (to) {
+      resolveModelRef(to.identifier);
+    }
 
     if (to?.identifier.ref.kind === "model") {
+      reference.ref = {
+        kind: "modelAtom",
+        atomKind: "reference",
+        name: reference.name.text,
+        model: model.name.text,
+        unique: !!kindFind(reference.atoms, "unique"),
+        to: to.identifier.ref.model,
+      };
       let type: Type = { kind: "model", model: to.identifier.ref.model };
       const nullable = kindFind(reference.atoms, "nullable");
       if (nullable) type = addTypeModifier(type, "nullable");
@@ -339,18 +341,23 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
 
-    relation.ref = {
-      kind: "modelAtom",
-      atomKind: "relation",
-      name: relation.name.text,
-      model: model.name.text,
-      unique: false,
-    };
+    if (
+      from?.identifier.ref.kind === "model" &&
+      through?.identifier.ref.kind === "modelAtom" &&
+      through.identifier.ref.atomKind === "reference"
+    ) {
+      relation.ref = {
+        kind: "modelAtom",
+        atomKind: "relation",
+        name: relation.name.text,
+        model: model.name.text,
+        unique: false,
+        from: from.identifier.ref.model,
+        through: through.identifier.ref.name,
+      };
 
-    if (from?.identifier.ref.kind === "model") {
       const type: Type = { kind: "model", model: from.identifier.ref.model };
-      const isOne =
-        through && through.identifier.ref.kind === "modelAtom" && through.identifier.ref.unique;
+      const isOne = through.identifier.ref.unique;
       relation.type = addTypeModifier(type, isOne ? "nullable" : "collection");
     }
   }
@@ -439,7 +446,6 @@ export function resolve(projectASTs: ProjectASTs) {
           atomKind: "query",
           name: query.name.text,
           model: parentScope.model,
-          unique: false,
         };
       }
     }
@@ -489,7 +495,6 @@ export function resolve(projectASTs: ProjectASTs) {
       atomKind: "computed",
       name: computed.name.text,
       model: model.name.text,
-      unique: false,
     };
 
     const exprType = computed.expr.type;
@@ -590,8 +595,29 @@ export function resolve(projectASTs: ProjectASTs) {
     const action = kindFind(endpoint.atoms, "action");
     if (action) {
       action.actions.forEach((action) => {
-        resolveAction(action, model, scope);
+        resolveAction(action, endpoint.type, model, alias, scope);
       });
+
+      // check for primary action
+      if (endpoint.type === "create" || endpoint.type === "update" || endpoint.type === "delete") {
+        let hasPrimary = false;
+        for (const a of action.actions) {
+          if (a.kind === endpoint.type && a.isPrimary) {
+            if (hasPrimary) {
+              errors.push(
+                new CompilerError(a.keyword, ErrorCode.ActionBlockAlreadyHasPrimaryAction)
+              );
+            } else {
+              hasPrimary = true;
+            }
+          }
+        }
+        if (!hasPrimary) {
+          errors.push(
+            new CompilerError(action.keyword, ErrorCode.ActionBlockDoesNotHavePrimaryAciton)
+          );
+        }
+      }
     }
     const orderBy = kindFind(endpoint.atoms, "orderBy");
     if (orderBy) {
@@ -612,18 +638,30 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveAction(action: Action, parentModel: string | undefined, scope: Scope) {
+  function resolveAction(
+    action: Action,
+    endpointType: EndpointType,
+    parentModel: string | undefined,
+    targetAlias: IdentifierRef | undefined,
+    scope: Scope
+  ) {
     match(action)
       .with({ kind: "create" }, { kind: "update" }, (action) =>
-        resolveModelAction(action, parentModel, scope)
+        resolveModelAction(action, endpointType, parentModel, targetAlias, scope)
       )
-      .with({ kind: "delete" }, (action) => resolveDeleteAction(action, scope))
+      .with({ kind: "delete" }, (action) => resolveDeleteAction(action, endpointType, scope))
       .with({ kind: "execute" }, (action) => resolveExecuteAction(action, scope))
       .with({ kind: "fetch" }, (action) => resolveFetchAction(action, scope))
       .exhaustive();
   }
 
-  function resolveModelAction(action: ModelAction, parentModel: string | undefined, scope: Scope) {
+  function resolveModelAction(
+    action: ModelAction,
+    endpointType: EndpointType,
+    parentModel: string | undefined,
+    targetAlias: IdentifierRef | undefined,
+    scope: Scope
+  ) {
     let currentModel: string | undefined = parentModel;
     if (action.target) {
       resolveIdentifierRefPath(action.target, scope, action.kind === "create");
@@ -650,7 +688,28 @@ export function resolve(projectASTs: ProjectASTs) {
             );
         }
       }
+
+      // check if target is primary action
+      if (action.target.length === 1 && endpointType === action.kind) {
+        const primaryTarget = action.kind === "update" ? targetAlias?.identifier.text : parentModel;
+        if (action.target[0].identifier.text === primaryTarget) {
+          action.isPrimary = true;
+        }
+      }
+    } else {
+      // action without target must be primary action
+      if (endpointType === action.kind) {
+        action.isPrimary = true;
+      } else {
+        errors.push(
+          new CompilerError(action.keyword, ErrorCode.PrimaryActionInWrongEntrypoint, {
+            action: action.kind,
+            endpoint: endpointType,
+          })
+        );
+      }
     }
+
     if (currentModel && action.as) {
       action.as.identifier.ref = { kind: "model", model: currentModel };
       action.as.identifier.type = { kind: "model", model: currentModel };
@@ -708,9 +767,21 @@ export function resolve(projectASTs: ProjectASTs) {
     });
   }
 
-  function resolveDeleteAction(action: DeleteAction, scope: Scope) {
+  function resolveDeleteAction(action: DeleteAction, endpointType: EndpointType, scope: Scope) {
     if (action.target) {
       resolveIdentifierRefPath(action.target, scope, true);
+    } else {
+      // action without target must be primary action
+      if (endpointType === action.kind) {
+        action.isPrimary = true;
+      } else {
+        errors.push(
+          new CompilerError(action.keyword, ErrorCode.PrimaryActionInWrongEntrypoint, {
+            action: action.kind,
+            endpoint: endpointType,
+          })
+        );
+      }
     }
   }
 
@@ -883,7 +954,6 @@ export function resolve(projectASTs: ProjectASTs) {
         atomKind: "hook",
         name: hook.name.text,
         model: scope.model,
-        unique: false,
       };
     }
   }
@@ -914,12 +984,11 @@ export function resolve(projectASTs: ProjectASTs) {
         }
       }
 
+      const internalExecRuntimeName = getInternalExecutionRuntimeName();
       if (runtime) {
-        const runtimePath = kindFind(runtime.atoms, "sourcePath")?.path.value;
-        if (runtimePath) {
-          source.runtime = runtime.name.text;
-          source.runtimePath = runtimePath;
-        }
+        source.runtime = runtime.name.text;
+      } else if (runtimeAtom?.identifier.text === internalExecRuntimeName) {
+        source.runtime = internalExecRuntimeName;
       }
     }
   }
@@ -989,7 +1058,10 @@ export function resolve(projectASTs: ProjectASTs) {
         path.type = path.path.at(-1)?.type ?? unknownType;
       })
       .with({ kind: "literal" }, (literal) => {
-        literal.type = { kind: "primitive", primitiveKind: literal.literal.kind };
+        literal.type =
+          literal.literal.kind === "null"
+            ? { kind: "null" }
+            : { kind: "primitive", primitiveKind: literal.literal.kind };
       })
       .with({ kind: "function" }, (function_) => {
         function_.args.forEach((arg) => resolveExpression(arg, scope));
@@ -1074,7 +1146,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (typeGuardOperation === "notNull") {
         identifier.type = removeTypeModifier(identifier.type, "nullable");
       } else if (typeGuardOperation === "null") {
-        identifier.type = { kind: "primitive", primitiveKind: "null" };
+        identifier.type = { kind: "null" };
       }
     });
   }

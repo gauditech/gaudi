@@ -5,13 +5,8 @@ import { Request, Response } from "express";
 
 import { getExecutionRuntime } from "@src/common/refs";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import {
-  Definition,
-  ExecutionRuntimeDef,
-  HookDef,
-  HookInline,
-  HookSource,
-} from "@src/types/definition";
+import { HookCode, HookInline, HookSource } from "@src/types/common";
+import { Definition, ExecutionRuntimeDef } from "@src/types/definition";
 
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 
@@ -23,7 +18,7 @@ const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
  */
 export async function executeHook<T>(
   def: Definition,
-  hook: HookDef,
+  hook: HookCode,
   args: Record<string, unknown>
 ): Promise<T> {
   if (hook.kind === "inline") return executeInlineHook(hook, args);
@@ -40,7 +35,7 @@ export async function executeHook<T>(
  */
 export async function executeActionHook<T>(
   def: Definition,
-  hook: HookDef,
+  hook: HookCode,
   args: Record<string, unknown>,
   ctx: {
     request: Request;

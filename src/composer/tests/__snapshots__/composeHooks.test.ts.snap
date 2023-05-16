@@ -206,7 +206,7 @@ exports[`compose hooks composes source hooks 1`] = `
         {
           "actions": [
             {
-              "alias": "$target_0",
+              "alias": "$action_0",
               "changeset": [
                 {
                   "name": "name",
@@ -222,11 +222,12 @@ exports[`compose hooks composes source hooks 1`] = `
                   },
                 },
               ],
+              "isPrimary": true,
               "kind": "create-one",
               "model": "Org",
               "select": [],
               "targetPath": [
-                "$target_0",
+                "Org",
               ],
             },
           ],
@@ -364,13 +365,11 @@ exports[`compose hooks composes source hooks 1`] = `
   "populators": [],
   "runtimes": [
     {
-      "default": true,
       "name": "MyRuntime",
       "sourcePath": "some/path/to/file",
       "type": "node",
     },
     {
-      "default": false,
       "name": "@GAUDI_INTERNAL",
       "sourcePath": "./internalExecutionRuntime",
       "type": "node",
@@ -383,7 +382,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
 {
   "actions": [
     {
-      "alias": "$target_0",
+      "alias": "$action_0",
       "changeset": [
         {
           "name": "name",
@@ -399,11 +398,12 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
           },
         },
       ],
+      "isPrimary": true,
       "kind": "create-one",
       "model": "Org",
       "select": [],
       "targetPath": [
-        "$target_0",
+        "Org",
       ],
     },
   ],
@@ -461,7 +461,7 @@ exports[`compose hooks inline hooks 1`] = `
         {
           "actions": [
             {
-              "alias": "$target_0",
+              "alias": "$action_0",
               "changeset": [
                 {
                   "name": "name",
@@ -475,11 +475,12 @@ exports[`compose hooks inline hooks 1`] = `
                   },
                 },
               ],
+              "isPrimary": true,
               "kind": "create-one",
               "model": "Org",
               "select": [],
               "targetPath": [
-                "$target_0",
+                "Org",
               ],
             },
           ],
@@ -613,13 +614,11 @@ exports[`compose hooks inline hooks 1`] = `
   "populators": [],
   "runtimes": [
     {
-      "default": true,
       "name": "MyRuntime",
       "sourcePath": "some/path/to/file",
       "type": "node",
     },
     {
-      "default": false,
       "name": "@GAUDI_INTERNAL",
       "sourcePath": "./internalExecutionRuntime",
       "type": "node",

@@ -47,14 +47,10 @@ passwordHash: string };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListError = GetError;
-type CreateData = { name: string,
-username: string,
-passwordHash: string };
+type CreateData = {  };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { name?: string,
-username?: string,
-passwordHash?: string };
+type UpdateData = CreateData;
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;
@@ -88,14 +84,10 @@ authUser_id: number };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListError = GetError;
-type CreateData = { token: string,
-expiryDate: string,
-authUser_id: number };
+type CreateData = {  };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { token?: string,
-expiryDate?: string,
-authUser_id?: number };
+type UpdateData = CreateData;
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;
@@ -129,14 +121,10 @@ owner_id: number };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListError = GetError;
-type CreateData = { name: string,
-is_public: boolean,
-owner_id: number };
+type CreateData = {  };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { name?: string,
-is_public?: boolean,
-owner_id?: number };
+type UpdateData = CreateData;
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;
@@ -170,14 +158,10 @@ box_id: number };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListError = GetError;
-type CreateData = { name: string,
-is_public: boolean,
-box_id: number };
+type CreateData = {  };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type UpdateData = { name?: string,
-is_public?: boolean,
-box_id?: number };
+type UpdateData = CreateData;
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;

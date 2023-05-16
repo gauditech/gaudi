@@ -4,10 +4,10 @@ import { mkJoinConnection } from "./stringify";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
+import { HookCode } from "@src/types/common";
 import {
   DeepSelectItem,
   Definition,
-  HookDef,
   ModelDef,
   QueryDef,
   QueryOrderByAtomDef,
@@ -26,7 +26,7 @@ export type QueryTree = {
   hooks: {
     name: string;
     args: { name: string; query: QueryTree }[];
-    hook: HookDef;
+    hook: HookCode;
   }[];
   related: QueryTree[];
 };
@@ -88,6 +88,16 @@ export function selectableId(def: Definition, namePath: NamePath): SelectableIte
     name: "id",
     namePath: [...namePath, "id"],
     refKey: `${model.refKey}.id`,
+  };
+}
+
+export function selectableId2(model: string, namePath: NamePath): SelectableItem {
+  return {
+    kind: "field",
+    alias: "id",
+    name: "id",
+    namePath: [...namePath, "id"],
+    refKey: `${model}.id`,
   };
 }
 
@@ -169,6 +179,7 @@ export function queryFromParts(
 }
 
 export function queryFromParts2(
+  sourceModel: string,
   targetModel: string,
   name: string,
   fromPath: NamePath,
@@ -179,19 +190,13 @@ export function queryFromParts2(
   offset?: number
 ): QueryDef {
   if (select.length === 0) {
-    const selectableId: SelectableItem = {
-      kind: "field",
-      alias: "id",
-      name: "id",
-      namePath: [...fromPath, "id"],
-      refKey: `${targetModel}.id`,
-    };
     return queryFromParts2(
+      sourceModel,
       targetModel,
       name,
       fromPath,
       filter,
-      [selectableId],
+      [selectableId2(sourceModel, fromPath)],
       orderBy,
       limit,
       offset
@@ -213,10 +218,15 @@ export function queryFromParts2(
     );
   });
 
+  const filterPaths = getFilterPaths(filter);
+  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
+  const direct = getDirectChildren(paths);
+  ensureEqual(direct.length, 1);
+
   return {
     kind: "query",
     refKey: "N/A",
-    modelRefKey: fromPath[0],
+    modelRefKey: sourceModel,
     filter,
     fromPath,
     name,

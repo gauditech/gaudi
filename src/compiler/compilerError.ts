@@ -49,6 +49,9 @@ export enum ErrorCode {
   InvalidDefaultAction,
   NonDefaultModelActionRequiresAlias,
   UnsuportedTargetInCreateAction,
+  ActionBlockAlreadyHasPrimaryAction,
+  ActionBlockDoesNotHavePrimaryAciton,
+  PrimaryActionInWrongEntrypoint,
   PopulateIsMissingSetters,
   // Type Errors
   UnexpectedType,
@@ -148,6 +151,12 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Non default "create" or "update" actions require alias`;
     case ErrorCode.UnsuportedTargetInCreateAction:
       return `This target is not supported in a "create" action, "create" can only have model and relation as a target`;
+    case ErrorCode.ActionBlockAlreadyHasPrimaryAction:
+      return `This action block has already defined primary action`;
+    case ErrorCode.ActionBlockDoesNotHavePrimaryAciton:
+      return `Can't find primary action in this action block`;
+    case ErrorCode.PrimaryActionInWrongEntrypoint:
+      return `Can't create "${params?.action}" primary action in "${params?.endpoint}" endpoint`;
     case ErrorCode.PopulateIsMissingSetters:
       return `Populate block is missing setters for members: ${JSON.stringify(params?.atoms)}`;
     case ErrorCode.UnexpectedType:

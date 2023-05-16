@@ -1,23 +1,25 @@
-import { kindFind } from "@src/common/kindFilter";
-import * as AST from "@src/compiler/ast/ast";
-import { accessTokenModelName, authUserModelName } from "@src/compiler/plugins/authenticator";
+import { getRef } from "@src/common/refs";
+import { assertUnreachable } from "@src/common/utils";
 import {
   AuthenticatorMethodDef,
   AuthenticatorNamedModelDef,
   Definition,
 } from "@src/types/definition";
+import { Authenticator, AuthenticatorMethod } from "@src/types/specification";
 
 /**
  * Compose authenticator block.
  */
-export function composeAuthenticator(def: Definition, projectASTs: AST.ProjectASTs): void {
-  if (!kindFind(projectASTs.document, "authenticator")) return;
+export function composeAuthenticator(def: Definition, spec: Authenticator | undefined): void {
+  if (spec == undefined) {
+    return;
+  }
 
-  // for now we hardcode this stuff
+  // hardcoded authenticator name - not exposed through blueprint cause we don't support multiple auth blocks yet
   const name = "Auth";
-  const authUserModel = composeTargetModel(authUserModelName);
-  const accessTokenModel = composeTargetModel(accessTokenModelName);
-  const method: AuthenticatorMethodDef = { kind: "basic" };
+  const authUserModel = composeTargetModel(def, spec.authUserModelName);
+  const accessTokenModel = composeTargetModel(def, spec.accessTokenModelName);
+  const method = composeMethod(def, spec.method);
 
   def.authenticator = {
     name,
@@ -27,9 +29,23 @@ export function composeAuthenticator(def: Definition, projectASTs: AST.ProjectAS
   };
 }
 
-function composeTargetModel(modelName: string): AuthenticatorNamedModelDef {
+function composeTargetModel(def: Definition, modelName: string): AuthenticatorNamedModelDef {
+  // get authenticator target model (injected in compiler)
+  const model = getRef.model(def, modelName);
+
   return {
     name: modelName,
-    refKey: modelName,
+    refKey: model.refKey,
   };
+}
+
+function composeMethod(def: Definition, methodSpec: AuthenticatorMethod): AuthenticatorMethodDef {
+  const kind = methodSpec.kind;
+  if (kind === "basic") {
+    return {
+      kind,
+    };
+  } else {
+    assertUnreachable(kind);
+  }
 }

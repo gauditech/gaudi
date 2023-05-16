@@ -24,18 +24,12 @@ export declare function createClient(options: ApiClientOptions): {
                 slug: string;
                 name: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                slug: string;
-                name: string;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 slug: string;
                 name: string;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                slug?: string | undefined;
-                name?: string | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 slug: string;
                 name: string;
@@ -57,24 +51,14 @@ export declare function createClient(options: ApiClientOptions): {
                 description: string;
                 org_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            create: CreateApiClientFn<{
-                slug: string;
-                name: string;
-                description: string;
-                org_id: number;
-            }, {
+            create: CreateApiClientFn<{}, {
                 id: number;
                 slug: string;
                 name: string;
                 description: string;
                 org_id: number;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            update: UpdateApiClientFn<number, {
-                slug?: string | undefined;
-                name?: string | undefined;
-                description?: string | undefined;
-                org_id?: number | undefined;
-            }, {
+            update: UpdateApiClientFn<number, {}, {
                 id: number;
                 slug: string;
                 name: string;

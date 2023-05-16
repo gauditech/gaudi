@@ -82,7 +82,7 @@ export type QueryAtom = { keyword: TokenData } & (
   | { kind: "select"; select: Select }
   | { kind: "aggregate"; aggregate: AggregateType }
 );
-export type AggregateType = "count" | "one" | "first";
+export type AggregateType = "count" | "sum" | "one" | "first";
 export type OrderBy = (
   | {
       identifierPath: IdentifierRef[];
@@ -157,6 +157,7 @@ export type ModelAction = {
   target?: IdentifierRef[];
   as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: ModelActionAtom[];
+  isPrimary?: true;
 };
 export type ModelActionAtom =
   | ActionAtomSet
@@ -169,6 +170,7 @@ export type DeleteAction = {
   kind: "delete";
   keyword: TokenData;
   target?: IdentifierRef[];
+  isPrimary?: true;
 };
 
 export type ExecuteAction = {
@@ -318,7 +320,6 @@ export type Hook<named extends boolean, simple extends boolean> = {
   keyword: TokenData;
   name: named extends true ? Identifier : undefined;
   ref: named extends true ? Ref : undefined;
-  runtime?: string;
   atoms: (
     | (simple extends true
         ? { kind: "default_arg"; keyword: TokenData; name: Identifier }
@@ -332,7 +333,6 @@ export type Hook<named extends boolean, simple extends boolean> = {
         name: Identifier;
         file: StringLiteral;
         runtime?: string;
-        runtimePath?: string;
       }
     | { kind: "inline"; keyword: TokenData; code: StringLiteral }
     | { kind: "runtime"; keyword: TokenData; identifier: Identifier }
@@ -399,13 +399,57 @@ export type StringLiteral = { kind: "string"; value: string; token: TokenData };
 
 export type RefUnresolved = { kind: "unresolved" };
 export type RefModel = { kind: "model"; model: string };
-export type RefModelAtom = {
+export type RefModelAtom =
+  | RefModelField
+  | RefModelReference
+  | RefModelRelation
+  | RefModelQuery
+  | RefModelComputed
+  | RefModelHook;
+
+export type RefModelField = {
   kind: "modelAtom";
-  atomKind: ModelAtom["kind"];
+  atomKind: "field";
   name: string;
   model: string;
   unique: boolean;
 };
+export type RefModelReference = {
+  kind: "modelAtom";
+  atomKind: "reference";
+  name: string;
+  model: string;
+  unique: boolean;
+  to: string;
+};
+export type RefModelRelation = {
+  kind: "modelAtom";
+  atomKind: "relation";
+  name: string;
+  model: string;
+  from: string;
+  through: string;
+  unique: boolean;
+};
+export type RefModelQuery = {
+  kind: "modelAtom";
+  atomKind: "query";
+  name: string;
+  model: string;
+};
+export type RefModelComputed = {
+  kind: "modelAtom";
+  atomKind: "computed";
+  name: string;
+  model: string;
+};
+export type RefModelHook = {
+  kind: "modelAtom";
+  atomKind: "hook";
+  name: string;
+  model: string;
+};
+
 export type RefQueryTarget = {
   kind: "queryTarget";
   path: string[];

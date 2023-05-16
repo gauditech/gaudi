@@ -1,4 +1,14 @@
-import { ProjectASTs } from "@src/compiler/ast/ast";
+import {
+  Ref,
+  RefContext,
+  RefModel,
+  RefModelAtom,
+  RefModelField,
+  RefModelReference,
+  RefModelRelation,
+} from "@src/compiler/ast/ast";
+import { Type } from "@src/compiler/ast/type";
+import { HookCode } from "@src/types/common";
 
 // old AST types
 export type EndpointCardinality = "one" | "many";
@@ -7,242 +17,283 @@ export type EndpointTypeAST = "list" | "get" | "create" | "update" | "delete" | 
 
 export type LiteralValue = null | boolean | number | string;
 
-export type SelectAST = {
-  select?: Record<string, SelectAST>;
-};
+export type Select = SingleSelect[];
+export type SingleSelect = { name: string; target: IdentifierRef<RefModelAtom> } & (
+  | { kind: "final" }
+  | { kind: "nested"; select: Select }
+);
 
-export type UnaryOperator = "not";
-export type BinaryOperator =
-  | "or"
-  | "and"
-  | "is not"
-  | "is"
-  | "not in"
-  | "in"
-  | "<"
-  | "<="
-  | ">"
-  | ">="
-  | "+"
-  | "-"
-  | "/"
-  | "*";
+export type IdentifierRef<R extends Ref = Ref> = { text: string; ref: R; type: Type };
 
 export type Specification = {
-  projectASTs: ProjectASTs;
-  models: ModelSpec[];
-  entrypoints: EntrypointSpec[];
-  populators: PopulatorSpec[];
-  generators: GeneratorSpec[];
+  models: Model[];
+  entrypoints: Entrypoint[];
+  populators: Populator[];
+  runtimes: ExecutionRuntime[];
+  authenticator: Authenticator | undefined;
+  generators: Generator[];
 };
 
-export type ModelSpec = {
+export type Model = {
   name: string;
-  alias?: string;
-  fields: FieldSpec[];
-  references: ReferenceSpec[];
-  relations: RelationSpec[];
-  queries: QuerySpec[];
-  computeds: ComputedSpec[];
-  hooks: ModelHookSpec[];
+  fields: Field[];
+  references: Reference[];
+  relations: Relation[];
+  queries: Query[];
+  computeds: Computed[];
+  hooks: ModelHook[];
 };
 
-export type FieldSpec = {
+export type Field = {
   name: string;
-  type: string;
+  ref: RefModelField;
+  type: Type;
+  primary: boolean;
   default?: LiteralValue;
-  unique?: boolean;
-  nullable?: boolean;
-  validators?: ValidatorSpec[];
+  validators: Validator[];
 };
 
-export type ValidatorSpec =
-  | { kind: "hook"; hook: FieldValidatorHookSpec }
+export type Validator =
+  | { kind: "hook"; hook: FieldValidatorHook }
   | { kind: "builtin"; name: string; args: LiteralValue[] };
-export type ReferenceSpec = {
-  name: string;
-  toModel: string;
-  unique?: boolean;
-  nullable?: boolean;
-};
 
-export type RelationSpec = {
+export type Reference = {
   name: string;
-  fromModel: string;
-  through: string;
-};
-
-export type QuerySpec = {
-  name: string;
-  fromModel: string[];
-  fromAlias?: string[];
-  filter?: ExpSpec;
-  orderBy?: QueryOrderBySpec[];
-  limit?: number;
-  offset?: number;
-  select?: SelectAST;
-  aggregate?: {
-    name: string;
-  };
-};
-
-export type QueryOrderBySpec = { field: string[]; order?: "asc" | "desc" };
-
-export type ComputedSpec = {
-  name: string;
-  exp: ExpSpec;
-  type: string;
+  ref: RefModelReference;
+  to: RefModel;
+  unique: boolean;
   nullable: boolean;
 };
 
-export type ExpSpec =
-  | {
-      kind: "binary";
-      operator: BinaryOperator;
-      lhs: ExpSpec;
-      rhs: ExpSpec;
-    }
-  | { kind: "unary"; operator: UnaryOperator; exp: ExpSpec }
-  | { kind: "identifier"; identifier: string[] }
-  | { kind: "literal"; literal: LiteralValue }
-  | { kind: "function"; name: string; args: ExpSpec[] };
-
-export type EntrypointSpec = {
+export type Relation = {
   name: string;
-  target: { kind: "model" | "relation"; identifier: string; alias?: string };
-  identify?: string;
-  response?: SelectAST;
-  authorize?: ExpSpec;
-  endpoints: EndpointSpec[];
-  entrypoints: EntrypointSpec[];
+  ref: RefModelRelation;
+  through: RefModelReference;
+  unique: boolean;
+  nullable: boolean;
 };
 
-export type EndpointSpec = {
-  type: EndpointTypeAST;
-  actions?: ActionSpec[];
-  authorize?: ExpSpec;
-  cardinality?: EndpointCardinality;
-  method?: EndpointMethod;
-  path?: string;
+export type Query = {
+  name: string;
+  sourceModel: string;
+  targetModel: string;
+  fromModel: IdentifierRef[];
+  fromAlias?: IdentifierRef[];
+  filter?: Expr;
+  orderBy?: QueryOrderBy[];
+  limit?: number;
+  offset?: number;
+  select: Select;
+  aggregate?: string;
+};
+
+export type QueryOrderBy = { field: string[]; order?: "asc" | "desc" };
+
+export type Computed = {
+  name: string;
+  ref: RefModelAtom;
+  expr: Expr;
+};
+
+export type Expr = { type: Type } & (
+  | { kind: "identifier"; identifier: IdentifierRef[] }
+  | { kind: "literal"; literal: LiteralValue }
+  | { kind: "function"; name: string; args: Expr[] }
+);
+
+export type Entrypoint = {
+  name: string;
+  model: string;
+  target: IdentifierRef<RefModel | RefModelAtom>;
+  alias: IdentifierRef<RefContext>;
+  identifyThrough: IdentifierRef<RefModelField>;
+  endpoints: Endpoint[];
+  entrypoints: Entrypoint[];
+};
+
+export type Endpoint =
+  | EndpointList
+  | EndpointGet
+  | EndpointCreateUpdate
+  | EndpointDelete
+  | EndpointCustom;
+
+export type EndpointList = {
+  kind: "list";
+  actions: Action[];
+  authorize?: Expr;
+  response: Select;
   pageable: boolean;
-  orderBy?: QueryOrderBySpec[];
-  filter?: ExpSpec;
+  orderBy?: QueryOrderBy[];
+  filter?: Expr;
 };
 
-export type ActionSpec =
+export type EndpointGet = {
+  kind: "get";
+  actions: Action[];
+  authorize?: Expr;
+  response: Select;
+};
+
+export type EndpointCreateUpdate = {
+  kind: "create" | "update";
+  actions: Action[];
+  authorize?: Expr;
+  response: Select;
+};
+
+export type EndpointDelete = {
+  kind: "delete";
+  actions: Action[];
+  authorize?: Expr;
+};
+
+export type EndpointCustom = {
+  kind: "custom";
+  actions: Action[];
+  authorize?: Expr;
+  cardinality: EndpointCardinality;
+  method: EndpointMethod;
+  path: string;
+};
+
+export type Action =
   | {
       kind: "create" | "update";
-      targetPath: string[] | undefined;
-      alias: string | undefined;
-      actionAtoms: ModelActionAtomSpec[];
+      alias: string;
+      targetPath: IdentifierRef[];
+      actionAtoms: ModelActionAtom[];
+      isPrimary: boolean;
     }
   | {
       kind: "delete";
-      targetPath: string[] | undefined;
+      targetPath: IdentifierRef[];
     }
   | {
       kind: "execute";
-      alias: string | undefined;
-      hook: ActionHookSpec;
+      alias: string;
+      hook: ActionHook;
       responds: boolean;
-      atoms: ActionAtomSpecVirtualInput[];
+      atoms: ActionAtomVirtualInput[];
     }
   | {
       kind: "fetch";
-      alias: string | undefined;
-      query: QuerySpec;
-      atoms: ActionAtomSpecVirtualInput[];
+      alias: string;
+      query: Query;
+      atoms: ActionAtomVirtualInput[];
     };
 
-export type ModelActionSpec = Extract<ActionSpec, { kind: "create" | "update" }>;
+export type ModelAction = Extract<Action, { kind: "create" | "update" }>;
 
-export type ModelActionAtomSpec =
-  | ActionAtomSpecSet
-  | ActionAtomSpecRefThrough
-  | ActionAtomSpecDeny
-  | ActionAtomSpecVirtualInput
-  | ActionAtomSpecInputList;
+export type ModelActionAtom =
+  | ActionAtomInput
+  | ActionAtomSet
+  | ActionAtomRefThrough
+  | ActionAtomVirtualInput;
 
-export type HookCodeSpec =
-  | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string };
+export type ActionAtomSetHook = { kind: "hook"; hook: ActionHook };
+export type ActionAtomSetExp = { kind: "expression"; expr: Expr };
+export type ActionAtomSetQuery = { kind: "query"; query: Query };
 
-export type ActionAtomSpecSetHook = { kind: "hook"; hook: ActionHookSpec };
-export type ActionAtomSpecSetExp = { kind: "expression"; exp: ExpSpec };
-export type ActionAtomSpecSetQuery = { kind: "query"; query: QuerySpec };
-
-export type ActionAtomSpecSet = {
-  kind: "set";
-  target: string;
-  set: ActionAtomSpecSetHook | ActionAtomSpecSetExp | ActionAtomSpecSetQuery;
+export type ActionAtomInput = {
+  kind: "input";
+  name: IdentifierRef<RefModelAtom>;
+  optional: boolean;
+  default?:
+    | { kind: "literal"; value: LiteralValue }
+    | { kind: "reference"; reference: IdentifierRef[] };
 };
-export type ActionAtomSpecHook = { kind: "hook"; hook: ActionHookSpec };
-export type ActionAtomSpecRefThrough = { kind: "reference"; target: string; through: string };
-export type ActionAtomSpecDeny = { kind: "deny"; fields: "*" | string[] };
-export type ActionAtomSpecVirtualInput = {
+export type ActionAtomSet = {
+  kind: "set";
+  target: IdentifierRef<RefModelField>;
+  set: ActionAtomSetHook | ActionAtomSetExp | ActionAtomSetQuery;
+};
+export type ActionAtomRefThrough = {
+  kind: "reference";
+  target: IdentifierRef<RefModelReference>;
+  through: IdentifierRef<RefModelField>;
+};
+export type ActionAtomVirtualInput = {
   kind: "virtual-input";
   name: string;
   type: string;
   nullable: boolean;
   optional: boolean;
-  validators: ValidatorSpec[];
-};
-export type ActionAtomSpecInput = { kind: "input"; fieldSpec: InputFieldSpec };
-export type ActionAtomSpecInputList = { kind: "input-list"; fields: InputFieldSpec[] };
-export type InputFieldSpec = {
-  name: string;
-  optional: boolean;
-  default?: { kind: "literal"; value: LiteralValue } | { kind: "reference"; reference: string[] };
-};
-export type ActionAtomSpecResponds = { kind: "responds" };
-export type ActionAtomSpecQuery = { kind: "query"; query: QuerySpec };
-
-export type HookSpec = {
-  name?: string;
-  runtimeName?: string;
-  code: HookCodeSpec;
+  validators: Validator[];
 };
 
-export type RepeaterSpec =
+export type ActionAtomHook = { kind: "hook"; hook: ActionHook };
+export type ActionAtomResponds = { kind: "responds" };
+export type ActionAtomQuery = { kind: "query"; query: Query };
+
+export type Repeater =
   | { kind: "fixed"; alias?: string; value: number }
   | { kind: "range"; alias?: string; range: { start?: number; end?: number } };
 
-export type PopulatorSpec = {
+export type Populator = {
   name: string;
-  populates: PopulateSpec[];
+  populates: Populate[];
 };
 
-export type PopulateSpec = {
-  name: string;
-  target: { kind: "model" | "relation"; identifier: string; alias?: string };
-  identify?: string;
-  setters: PopulateSetterSpec[];
-  populates: PopulateSpec[];
-  repeater?: RepeaterSpec;
+export type Populate = {
+  target: IdentifierRef<RefModel | RefModelAtom>;
+  alias: IdentifierRef<RefContext>;
+  setters: PopulateSetter[];
+  populates: Populate[];
+  repeater?: Repeater;
 };
 
-export type PopulateSetterSpec = {
+export type PopulateSetter = {
   kind: "set";
-  target: string;
-  set: { kind: "hook"; hook: ActionHookSpec } | { kind: "expression"; exp: ExpSpec };
+  target: IdentifierRef<RefModelField>;
+  set: ActionAtomSetHook | ActionAtomSetExp;
 };
 
-export type FieldValidatorHookSpec = HookSpec & {
+export type FieldValidatorHook = {
   arg?: string;
+  code: HookCode;
 };
 
-export type ModelHookSpec = HookSpec & {
+export type ModelHook = {
   name: string;
-  args: { name: string; query: QuerySpec }[];
+  ref: RefModelAtom;
+  args: { name: string; query: Query }[];
+  code: HookCode;
 };
 
-export type ActionHookSpec = HookSpec & {
-  args: Record<string, { kind: "expression"; exp: ExpSpec } | { kind: "query"; query: QuerySpec }>;
+export type ActionHook = {
+  args: (
+    | { kind: "expression"; name: string; expr: Expr }
+    | { kind: "query"; name: string; query: Query }
+  )[];
+  code: HookCode;
+};
+
+// ----- Execution Runtime
+
+export type ExecutionRuntime = {
+  name: string;
+  sourcePath: string;
+};
+
+// ---------- authenticator
+
+export type Authenticator = {
+  name?: string;
+  authUserModelName: string;
+  accessTokenModelName: string;
+  method: AuthenticatorMethod;
+};
+
+export type AuthenticatorMethod = AuthenticatorBasicMethod;
+
+export type AuthenticatorBasicMethod = {
+  kind: "basic";
 };
 
 // ----- Generators
 
-export type GeneratorSpec = {
+export type Generator = {
   kind: "generator-client";
   target: string;
   api: string;

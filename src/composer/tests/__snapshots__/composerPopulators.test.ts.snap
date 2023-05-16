@@ -26,15 +26,15 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
               },
             },
           ],
+          "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
           "select": [],
           "targetPath": [
-            "org",
+            "Org",
           ],
         },
       ],
-      "name": "",
       "populates": [],
       "repeater": {
         "alias": undefined,
@@ -88,6 +88,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
               },
             },
           ],
+          "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
           "select": [
@@ -103,11 +104,10 @@ exports[`populator composer succeeds for nested iterations 1`] = `
             },
           ],
           "targetPath": [
-            "org",
+            "Org",
           ],
         },
       ],
-      "name": "",
       "populates": [
         {
           "actions": [
@@ -135,15 +135,15 @@ exports[`populator composer succeeds for nested iterations 1`] = `
                   },
                 },
               ],
+              "isPrimary": false,
               "kind": "create-one",
               "model": "Repo",
               "select": [],
               "targetPath": [
-                "repo",
+                "repos",
               ],
             },
           ],
-          "name": "",
           "populates": [],
           "repeater": {
             "alias": undefined,
@@ -213,6 +213,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
               },
             },
           ],
+          "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
           "select": [
@@ -238,11 +239,10 @@ exports[`populator composer succeeds for nested populators 1`] = `
             },
           ],
           "targetPath": [
-            "org",
+            "Org",
           ],
         },
       ],
-      "name": "",
       "populates": [
         {
           "actions": [
@@ -274,6 +274,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
                   },
                 },
               ],
+              "isPrimary": false,
               "kind": "create-one",
               "model": "Repo",
               "select": [
@@ -299,11 +300,10 @@ exports[`populator composer succeeds for nested populators 1`] = `
                 },
               ],
               "targetPath": [
-                "repo",
+                "repos",
               ],
             },
           ],
-          "name": "",
           "populates": [
             {
               "actions": [
@@ -335,15 +335,15 @@ exports[`populator composer succeeds for nested populators 1`] = `
                       },
                     },
                   ],
+                  "isPrimary": false,
                   "kind": "create-one",
                   "model": "Issue",
                   "select": [],
                   "targetPath": [
-                    "issue",
+                    "issues",
                   ],
                 },
               ],
-              "name": "",
               "populates": [],
               "repeater": {
                 "end": 1,
@@ -443,15 +443,15 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
               },
             },
           ],
+          "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
           "select": [],
           "targetPath": [
-            "org",
+            "Org",
           ],
         },
       ],
-      "name": "",
       "populates": [],
       "repeater": {
         "alias": undefined,
@@ -505,15 +505,15 @@ exports[`populator composer succeeds for range iteration 1`] = `
               },
             },
           ],
+          "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
           "select": [],
           "targetPath": [
-            "org",
+            "Org",
           ],
         },
       ],
-      "name": "",
       "populates": [],
       "repeater": {
         "alias": undefined,
@@ -596,15 +596,15 @@ exports[`populator composer succeeds for simple populator 1`] = `
               },
             },
           ],
+          "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
           "select": [],
           "targetPath": [
-            "org",
+            "Org",
           ],
         },
       ],
-      "name": "",
       "populates": [],
       "repeater": {
         "end": 1,
@@ -682,6 +682,7 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
               },
             },
           ],
+          "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
           "select": [
@@ -697,11 +698,10 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
             },
           ],
           "targetPath": [
-            "org",
+            "Org",
           ],
         },
       ],
-      "name": "",
       "populates": [
         {
           "actions": [
@@ -745,15 +745,15 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
                   },
                 },
               ],
+              "isPrimary": false,
               "kind": "create-one",
               "model": "Repo",
               "select": [],
               "targetPath": [
-                "repo",
+                "repos",
               ],
             },
           ],
-          "name": "",
           "populates": [],
           "repeater": {
             "alias": "rIter",
