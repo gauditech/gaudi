@@ -4,6 +4,7 @@ import {
   RefModel,
   RefModelAtom,
   RefModelField,
+  RefModelQuery,
   RefModelReference,
   RefModelRelation,
 } from "@src/compiler/ast/ast";
@@ -99,7 +100,7 @@ export type Expr = { type: Type } & (
 export type Entrypoint = {
   name: string;
   model: string;
-  target: IdentifierRef<RefModel | RefModelAtom>;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
   alias: IdentifierRef<RefContext>;
   identifyThrough: IdentifierRef<RefModelField>;
   endpoints: Endpoint[];
@@ -195,7 +196,7 @@ export type ActionAtomSetQuery = { kind: "query"; query: Query };
 
 export type ActionAtomInput = {
   kind: "input";
-  name: IdentifierRef<RefModelAtom>;
+  target: IdentifierRef<RefModelField>;
   optional: boolean;
   default?:
     | { kind: "literal"; value: LiteralValue }
@@ -234,7 +235,7 @@ export type Populator = {
 };
 
 export type Populate = {
-  target: IdentifierRef<RefModel | RefModelAtom>;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
   alias: IdentifierRef<RefContext>;
   setters: PopulateSetter[];
   populates: Populate[];

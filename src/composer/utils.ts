@@ -7,8 +7,8 @@ import * as AST from "@src/compiler/ast/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 import { LiteralValue } from "@src/types/specification";
 
-export function refKeyFromRef(ref: AST.RefModelAtom): string {
-  return `${ref.model}.${ref.name}`;
+export function refKeyFromRef(ref: AST.RefModel | AST.RefModelAtom): string {
+  return ref.kind === "model" ? ref.model : `${ref.parentModel}.${ref.name}`;
 }
 
 export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {

@@ -50,7 +50,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       model.references.forEach((reference) => {
         implicitModels.forEach((implicitModel) => {
           if (reference.to.model === implicitModel.name) {
-            const relationName = `${_.camelCase(reference.ref.model)}${_.upperFirst(
+            const relationName = `${_.camelCase(reference.ref.parentModel)}${_.upperFirst(
               _.camelCase(reference.name)
             )}Rel`;
             const relation: Spec.Relation = {
@@ -58,9 +58,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
               ref: {
                 kind: "modelAtom",
                 atomKind: "relation",
+                parentModel: implicitModel.name,
                 name: relationName,
-                model: implicitModel.name,
-                from: reference.ref.model,
+                model: reference.ref.parentModel,
                 through: reference.ref.name,
               },
               through: reference.ref,
@@ -80,7 +80,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ref: {
         kind: "modelAtom",
         atomKind: "field",
-        model: model.name.text,
+        parentModel: model.name.text,
         name: "id",
         unique: true,
       },
@@ -91,16 +91,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const fields = kindFilter(model.atoms, "field").map(migrateField);
 
     const references = kindFilter(model.atoms, "reference").map((reference): Spec.Field => {
-      const ref = referenceToIdField(migrateRefModelAtom(reference.ref, "reference"));
-      let type: Type = { kind: "primitive", primitiveKind: "integer" };
-      if (kindFind(reference.atoms, "nullable")) {
-        type = addTypeModifier({ kind: "primitive", primitiveKind: "integer" }, "nullable");
-      }
-
+      const idField = referenceToIdField(
+        migrateIdentifierRefModelAtom(
+          { identifier: reference.name, ref: reference.ref, type: reference.type },
+          "reference"
+        )
+      );
       return {
-        name: ref.name,
-        ref,
-        type,
+        name: idField.text,
+        ref: idField.ref,
+        type: idField.type,
         primary: false,
         validators: [],
       };
@@ -171,7 +171,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateModelQuery(query: AST.Query) {
     const ref = migrateRefModelAtom(query.ref, "query");
-    const model = ref.model;
+    const model = ref.parentModel;
     const initialPath: Spec.IdentifierRef[] = [
       { text: model, ref: { kind: "model", model }, type: { kind: "model", model } },
     ];
@@ -246,12 +246,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     parentAuthorize: Spec.Expr | undefined,
     depth: number
   ): Spec.Entrypoint {
-    if (entrypoint.target.ref.kind !== "model" && entrypoint.target.ref.kind !== "modelAtom") {
-      throw Error("Unexpected model reference");
-    }
-
-    const model = getTypeModel(entrypoint.target.type);
-    ensureExists(model);
+    const target =
+      entrypoint.target.ref.kind === "model"
+        ? migrateIdentifierRef(entrypoint.target, "model")
+        : migrateIdentifierRefModelAtom(entrypoint.target, "reference", "relation", "query");
+    const model = target.ref.model;
 
     const identify = kindFind(entrypoint.atoms, "identify");
     const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifier;
@@ -259,7 +258,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ? migrateIdentifierRefModelAtom(identifyThroughAst, "field")
       : generateModelIdIdentifier(model);
 
-    const target = migrateIdentifierRef(entrypoint.target, "model", "modelAtom");
     const alias: Spec.IdentifierRef<AST.RefContext> = entrypoint.as
       ? migrateIdentifierRef(entrypoint.as?.identifier, "context")
       : {
@@ -268,7 +266,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
             kind: "context",
             contextKind: "entrypointTarget",
           },
-          type: { kind: "model", model: getTypeModel(target.type)! },
+          type: { kind: "model", model },
         };
 
     const astAuthorize = kindFind(entrypoint.atoms, "authorize")?.expr;
@@ -448,7 +446,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
               kind: "expression",
               expr: {
                 kind: "identifier",
-                identifier: [...parentPath, generateModelIdIdentifier(contextRelation.model)],
+                identifier: [...parentPath, generateModelIdIdentifier(contextRelation.parentModel)],
                 type: { kind: "primitive", primitiveKind: "integer" },
               },
             },
@@ -460,7 +458,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       if (set) return [set];
       const refThrough = refThroughs.find((r) => r.target.text + "_id" === field.name);
       if (refThrough) return [refThrough];
-      const input = inputs.find((i) => i.name.text === field.name);
+      const input = inputs.find((i) => i.target.text === field.name);
       if (input) return [input];
       if (allDenied) return [];
       const denied = deniedFields.find((i) => i.text === field.name);
@@ -470,7 +468,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       return [
         {
           kind: "input",
-          name: { text: field.name, ref: field.ref, type: field.type },
+          target: { text: field.name, ref: field.ref, type: field.type },
           optional: nullable || action.kind === "update",
           default: nullable ? { kind: "literal", value: null } : undefined,
         },
@@ -528,19 +526,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
     // simplify all reference sets to _id sets
     if (target.ref.atomKind === "reference") {
-      const ref = referenceToIdField(target.ref);
-
-      let type: Type = { kind: "primitive", primitiveKind: "integer" };
-      if (target.type.kind === "nullable") type = addTypeModifier(type, "nullable");
-
       ensureEqual(set.set.kind, "expr");
       const expr = migrateExpr(set.set.expr);
       ensureEqual(expr.kind, "identifier");
-      expr.identifier.push({ text: "id", ref, type });
+      const model = getTypeModel(expr.identifier.at(-1)?.type)!;
+      ensureExists(model);
+      expr.identifier.push(generateModelIdIdentifier(model));
 
       return {
         kind: "set",
-        target: { text: ref.name, ref, type },
+        target: referenceToIdField({ ...target, ref: target.ref }),
         set: { kind: "expression", expr },
       };
     }
@@ -573,9 +568,15 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           throw Error("Default input as expression is not supported in spec");
         }
       }
+
+      const target =
+        field.ref.kind === "modelAtom" && field.ref.atomKind === "reference"
+          ? referenceToIdField(migrateIdentifierRefModelAtom(field, "reference"))
+          : migrateIdentifierRefModelAtom(field, "field");
+
       return {
         kind: "input",
-        name: migrateIdentifierRef(field, "modelAtom"),
+        target,
         optional,
         default: migratedDefault,
       };
@@ -612,7 +613,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     parentAlias: Spec.IdentifierRef<AST.RefContext> | undefined,
     depth: number
   ): Spec.Populate {
-    const target = migrateIdentifierRef(populate.target, "model", "modelAtom");
+    const target =
+      populate.target.ref.kind === "model"
+        ? migrateIdentifierRef(populate.target, "model")
+        : migrateIdentifierRefModelAtom(populate.target, "reference", "relation", "query");
+
     const alias: Spec.IdentifierRef<AST.RefContext> = populate.as?.identifier
       ? migrateIdentifierRef(populate.as?.identifier, "context")
       : {
@@ -631,7 +636,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           ref: {
             kind: "modelAtom",
             atomKind: "field",
-            model: target.ref.from,
+            parentModel: target.ref.model,
             name: referenceName,
             unique: false,
           },
@@ -641,7 +646,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           kind: "expression",
           expr: {
             kind: "identifier",
-            identifier: [parentAlias, generateModelIdIdentifier(target.ref.model)],
+            identifier: [parentAlias, generateModelIdIdentifier(target.ref.parentModel)],
             type: { kind: "primitive", primitiveKind: "integer" },
           },
         },
@@ -725,7 +730,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       const ref = migrateRefModelAtom(hook.ref, "hook");
       return {
         name: a.name.text,
-        query: migrateAnonymousQuery(a.query, ref.model),
+        query: migrateAnonymousQuery(a.query, ref.parentModel),
       };
     });
     return { name: hook.name.text, ref: migrateRef(hook.ref, "modelAtom"), code, args };
@@ -852,22 +857,31 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     }
   }
 
-  function referenceToIdField(reference: AST.RefModelReference): AST.RefModelField {
-    const name = `${reference.name}_id`;
+  function referenceToIdField(
+    reference: Spec.IdentifierRef<AST.RefModelReference>
+  ): Spec.IdentifierRef<AST.RefModelField> {
+    const name = `${reference.ref.name}_id`;
+
+    let type: Type = { kind: "primitive", primitiveKind: "integer" };
+    if (reference.type.kind === "nullable") type = addTypeModifier(type, "nullable");
 
     return {
-      kind: "modelAtom",
-      atomKind: "field",
-      model: reference.model,
-      name,
-      unique: reference.unique,
+      text: name,
+      ref: {
+        kind: "modelAtom",
+        atomKind: "field",
+        parentModel: reference.ref.parentModel,
+        name,
+        unique: reference.ref.unique,
+      },
+      type,
     };
   }
 
   function generateModelIdIdentifier(model: string): Spec.IdentifierRef<AST.RefModelField> {
     return {
       text: "id",
-      ref: { kind: "modelAtom", atomKind: "field", name: "id", model, unique: true },
+      ref: { kind: "modelAtom", atomKind: "field", name: "id", parentModel: model, unique: true },
       type: { kind: "primitive", primitiveKind: "integer" },
     };
   }

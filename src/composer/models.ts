@@ -63,7 +63,7 @@ function defineField(fspec: Spec.Field): FieldDef {
   return {
     kind: "field",
     refKey: refKeyFromRef(fspec.ref),
-    modelRefKey: fspec.ref.model,
+    modelRefKey: fspec.ref.parentModel,
     name: fspec.name,
     dbname: fspec.name.toLowerCase(),
     type,
@@ -79,9 +79,9 @@ function defineComputed(cspec: Spec.Computed): ComputedDef {
   return {
     kind: "computed",
     refKey: refKeyFromRef(cspec.ref),
-    modelRefKey: cspec.ref.model,
+    modelRefKey: cspec.ref.parentModel,
     name: cspec.name,
-    exp: composeExpression(cspec.expr, [cspec.ref.model]),
+    exp: composeExpression(cspec.expr, [cspec.ref.parentModel]),
     type: defineType(cspec.expr.type),
   };
 }
@@ -134,7 +134,7 @@ function defineReference(rspec: Spec.Reference): ReferenceDef {
     kind: "reference",
     refKey,
     fieldRefKey: `${refKey}_id`,
-    modelRefKey: rspec.ref.model,
+    modelRefKey: rspec.ref.parentModel,
     toModelFieldRefKey: `${refToModelName}.id`,
     toModelRefKey: refToModelName,
     name: rspec.name,
@@ -147,10 +147,10 @@ function defineRelation(rspec: Spec.Relation): RelationDef {
   return {
     kind: "relation",
     refKey: refKeyFromRef(rspec.ref),
-    modelRefKey: rspec.ref.model,
+    modelRefKey: rspec.ref.parentModel,
     name: rspec.name,
-    fromModel: rspec.through.model,
-    fromModelRefKey: rspec.through.model,
+    fromModel: rspec.through.parentModel,
+    fromModelRefKey: rspec.through.parentModel,
     through: rspec.through.name,
     throughRefKey: refKeyFromRef(rspec.through),
     nullable: rspec.nullable,

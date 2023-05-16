@@ -220,9 +220,10 @@ function composeModelAction(
     spec.actionAtoms,
     // item name resolver
     (atom: Spec.ModelActionAtom) => {
+      console.dir(atom, { depth: 20 });
       switch (atom.kind) {
         case "input":
-          return atom.name.text;
+          return atom.target.text;
         case "reference":
           return atom.target.text;
         case "set":
@@ -400,14 +401,14 @@ function atomToChangesetOperation(
     }
     case "input": {
       ensureNot(model, null, `input atom can't be used with actions without target model`);
-      const field = getRef.field(def, model.name, atom.name.text);
+      const field = getRef.field(def, model.name, atom.target.text);
       return {
-        name: atom.name.text,
+        name: atom.target.text,
         setter: {
           kind: "fieldset-input",
           type: field.type,
           required: !atom.optional,
-          fieldsetAccess: [...fieldsetNamespace, atom.name.text],
+          fieldsetAccess: [...fieldsetNamespace, atom.target.text],
         },
       };
     }

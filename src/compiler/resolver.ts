@@ -273,8 +273,8 @@ export function resolve(projectASTs: ProjectASTs) {
     field.ref = {
       kind: "modelAtom",
       atomKind: "field",
+      parentModel: model.name.text,
       name: field.name.text,
-      model: model.name.text,
       unique: !!kindFind(field.atoms, "unique"),
     };
 
@@ -310,10 +310,10 @@ export function resolve(projectASTs: ProjectASTs) {
       reference.ref = {
         kind: "modelAtom",
         atomKind: "reference",
+        parentModel: model.name.text,
         name: reference.name.text,
-        model: model.name.text,
+        model: to.identifier.ref.model,
         unique: !!kindFind(reference.atoms, "unique"),
-        to: to.identifier.ref.model,
       };
       let type: Type = { kind: "model", model: to.identifier.ref.model };
       const nullable = kindFind(reference.atoms, "nullable");
@@ -349,9 +349,9 @@ export function resolve(projectASTs: ProjectASTs) {
       relation.ref = {
         kind: "modelAtom",
         atomKind: "relation",
+        parentModel: model.name.text,
         name: relation.name.text,
-        model: model.name.text,
-        from: from.identifier.ref.model,
+        model: from.identifier.ref.model,
         through: through.identifier.ref.name,
       };
 
@@ -378,7 +378,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (from.as) {
         const rootRef = from.identifierPath[0].ref;
         // TODO: what if root is "context" or another "queryTarget"
-        const initialPath = rootRef.kind === "modelAtom" ? [rootRef.model] : [];
+        const initialPath = rootRef.kind === "modelAtom" ? [rootRef.parentModel] : [];
         from.as.identifierPath.forEach((as, i) => {
           const target = from.identifierPath[i];
           const path = [
@@ -443,8 +443,9 @@ export function resolve(projectASTs: ProjectASTs) {
         query.ref = {
           kind: "modelAtom",
           atomKind: "query",
+          parentModel: parentScope.model,
           name: query.name.text,
-          model: parentScope.model,
+          model: currentModel,
         };
       }
     }
@@ -492,8 +493,8 @@ export function resolve(projectASTs: ProjectASTs) {
     computed.ref = {
       kind: "modelAtom",
       atomKind: "computed",
+      parentModel: model.name.text,
       name: computed.name.text,
-      model: model.name.text,
     };
 
     const exprType = computed.expr.type;
@@ -951,8 +952,8 @@ export function resolve(projectASTs: ProjectASTs) {
       hook.ref = {
         kind: "modelAtom",
         atomKind: "hook",
+        parentModel: scope.model,
         name: hook.name.text,
-        model: scope.model,
       };
     }
   }
@@ -1241,7 +1242,7 @@ export function resolve(projectASTs: ProjectASTs) {
         identifier.ref = {
           kind: "modelAtom",
           atomKind: "field",
-          model: model.name.text,
+          parentModel: model.name.text,
           name,
           unique: false,
         };
@@ -1256,7 +1257,7 @@ export function resolve(projectASTs: ProjectASTs) {
       identifier.ref = {
         kind: "modelAtom",
         atomKind: "field",
-        model: model.name.text,
+        parentModel: model.name.text,
         name,
         unique: true,
       };

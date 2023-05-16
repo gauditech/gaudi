@@ -3,7 +3,6 @@ import _ from "lodash";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual, ensureExists } from "@src/common/utils";
 import { RefModelField } from "@src/compiler/ast/ast";
-import { getTypeModel } from "@src/compiler/ast/type";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression } from "@src/composer/query";
 import { refKeyFromRef } from "@src/composer/utils";
@@ -71,8 +70,7 @@ export function calculateTarget(
   spec: Spec.Entrypoint | Spec.Populate,
   namePath: string[]
 ): TargetDef {
-  const name = spec.target.text;
-  const model = getTypeModel(spec.target.type)!;
+  const model = spec.target.ref.model;
   const identifyWith: TargetDef["identifyWith"] =
     "identifyThrough" in spec
       ? calculateIdentifyWith(spec.identifyThrough)
@@ -82,36 +80,16 @@ export function calculateTarget(
           refKey: `${model}.id`,
           paramName: `${model.toLocaleLowerCase()}_id`,
         };
-  if (spec.target.ref.kind === "modelAtom") {
-    switch (spec.target.ref.atomKind) {
-      case "reference":
-      case "relation":
-      case "query": {
-        return {
-          kind: spec.target.ref.atomKind,
-          name,
-          namePath,
-          retType: model,
-          refKey: refKeyFromRef(spec.target.ref),
-          identifyWith,
-          alias: spec.alias.text,
-        };
-      }
-      default: {
-        throw Error(`${spec.target.ref.atomKind} is not a valid entrypoint target`);
-      }
-    }
-  } else {
-    return {
-      kind: "model",
-      name,
-      namePath,
-      retType: model,
-      refKey: spec.target.ref.model,
-      identifyWith,
-      alias: spec.alias.text,
-    };
-  }
+
+  return {
+    kind: spec.target.ref.kind === "model" ? "model" : spec.target.ref.atomKind,
+    name: spec.target.text,
+    namePath,
+    retType: model,
+    refKey: refKeyFromRef(spec.target.ref),
+    identifyWith,
+    alias: spec.alias.text,
+  };
 }
 
 function calculateIdentifyWith(
@@ -128,7 +106,7 @@ function calculateIdentifyWith(
     name: identifyThrough.ref.name,
     type: type.primitiveKind === "string" ? "text" : type.primitiveKind,
     refKey: refKeyFromRef(identifyThrough.ref),
-    paramName: `${identifyThrough.ref.model.toLowerCase()}_${identifyThrough.ref.name}`,
+    paramName: `${identifyThrough.ref.parentModel.toLowerCase()}_${identifyThrough.ref.name}`,
   };
 }
 

@@ -410,43 +410,44 @@ export type RefModelAtom =
 export type RefModelField = {
   kind: "modelAtom";
   atomKind: "field";
+  parentModel: string;
   name: string;
-  model: string;
   unique: boolean;
 };
 export type RefModelReference = {
   kind: "modelAtom";
   atomKind: "reference";
+  parentModel: string;
   name: string;
   model: string;
   unique: boolean;
-  to: string;
 };
 export type RefModelRelation = {
   kind: "modelAtom";
   atomKind: "relation";
+  parentModel: string;
   name: string;
   model: string;
-  from: string;
   through: string;
 };
 export type RefModelQuery = {
   kind: "modelAtom";
   atomKind: "query";
+  parentModel: string;
   name: string;
   model: string;
 };
 export type RefModelComputed = {
   kind: "modelAtom";
   atomKind: "computed";
+  parentModel: string;
   name: string;
-  model: string;
 };
 export type RefModelHook = {
   kind: "modelAtom";
   atomKind: "hook";
+  parentModel: string;
   name: string;
-  model: string;
 };
 
 export type RefQueryTarget = {
