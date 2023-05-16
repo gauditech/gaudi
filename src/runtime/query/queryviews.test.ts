@@ -86,6 +86,7 @@ describe("Queryviews", () => {
       ["Org", "repos", "id"],
       ["Org", "repos", "name"],
       ["Org", "repos", "org", "name"],
+      ["Org", "repos", "ref_number"],
     ],
     aggregates: [
       {
