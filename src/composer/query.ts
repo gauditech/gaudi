@@ -101,12 +101,6 @@ export function composeRefPath(
   const [head, ...tail] = path;
   switch (head.ref.kind) {
     case "model":
-      if (head.text === "@auth") {
-        return {
-          kind: "alias",
-          namePath: path.map((i) => i.text),
-        };
-      }
       return {
         kind: "alias",
         namePath: [...namePath, ...tail.map((i) => i.text)],

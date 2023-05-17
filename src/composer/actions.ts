@@ -133,7 +133,7 @@ function expandSetterExpression(expr: Spec.Expr): FieldSetter {
       }
 
       // if path has more than 1 element, it can't be a sibling call
-      ensureEqual(access.length, 0, `Unresolved expression path: ${access}`);
+      ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
       return { kind: "changeset-reference", referenceName: head.text };
     }
     case "function": {

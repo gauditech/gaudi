@@ -623,7 +623,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (orderBy) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
-      const modelScope = { ...scope, model };
+      const modelScope: Scope = { ...scope, model, environment: "model" };
       orderBy.orderBy.forEach((orderBy) =>
         resolveIdentifierRefPath(orderBy.identifierPath, modelScope)
       );
@@ -633,7 +633,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (filter) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
-      const modelScope = { ...scope, model };
+      const modelScope: Scope = { ...scope, model, environment: "model" };
       resolveExpression(filter.expr, modelScope);
     }
   }
@@ -1132,7 +1132,7 @@ export function resolve(projectASTs: ProjectASTs) {
         errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
         return;
       } else {
-        head.ref = { kind: "model", model: model.name.text };
+        head.ref = { kind: "context", contextKind: "auth" };
         head.type = addTypeModifier({ kind: "model", model: model.name.text }, "nullable");
       }
     }

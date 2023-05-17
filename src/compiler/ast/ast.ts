@@ -460,6 +460,7 @@ export type ContextKind =
   | "actionAlias"
   | "virtualInput"
   | "repeat"
+  | "auth"
   | "authToken"
   | "struct";
 export type RefContext = { kind: "context"; contextKind: ContextKind };
