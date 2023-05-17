@@ -62,7 +62,6 @@ describe("compose action queries", () => {
       }
 
       entrypoint Org {
-        target Org
 
         // test in native endpoint
         update endpoint {
@@ -95,7 +94,6 @@ describe("compose action queries", () => {
       }
 
       entrypoint Org {
-        target Org
 
         // test in custom endpoint
         custom endpoint {

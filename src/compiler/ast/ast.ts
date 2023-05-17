@@ -109,22 +109,23 @@ export type Computed = {
 export type Entrypoint = {
   kind: "entrypoint";
   keyword: TokenData;
-  name: Identifier;
+  target: IdentifierRef;
+  as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: EntrypointAtom[];
 };
+
 export type EntrypointAtom =
-  | ({ keyword: TokenData } & (
-      | {
-          kind: "target";
-          identifier: IdentifierRef;
-          as?: { keyword: TokenData; identifier: IdentifierRef };
-        }
-      | { kind: "identifyWith"; identifier: IdentifierRef }
-      | { kind: "response"; select: Select }
-      | { kind: "authorize"; expr: Expr<Code> }
-    ))
+  | { kind: "response"; select: Select; keyword: TokenData }
+  | { kind: "authorize"; expr: Expr<Code>; keyword: TokenData }
   | Endpoint
-  | Entrypoint;
+  | Entrypoint
+  | Identify;
+
+export type Identify = {
+  kind: "identify";
+  keyword: TokenData;
+  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef }[];
+};
 
 export type Endpoint = {
   kind: "endpoint";
@@ -250,25 +251,24 @@ export type Populator = {
 export type Populate = {
   kind: "populate";
   keyword: TokenData;
-  name: Identifier;
+  target: IdentifierRef;
+  as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: PopulateAtom[];
 };
 export type PopulateAtom =
-  | ({ keyword: TokenData } & (
-      | {
-          kind: "target";
-          identifier: IdentifierRef;
-          as?: { keyword: TokenData; identifier: IdentifierRef };
-        }
-      | { kind: "repeat"; repeater: Repeater }
-    ))
+  | {
+      kind: "repeat";
+      keyword: TokenData;
+      as?: { keyword: TokenData; identifier: IdentifierRef };
+      repeatValue: RepeatValue;
+    }
   | ActionAtomSet
   | Populate;
 
-export type Repeater =
-  | { name?: Identifier; kind: "body"; atoms: RepeaterAtom[] }
-  | { name?: Identifier; kind: "simple"; value: IntegerLiteral };
-export type RepeaterAtom = { keyword: TokenData } & (
+export type RepeatValue =
+  | { kind: "long"; atoms: RepeatAtom[] }
+  | { kind: "short"; value: IntegerLiteral };
+export type RepeatAtom = { keyword: TokenData } & (
   | { kind: "start"; value: IntegerLiteral }
   | { kind: "end"; value: IntegerLiteral }
 );
@@ -409,7 +409,7 @@ export type ContextKind =
   | "populateTarget"
   | "fetch"
   | "virtualInput"
-  | "repeater"
+  | "repeat"
   | "authToken"
   | "struct";
 export type RefContext = { kind: "context"; contextKind: ContextKind };

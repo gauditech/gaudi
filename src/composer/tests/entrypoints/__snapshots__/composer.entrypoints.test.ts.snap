@@ -274,7 +274,7 @@ exports[`entrypoint composes basic example 1`] = `
               },
             ],
             "target": {
-              "alias": "repo",
+              "alias": "$target_1",
               "kind": "relation",
               "name": "repos",
               "namePath": [
@@ -371,7 +371,7 @@ exports[`entrypoint composes basic example 1`] = `
               },
             ],
             "target": {
-              "alias": "repo",
+              "alias": "$target_1",
               "identifyWith": {
                 "name": "id",
                 "paramName": "repo_id",
@@ -392,7 +392,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "actions": [
               {
-                "alias": "repo",
+                "alias": "$target_1",
                 "changeset": [
                   {
                     "name": "title",
@@ -422,7 +422,7 @@ exports[`entrypoint composes basic example 1`] = `
                 "model": "Repo",
                 "select": [],
                 "targetPath": [
-                  "repo",
+                  "$target_1",
                 ],
               },
             ],
@@ -534,7 +534,7 @@ exports[`entrypoint composes basic example 1`] = `
               },
             ],
             "target": {
-              "alias": "repo",
+              "alias": "$target_1",
               "kind": "relation",
               "name": "repos",
               "namePath": [
@@ -649,7 +649,7 @@ exports[`entrypoint composes basic example 1`] = `
             "responds": true,
             "response": undefined,
             "target": {
-              "alias": "repo",
+              "alias": "$target_1",
               "identifyWith": {
                 "name": "id",
                 "paramName": "repo_id",
@@ -669,9 +669,9 @@ exports[`entrypoint composes basic example 1`] = `
           },
         ],
         "entrypoints": [],
-        "name": "Repositories",
+        "name": "",
         "target": {
-          "alias": "repo",
+          "alias": "$target_1",
           "identifyWith": {
             "name": "id",
             "paramName": "repo_id",
@@ -689,7 +689,7 @@ exports[`entrypoint composes basic example 1`] = `
         },
       },
     ],
-    "name": "Orgs",
+    "name": "",
     "target": {
       "alias": "org",
       "identifyWith": {
