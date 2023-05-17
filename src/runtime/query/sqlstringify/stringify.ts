@@ -87,8 +87,7 @@ function joinsToString(joins: QueryPlanJoin[]): string {
           return `
     JOIN (${subquery})
     AS ${namepathToQuoted(join.namePath)}
-    ON ${namepathToQuotedPair(join.joinOn[0])} = ${namepathToQuotedPair(join.joinOn[1])}
-    ${joinsToString(join.plan.joins)}`;
+    ON ${namepathToQuotedPair(join.joinOn[0])} = ${namepathToQuotedPair(join.joinOn[1])}`;
         }
         case "inline": {
           return `

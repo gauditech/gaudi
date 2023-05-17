@@ -17,7 +17,6 @@ function makeTestQuery(models: string, query: string): QueryDef {
   
   model TestHelperModel {}
   entrypoint TestHelperModel {
-    target TestHelperModel
     custom endpoint {
       method GET
       cardinality many
@@ -107,7 +106,6 @@ describe("Query plan", () => {
           GROUP BY
             "Repo"."id"
         ) AS "Org.repos.COUNT.issues.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.id"."__join_connection"
-        JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
         JOIN (
           SELECT
             "Repo"."id" AS "__join_connection",
@@ -119,8 +117,6 @@ describe("Query plan", () => {
           GROUP BY
             "Repo"."id"
         ) AS "Org.repos.COUNT.issues.repo.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo.id"."__join_connection"
-        JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-        JOIN repo AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
         JOIN (
           SELECT
             "Repo"."id" AS "__join_connection",
@@ -131,7 +127,6 @@ describe("Query plan", () => {
           GROUP BY
             "Repo"."id"
         ) AS "Org.repos.SUM.Repo.issues.id" ON "Org.repos"."id" = "Org.repos.SUM.Repo.issues.id"."__join_connection"
-        JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
         JOIN (
           SELECT
             "Repo"."id" AS "__join_connection",
@@ -143,8 +138,6 @@ describe("Query plan", () => {
           GROUP BY
             "Repo"."id"
         ) AS "Org.repos.COUNT.issues.repo.name" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo.name"."__join_connection"
-        JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-        JOIN repo AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
         JOIN (
           SELECT
             "Org"."id" AS "__join_connection",
@@ -154,8 +147,7 @@ describe("Query plan", () => {
             JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
           GROUP BY
             "Org"."id"
-        ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
-        JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id""
+        ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection""
     `);
   });
 });
