@@ -1,0 +1,165 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Query plan composes a query 1`] = `
+{
+  "filter": {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "issues",
+                    ],
+                  },
+                ],
+                "kind": "function",
+                "name": "count",
+              },
+              {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "issues",
+                      "repo",
+                      "id",
+                    ],
+                  },
+                ],
+                "kind": "function",
+                "name": "count",
+              },
+            ],
+            "kind": "function",
+            "name": "+",
+          },
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "issues",
+                  "id",
+                ],
+              },
+            ],
+            "kind": "function",
+            "name": "sum",
+          },
+        ],
+        "kind": "function",
+        "name": "+",
+      },
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "issues",
+                      "repo_name",
+                    ],
+                  },
+                ],
+                "kind": "function",
+                "name": "count",
+              },
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "ref_number",
+                ],
+              },
+            ],
+            "kind": "function",
+            "name": "+",
+          },
+          {
+            "args": [
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "id",
+                ],
+              },
+            ],
+            "kind": "function",
+            "name": "count",
+          },
+        ],
+        "kind": "function",
+        "name": "+",
+      },
+    ],
+    "kind": "function",
+    "name": ">",
+  },
+  "fromPath": [
+    "Org",
+    "repos",
+  ],
+  "kind": "query",
+  "limit": undefined,
+  "modelRefKey": "Org",
+  "name": "$query",
+  "offset": undefined,
+  "orderBy": undefined,
+  "refKey": "N/A",
+  "retType": "Repo",
+  "select": [
+    {
+      "alias": "id",
+      "kind": "field",
+      "name": "id",
+      "namePath": [
+        "Org",
+        "repos",
+        "id",
+      ],
+      "refKey": "Repo.id",
+    },
+    {
+      "alias": "name",
+      "kind": "field",
+      "name": "name",
+      "namePath": [
+        "Org",
+        "repos",
+        "name",
+      ],
+      "refKey": "Repo.name",
+    },
+    {
+      "alias": "org_name",
+      "kind": "computed",
+      "name": "org_name",
+      "namePath": [
+        "Org",
+        "repos",
+        "org_name",
+      ],
+      "refKey": "Repo.org_name",
+    },
+  ],
+}
+`;

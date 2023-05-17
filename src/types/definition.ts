@@ -145,6 +145,8 @@ export type FunctionName =
   | "cryptoToken"
   | "stringify";
 
+export type AggregateFunctionName = "count" | "sum";
+
 export type TypedFunction = {
   kind: "function";
   name: FunctionName;

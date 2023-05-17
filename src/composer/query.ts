@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getRef } from "@src/common/refs";
+import { getRef, getResultModel } from "@src/common/refs";
 import { ensureEqual } from "@src/common/utils";
 import { processSelect } from "@src/composer/entrypoints";
 import {
@@ -58,7 +58,7 @@ export function composeQuery(
    * { r: ["Org", "repos"], i: ["Org", "repos", "issues"] }
    */
   const aliases = (qspec.fromAlias ?? []).reduce((acc, curr, index) => {
-    return _.assign(acc, { [curr]: _.take(fromPath, index + 2) });
+    return _.assign(acc, { [curr]: _.take(fromPath, index + 1) });
   }, {} as Record<string, NamePath>);
 
   const filter = qspec.filter && composeExpression(def, qspec.filter, fromPath, ctx, aliases);
@@ -66,9 +66,9 @@ export function composeQuery(
   const filterPaths = getFilterPaths(filter);
   const paths = uniqueNamePaths([fromPath, ...filterPaths]);
   const direct = getDirectChildren(paths);
-  ensureEqual(direct.length, 1);
-  const targetModel = getRef.model(def, direct[0]);
-  const select = processSelect(def, targetModel, qspec.select, fromPath);
+  ensureEqual(direct.length, 1, `Query paths shouldn't have more than one root source`);
+  const resultModel = getResultModel(def, fromPath, {});
+  const select = processSelect(def, resultModel, qspec.select, fromPath);
 
   const orderBy = qspec.orderBy?.map(
     ({ field, order }): QueryOrderByAtomDef => ({
