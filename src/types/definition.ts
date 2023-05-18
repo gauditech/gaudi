@@ -167,7 +167,21 @@ export type TypedFunction = {
   type?: TypedVariableType;
 };
 
-export type TypedExprDef = LiteralValueDef | TypedAlias | TypedVariable | TypedFunction | undefined;
+export type TypedExprDef =
+  | LiteralValueDef
+  | TypedAlias
+  | TypedVariable
+  | TypedFunction
+  | TypedAggregateFunction
+  | undefined;
+
+type TypedAggregateFunction = {
+  kind: "aggregate-function";
+  fnName: string;
+  type: VariablePrimitiveType;
+  sourcePath: string[];
+  targetPath: string[];
+};
 
 type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
 type LiteralTextDef = { kind: "literal"; type: "text"; value: string };

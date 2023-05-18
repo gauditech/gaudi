@@ -296,6 +296,9 @@ export function transformExpressionPaths(
         args: exp.args.map((arg) => transformExpressionPaths(arg, from, to)),
       };
     }
+    case "aggregate-function": {
+      return { ...exp, sourcePath: transformNamePath(exp.sourcePath, from, to) };
+    }
     default: {
       assertUnreachable(exp);
     }

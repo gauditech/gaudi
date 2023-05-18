@@ -9,53 +9,56 @@ exports[`Query plan composes a query 1`] = `
           {
             "args": [
               {
-                "args": [
-                  {
-                    "kind": "alias",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "issues",
-                    ],
-                  },
+                "fnName": "count",
+                "kind": "aggregate-function",
+                "sourcePath": [
+                  "Org",
+                  "repos",
                 ],
-                "kind": "function",
-                "name": "count",
+                "targetPath": [
+                  "issues",
+                ],
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
               {
-                "args": [
-                  {
-                    "kind": "alias",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "issues",
-                      "repo",
-                      "id",
-                    ],
-                  },
+                "fnName": "count",
+                "kind": "aggregate-function",
+                "sourcePath": [
+                  "Org",
+                  "repos",
                 ],
-                "kind": "function",
-                "name": "count",
+                "targetPath": [
+                  "issues",
+                  "repo",
+                  "id",
+                ],
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
             ],
             "kind": "function",
             "name": "+",
           },
           {
-            "args": [
-              {
-                "kind": "alias",
-                "namePath": [
-                  "Org",
-                  "repos",
-                  "issues",
-                  "id",
-                ],
-              },
+            "fnName": "sum",
+            "kind": "aggregate-function",
+            "sourcePath": [
+              "Org",
+              "repos",
             ],
-            "kind": "function",
-            "name": "sum",
+            "targetPath": [
+              "issues",
+              "id",
+            ],
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         ],
         "kind": "function",
@@ -66,19 +69,20 @@ exports[`Query plan composes a query 1`] = `
           {
             "args": [
               {
-                "args": [
-                  {
-                    "kind": "alias",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "issues",
-                      "repo_name",
-                    ],
-                  },
+                "fnName": "count",
+                "kind": "aggregate-function",
+                "sourcePath": [
+                  "Org",
+                  "repos",
                 ],
-                "kind": "function",
-                "name": "count",
+                "targetPath": [
+                  "issues",
+                  "repo_name",
+                ],
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
               {
                 "kind": "alias",
@@ -93,18 +97,19 @@ exports[`Query plan composes a query 1`] = `
             "name": "+",
           },
           {
-            "args": [
-              {
-                "kind": "alias",
-                "namePath": [
-                  "Org",
-                  "repos",
-                  "id",
-                ],
-              },
+            "fnName": "count",
+            "kind": "aggregate-function",
+            "sourcePath": [
+              "Org",
             ],
-            "kind": "function",
-            "name": "count",
+            "targetPath": [
+              "repos",
+              "id",
+            ],
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         ],
         "kind": "function",

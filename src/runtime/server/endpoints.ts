@@ -837,6 +837,9 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
     case "function": {
       return executeTypedFunction(expr, contextVars);
     }
+    case "aggregate-function": {
+      throw new Error("Not implemented: aggregate functions not supported in the runtime");
+    }
     case "literal": {
       return expr.value;
     }

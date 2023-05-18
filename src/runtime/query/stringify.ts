@@ -58,6 +58,9 @@ export function queryToString(def: Definition, q: QueryDef, isBatching = false):
         // returns `true` if any of the args is `true`
         return exp.args.map((a) => hasBatchingExpr(a)).some(_.identity);
       }
+      case "aggregate-function": {
+        throw new Error("Not implemented");
+      }
     }
   }
   const innerBatching = hasBatchingExpr(q.filter);
@@ -184,6 +187,9 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
         ...exp,
         args: exp.args.map((arg) => expandExpression(def, arg)),
       };
+    }
+    case "aggregate-function": {
+      throw new Error("Not implemented");
     }
     default: {
       assertUnreachable(exp);
@@ -339,6 +345,9 @@ export function collectPathsFromExp(def: Definition, exp: TypedExprDef): string[
     }
     case "function": {
       return exp.args.flatMap((arg) => collectPathsFromExp(def, arg));
+    }
+    case "aggregate-function": {
+      throw new Error("Not implemented");
     }
   }
 }
@@ -498,6 +507,9 @@ function expressionToString(def: Definition, filter: TypedExprDef): string {
     }
     case "function": {
       return functionToString(def, filter);
+    }
+    case "aggregate-function": {
+      throw new Error("Not implemented");
     }
     case "variable": {
       // Start variable names with a `:` which is a knex format for query variables
