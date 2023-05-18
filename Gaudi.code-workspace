@@ -11,5 +11,29 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.tabSize": 2
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "type": "process",
+        "command": "npm",
+        "args": ["run", "dev:ts"],
+        "isBackground": true,
+        "problemMatcher": ["$tsc-watch"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "label": "TS build",
+        "presentation": {
+          "focus": false,
+          "close": true,
+          "reveal": "never",
+          "panel": "dedicated",
+          "clear": true
+        }
+      }
+    ]
   }
 }
