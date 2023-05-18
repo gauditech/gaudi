@@ -1,7 +1,8 @@
-export const primitiveTypes = ["integer", "float", "boolean", "null", "string"] as const;
+export const primitiveTypes = ["integer", "float", "boolean", "string"] as const;
 
 export type AnyType = { kind: "unknown" };
 export type PrimitiveType = { kind: "primitive"; primitiveKind: (typeof primitiveTypes)[number] };
+export type NullType = { kind: "null" };
 export type ModelType = { kind: "model"; model: string };
 export type StructType = { kind: "struct"; types: Record<string, Type> };
 export type CollectionType = { kind: "collection"; type: Type };
@@ -18,6 +19,7 @@ export type GroupType = { kind: "group"; group: keyof typeof typeGroups };
 export type Type =
   | AnyType
   | PrimitiveType
+  | NullType
   | ModelType
   | StructType
   | CollectionType
@@ -52,6 +54,7 @@ export function removeTypeModifier(type: Type, ...modifiers: TypeModifier[]): Ty
     case "struct":
     case "primitive":
     case "group":
+    case "null":
       return type;
     default: {
       return modifiers.includes(type.kind)
@@ -66,6 +69,7 @@ export function getTypeModel(type?: Type): string | undefined {
   switch (type.kind) {
     case "unknown":
     case "primitive":
+    case "null":
     case "struct":
     case "group":
       return undefined;
@@ -91,6 +95,7 @@ export function getTypeCardinality(
     case "struct":
     case "primitive":
     case "group":
+    case "null":
       return baseCardinality;
     case "nullable":
       return getTypeCardinality(type.type, "nullable");
@@ -104,6 +109,9 @@ export function isExpectedType(type: Type, expected: Type): boolean {
   switch (expected.kind) {
     case "primitive": {
       return type.kind === "primitive" && expected.primitiveKind === type.primitiveKind;
+    }
+    case "null": {
+      return type.kind === "null" || type.kind === "nullable";
     }
     case "model": {
       return type.kind === "model" && expected.model === type.model;
@@ -128,7 +136,7 @@ export function isExpectedType(type: Type, expected: Type): boolean {
       if (type.kind === "nullable") {
         return isExpectedType(type.type, expected.type);
       }
-      if (type.kind === "primitive" && type.primitiveKind === "null") {
+      if (type.kind === "null") {
         return true;
       }
       return isExpectedType(type, expected.type);

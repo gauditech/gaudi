@@ -54,7 +54,7 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
 
 exports[`compose action queries "fetch" action native endpoint 1`] = `
 {
-  "alias": "$$target_0",
+  "alias": "$action_0",
   "changeset": [
     {
       "name": "name",
@@ -80,6 +80,7 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
     },
   ],
   "filter": undefined,
+  "isPrimary": true,
   "kind": "update-one",
   "model": "Org",
   "select": [],

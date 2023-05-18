@@ -5,12 +5,12 @@ import {
   AuthenticatorNamedModelDef,
   Definition,
 } from "@src/types/definition";
-import { AuthenticatorMethodSpec, AuthenticatorSpec } from "@src/types/specification";
+import { Authenticator, AuthenticatorMethod } from "@src/types/specification";
 
 /**
  * Compose authenticator block.
  */
-export function composeAuthenticator(def: Definition, spec: AuthenticatorSpec | undefined): void {
+export function composeAuthenticator(def: Definition, spec: Authenticator | undefined): void {
   if (spec == undefined) {
     return;
   }
@@ -39,10 +39,7 @@ function composeTargetModel(def: Definition, modelName: string): AuthenticatorNa
   };
 }
 
-function composeMethod(
-  def: Definition,
-  methodSpec: AuthenticatorMethodSpec
-): AuthenticatorMethodDef {
+function composeMethod(def: Definition, methodSpec: AuthenticatorMethod): AuthenticatorMethodDef {
   const kind = methodSpec.kind;
   if (kind === "basic") {
     return {

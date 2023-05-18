@@ -3,11 +3,10 @@ import path from "path";
 
 import { Request, Response } from "express";
 
-import { Vars } from "./server/vars";
-
 import { getExecutionRuntime } from "@src/common/refs";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { Definition, ExecutionRuntimeDef, HookCodeDef, HookDef } from "@src/types/definition";
+import { HookCode, HookInline, HookSource } from "@src/types/common";
+import { Definition, ExecutionRuntimeDef } from "@src/types/definition";
 
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 
@@ -19,11 +18,12 @@ const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
  */
 export async function executeHook<T>(
   def: Definition,
-  hook: HookDef,
+  hook: HookCode,
   args: Record<string, unknown>
 ): Promise<T> {
+  if (hook.kind === "inline") return executeInlineHook(hook, args);
   const execRuntime = getExecutionRuntime(def, hook.runtimeName);
-  return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook.code, args);
+  return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook, args);
 }
 
 /**
@@ -35,15 +35,47 @@ export async function executeHook<T>(
  */
 export async function executeActionHook<T>(
   def: Definition,
-  hook: HookDef,
+  hook: HookCode,
   args: Record<string, unknown>,
   ctx: {
     request: Request;
     response: Response;
   }
 ): Promise<T> {
+  if (hook.kind === "inline") return executeInlineHook(hook, args);
   const execRuntime = getExecutionRuntime(def, hook.runtimeName);
-  return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook.code, args, ctx);
+  return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook, args, ctx);
+}
+
+/**
+ * Executes inline hook.
+ *
+ * Inline hook is seperate because it can be executed without named runtime environment.
+ */
+export async function executeInlineHook<T>(
+  hook: HookInline,
+  args: Record<string, unknown>
+): Promise<T> {
+  // order of args must be consistent
+  const argNames = Object.entries(args).map(([name, _value]) => name);
+  const argValues = Object.entries(args).map(([_name, value]) => value);
+  const hookBody = [
+    // strict mode
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
+    "'use strict'",
+    // hook fn body
+    `return ${hook.inline}`,
+  ].join("\n");
+
+  // dynamically create new function
+  // allows access only to global and function's own scope
+  // syntax is `new AsyncFunction(arg1, ..., argN, fnBody)`
+  // arguments are positional so order in fn definition (here) and in fn call (below) must be the same
+  const hookFn = new AsyncFunction(...[...argNames, hookBody]);
+
+  // TODO: cache inline function - by which key, source code?!
+
+  return hookFn(...argValues);
 }
 
 async function createExecutionRuntime(
@@ -60,13 +92,16 @@ async function createExecutionRuntime(
 // ---------- Local execution runtime
 
 export type HookActionContext = { request: Request; response: Response };
-export type HookFunction = (args: Record<string, unknown>, ctx?: HookActionContext) => unknown;
+export type HookFunction = <T>(
+  args: Record<string, unknown>,
+  ctx?: HookActionContext
+) => Promise<T>;
 export type HookModules = Record<string, Record<string, HookFunction>>;
 
 export type ExecutionRuntimeClient = {
   runtimeName: string;
   executeHook: <T>(
-    hook: HookCodeDef,
+    hook: HookSource,
     args: Record<string, unknown>,
     ctx?: HookActionContext
   ) => Promise<T>;
@@ -84,44 +119,18 @@ export async function createLocalExecutionRuntime(
 
   return {
     runtimeName: runtime.name,
-    executeHook(code, args, ctx) {
-      switch (code.kind) {
-        case "inline": {
-          // order of args must be consistent
-          const argNames = Object.entries(args).map(([name, _value]) => name);
-          const argValues = Object.entries(args).map(([_name, value]) => value);
-          const hookBody = [
-            // strict mode
-            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
-            "'use strict'",
-            // hook fn body
-            `return ${code.inline}`,
-          ].join("\n");
-
-          // dynamically create new function
-          // allows access only to global and function's own scope
-          // syntax is `new AsyncFunction(arg1, ..., argN, fnBody)`
-          // arguments are positional so order in fn definition (here) and in fn call (below) must be the same
-          const hookFn = new AsyncFunction(...[...argNames, hookBody]);
-
-          // TODO: cache inline function - by which key, source code?!
-
-          return hookFn(...argValues);
-        }
-        case "source": {
-          const hookFile = modules[code.file];
-          if (hookFile == null) {
-            throw new Error(`Hook file "${code.file}" not found`);
-          }
-
-          const hook = hookFile[code.target];
-          if (hook == null) {
-            throw new Error(`Hook "${code.target}" in file "${code.file}" not found`);
-          }
-
-          return hook(args, ctx);
-        }
+    executeHook(hook, args, ctx) {
+      const hookFile = modules[hook.file];
+      if (hookFile == null) {
+        throw new Error(`Hook file "${hook.file}" not found`);
       }
+
+      const hookFn = hookFile[hook.target];
+      if (hookFn == null) {
+        throw new Error(`Hook "${hook.target}" in file "${hook.file}" not found`);
+      }
+
+      return hookFn(args, ctx);
     },
   };
 }

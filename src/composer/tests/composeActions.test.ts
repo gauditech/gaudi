@@ -64,9 +64,9 @@ describe("compose actions", () => {
     it("succeeds with nested sibling reference", () => {
       const bp = `
     model Org {
-      field name { type string }
-      field name2 { type string }
       field name3 { type string }
+      field name2 { type string }
+      field name { type string }
     }
     entrypoint Org {
       create endpoint {

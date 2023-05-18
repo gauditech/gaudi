@@ -1,12 +1,12 @@
 import { assertUnreachable } from "@src/common/utils";
 import { Definition, GeneratorDef } from "@src/types/definition";
-import { GeneratorSpec } from "@src/types/specification";
+import { Generator } from "@src/types/specification";
 
-export function composeGenerators(def: Definition, generators: GeneratorSpec[]): void {
+export function composeGenerators(def: Definition, generators: Generator[]): void {
   def.generators = generators.map((g) => composeGenerator(def, g));
 }
 
-function composeGenerator(def: Definition, generator: GeneratorSpec): GeneratorDef {
+function composeGenerator(def: Definition, generator: Generator): GeneratorDef {
   const kind = generator.kind;
   switch (kind) {
     case "generator-client": {

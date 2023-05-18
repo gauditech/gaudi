@@ -1,16 +1,11 @@
 import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import {
-  UnreachableError,
-  assertUnreachable,
-  ensureEmpty,
-  ensureEqual,
-  ensureExists,
-  ensureUnique,
-} from "@src/common/utils";
-import { composeActionBlock, getInitialContext } from "@src/composer/actions";
+import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
+import { RefModelField } from "@src/compiler/ast/ast";
+import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression } from "@src/composer/query";
+import { refKeyFromRef } from "@src/composer/utils";
 import { uniqueNamePaths } from "@src/runtime/query/build";
 import {
   ActionDef,
@@ -18,7 +13,6 @@ import {
   DeleteOneAction,
   EndpointDef,
   EndpointHttpMethod,
-  EndpointType,
   EntrypointDef,
   ExecuteHookAction,
   FieldSetter,
@@ -33,192 +27,90 @@ import {
   TargetWithSelectDef,
   TypedExprDef,
 } from "@src/types/definition";
-import {
-  EndpointSpec,
-  EntrypointSpec,
-  ExpSpec,
-  QueryOrderBySpec,
-  SelectAST,
-} from "@src/types/specification";
+import * as Spec from "@src/types/specification";
 
-export function composeEntrypoints(def: Definition, input: EntrypointSpec[]): void {
-  def.entrypoints = input.map((spec) => processEntrypoint(def, spec, []));
+export function composeEntrypoints(def: Definition, input: Spec.Entrypoint[]): void {
+  def.entrypoints = input.map((spec) => processEntrypoint(def, spec, [], []));
 }
-
-export type TargetContext = {
-  model: ModelDef;
-  target: TargetDef;
-  authorize: { expr: TypedExprDef; deps: SelectDep[] };
-};
 
 function processEntrypoint(
   def: Definition,
-  spec: EntrypointSpec,
-  parents: TargetContext[]
+  spec: Spec.Entrypoint,
+  parentTargets: TargetDef[],
+  parentNamePath: string[]
 ): EntrypointDef {
-  const target = calculateTarget(
-    def,
-    parents,
-    spec.target.identifier,
-    spec.target.alias ?? null,
-    spec.identify || "id"
-  );
+  const namePath = [...parentNamePath, spec.target.text];
+  const target = calculateTarget(spec, namePath);
   const name = spec.name;
-  const targetModel = getRef.model(def, target.retType);
 
-  const authorizeContext = getInitialContext(
-    def,
-    [...parents.map(({ target }) => target), target],
-    "create"
-  );
-  const authorizeExpr = spec.authorize
-    ? composeExpression(def, spec.authorize, [], authorizeContext)
-    : undefined;
-  const authorizeDeps = collectAuthorizeDeps(def, authorizeExpr);
-
-  const thisContext: TargetContext = {
-    model: targetModel,
-    target,
-    authorize: { expr: authorizeExpr, deps: authorizeDeps },
-  };
-  const targetParents = [...parents, thisContext];
+  const targets = [...parentTargets, target];
 
   return {
     name,
     target,
-    endpoints: processEndpoints(def, targetParents, spec),
-    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(def, ispec, targetParents)),
+    endpoints: processEndpoints(def, targets, spec),
+    entrypoints: spec.entrypoints.map((ispec) => processEntrypoint(def, ispec, targets, namePath)),
   };
 }
 
 export function calculateTarget(
-  def: Definition,
-  parents: TargetContext[],
-  name: string,
-  alias: string | null,
-  identify: string
+  spec: Spec.Entrypoint | Spec.Populate,
+  namePath: string[]
 ): TargetDef {
-  const ctxModel = _.last(parents)?.model ?? null;
-  const namePath = [...parents.map((p) => p.target.name), name];
-  if (ctxModel) {
-    const prop = getRef(def, ctxModel.name, name);
-    switch (prop.kind) {
-      case "reference": {
-        const reference = prop;
-        const model = getRef.model(def, reference.toModelRefKey);
-        return {
-          kind: "reference",
-          name,
-          namePath,
-          retType: reference.toModelRefKey,
-          refKey: reference.refKey,
-          identifyWith: calculateIdentifyWith(def, model, identify),
-          alias: alias || `$target_${parents.length}`,
+  const model = spec.target.ref.model;
+  const identifyWith: TargetDef["identifyWith"] =
+    "identifyThrough" in spec
+      ? calculateIdentifyWith(spec.identifyThrough)
+      : {
+          name: "id",
+          type: "integer",
+          refKey: `${model}.id`,
+          paramName: `${model.toLocaleLowerCase()}_id`,
         };
-      }
-      case "relation": {
-        const relation = prop;
-        const model = getRef.model(def, relation.fromModelRefKey);
-        return {
-          kind: "relation",
-          name,
-          namePath,
-          retType: relation.fromModel,
-          refKey: relation.refKey,
-          identifyWith: calculateIdentifyWith(def, model, identify),
-          alias: alias || `$target_${parents.length}`,
-        };
-      }
-      case "query": {
-        const query = prop;
-        const model = getRef.model(def, query.retType);
-        return {
-          kind: "query",
-          name,
-          namePath,
-          retType: query.retType,
-          refKey: query.refKey,
-          identifyWith: calculateIdentifyWith(def, model, identify),
-          alias: alias || `$target_${parents.length}`,
-        };
-      }
-      default: {
-        throw `${prop.kind} is not a valid entrypoint target`;
-      }
-    }
-  } else {
-    const model = getRef.model(def, name);
-    return {
-      kind: "model",
-      name,
-      namePath,
-      refKey: model.refKey,
-      retType: model.name,
-      identifyWith: calculateIdentifyWith(def, model, identify),
-      alias: alias || `$target_${parents.length}`,
-    };
-  }
+
+  return {
+    kind: spec.target.ref.kind === "model" ? "model" : spec.target.ref.atomKind,
+    name: spec.target.text,
+    namePath,
+    retType: model,
+    identifyWith,
+    alias: spec.alias.text,
+  };
 }
 
 function calculateIdentifyWith(
-  def: Definition,
-  model: ModelDef,
-  identify: string | undefined
-): EntrypointDef["target"]["identifyWith"] {
-  const name = identify ?? "id";
-  const prop = getRef(def, model.name, name);
-  switch (prop.kind) {
-    case "field": {
-      const field = prop;
-      if (field.type === "boolean") {
-        throw new Error("Invalid type of identifiyWith - boolean");
-      }
-      return {
-        name,
-        type: field.type,
-        refKey: field.refKey,
-        paramName: `${model.name.toLowerCase()}_${name}`,
-      };
-    }
-    default:
-      throw new Error(`Identify with target must be a field`);
+  identifyThrough: Spec.IdentifierRef<RefModelField>
+): TargetDef["identifyWith"] {
+  const type = identifyThrough.type;
+  if (
+    type.kind !== "primitive" ||
+    (type.primitiveKind !== "integer" && type.primitiveKind !== "string")
+  ) {
+    throw new Error(`Invalid type of identifiyWith ${JSON.stringify(type)}`);
   }
+  return {
+    name: identifyThrough.ref.name,
+    type: type.primitiveKind === "string" ? "text" : type.primitiveKind,
+    refKey: refKeyFromRef(identifyThrough.ref),
+    paramName: `${identifyThrough.ref.parentModel.toLowerCase()}_${identifyThrough.ref.name}`,
+  };
 }
 
 function processEndpoints(
   def: Definition,
-  parents: TargetContext[],
-  entrySpec: EntrypointSpec
+  targets: TargetDef[],
+  entrySpec: Spec.Entrypoint
 ): EndpointDef[] {
-  const context = _.last(parents)!;
-  const targets = parents.map((p) => p.target);
-  const parentAuthorizes = parents.map((p) => p.authorize.expr);
-  const parentAuthorizeDeps = parents.flatMap((p) => p.authorize.deps);
-
-  // ensure there are no duplicate custom endpoint paths on the same method
-  ensureUnique(
-    entrySpec.endpoints.filter((e) => e.type === "custom").map((ep) => `${ep.method}-${ep.path}`),
-    `Custom endpoints on the same HTTP method must have unique paths in one entrypoint ("${entrySpec.name}")`
-  );
+  const context = _.last(targets)!;
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
-    const endpointType = mapEndpointSpecToDefType(endSpec);
-
-    const rawActions = composeActionBlock(def, endSpec.actions ?? [], targets, endpointType);
+    const rawActions = composeActionBlock(endSpec.actions);
     const actionDeps = collectActionDeps(def, rawActions);
 
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
-    const authorizeContext = getInitialContext(def, targets, endpointType);
-    const currentAuthorize = endSpec.authorize
-      ? composeExpression(def, endSpec.authorize, [], authorizeContext)
-      : undefined;
-    const authorize = [...parentAuthorizes, currentAuthorize].reduce((prev, curr) => {
-      if (prev === undefined) return curr;
-      if (curr === undefined) return prev;
-      return { kind: "function", name: "and", args: [prev, curr] };
-    });
-    const authorizeDeps = collectAuthorizeDeps(def, currentAuthorize);
-    const selectDeps = [...actionDeps, ...parentAuthorizeDeps, ...authorizeDeps];
+    const authorize = endSpec.authorize ? composeExpression(endSpec.authorize, []) : undefined;
+    const authorizeDeps = collectAuthorizeDeps(def, authorize);
+    const selectDeps = [...actionDeps, ...authorizeDeps];
 
     const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
     const parentContext = _.initial(targetsWithSelect);
@@ -237,51 +129,33 @@ function processEndpoints(
     }
     const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
 
-    switch (endpointType) {
+    switch (endSpec.kind) {
       case "get": {
-        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
-        ensureEmpty(
-          endSpec.method,
-          `Property "method" is not allowed for "${endpointType}" endpoints`
-        );
-
         return {
           kind: "get",
           authSelect,
           authorize,
-          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
           // actions,
           parentContext,
           target,
         };
       }
       case "list": {
-        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
-        ensureEmpty(
-          endSpec.method,
-          `Property "method" is not allowed for "${endpointType}" endpoints`
-        );
-
         return {
           kind: "list",
           authSelect,
           authorize,
           pageable: endSpec.pageable,
-          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
           // actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
-          orderBy: processOrderBy(context.target.namePath, endSpec.orderBy),
-          filter: processFilter(def, targets, context.target.namePath, endSpec.filter),
+          orderBy: processOrderBy(context.namePath, endSpec.orderBy),
+          filter: processFilter(context.namePath, endSpec.filter),
         };
       }
       case "create": {
-        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
-        ensureEmpty(
-          endSpec.method,
-          `Property "method" is not allowed for "${endpointType}" endpoints`
-        );
-
         const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "create",
@@ -291,16 +165,10 @@ function processEndpoints(
           target: _.omit(target, "identifyWith"),
           authSelect,
           authorize,
-          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
         };
       }
       case "update": {
-        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
-        ensureEmpty(
-          endSpec.method,
-          `Property "method" is not allowed for "${endpointType}" endpoints`
-        );
-
         const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "update",
@@ -310,16 +178,10 @@ function processEndpoints(
           target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
           authSelect,
           authorize,
-          response: processSelect(def, context.model, entrySpec.response, context.target.namePath),
+          response: processSelect(endSpec.response, context.namePath),
         };
       }
       case "delete": {
-        ensureEmpty(endSpec.path, `Property "path" is not allowed for "${endpointType}" endpoints`);
-        ensureEmpty(
-          endSpec.method,
-          `Property "method" is not allowed for "${endpointType}" endpoints`
-        );
-
         return {
           kind: "delete",
           actions,
@@ -330,52 +192,43 @@ function processEndpoints(
           response: undefined,
         };
       }
-      case "custom-one": {
-        ensureExists(endSpec.path, `Property "path" is required for custom endpoints`);
-        ensureExists(endSpec.method, `Property "method" is required for custom endpoints`);
-
+      case "custom": {
         const fieldset = isMethodWithFieldset(endSpec.method)
           ? fieldsetFromActions(def, actions)
           : undefined;
 
-        return {
-          kind: "custom-one",
-          method: endSpec.method,
-          path: endSpec.path,
-          actions,
-          parentContext,
-          target,
-          authSelect,
-          authorize,
-          fieldset,
-          response: undefined,
-          responds,
-        };
-      }
-      case "custom-many": {
-        ensureExists(endSpec.path, `Property "path" is required for custom endpoints`);
-        ensureExists(endSpec.method, `Property "method" is required for custom endpoints`);
-
-        const fieldset = isMethodWithFieldset(endSpec.method)
-          ? fieldsetFromActions(def, actions)
-          : undefined;
-
-        return {
-          kind: "custom-many",
-          method: endSpec.method,
-          path: endSpec.path,
-          actions,
-          parentContext,
-          target: _.omit(target, "identifyWith"),
-          authSelect,
-          authorize,
-          fieldset,
-          response: undefined,
-          responds,
-        };
+        if (endSpec.cardinality === "one") {
+          return {
+            kind: "custom-one",
+            method: endSpec.method,
+            path: endSpec.path,
+            actions,
+            parentContext,
+            target,
+            authSelect,
+            authorize,
+            fieldset,
+            response: undefined,
+            responds,
+          };
+        } else {
+          return {
+            kind: "custom-many",
+            method: endSpec.method,
+            path: endSpec.path,
+            actions,
+            parentContext,
+            target: _.omit(target, "identifyWith"),
+            authSelect,
+            authorize,
+            fieldset,
+            response: undefined,
+            responds,
+          };
+        }
       }
       default: {
-        assertUnreachable(endpointType);
+        assertUnreachable(endSpec);
       }
     }
   });
@@ -394,30 +247,9 @@ function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
   }
 }
 
-function mapEndpointSpecToDefType(endSpec: EndpointSpec): EndpointType {
-  if (endSpec.type === "custom") {
-    ensureExists(endSpec.cardinality, `Property "cardinality" is required for custom endpoints`);
-
-    if (endSpec.cardinality === "one") {
-      return "custom-one";
-    } else if (endSpec.cardinality === "many") {
-      return "custom-many";
-    } else {
-      assertUnreachable(endSpec.cardinality);
-    }
-  } else {
-    ensureEmpty(
-      endSpec.cardinality,
-      `Property "cardinality" is not allowed for "${endSpec.type}" endpoints`
-    );
-
-    return endSpec.type;
-  }
-}
-
 export function processOrderBy(
   fromPath: string[],
-  orderBy: QueryOrderBySpec[] | undefined
+  orderBy: Spec.QueryOrderBy[] | undefined
 ): QueryOrderByAtomDef[] | undefined {
   if (orderBy == null) return;
 
@@ -430,94 +262,58 @@ export function processOrderBy(
 }
 
 export function processFilter(
-  def: Definition,
-  targets: TargetDef[],
   fromPath: string[],
-  filter: ExpSpec | undefined
+  filter: Spec.Expr | undefined
 ): TypedExprDef | undefined {
-  const context = getInitialContext(def, targets, "list");
-
-  return filter && composeExpression(def, filter, fromPath, context);
+  return filter && composeExpression(filter, fromPath);
 }
 
-export function processSelect(
-  def: Definition,
-  model: ModelDef,
-  selectAST: SelectAST | undefined,
-  namePath: string[]
-): SelectDef {
-  if (selectAST === undefined) {
-    return model.fields.map((f) => ({
-      kind: "field",
-      name: f.name,
-      alias: f.name,
-      namePath: [...namePath, f.name],
-      refKey: f.refKey,
-    }));
-  } else {
-    if (selectAST.select === undefined) {
-      // throw new Error(`Select block is missing`);
-      // for simplicity, we will allow missing nested select blocks
-      return model.fields.map((f) => ({
-        kind: "field",
-        name: f.name,
-        alias: f.name,
-        namePath: [...namePath, f.name],
-        refKey: f.refKey,
-      }));
-    }
-    const s = selectAST.select;
+export function processSelect(select: Spec.Select, parentNamePath: string[]): SelectDef {
+  return select.map((select): SelectItem => {
+    const target = select.target;
+    const namePath = [...parentNamePath, select.target.ref.name];
 
-    return Object.keys(selectAST.select).map((name: string): SelectItem => {
-      // what is this?
-      const ref = getRef.except(def, model.name, name, ["model"]);
-      if (ref.kind === "field") {
-        ensureEqual(s[name].select, undefined);
+    switch (target.ref.atomKind) {
+      case "field":
+      case "computed":
         return {
-          kind: ref.kind,
-          name,
-          alias: name,
-          namePath: [...namePath, name],
-          refKey: ref.refKey,
+          kind: target.ref.atomKind,
+          refKey: refKeyFromRef(target.ref),
+          name: target.ref.name,
+          alias: target.text,
+          namePath,
         };
-      } else if (ref.kind === "model-hook") {
+      case "hook":
         return {
-          kind: ref.kind,
-          // refKey: ref.refKey,
-          name,
-          alias: name,
-          namePath: [...namePath, name],
-          args: ref.args,
-          hook: ref.hook,
+          kind: "model-hook",
+          refKey: refKeyFromRef(target.ref),
+          name: target.ref.name,
+          alias: target.text,
+          namePath,
         };
-      } else if (ref.kind === "computed") {
-        return {
-          kind: ref.kind,
-          refKey: ref.refKey,
-          name,
-          alias: name,
-          namePath: [...namePath, name],
-        };
-      } else if (ref.kind === "aggregate") {
-        return {
-          kind: ref.kind,
-          refKey: ref.refKey,
-          name,
-          alias: name,
-          namePath: [...namePath, name],
-        };
-      } else {
-        const targetModel = getTargetModel(def, ref.refKey);
-        return {
-          kind: ref.kind,
-          name,
-          namePath: [...namePath, name],
-          alias: name,
-          select: processSelect(def, targetModel, s[name], [...namePath, name]),
-        };
+      case "reference":
+      case "relation":
+      case "query": {
+        if (select.kind === "final") {
+          return {
+            kind: "aggregate",
+            refKey: refKeyFromRef(target.ref),
+            name: target.ref.name,
+            alias: target.text,
+            namePath,
+          };
+        } else {
+          return {
+            kind: target.ref.atomKind,
+            name: target.ref.name,
+            alias: target.text,
+            namePath,
+            select: processSelect(select.select, namePath),
+          };
+        }
       }
-    });
-  }
+    }
+  });
 }
 
 export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {

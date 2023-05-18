@@ -300,7 +300,7 @@ exports[`Expressions to queries composes a complex local computed expression 1`]
   "name": "worthiness",
   "refKey": "Item.worthiness",
   "type": {
-    "kind": "unknown",
+    "kind": "integer",
     "nullable": false,
   },
 }

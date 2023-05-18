@@ -26,7 +26,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },
@@ -50,6 +49,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
           },
         ],
         "filter": undefined,
+        "isPrimary": false,
         "kind": "update-one",
         "model": "Org",
         "select": [],
@@ -98,7 +98,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [
         {
@@ -146,7 +145,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },
@@ -169,7 +167,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },
@@ -192,6 +189,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
             },
           },
         ],
+        "isPrimary": false,
         "kind": "create-one",
         "model": "Org",
         "select": [],
@@ -234,7 +232,6 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
       "select": [],
     },
@@ -270,6 +267,7 @@ exports[`compose actions native actions can create nested relations through tran
         },
       },
     ],
+    "isPrimary": true,
     "kind": "create-one",
     "model": "Repo",
     "select": [
@@ -297,7 +295,7 @@ exports[`compose actions native actions can create nested relations through tran
       },
     ],
     "targetPath": [
-      "repo",
+      "Repo",
     ],
   },
   {
@@ -317,6 +315,7 @@ exports[`compose actions native actions can create nested relations through tran
         },
       },
     ],
+    "isPrimary": false,
     "kind": "create-one",
     "model": "OrgLog",
     "select": [],
@@ -332,7 +331,7 @@ exports[`compose actions native actions can create nested relations through tran
 exports[`compose actions native actions can update deeply nested references 1`] = `
 [
   {
-    "alias": "$issue",
+    "alias": "$action_0",
     "changeset": [
       {
         "name": "repo_id",
@@ -347,6 +346,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
       },
     ],
     "filter": undefined,
+    "isPrimary": true,
     "kind": "update-one",
     "model": "Issue",
     "select": [],
@@ -371,6 +371,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
       },
     ],
     "filter": undefined,
+    "isPrimary": false,
     "kind": "update-one",
     "model": "Org",
     "select": [],
@@ -386,7 +387,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
 exports[`compose actions native actions correctly sets parent context 1`] = `
 [
   {
-    "alias": "myrepo",
+    "alias": "$action_0",
     "changeset": [
       {
         "name": "name",
@@ -412,11 +413,12 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
         },
       },
     ],
+    "isPrimary": true,
     "kind": "create-one",
     "model": "Repo",
     "select": [],
     "targetPath": [
-      "myrepo",
+      "repos",
     ],
   },
 ]
@@ -425,7 +427,7 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
 exports[`compose actions native actions sets default action if not given 1`] = `
 [
   {
-    "alias": "$org",
+    "alias": "$action_0",
     "changeset": [
       {
         "name": "name",
@@ -440,6 +442,7 @@ exports[`compose actions native actions sets default action if not given 1`] = `
       },
     ],
     "filter": undefined,
+    "isPrimary": true,
     "kind": "update-one",
     "model": "Org",
     "select": [],
@@ -455,6 +458,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
   {
     "alias": "e",
     "changeset": [],
+    "isPrimary": false,
     "kind": "create-one",
     "model": "OrgExtra",
     "select": [
@@ -477,6 +481,14 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     "alias": "org",
     "changeset": [
       {
+        "name": "is_new",
+        "setter": {
+          "kind": "literal",
+          "type": "boolean",
+          "value": true,
+        },
+      },
+      {
         "name": "name",
         "setter": {
           "fieldsetAccess": [
@@ -485,14 +497,6 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
           "kind": "fieldset-input",
           "required": true,
           "type": "text",
-        },
-      },
-      {
-        "name": "is_new",
-        "setter": {
-          "kind": "literal",
-          "type": "boolean",
-          "value": true,
         },
       },
       {
@@ -508,6 +512,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
         },
       },
     ],
+    "isPrimary": true,
     "kind": "create-one",
     "model": "Org",
     "select": [
@@ -523,7 +528,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
       },
     ],
     "targetPath": [
-      "org",
+      "Org",
     ],
   },
   {
@@ -542,6 +547,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
         },
       },
     ],
+    "isPrimary": false,
     "kind": "create-one",
     "model": "OrgOwner",
     "select": [],
@@ -558,10 +564,17 @@ exports[`compose actions native actions succeeds for basic update with a deny ru
     "alias": "ox",
     "changeset": [
       {
+        "name": "name",
+        "setter": {
+          "kind": "literal",
+          "type": "text",
+          "value": "new name",
+        },
+      },
+      {
         "name": "description",
         "setter": {
           "fieldsetAccess": [
-            "ox",
             "description",
           ],
           "kind": "fieldset-input",
@@ -573,7 +586,6 @@ exports[`compose actions native actions succeeds for basic update with a deny ru
         "name": "extras_id",
         "setter": {
           "fieldsetAccess": [
-            "ox",
             "extras_id",
           ],
           "kind": "fieldset-input",
@@ -581,16 +593,9 @@ exports[`compose actions native actions succeeds for basic update with a deny ru
           "type": "integer",
         },
       },
-      {
-        "name": "name",
-        "setter": {
-          "kind": "literal",
-          "type": "text",
-          "value": "new name",
-        },
-      },
     ],
     "filter": undefined,
+    "isPrimary": true,
     "kind": "update-one",
     "model": "Org",
     "select": [],
@@ -649,11 +654,12 @@ exports[`compose actions native actions succeeds when virtual input is defined a
         },
       },
     ],
+    "isPrimary": true,
     "kind": "create-one",
     "model": "Org",
     "select": [],
     "targetPath": [
-      "org",
+      "Org",
     ],
   },
 ]
@@ -662,7 +668,7 @@ exports[`compose actions native actions succeeds when virtual input is defined a
 exports[`compose actions native actions succeeds with arithmetic expressions in setters 1`] = `
 [
   {
-    "alias": "org",
+    "alias": "$action_0",
     "changeset": [
       {
         "name": "name",
@@ -715,11 +721,12 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
         },
       },
     ],
+    "isPrimary": true,
     "kind": "create-one",
     "model": "Org",
     "select": [],
     "targetPath": [
-      "org",
+      "Org",
     ],
   },
 ]
@@ -731,11 +738,29 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
     "alias": "ox",
     "changeset": [
       {
+        "name": "name",
+        "setter": {
+          "kind": "literal",
+          "type": "text",
+          "value": "new name",
+        },
+      },
+      {
         "name": "description",
         "setter": {
           "fieldsetAccess": [
-            "ox",
             "description",
+          ],
+          "kind": "fieldset-input",
+          "required": false,
+          "type": "text",
+        },
+      },
+      {
+        "name": "uuid",
+        "setter": {
+          "fieldsetAccess": [
+            "uuid",
           ],
           "kind": "fieldset-input",
           "required": false,
@@ -746,35 +771,15 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
         "name": "extras",
         "setter": {
           "fieldsetAccess": [
-            "ox",
             "extras_name",
           ],
           "kind": "fieldset-reference-input",
           "throughRefKey": "OrgExtra.name",
         },
       },
-      {
-        "name": "uuid",
-        "setter": {
-          "fieldsetAccess": [
-            "ox",
-            "uuid",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "text",
-        },
-      },
-      {
-        "name": "name",
-        "setter": {
-          "kind": "literal",
-          "type": "text",
-          "value": "new name",
-        },
-      },
     ],
     "filter": undefined,
+    "isPrimary": true,
     "kind": "update-one",
     "model": "Org",
     "select": [],
@@ -788,7 +793,7 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
 exports[`compose actions native actions succeeds with nested sibling reference 1`] = `
 [
   {
-    "alias": "$target_0",
+    "alias": "$action_0",
     "changeset": [
       {
         "name": "name",
@@ -816,11 +821,12 @@ exports[`compose actions native actions succeeds with nested sibling reference 1
         },
       },
     ],
+    "isPrimary": true,
     "kind": "create-one",
     "model": "Org",
     "select": [],
     "targetPath": [
-      "$target_0",
+      "Org",
     ],
   },
 ]

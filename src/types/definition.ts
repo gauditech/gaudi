@@ -1,16 +1,13 @@
-import { BinaryOperator } from "./specification";
+import { HookCode } from "@src/types/common";
 
 export type Definition = {
   models: ModelDef[];
   entrypoints: EntrypointDef[];
-  resolveOrder: string[];
   populators: PopulatorDef[];
   runtimes: ExecutionRuntimeDef[];
   authenticator: AuthenticatorDef | undefined;
   generators: GeneratorDef[];
 };
-
-export type AuthDef = { baseRefKey: string; localRefKey: string; accessTokenRefKey: string };
 
 export type ModelDef = {
   kind: "model";
@@ -109,10 +106,10 @@ export type ModelHookDef = {
   refKey: string;
   name: string;
   args: { name: string; query: QueryDef }[];
-  hook: HookDef;
+  hook: HookCode;
 };
 
-type VariablePrimitiveType = {
+export type VariablePrimitiveType = {
   kind: "integer" | "text" | "boolean" | "unknown" | "null";
   nullable: boolean;
 };
@@ -132,6 +129,22 @@ export type LiteralValueDef =
 
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
 type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
+
+export type BinaryOperator =
+  | "or"
+  | "and"
+  | "is not"
+  | "is"
+  | "not in"
+  | "in"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "+"
+  | "-"
+  | "/"
+  | "*";
 
 export type FunctionName =
   | BinaryOperator
@@ -175,7 +188,6 @@ export type TargetDef = {
   kind: "model" | "reference" | "relation" | "query";
   name: string;
   namePath: string[];
-  refKey: string;
   retType: string;
   alias: string;
   identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
@@ -183,14 +195,6 @@ export type TargetDef = {
 
 export type TargetWithSelectDef = TargetDef & { select: SelectDef };
 
-export type EndpointType =
-  | "list"
-  | "get"
-  | "create"
-  | "update"
-  | "delete"
-  | "custom-one"
-  | "custom-many";
 export type EndpointHttpMethod = "GET" | "POST" | /*"PUT" |*/ "PATCH" | "DELETE";
 
 export type EndpointDef =
@@ -313,15 +317,12 @@ export type SelectAggregateItem = {
   namePath: string[];
 };
 
-// FIXME add refKey instead of args and code
 export type SelectHookItem = {
   kind: "model-hook";
-  // refKey: string;
+  refKey: string;
   name: string;
   alias: string;
   namePath: string[];
-  args: { name: string; query: QueryDef }[];
-  hook: HookDef;
 };
 
 export type DeepSelectItem = {
@@ -432,7 +433,7 @@ export interface IsTextEqual extends IValidatorDef {
 export interface HookValidator {
   name: "hook";
   arg?: string;
-  hook: HookDef;
+  hook: HookCode;
 }
 export interface NoReferenceValidator {
   name: "noReference";
@@ -458,6 +459,7 @@ export type CreateOneAction = {
   targetPath: string[];
   changeset: ChangesetDef;
   select: SelectDef;
+  isPrimary: boolean;
 };
 
 export type UpdateOneAction = {
@@ -468,6 +470,7 @@ export type UpdateOneAction = {
   filter: TypedExprDef;
   changeset: ChangesetDef;
   select: SelectDef;
+  isPrimary: boolean;
 };
 
 export type DeleteOneAction = {
@@ -497,7 +500,7 @@ export type FetchOneAction = {
 };
 
 export type ActionHookDef = {
-  hook: HookDef;
+  hook: HookCode;
   args: ChangesetDef;
 };
 
@@ -540,27 +543,13 @@ export type PopulatorDef = {
 };
 
 export type PopulateDef = {
-  name: string;
   target: TargetDef;
   actions: ActionDef[];
   populates: PopulateDef[];
   repeater: RepeaterDef;
 };
 
-export type PopulateTargetDef = {
-  kind: "model" | "reference" | "relation"; // TODO: can we add "query" here?
-  name: string;
-  namePath: string[];
-  refKey: string;
-  retType: string;
-  alias: string;
-};
-
 export type RepeaterDef = { alias?: string; start: number; end: number };
-
-// TODO: this is very much alike to `FieldSetter` def
-export type PopulateSetter = LiteralValueDef | FieldSetterReferenceValue | FieldSetterHook;
-// TODO: add populator hints
 
 export type FieldSetterChangesetReference = {
   kind: "changeset-reference";
@@ -585,7 +574,7 @@ export type FieldSetterContextReference = {
 
 export type FieldSetterHook = {
   kind: "fieldset-hook";
-  hook: HookDef;
+  hook: HookCode;
   args: ChangesetDef;
 };
 
@@ -608,19 +597,9 @@ export type FieldSetter =
   | FieldSetterContextReference
   | FieldSetterQuery;
 
-export type HookDef = {
-  runtimeName: string;
-  code: HookCodeDef;
-};
-
-export type HookCodeDef =
-  | { kind: "inline"; inline: string }
-  | { kind: "source"; target: string; file: string };
-
 export type ExecutionRuntimeDef = {
   name: string;
   type: RuntimeEngineType;
-  default: boolean;
   sourcePath: string;
 };
 

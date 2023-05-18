@@ -36,6 +36,8 @@ model Student {
 entrypoint Class {
   create endpoint {
     action {
+      create {}
+
       // test query in fetch action
       fetch as fClass {
         query {
