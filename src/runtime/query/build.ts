@@ -91,16 +91,6 @@ export function selectableId(def: Definition, namePath: NamePath): SelectableIte
   };
 }
 
-export function selectableId2(model: string, namePath: NamePath): SelectableItem {
-  return {
-    kind: "field",
-    alias: "id",
-    name: "id",
-    namePath: [...namePath, "id"],
-    refKey: `${model}.id`,
-  };
-}
-
 /**
  * Query builder
  */
@@ -171,67 +161,6 @@ export function queryFromParts(
     name,
     // retCardinality: "many", // FIXME,
     retType: getPathRetType(def, fromPath).refKey,
-    select,
-    orderBy,
-    limit,
-    offset,
-  };
-}
-
-export function queryFromParts2(
-  sourceModel: string,
-  targetModel: string,
-  name: string,
-  fromPath: NamePath,
-  filter: TypedExprDef,
-  select: SelectDef,
-  orderBy?: QueryOrderByAtomDef[],
-  limit?: number,
-  offset?: number
-): QueryDef {
-  if (select.length === 0) {
-    return queryFromParts2(
-      sourceModel,
-      targetModel,
-      name,
-      fromPath,
-      filter,
-      [selectableId2(sourceModel, fromPath)],
-      orderBy,
-      limit,
-      offset
-    );
-  }
-  select.forEach((selItem) => {
-    if (selItem.alias === "__join_connection") {
-      /* We currently make exception for `__join_connection` field as it's the only selectable
-        not being in `fromPath`.
-        Otherwise, we ensure that only the leaf of the `fromPath` can be selected,
-        since we expect `retType` to match leaf model, we can't select from other (non-leaf) models.
-       */
-      return;
-    }
-    ensureEqual(
-      _.isEqual(fromPath, _.initial(selItem.namePath)),
-      true,
-      `Path ${fromPath.join(".")} selects ${selItem.namePath.join(".")} as ${selItem.alias}`
-    );
-  });
-
-  const filterPaths = getFilterPaths(filter);
-  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
-  const direct = getDirectChildren(paths);
-  ensureEqual(direct.length, 1);
-
-  return {
-    kind: "query",
-    refKey: "N/A",
-    modelRefKey: sourceModel,
-    filter,
-    fromPath,
-    name,
-    // retCardinality: "many", // FIXME,
-    retType: targetModel,
     select,
     orderBy,
     limit,

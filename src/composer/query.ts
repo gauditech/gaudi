@@ -2,7 +2,6 @@ import _ from "lodash";
 
 import { processSelect } from "@src/composer/entrypoints";
 import { getTypedLiteralValue } from "@src/composer/utils";
-import { queryFromParts2 } from "@src/runtime/query/build";
 import {
   AggregateDef,
   FunctionName,
@@ -22,6 +21,15 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
   const filter = qspec.filter && composeExpression(qspec.filter, fromPath);
 
   const select = processSelect(qspec.select, fromPath);
+  if (select.length === 0) {
+    select.push({
+      kind: "field",
+      alias: "id",
+      name: "id",
+      namePath: [...fromPath, "id"],
+      refKey: `${qspec.sourceModel}.id`,
+    });
+  }
 
   const orderBy = qspec.orderBy?.map(
     ({ field, order }): QueryOrderByAtomDef => ({
@@ -30,17 +38,20 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     })
   );
 
-  return queryFromParts2(
-    qspec.sourceModel,
-    qspec.targetModel,
-    qspec.name,
-    fromPath,
+  return {
+    kind: "query",
+    refKey: "N/A",
+    modelRefKey: qspec.sourceModel,
     filter,
+    fromPath,
+    name: qspec.name,
+    // retCardinality: "many", // FIXME,
+    retType: qspec.targetModel,
     select,
     orderBy,
-    qspec.limit,
-    qspec.offset
-  );
+    limit: qspec.limit,
+    offset: qspec.offset,
+  };
 }
 
 export function composeAggregate(qspec: Spec.Query): AggregateDef {

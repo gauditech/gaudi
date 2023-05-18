@@ -161,7 +161,7 @@ function defineRelation(rspec: Spec.Relation): RelationDef {
 function defineQuery(qspec: Spec.Query): QueryDef {
   const refKey = `${qspec.sourceModel}.${qspec.name}`;
 
-  const query = queryFromSpec(qspec);
+  const query = composeQuery(qspec);
   query.refKey = refKey;
   query.select = []; // FIXME ??
 
@@ -171,7 +171,7 @@ function defineQuery(qspec: Spec.Query): QueryDef {
 function defineAggregate(qspec: Spec.Query): AggregateDef {
   const refKey = `${qspec.sourceModel}.${qspec.name}`;
 
-  const query = aggregateFromSpec(qspec);
+  const query = composeAggregate(qspec);
   query.refKey = refKey;
 
   return query;
@@ -180,7 +180,7 @@ function defineAggregate(qspec: Spec.Query): AggregateDef {
 function defineModelHook(hspec: Spec.ModelHook): ModelHookDef {
   const args = hspec.args.map(({ name, query }) => ({
     name,
-    query: queryFromSpec(query),
+    query: composeQuery(query),
   }));
 
   return {
@@ -190,14 +190,6 @@ function defineModelHook(hspec: Spec.ModelHook): ModelHookDef {
     args,
     hook: hspec.code,
   };
-}
-
-export function queryFromSpec(qspec: Spec.Query): QueryDef {
-  return composeQuery(qspec);
-}
-
-function aggregateFromSpec(qspec: Spec.Query): AggregateDef {
-  return composeAggregate(qspec);
 }
 
 export function validateFieldType(type: string): FieldDef["type"] {
