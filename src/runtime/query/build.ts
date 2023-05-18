@@ -4,10 +4,10 @@ import { mkJoinConnection } from "./stringify";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
+import { HookCode } from "@src/types/common";
 import {
   DeepSelectItem,
   Definition,
-  HookDef,
   ModelDef,
   QueryDef,
   QueryOrderByAtomDef,
@@ -26,7 +26,7 @@ export type QueryTree = {
   hooks: {
     name: string;
     args: { name: string; query: QueryTree }[];
-    hook: HookDef;
+    hook: HookCode;
   }[];
   related: QueryTree[];
 };
@@ -201,22 +201,25 @@ export function getFilterPaths(filter: TypedExprDef): string[][] {
 
 export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
   const query = { ...q, select: selectToSelectable(q.select) };
-  const hooks = selectToHooks(q.select).map(({ name, args, hook }) => ({
-    name,
-    args: args.map(({ name, query }) => {
-      // apply a batching filter
-      const filter = applyFilterIdInContext(query.fromPath, query.filter);
-      // select the __join_connection
-      const conn = mkJoinConnection(getRef.model(def, _.first(query.fromPath)!));
-      const select = [...query.select, conn];
+  const hooks = selectToHooks(q.select).map(({ name, refKey }) => {
+    const modelHook = getRef.modelHook(def, refKey);
+    return {
+      name,
+      args: modelHook.args.map(({ name, query }) => {
+        // apply a batching filter
+        const filter = applyFilterIdInContext(query.fromPath, query.filter);
+        // select the __join_connection
+        const conn = mkJoinConnection(getRef.model(def, _.first(query.fromPath)!));
+        const select = [...query.select, conn];
 
-      return {
-        name,
-        query: buildQueryTree(def, { ...query, filter, select }),
-      };
-    }),
-    hook,
-  }));
+        return {
+          name,
+          query: buildQueryTree(def, { ...query, filter, select }),
+        };
+      }),
+      hook: modelHook.hook,
+    };
+  });
   const model = getRef.model(def, query.retType);
 
   return {

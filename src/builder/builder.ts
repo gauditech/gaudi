@@ -3,7 +3,6 @@ import path from "path";
 
 import { DiagnosticCategory, ModuleKind, Project, ScriptTarget } from "ts-morph";
 
-import { buildEntrypoints } from "@src/builder/admin";
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
   BuildApiClientData,
@@ -100,8 +99,7 @@ export async function buildApiClients(
               entrypoints = definition.entrypoints;
               break;
             case "model":
-              entrypoints = buildEntrypoints(definition);
-              break;
+              throw Error(`"api model" is not implemented`);
             default:
               assertUnreachable(g.api);
           }

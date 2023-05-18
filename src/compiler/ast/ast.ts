@@ -82,7 +82,7 @@ export type QueryAtom = { keyword: TokenData } & (
   | { kind: "select"; select: Select }
   | { kind: "aggregate"; aggregate: AggregateType }
 );
-export type AggregateType = "count" | "one" | "first";
+export type AggregateType = "count" | "sum" | "one" | "first";
 export type OrderBy = (
   | {
       identifierPath: IdentifierRef[];
@@ -157,6 +157,7 @@ export type ModelAction = {
   target?: IdentifierRef[];
   as?: { keyword: TokenData; identifier: IdentifierRef };
   atoms: ModelActionAtom[];
+  isPrimary?: true;
 };
 export type ModelActionAtom =
   | ActionAtomSet
@@ -169,6 +170,7 @@ export type DeleteAction = {
   kind: "delete";
   keyword: TokenData;
   target?: IdentifierRef[];
+  isPrimary?: true;
 };
 
 export type ExecuteAction = {
@@ -330,7 +332,7 @@ export type Hook<named extends boolean, simple extends boolean> = {
         keywordFrom: TokenData;
         name: Identifier;
         file: StringLiteral;
-        runtimePath?: string;
+        runtime?: string;
       }
     | { kind: "inline"; keyword: TokenData; code: StringLiteral }
     | { kind: "runtime"; keyword: TokenData; identifier: Identifier }
@@ -397,23 +399,72 @@ export type StringLiteral = { kind: "string"; value: string; token: TokenData };
 
 export type RefUnresolved = { kind: "unresolved" };
 export type RefModel = { kind: "model"; model: string };
-export type RefModelAtom = {
+export type RefModelAtom =
+  | RefModelField
+  | RefModelReference
+  | RefModelRelation
+  | RefModelQuery
+  | RefModelComputed
+  | RefModelHook;
+
+export type RefModelField = {
   kind: "modelAtom";
-  atomKind: ModelAtom["kind"];
+  atomKind: "field";
+  parentModel: string;
+  name: string;
+  unique: boolean;
+};
+export type RefModelReference = {
+  kind: "modelAtom";
+  atomKind: "reference";
+  parentModel: string;
   name: string;
   model: string;
   unique: boolean;
 };
+export type RefModelRelation = {
+  kind: "modelAtom";
+  atomKind: "relation";
+  parentModel: string;
+  name: string;
+  model: string;
+  through: string;
+};
+export type RefModelQuery = {
+  kind: "modelAtom";
+  atomKind: "query";
+  parentModel: string;
+  name: string;
+  model: string;
+};
+export type RefModelComputed = {
+  kind: "modelAtom";
+  atomKind: "computed";
+  parentModel: string;
+  name: string;
+};
+export type RefModelHook = {
+  kind: "modelAtom";
+  atomKind: "hook";
+  parentModel: string;
+  name: string;
+};
+
+export type RefQueryTarget = {
+  kind: "queryTarget";
+  path: string[];
+};
 export type ContextKind =
   | "entrypointTarget"
   | "populateTarget"
-  | "fetch"
+  | "actionAlias"
   | "virtualInput"
   | "repeat"
+  | "auth"
   | "authToken"
   | "struct";
 export type RefContext = { kind: "context"; contextKind: ContextKind };
-export type Ref = RefUnresolved | RefModel | RefModelAtom | RefContext;
+export type Ref = RefUnresolved | RefModel | RefModelAtom | RefQueryTarget | RefContext;
 
 export const unresolvedRef: Ref = { kind: "unresolved" };
 
@@ -421,8 +472,3 @@ export type Identifier = { text: string; token: TokenData };
 export type IdentifierRef = { identifier: Identifier; ref: Ref; type: Type };
 
 export type TokenData = { start: number; end: number };
-
-export type Parsed = "parsed";
-export type Resolved = "resolved";
-export type Typed = "typed";
-export type Stage = Parsed | Resolved | Typed;

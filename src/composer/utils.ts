@@ -1,10 +1,13 @@
 import _ from "lodash";
 
-import { FilteredByKind } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
-import { ensureEqual, ensureNot } from "@src/common/utils";
+import * as AST from "@src/compiler/ast/ast";
 import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
 import { LiteralValue } from "@src/types/specification";
+
+export function refKeyFromRef(ref: AST.RefModel | AST.RefModelAtom): string {
+  return ref.kind === "model" ? ref.model : `${ref.parentModel}.${ref.name}`;
+}
 
 export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
   if (typeof literal === "string") {
@@ -58,66 +61,12 @@ export type TypedPath = {
   leaf: TypedPathItemField | TypedPathItemComputed | TypedPathItemAggregate | null;
 };
 
-export type TypedIterator = {
-  name: string;
-  leaf: "start" | "end" | "current" | null;
-};
-
-export type TypedRequestPath = TypedRequestAuthToken;
-export type TypedRequestAuthToken = {
-  kind: "request-auth-token";
-  access: string[];
-};
-
 export type VarContext = Record<string, ContextRecord | undefined>;
 type ContextRecord =
   | { kind: "record"; modelName: string }
   | { kind: "iterator" }
   | { kind: "requestAuthToken" }
   | { kind: "changeset-value"; keys: string[] };
-
-export function getTypedIterator(def: Definition, path: string[], ctx: VarContext): TypedIterator {
-  if (path[0] in ctx) {
-    // we can either reference the whole iterator, which is path === path[0], or some of the fixed fields
-    if (path.length === 1) {
-      return { name: path[0], leaf: null };
-    }
-    ensureEqual(path.length, 2);
-    ensureEqual(
-      ["start", "end", "current"].includes(path[1]),
-      true,
-      `Path ${path[1]} is not valid in iterator`
-    );
-    return { name: path[0], leaf: path[1] as never };
-  } else {
-    throw new Error(`Iterator with name ${path[0]} is not in the context`);
-  }
-}
-
-export function getTypedChangesetContext(path: string[], ctx: VarContext): void {
-  ensureEqual(path.length, 2, `Changeset path can't be nested: ${path.join(".")}`);
-  const [name, value] = path;
-  const chx = ctx[name] as FilteredByKind<ContextRecord, "changeset-value">;
-  ensureEqual(chx.kind, "changeset-value");
-  ensureEqual(_.includes(chx.keys, value), true, `${value} is not in the changeset context`);
-}
-
-export function getTypedRequestPath(path: string[], ctx: VarContext): TypedRequestPath {
-  const [prefix, ...rest] = path;
-
-  if (prefix === "@requestAuthToken") {
-    ensureEqual(rest.length, 0, `Additional "${prefix}" path ${rest.join(".")} is not supported`);
-
-    ensureNot(ctx[prefix], undefined, `${prefix} is not in the context`);
-
-    return {
-      kind: "request-auth-token",
-      access: ["user", "token"],
-    };
-  } else {
-    throw new Error(`Invalid HTTP handler context type "${path}"`);
-  }
-}
 
 export function getTypedPath(def: Definition, path: string[], ctx: VarContext): TypedPath {
   if (_.isEmpty(path)) {

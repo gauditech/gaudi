@@ -56,10 +56,11 @@ generate client {
   api entrypoint
 }
 
-generate client {
-  target js
-  api model
-}
+// "api model" is not implemented
+//generate client {
+//  target js
+//  api model
+//}
 
 ${bp}
 `;
