@@ -1,12 +1,8 @@
 import _ from "lodash";
 
-import { VarContext } from "./utils";
-
-import { getRef } from "@src/common/refs";
 import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
 import {
-  TargetContext,
   calculateTarget,
   collectActionDeps,
   wrapActionsWithSelect,
@@ -17,50 +13,37 @@ import {
   PopulateDef,
   PopulatorDef,
   RepeaterDef,
+  TargetDef,
 } from "@src/types/definition";
-import { ActionSpec, PopulateSpec, PopulatorSpec, RepeaterSpec } from "@src/types/specification";
+import * as Spec from "@src/types/specification";
 
-export function composePopulators(def: Definition, populators: PopulatorSpec[]): void {
+export function composePopulators(def: Definition, populators: Spec.Populator[]): void {
   def.populators = populators.map((p) => processPopulator(def, p));
 }
 
-function processPopulator(def: Definition, populator: PopulatorSpec): PopulatorDef {
+function processPopulator(def: Definition, populator: Spec.Populator): PopulatorDef {
   return {
     name: populator.name,
-    populates: populator.populates.map((p) => processPopulate(def, [], p, {} as VarContext)),
+    populates: populator.populates.map((p) => processPopulate(def, [], [], p)),
   };
 }
 
 function processPopulate(
   def: Definition,
-  parents: TargetContext[],
-  populateSpec: PopulateSpec,
-  ctx: VarContext
+  parents: TargetDef[],
+  parentNamePath: string[],
+  populateSpec: Spec.Populate
 ): PopulateDef {
-  const name = populateSpec.name;
-  const target = calculateTarget(
-    def,
-    parents,
-    populateSpec.target.identifier,
-    populateSpec.target.alias ?? null,
-    populateSpec.identify || "id"
-  );
-  const targetModel = getRef.model(def, target.retType);
+  const namePath = [...parentNamePath, populateSpec.target.text];
+  const target = calculateTarget(populateSpec, namePath);
 
-  const currentContext = {
-    target,
-    model: targetModel,
-    authorize: { expr: undefined, deps: [] },
-  };
-  const targetParents: TargetContext[] = [...parents, currentContext];
+  const targetParents = [...parents, target];
 
-  const thisCtx = updateCtx(ctx, populateSpec.repeater);
-
-  const rawActions = composeAction(def, populateSpec, targetParents, thisCtx);
+  const rawActions = composeAction(populateSpec);
   checkActionChangeset(rawActions);
 
   const populates = populateSpec.populates.map((p) =>
-    processPopulate(def, targetParents, p, thisCtx)
+    processPopulate(def, targetParents, namePath, p)
   );
   const subactions = populates.flatMap((p) => p.actions);
 
@@ -71,7 +54,6 @@ function processPopulate(
   const repeater = composeRepeater(populateSpec.repeater);
 
   return {
-    name,
     target,
     actions,
     populates,
@@ -79,38 +61,17 @@ function processPopulate(
   };
 }
 
-function updateCtx(ctx: VarContext, repeater: PopulateSpec["repeater"]): VarContext {
-  if (!repeater?.alias) {
-    return ctx;
-  }
-  const alias = repeater.alias;
-  if (alias in ctx) {
-    throw new Error(`Shadowing iterator names is not allowed: ${alias}`);
-  } else {
-    return { ...ctx, [alias]: { kind: "iterator" } };
-  }
-}
-
-function composeAction(
-  def: Definition,
-  populate: PopulateSpec,
-  parents: TargetContext[],
-  ctx: VarContext
-): ActionDef[] {
-  const targets = parents.map((p) => p.target);
-
-  const targetPath = undefined;
-  const alias = undefined;
-
-  const actionSpec: ActionSpec = {
+function composeAction(populate: Spec.Populate): ActionDef[] {
+  const actionSpec: Spec.Action = {
     kind: "create",
     // TODO: add default targetPath, alias
-    targetPath,
-    alias,
+    targetPath: [populate.target],
+    alias: populate.alias.text,
     actionAtoms: populate.setters,
+    isPrimary: false,
   };
 
-  return composeActionBlock(def, [actionSpec], targets, "create", ctx);
+  return composeActionBlock([actionSpec]);
 }
 
 /**
@@ -156,7 +117,7 @@ function checkActionChangeset(action: ActionDef | ActionDef[]) {
   });
 }
 
-function composeRepeater(repeat?: RepeaterSpec): RepeaterDef {
+function composeRepeater(repeat?: Spec.Repeater): RepeaterDef {
   // if empty, default to 1s
   if (repeat == null) {
     return { start: 1, end: 1 };

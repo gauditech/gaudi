@@ -1,6 +1,5 @@
 import { compileToAST } from "../index";
-
-import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
+import { authUserModelName } from "../plugins/authenticator";
 
 function expectError(source: string, errorMessage: string) {
   const { errors } = compileToAST(source);
@@ -336,12 +335,12 @@ describe("compiler errors", () => {
   describe("authenticator", () => {
     it("fails if authenticator model names are already taken", () => {
       const bp1 = `
-        model ${AUTH_TARGET_MODEL_NAME} {}
+        model ${authUserModelName} {}
         auth { method basic {} }
         `;
       expectError(bp1, `Duplicate model definition`);
       const bp2 = `
-        model ${AUTH_TARGET_MODEL_NAME}AccessToken {}
+        model ${authUserModelName}AccessToken {}
         auth { method basic {} }
         `;
       expectError(bp2, `Duplicate model definition`);

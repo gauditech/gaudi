@@ -12,6 +12,7 @@ import {
   Computed,
   DeleteAction,
   Endpoint,
+  EndpointType,
   Entrypoint,
   ExecuteAction,
   Expr,
@@ -54,6 +55,7 @@ import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
 import { FilteredByKind, kindFilter, kindFind } from "@src/common/kindFilter";
+import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 
 type Scope = {
   environment: "model" | "entrypoint";
@@ -180,10 +182,8 @@ function getTypeGuardOperation(expr: Expr): TypeGuardOperation | undefined {
     case "unknown":
     case "nullable":
       return undefined;
-    case "primitive": {
-      if (expr.type.primitiveKind === "null") return "null";
-      else return "notNull";
-    }
+    case "null":
+      return "null";
     default:
       return "notNull";
   }
@@ -204,8 +204,13 @@ export function resolve(projectASTs: ProjectASTs) {
     return kindFilter(getSumDocument(), "model");
   }
 
-  function getAllRuntimes(): Runtime[] {
-    return kindFilter(getSumDocument(), "runtime");
+  /**
+   * Note that code can't see runtimes of plugins. This is on purpose so that
+   * Code can have one runtime and that would be a default runtime without
+   * using default keyword.
+   */
+  function getRuntimes(): Runtime[] {
+    return kindFilter(projectASTs.document, "runtime");
   }
 
   function resolveDocument(document: GlobalAtom[]) {
@@ -262,8 +267,8 @@ export function resolve(projectASTs: ProjectASTs) {
     field.ref = {
       kind: "modelAtom",
       atomKind: "field",
+      parentModel: model.name.text,
       name: field.name.text,
-      model: model.name.text,
       unique: !!kindFind(field.atoms, "unique"),
     };
 
@@ -291,17 +296,19 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveReference(model: Model, reference: Reference) {
     const to = kindFind(reference.atoms, "to");
-    if (to) resolveModelRef(to.identifier);
-
-    reference.ref = {
-      kind: "modelAtom",
-      atomKind: "reference",
-      name: reference.name.text,
-      model: model.name.text,
-      unique: !!kindFind(reference.atoms, "unique"),
-    };
+    if (to) {
+      resolveModelRef(to.identifier);
+    }
 
     if (to?.identifier.ref.kind === "model") {
+      reference.ref = {
+        kind: "modelAtom",
+        atomKind: "reference",
+        parentModel: model.name.text,
+        name: reference.name.text,
+        model: to.identifier.ref.model,
+        unique: !!kindFind(reference.atoms, "unique"),
+      };
       let type: Type = { kind: "model", model: to.identifier.ref.model };
       const nullable = kindFind(reference.atoms, "nullable");
       if (nullable) type = addTypeModifier(type, "nullable");
@@ -328,30 +335,34 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
 
-    relation.ref = {
-      kind: "modelAtom",
-      atomKind: "relation",
-      name: relation.name.text,
-      model: model.name.text,
-      unique: false,
-    };
+    if (
+      from?.identifier.ref.kind === "model" &&
+      through?.identifier.ref.kind === "modelAtom" &&
+      through.identifier.ref.atomKind === "reference"
+    ) {
+      relation.ref = {
+        kind: "modelAtom",
+        atomKind: "relation",
+        parentModel: model.name.text,
+        name: relation.name.text,
+        model: from.identifier.ref.model,
+        through: through.identifier.ref.name,
+      };
 
-    if (from?.identifier.ref.kind === "model") {
       const type: Type = { kind: "model", model: from.identifier.ref.model };
-      const isOne =
-        through && through.identifier.ref.kind === "modelAtom" && through.identifier.ref.unique;
+      const isOne = through.identifier.ref.unique;
       relation.type = addTypeModifier(type, isOne ? "nullable" : "collection");
     }
   }
 
   function resolveQuery(query: Query | AnonymousQuery, parentScope: Scope) {
     let currentModel: string | undefined;
-    const scope = _.cloneDeep(parentScope);
+    const scope: Scope = _.cloneDeep({ ...parentScope, environment: "model" });
     let cardinality = "one" as TypeCardinality;
 
     const from = kindFind(query.atoms, "from");
     if (from) {
-      resolveIdentifierRefPath(from.identifierPath, parentScope, true);
+      resolveIdentifierRefPath(from.identifierPath, parentScope, { allowGlobal: true });
       from.identifierPath.forEach((identifier) => {
         currentModel = getTypeModel(identifier.type);
         cardinality = getTypeCardinality(identifier.type, cardinality);
@@ -359,9 +370,16 @@ export function resolve(projectASTs: ProjectASTs) {
       });
 
       if (from.as) {
+        const rootRef = from.identifierPath[0].ref;
+        // TODO: what if root is "context" or another "queryTarget"
+        const initialPath = rootRef.kind === "modelAtom" ? [rootRef.parentModel] : [];
         from.as.identifierPath.forEach((as, i) => {
           const target = from.identifierPath[i];
-          as.ref = target.ref;
+          const path = [
+            ...initialPath,
+            ...from.identifierPath.slice(0, i + 1).map((i) => i.identifier.text),
+          ];
+          as.ref = { kind: "queryTarget", path };
           as.type = target.type;
           addToScope(scope, as);
         });
@@ -415,13 +433,13 @@ export function resolve(projectASTs: ProjectASTs) {
           break;
       }
 
-      if (query.kind === "query") {
+      if (query.kind === "query" && parentScope.model) {
         query.ref = {
           kind: "modelAtom",
           atomKind: "query",
+          parentModel: parentScope.model,
           name: query.name.text,
           model: currentModel,
-          unique: false,
         };
       }
     }
@@ -469,9 +487,8 @@ export function resolve(projectASTs: ProjectASTs) {
     computed.ref = {
       kind: "modelAtom",
       atomKind: "computed",
+      parentModel: model.name.text,
       name: computed.name.text,
-      model: model.name.text,
-      unique: false,
     };
 
     const exprType = computed.expr.type;
@@ -587,14 +604,35 @@ export function resolve(projectASTs: ProjectASTs) {
     const action = kindFind(endpoint.atoms, "action");
     if (action) {
       action.actions.forEach((action) => {
-        resolveAction(action, model, scope);
+        resolveAction(action, endpoint.type, model, alias, scope);
       });
+
+      // check for primary action
+      if (endpoint.type === "create" || endpoint.type === "update" || endpoint.type === "delete") {
+        let hasPrimary = false;
+        for (const a of action.actions) {
+          if (a.kind === endpoint.type && a.isPrimary) {
+            if (hasPrimary) {
+              errors.push(
+                new CompilerError(a.keyword, ErrorCode.ActionBlockAlreadyHasPrimaryAction)
+              );
+            } else {
+              hasPrimary = true;
+            }
+          }
+        }
+        if (!hasPrimary) {
+          errors.push(
+            new CompilerError(action.keyword, ErrorCode.ActionBlockDoesNotHavePrimaryAciton)
+          );
+        }
+      }
     }
     const orderBy = kindFind(endpoint.atoms, "orderBy");
     if (orderBy) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
-      const modelScope = { ...scope, model };
+      const modelScope: Scope = { ...scope, model, environment: "model" };
       orderBy.orderBy.forEach((orderBy) =>
         resolveIdentifierRefPath(orderBy.identifierPath, modelScope)
       );
@@ -604,26 +642,38 @@ export function resolve(projectASTs: ProjectASTs) {
     if (filter) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
-      const modelScope = { ...scope, model };
+      const modelScope: Scope = { ...scope, model, environment: "model" };
       resolveExpression(filter.expr, modelScope);
     }
   }
 
-  function resolveAction(action: Action, parentModel: string | undefined, scope: Scope) {
+  function resolveAction(
+    action: Action,
+    endpointType: EndpointType,
+    parentModel: string | undefined,
+    targetAlias: IdentifierRef | undefined,
+    scope: Scope
+  ) {
     match(action)
       .with({ kind: "create" }, { kind: "update" }, (action) =>
-        resolveModelAction(action, parentModel, scope)
+        resolveModelAction(action, endpointType, parentModel, targetAlias, scope)
       )
-      .with({ kind: "delete" }, (action) => resolveDeleteAction(action, scope))
+      .with({ kind: "delete" }, (action) => resolveDeleteAction(action, endpointType, scope))
       .with({ kind: "execute" }, (action) => resolveExecuteAction(action, scope))
       .with({ kind: "fetch" }, (action) => resolveFetchAction(action, scope))
       .exhaustive();
   }
 
-  function resolveModelAction(action: ModelAction, parentModel: string | undefined, scope: Scope) {
+  function resolveModelAction(
+    action: ModelAction,
+    endpointType: EndpointType,
+    parentModel: string | undefined,
+    targetAlias: IdentifierRef | undefined,
+    scope: Scope
+  ) {
     let currentModel: string | undefined = parentModel;
     if (action.target) {
-      resolveIdentifierRefPath(action.target, scope, action.kind === "create");
+      resolveIdentifierRefPath(action.target, scope, { allowGlobal: action.kind === "create" });
       const lastTarget = action.target.at(-1);
       currentModel = getTypeModel(lastTarget?.type);
 
@@ -647,9 +697,30 @@ export function resolve(projectASTs: ProjectASTs) {
             );
         }
       }
+
+      // check if target is primary action
+      if (action.target.length === 1 && endpointType === action.kind) {
+        const primaryTarget = action.kind === "update" ? targetAlias?.identifier.text : parentModel;
+        if (action.target[0].identifier.text === primaryTarget) {
+          action.isPrimary = true;
+        }
+      }
+    } else {
+      // action without target must be primary action
+      if (endpointType === action.kind) {
+        action.isPrimary = true;
+      } else {
+        errors.push(
+          new CompilerError(action.keyword, ErrorCode.PrimaryActionInWrongEntrypoint, {
+            action: action.kind,
+            endpoint: endpointType,
+          })
+        );
+      }
     }
+
     if (currentModel && action.as) {
-      action.as.identifier.ref = { kind: "model", model: currentModel };
+      action.as.identifier.ref = { kind: "context", contextKind: "actionAlias" };
       action.as.identifier.type = { kind: "model", model: currentModel };
       addToScope(scope, action.as.identifier);
     }
@@ -705,9 +776,21 @@ export function resolve(projectASTs: ProjectASTs) {
     });
   }
 
-  function resolveDeleteAction(action: DeleteAction, scope: Scope) {
+  function resolveDeleteAction(action: DeleteAction, endpointType: EndpointType, scope: Scope) {
     if (action.target) {
-      resolveIdentifierRefPath(action.target, scope, true);
+      resolveIdentifierRefPath(action.target, scope);
+    } else {
+      // action without target must be primary action
+      if (endpointType === action.kind) {
+        action.isPrimary = true;
+      } else {
+        errors.push(
+          new CompilerError(action.keyword, ErrorCode.PrimaryActionInWrongEntrypoint, {
+            action: action.kind,
+            endpoint: endpointType,
+          })
+        );
+      }
     }
   }
 
@@ -729,7 +812,7 @@ export function resolve(projectASTs: ProjectASTs) {
       // TODO: for now, we magicaly get non modified type from fetch query
       const identifier: IdentifierRef = {
         identifier: action.name,
-        ref: { kind: "context", contextKind: "fetch" },
+        ref: { kind: "context", contextKind: "actionAlias" },
         type: removeTypeModifier(query.type, "collection", "nullable"),
       };
       addToScope(scope, identifier);
@@ -798,6 +881,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (relation) {
         through = kindFind(relation.atoms, "through")?.identifier.identifier.text;
       }
+      populate.target.type = removeTypeModifier(populate.target.type, "collection", "nullable");
       currentModel = getTypeModel(populate.target.type);
     }
     scope.model = currentModel;
@@ -878,9 +962,8 @@ export function resolve(projectASTs: ProjectASTs) {
       hook.ref = {
         kind: "modelAtom",
         atomKind: "hook",
+        parentModel: scope.model,
         name: hook.name.text,
-        model: scope.model,
-        unique: false,
       };
     }
   }
@@ -898,7 +981,7 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveHook(hook: Hook<boolean, boolean>) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
-      const runtimes = kindFilter(getAllRuntimes(), "runtime");
+      const runtimes = getRuntimes();
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
       let runtime: Runtime | undefined = undefined;
@@ -906,13 +989,16 @@ export function resolve(projectASTs: ProjectASTs) {
         runtime = runtimes.find((r) => r.name.text === runtimeAtom.identifier.text);
       } else {
         runtime = runtimes.find((r) => kindFind(r.atoms, "default"));
+        if (!runtime && runtimes.length === 1) {
+          runtime = runtimes[0];
+        }
       }
 
+      const internalExecRuntimeName = getInternalExecutionRuntimeName();
       if (runtime) {
-        const runtimePath = kindFind(runtime.atoms, "sourcePath")?.path.value;
-        if (runtimePath) {
-          source.runtimePath = runtimePath;
-        }
+        source.runtime = runtime.name.text;
+      } else if (runtimeAtom?.identifier.text === internalExecRuntimeName) {
+        source.runtime = internalExecRuntimeName;
       }
     }
   }
@@ -978,11 +1064,17 @@ export function resolve(projectASTs: ProjectASTs) {
         unary.type = getUnaryOperatorType(unary.operator, unary.expr);
       })
       .with({ kind: "path" }, (path) => {
-        resolveIdentifierRefPath(path.path, scope);
+        const resolveOptions: ResolveOptions = {
+          modelAtomKinds: scope.environment === "entrypoint" ? ["field"] : undefined,
+        };
+        resolveIdentifierRefPath(path.path, scope, resolveOptions);
         path.type = path.path.at(-1)?.type ?? unknownType;
       })
       .with({ kind: "literal" }, (literal) => {
-        literal.type = { kind: "primitive", primitiveKind: literal.literal.kind };
+        literal.type =
+          literal.literal.kind === "null"
+            ? { kind: "null" }
+            : { kind: "primitive", primitiveKind: literal.literal.kind };
       })
       .with({ kind: "function" }, (function_) => {
         function_.args.forEach((arg) => resolveExpression(arg, scope));
@@ -1010,14 +1102,25 @@ export function resolve(projectASTs: ProjectASTs) {
       .exhaustive();
   }
 
-  function resolveIdentifierRefPath(path: IdentifierRef[], scope: Scope, allowGlobal = false) {
+  type ResolveOptions = { allowGlobal?: boolean; modelAtomKinds?: ModelAtom["kind"][] };
+  function resolveIdentifierRefPath(path: IdentifierRef[], scope: Scope, options?: ResolveOptions) {
     if (path.length <= 0) return;
     const [head, ...tail] = path;
     const headName = head.identifier.text;
+
+    const isModelAtom = scope.model
+      ? !(tryResolveModelAtomRef(head, scope.model) instanceof CompilerError)
+      : false;
+    const modelAtomKind = head.ref.kind === "modelAtom" ? head.ref.atomKind : undefined;
+
     const context = scope.context[headName];
 
     // try to resolve from model scope
-    if (scope.model && !tryResolveNextRef(head, { kind: "model", model: scope.model })) {
+    if (
+      isModelAtom &&
+      modelAtomKind &&
+      (options?.modelAtomKinds ? options.modelAtomKinds.includes(modelAtomKind) : true)
+    ) {
       // don't set ref and type because it is set in tryResolveNextRef
     }
     // try to resolve from context
@@ -1026,7 +1129,7 @@ export function resolve(projectASTs: ProjectASTs) {
       head.type = context.type;
     }
     // try to resolve from global models, if global is allowed
-    else if (allowGlobal && findModel(headName)) {
+    else if (options?.allowGlobal && findModel(headName)) {
       head.ref = { kind: "model", model: headName };
       head.type = addTypeModifier({ kind: "model", model: headName }, "collection");
     }
@@ -1038,7 +1141,7 @@ export function resolve(projectASTs: ProjectASTs) {
         errors.push(new CompilerError(head.identifier.token, ErrorCode.CantResolveModel));
         return;
       } else {
-        head.ref = { kind: "model", model: model.name.text };
+        head.ref = { kind: "context", contextKind: "auth" };
         head.type = addTypeModifier({ kind: "model", model: model.name.text }, "nullable");
       }
     }
@@ -1067,7 +1170,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (typeGuardOperation === "notNull") {
         identifier.type = removeTypeModifier(identifier.type, "nullable");
       } else if (typeGuardOperation === "null") {
-        identifier.type = { kind: "primitive", primitiveKind: "null" };
+        identifier.type = { kind: "null" };
       }
     });
   }
@@ -1139,6 +1242,9 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
+  /**
+   * returned undefined represents autogenerated fields ("id" and "_id")
+   */
   function tryResolveModelAtomRef(
     identifier: IdentifierRef,
     modelName: string
@@ -1163,7 +1269,7 @@ export function resolve(projectASTs: ProjectASTs) {
         identifier.ref = {
           kind: "modelAtom",
           atomKind: "field",
-          model: model.name.text,
+          parentModel: model.name.text,
           name,
           unique: false,
         };
@@ -1178,7 +1284,7 @@ export function resolve(projectASTs: ProjectASTs) {
       identifier.ref = {
         kind: "modelAtom",
         atomKind: "field",
-        model: model.name.text,
+        parentModel: model.name.text,
         name,
         unique: true,
       };

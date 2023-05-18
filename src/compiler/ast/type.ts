@@ -1,13 +1,21 @@
-export const primitiveTypes = ["integer", "float", "boolean", "null", "string"] as const;
+export const primitiveTypes = ["integer", "float", "boolean", "string"] as const;
 
 export type AnyType = { kind: "unknown" };
 export type PrimitiveType = { kind: "primitive"; primitiveKind: (typeof primitiveTypes)[number] };
+export type NullType = { kind: "null" };
 export type ModelType = { kind: "model"; model: string };
 export type StructType = { kind: "struct"; types: Record<string, Type> };
 export type CollectionType = { kind: "collection"; type: Type };
 export type NullableType = { kind: "nullable"; type: Type };
 
-export type Type = AnyType | PrimitiveType | ModelType | StructType | CollectionType | NullableType;
+export type Type =
+  | AnyType
+  | PrimitiveType
+  | NullType
+  | ModelType
+  | StructType
+  | CollectionType
+  | NullableType;
 
 export const unknownType: Type = { kind: "unknown" };
 
@@ -36,6 +44,7 @@ export function removeTypeModifier(type: Type, ...modifiers: TypeModifier[]): Ty
     case "model":
     case "struct":
     case "primitive":
+    case "null":
       return type;
     default: {
       return modifiers.includes(type.kind)
@@ -50,6 +59,7 @@ export function getTypeModel(type?: Type): string | undefined {
   switch (type.kind) {
     case "unknown":
     case "primitive":
+    case "null":
     case "struct":
       return undefined;
     case "model":
@@ -73,6 +83,7 @@ export function getTypeCardinality(
     case "model":
     case "struct":
     case "primitive":
+    case "null":
       return baseCardinality;
     case "nullable":
       return getTypeCardinality(type.type, "nullable");
@@ -105,7 +116,7 @@ export function isExpectedType(type: Type, expected: Type | TypeCategory): boole
     if (type.kind === "nullable") {
       return isExpectedType(type.type, expected.type);
     }
-    if (type.kind === "primitive" && type.primitiveKind === "null") {
+    if (type.kind === "null") {
       return true;
     }
     return isExpectedType(type, expected.type);

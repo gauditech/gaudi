@@ -16,10 +16,7 @@ describe("hooks", () => {
     it("should resolve static value", async () => {
       const result = await executeHook(
         def,
-        {
-          runtimeName: "TestRuntime",
-          code: { kind: "source", target: "divideStatic", file: "hooks.js" },
-        },
+        { kind: "source", target: "divideStatic", file: "hooks.js", runtimeName: "TestRuntime" },
         { x: 6, y: 2 }
       );
 
@@ -29,10 +26,7 @@ describe("hooks", () => {
     it("should resolve promise value", async () => {
       const result = await executeHook(
         def,
-        {
-          runtimeName: "TestRuntime",
-          code: { kind: "source", target: "divideAsync", file: "hooks.js" },
-        },
+        { kind: "source", target: "divideAsync", file: "hooks.js", runtimeName: "TestRuntime" },
         { x: 6, y: 2 }
       );
 
@@ -42,14 +36,7 @@ describe("hooks", () => {
 
   describe("inline hooks", () => {
     it("should resolve static value", async () => {
-      const result = await executeHook(
-        def,
-        {
-          runtimeName: "TestRuntime",
-          code: { kind: "inline", inline: "x / y" },
-        },
-        { x: 6, y: 2 }
-      );
+      const result = await executeHook(def, { kind: "inline", inline: "x / y" }, { x: 6, y: 2 });
 
       expect(result).toBe(3);
     });
@@ -57,10 +44,7 @@ describe("hooks", () => {
     it("should resolve promise value", async () => {
       const result = await executeHook(
         def,
-        {
-          runtimeName: "TestRuntime",
-          code: { kind: "inline", inline: "Promise.resolve(x / y)" },
-        },
+        { kind: "inline", inline: "Promise.resolve(x / y)" },
         { x: 6, y: 2 }
       );
 
@@ -125,8 +109,10 @@ describe("hooks", () => {
       const result = await executeHook(
         def,
         {
+          kind: "source",
+          file: "hooks/index.js",
+          target: "echo",
           runtimeName: getInternalExecutionRuntimeName(),
-          code: { kind: "source", file: "hooks/index.js", target: "echo" },
         },
         { value: "ASDF" }
       );
@@ -140,20 +126,11 @@ describe("hooks", () => {
  * Creates test definition struct
  */
 function createTestDefinition(): Definition {
-  const def = compose({
-    entrypoints: [],
-    models: [],
-    populators: [],
-    runtimes: [
-      {
-        name: "TestRuntime",
-        default: true,
-        sourcePath: "./src/runtime/test/hooks",
-      },
-    ],
-    authenticator: undefined,
-    generators: [],
-  });
-
-  return def;
+  const bp = `
+    runtime TestRuntime {
+      default
+      source path "./src/runtime/test/hooks"
+    }
+  `;
+  return compose(compileToOldSpec(bp));
 }

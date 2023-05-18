@@ -20,13 +20,14 @@ generate client {
   output "src/e2e/client/__snapshots__/mockClient/client"
 }
 
-generate client {
-  target js
-  // test modela API
-  api model
-  // test custom output folder
-  output "src/e2e/client/__snapshots__/mockClient/client"
-}
+// "api model" is not implemented
+//generate client {
+//  target js
+//  // test modela API
+//  api model
+//  // test custom output folder
+//  output "src/e2e/client/__snapshots__/mockClient/client"
+//}
 
 api {
   entrypoint Org {

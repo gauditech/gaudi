@@ -10,6 +10,7 @@ import {
   PathQueryParameter,
   buildEndpointPath,
 } from "@src/builder/query";
+import { kindFilter } from "@src/common/kindFilter";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import { Logger } from "@src/logger";
@@ -325,7 +326,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             endpoint.actions
           );
 
-          const targetId = contextVars.get(endpoint.target.alias)?.id;
+          const primaryAlias = kindFilter(endpoint.actions, "create-one").find(
+            (a) => a.isPrimary
+          )!.alias;
+          const targetId = contextVars.get(primaryAlias)?.id;
 
           if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
@@ -424,7 +428,10 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             endpoint.actions
           );
 
-          const targetId = contextVars.get(endpoint.target.alias, ["id"]);
+          const primaryAlias = kindFilter(endpoint.actions, "update-one").find(
+            (a) => a.isPrimary
+          )!.alias;
+          const targetId = contextVars.get(primaryAlias, ["id"]);
 
           if (targetId === null) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");

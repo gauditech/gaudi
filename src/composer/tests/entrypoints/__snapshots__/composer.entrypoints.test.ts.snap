@@ -41,8 +41,8 @@ exports[`entrypoint collects dependencies 1`] = `
 {
   "actionSelects": [
     [
-      "id",
       "name",
+      "id",
     ],
     [],
   ],
@@ -54,8 +54,8 @@ exports[`entrypoint collects dependencies 1`] = `
     "coef",
   ],
   "repoSelect": [
-    "id",
     "name",
+    "id",
   ],
 }
 `;
@@ -122,7 +122,6 @@ exports[`entrypoint composes basic example 1`] = `
           "namePath": [
             "Org",
           ],
-          "refKey": "Org",
           "retType": "Org",
           "select": [],
         },
@@ -177,7 +176,6 @@ exports[`entrypoint composes basic example 1`] = `
           "namePath": [
             "Org",
           ],
-          "refKey": "Org",
           "retType": "Org",
           "select": [],
         },
@@ -207,7 +205,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [],
               },
@@ -281,7 +278,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -304,7 +300,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [],
               },
@@ -384,7 +379,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -392,7 +386,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "actions": [
               {
-                "alias": "$target_1",
+                "alias": "$action_0",
                 "changeset": [
                   {
                     "name": "title",
@@ -418,11 +412,12 @@ exports[`entrypoint composes basic example 1`] = `
                     },
                   },
                 ],
+                "isPrimary": true,
                 "kind": "create-one",
                 "model": "Repo",
                 "select": [],
                 "targetPath": [
-                  "$target_1",
+                  "repos",
                 ],
               },
             ],
@@ -456,7 +451,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [
                   {
@@ -541,7 +535,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -577,6 +570,7 @@ exports[`entrypoint composes basic example 1`] = `
                   },
                 ],
                 "filter": undefined,
+                "isPrimary": false,
                 "kind": "update-one",
                 "model": "Org",
                 "select": [],
@@ -629,7 +623,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "namePath": [
                   "Org",
                 ],
-                "refKey": "Org",
                 "retType": "Org",
                 "select": [
                   {
@@ -662,7 +655,6 @@ exports[`entrypoint composes basic example 1`] = `
                 "Org",
                 "repos",
               ],
-              "refKey": "Org.repos",
               "retType": "Repo",
               "select": [],
             },
@@ -684,7 +676,6 @@ exports[`entrypoint composes basic example 1`] = `
             "Org",
             "repos",
           ],
-          "refKey": "Org.repos",
           "retType": "Repo",
         },
       },
@@ -703,7 +694,6 @@ exports[`entrypoint composes basic example 1`] = `
       "namePath": [
         "Org",
       ],
-      "refKey": "Org",
       "retType": "Org",
     },
   },

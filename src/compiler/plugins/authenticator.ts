@@ -1,11 +1,9 @@
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { AUTH_TARGET_MODEL_NAME } from "@src/types/specification";
 
-export const authUserModelName = AUTH_TARGET_MODEL_NAME;
+export const authUserModelName = "AuthUser";
+export const accessTokenModelName = `${authUserModelName}AccessToken`;
 
 function getCode(): string {
-  const accessTokenModelName = `${authUserModelName}AccessToken`;
-
   const internalExecRuntimeName = getInternalExecutionRuntimeName();
 
   return `
