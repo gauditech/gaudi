@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { FilteredByKind } from "@src/common/kindFilter";
-import { ensureEmpty, ensureEqual, ensureExists } from "@src/common/utils";
+import { ensureEmpty, ensureEqual, ensureExists, resolveItems } from "@src/common/utils";
 import { getTypeModel } from "@src/compiler/ast/type";
 import { composeValidators, validateFieldType } from "@src/composer/models";
 import { composeQuery } from "@src/composer/query";
@@ -59,7 +59,7 @@ function composeDeleteAction(spec: FilteredByKind<Spec.Action, "delete">): Delet
 }
 
 function composeFetchAction(spec: FilteredByKind<Spec.Action, "fetch">): FetchOneAction {
-  const changeset = spec.atoms.map((atom) => atomToChangesetOperation(atom, []));
+  const changeset = spec.atoms.map((atom) => atomToChangesetOperation(atom, [], []));
   // fetch action's model is derived from it's query
   const query = composeQuery(spec.query);
   return {
@@ -72,12 +72,12 @@ function composeFetchAction(spec: FilteredByKind<Spec.Action, "fetch">): FetchOn
 }
 
 function composeExecuteAction(spec: FilteredByKind<Spec.Action, "execute">): ExecuteHookAction {
-  const changeset = spec.atoms.map((atom) => atomToChangesetOperation(atom, []));
+  const changeset = spec.atoms.map((atom) => atomToChangesetOperation(atom, [], []));
 
   const actionHook: ActionHookDef = {
     args: spec.hook.args.map((arg) => ({
       name: arg.name,
-      setter: setterToFieldSetter(arg),
+      setter: setterToFieldSetter(arg, changeset),
     })),
     hook: spec.hook.code,
   };
@@ -96,15 +96,50 @@ function composeExecuteAction(spec: FilteredByKind<Spec.Action, "execute">): Exe
 function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOneAction {
   const model = findChangesetModel(spec.targetPath);
 
-  const changeset = spec.actionAtoms.map((atom) =>
-    atomToChangesetOperation(atom, spec.isPrimary ? [] : [spec.alias])
+  // TODO: this should be managed in resolver since it can be a circular reference which must be a compiler error
+  const changeset: ChangesetDef = [];
+  const resolveResult = resolveItems(
+    // atoms to be resolved
+    spec.actionAtoms,
+    // item name resolver
+    (atom) => {
+      switch (atom.kind) {
+        case "input":
+          return atom.target.text;
+        case "reference":
+          return atom.target.text;
+        case "set":
+          return atom.target.text;
+        case "virtual-input":
+          return atom.name;
+      }
+    },
+    // item resolver
+    (atom) => {
+      const op = atomToChangesetOperation(atom, spec.isPrimary ? [] : [spec.alias], changeset);
+      // Add the changeset operation only if not added before
+      if (!_.find(changeset, { name: op.name })) {
+        changeset.push(op);
+      }
+    }
   );
+  // handle error
+  if (resolveResult.kind === "error") {
+    console.log(
+      "ERRORS",
+      resolveResult.errors.map((e) => `${e.name} [${e.error.message ?? e.error}]`)
+    );
+
+    throw new Error(
+      `Couldn't resolve all field setters: ${resolveResult.errors.map((i) => i.name).join()}`
+    );
+  }
 
   // Build the desired `ActionDef`.
   return modelActionFromParts(spec, model, changeset);
 }
 
-function expandSetterExpression(expr: Spec.Expr): FieldSetter {
+function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): FieldSetter {
   switch (expr.kind) {
     case "literal": {
       return getTypedLiteralValue(expr.literal);
@@ -134,34 +169,43 @@ function expandSetterExpression(expr: Spec.Expr): FieldSetter {
 
       // if path has more than 1 element, it can't be a sibling call
       ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
-      return { kind: "changeset-reference", referenceName: head.text };
+      // check if sibling name is defined in the changeset
+      const siblingOp = _.find(changeset, { name: head.text });
+      if (siblingOp) {
+        return { kind: "changeset-reference", referenceName: head.text };
+      } else {
+        throw new Error(`Circular reference: ${head.text}`);
+      }
     }
     case "function": {
       return {
         kind: "function",
         name: expr.name as FunctionName, // FIXME proper validation
-        args: expr.args.map((a) => expandSetterExpression(a)),
+        args: expr.args.map((a) => expandSetterExpression(a, changeset)),
       };
     }
   }
 }
 
-function setterToChangesetOperation(atom: Spec.ActionAtomSet): ChangesetOperationDef {
-  return { name: atom.target.text, setter: setterToFieldSetter(atom.set) };
+function setterToChangesetOperation(
+  atom: Spec.ActionAtomSet,
+  changeset: ChangesetDef
+): ChangesetOperationDef {
+  return { name: atom.target.text, setter: setterToFieldSetter(atom.set, changeset) };
 }
 
-function setterToFieldSetter(set: Spec.ActionAtomSet["set"]): FieldSetter {
+function setterToFieldSetter(set: Spec.ActionAtomSet["set"], changeset: ChangesetDef): FieldSetter {
   switch (set.kind) {
     case "hook": {
       const args = set.hook.args.map((arg) => {
-        const setter = setterToFieldSetter(arg);
+        const setter = setterToFieldSetter(arg, changeset);
         return { name: arg.name, setter };
       });
       return { kind: "fieldset-hook", hook: set.hook.code, args };
     }
     case "expression": {
       const exp = set.expr;
-      return expandSetterExpression(exp);
+      return expandSetterExpression(exp, changeset);
     }
     case "query": {
       return { kind: "query", query: queryFromSpec(set.query) };
@@ -171,7 +215,8 @@ function setterToFieldSetter(set: Spec.ActionAtomSet["set"]): FieldSetter {
 
 function atomToChangesetOperation(
   atom: Spec.ModelActionAtom,
-  fieldsetNamespace: string[]
+  fieldsetNamespace: string[],
+  changeset: ChangesetDef
 ): ChangesetOperationDef {
   switch (atom.kind) {
     case "virtual-input": {
@@ -218,7 +263,7 @@ function atomToChangesetOperation(
       };
     }
     case "set": {
-      return setterToChangesetOperation(atom);
+      return setterToChangesetOperation(atom, changeset);
     }
   }
 }

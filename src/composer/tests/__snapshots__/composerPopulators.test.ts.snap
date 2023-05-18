@@ -632,13 +632,6 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
           "alias": "org",
           "changeset": [
             {
-              "name": "name2",
-              "setter": {
-                "kind": "changeset-reference",
-                "referenceName": "name",
-              },
-            },
-            {
               "name": "index",
               "setter": {
                 "kind": "reference-value",
@@ -670,6 +663,13 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
                   "kind": "inline",
                 },
                 "kind": "fieldset-hook",
+              },
+            },
+            {
+              "name": "name2",
+              "setter": {
+                "kind": "changeset-reference",
+                "referenceName": "name",
               },
             },
           ],
