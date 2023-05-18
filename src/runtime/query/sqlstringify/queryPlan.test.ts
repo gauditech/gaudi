@@ -147,7 +147,17 @@ describe("Query plan", () => {
             JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
           GROUP BY
             "Org"."id"
-        ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection""
+        ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
+      WHERE
+        (
+          "Org.repos.COUNT.issues.id"."result" + (
+            "Org.repos.COUNT.issues.repo.id"."result" + "Org.repos.SUM.issues.id"."result"
+          )
+        ) > (
+          "Org.repos.COUNT.issues.repo_name"."result" + (
+            "Org.repos"."ref_number" + "Org.COUNT.repos.id"."result"
+          )
+        )"
     `);
   });
 });
@@ -158,8 +168,70 @@ const QP: QueryPlan = {
    */
   entry: "Org",
   groupBy: [],
-  // TODO add filter
-  filter: undefined,
+  filter: {
+    kind: "function",
+    fnName: ">",
+    args: [
+      // count(r.issues) + count(r.issues.repo.id) + sum(r.issues.id)
+      {
+        kind: "function",
+        fnName: "+",
+        args: [
+          // count(r.issues)
+          {
+            kind: "alias",
+            value: ["Org", "repos", "COUNT", "issues", "id", "result"],
+          },
+          // count(r.issues.repo.id) + sum(r.issues.id)
+          {
+            kind: "function",
+            fnName: "+",
+            args: [
+              // count(r.issues.repo.id)
+              {
+                kind: "alias",
+                value: ["Org", "repos", "COUNT", "issues", "repo", "id", "result"],
+              },
+              // sum(r.issues.id)
+              {
+                kind: "alias",
+                value: ["Org", "repos", "SUM", "issues", "id", "result"],
+              },
+            ],
+          },
+        ],
+      },
+      // count(r.issues.repo_name) + r.ref_number + count(o.repos.id)
+      {
+        kind: "function",
+        fnName: "+",
+        args: [
+          // count(r.issues.repo_name)
+          {
+            kind: "alias",
+            value: ["Org", "repos", "COUNT", "issues", "repo_name", "result"],
+          },
+          // r.ref_number + count(o.repos.id)
+          {
+            kind: "function",
+            fnName: "+",
+            args: [
+              // r.ref_number
+              {
+                kind: "alias",
+                value: ["Org", "repos", "ref_number"],
+              },
+              // count(o.repos.id)
+              {
+                kind: "alias",
+                value: ["Org", "COUNT", "repos", "id", "result"],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
   select: {
     id: { kind: "alias", value: ["Org", "repos", "id"] },
     name: { kind: "alias", value: ["Org", "repos", "name"] },
