@@ -31,7 +31,6 @@ export type InlineJoin = {
   target: string;
   modelName: string;
   namePath: NamePath;
-  joins: QueryPlanJoin[];
 };
 
 export type QueryPlanJoin = JoinWithSubquery | InlineJoin;

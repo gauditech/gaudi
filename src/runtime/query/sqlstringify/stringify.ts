@@ -93,7 +93,6 @@ function joinsToString(joins: QueryPlanJoin[]): string {
           return `
     JOIN ${join.modelName.toLowerCase()} AS ${namepathToQuoted(join.namePath)}
     ON ${namepathToQuotedPair(join.joinOn[0])} = ${namepathToQuotedPair(join.joinOn[1])}
-    ${joinsToString(join.joins)}
     `;
         }
       }

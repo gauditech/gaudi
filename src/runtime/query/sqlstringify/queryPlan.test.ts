@@ -251,219 +251,208 @@ const QP: QueryPlan = {
       modelName: "Repo",
       target: "repos",
       namePath: ["Org", "repos"],
-      joins: [
-        /**
-         * Main query, join [Org->]repos->org
-         */
-        {
-          kind: "inline",
-          joinType: "inner",
-          joinOn: [
-            ["Org", "repos", "org_id"],
-            ["Org", "repos", "org", "id"],
-          ],
-          modelName: "Org",
-          namePath: ["Org", "repos", "org"],
-          target: "org",
-          joins: [],
-        },
-        /**
-         * Aggregate query Org->repos->count(issues.id)
-         */
-        {
-          kind: "subquery",
-          joinType: "inner",
-          namePath: ["Org", "repos", "COUNT", "issues", "id"],
-          joinOn: [
-            ["Org", "repos", "id"],
-            ["Org", "repos", "COUNT", "issues", "id", "__join_connection"],
-          ],
-          plan: {
-            entry: "Repo",
-            groupBy: [["Repo", "id"]],
-            select: {
-              __join_connection: { kind: "alias", value: ["Repo", "id"] },
-              result: {
-                kind: "function",
-                fnName: "count",
-                args: [{ kind: "alias", value: ["Repo", "issues", "id"] }],
-              },
-            },
-            /**
-             * Inside aggregate, Join Repo->issues
-             */
-            joins: [
-              {
-                kind: "inline",
-                joinType: "left",
-                joinOn: [
-                  ["Repo", "id"],
-                  ["Repo", "issues", "repo_id"],
-                ],
-                modelName: "Issue",
-                target: "issues",
-                namePath: ["Repo", "issues"],
-                joins: [],
-              },
-            ],
-          },
-        },
-        /**
-         * Aggregate query Org->repos->count(issues.repo.id)
-         */
-        {
-          kind: "subquery",
-          joinType: "inner",
-          namePath: ["Org", "repos", "COUNT", "issues", "repo", "id"],
-          joinOn: [
-            ["Org", "repos", "id"],
-            ["Org", "repos", "COUNT", "issues", "repo", "id", "__join_connection"],
-          ],
-          plan: {
-            entry: "Repo",
-            groupBy: [["Repo", "id"]],
-            select: {
-              __join_connection: { kind: "alias", value: ["Repo", "id"] },
-              result: {
-                kind: "function",
-                fnName: "count",
-                args: [{ kind: "alias", value: ["Repo", "issues", "repo", "id"] }],
-              },
-            },
-            /**
-             * Inside aggregate, Join Repo->issues
-             */
-            joins: [
-              {
-                kind: "inline",
-                joinType: "left",
-                joinOn: [
-                  ["Repo", "id"],
-                  ["Repo", "issues", "repo_id"],
-                ],
-                modelName: "Issue",
-                target: "issues",
-                namePath: ["Repo", "issues"],
-                joins: [
-                  /**
-                   * Inside aggregate, Join [Repo->]issues->repo
-                   */
-                  {
-                    kind: "inline",
-                    joinType: "left",
-                    joinOn: [
-                      ["Repo", "issues", "repo_id"],
-                      ["Repo", "issues", "repo", "id"],
-                    ],
-                    modelName: "Repo",
-                    target: "repo",
-                    joins: [],
-                    namePath: ["Repo", "issues", "repo"],
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        /**
-         * Aggregate query Org->repos->sum(issues.id)
-         */
-        {
-          kind: "subquery",
-          joinType: "inner",
-          namePath: ["Org", "repos", "SUM", "Repo", "issues", "id"],
-          joinOn: [
-            ["Org", "repos", "id"],
-            ["Org", "repos", "SUM", "Repo", "issues", "id", "__join_connection"],
-          ],
-          plan: {
-            entry: "Repo",
-            groupBy: [["Repo", "id"]],
-            select: {
-              __join_connection: { kind: "alias", value: ["Repo", "id"] },
-              result: {
-                kind: "function",
-                fnName: "sum",
-                args: [{ kind: "alias", value: ["Repo", "issues", "id"] }],
-              },
-            },
-            /**
-             * Inside aggregate, Join Repo->issues
-             */
-            joins: [
-              {
-                kind: "inline",
-                joinType: "left",
-                joinOn: [
-                  ["Repo", "id"],
-                  ["Repo", "issues", "repo_id"],
-                ],
-                modelName: "Issue",
-                target: "issues",
-                namePath: ["Repo", "issues"],
-                joins: [],
-              },
-            ],
-          },
-        },
-        /**
-         * Aggregate query Org->repos->count(issues.repo_name)
-         */
-        {
-          kind: "subquery",
-          joinType: "inner",
-          namePath: ["Org", "repos", "COUNT", "issues", "repo", "name"],
-          joinOn: [
-            ["Org", "repos", "id"],
-            ["Org", "repos", "COUNT", "issues", "repo", "name", "__join_connection"],
-          ],
-          plan: {
-            entry: "Repo",
-            groupBy: [["Repo", "id"]],
-            select: {
-              __join_connection: { kind: "alias", value: ["Repo", "id"] },
-              result: {
-                kind: "function",
-                fnName: "count",
-                args: [{ kind: "alias", value: ["Repo", "issues", "repo", "name"] }],
-              },
-            },
-            /**
-             * Inside aggregate, Join Repo->issues
-             */
-            joins: [
-              {
-                kind: "inline",
-                joinType: "left",
-                joinOn: [
-                  ["Repo", "id"],
-                  ["Repo", "issues", "repo_id"],
-                ],
-                modelName: "Issue",
-                target: "issues",
-                namePath: ["Repo", "issues"],
-                joins: [
-                  /**
-                   * Inside aggregate, Join [Repo->]issues->repo
-                   */
-                  {
-                    kind: "inline",
-                    joinType: "left",
-                    joinOn: [
-                      ["Repo", "issues", "repo_id"],
-                      ["Repo", "issues", "repo", "id"],
-                    ],
-                    modelName: "Repo",
-                    target: "repo",
-                    joins: [],
-                    namePath: ["Repo", "issues", "repo"],
-                  },
-                ],
-              },
-            ],
-          },
-        },
+    },
+    /**
+     * Main query, join [Org->]repos->org
+     */
+    {
+      kind: "inline",
+      joinType: "inner",
+      joinOn: [
+        ["Org", "repos", "org_id"],
+        ["Org", "repos", "org", "id"],
       ],
+      modelName: "Org",
+      namePath: ["Org", "repos", "org"],
+      target: "org",
+    },
+    /**
+     * Aggregate query Org->repos->count(issues.id)
+     */
+    {
+      kind: "subquery",
+      joinType: "inner",
+      namePath: ["Org", "repos", "COUNT", "issues", "id"],
+      joinOn: [
+        ["Org", "repos", "id"],
+        ["Org", "repos", "COUNT", "issues", "id", "__join_connection"],
+      ],
+      plan: {
+        entry: "Repo",
+        groupBy: [["Repo", "id"]],
+        select: {
+          __join_connection: { kind: "alias", value: ["Repo", "id"] },
+          result: {
+            kind: "function",
+            fnName: "count",
+            args: [{ kind: "alias", value: ["Repo", "issues", "id"] }],
+          },
+        },
+        /**
+         * Inside aggregate, Join Repo->issues
+         */
+        joins: [
+          {
+            kind: "inline",
+            joinType: "left",
+            joinOn: [
+              ["Repo", "id"],
+              ["Repo", "issues", "repo_id"],
+            ],
+            modelName: "Issue",
+            target: "issues",
+            namePath: ["Repo", "issues"],
+          },
+        ],
+      },
+    },
+    /**
+     * Aggregate query Org->repos->count(issues.repo.id)
+     */
+    {
+      kind: "subquery",
+      joinType: "inner",
+      namePath: ["Org", "repos", "COUNT", "issues", "repo", "id"],
+      joinOn: [
+        ["Org", "repos", "id"],
+        ["Org", "repos", "COUNT", "issues", "repo", "id", "__join_connection"],
+      ],
+      plan: {
+        entry: "Repo",
+        groupBy: [["Repo", "id"]],
+        select: {
+          __join_connection: { kind: "alias", value: ["Repo", "id"] },
+          result: {
+            kind: "function",
+            fnName: "count",
+            args: [{ kind: "alias", value: ["Repo", "issues", "repo", "id"] }],
+          },
+        },
+        /**
+         * Inside aggregate, Join Repo->issues
+         */
+        joins: [
+          {
+            kind: "inline",
+            joinType: "left",
+            joinOn: [
+              ["Repo", "id"],
+              ["Repo", "issues", "repo_id"],
+            ],
+            modelName: "Issue",
+            target: "issues",
+            namePath: ["Repo", "issues"],
+          },
+          /**
+           * Inside aggregate, Join [Repo->]issues->repo
+           */
+          {
+            kind: "inline",
+            joinType: "left",
+            joinOn: [
+              ["Repo", "issues", "repo_id"],
+              ["Repo", "issues", "repo", "id"],
+            ],
+            modelName: "Repo",
+            target: "repo",
+            namePath: ["Repo", "issues", "repo"],
+          },
+        ],
+      },
+    },
+    /**
+     * Aggregate query Org->repos->sum(issues.id)
+     */
+    {
+      kind: "subquery",
+      joinType: "inner",
+      namePath: ["Org", "repos", "SUM", "Repo", "issues", "id"],
+      joinOn: [
+        ["Org", "repos", "id"],
+        ["Org", "repos", "SUM", "Repo", "issues", "id", "__join_connection"],
+      ],
+      plan: {
+        entry: "Repo",
+        groupBy: [["Repo", "id"]],
+        select: {
+          __join_connection: { kind: "alias", value: ["Repo", "id"] },
+          result: {
+            kind: "function",
+            fnName: "sum",
+            args: [{ kind: "alias", value: ["Repo", "issues", "id"] }],
+          },
+        },
+        /**
+         * Inside aggregate, Join Repo->issues
+         */
+        joins: [
+          {
+            kind: "inline",
+            joinType: "left",
+            joinOn: [
+              ["Repo", "id"],
+              ["Repo", "issues", "repo_id"],
+            ],
+            modelName: "Issue",
+            target: "issues",
+            namePath: ["Repo", "issues"],
+          },
+        ],
+      },
+    },
+    /**
+     * Aggregate query Org->repos->count(issues.repo_name)
+     */
+    {
+      kind: "subquery",
+      joinType: "inner",
+      namePath: ["Org", "repos", "COUNT", "issues", "repo", "name"],
+      joinOn: [
+        ["Org", "repos", "id"],
+        ["Org", "repos", "COUNT", "issues", "repo", "name", "__join_connection"],
+      ],
+      plan: {
+        entry: "Repo",
+        groupBy: [["Repo", "id"]],
+        select: {
+          __join_connection: { kind: "alias", value: ["Repo", "id"] },
+          result: {
+            kind: "function",
+            fnName: "count",
+            args: [{ kind: "alias", value: ["Repo", "issues", "repo", "name"] }],
+          },
+        },
+        /**
+         * Inside aggregate, Join Repo->issues
+         */
+        joins: [
+          {
+            kind: "inline",
+            joinType: "left",
+            joinOn: [
+              ["Repo", "id"],
+              ["Repo", "issues", "repo_id"],
+            ],
+            modelName: "Issue",
+            target: "issues",
+            namePath: ["Repo", "issues"],
+          },
+          /**
+           * Inside aggregate, Join [Repo->]issues->repo
+           */
+          {
+            kind: "inline",
+            joinType: "left",
+            joinOn: [
+              ["Repo", "issues", "repo_id"],
+              ["Repo", "issues", "repo", "id"],
+            ],
+            modelName: "Repo",
+            target: "repo",
+            namePath: ["Repo", "issues", "repo"],
+          },
+        ],
+      },
     },
     /**
      * Join Org->count(Org.repos.id)
@@ -501,7 +490,6 @@ const QP: QueryPlan = {
             modelName: "Repo",
             namePath: ["Org", "repos"],
             target: "repos",
-            joins: [],
           },
         ],
       },
