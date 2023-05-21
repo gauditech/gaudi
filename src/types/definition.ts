@@ -177,7 +177,7 @@ export type TypedExprDef =
 
 type TypedAggregateFunction = {
   kind: "aggregate-function";
-  fnName: string;
+  fnName: FunctionName | AggregateFunctionName;
   type: VariablePrimitiveType;
   sourcePath: string[];
   targetPath: string[];

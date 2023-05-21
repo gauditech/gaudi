@@ -1,17 +1,17 @@
 import { format } from "sql-formatter";
 
-import { QueryPlan } from "./queryPlan";
+import { QueryAtom, QueryPlan, collectQueryAtoms } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
 import { compileToOldSpec } from "@src/compiler";
 import { compose } from "@src/composer/composer";
-import { CustomManyEndpointDef, FetchOneAction, QueryDef } from "@src/types/definition";
+import { CustomManyEndpointDef, Definition, FetchOneAction, QueryDef } from "@src/types/definition";
 
 /**
  * Define a query wrapper
  */
 
-function makeTestQuery(models: string, query: string): QueryDef {
+function makeTestQuery(models: string, query: string): { def: Definition; query: QueryDef } {
   const bp = `
   ${models}
   
@@ -32,7 +32,7 @@ function makeTestQuery(models: string, query: string): QueryDef {
   const def = compose(compileToOldSpec(bp));
   const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
   const action = endpoint.actions[0] as FetchOneAction;
-  return action.query;
+  return { def, query: action.query };
 }
 
 describe("Query plan", () => {
@@ -67,7 +67,7 @@ describe("Query plan", () => {
   query {
     from Org.repos as o.r,
     filter {
-      count(r.issues) // fixme it should work without '.id' as well
+      count(r.issues.id) // fixme it should work without '.id' as well
       + count(r.issues.repo.id) + sum(r.issues.id) > count(r.issues.repo_name) + r.ref_number
       + count(o.repos.id)
     },
@@ -79,88 +79,127 @@ describe("Query plan", () => {
   }
 
   it("composes a query", () => {
-    const query = setup();
+    const { query } = setup();
     expect(query).toMatchSnapshot();
+  });
+  it("collects atoms", () => {
+    const { def, query } = setup();
+    const atoms = collectQueryAtoms(def, query);
+    expect(atoms).toMatchInlineSnapshot(`
+      [
+        {
+          "kind": "table-namespace",
+          "namePath": [
+            "Org",
+            "repos",
+          ],
+        },
+        {
+          "kind": "table-namespace",
+          "namePath": [
+            "Org",
+            "repos",
+            "org",
+          ],
+        },
+        {
+          "fnName": "count",
+          "kind": "aggregate",
+          "sourcePath": [
+            "Org",
+          ],
+          "targetPath": [
+            "repos",
+            "id",
+          ],
+        },
+        {
+          "fnName": "count",
+          "kind": "aggregate",
+          "sourcePath": [
+            "Org",
+            "repos",
+          ],
+          "targetPath": [
+            "issues",
+            "id",
+          ],
+        },
+        {
+          "fnName": "count",
+          "kind": "aggregate",
+          "sourcePath": [
+            "Org",
+            "repos",
+          ],
+          "targetPath": [
+            "issues",
+            "repo",
+            "id",
+          ],
+        },
+        {
+          "fnName": "count",
+          "kind": "aggregate",
+          "sourcePath": [
+            "Org",
+            "repos",
+          ],
+          "targetPath": [
+            "issues",
+            "repo_name",
+          ],
+        },
+        {
+          "fnName": "sum",
+          "kind": "aggregate",
+          "sourcePath": [
+            "Org",
+            "repos",
+          ],
+          "targetPath": [
+            "issues",
+            "id",
+          ],
+        },
+      ]
+    `);
+    expect(atoms).toEqual(ATOMS);
   });
   it("stringifies the query plan", () => {
     // const query = setup();
     const qstr = queryPlanToString(QP);
     const final = format(qstr, { language: "postgresql" });
 
-    expect(final).toMatchInlineSnapshot(`
-      "SELECT
-        "Org.repos"."id" AS "id",
-        "Org.repos"."name" AS "name",
-        "Org.repos.org"."name" AS "org_name"
-      FROM
-        org AS "Org"
-        JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
-        JOIN org AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
-        JOIN (
-          SELECT
-            "Repo"."id" AS "__join_connection",
-            count("Repo.issues"."id") AS "result"
-          FROM
-            repo AS "Repo"
-            JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-          GROUP BY
-            "Repo"."id"
-        ) AS "Org.repos.COUNT.issues.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.id"."__join_connection"
-        JOIN (
-          SELECT
-            "Repo"."id" AS "__join_connection",
-            count("Repo.issues.repo"."id") AS "result"
-          FROM
-            repo AS "Repo"
-            JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-            JOIN repo AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
-          GROUP BY
-            "Repo"."id"
-        ) AS "Org.repos.COUNT.issues.repo.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo.id"."__join_connection"
-        JOIN (
-          SELECT
-            "Repo"."id" AS "__join_connection",
-            sum("Repo.issues"."id") AS "result"
-          FROM
-            repo AS "Repo"
-            JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-          GROUP BY
-            "Repo"."id"
-        ) AS "Org.repos.SUM.Repo.issues.id" ON "Org.repos"."id" = "Org.repos.SUM.Repo.issues.id"."__join_connection"
-        JOIN (
-          SELECT
-            "Repo"."id" AS "__join_connection",
-            count("Repo.issues.repo"."name") AS "result"
-          FROM
-            repo AS "Repo"
-            JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-            JOIN repo AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
-          GROUP BY
-            "Repo"."id"
-        ) AS "Org.repos.COUNT.issues.repo.name" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo.name"."__join_connection"
-        JOIN (
-          SELECT
-            "Org"."id" AS "__join_connection",
-            count("Org.repos"."id") AS "result"
-          FROM
-            org AS "Org"
-            JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
-          GROUP BY
-            "Org"."id"
-        ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
-      WHERE
-        (
-          "Org.repos.COUNT.issues.id"."result" + (
-            "Org.repos.COUNT.issues.repo.id"."result" + "Org.repos.SUM.issues.id"."result"
-          )
-        ) > (
-          "Org.repos.COUNT.issues.repo_name"."result" + (
-            "Org.repos"."ref_number" + "Org.COUNT.repos.id"."result"
-          )
-        )"
-    `);
+    expect(final).toMatchSnapshot();
   });
 });
+
+const ATOMS: QueryAtom[] = [
+  { kind: "table-namespace", namePath: ["Org", "repos"] },
+  { kind: "table-namespace", namePath: ["Org", "repos", "org"] },
+  { kind: "aggregate", fnName: "count", sourcePath: ["Org"], targetPath: ["repos", "id"] },
+  {
+    kind: "aggregate",
+    fnName: "count",
+    sourcePath: ["Org", "repos"],
+    targetPath: ["issues", "id"],
+  },
+  {
+    kind: "aggregate",
+    fnName: "count",
+    sourcePath: ["Org", "repos"],
+    targetPath: ["issues", "repo", "id"],
+  },
+  {
+    kind: "aggregate",
+    fnName: "count",
+    sourcePath: ["Org", "repos"],
+    targetPath: ["issues", "repo_name"],
+  },
+
+  { kind: "aggregate", fnName: "sum", sourcePath: ["Org", "repos"], targetPath: ["issues", "id"] },
+];
 
 const QP: QueryPlan = {
   /**
