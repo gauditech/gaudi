@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { format } from "sql-formatter";
 
 import { NamePath } from "../build";
 
@@ -83,7 +84,7 @@ function joinsToString(joins: QueryPlanJoin[]): string {
     .map((join) => {
       switch (join.kind) {
         case "subquery": {
-          const subquery = queryPlanToString(join.plan);
+          const subquery = queryPlanToString(join.plan, true);
           return `
     JOIN (${subquery})
     AS ${namepathToQuoted(join.namePath)}
@@ -100,17 +101,15 @@ function joinsToString(joins: QueryPlanJoin[]): string {
     .join("\n");
 }
 
-export function queryPlanToString(plan: QueryPlan): string {
+export function queryPlanToString(plan: QueryPlan, isSubquery = false): string {
   const selectFrag = plan.select
     ? Object.entries(plan.select)
         .map(([alias, expr]) => `${exprToString(expr)} AS "${alias}"`)
         .join(", ")
-    : "*";
+    : `${namepathToQuoted(plan.fromPath)}.*`;
   const limitFrag = plan.limit ? `LIMIT ${plan.limit}` : "";
   const orderFrag = plan.orderBy
-    ? `ORDER BY ${plan.orderBy.map(
-        ([path, dir]): string => `${namepathToQuotedPair(path)} ${dir}`
-      )}`
+    ? `ORDER BY ${plan.orderBy.map(([expr, dir]): string => `${exprToString(expr)} ${dir}`)}`
     : "";
   const offsetFrag = plan.offset ? `OFFSET ${plan.offset}` : "";
 
@@ -120,7 +119,27 @@ export function queryPlanToString(plan: QueryPlan): string {
   const groupByItems = plan.groupBy.map(_.unary(namepathToQuotedPair));
   const groupByFrag = groupByItems.length > 0 ? `GROUP BY ${groupByItems}` : "";
 
-  return `
+  if (isSubquery && (plan.limit || plan.offset)) {
+    /**
+     * NOTE: This doesn't work if query plan defines `offset` without `limit`!
+     */
+    const offset = plan.offset ?? 0;
+    const sql = `
+    SELECT * FROM
+      (SELECT ${selectFrag},
+        ${namepathToQuotedPair([plan.entry, "id"])} AS "__join_connection",
+        ROW_NUMBER() OVER (PARTITION BY "${plan.entry}"."id" ${orderFrag}) AS "__row_number"
+      FROM ${plan.entry.toLowerCase()} AS "${plan.entry}"
+      ${joinFrags}
+      ${whereFrag}
+      ) AS topn
+      WHERE topn."__row_number" <= ${plan.limit! + offset} AND topn."__row_number" > ${offset}
+    `;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return format(sql, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
+  }
+
+  const sql = `
   SELECT ${selectFrag}
   FROM ${plan.entry.toLowerCase()} AS "${plan.entry}"
   ${joinFrags}
@@ -130,4 +149,6 @@ export function queryPlanToString(plan: QueryPlan): string {
   ${limitFrag}
   ${offsetFrag} 
   `;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return format(sql, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });
 }

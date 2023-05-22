@@ -1,6 +1,219 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Query plan composes a query 1`] = `
+exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
+{
+  "entry": "Org",
+  "filter": {
+    "args": [
+      {
+        "kind": "alias",
+        "value": [
+          "Org",
+          "SUM",
+          "latest_repos",
+          "points",
+          "result",
+        ],
+      },
+      {
+        "kind": "literal",
+        "type": "integer",
+        "value": 100,
+      },
+    ],
+    "fnName": ">",
+    "kind": "function",
+  },
+  "fromPath": [
+    "Org",
+  ],
+  "groupBy": [],
+  "joins": [
+    {
+      "joinOn": [
+        [
+          "Org",
+          "id",
+        ],
+        [
+          "Org",
+          "SUM",
+          "latest_repos",
+          "points",
+          "__join_connection",
+        ],
+      ],
+      "joinType": "left",
+      "kind": "subquery",
+      "namePath": [
+        "Org",
+        "SUM",
+        "latest_repos",
+        "points",
+      ],
+      "plan": {
+        "entry": "Org",
+        "fromPath": [
+          "Org",
+          "latest_repos",
+        ],
+        "groupBy": [
+          [
+            "Org",
+            "id",
+          ],
+        ],
+        "joins": [
+          {
+            "joinOn": [
+              [
+                "Org",
+                "id",
+              ],
+              [
+                "Org",
+                "latest_repos",
+                "__join_connection",
+              ],
+            ],
+            "joinType": "left",
+            "kind": "subquery",
+            "namePath": [
+              "Org",
+              "latest_repos",
+            ],
+            "plan": {
+              "entry": "Org",
+              "filter": undefined,
+              "fromPath": [
+                "Org",
+                "repos",
+              ],
+              "groupBy": [],
+              "joins": [
+                {
+                  "joinOn": [
+                    [
+                      "Org",
+                      "id",
+                    ],
+                    [
+                      "Org",
+                      "repos",
+                      "org_id",
+                    ],
+                  ],
+                  "joinType": "inner",
+                  "kind": "inline",
+                  "modelName": "Repo",
+                  "namePath": [
+                    "Org",
+                    "repos",
+                  ],
+                  "target": "repos",
+                },
+              ],
+              "limit": 5,
+              "offset": undefined,
+              "orderBy": [
+                [
+                  {
+                    "kind": "alias",
+                    "value": [
+                      "Org",
+                      "repos",
+                      "id",
+                    ],
+                  },
+                  "desc",
+                ],
+              ],
+              "select": undefined,
+            },
+          },
+        ],
+        "select": {
+          "__join_connection": {
+            "kind": "alias",
+            "value": [
+              "Org",
+              "id",
+            ],
+          },
+          "result": {
+            "args": [
+              {
+                "kind": "alias",
+                "value": [
+                  "Org",
+                  "latest_repos",
+                  "points",
+                ],
+              },
+            ],
+            "fnName": "sum",
+            "kind": "function",
+          },
+        },
+      },
+    },
+  ],
+  "limit": undefined,
+  "offset": undefined,
+  "orderBy": undefined,
+  "select": {
+    "id": {
+      "kind": "alias",
+      "value": [
+        "Org",
+        "id",
+      ],
+    },
+  },
+}
+`;
+
+exports[`Query plan subqueries using partition/over: SQL snapshot 1`] = `
+"SELECT
+  "Org"."id" AS "id"
+FROM
+  org AS "Org"
+  JOIN (
+    SELECT
+      "Org"."id" AS "__join_connection",
+      sum("Org.latest_repos"."points") AS "result"
+    FROM
+      org AS "Org"
+      JOIN (
+        SELECT
+          *
+        FROM
+          (
+            SELECT
+              "Org.repos".*,
+              "Org"."id" AS "__join_connection",
+              ROW_NUMBER() OVER (
+                PARTITION BY
+                  "Org"."id"
+                ORDER BY
+                  "Org.repos"."id" desc
+              ) AS "__row_number"
+            FROM
+              org AS "Org"
+              JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+          ) AS topn
+        WHERE
+          topn."__row_number" <= 5
+          AND topn."__row_number" > 0
+      ) AS "Org.latest_repos" ON "Org"."id" = "Org.latest_repos"."__join_connection"
+    GROUP BY
+      "Org"."id"
+  ) AS "Org.SUM.latest_repos.points" ON "Org"."id" = "Org.SUM.latest_repos.points"."__join_connection"
+WHERE
+  "Org.SUM.latest_repos.points"."result" > 100"
+`;
+
+exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
 {
   "filter": {
     "args": [
@@ -170,7 +383,7 @@ exports[`Query plan composes a query 1`] = `
 }
 `;
 
-exports[`Query plan stringifies the query plan 1`] = `
+exports[`Query plan works with complex aggregates: SQL snapshot 1`] = `
 "SELECT
   "Org.repos"."id" AS "id",
   "Org.repos"."name" AS "name",
@@ -179,6 +392,16 @@ FROM
   org AS "Org"
   JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
   JOIN org AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+  JOIN (
+    SELECT
+      "Org"."id" AS "__join_connection",
+      count("Org.repos"."id") AS "result"
+    FROM
+      org AS "Org"
+      JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+    GROUP BY
+      "Org"."id"
+  ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
   JOIN (
     SELECT
       "Repo"."id" AS "__join_connection",
@@ -203,16 +426,6 @@ FROM
   JOIN (
     SELECT
       "Repo"."id" AS "__join_connection",
-      sum("Repo.issues"."id") AS "result"
-    FROM
-      repo AS "Repo"
-      JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-    GROUP BY
-      "Repo"."id"
-  ) AS "Org.repos.SUM.Repo.issues.id" ON "Org.repos"."id" = "Org.repos.SUM.Repo.issues.id"."__join_connection"
-  JOIN (
-    SELECT
-      "Repo"."id" AS "__join_connection",
       count("Repo.issues.repo"."name") AS "result"
     FROM
       repo AS "Repo"
@@ -220,25 +433,25 @@ FROM
       JOIN repo AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
     GROUP BY
       "Repo"."id"
-  ) AS "Org.repos.COUNT.issues.repo.name" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo.name"."__join_connection"
+  ) AS "Org.repos.COUNT.issues.repo_name" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo_name"."__join_connection"
   JOIN (
     SELECT
-      "Org"."id" AS "__join_connection",
-      count("Org.repos"."id") AS "result"
+      "Repo"."id" AS "__join_connection",
+      sum("Repo.issues"."id") AS "result"
     FROM
-      org AS "Org"
-      JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      repo AS "Repo"
+      JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
     GROUP BY
-      "Org"."id"
-  ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
+      "Repo"."id"
+  ) AS "Org.repos.SUM.issues.id" ON "Org.repos"."id" = "Org.repos.SUM.issues.id"."__join_connection"
 WHERE
   (
-    "Org.repos.COUNT.issues.id"."result" + (
-      "Org.repos.COUNT.issues.repo.id"."result" + "Org.repos.SUM.issues.id"."result"
-    )
+    (
+      "Org.repos.COUNT.issues.id"."result" + "Org.repos.COUNT.issues.repo.id"."result"
+    ) + "Org.repos.SUM.issues.id"."result"
   ) > (
-    "Org.repos.COUNT.issues.repo_name"."result" + (
-      "Org.repos"."ref_number" + "Org.COUNT.repos.id"."result"
-    )
+    (
+      "Org.repos.COUNT.issues.repo_name"."result" + "Org.repos"."ref_number"
+    ) + "Org.COUNT.repos.id"."result"
   )"
 `;

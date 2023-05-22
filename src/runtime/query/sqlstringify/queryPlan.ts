@@ -5,13 +5,14 @@ import { transformExpressionPaths } from "../build";
 
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureNot } from "@src/common/utils";
+import { UnreachableError, assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
 import { getTypedPath } from "@src/composer/utils";
 import {
   AggregateFunctionName,
   Definition,
   FunctionName,
   QueryDef,
+  SelectItem,
   TypedExprDef,
 } from "@src/types/definition";
 
@@ -20,18 +21,24 @@ type NamePath = string[];
 // FIXME support dbname and real table names
 export type QueryPlan = {
   entry: string;
+  /**
+   * NOTE: `fromPath` is only needed to build a `select "My.target.table".*`.
+   * This can be removed if `QueryPlanExpression` supported selecting *,
+   * Then it could be embedded into `select` (which would be required field in that case)
+   */
+  fromPath: NamePath;
   joins: QueryPlanJoin[];
   groupBy: NamePath[];
   filter?: QueryPlanExpression;
   select?: Record<string, QueryPlanExpression>; // key is 'alias'
-  orderBy?: [NamePath, "asc" | "desc"][];
+  orderBy?: [QueryPlanExpression, "asc" | "desc"][];
   limit?: number;
   offset?: number;
 };
 
 export type JoinWithSubquery = {
   kind: "subquery";
-  joinType: "inner" | "left";
+  joinType: "left";
   joinOn: [NamePath, NamePath];
   namePath: NamePath;
   plan: QueryPlan;
@@ -84,23 +91,45 @@ export function buildQueryPlan(def: Definition, q: QueryDef): QueryPlan {
    */
   // FIXME
   const atoms = collectQueryAtoms(def, q);
-
   /**
    * Step 2: build the plan
    */
 
   return {
     entry: q.fromPath[0],
+    fromPath: q.fromPath,
+    filter: q.filter ? toQueryExpr(expandExpression(def, q.filter)) : undefined,
+    select: q.select.length > 0 ? buildSelect(def, q.select) : undefined,
     groupBy: [],
-    joins: buildJoins(def, atoms),
+    orderBy:
+      q.orderBy?.map((ord) => [toQueryExpr(expandExpression(def, ord.exp)), ord.direction]) ??
+      undefined,
+    joins: buildJoins(def, atoms, "inner"),
+    limit: q.limit,
+    offset: q.offset,
   };
 }
 
-export function collectQueryAtoms(def: Definition, q: QueryDef): QueryAtom[] {
-  // collect from select
-  const fromAtoms = _.range(1, q.fromPath.length).map(
-    (val): QueryAtom => ({ kind: "table-namespace", namePath: _.take(q.fromPath, val) })
+function buildSelect(def: Definition, items: SelectItem[]): QueryPlan["select"] {
+  const pairs = items.map((item) =>
+    match(item)
+      .with({ kind: "field" }, { kind: "computed" }, (item) => [
+        item.alias,
+        toQueryExpr(expandExpression(def, { kind: "alias", namePath: item.namePath })),
+      ])
+      .otherwise(() => {
+        throw new UnreachableError(
+          `Select can currently be built only from fields and computeds, got ${item.kind} instead`
+        );
+      })
   );
+  return Object.fromEntries(pairs);
+}
+
+export function collectQueryAtoms(def: Definition, q: QueryDef): QueryAtom[] {
+  const fromPathAtom: QueryAtom = { kind: "table-namespace", namePath: q.fromPath };
+
+  // collect from select
   const selectAtoms = q.select.flatMap((item) =>
     match(item)
       .with({ kind: "field" }, (f): QueryAtom[] => [
@@ -118,7 +147,7 @@ export function collectQueryAtoms(def: Definition, q: QueryDef): QueryAtom[] {
       })
   );
   const filterAtoms = pathsFromExpr(expandExpression(def, q.filter));
-  return _.tail(getUniqueQueryAtoms([...fromAtoms, ...selectAtoms, ...filterAtoms]));
+  return getFinalQueryAtoms([fromPathAtom, ...selectAtoms, ...filterAtoms]);
 }
 
 function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
@@ -139,7 +168,7 @@ function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
     .exhaustive();
 }
 
-function getUniqueQueryAtoms(atoms: QueryAtom[]): QueryAtom[] {
+function getFinalQueryAtoms(atoms: QueryAtom[]): QueryAtom[] {
   const tablePaths = getUniqueTablePaths(atoms);
   const aggregates = getUniqueAggregates(atoms);
   const tables = tablePaths.map(
@@ -153,8 +182,9 @@ function getUniqueQueryAtoms(atoms: QueryAtom[]): QueryAtom[] {
 
 function getUniqueTablePaths(atoms: QueryAtom[]): NamePath[] {
   const tablePaths = kindFilter(atoms, "table-namespace").map((a) => a.namePath);
+  const tablePathsWithSubpaths = tablePaths.flatMap((path) => buildNamePathSubranges(path));
   return _.sortBy(
-    _.uniqBy(tablePaths, (path) => path.join(".")),
+    _.uniqBy(tablePathsWithSubpaths, (path) => path.join(".")),
     (path) => path.join(".")
   );
 }
@@ -171,19 +201,24 @@ function getUniqueAggregates(atoms: QueryAtom[]): QueryAtomAggregate[] {
   return _.sortBy(_.uniqBy(aggregates, aggregateToUniqueRepr), aggregateToUniqueRepr);
 }
 
-function buildJoins(def: Definition, atoms: QueryAtom[]): QueryPlanJoin[] {
+function buildJoins(
+  def: Definition,
+  atoms: QueryAtom[],
+  joinType: "inner" | "left"
+): QueryPlanJoin[] {
   const joins = atoms.map(
     (atom): QueryPlanJoin =>
       match(atom)
         .with({ kind: "table-namespace" }, (atom): QueryPlanJoin => {
           // we need to figure out if this is an inline or subquery
           const tpath = getTypedPath(def, atom.namePath, {});
+          ensureEqual(tpath.leaf, null, tpath.leaf?.name);
           const ref = getRef(def, _.last(tpath.nodes)!.refKey);
           return match(ref)
             .with({ kind: "reference" }, { kind: "relation" }, (ref): QueryPlanJoin => {
               return {
                 kind: "inline",
-                joinType: "inner", // FIXME should every "inline" join be inner? How do we decide?
+                joinType,
                 target: ref.name, // FIXME we don't need this
                 modelName: getTargetModel(def, ref.refKey).name,
                 namePath: atom.namePath,
@@ -193,7 +228,7 @@ function buildJoins(def: Definition, atoms: QueryAtom[]): QueryPlanJoin[] {
             .with({ kind: "query" }, (ref): QueryPlanJoin => {
               return {
                 kind: "subquery",
-                joinType: "inner",
+                joinType: "left",
                 namePath: atom.namePath,
                 joinOn: calculateJoinOn(def, atom.namePath),
                 plan: buildQueryPlan(def, ref),
@@ -204,8 +239,19 @@ function buildJoins(def: Definition, atoms: QueryAtom[]): QueryPlanJoin[] {
             });
         })
         .with({ kind: "aggregate" }, (atom): QueryPlanJoin => {
-          const tpath = getTypedPath(def, atom.sourcePath, {});
-          const ref = getRef(def, _.last(tpath.nodes)!.refKey);
+          function getSourceRef(sourcePath: NamePath) {
+            const tpath = getTypedPath(def, sourcePath, {});
+            if (tpath.nodes.length) {
+              return getRef(def, _.last(tpath.nodes)!.refKey);
+            } else {
+              return match(tpath.source)
+                .with({ kind: "model" }, (source) => getRef(def, source.refKey))
+                .otherwise(() => {
+                  throw new UnreachableError("Doesn't support paths from the context");
+                });
+            }
+          }
+          const ref = getSourceRef(atom.sourcePath);
           const entryModel = getTargetModel(def, ref.refKey);
           return {
             kind: "subquery",
@@ -222,10 +268,20 @@ function buildJoins(def: Definition, atoms: QueryAtom[]): QueryPlanJoin[] {
             namePath: [...atom.sourcePath, atom.fnName.toUpperCase(), ...atom.targetPath],
             plan: {
               entry: entryModel.name, // FIXME could we use dbname here?
-              groupBy: [[entryModel.name, ...atom.targetPath, "id"]],
-              joins: buildJoins(def, [
-                { kind: "table-namespace", namePath: [entryModel.name, ...atom.targetPath] },
-              ]), // fixme
+              fromPath: [entryModel.name, ..._.initial(atom.targetPath)],
+              groupBy: [[entryModel.name, "id"]],
+              joins: buildJoins(
+                def,
+                getFinalQueryAtoms(
+                  pathsFromExpr(
+                    expandExpression(def, {
+                      kind: "alias",
+                      namePath: [entryModel.name, ...atom.targetPath],
+                    })
+                  )
+                ),
+                "left"
+              ),
               select: {
                 __join_connection: { kind: "alias", value: [entryModel.name, "id"] },
                 result: {
@@ -249,6 +305,13 @@ function buildJoins(def: Definition, atoms: QueryAtom[]): QueryPlanJoin[] {
   return joins;
 }
 
+function buildNamePathSubranges(path: NamePath): NamePath[] {
+  if (path.length < 2) {
+    return [];
+  }
+  return _.range(2, path.length + 1).map((val) => _.take(path, val));
+}
+
 function calculateJoinOn(def: Definition, path: NamePath): [NamePath, NamePath] {
   const tpath = getTypedPath(def, path, {});
   const dest = tpath.nodes.at(-1)!;
@@ -261,8 +324,9 @@ function calculateJoinOn(def: Definition, path: NamePath): [NamePath, NamePath] 
         [...path, "id"],
       ];
     })
-    .with({ kind: "relation" }, (ref): [NamePath, NamePath] => {
-      const field = getRef.field(def, ref.throughRefKey);
+    .with({ kind: "relation" }, (rel): [NamePath, NamePath] => {
+      const reference = getRef.reference(def, rel.throughRefKey);
+      const field = getRef.field(def, reference.fieldRefKey);
       return [
         [..._.initial(path), "id"],
         [...path, field.dbname],
