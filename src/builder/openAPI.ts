@@ -13,16 +13,6 @@ import {
 } from "@src/types/definition";
 
 export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
-  const endpoints = definition.apis.flatMap((api) =>
-    api.entrypoints.flatMap((entrypoint) =>
-      extractEndpoints(entrypoint).map((endpoint) => ({
-        pathPrefix: api.path,
-        apiName: api.name,
-        endpoint,
-      }))
-    )
-  );
-
   /**
    * Builds a list of required prop names that is attached to the object schema.
    *
@@ -189,53 +179,56 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     return operation;
   }
 
-  const paths = endpoints.reduce((paths, { pathPrefix, apiName, endpoint }) => {
-    const endpointPath = buildEndpointPath(endpoint);
-    const method = buildEndpointHttpMethod(endpoint);
+  const paths: OpenAPIV3.PathsObject = {};
+  definition.apis.forEach((api) =>
+    api.entrypoints.forEach((entrypoint) =>
+      extractEndpoints(entrypoint).forEach((endpoint) => {
+        const endpointPath = buildEndpointPath(endpoint);
+        const method = buildEndpointHttpMethod(endpoint);
 
-    const path = [
-      pathPrefix,
-      ..._.chain(endpointPath.fragments)
-        .map((frag) => {
-          return match(frag)
-            .with({ kind: "namespace" }, (f) => f.name)
-            .with({ kind: "identifier" }, (f) => `{${f.name}}`)
-            .with({ kind: "query" }, () => null)
-            .exhaustive();
-        })
-        .compact() // remove nulls
-        .value(),
-    ].join("/");
+        const path = [
+          api.path,
+          ..._.chain(endpointPath.fragments)
+            .map((frag) => {
+              return match(frag)
+                .with({ kind: "namespace" }, (f) => f.name)
+                .with({ kind: "identifier" }, (f) => `{${f.name}}`)
+                .with({ kind: "query" }, () => null)
+                .exhaustive();
+            })
+            .compact() // remove nulls
+            .value(),
+        ].join("/");
 
-    const parameters = _.chain(endpointPath.fragments)
-      .map((fragment): OpenAPIV3.ParameterObject | null => {
-        return match(fragment)
-          .with({ kind: "identifier" }, (f) => ({
-            in: "path",
-            name: f.name,
-            required: true,
-            schema: { type: convertToOpenAPIType(f.type) },
-          }))
-          .with({ kind: "query" }, (f) => ({
-            in: "query",
-            name: f.name,
-            required: f.required,
-            schema: { type: convertToOpenAPIType(f.type) },
-          }))
-          .with({ kind: "namespace" }, () => null)
-          .exhaustive();
+        const parameters = _.chain(endpointPath.fragments)
+          .map((fragment): OpenAPIV3.ParameterObject | null => {
+            return match(fragment)
+              .with({ kind: "identifier" }, (f) => ({
+                in: "path",
+                name: f.name,
+                required: true,
+                schema: { type: convertToOpenAPIType(f.type) },
+              }))
+              .with({ kind: "query" }, (f) => ({
+                in: "query",
+                name: f.name,
+                required: f.required,
+                schema: { type: convertToOpenAPIType(f.type) },
+              }))
+              .with({ kind: "namespace" }, () => null)
+              .exhaustive();
+          })
+          .compact()
+          .value();
+
+        // has parent or target context iow. identifier in URL
+        const hasContext = endpointPath.fragments.some((f) => f.kind === "identifier");
+        const pathItem = paths[path] ?? {};
+        pathItem[method] = buildEndpointOperation(endpoint, api.name, parameters, hasContext);
+        paths[path] = pathItem;
       })
-      .compact()
-      .value();
-
-    // has parent or target context iow. identifier in URL
-    const hasContext = endpointPath.fragments.some((f) => f.kind === "identifier");
-    const pathItem = paths[path] ?? {};
-    pathItem[method] = buildEndpointOperation(endpoint, apiName, parameters, hasContext);
-    paths[path] = pathItem;
-
-    return paths;
-  }, {} as OpenAPIV3.PathsObject);
+    )
+  );
 
   return { openapi: "3.0.3", info: { title: "Title", version: "1.0.0" }, paths };
 }
