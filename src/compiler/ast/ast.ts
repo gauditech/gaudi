@@ -298,10 +298,8 @@ export type GeneratorClientAtom =
       value: GeneratorClientAtomTarget;
       keywordValue: TokenData;
     }
-  | { kind: "api"; keyword: TokenData; value: GeneratorClientAtomApi; keywordValue: TokenData }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
 export type GeneratorClientAtomTarget = "js";
-export type GeneratorClientAtomApi = "entrypoint" | "model";
 
 export type Runtime = {
   kind: "runtime";

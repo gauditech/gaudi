@@ -12,8 +12,16 @@ import {
   SelectItem,
 } from "@src/types/definition";
 
-export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAPIV3.Document {
-  const endpoints = definition.entrypoints.map(extractEndpoints).flat();
+export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
+  const endpoints = definition.apis.flatMap((api) =>
+    api.entrypoints.flatMap((entrypoint) =>
+      extractEndpoints(entrypoint).map((endpoint) => ({
+        pathPrefix: api.path,
+        apiName: api.name,
+        endpoint,
+      }))
+    )
+  );
 
   /**
    * Builds a list of required prop names that is attached to the object schema.
@@ -106,6 +114,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
 
   function buildEndpointOperation(
     endpoint: EndpointDef,
+    apiName: string | undefined,
     parameters: OpenAPIV3.ParameterObject[],
     hasContext: boolean
   ): OpenAPIV3.OperationObject {
@@ -144,13 +153,20 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
     }
 
     const operation: OpenAPIV3.OperationObject = {
-      responses: {
-        200: {
-          description: "Successful response",
-          content: { "application/json": { schema: responseSchema } },
-        },
-      },
+      tags: apiName ? [apiName] : undefined,
+      responses: {},
     };
+
+    if (endpoint.kind === "delete") {
+      operation.responses[204] = {
+        description: "Successful response",
+      };
+    } else {
+      operation.responses[200] = {
+        description: "Successful response",
+        content: { "application/json": { schema: responseSchema } },
+      };
+    }
 
     if (hasContext) {
       operation.responses[404] = {
@@ -173,25 +189,23 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
     return operation;
   }
 
-  const paths = endpoints.reduce((paths, endpoint) => {
+  const paths = endpoints.reduce((paths, { pathPrefix, apiName, endpoint }) => {
     const endpointPath = buildEndpointPath(endpoint);
     const method = buildEndpointHttpMethod(endpoint);
 
-    const path =
-      pathPrefix +
-      [
-        "",
-        ..._.chain(endpointPath.fragments)
-          .map((frag) => {
-            return match(frag)
-              .with({ kind: "namespace" }, (f) => f.name)
-              .with({ kind: "identifier" }, (f) => `{${f.name}}`)
-              .with({ kind: "query" }, () => null)
-              .exhaustive();
-          })
-          .compact() // remove nulls
-          .value(),
-      ].join("/");
+    const path = [
+      pathPrefix,
+      ..._.chain(endpointPath.fragments)
+        .map((frag) => {
+          return match(frag)
+            .with({ kind: "namespace" }, (f) => f.name)
+            .with({ kind: "identifier" }, (f) => `{${f.name}}`)
+            .with({ kind: "query" }, () => null)
+            .exhaustive();
+        })
+        .compact() // remove nulls
+        .value(),
+    ].join("/");
 
     const parameters = _.chain(endpointPath.fragments)
       .map((fragment): OpenAPIV3.ParameterObject | null => {
@@ -217,7 +231,7 @@ export function buildOpenAPI(definition: Definition, pathPrefix: string): OpenAP
     // has parent or target context iow. identifier in URL
     const hasContext = endpointPath.fragments.some((f) => f.kind === "identifier");
     const pathItem = paths[path] ?? {};
-    pathItem[method] = buildEndpointOperation(endpoint, parameters, hasContext);
+    pathItem[method] = buildEndpointOperation(endpoint, apiName, parameters, hasContext);
     paths[path] = pathItem;
 
     return paths;

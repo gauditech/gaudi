@@ -1,12 +1,12 @@
 
   // ----- API client
-  
+
   export type ApiClientOptions = {
     /** Server API path prefix */
     rootPath?: string;
     /**
      * Function that implements HTTP calls and returns it's result.
-     * 
+     *
      * This lib does not implement it's own HTTP calls which allows users
      * to use any HTTP client lib of their choice.
      */
@@ -23,24 +23,105 @@
     }
 
     return {
-      api: buildApi(internalOptions ?? {}),
-    };
+    api: {
+      User: buildUserApi(internalOptions ?? {}),
+...buildApi(internalOptions ?? {})
+    }
+  };
   }
 
   
     function buildApi(options: ApiClientOptions) {
+      
+  function buildOrgEntrypoint(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
+    type GetResp = { name: string,
+slug: string,
+description: string,
+repos: { issues: { title: string,
+body: string,
+repo: { org: { id: number,
+name: string,
+slug: string,
+description: string,
+optOut: string|null } } }[] }[],
+members: { id: number,
+name: string }[],
+public_repos: { id: number,
+name: string,
+slug: string,
+description: string,
+is_public: boolean,
+org_id: number }[],
+public_issues: { id: number,
+title: string,
+body: string,
+repo_id: number }[],
+nameAndDesc: unknown };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type ListResp = GetResp;
+type ListError = GetError;
+type CreateData = { name: string,
+slug: string,
+description: string,
+optOut?: string|null };
+type CreateResp = GetResp;
+type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type UpdateData = { name?: string,
+slug?: string,
+description?: string,
+optOut?: string|null };
+type UpdateResp = GetResp;
+type UpdateError = CreateError;
+
+    // entrypoint function
+    function api(id: string) {
+      const baseUrl = `${parentPath}/${id}`;
       return {
-        authUser: buildAuthuserApi(options, "auth_user"),
-box: buildBoxApi(options, "box")
+        repos: buildReposEntrypoint(options, `${baseUrl}/repos`)
       }
     }
 
-    
-  function buildAuthuserApi(options: ApiClientOptions, parentPath: string) {
+    // endpoint functions
+    return Object.assign(api,
+      {
+        get: buildGetFn<string, GetResp, GetError>(options, parentPath),
+list: buildPaginatedListFn<ListResp, ListError>(options, parentPath),
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
+update: buildUpdateFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath)
+      }
+    )
+  }
+
+  function buildReposEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
-    type LoginError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type LogoutError = LoginError;
-type RegisterError = LoginError;
+    type GetResp = { id: number,
+slug: string,
+description: string,
+org_id: number,
+issues: { repo: { id: number,
+name: string,
+slug: string,
+description: string,
+is_public: boolean,
+org_id: number } }[] };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type ListResp = GetResp;
+type ListError = GetError;
+type CreateData = { name: string,
+slug: string,
+description: string,
+is_public: boolean };
+type CreateResp = GetResp;
+type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type UpdateData = { name?: string,
+slug?: string,
+description?: string,
+is_public?: boolean,
+org_id?: number };
+type UpdateResp = GetResp;
+type UpdateError = CreateError;
+type DeleteError = GetError;
 
     // entrypoint function
     function api(id: number) {
@@ -51,59 +132,33 @@ type RegisterError = LoginError;
     }
 
     // endpoint functions
-    return Object.assign(api, 
+    return Object.assign(api,
       {
-        login: buildCustomManySubmitFn<any, any, LoginError>(options, parentPath, "login", "POST"),
-logout: buildCustomManySubmitFn<any, any, LogoutError>(options, parentPath, "logout", "POST"),
-register: buildCustomManySubmitFn<any, any, RegisterError>(options, parentPath, "register", "POST")
+        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
+list: buildListFn<ListResp, ListError>(options, parentPath),
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
+update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       }
     )
   }
 
-  function buildBoxApi(options: ApiClientOptions, parentPath: string) {
-    // endpoint types
-    type ListResp = { id: number,
-name: string,
-is_public: boolean,
-owner_id: number };
-type ListError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
-type GetResp = ListResp;
-type GetError = ListError;
-type CreateData = { name: string,
-is_public: boolean };
-type CreateResp = ListResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type FetchAuthTokenError = CreateError;
-
-    // entrypoint function
-    function api(id: string) {
-      const baseUrl = `${parentPath}/${id}`;
       return {
-        items: buildItemsApi(options, `${baseUrl}/items`)
+        org: buildOrgEntrypoint(options, "/api/org")
       }
     }
+  
 
-    // endpoint functions
-    return Object.assign(api, 
-      {
-        list: buildListFn<ListResp, ListError>(options, parentPath),
-get: buildGetFn<string, GetResp, GetError>(options, parentPath),
-create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
-fetchAuthToken: buildCustomManySubmitFn<any, any, FetchAuthTokenError>(options, parentPath, "fetchAuthToken", "POST")
-      }
-    )
-  }
-
-  function buildItemsApi(options: ApiClientOptions, parentPath: string) {
+    function buildUserApi(options: ApiClientOptions) {
+      
+  function buildUserEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type GetResp = { id: number,
-name: string,
-is_public: boolean,
-box_id: number };
+name: string };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 
     // entrypoint function
-    function api(id: string) {
+    function api(id: number) {
       const baseUrl = `${parentPath}/${id}`;
       return {
         
@@ -111,12 +166,17 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     }
 
     // endpoint functions
-    return Object.assign(api, 
+    return Object.assign(api,
       {
-        get: buildGetFn<string, GetResp, GetError>(options, parentPath)
+        get: buildGetFn<number, GetResp, GetError>(options, parentPath)
       }
     )
   }
+
+      return {
+        user: buildUserEntrypoint(options, "/api/user/user")
+      }
+    }
   
 
   
@@ -134,13 +194,13 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     /** Response body data. */
     data?: any;
   };
-  
+
   /**
    * Function that performs request call and returns result.
-   * This allows for any custom HTTP client (fetch, axios, ...) implementation 
+   * This allows for any custom HTTP client (fetch, axios, ...) implementation
    * to be used regardless of environment (node, browser, ...).
-   * 
-   * Return value from this function is wrapped by client in {ApiResponse} 
+   *
+   * Return value from this function is wrapped by client in {ApiResponse}
    * structure and returned to the caller.
    *
    * @param url {string} request URL
@@ -148,7 +208,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
    * @returns {ApiRequestFnData}
    */
   export type ApiRequestFn = (url: string, init: ApiRequestInit) => Promise<ApiRequestFnData>;
-  
+
   /** API request additional parameters. */
   export type ApiRequestInit = {
     /** A BodyInit object or null to set request's body. */
@@ -158,9 +218,9 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     /** A string to set request's method. */
     method: EndpointHttpMethod;
   }
-  
+
   export type ApiRequestBody = any;
-  
+
   export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
     ? {
         code: C;
@@ -168,7 +228,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
         data?: D;
       }
     : never;
-  
+
   export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
 
   export type ApiResponseSuccess<D, E extends string> = {
@@ -192,11 +252,11 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     totalPages: number;
     totalCount: number;
     data: T[];
-  };  
+  };
 
   // TODO: add list search/filter parameter
   export type PaginatedListData = { pageSize?: number; page?: number };
-  
+
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -226,7 +286,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
-  
+
   export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -252,7 +312,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
 
   function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -262,12 +322,12 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildCreateFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): CreateApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -278,12 +338,12 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): UpdateApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -294,10 +354,10 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -307,10 +367,10 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
     return async (options) => {
-      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const urlPath = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, urlPath, {
@@ -320,10 +380,10 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
     return async (data, options) => {
-      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const urlPath = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       const params = new URLSearchParams()
       Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
@@ -347,7 +407,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     method: EndpointHttpMethod
   ): CustomOneFetchApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -357,7 +417,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -365,7 +425,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     method: EndpointHttpMethod
   ): CustomOneSubmitApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -376,7 +436,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildCustomManyFetchFn<R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -384,8 +444,8 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     method: EndpointHttpMethod
   ): CustomManyFetchApiClientFn<R, E> {
     return async (options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${path}`;
-  
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
+
       return (
         makeRequest(clientOptions, url, {
           method,
@@ -394,7 +454,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
       );
     };
   }
-  
+
   function buildCustomManySubmitFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -402,7 +462,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     method: EndpointHttpMethod
   ): CustomManySubmitApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {

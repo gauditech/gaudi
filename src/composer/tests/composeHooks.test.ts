@@ -119,7 +119,7 @@ describe("compose hooks", () => {
 
     const result = compose(compileToOldSpec(bp));
 
-    expect(result.entrypoints[0].endpoints[0]).toMatchSnapshot();
+    expect(result.apis[0].entrypoints[0].endpoints[0]).toMatchSnapshot();
   });
 
   it("action hook", () => {
@@ -161,7 +161,7 @@ describe("compose hooks", () => {
     `;
     const result = compose(compileToOldSpec(bp));
 
-    expect(result.entrypoints[0].endpoints).toMatchSnapshot();
+    expect(result.apis[0].entrypoints[0].endpoints).toMatchSnapshot();
   });
 
   it("composes action hook", () => {
@@ -196,7 +196,7 @@ describe("compose hooks", () => {
       }
     `;
     const def = compose(compileToOldSpec(bp));
-    const action = (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
+    const action = (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
 
     expect(action).toMatchSnapshot();
   });

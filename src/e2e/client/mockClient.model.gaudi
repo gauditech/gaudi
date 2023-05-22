@@ -14,8 +14,6 @@ model Repo {
 
 generate client {
   target js
-  // test entrypoint API
-  api entrypoint
   // test custom output folder
   output "src/e2e/client/__snapshots__/mockClient/client"
 }

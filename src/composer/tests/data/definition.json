@@ -183,7 +183,7 @@
       "hooks": []
     }
   ],
-  "entrypoints": [],
+  "apis": [],
   "populators": [],
   "resolveOrder": [],
   "runtimes": [],

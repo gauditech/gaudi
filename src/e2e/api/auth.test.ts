@@ -21,14 +21,14 @@ describe("Auth", () => {
 
   async function loginTestUser() {
     const loginResponse = await request(getServer())
-      .post("/auth_user/login")
+      .post("/api/auth/auth_user/login")
       .send({ username: "first", password: "1234" });
     return loginResponse.body.token;
   }
 
   async function loginTestUser2() {
     const loginResponse = await request(getServer())
-      .post("/auth_user/login")
+      .post("/api/auth/auth_user/login")
       .send({ username: "second", password: "1234" });
     return loginResponse.body.token;
   }
@@ -42,11 +42,11 @@ describe("Auth", () => {
     });
 
     it("Login and Logout successfully", async () => {
-      const listResponse1 = await request(getServer()).get("/box");
+      const listResponse1 = await request(getServer()).get("/api/box");
       expect(listResponse1.statusCode).toBe(401);
 
       const loginResponse = await request(getServer())
-        .post("/auth_user/login")
+        .post("/api/auth/auth_user/login")
         .send({ username: "first", password: "1234" });
       expect(loginResponse.statusCode).toBe(200);
 
@@ -54,38 +54,38 @@ describe("Auth", () => {
       expect(token?.length).toBe(43);
 
       const listResponse2 = await request(getServer())
-        .get("/box")
+        .get("/api/box")
         .set("Authorization", "bearer " + token);
       expect(listResponse2.statusCode).toBe(200);
 
       const logoutResponse = await request(getServer())
-        .post("/auth_user/logout")
+        .post("/api/auth/auth_user/logout")
         .set("Authorization", "bearer " + token);
       expect(logoutResponse.statusCode).toBe(204);
 
       const listResponse3 = await request(getServer())
-        .get("/box")
+        .get("/api/box")
         .set("Authorization", "bearer " + token);
       expect(listResponse3.statusCode).toBe(401);
     });
 
     it("Wrong Login password", async () => {
       const loginResponse = await request(getServer())
-        .post("/auth_user/login")
+        .post("/api/auth/auth_user/login")
         .send({ username: "first", password: "wrong password" });
       expect(loginResponse.statusCode).toBe(401);
     });
 
     it("Wrong Login username", async () => {
       const loginResponse = await request(getServer())
-        .post("/auth_user/login")
+        .post("/api/auth/auth_user/login")
         .send({ username: "wrong username", password: "1234" });
       expect(loginResponse.statusCode).toBe(401);
     });
     it("Success public", async () => {
       const token = await loginTestUser();
       const getResponse = await request(getServer())
-        .get("/box/public")
+        .get("/api/box/public")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(200);
     });
@@ -94,7 +94,7 @@ describe("Auth", () => {
       const token = await loginTestUser();
 
       const getResponse = await request(getServer())
-        .get("/box/private")
+        .get("/api/box/private")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(200);
     });
@@ -102,20 +102,20 @@ describe("Auth", () => {
     it("Fail private", async () => {
       const token = await loginTestUser2();
       const getResponse = await request(getServer())
-        .get("/box/private")
+        .get("/api/box/private")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(401);
     });
 
     it("Fail private no auth", async () => {
-      const getResponse = await request(getServer()).get("/box/private");
+      const getResponse = await request(getServer()).get("/api/box/private");
       expect(getResponse.statusCode).toBe(401);
     });
 
     it("Success public > public", async () => {
       const token = await loginTestUser();
       const getResponse = await request(getServer())
-        .get("/box/public/items/public")
+        .get("/api/box/public/items/public")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(200);
     });
@@ -123,7 +123,7 @@ describe("Auth", () => {
     it("Fail private > private", async () => {
       const token = await loginTestUser();
       const getResponse = await request(getServer())
-        .get("/box/private/items/private")
+        .get("/api/box/private/items/private")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(401);
     });
@@ -131,7 +131,7 @@ describe("Auth", () => {
     it("Fail public > private", async () => {
       const token = await loginTestUser();
       const getResponse = await request(getServer())
-        .get("/box/public/items/private")
+        .get("/api/box/public/items/private")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(401);
     });
@@ -140,7 +140,7 @@ describe("Auth", () => {
       const token = await loginTestUser();
 
       const getResponse = await request(getServer())
-        .get("/box/private/items/public")
+        .get("/api/box/private/items/public")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(200);
     });
@@ -149,7 +149,7 @@ describe("Auth", () => {
       const token = await loginTestUser2();
 
       const getResponse = await request(getServer())
-        .post("/box")
+        .post("/api/box")
         .set("Authorization", "bearer " + token)
         .send({ name: "new box", is_public: false });
       expect(getResponse.statusCode).toBe(200);
@@ -157,7 +157,7 @@ describe("Auth", () => {
 
     it("Fail create box not logged in", async () => {
       const getResponse = await request(getServer())
-        .post("/box")
+        .post("/api/box")
         .send({ name: "another box", is_public: false });
       expect(getResponse.statusCode).toBe(401);
     });
@@ -166,7 +166,7 @@ describe("Auth", () => {
       const authToken = "FwExbO7sVwf95pI3F3qWSpkANE4aeoNiI0pogqiMcfQ";
 
       const listResponse2 = await request(getServer())
-        .post("/box/fetchAuthToken")
+        .post("/api/box/fetchAuthToken")
         // send token in header
         .set("Authorization", "bearer " + authToken)
         .send({});
@@ -186,7 +186,7 @@ describe("Auth", () => {
 
     it("should register and login new user", async () => {
       const registerResponse = await request(getServer())
-        .post("/auth_user/register")
+        .post("/api/auth/auth_user/register")
         .send({
           authUser: {
             name: "some name",
@@ -201,14 +201,14 @@ describe("Auth", () => {
 
       // login is tested fully in another test, this just confirmation that login doesn't fail for new user
       const loginResponse = await request(getServer())
-        .post("/auth_user/login")
+        .post("/api/auth/auth_user/login")
         .send({ username: "somename@example.com", password: "some password" });
       expect(loginResponse.statusCode).toBe(200);
     });
 
     it("should fail when creating user with invalid parameters", async () => {
       const registerResponse = await request(getServer())
-        .post("/auth_user/register")
+        .post("/api/auth/auth_user/register")
         .send({ name: "", username: "", password: "" });
 
       expect(registerResponse.statusCode).toBe(400);
@@ -225,9 +225,11 @@ describe("Auth", () => {
         },
       };
 
-      await request(getServer()).post("/auth_user/register").send(data);
+      await request(getServer()).post("/api/auth/auth_user/register").send(data);
 
-      const reregisterReponse = await request(getServer()).post("/auth_user/register").send(data);
+      const reregisterReponse = await request(getServer())
+        .post("/api/auth/auth_user/register")
+        .send(data);
 
       // FIXME this should be a validation error instead, but we don't handle unique constraints yet
       expect(reregisterReponse.statusCode).toBe(500);

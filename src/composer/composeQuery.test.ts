@@ -83,7 +83,7 @@ describe("compose action queries", () => {
 
       const def = compose(compileToOldSpec(bp));
       expect(
-        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
     });
     it("custom endpoint", () => {
@@ -121,7 +121,7 @@ describe("compose action queries", () => {
 
       const def = compose(compileToOldSpec(bp));
       expect(
-        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
     });
   });

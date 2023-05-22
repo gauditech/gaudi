@@ -175,7 +175,7 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 slug: string;
                 description: string;
-                optOut: string | null;
+                optOut?: string | null | undefined;
             }, {
                 name: string;
                 slug: string;
@@ -259,6 +259,14 @@ export declare function createClient(options: ApiClientOptions): {
                 }[];
                 nameAndDesc: unknown;
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+        };
+        User: {
+            user: ((id: number) => {}) & {
+                get: GetApiClientFn<number, {
+                    id: number;
+                    name: string;
+                }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            };
         };
     };
 };

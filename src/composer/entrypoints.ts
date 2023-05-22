@@ -29,8 +29,16 @@ import {
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
-export function composeEntrypoints(def: Definition, input: Spec.Entrypoint[]): void {
-  def.entrypoints = input.map((spec) => processEntrypoint(def, spec, [], []));
+export function composeApis(def: Definition, input: Spec.Api[]): void {
+  def.apis = input.map(({ name, entrypoints }) => ({
+    name,
+    path: "/api" + (name ? "/" + name.toLocaleLowerCase() : ""),
+    entrypoints: composeEntrypoints(def, entrypoints),
+  }));
+}
+
+export function composeEntrypoints(def: Definition, input: Spec.Entrypoint[]): EntrypointDef[] {
+  return input.map((spec) => processEntrypoint(def, spec, [], []));
 }
 
 function processEntrypoint(

@@ -13,7 +13,7 @@ describe("openAPI", () => {
       reference org { to Org }
       field name { type string }
     }
-    api {
+    api Test {
       entrypoint Org {
         identify { through slug }
 
@@ -38,6 +38,6 @@ describe("openAPI", () => {
 
     const def = compose(compileToOldSpec(bp));
 
-    expect(buildOpenAPI(def, "/api-test")).toMatchSnapshot();
+    expect(buildOpenAPI(def)).toMatchSnapshot();
   });
 });

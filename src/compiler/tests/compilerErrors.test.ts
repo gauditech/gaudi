@@ -402,20 +402,15 @@ describe("compiler errors", () => {
       const bp = `
         generate client {
           target js
-          api entrypoint
           output "a/b/c"
         }
 
         generate client {
           target js
-          api entrypoint
           output "a/b/c"
         }
         `;
-      expectError(
-        bp,
-        `Found duplicate generator "client", targeting the same target "js" and api "entrypoint"`
-      );
+      expectError(bp, `Found duplicate generator "client", targeting the same target "js"`);
     });
   });
 

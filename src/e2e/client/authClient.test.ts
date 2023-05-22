@@ -9,7 +9,7 @@ import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup";
 import {
   ApiRequestInit,
   createClient,
-} from "@src/e2e/client/__snapshots__/authClient/client/api-client-entrypoint";
+} from "@src/e2e/client/__snapshots__/authClient/client/api-client";
 import { readConfig } from "@src/runtime/config";
 
 // these tests last longer than default 5s timeout so this seems to help
@@ -28,7 +28,7 @@ describe("auth client lib", () => {
     const client = createClient({
       requestFn: testRequestFn,
     });
-    const resp = await client.api.authUser.login({ username: "first", password: "1234" });
+    const resp = await client.api.Auth.authUser.login({ username: "first", password: "1234" });
 
     // type narrowing for simpler later code
     ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
@@ -126,7 +126,7 @@ describe("auth client lib", () => {
       expect(response2.status).toBe(200);
 
       // logout
-      const response3 = await authClient.api.authUser.logout();
+      const response3 = await authClient.api.Auth.authUser.logout();
       expect(response3.status).toBe(204);
 
       // UNauthorized request again

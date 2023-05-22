@@ -5,7 +5,6 @@ describe("generator composer", () => {
     const bp = `
       generate client {
         target js
-        api entrypoint
       }
     `;
 
@@ -15,17 +14,10 @@ describe("generator composer", () => {
     expect(generator).toMatchSnapshot();
   });
 
-  it("succeeds for multiple client generators", () => {
+  it("succeeds for JS client generator with output", () => {
     const bp = `
       generate client {
         target js
-        api entrypoint
-        // without output
-      }
-
-      generate client {
-        target js
-        api model
         output "a/b/c"
       }
     `;

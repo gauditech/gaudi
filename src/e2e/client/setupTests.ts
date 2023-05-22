@@ -53,7 +53,6 @@ function appendClientGenerator(bp: string) {
   return `
 generate client {
   target js
-  api entrypoint
 }
 
 // "api model" is not implemented

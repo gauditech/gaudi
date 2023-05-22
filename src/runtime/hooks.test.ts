@@ -95,7 +95,7 @@ describe("hooks", () => {
     `;
 
       const result = compose(compileToOldSpec(bp));
-      const action = result.entrypoints[0].endpoints
+      const action = result.apis[0].entrypoints[0].endpoints
         .filter((ep): ep is CreateEndpointDef => ep.kind === "create")
         .shift()
         ?.actions.at(0);

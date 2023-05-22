@@ -70,7 +70,7 @@ describe("Endpoint queries", () => {
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    const entrypoint = def.entrypoints[0].entrypoints[0].entrypoints[0];
+    const entrypoint = def.apis[0].entrypoints[0].entrypoints[0].entrypoints[0];
     const range = entrypoint.endpoints.map((ep) => [ep.kind, ep] as [string, EndpointDef]);
     it.each(range)("test %s endpoint", (_kind, endpoint) => {
       const q = buildEndpointQueries(def, endpoint);
@@ -103,7 +103,7 @@ describe("Endpoint queries", () => {
     `;
 
       const def = compose(compileToOldSpec(bp));
-      const ep = def.entrypoints[0].endpoints[0] as ListEndpointDef;
+      const ep = def.apis[0].entrypoints[0].endpoints[0] as ListEndpointDef;
       let qt = buildEndpointQueries(def, ep).responseQueryTree;
 
       if (options?.paging) {
@@ -166,7 +166,7 @@ describe("Endpoint queries", () => {
     `;
 
       const def = compose(compileToOldSpec(bp));
-      const ep = def.entrypoints[0].entrypoints[0].endpoints[0] as ListEndpointDef;
+      const ep = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as ListEndpointDef;
       let qt = buildEndpointQueries(def, ep).responseQueryTree;
 
       if (options?.paging) {

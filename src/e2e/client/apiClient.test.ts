@@ -7,7 +7,7 @@ import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@src/e2e/a
 import {
   ApiRequestInit,
   createClient,
-} from "@src/e2e/client/__snapshots__/apiClient/client/api-client-entrypoint";
+} from "@src/e2e/client/__snapshots__/apiClient/client/api-client";
 import { readConfig } from "@src/runtime/config";
 
 // test are slow
@@ -83,6 +83,7 @@ describe("api client lib", () => {
     it("get", async () => {
       const response = await client.api.org.get("org1");
 
+      console.log(response.status, response.kind === "error" ? response.error : response.data);
       ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
 
       expect(response.status).toBe(200);

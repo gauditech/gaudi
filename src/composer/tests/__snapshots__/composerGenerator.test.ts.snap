@@ -2,23 +2,15 @@
 
 exports[`generator composer succeeds for JS client generator 1`] = `
 {
-  "api": "entrypoint",
   "kind": "generator-client",
   "output": undefined,
   "target": "js",
 }
 `;
 
-exports[`generator composer succeeds for multiple client generators 1`] = `
+exports[`generator composer succeeds for JS client generator with output 1`] = `
 [
   {
-    "api": "entrypoint",
-    "kind": "generator-client",
-    "output": undefined,
-    "target": "js",
-  },
-  {
-    "api": "model",
     "kind": "generator-client",
     "output": "a/b/c",
     "target": "js",

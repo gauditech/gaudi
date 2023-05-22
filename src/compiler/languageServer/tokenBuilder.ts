@@ -502,10 +502,6 @@ export function buildTokens(
               buildKeyword(a.keyword);
               buildKeyword(a.keywordValue);
             })
-            .with({ kind: "api" }, (a) => {
-              buildKeyword(a.keyword);
-              buildKeyword(a.keywordValue);
-            })
             .with({ kind: "output" }, (a) => {
               buildKeyword(a.keyword);
               buildLiteral(a.value);

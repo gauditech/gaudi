@@ -1,12 +1,12 @@
 
   // ----- API client
-  
+
   export type ApiClientOptions = {
     /** Server API path prefix */
     rootPath?: string;
     /**
      * Function that implements HTTP calls and returns it's result.
-     * 
+     *
      * This lib does not implement it's own HTTP calls which allows users
      * to use any HTTP client lib of their choice.
      */
@@ -23,19 +23,16 @@
     }
 
     return {
-      api: buildApi(internalOptions ?? {}),
-    };
+    api: {
+      ...buildApi(internalOptions ?? {})
+    }
+  };
   }
 
   
     function buildApi(options: ApiClientOptions) {
-      return {
-        org: buildOrgApi(options, "org")
-      }
-    }
-
-    
-  function buildOrgApi(options: ApiClientOptions, parentPath: string) {
+      
+  function buildOrgEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type GetResp = { id: number,
 slug: string,
@@ -61,12 +58,12 @@ type CustomManySubmitError = CreateError;
     function api(id: string) {
       const baseUrl = `${parentPath}/${id}`;
       return {
-        repos: buildReposApi(options, `${baseUrl}/repos`)
+        repos: buildReposEntrypoint(options, `${baseUrl}/repos`)
       }
     }
 
     // endpoint functions
-    return Object.assign(api, 
+    return Object.assign(api,
       {
         get: buildGetFn<string, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
@@ -81,7 +78,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     )
   }
 
-  function buildReposApi(options: ApiClientOptions, parentPath: string) {
+  function buildReposEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type GetResp = { slug: string,
 name: string };
@@ -114,7 +111,7 @@ type CustomManySubmitError = CreateError;
     }
 
     // endpoint functions
-    return Object.assign(api, 
+    return Object.assign(api,
       {
         get: buildGetFn<number, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
@@ -128,6 +125,11 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       }
     )
   }
+
+      return {
+        org: buildOrgEntrypoint(options, "/api/org")
+      }
+    }
   
 
   
@@ -145,13 +147,13 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     /** Response body data. */
     data?: any;
   };
-  
+
   /**
    * Function that performs request call and returns result.
-   * This allows for any custom HTTP client (fetch, axios, ...) implementation 
+   * This allows for any custom HTTP client (fetch, axios, ...) implementation
    * to be used regardless of environment (node, browser, ...).
-   * 
-   * Return value from this function is wrapped by client in {ApiResponse} 
+   *
+   * Return value from this function is wrapped by client in {ApiResponse}
    * structure and returned to the caller.
    *
    * @param url {string} request URL
@@ -159,7 +161,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
    * @returns {ApiRequestFnData}
    */
   export type ApiRequestFn = (url: string, init: ApiRequestInit) => Promise<ApiRequestFnData>;
-  
+
   /** API request additional parameters. */
   export type ApiRequestInit = {
     /** A BodyInit object or null to set request's body. */
@@ -169,9 +171,9 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     /** A string to set request's method. */
     method: EndpointHttpMethod;
   }
-  
+
   export type ApiRequestBody = any;
-  
+
   export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
     ? {
         code: C;
@@ -179,7 +181,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
         data?: D;
       }
     : never;
-  
+
   export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
 
   export type ApiResponseSuccess<D, E extends string> = {
@@ -203,11 +205,11 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     totalPages: number;
     totalCount: number;
     data: T[];
-  };  
+  };
 
   // TODO: add list search/filter parameter
   export type PaginatedListData = { pageSize?: number; page?: number };
-  
+
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -237,7 +239,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
-  
+
   export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -263,7 +265,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
 
   function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -273,12 +275,12 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildCreateFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): CreateApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -289,12 +291,12 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): UpdateApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -305,10 +307,10 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -318,10 +320,10 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
     return async (options) => {
-      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const urlPath = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, urlPath, {
@@ -331,10 +333,10 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
     return async (data, options) => {
-      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const urlPath = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       const params = new URLSearchParams()
       Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
@@ -358,7 +360,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     method: EndpointHttpMethod
   ): CustomOneFetchApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -368,7 +370,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -376,7 +378,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     method: EndpointHttpMethod
   ): CustomOneSubmitApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -387,7 +389,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildCustomManyFetchFn<R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -395,8 +397,8 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     method: EndpointHttpMethod
   ): CustomManyFetchApiClientFn<R, E> {
     return async (options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${path}`;
-  
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
+
       return (
         makeRequest(clientOptions, url, {
           method,
@@ -405,7 +407,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
       );
     };
   }
-  
+
   function buildCustomManySubmitFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -413,7 +415,7 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     method: EndpointHttpMethod
   ): CustomManySubmitApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {

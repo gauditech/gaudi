@@ -117,7 +117,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
     let type = field.type;
     if (kindFind(field.atoms, "nullable")) {
-      type = addTypeModifier({ kind: "primitive", primitiveKind: "integer" }, "nullable");
+      type = addTypeModifier(field.type, "nullable");
     }
 
     return {
@@ -237,8 +237,13 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     };
   }
 
-  function migrateApi(api: AST.Api): Spec.Entrypoint[] {
-    return api.atoms.map((entrypoint) => migrateEntrypoint(entrypoint, undefined, undefined, 0));
+  function migrateApi(api: AST.Api): Spec.Api {
+    return {
+      name: api.name?.text,
+      entrypoints: api.atoms.map((entrypoint) =>
+        migrateEntrypoint(entrypoint, undefined, undefined, 0)
+      ),
+    };
   }
 
   function migrateEntrypoint(
@@ -710,13 +715,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return match(generator)
       .with({ type: "client" }, (g) => {
         const target = kindFind(g.atoms, "target")!.value;
-        const api = kindFind(g.atoms, "api")!.value;
         const output = kindFind(g.atoms, "output")?.value.value;
 
         return {
           kind: "generator-client" as const,
           target,
-          api,
           output,
         };
       })
@@ -937,7 +940,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   return {
     models,
-    entrypoints: kindFilter(globals, "api").flatMap(migrateApi),
+    apis: kindFilter(globals, "api").flatMap(migrateApi),
     populators: kindFilter(globals, "populator").map(migratePopulator),
     runtimes: kindFilter(globals, "runtime").map(migrateRuntime),
     authenticator,

@@ -36,7 +36,6 @@ import {
   FloatLiteral,
   Generator,
   GeneratorClientAtom,
-  GeneratorClientAtomApi,
   GeneratorClientAtomTarget,
   GeneratorType,
   GlobalAtom,
@@ -1105,18 +1104,6 @@ class GaudiParser extends EmbeddedActionsParser {
             const keywordValue = getTokenData(typeToken);
             const value = typeToken.image as GeneratorClientAtomTarget;
             atoms.push({ kind: "target", keyword, value, keywordValue });
-          },
-        },
-        {
-          ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Api));
-            const typeToken = this.OR4([
-              { ALT: () => this.CONSUME(L.Entrypoint) },
-              { ALT: () => this.CONSUME(L.Model) },
-            ]);
-            const keywordValue = getTokenData(typeToken);
-            const value = typeToken.image as GeneratorClientAtomApi;
-            atoms.push({ kind: "api", keyword, value, keywordValue });
           },
         },
         {

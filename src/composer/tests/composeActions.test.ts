@@ -35,7 +35,7 @@ describe("compose actions", () => {
     }
     `;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it("succeeds for basic update with a deny rule", () => {
@@ -62,7 +62,7 @@ describe("compose actions", () => {
       }
     }`;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it("succeeds with nested sibling reference", () => {
@@ -86,7 +86,7 @@ describe("compose actions", () => {
     }
     `;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
       expect(endpoint.fieldset).toMatchSnapshot();
     });
@@ -108,7 +108,7 @@ describe("compose actions", () => {
     }
     `;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
 
@@ -130,7 +130,7 @@ describe("compose actions", () => {
     }
     `;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it("can update deeply nested references", () => {
@@ -154,7 +154,7 @@ describe("compose actions", () => {
     }
     `;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it("succeeds with custom inputs", () => {
@@ -183,7 +183,7 @@ describe("compose actions", () => {
       }
     }`;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it("succeeds with arithmetic expressions in setters", () => {
@@ -207,7 +207,7 @@ describe("compose actions", () => {
       }
     }`;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it("succeeds when virtual input is defined and referenced", () => {
@@ -229,7 +229,7 @@ describe("compose actions", () => {
     `;
 
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it.todo("succeeds to update through unique relation");
@@ -245,7 +245,7 @@ describe("compose actions", () => {
     }
     `;
       const def = compose(compileToOldSpec(bp));
-      const endpoint = def.entrypoints[0].endpoints[0] as UpdateEndpointDef;
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
     it.todo("gives proper error when nested cycle is detected");
@@ -306,7 +306,7 @@ describe("compose actions", () => {
     `;
 
       const def = compose(compileToOldSpec(bp));
-      const endpoints = def.entrypoints[0].endpoints;
+      const endpoints = def.apis[0].entrypoints[0].endpoints;
 
       expect(endpoints).toMatchSnapshot();
     });

@@ -47,7 +47,7 @@ describe("entrypoint", () => {
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    expect(def.entrypoints).toMatchSnapshot();
+    expect(def.apis[0].entrypoints).toMatchSnapshot();
   });
   it("adds validators into fieldsets", () => {
     const bp = `
@@ -62,7 +62,7 @@ describe("entrypoint", () => {
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.fieldset).toMatchSnapshot();
   });
 
@@ -99,7 +99,7 @@ describe("entrypoint", () => {
     `;
     const def = compose(compileToOldSpec(bp));
 
-    const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
 
     expect(action.responds).toBe(true);
@@ -137,7 +137,7 @@ describe("entrypoint", () => {
     `;
     const def = compose(compileToOldSpec(bp));
 
-    const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
 
     expect(action.responds).toBe(false);
@@ -188,7 +188,7 @@ describe("entrypoint", () => {
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     const orgSelect = endpoint.parentContext[0].select.map((s) => s.alias);
     const repoSelect = endpoint.target.select.map((s) => s.alias);
     const actionSelects = endpoint.actions.map((a) =>

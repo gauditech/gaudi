@@ -4,53 +4,52 @@
 // }
 
 runtime HooksRuntime {
-    source path "hooks"
+  source path "hooks"
 }
 
 generate client {
   target js
-  api entrypoint
   output "src/web/js"
 }
 
 // ----- models
 
 model Org {
-    field name {
-        type string,
-        validate {
-            hook {
-                default arg name
-                source noUnicode from "githubc.js"
-            }
-        }
+  field name {
+    type string,
+    validate {
+      hook {
+        default arg name
+        source noUnicode from "githubc.js"
+      }
     }
-    field slug {
-        type string,
-        unique,
-        validate {
-            hook { // hook can be named for documentation. Maybe use the name for hook code?
-                default arg slug
-                inline "!/\\s/.test(slug)"
-            }
-        }
+  }
+  field slug {
+    type string,
+    unique,
+    validate {
+      hook {
+        default arg slug
+        inline "!/\\s/.test(slug)"
+      }
     }
-    field description { type string }
-    field optOut { type string, nullable }
+  }
+  field description { type string }
+  field optOut { type string, nullable }
 
-    relation repos { from Repo, through org }
-    relation memberships { from OrgMembership, through org }
+  relation repos { from Repo, through org }
+  relation memberships { from OrgMembership, through org }
 
-    query members { from memberships.user }
-    query public_repos { from repos, filter { is_public is true } }
-    query public_issues { from public_repos.issues }
+  query members { from memberships.user }
+  query public_repos { from repos, filter { is_public is true } }
+  query public_issues { from public_repos.issues }
 
-    hook nameAndDesc {
-        arg test query {
-            select { name, description }
-        }
-        inline "test.name + ': ' + test.description"
+  hook nameAndDesc {
+    arg test query {
+      select { name, description }
     }
+    inline "test.name + ': ' + test.description"
+  }
 }
 
 model OrgMembership {
@@ -96,57 +95,62 @@ model UserAccessToken {
 
 // ----- entrypoints
 
-entrypoint Orgs {
-    target Org as org
-    identify with slug
-    response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, nameAndDesc }
+api {
+  entrypoint Org as org {
+      identify { through slug }
+      response { name, slug, description, repos { issues { title, body, repo { org } } }, members, public_repos, public_issues, nameAndDesc }
 
+      get endpoint {}
+      list endpoint { pageable }
+      create endpoint {}
+      update endpoint {}
+
+      entrypoint repos {
+          response { id, slug, description, org_id, issues { repo } }
+
+          get endpoint {}
+          list endpoint {}
+          create endpoint {}
+          update endpoint {}
+          delete endpoint {}
+      }
+
+  //    entrypoint PublicRepos {
+  //        target public_repos
+  //        response { id, slug, description, org_id }
+  //
+  //        get endpoint {}
+  //        list endpoint {}
+  //        // create endpoint {}
+  //    }
+  //
+  //    entrypoint AllIssues {
+  //        target public_issues
+  //        response { id, title, body }
+  //        list endpoint {}
+  //    }
+  //
+  //    entrypoint Members {
+  //        target members
+  //        response { id, name }
+  //        list endpoint {}
+  //        get endpoint {}
+  //    }
+  }
+
+}
+
+api User {
+  entrypoint User {
     get endpoint {}
-    list endpoint { pageable }
-    create endpoint {}
-    update endpoint {}
-
-    entrypoint Repos {
-        target repos
-        response { id, slug, description, org_id, issues { repo } }
-
-        get endpoint {}
-        list endpoint {}
-        create endpoint {}
-        update endpoint {}
-        delete endpoint {}
-    }
-
-//    entrypoint PublicRepos {
-//        target public_repos
-//        response { id, slug, description, org_id }
-//
-//        get endpoint {}
-//        list endpoint {}
-//        // create endpoint {}
-//    }
-//
-//    entrypoint AllIssues {
-//        target public_issues
-//        response { id, title, body }
-//        list endpoint {}
-//    }
-//
-//    entrypoint Members {
-//        target members
-//        response { id, name }
-//        list endpoint {}
-//        get endpoint {}
-//    }
+  }
 }
 
 // ----- populators
 
 populator Dev {
   // org without repos and users
-  populate EmptyOrg {
-    target Org as org
-
+  populate Org as org {
     // org
     set name "Organization 1"
     set slug "org-1"
@@ -155,9 +159,7 @@ populator Dev {
   }
 
   // org without repos and users
-  populate OrgWith1RepoAnd1Member {
-    target Org as org
-
+  populate Org as org {
     // org
     set name "Organization 2"
     set slug "org-2"
@@ -170,9 +172,7 @@ populator Dev {
         inline "'Opt out from org ' + slug"
     }
 
-    populate Repos {
-        target repos as repo
-
+    populate repos as repo {
         // fields
         set name "Repo 1 at " + org.slug
         set slug hook {
@@ -188,9 +188,7 @@ populator Dev {
   }
 
   // org without repos and users
-  populate OrgWithMultipleReposAndMembers {
-    target Org as org
-
+  populate Org as org {
     repeat as iter { start 3, end 5 }
 
     // org
@@ -211,9 +209,7 @@ populator Dev {
         inline "'Opt out from org ' + slug"
     }
 
-    populate Repos {
-        target repos as repo
-
+    populate repos as repo {
         repeat as riter { start 1, end 3 }
 
         // fields
