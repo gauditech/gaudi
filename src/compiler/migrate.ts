@@ -115,15 +115,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       v.validators.map(migrateValidator)
     );
 
-    let type = field.type;
-    if (kindFind(field.atoms, "nullable")) {
-      type = addTypeModifier(field.type, "nullable");
-    }
-
     return {
       name: field.name.text,
       ref: migrateRefModelAtom(field.ref, "field"),
-      type,
+      type: field.type,
       default: default_?.literal.value,
       primary: false,
       validators: validators,
