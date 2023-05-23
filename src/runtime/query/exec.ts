@@ -4,7 +4,8 @@ import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
 import { QueryTree, selectableId } from "./build";
-import { queryToString } from "./stringify";
+import { buildQueryPlan } from "./sqlstringify/queryPlan";
+import { queryPlanToString } from "./sqlstringify/stringify";
 
 import { ensureEqual } from "@src/common/utils";
 import { getTypedPath } from "@src/composer/utils";
@@ -39,7 +40,7 @@ export async function executeQuery(
   if (!hasId) {
     query = { ...q, select: [...q.select, selectableId(def, query.fromPath)] };
   }
-  const sqlTpl = queryToString(def, query).replace(
+  const sqlTpl = queryPlanToString(buildQueryPlan(def, query)).replace(
     ":@context_ids",
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
