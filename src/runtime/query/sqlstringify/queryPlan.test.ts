@@ -3,37 +3,8 @@ import { format } from "sql-formatter";
 import { QueryAtom, QueryPlan, buildQueryPlan, collectQueryAtoms } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
-import { compileToOldSpec } from "@src/compiler";
-import { compose } from "@src/composer/composer";
-import { CustomManyEndpointDef, Definition, FetchOneAction, QueryDef } from "@src/types/definition";
+import { makeTestQuery } from "@src/runtime/common/testUtils";
 
-/**
- * Define a query wrapper
- */
-
-function makeTestQuery(models: string, query: string): { def: Definition; query: QueryDef } {
-  const bp = `
-  ${models}
-  
-  model TestHelperModel {}
-  entrypoint TestHelperModel {
-    custom endpoint {
-      method GET
-      cardinality many
-      path "/test"
-      action {
-        fetch as q {
-          ${query}
-        }
-      }
-    }
-  }
-  `;
-  const def = compose(compileToOldSpec(bp));
-  const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
-  const action = endpoint.actions[0] as FetchOneAction;
-  return { def, query: action.query };
-}
 describe("Query plan", () => {
   it("works with complex aggregates", () => {
     const modelBp = `
@@ -93,7 +64,7 @@ describe("Query plan", () => {
       query latest_repos { from repos, order by { id desc }, limit 5 }
     }
     model Repo {
-      field points { type integer }
+      field collectedPoints { type integer }
       reference org { to Org }
     }
     `;
@@ -101,7 +72,7 @@ describe("Query plan", () => {
     const queryBp = `
     query {
       from Org,
-      filter { sum(latest_repos.points) > 100 },
+      filter { sum(latest_repos.collectedPoints) > 100 },
       select { id }
     }
     `;

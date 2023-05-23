@@ -1,11 +1,12 @@
 import _ from "lodash";
 import { format } from "sql-formatter";
+import { match } from "ts-pattern";
 
 import { NamePath } from "../build";
 
 import { QueryPlan, QueryPlanExpression, QueryPlanJoin } from "./queryPlan";
 
-import { assertUnreachable } from "@src/common/utils";
+import { UnreachableError, assertUnreachable } from "@src/common/utils";
 
 function namepathToQuotedPair(npath: NamePath): string {
   return `"${_.initial(npath).join(".")}"."${_.last(npath)}"`;
@@ -22,12 +23,25 @@ function exprToString(expr: QueryPlanExpression): string {
   function stringifyFn(name: string, args: QueryPlanExpression[]): string {
     return `${name}(${args.map(_.unary(exprToString)).join(", ")})`;
   }
-  switch (expr.kind) {
+  switch (expr?.kind) {
+    case undefined: {
+      return "TRUE = TRUE";
+    }
     case "alias": {
       return namepathToQuotedPair(expr.value);
     }
     case "literal": {
-      return expr.value as string; // FIXME
+      return match(typeof expr.value)
+        .with("number", "bigint", () => `${expr.value}`)
+        .with("string", () => `'${expr.value}'`)
+        .with("boolean", () => (expr.value ? "TRUE" : "FALSE"))
+        .when(
+          () => expr.value === null,
+          () => "NULL"
+        )
+        .otherwise((t) => {
+          throw new UnreachableError(`Invalid value typeof: ${t} (${expr.value})`);
+        });
     }
     case "variable": {
       return `:${expr.name}`;
@@ -59,7 +73,9 @@ function exprToString(expr: QueryPlanExpression): string {
         case "length": {
           return stringifyFn("char_length", expr.args);
         }
-        case "count":
+        case "count": {
+          return `COALESCE(${stringifyFn("count", expr.args)}, 0)`;
+        }
         case "sum":
         case "lower":
         case "upper":
@@ -86,13 +102,15 @@ function joinsToString(joins: QueryPlanJoin[]): string {
         case "subquery": {
           const subquery = queryPlanToString(join.plan, true);
           return `
-    JOIN (${subquery})
+    ${join.joinType.toUpperCase()} JOIN (${subquery})
     AS ${namepathToQuoted(join.namePath)}
     ON ${namepathToQuotedPair(join.joinOn[0])} = ${namepathToQuotedPair(join.joinOn[1])}`;
         }
         case "inline": {
           return `
-    JOIN ${join.modelName.toLowerCase()} AS ${namepathToQuoted(join.namePath)}
+    ${join.joinType.toUpperCase()} JOIN "${join.modelName.toLowerCase()}" AS ${namepathToQuoted(
+            join.namePath
+          )}
     ON ${namepathToQuotedPair(join.joinOn[0])} = ${namepathToQuotedPair(join.joinOn[1])}
     `;
         }
@@ -129,7 +147,7 @@ export function queryPlanToString(plan: QueryPlan, isSubquery = false): string {
       (SELECT ${selectFrag},
         ${namepathToQuotedPair([plan.entry, "id"])} AS "__join_connection",
         ROW_NUMBER() OVER (PARTITION BY "${plan.entry}"."id" ${orderFrag}) AS "__row_number"
-      FROM ${plan.entry.toLowerCase()} AS "${plan.entry}"
+      FROM "${plan.entry.toLowerCase()}" AS "${plan.entry}"
       ${joinFrags}
       ${whereFrag}
       ) AS topn
@@ -141,7 +159,7 @@ export function queryPlanToString(plan: QueryPlan, isSubquery = false): string {
 
   const sql = `
   SELECT ${selectFrag}
-  FROM ${plan.entry.toLowerCase()} AS "${plan.entry}"
+  FROM "${plan.entry.toLowerCase()}" AS "${plan.entry}"
   ${joinFrags}
   ${whereFrag}
   ${groupByFrag}

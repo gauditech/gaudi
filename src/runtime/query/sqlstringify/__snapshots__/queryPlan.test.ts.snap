@@ -11,7 +11,7 @@ exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
           "Org",
           "SUM",
           "latest_repos",
-          "points",
+          "collectedPoints",
           "result",
         ],
       },
@@ -39,7 +39,7 @@ exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
           "Org",
           "SUM",
           "latest_repos",
-          "points",
+          "collectedPoints",
           "__join_connection",
         ],
       ],
@@ -49,7 +49,7 @@ exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
         "Org",
         "SUM",
         "latest_repos",
-        "points",
+        "collectedPoints",
       ],
       "plan": {
         "entry": "Org",
@@ -147,7 +147,7 @@ exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
                 "value": [
                   "Org",
                   "latest_repos",
-                  "points",
+                  "collectedpoints",
                 ],
               },
             ],
@@ -177,14 +177,14 @@ exports[`Query plan subqueries using partition/over: SQL snapshot 1`] = `
 "SELECT
   "Org"."id" AS "id"
 FROM
-  org AS "Org"
-  JOIN (
+  "org" AS "Org"
+  LEFT JOIN (
     SELECT
       "Org"."id" AS "__join_connection",
-      sum("Org.latest_repos"."points") AS "result"
+      sum("Org.latest_repos"."collectedpoints") AS "result"
     FROM
-      org AS "Org"
-      JOIN (
+      "org" AS "Org"
+      LEFT JOIN (
         SELECT
           *
         FROM
@@ -199,8 +199,8 @@ FROM
                   "Org.repos"."id" desc
               ) AS "__row_number"
             FROM
-              org AS "Org"
-              JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+              "org" AS "Org"
+              INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
           ) AS topn
         WHERE
           topn."__row_number" <= 5
@@ -208,9 +208,9 @@ FROM
       ) AS "Org.latest_repos" ON "Org"."id" = "Org.latest_repos"."__join_connection"
     GROUP BY
       "Org"."id"
-  ) AS "Org.SUM.latest_repos.points" ON "Org"."id" = "Org.SUM.latest_repos.points"."__join_connection"
+  ) AS "Org.SUM.latest_repos.collectedPoints" ON "Org"."id" = "Org.SUM.latest_repos.collectedPoints"."__join_connection"
 WHERE
-  "Org.SUM.latest_repos.points"."result" > 100"
+  "Org.SUM.latest_repos.collectedPoints"."result" > 100"
 `;
 
 exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
@@ -389,58 +389,58 @@ exports[`Query plan works with complex aggregates: SQL snapshot 1`] = `
   "Org.repos"."name" AS "name",
   "Org.repos.org"."name" AS "org_name"
 FROM
-  org AS "Org"
-  JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
-  JOIN org AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
-  JOIN (
+  "org" AS "Org"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+  LEFT JOIN (
     SELECT
       "Org"."id" AS "__join_connection",
-      count("Org.repos"."id") AS "result"
+      COALESCE(count("Org.repos"."id"), 0) AS "result"
     FROM
-      org AS "Org"
-      JOIN repo AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
     GROUP BY
       "Org"."id"
   ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
-  JOIN (
+  LEFT JOIN (
     SELECT
       "Repo"."id" AS "__join_connection",
-      count("Repo.issues"."id") AS "result"
+      COALESCE(count("Repo.issues"."id"), 0) AS "result"
     FROM
-      repo AS "Repo"
-      JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
     GROUP BY
       "Repo"."id"
   ) AS "Org.repos.COUNT.issues.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.id"."__join_connection"
-  JOIN (
+  LEFT JOIN (
     SELECT
       "Repo"."id" AS "__join_connection",
-      count("Repo.issues.repo"."id") AS "result"
+      COALESCE(count("Repo.issues.repo"."id"), 0) AS "result"
     FROM
-      repo AS "Repo"
-      JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-      JOIN repo AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+      LEFT JOIN "repo" AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
     GROUP BY
       "Repo"."id"
   ) AS "Org.repos.COUNT.issues.repo.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo.id"."__join_connection"
-  JOIN (
+  LEFT JOIN (
     SELECT
       "Repo"."id" AS "__join_connection",
-      count("Repo.issues.repo"."name") AS "result"
+      COALESCE(count("Repo.issues.repo"."name"), 0) AS "result"
     FROM
-      repo AS "Repo"
-      JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
-      JOIN repo AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+      LEFT JOIN "repo" AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
     GROUP BY
       "Repo"."id"
   ) AS "Org.repos.COUNT.issues.repo_name" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo_name"."__join_connection"
-  JOIN (
+  LEFT JOIN (
     SELECT
       "Repo"."id" AS "__join_connection",
       sum("Repo.issues"."id") AS "result"
     FROM
-      repo AS "Repo"
-      JOIN issue AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
     GROUP BY
       "Repo"."id"
   ) AS "Org.repos.SUM.issues.id" ON "Org.repos"."id" = "Org.repos.SUM.issues.id"."__join_connection"

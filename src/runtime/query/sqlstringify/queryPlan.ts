@@ -38,7 +38,7 @@ export type QueryPlan = {
 
 export type JoinWithSubquery = {
   kind: "subquery";
-  joinType: "left";
+  joinType: "inner" | "left";
   joinOn: [NamePath, NamePath];
   namePath: NamePath;
   plan: QueryPlan;
@@ -98,11 +98,11 @@ export function buildQueryPlan(def: Definition, q: QueryDef): QueryPlan {
   return {
     entry: q.fromPath[0],
     fromPath: q.fromPath,
-    filter: q.filter ? toQueryExpr(expandExpression(def, q.filter)) : undefined,
+    filter: q.filter ? toQueryExpr(def, expandExpression(def, q.filter)) : undefined,
     select: q.select.length > 0 ? buildSelect(def, q.select) : undefined,
     groupBy: [],
     orderBy:
-      q.orderBy?.map((ord) => [toQueryExpr(expandExpression(def, ord.exp)), ord.direction]) ??
+      q.orderBy?.map((ord) => [toQueryExpr(def, expandExpression(def, ord.exp)), ord.direction]) ??
       undefined,
     joins: buildJoins(def, atoms, "inner"),
     limit: q.limit,
@@ -115,7 +115,7 @@ function buildSelect(def: Definition, items: SelectItem[]): QueryPlan["select"] 
     match(item)
       .with({ kind: "field" }, { kind: "computed" }, (item) => [
         item.alias,
-        toQueryExpr(expandExpression(def, { kind: "alias", namePath: item.namePath })),
+        toQueryExpr(def, expandExpression(def, { kind: "alias", namePath: item.namePath })),
       ])
       .otherwise(() => {
         throw new UnreachableError(
@@ -226,12 +226,13 @@ function buildJoins(
               };
             })
             .with({ kind: "query" }, (ref): QueryPlanJoin => {
+              const plan = buildQueryPlan(def, ref);
               return {
                 kind: "subquery",
-                joinType: "left",
+                joinType,
                 namePath: atom.namePath,
                 joinOn: calculateJoinOn(def, atom.namePath),
-                plan: buildQueryPlan(def, ref),
+                plan,
               };
             })
             .otherwise(() => {
@@ -289,6 +290,7 @@ function buildJoins(
                   fnName: atom.fnName,
                   args: [
                     toQueryExpr(
+                      def,
                       expandExpression(def, {
                         kind: "alias",
                         namePath: [entryModel.name, ...atom.targetPath],
@@ -341,15 +343,23 @@ function calculateJoinOn(def: Definition, path: NamePath): [NamePath, NamePath] 
     });
 }
 
-function toQueryExpr(texpr: TypedExprDef): QueryPlanExpression {
+function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression {
   return match(texpr)
-    .with({ kind: "alias" }, (a): QueryPlanExpression => ({ kind: "alias", value: a.namePath }))
+    .with({ kind: "alias" }, (a): QueryPlanExpression => {
+      /**
+       * FIXME this function needs access to `Definition` in order to extract `dbname`.
+       * Perhaps there is a better way?
+       */
+      const tpath = getTypedPath(def, a.namePath, {});
+      const field = getRef.field(def, tpath.leaf!.refKey);
+      return { kind: "alias", value: [..._.initial(a.namePath), field.dbname] };
+    })
     .with(
       { kind: "function" },
       (fn): QueryPlanExpression => ({
         kind: "function",
         fnName: fn.name,
-        args: fn.args.map(toQueryExpr),
+        args: fn.args.map((arg) => toQueryExpr(def, arg)),
       })
     )
     .with(
@@ -385,7 +395,7 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
       return exp;
     case "alias": {
       const tpath = getTypedPath(def, exp.namePath, {});
-      ensureNot(tpath.leaf, null);
+      ensureNot(tpath.leaf, null, `${exp.namePath.join(".")} ends without leaf`);
       switch (tpath.leaf.kind) {
         case "aggregate": {
           throw new UnreachableError("aggregate queries are no longer supported");
