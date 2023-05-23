@@ -303,7 +303,7 @@ WHERE
   "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
-  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
   "Org.repos"."id" = :repo_id
   AND "Org"."id" IN :@context_ids
@@ -314,7 +314,7 @@ WHERE
   "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
-  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+  INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo"."id" IN :@context_ids
 
@@ -672,7 +672,7 @@ WHERE
   "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
-  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
   "Org.repos"."id" = :repo_id
   AND "Org"."id" IN :@context_ids
@@ -683,7 +683,7 @@ WHERE
   "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
-  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+  INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo.issues"."id" = :issue_id
   AND "Repo"."id" IN :@context_ids
@@ -1054,7 +1054,7 @@ WHERE
   "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
-  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
   "Org.repos"."id" = :repo_id
   AND "Org"."id" IN :@context_ids
@@ -1065,7 +1065,7 @@ WHERE
   "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
-  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+  INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo.issues"."id" = :issue_id
   AND "Repo"."id" IN :@context_ids
@@ -1414,7 +1414,7 @@ WHERE
   "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
-  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
   "Org.repos"."id" = :repo_id
   AND "Org"."id" IN :@context_ids
@@ -1425,7 +1425,7 @@ WHERE
   "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
-  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+  INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo"."id" IN :@context_ids
 
@@ -1437,7 +1437,7 @@ WHERE
   "Repo.issues"."repo_id" AS "repo_id"
 FROM
   "repo" AS "Repo"
-  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+  INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo"."id" IN :@context_ids
 
@@ -1792,7 +1792,7 @@ WHERE
   "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
-  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
   "Org.repos"."id" = :repo_id
   AND "Org"."id" IN :@context_ids
@@ -1803,7 +1803,7 @@ WHERE
   "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
-  JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+  INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
   "Repo.issues"."id" = :issue_id
   AND "Repo"."id" IN :@context_ids
@@ -2270,7 +2270,7 @@ exports[`Endpoint queries List nested endpoint response queries test orderBy que
   "Item1.item2"."item1_id" AS "item1_id"
 FROM
   "item1" AS "Item1"
-  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+  INNER JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
 WHERE
   "Item1"."id" IN :@context_ids
 ORDER BY
@@ -2367,7 +2367,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging quer
   "Item1.item2"."item1_id" AS "item1_id"
 FROM
   "item1" AS "Item1"
-  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+  INNER JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
 WHERE
   "Item1"."id" IN :@context_ids
 LIMIT
@@ -2503,7 +2503,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging/orde
   "Item1.item2"."item1_id" AS "item1_id"
 FROM
   "item1" AS "Item1"
-  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+  INNER JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
 WHERE
   "Item1.item2"."name" = 'asdf'
   AND "Item1"."id" IN :@context_ids
@@ -2605,7 +2605,7 @@ exports[`Endpoint queries List nested endpoint response queries test plain query
   "Item1.item2"."item1_id" AS "item1_id"
 FROM
   "item1" AS "Item1"
-  JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
+  INNER JOIN "item2" AS "Item1.item2" ON "Item1"."id" = "Item1.item2"."item1_id"
 WHERE
   "Item1"."id" IN :@context_ids
 
@@ -2697,6 +2697,7 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
 
 exports[`Orderby, limit and offset supports orderby, limit and offset in batching query 2`] = `
 "SELECT
+  "Org".*
 FROM
   "org" AS "Org"
 
@@ -2706,14 +2707,13 @@ SELECT
   "Org"."id" AS "__join_connection"
 FROM
   "org" AS "Org"
-  JOIN (
+  INNER JOIN (
     SELECT
       *
     FROM
       (
         SELECT
-          "Org.repos"."id" AS "id",
-          "Org.repos"."org_id" AS "org_id",
+          "Org.repos".*,
           "Org"."id" AS "__join_connection",
           ROW_NUMBER() OVER (
             PARTITION BY
@@ -2723,8 +2723,8 @@ FROM
           ) AS "__row_number"
         FROM
           "org" AS "Org"
-          JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
-      ) as topn
+          INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      ) AS topn
     WHERE
       topn."__row_number" <= 15
       AND topn."__row_number" > 5
@@ -2735,9 +2735,10 @@ WHERE
 
 exports[`Orderby, limit and offset supports orderby, limit and offset in non-batching query 1`] = `
 "SELECT
+  "Org.repos".*
 FROM
   "org" AS "Org"
-  JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 ORDER BY
   "Org.repos"."id" desc
 LIMIT

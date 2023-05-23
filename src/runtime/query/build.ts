@@ -1,7 +1,5 @@
 import _ from "lodash";
 
-import { mkJoinConnection } from "./stringify";
-
 import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { HookCode } from "@src/types/common";
@@ -12,6 +10,7 @@ import {
   QueryDef,
   QueryOrderByAtomDef,
   SelectDef,
+  SelectFieldItem,
   SelectHookItem,
   SelectItem,
   SelectableItem,
@@ -303,4 +302,14 @@ export function transformExpressionPaths(
       assertUnreachable(exp);
     }
   }
+}
+
+function mkJoinConnection(model: ModelDef): SelectFieldItem {
+  return {
+    kind: "field",
+    refKey: `${model.name}.id`,
+    alias: "__join_connection",
+    name: "id",
+    namePath: [model.name, "id"],
+  };
 }

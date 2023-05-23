@@ -4,8 +4,8 @@ import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
 import { QueryTree, selectableId } from "./build";
-import { buildQueryPlan } from "./sqlstringify/queryPlan";
-import { queryPlanToString } from "./sqlstringify/stringify";
+import { buildQueryPlan } from "./queryPlan";
+import { queryPlanToString } from "./stringify";
 
 import { ensureEqual } from "@src/common/utils";
 import { getTypedPath } from "@src/composer/utils";

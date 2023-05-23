@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { transformExpressionPaths } from "../build";
+import { NamePath, transformExpressionPaths } from "./build";
 
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
@@ -15,8 +15,6 @@ import {
   SelectItem,
   TypedExprDef,
 } from "@src/types/definition";
-
-type NamePath = string[];
 
 // FIXME support dbname and real table names
 export type QueryPlan = {

@@ -2,8 +2,8 @@ import _ from "lodash";
 
 import { makeTestQuery } from "../common/testUtils";
 
-import { buildQueryPlan } from "./sqlstringify/queryPlan";
-import { queryPlanToString } from "./sqlstringify/stringify";
+import { buildQueryPlan } from "./queryPlan";
+import { queryPlanToString } from "./stringify";
 
 describe("Aggregates to queries", () => {
   it("composes a query with simple aggregate through relation", () => {
