@@ -1,12 +1,12 @@
 import {
   Ref,
-  RefContext,
   RefModel,
   RefModelAtom,
   RefModelField,
   RefModelQuery,
   RefModelReference,
   RefModelRelation,
+  RefTarget,
 } from "@src/compiler/ast/ast";
 import { Type } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
@@ -19,7 +19,11 @@ export type SingleSelect = { name: string; target: IdentifierRef<RefModelAtom> }
   | { kind: "nested"; select: Select }
 );
 
-export type IdentifierRef<R extends Ref = Ref> = { text: string; ref: R; type: Type };
+export type IdentifierRef<R extends Ref = Ref> = {
+  readonly text: string;
+  readonly ref: R;
+  readonly type: Type;
+};
 
 export type Specification = {
   models: Model[];
@@ -106,7 +110,7 @@ export type Entrypoint = {
   name: string;
   model: string;
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
-  alias: IdentifierRef<RefContext>;
+  alias: IdentifierRef<RefTarget>;
   identifyThrough: IdentifierRef<RefModelField>;
   endpoints: Endpoint[];
   entrypoints: Entrypoint[];
@@ -210,7 +214,7 @@ export type ActionAtomInput = {
 export type ActionAtomSet = {
   kind: "set";
   target: IdentifierRef<RefModelField>;
-  set: ActionAtomSetHook | ActionAtomSetExp | ActionAtomSetQuery;
+  set: ActionAtomSetHook | ActionAtomSetExp;
 };
 export type ActionAtomRefThrough = {
   kind: "reference";
@@ -237,16 +241,10 @@ export type Populator = {
 
 export type Populate = {
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
-  alias: IdentifierRef<RefContext>;
-  setters: PopulateSetter[];
+  alias: IdentifierRef<RefTarget>;
+  setters: ActionAtomSet[];
   populates: Populate[];
   repeater?: Repeater;
-};
-
-export type PopulateSetter = {
-  kind: "set";
-  target: IdentifierRef<RefModelField>;
-  set: ActionAtomSetHook | ActionAtomSetExp;
 };
 
 export type FieldValidatorHook = {

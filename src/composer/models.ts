@@ -45,12 +45,12 @@ function defineModel(spec: Spec.Model): ModelDef {
 function defineField(fspec: Spec.Field): FieldDef {
   let nullable = false;
   let type;
-  if (fspec.type.kind === "nullable") {
+  if (fspec.type?.kind === "nullable") {
     nullable = true;
-    ensureEqual(fspec.type.type.kind, "primitive");
+    ensureEqual(fspec.type.type?.kind, "primitive");
     type = fspec.type.type.primitiveKind;
   } else {
-    ensureEqual(fspec.type.kind, "primitive");
+    ensureEqual(fspec.type?.kind, "primitive");
     type = fspec.type.primitiveKind;
   }
   if (type === "float") {
@@ -206,7 +206,7 @@ export function validateFieldType(type: string): FieldDef["type"] {
 }
 
 export function defineType(type: Type, nullable = false): VariablePrimitiveType {
-  switch (type.kind) {
+  switch (type?.kind) {
     case "primitive": {
       switch (type.primitiveKind) {
         case "string":
@@ -217,7 +217,7 @@ export function defineType(type: Type, nullable = false): VariablePrimitiveType 
           return { kind: type.primitiveKind, nullable };
       }
     }
-    case "unknown":
+    case undefined:
     case "null":
       return { kind: "null", nullable: true };
     case "nullable":

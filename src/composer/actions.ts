@@ -1,7 +1,13 @@
 import _ from "lodash";
 
 import { FilteredByKind } from "@src/common/kindFilter";
-import { ensureEmpty, ensureEqual, ensureExists, resolveItems } from "@src/common/utils";
+import {
+  assertUnreachable,
+  ensureEmpty,
+  ensureEqual,
+  ensureExists,
+  resolveItems,
+} from "@src/common/utils";
 import { getTypeModel } from "@src/compiler/ast/type";
 import { composeValidators, validateFieldType } from "@src/composer/models";
 import { composeQuery } from "@src/composer/query";
@@ -147,34 +153,42 @@ function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): Field
     case "identifier": {
       const [head, ...tail] = expr.identifier;
       const access = tail.map((i) => i.text);
-      if (head.ref.kind === "context") {
-        switch (head.ref.contextKind) {
-          case "virtualInput":
-            return { kind: "changeset-reference", referenceName: head.text };
-          case "authToken":
-            return {
-              kind: "request-auth-token",
-              access: ["user", "token"],
-            };
-          default:
-            return {
-              kind: "reference-value",
-              target: {
-                alias: head.text,
-                access,
-              },
-            };
+      switch (head.ref.kind) {
+        case "auth":
+        case "model":
+        case "queryTarget":
+        case "target":
+        case "action":
+        case "repeat":
+        case "struct": {
+          return {
+            kind: "reference-value",
+            target: {
+              alias: head.text,
+              access,
+            },
+          };
         }
-      }
-
-      // if path has more than 1 element, it can't be a sibling call
-      ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
-      // check if sibling name is defined in the changeset
-      const siblingOp = _.find(changeset, { name: head.text });
-      if (siblingOp) {
-        return { kind: "changeset-reference", referenceName: head.text };
-      } else {
-        throw new Error(`Circular reference: ${head.text}`);
+        case "authToken": {
+          return {
+            kind: "request-auth-token",
+            access: ["user", "token"],
+          };
+        }
+        case "virtualInput":
+        case "modelAtom": {
+          // if path has more than 1 element, it can't be a sibling call
+          ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
+          // check if sibling name is defined in the changeset
+          const siblingOp = _.find(changeset, { name: head.text });
+          if (siblingOp) {
+            return { kind: "changeset-reference", referenceName: head.text };
+          } else {
+            throw new Error(`Circular reference: ${head.text}`);
+          }
+        }
+        default:
+          return assertUnreachable(head.ref);
       }
     }
     case "function": {
@@ -194,7 +208,10 @@ function setterToChangesetOperation(
   return { name: atom.target.text, setter: setterToFieldSetter(atom.set, changeset) };
 }
 
-function setterToFieldSetter(set: Spec.ActionAtomSet["set"], changeset: ChangesetDef): FieldSetter {
+function setterToFieldSetter(
+  set: Spec.ActionAtomSetHook | Spec.ActionAtomSetExp | Spec.ActionAtomSetQuery,
+  changeset: ChangesetDef
+): FieldSetter {
   switch (set.kind) {
     case "hook": {
       const args = set.hook.args.map((arg) => {
@@ -234,8 +251,8 @@ function atomToChangesetOperation(
     }
     case "input": {
       const astType =
-        atom.target.type.kind === "nullable" ? atom.target.type.type : atom.target.type;
-      ensureEqual(astType.kind, "primitive");
+        atom.target.type?.kind === "nullable" ? atom.target.type.type : atom.target.type;
+      ensureEqual(astType?.kind, "primitive");
       const type =
         astType.primitiveKind === "string"
           ? "text"

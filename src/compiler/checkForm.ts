@@ -171,10 +171,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     if (from && from.as) {
       if (from.as.identifierPath.length !== from.identifierPath.length) {
         errors.push(
-          new CompilerError(
-            from.as.identifierPath[0].identifier.token,
-            ErrorCode.QueryFromAliasWrongLength
-          )
+          new CompilerError(from.as.identifierPath[0].token, ErrorCode.QueryFromAliasWrongLength)
         );
       }
     }
@@ -207,7 +204,7 @@ export function checkForm(projectASTs: ProjectASTs) {
 
     // check custom endpoint unique path
     const entrypointPaths = new Set(
-      _.compact(kindFilter(entrypoint.atoms, "entrypoint").map((e) => e.target.identifier.text))
+      _.compact(kindFilter(entrypoint.atoms, "entrypoint").map((e) => e.target.text))
     );
     const customPaths = new Set<string>();
     endpoints.forEach((e) => {
@@ -321,31 +318,26 @@ export function checkForm(projectASTs: ProjectASTs) {
     }
     if (action.target && !action.as) {
       errors.push(
-        new CompilerError(
-          action.target[0].identifier.token,
-          ErrorCode.NonDefaultModelActionRequiresAlias
-        )
+        new CompilerError(action.target[0].token, ErrorCode.NonDefaultModelActionRequiresAlias)
       );
     }
 
-    const allIdentifiers = action.atoms.flatMap((a) =>
+    const allIdentifiers = action.atoms.flatMap((a): Identifier[] =>
       match(a)
         .with({ kind: "set" }, ({ target, set }) => {
           if (set.kind === "hook") checkHook(set);
-          return [target.identifier];
+          return [target];
         })
-        .with({ kind: "referenceThrough" }, ({ target }) => [target.identifier])
+        .with({ kind: "referenceThrough" }, ({ target }) => [target])
         .with({ kind: "virtualInput" }, (virtualInput) => {
           checkActionAtomVirtualInput(virtualInput);
           return [virtualInput.name];
         })
-        .with({ kind: "deny" }, ({ fields }) =>
-          fields.kind === "all" ? [] : fields.fields.map(({ identifier }) => identifier)
-        )
+        .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
             noDuplicateAtoms({ ...field, kind: "input" }, ["optional", "default"]);
-            return field.field.identifier;
+            return field.field;
           })
         )
         .exhaustive()
@@ -411,7 +403,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     noDuplicateAtoms(populate, ["repeat"]);
     const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
       if (set.kind === "hook") checkHook(set);
-      return target.identifier;
+      return target;
     });
     noDuplicateNames(setIdentifiers, ErrorCode.DuplicatePopulateSet);
     kindFilter(populate.atoms, "populate").forEach(checkPopulate);
@@ -455,7 +447,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     });
   }
 
-  function checkHook(hook: Hook<boolean, boolean>) {
+  function checkHook(hook: Hook<"action" | "validation" | "model">) {
     noDuplicateAtoms(hook, ["default_arg", "runtime"]);
     const sourceOrInline = kindFilter(hook.atoms, "source", "inline");
     const internalExecRuntimeName = getInternalExecutionRuntimeName();
@@ -480,9 +472,9 @@ export function checkForm(projectASTs: ProjectASTs) {
   }
 
   function checkSelect(select: Select) {
-    const identifiers = select.map(({ target, select }) => {
+    const identifiers = select.map(({ target, select }): Identifier => {
       if (select) checkSelect(select);
-      return target.kind === "short" ? target.name.identifier : target.name;
+      return target.name;
     });
     noDuplicateNames(identifiers, ErrorCode.DuplicateSelectField);
   }

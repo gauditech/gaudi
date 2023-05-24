@@ -1,5 +1,6 @@
 import _ from "lodash";
 
+import { UnreachableError } from "@src/common/utils";
 import { processSelect } from "@src/composer/entrypoints";
 import { getTypedLiteralValue } from "@src/composer/utils";
 import {
@@ -126,21 +127,21 @@ export function composeRefPath(
         kind: "alias",
         namePath: [...head.ref.path, ...tail.map((i) => i.text)],
       };
-    case "context":
-      switch (head.ref.contextKind) {
-        case "virtualInput":
-          return {
-            kind: "variable",
-            name: `___changeset___${path.map((i) => i.text).join("___")}`,
-          };
-        case "authToken":
-          return { kind: "variable", name: `___requestAuthToken` };
-        case "repeat":
-          throw new Error("TODO");
-        default:
-          return { kind: "alias", namePath: path.map((i) => i.text) };
-      }
-    default:
-      throw new Error("Unexpected unresolved reference");
+    case "virtualInput":
+      return {
+        kind: "variable",
+        name: `___changeset___${path.map((i) => i.text).join("___")}`,
+      };
+    case "target":
+    case "action":
+      return { kind: "alias", namePath: path.map((i) => i.text) };
+    case "authToken":
+      return { kind: "variable", name: `___requestAuthToken` };
+    case "auth":
+      return { kind: "alias", namePath: path.map((i) => i.text) };
+    case "struct":
+      throw new UnreachableError("Unexpected struct reference in first identifier");
+    case "repeat":
+      throw new Error("TODO");
   }
 }

@@ -12,5 +12,5 @@ export const builtinFunctions: { name: string; args: Type[]; result: Type }[] = 
   { name: "cryptoHash", args: [stringT, integerT], result: stringT },
   { name: "cryptoCompare", args: [stringT, stringT], result: booleanT },
   { name: "cryptoToken", args: [integerT], result: stringT },
-  { name: "stringify", args: [{ kind: "unknown" }], result: stringT },
+  { name: "stringify", args: [undefined], result: stringT },
 ];
