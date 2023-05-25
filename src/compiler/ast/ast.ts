@@ -10,7 +10,7 @@ export type GlobalAtom = Model | Api | Populator | Runtime | Authenticator | Gen
 export type Model = {
   kind: "model";
   keyword: TokenData;
-  name: Identifier;
+  name: IdentifierRef<RefModel>;
   atoms: ModelAtom[];
 };
 export type ModelAtom = Field | Reference | Relation | Query | Computed | ModelHook;
@@ -18,9 +18,7 @@ export type ModelAtom = Field | Reference | Relation | Query | Computed | ModelH
 export type Field = {
   kind: "field";
   keyword: TokenData;
-  name: Identifier;
-  ref: Ref;
-  type: Type;
+  name: IdentifierRef<RefModelField>;
   atoms: FieldAtom[];
 };
 export type FieldAtom = { keyword: TokenData } & (
@@ -37,13 +35,11 @@ export type Validator =
 export type Reference = {
   kind: "reference";
   keyword: TokenData;
-  name: Identifier;
-  ref: Ref;
-  type: Type;
+  name: IdentifierRef<RefModelReference>;
   atoms: ReferenceAtom[];
 };
 export type ReferenceAtom = { keyword: TokenData } & (
-  | { kind: "to"; identifier: IdentifierRef }
+  | { kind: "to"; identifier: IdentifierRef<RefModel> }
   | { kind: "nullable" }
   | { kind: "unique" }
 );
@@ -51,29 +47,25 @@ export type ReferenceAtom = { keyword: TokenData } & (
 export type Relation = {
   kind: "relation";
   keyword: TokenData;
-  name: Identifier;
-  ref: Ref;
-  type: Type;
+  name: IdentifierRef<RefModelRelation>;
   atoms: RelationAtom[];
 };
 export type RelationAtom = { keyword: TokenData } & (
-  | { kind: "from"; identifier: IdentifierRef }
-  | { kind: "through"; identifier: IdentifierRef }
+  | { kind: "from"; identifier: IdentifierRef<RefModel> }
+  | { kind: "through"; identifier: IdentifierRef<RefModelReference> }
 );
 
 export type Query = {
   kind: "query";
   keyword: TokenData;
-  name: Identifier;
-  ref: Ref;
-  type: Type;
+  name: IdentifierRef<RefModelQuery>;
   atoms: QueryAtom[];
 };
 export type QueryAtom = { keyword: TokenData } & (
   | {
       kind: "from";
       identifierPath: IdentifierRef[];
-      as?: { keyword: TokenData; identifierPath: IdentifierRef[] };
+      as?: { keyword: TokenData; identifierPath: IdentifierRef<RefQueryTarget>[] };
     }
   | { kind: "filter"; expr: Expr<Db> }
   | { kind: "orderBy"; orderBy: OrderBy }
@@ -100,9 +92,7 @@ export type OrderType = "asc" | "desc";
 export type Computed = {
   kind: "computed";
   keyword: TokenData;
-  name: Identifier;
-  ref: Ref;
-  type: Type;
+  name: IdentifierRef<RefModelComputed>;
   expr: Expr<Db>;
 };
 
@@ -116,8 +106,8 @@ export type Api = {
 export type Entrypoint = {
   kind: "entrypoint";
   keyword: TokenData;
-  target: IdentifierRef;
-  as?: { keyword: TokenData; identifier: IdentifierRef };
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
   atoms: EntrypointAtom[];
 };
 
@@ -131,7 +121,7 @@ export type EntrypointAtom =
 export type Identify = {
   kind: "identify";
   keyword: TokenData;
-  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef }[];
+  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef<RefModelField> }[];
 };
 
 export type Endpoint = {
@@ -162,7 +152,7 @@ export type ModelAction = {
   kind: "create" | "update";
   keyword: TokenData;
   target?: IdentifierRef[];
-  as?: { keyword: TokenData; identifier: IdentifierRef };
+  as?: { keyword: TokenData; identifier: IdentifierRef<RefAction> };
   atoms: ModelActionAtom[];
   isPrimary?: true;
 };
@@ -184,7 +174,7 @@ export type ExecuteAction = {
   kind: "execute";
   keyword: TokenData;
   keywordAs?: TokenData;
-  name?: Identifier;
+  name?: IdentifierRef<RefAction>;
   atoms: ExecuteActionAtom[];
 };
 export type ExecuteActionAtom =
@@ -196,7 +186,7 @@ export type FetchAction = {
   kind: "fetch";
   keyword: TokenData;
   keywordAs: TokenData;
-  name: Identifier;
+  name: IdentifierRef<RefAction>;
   atoms: FetchActionAtom[];
 };
 export type FetchActionAtom = ActionAtomVirtualInput | AnonymousQuery;
@@ -204,14 +194,14 @@ export type FetchActionAtom = ActionAtomVirtualInput | AnonymousQuery;
 export type ActionAtomSet = {
   kind: "set";
   keyword: TokenData;
-  target: IdentifierRef;
+  target: IdentifierRef<RefModelField | RefModelReference>;
   set: ActionHook | { kind: "expr"; expr: Expr<Code> };
 };
 export type ActionAtomReferenceThrough = {
   kind: "referenceThrough";
   keyword: TokenData;
-  target: IdentifierRef;
-  through: IdentifierRef;
+  target: IdentifierRef<RefModelReference>;
+  through: IdentifierRef<RefModelField>;
   keywordThrough: TokenData;
 };
 export type ActionAtomDeny = {
@@ -221,14 +211,14 @@ export type ActionAtomDeny = {
     | { kind: "all"; keyword: TokenData }
     | {
         kind: "list";
-        fields: IdentifierRef[];
+        fields: IdentifierRef<RefModelField | RefModelReference>[];
       };
 };
 export type ActionAtomInput = {
   kind: "input";
   keyword: TokenData;
   fields: {
-    field: IdentifierRef;
+    field: IdentifierRef<RefModelField | RefModelReference>;
     atoms: InputAtom[];
   }[];
 };
@@ -239,9 +229,7 @@ export type InputAtom = { keyword: TokenData } & (
 export type ActionAtomVirtualInput = {
   kind: "virtualInput";
   keyword: TokenData;
-  name: Identifier;
-  ref: Ref;
-  type: Type;
+  name: IdentifierRef<RefVirtualInput>;
   atoms: ActionAtomVirtualInputAtom[];
 };
 
@@ -260,15 +248,15 @@ export type Populator = {
 export type Populate = {
   kind: "populate";
   keyword: TokenData;
-  target: IdentifierRef;
-  as?: { keyword: TokenData; identifier: IdentifierRef };
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
   atoms: PopulateAtom[];
 };
 export type PopulateAtom =
   | {
       kind: "repeat";
       keyword: TokenData;
-      as?: { keyword: TokenData; identifier: IdentifierRef };
+      as?: { keyword: TokenData; identifier: IdentifierRef<RefRepeat> };
       repeatValue: RepeatValue;
     }
   | ActionAtomSet
@@ -320,13 +308,12 @@ export type Authenticator = {
 export type AuthenticatorAtom = { kind: "method"; keyword: TokenData; method: AuthenticatorMethod };
 export type AuthenticatorMethod = { kind: "basic"; keyword: TokenData };
 
-export type Hook<named extends boolean, simple extends boolean> = {
+export type Hook<kind extends "model" | "validation" | "action"> = {
   kind: "hook";
   keyword: TokenData;
-  name: named extends true ? Identifier : undefined;
-  ref: named extends true ? Ref : undefined;
+  name: kind extends "model" ? IdentifierRef<RefModelHook> : undefined;
   atoms: (
-    | (simple extends true
+    | (kind extends "validation"
         ? { kind: "default_arg"; keyword: TokenData; name: Identifier }
         :
             | { kind: "arg_expr"; keyword: TokenData; name: Identifier; expr: Expr<Code> }
@@ -343,9 +330,9 @@ export type Hook<named extends boolean, simple extends boolean> = {
     | { kind: "runtime"; keyword: TokenData; identifier: Identifier }
   )[];
 };
-export type ModelHook = Hook<true, false> & { type: Type };
-export type FieldValidationHook = Hook<false, true>;
-export type ActionHook = Hook<false, false>;
+export type ModelHook = Hook<"model">;
+export type FieldValidationHook = Hook<"validation">;
+export type ActionHook = Hook<"action">;
 
 export type AnonymousQuery = {
   kind: "anonymousQuery";
@@ -356,7 +343,7 @@ export type AnonymousQuery = {
 
 export type Select = {
   target:
-    | { kind: "short"; name: IdentifierRef }
+    | { kind: "short"; name: IdentifierRef<RefModelAtom> }
     | { kind: "long"; name: Identifier; identifierPath: IdentifierRef[] };
   select?: Select;
 }[];
@@ -402,7 +389,6 @@ export type BooleanLiteral = { kind: "boolean"; value: boolean; token: TokenData
 export type NullLiteral = { kind: "null"; value: null; token: TokenData };
 export type StringLiteral = { kind: "string"; value: string; token: TokenData };
 
-export type RefUnresolved = { kind: "unresolved" };
 export type RefModel = { kind: "model"; model: string };
 export type RefModelAtom =
   | RefModelField
@@ -459,21 +445,31 @@ export type RefQueryTarget = {
   kind: "queryTarget";
   path: string[];
 };
-export type ContextKind =
-  | "entrypointTarget"
-  | "populateTarget"
-  | "actionAlias"
-  | "virtualInput"
-  | "repeat"
-  | "auth"
-  | "authToken"
-  | "struct";
-export type RefContext = { kind: "context"; contextKind: ContextKind };
-export type Ref = RefUnresolved | RefModel | RefModelAtom | RefQueryTarget | RefContext;
-
-export const unresolvedRef: Ref = { kind: "unresolved" };
+export type RefTarget = { kind: "target"; targetKind: "entrypoint" | "populate" };
+export type RefAction = { kind: "action" };
+export type RefRepeat = { kind: "repeat" };
+export type RefVirtualInput = { kind: "virtualInput" };
+export type RefAuth = { kind: "auth"; model: string };
+export type RefAuthToken = { kind: "authToken" };
+export type RefStruct = { kind: "struct" };
+export type Ref =
+  | RefModel
+  | RefModelAtom
+  | RefQueryTarget
+  | RefTarget
+  | RefAction
+  | RefRepeat
+  | RefVirtualInput
+  | RefAuth
+  | RefAuthToken
+  | RefStruct;
 
 export type Identifier = { text: string; token: TokenData };
-export type IdentifierRef = { identifier: Identifier; ref: Ref; type: Type };
+export type IdentifierRef<R extends Ref = Ref> = {
+  text: string;
+  token: TokenData;
+  ref?: R;
+  type: Type;
+};
 
 export type TokenData = { start: number; end: number };

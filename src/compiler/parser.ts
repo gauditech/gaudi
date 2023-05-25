@@ -60,6 +60,8 @@ import {
   ProjectASTs,
   Query,
   QueryAtom,
+  RefModelField,
+  RefModelReference,
   Reference,
   ReferenceAtom,
   Relation,
@@ -72,9 +74,8 @@ import {
   StringLiteral,
   TokenData,
   Validator,
-  unresolvedRef,
 } from "./ast/ast";
-import { unknownType } from "./ast/type";
+import { Type } from "./ast/type";
 import * as L from "./lexer";
 
 export function getTokenData(...tokens: IToken[]): TokenData {
@@ -114,7 +115,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: ModelAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Model));
-    const name = this.SUBRULE(this.identifier);
+    const name = this.SUBRULE(this.identifierRef);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
@@ -126,9 +127,6 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const modelHook = this.SUBRULE(this.modelHook);
-            this.ACTION(() => {
-              modelHook.type = unknownType;
-            });
             atoms.push(modelHook);
           },
         },
@@ -143,7 +141,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: FieldAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Field));
-    const name = this.SUBRULE1(this.identifier);
+    const name = this.SUBRULE1(this.identifierRef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -189,7 +187,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "field", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
+    return { kind: "field", name, atoms, keyword };
   });
 
   fieldValidators = this.RULE("fieldValidators", (): Validator[] => {
@@ -222,7 +220,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: ReferenceAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Reference));
-    const name = this.SUBRULE1(this.identifier);
+    const name = this.SUBRULE1(this.identifierRef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -252,14 +250,14 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "reference", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
+    return { kind: "reference", name, atoms, keyword };
   });
 
   relation = this.RULE("relation", (): Relation => {
     const atoms: RelationAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Relation));
-    const name = this.SUBRULE1(this.identifier);
+    const name = this.SUBRULE1(this.identifierRef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -284,24 +282,24 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "relation", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
+    return { kind: "relation", name, atoms, keyword };
   });
 
   computed = this.RULE("computed", (): Computed => {
     const keyword = getTokenData(this.CONSUME(L.Computed));
-    const name = this.SUBRULE1(this.identifier);
+    const name = this.SUBRULE(this.identifierRef);
     this.CONSUME(L.LCurly);
     const expr = this.SUBRULE(this.expr) as Expr<Db>;
     this.CONSUME(L.RCurly);
 
-    return { kind: "computed", name, ref: unresolvedRef, type: unknownType, expr, keyword };
+    return { kind: "computed", name, expr, keyword };
   });
 
   query = this.RULE("query", (): Query => {
     const atoms: QueryAtom[] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Query));
-    const name = this.SUBRULE(this.identifier);
+    const name = this.SUBRULE(this.identifierRef);
     this.CONSUME1(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -379,7 +377,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME1(L.RCurly);
 
-    return { kind: "query", name, ref: unresolvedRef, type: unknownType, atoms, keyword };
+    return { kind: "query", name, atoms, keyword };
   });
   queryAtoms = this.RULE("queryAtoms", (): QueryAtom[] => {
     const atoms: QueryAtom[] = [];
@@ -766,7 +764,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = getTokenData(this.CONSUME(L.Execute));
     const alias = this.OPTION(() => {
       const keywordAs = getTokenData(this.CONSUME(L.As));
-      const name = this.SUBRULE(this.identifier);
+      const name = this.SUBRULE(this.identifierRef);
       return { keywordAs, name };
     });
 
@@ -793,7 +791,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
     const keyword = getTokenData(this.CONSUME(L.Fetch));
     const keywordAs = getTokenData(this.CONSUME(L.As));
-    const name = this.SUBRULE(this.identifier);
+    const name = this.SUBRULE(this.identifierRef);
 
     this.CONSUME(L.LCurly);
     this.MANY(() => {
@@ -844,7 +842,7 @@ class GaudiParser extends EmbeddedActionsParser {
       },
       {
         ALT: () => {
-          const fields: IdentifierRef[] = [];
+          const fields: IdentifierRef<RefModelField | RefModelReference>[] = [];
 
           this.CONSUME(L.LCurly);
           this.MANY_SEP({
@@ -883,7 +881,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: ActionAtomVirtualInput["atoms"] = [];
 
     const keyword = getTokenData(this.CONSUME(L.Virtual), this.CONSUME(L.Input));
-    const name = this.SUBRULE(this.identifier);
+    const name = this.SUBRULE(this.identifierRef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -892,7 +890,7 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = getTokenData(this.CONSUME(L.Type));
-              const identifier = this.SUBRULE2(this.identifier);
+              const identifier = this.SUBRULE(this.identifier);
               atoms.push({ kind: "type", identifier, keyword });
             },
           },
@@ -916,7 +914,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "virtualInput", name, atoms, ref: unresolvedRef, type: unknownType, keyword };
+    return { kind: "virtualInput", name, atoms, keyword };
   });
 
   inputAtoms = this.RULE("inputAtoms", (): InputAtom[] => {
@@ -1120,23 +1118,21 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "generator", type, atoms, keyword, keywordType };
   });
 
-  modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", true, false);
+  modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", "model");
   fieldValidationHook: ParserMethod<[], FieldValidationHook> = this.GENERATE_HOOK(
     "fieldValidationHook",
-    false,
-    true
+    "validation"
   );
-  actionHook: ParserMethod<[], ActionHook> = this.GENERATE_HOOK("actionHook", false, false);
+  actionHook: ParserMethod<[], ActionHook> = this.GENERATE_HOOK("actionHook", "action");
 
-  GENERATE_HOOK<h extends Hook<n, s>, n extends boolean, s extends boolean>(
+  GENERATE_HOOK<k extends "model" | "validation" | "action", h extends Hook<k>>(
     ruleName: string,
-    named: n,
-    simple: s
+    kind: k
   ): ParserMethod<[], h> {
     return this.RULE(ruleName, (): h => {
       const keyword = getTokenData(this.CONSUME(L.Hook));
 
-      const name = named ? this.SUBRULE1(this.identifier) : undefined;
+      const name = kind === "model" ? this.SUBRULE1(this.identifier) : undefined;
 
       const atoms: unknown[] = [];
 
@@ -1144,7 +1140,7 @@ class GaudiParser extends EmbeddedActionsParser {
       this.MANY(() => {
         this.OR1([
           {
-            GATE: () => simple,
+            GATE: () => kind === "validation",
             ALT: () => {
               const keyword = getTokenData(this.CONSUME(L.Default), this.CONSUME1(L.Arg));
               const name = this.SUBRULE2(this.identifier);
@@ -1152,7 +1148,7 @@ class GaudiParser extends EmbeddedActionsParser {
             },
           },
           {
-            GATE: () => !simple,
+            GATE: () => kind !== "validation",
             ALT: () => {
               const keyword = getTokenData(this.CONSUME2(L.Arg));
               const name = this.SUBRULE3(this.identifier);
@@ -1199,14 +1195,14 @@ class GaudiParser extends EmbeddedActionsParser {
       });
       this.CONSUME(L.RCurly);
 
-      return { kind: "hook", name, ref: named ? unresolvedRef : undefined, atoms, keyword } as h;
+      return { kind: "hook", name, atoms, keyword } as h;
     });
   }
 
   anonymousQuery = this.RULE("anonymousQuery", (): AnonymousQuery => {
     const keyword = getTokenData(this.CONSUME(L.Query));
     const atoms = this.SUBRULE(this.queryAtoms);
-    return { kind: "anonymousQuery", atoms, type: unknownType, keyword };
+    return { kind: "anonymousQuery", atoms, keyword, type: Type.any };
   });
 
   select = this.RULE("select", (): Select => {
@@ -1257,9 +1253,9 @@ class GaudiParser extends EmbeddedActionsParser {
           const literal = this.SUBRULE(this.literal);
           return {
             kind: "literal",
-            type: unknownType,
             literal,
             sourcePos: literal.token,
+            type: Type.any,
           };
         },
       },
@@ -1267,10 +1263,10 @@ class GaudiParser extends EmbeddedActionsParser {
         ALT: () => {
           const path = this.SUBRULE(this.identifierRefPath);
           const sourcePos = this.ACTION(() => ({
-            start: path.at(0)!.identifier.token.start,
-            end: path.at(-1)!.identifier.token.end,
+            start: path.at(0)!.token.start,
+            end: path.at(-1)!.token.end,
           }));
-          return { kind: "path", path, type: unknownType, sourcePos };
+          return { kind: "path", path, sourcePos, type: Type.any };
         },
       },
     ]);
@@ -1287,7 +1283,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     const rRound = getTokenData(this.CONSUME(L.RRound));
     const sourcePos = this.ACTION(() => ({ start: name.token.start, end: rRound.end }));
-    return { kind: "function", name, args, type: unknownType, sourcePos };
+    return { kind: "function", name, args, sourcePos, type: Type.any };
   });
 
   groupExpr = this.RULE("groupExpr", (): Expr => {
@@ -1295,14 +1291,14 @@ class GaudiParser extends EmbeddedActionsParser {
     const expr = this.SUBRULE(this.expr);
     const rRound = getTokenData(this.CONSUME(L.RRound));
     const sourcePos = this.ACTION(() => ({ start: lRound.start, end: rRound.end }));
-    return { kind: "group", expr, type: unknownType, sourcePos };
+    return { kind: "group", expr, sourcePos, type: Type.any };
   });
 
   notExpr = this.RULE("notExpr", (): Expr => {
     const keyword = getTokenData(this.CONSUME(L.Not));
     const expr = this.SUBRULE(this.primaryExpr);
     const sourcePos = this.ACTION(() => ({ start: keyword.start, end: expr.sourcePos.end }));
-    return { kind: "unary", operator: "not", expr, keyword, type: unknownType, sourcePos };
+    return { kind: "unary", operator: "not", expr, keyword, sourcePos, type: Type.any };
   });
 
   inOperator = this.RULE("inOperator", (): IToken[] => {
@@ -1341,7 +1337,7 @@ class GaudiParser extends EmbeddedActionsParser {
           start: lhs.sourcePos.start,
           end: rhs.sourcePos.end,
         }));
-        lhs = { kind: "binary", operator, lhs, rhs, keyword, type: unknownType, sourcePos };
+        lhs = { kind: "binary", operator, lhs, rhs, keyword, sourcePos, type: Type.any };
       });
       return lhs;
     });
@@ -1368,7 +1364,7 @@ class GaudiParser extends EmbeddedActionsParser {
           return { sourcePos, keyword, operator };
         });
 
-        lhs = { kind: "binary", ...operatorData, lhs, rhs, type: unknownType };
+        lhs = { kind: "binary", ...operatorData, lhs, rhs, type: Type.any };
       });
       return lhs;
     });
@@ -1419,13 +1415,13 @@ class GaudiParser extends EmbeddedActionsParser {
     return { text: token.image, token: getTokenData(token) };
   });
 
-  identifierRef = this.RULE("identifierRef", (): IdentifierRef => {
+  identifierRef = this.RULE("identifierRef", (): Identifier & { type: Type } => {
     const identifier = this.SUBRULE(this.identifier);
-    return { identifier, ref: unresolvedRef, type: unknownType };
+    return { ...identifier, type: Type.any };
   });
 
-  identifierRefPath = this.RULE("identifierRefPath", (): IdentifierRef[] => {
-    const identifiers: IdentifierRef[] = [];
+  identifierRefPath = this.RULE("identifierRefPath", (): (Identifier & { type: Type })[] => {
+    const identifiers: (Identifier & { type: Type })[] = [];
 
     identifiers.push(this.SUBRULE1(this.identifierRef));
     this.MANY(() => {

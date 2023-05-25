@@ -612,9 +612,9 @@ export function buildTokens(
   }
 
   function buildIdentifierRef(identifier: IdentifierRef) {
-    const isModel = identifier.ref.kind === "model";
+    const isModel = identifier.ref?.kind === "model";
     const tokenType = isModel ? TokenTypes.class : TokenTypes.variable;
-    return push(identifier.identifier.token, tokenType);
+    return push(identifier.token, tokenType);
   }
 
   function buildType(identifier: Identifier) {
