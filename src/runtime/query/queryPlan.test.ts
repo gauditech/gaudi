@@ -12,7 +12,7 @@ describe("Query plan", () => {
       field name { type string }
       relation repos { from Repo, through org }
   
-      computed total_issues { count(repos.issues) }
+      computed total_issues { count(repos.issues.id) }
     }
     
     model Repo {
