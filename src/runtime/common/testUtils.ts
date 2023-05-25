@@ -42,21 +42,23 @@ export function makeTestQuery(models: string, query: string): { def: Definition;
   ${models}
 
   model TestHelperModel {}
-  entrypoint TestHelperModel {
-    custom endpoint {
-      method GET
-      cardinality many
-      path "/test"
-      action {
-        fetch as q {
-          ${query}
+  api {
+    entrypoint TestHelperModel {
+      custom endpoint {
+        method GET
+        cardinality many
+        path "/test"
+        action {
+          fetch as q {
+            ${query}
+          }
         }
       }
     }
   }
   `;
   const def = compose(compileToOldSpec(bp));
-  const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
+  const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
   const action = endpoint.actions[0] as FetchOneAction;
   return { def, query: action.query };
 }
