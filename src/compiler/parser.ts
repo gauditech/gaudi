@@ -75,7 +75,7 @@ import {
   TokenData,
   Validator,
 } from "./ast/ast";
-import { Type, anyType } from "./ast/type";
+import { Type } from "./ast/type";
 import * as L from "./lexer";
 
 export function getTokenData(...tokens: IToken[]): TokenData {
@@ -1202,7 +1202,7 @@ class GaudiParser extends EmbeddedActionsParser {
   anonymousQuery = this.RULE("anonymousQuery", (): AnonymousQuery => {
     const keyword = getTokenData(this.CONSUME(L.Query));
     const atoms = this.SUBRULE(this.queryAtoms);
-    return { kind: "anonymousQuery", atoms, keyword, type: anyType };
+    return { kind: "anonymousQuery", atoms, keyword, type: Type.any };
   });
 
   select = this.RULE("select", (): Select => {
@@ -1255,7 +1255,7 @@ class GaudiParser extends EmbeddedActionsParser {
             kind: "literal",
             literal,
             sourcePos: literal.token,
-            type: anyType,
+            type: Type.any,
           };
         },
       },
@@ -1266,7 +1266,7 @@ class GaudiParser extends EmbeddedActionsParser {
             start: path.at(0)!.token.start,
             end: path.at(-1)!.token.end,
           }));
-          return { kind: "path", path, sourcePos, type: anyType };
+          return { kind: "path", path, sourcePos, type: Type.any };
         },
       },
     ]);
@@ -1283,7 +1283,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     const rRound = getTokenData(this.CONSUME(L.RRound));
     const sourcePos = this.ACTION(() => ({ start: name.token.start, end: rRound.end }));
-    return { kind: "function", name, args, sourcePos, type: anyType };
+    return { kind: "function", name, args, sourcePos, type: Type.any };
   });
 
   groupExpr = this.RULE("groupExpr", (): Expr => {
@@ -1291,14 +1291,14 @@ class GaudiParser extends EmbeddedActionsParser {
     const expr = this.SUBRULE(this.expr);
     const rRound = getTokenData(this.CONSUME(L.RRound));
     const sourcePos = this.ACTION(() => ({ start: lRound.start, end: rRound.end }));
-    return { kind: "group", expr, sourcePos, type: anyType };
+    return { kind: "group", expr, sourcePos, type: Type.any };
   });
 
   notExpr = this.RULE("notExpr", (): Expr => {
     const keyword = getTokenData(this.CONSUME(L.Not));
     const expr = this.SUBRULE(this.primaryExpr);
     const sourcePos = this.ACTION(() => ({ start: keyword.start, end: expr.sourcePos.end }));
-    return { kind: "unary", operator: "not", expr, keyword, sourcePos, type: anyType };
+    return { kind: "unary", operator: "not", expr, keyword, sourcePos, type: Type.any };
   });
 
   inOperator = this.RULE("inOperator", (): IToken[] => {
@@ -1337,7 +1337,7 @@ class GaudiParser extends EmbeddedActionsParser {
           start: lhs.sourcePos.start,
           end: rhs.sourcePos.end,
         }));
-        lhs = { kind: "binary", operator, lhs, rhs, keyword, sourcePos, type: anyType };
+        lhs = { kind: "binary", operator, lhs, rhs, keyword, sourcePos, type: Type.any };
       });
       return lhs;
     });
@@ -1364,7 +1364,7 @@ class GaudiParser extends EmbeddedActionsParser {
           return { sourcePos, keyword, operator };
         });
 
-        lhs = { kind: "binary", ...operatorData, lhs, rhs, type: anyType };
+        lhs = { kind: "binary", ...operatorData, lhs, rhs, type: Type.any };
       });
       return lhs;
     });
@@ -1417,7 +1417,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
   identifierRef = this.RULE("identifierRef", (): Identifier & { type: Type } => {
     const identifier = this.SUBRULE(this.identifier);
-    return { ...identifier, type: anyType };
+    return { ...identifier, type: Type.any };
   });
 
   identifierRefPath = this.RULE("identifierRefPath", (): (Identifier & { type: Type })[] => {

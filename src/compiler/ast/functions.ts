@@ -1,12 +1,12 @@
-import { Type, anyType, booleanType, integerType, stringType } from "./type";
+import { Type } from "./type";
 
 export const builtinFunctions: { name: string; args: Type[]; result: Type }[] = [
-  { name: "length", args: [stringType], result: integerType },
-  { name: "lower", args: [stringType], result: stringType },
-  { name: "upper", args: [stringType], result: stringType },
-  { name: "now", args: [], result: integerType },
-  { name: "cryptoHash", args: [stringType, integerType], result: stringType },
-  { name: "cryptoCompare", args: [stringType, stringType], result: booleanType },
-  { name: "cryptoToken", args: [integerType], result: stringType },
-  { name: "stringify", args: [anyType], result: stringType },
+  { name: "length", args: [Type.string], result: Type.integer },
+  { name: "lower", args: [Type.string], result: Type.string },
+  { name: "upper", args: [Type.string], result: Type.string },
+  { name: "now", args: [], result: Type.integer },
+  { name: "cryptoHash", args: [Type.string, Type.integer], result: Type.string },
+  { name: "cryptoCompare", args: [Type.string, Type.string], result: Type.boolean },
+  { name: "cryptoToken", args: [Type.integer], result: Type.string },
+  { name: "stringify", args: [Type.any], result: Type.string },
 ];

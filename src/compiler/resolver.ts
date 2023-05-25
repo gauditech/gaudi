@@ -44,23 +44,16 @@ import {
 import { builtinFunctions } from "./ast/functions";
 import { Scope, addTypeGuard } from "./ast/scope";
 import {
+  PrimitiveType,
   Type,
   TypeCardinality,
   TypeCategory,
-  addCollection,
-  addNullable,
-  anyType,
   baseType,
-  booleanType,
-  floatType,
   getTypeCardinality,
   getTypeModel,
-  integerType,
   isExpectedType,
-  nullType,
   primitiveTypes,
   removeNullable,
-  stringType,
 } from "./ast/type";
 import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
@@ -151,19 +144,18 @@ export function resolve(projectASTs: ProjectASTs) {
       unique: !!kindFind(field.atoms, "unique"),
     };
 
-    let type: Type = anyType;
+    let type: Type = Type.any;
     const typeAtom = kindFind(field.atoms, "type");
     if (typeAtom) {
       const typeText = typeAtom.identifier.text;
       if (_.includes(primitiveTypes, typeText)) {
-        type = { kind: "primitive", primitiveKind: typeText } as Type;
+        type = Type.primitive(typeText as PrimitiveType["primitiveKind"]);
       } else {
         errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
       }
     }
     const nullable = kindFind(field.atoms, "nullable");
-    if (nullable) type = addNullable(type);
-    field.name.type = type;
+    field.name.type = nullable ? Type.nullable(type) : type;
   }
 
   function resolveValidator(validator: Validator) {
@@ -188,10 +180,9 @@ export function resolve(projectASTs: ProjectASTs) {
         model: to.identifier.ref.model,
         unique: !!kindFind(reference.atoms, "unique"),
       };
-      let type: Type = { kind: "model", model: to.identifier.ref.model };
+      const type = Type.model(to.identifier.ref.model);
       const nullable = kindFind(reference.atoms, "nullable");
-      if (nullable) type = addNullable(type);
-      reference.name.type = type;
+      reference.name.type = nullable ? Type.nullable(type) : type;
     }
   }
 
@@ -220,9 +211,9 @@ export function resolve(projectASTs: ProjectASTs) {
         through: through.identifier.ref.name,
       };
 
-      const type: Type = { kind: "model", model: from.identifier.ref.model };
+      const type = Type.model(from.identifier.ref.model);
       const isOne = through.identifier.ref.unique;
-      relation.name.type = isOne ? addNullable(type) : addCollection(type);
+      relation.name.type = isOne ? Type.nullable(type) : Type.collection(type);
     }
   }
 
@@ -282,7 +273,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (select) {
         baseType = selectToStruct(select.select);
       } else {
-        baseType = { kind: "model", model: currentModel };
+        baseType = Type.model(currentModel);
       }
 
       const aggregate = kindFind(query.atoms, "aggregate");
@@ -292,19 +283,19 @@ export function resolve(projectASTs: ProjectASTs) {
           type = baseType;
           break;
         case "first":
-          type = cardinality === "one" ? baseType : addNullable(baseType);
+          type = cardinality === "one" ? baseType : Type.nullable(baseType);
           break;
         case "count":
         case "sum":
-          type = integerType;
+          type = Type.integer;
           break;
         case undefined:
           type =
             cardinality === "one"
               ? baseType
               : cardinality === "nullable"
-              ? addNullable(baseType)
-              : addCollection(baseType);
+              ? Type.nullable(baseType)
+              : Type.collection(baseType);
           break;
       }
 
@@ -325,7 +316,7 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function selectToStruct(select: Select): Type {
-    const type: Type = { kind: "struct", types: {} };
+    const type = Type.struct({});
 
     select.forEach(({ target, select }) => {
       let name = target.name.text;
@@ -341,7 +332,7 @@ export function resolve(projectASTs: ProjectASTs) {
         }
         if (targetType.kind === "model") {
           name += "_id";
-          targetType = integerType;
+          targetType = Type.integer;
         }
       }
       type.types[name] = targetType;
@@ -424,7 +415,7 @@ export function resolve(projectASTs: ProjectASTs) {
     const authorize = kindFind(entrypoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
-      checkExprType(authorize.expr, booleanType);
+      checkExprType(authorize.expr, Type.boolean);
       scope = addTypeGuard(authorize.expr, scope, false);
     }
 
@@ -468,7 +459,7 @@ export function resolve(projectASTs: ProjectASTs) {
     const authorize = kindFind(endpoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
-      checkExprType(authorize.expr, booleanType);
+      checkExprType(authorize.expr, Type.boolean);
       scope = addTypeGuard(authorize.expr, scope, false);
     }
 
@@ -588,7 +579,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
     if (currentModel && action.as) {
       action.as.identifier.ref = { kind: "action" };
-      action.as.identifier.type = { kind: "model", model: currentModel };
+      action.as.identifier.type = Type.model(currentModel);
       addToScope(scope, action.as.identifier);
     }
 
@@ -696,21 +687,19 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput, scope: Scope) {
-    let type: Type = anyType;
+    let type: Type = Type.any;
     const typeAtom = kindFind(virtualInput.atoms, "type");
     if (typeAtom) {
       const typeText = typeAtom.identifier.text;
       if (_.includes(primitiveTypes, typeText)) {
-        type = { kind: "primitive", primitiveKind: typeText } as Type;
+        type = Type.primitive(typeText as PrimitiveType["primitiveKind"]);
       } else {
         errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.VirtualInputType));
       }
     }
-    if (kindFind(virtualInput.atoms, "nullable")) {
-      type = addNullable(type);
-    }
+    const nullable = kindFind(virtualInput.atoms, "nullable");
     virtualInput.name.ref = { kind: "virtualInput" };
-    virtualInput.name.type = type;
+    virtualInput.name.type = nullable ? Type.nullable(type) : type;
     addToScope(scope, virtualInput.name);
   }
 
@@ -755,14 +744,11 @@ export function resolve(projectASTs: ProjectASTs) {
     kindFilter(populate.atoms, "repeat").forEach((repeat) => {
       if (repeat.as) {
         repeat.as.identifier.ref = { kind: "repeat" };
-        repeat.as.identifier.type = {
-          kind: "struct",
-          types: {
-            start: integerType,
-            end: integerType,
-            current: integerType,
-          },
-        };
+        repeat.as.identifier.type = Type.struct({
+          start: Type.integer,
+          end: Type.integer,
+          current: Type.integer,
+        });
         addToScope(scope, repeat.as.identifier);
       }
     });
@@ -931,9 +917,7 @@ export function resolve(projectASTs: ProjectASTs) {
       })
       .with({ kind: "literal" }, (literal) => {
         literal.type =
-          literal.literal.kind === "null"
-            ? nullType
-            : { kind: "primitive", primitiveKind: literal.literal.kind };
+          literal.literal.kind === "null" ? Type.null : Type.primitive(literal.literal.kind);
       })
       .with({ kind: "function" }, (function_) => {
         function_.args.forEach((arg) => resolveExpression(arg, scope));
@@ -990,7 +974,7 @@ export function resolve(projectASTs: ProjectASTs) {
     // try to resolve from global models, if global is allowed
     else if (options?.allowGlobal && findModel(headName)) {
       head.ref = { kind: "model", model: headName };
-      head.type = { kind: "model", model: headName };
+      head.type = Type.model(headName);
     }
     // special case, try to resolve @auth
     else if (headName === "@auth") {
@@ -1001,13 +985,13 @@ export function resolve(projectASTs: ProjectASTs) {
         return;
       } else {
         head.ref = { kind: "auth", model: model.name.text };
-        head.type = addNullable({ kind: "model", model: model.name.text });
+        head.type = Type.nullable(Type.model(model.name.text));
       }
     }
     // simple nullable string, we don't check if auth plugin is present for this for now
     else if (headName === "@requestAuthToken") {
       head.ref = { kind: "authToken" };
-      head.type = addNullable(stringType);
+      head.type = Type.nullable(Type.string);
     } else {
       // fail resolve
       errors.push(new CompilerError(head.token, ErrorCode.CantFindNameInScope, { name: headName }));
@@ -1027,7 +1011,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (typeGuardOperation === "notNull") {
         identifier.type = removeNullable(identifier.type);
       } else if (typeGuardOperation === "null") {
-        identifier.type = nullType;
+        identifier.type = Type.null;
       }
     });
   }
@@ -1066,13 +1050,13 @@ export function resolve(projectASTs: ProjectASTs) {
         if (!resolveNextRef(identifier, previousType.type)) {
           return false;
         }
-        identifier.type = addCollection(identifier.type);
+        identifier.type = Type.collection(identifier.type);
         return true;
       case "nullable": {
         if (!resolveNextRef(identifier, previousType.type)) {
           return false;
         }
-        identifier.type = addNullable(identifier.type);
+        identifier.type = Type.nullable(identifier.type);
         return true;
       }
       case "null":
@@ -1088,7 +1072,7 @@ export function resolve(projectASTs: ProjectASTs) {
       errors.push(new CompilerError(identifier.token, ErrorCode.CantResolveModel));
     } else {
       identifier.ref = { kind: "model", model: model.name.text };
-      identifier.type = { kind: "model", model: model.name.text };
+      identifier.type = Type.model(model.name.text);
     }
   }
 
@@ -1125,9 +1109,9 @@ export function resolve(projectASTs: ProjectASTs) {
           name,
           unique: false,
         };
-        const baseType: Type = integerType;
+        const baseType: Type = Type.integer;
         identifier.type =
-          referenceAtom.name.type.kind === "nullable" ? addNullable(baseType) : baseType;
+          referenceAtom.name.type.kind === "nullable" ? Type.nullable(baseType) : baseType;
         return true;
       }
     }
@@ -1140,7 +1124,7 @@ export function resolve(projectASTs: ProjectASTs) {
         name,
         unique: true,
       };
-      identifier.type = integerType;
+      identifier.type = Type.integer;
       identifier.type;
       return true;
     }
@@ -1180,9 +1164,9 @@ export function resolve(projectASTs: ProjectASTs) {
     switch (op) {
       case "or":
       case "and": {
-        checkExprType(lhs, booleanType);
-        checkExprType(rhs, booleanType);
-        return booleanType;
+        checkExprType(lhs, Type.boolean);
+        checkExprType(rhs, Type.boolean);
+        return Type.boolean;
       }
       case "is":
       case "is not": {
@@ -1190,12 +1174,12 @@ export function resolve(projectASTs: ProjectASTs) {
         if (!isExpectedType(lhs.type, rhs.type)) {
           checkExprType(rhs, lhs.type);
         }
-        return booleanType;
+        return Type.boolean;
       }
       case "in":
       case "not in": {
-        checkExprType(rhs, addCollection(lhs.type));
-        return booleanType;
+        checkExprType(rhs, Type.collection(lhs.type));
+        return Type.boolean;
       }
       case "<":
       case "<=":
@@ -1210,19 +1194,19 @@ export function resolve(projectASTs: ProjectASTs) {
             checkExprType(rhs, lhs.type);
           }
         }
-        return booleanType;
+        return Type.boolean;
       }
       case "+": {
-        if (lhs.type.kind === "any" || rhs.type.kind === "any") return anyType;
+        if (lhs.type.kind === "any" || rhs.type.kind === "any") return Type.any;
         const lhsOk = checkExprType(lhs, "addable");
         const rhsOk = checkExprType(rhs, "addable");
         if (lhsOk && rhsOk) {
           if (isExpectedType(lhs.type, "number")) {
             checkExprType(rhs, "number");
-            if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
-              return floatType;
+            if (isExpectedType(lhs.type, Type.float) || isExpectedType(rhs.type, Type.float)) {
+              return Type.float;
             } else {
-              return integerType;
+              return Type.integer;
             }
           } else {
             checkExprType(rhs, lhs.type);
@@ -1233,32 +1217,32 @@ export function resolve(projectASTs: ProjectASTs) {
         } else if (rhsOk) {
           return rhs.type;
         } else {
-          return anyType;
+          return Type.any;
         }
       }
       case "-":
       case "*": {
-        if (lhs.type.kind === "any" || rhs.type.kind === "any") return anyType;
+        if (lhs.type.kind === "any" || rhs.type.kind === "any") return Type.any;
         const lhsOk = checkExprType(lhs, "number");
         const rhsOk = checkExprType(rhs, "number");
         if (lhsOk && rhsOk) {
-          if (isExpectedType(lhs.type, floatType) || isExpectedType(rhs.type, floatType)) {
-            return floatType;
+          if (isExpectedType(lhs.type, Type.float) || isExpectedType(rhs.type, Type.float)) {
+            return Type.float;
           } else {
-            return integerType;
+            return Type.integer;
           }
         } else if (lhsOk) {
           return lhs.type;
         } else if (rhsOk) {
           return rhs.type;
         } else {
-          return anyType;
+          return Type.any;
         }
       }
       case "/": {
         checkExprType(lhs, "number");
         checkExprType(rhs, "number");
-        return floatType;
+        return Type.float;
       }
     }
   }
@@ -1266,8 +1250,8 @@ export function resolve(projectASTs: ProjectASTs) {
   function getUnaryOperatorType(op: UnaryOperator, expr: Expr): Type {
     switch (op) {
       case "not": {
-        checkExprType(expr, booleanType);
-        return booleanType;
+        checkExprType(expr, Type.boolean);
+        return Type.boolean;
       }
     }
   }

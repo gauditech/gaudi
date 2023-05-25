@@ -4,15 +4,19 @@ export type AnyType = { kind: "any" };
 export type PrimitiveType = { kind: "primitive"; primitiveKind: (typeof primitiveTypes)[number] };
 export type NullType = { kind: "null" };
 export type ModelType = { kind: "model"; model: string };
-export type StructType = { kind: "struct"; types: Record<string, Type> };
+export type StructType = {
+  kind: "struct";
+  types: Record<string, Type>;
+};
 export type CollectionType<t extends CanBeInCollection = CanBeInCollection> = {
   kind: "collection";
   type: t;
 };
-export type NullableType<t extends CanBeNullType = CanBeNullType> = { kind: "nullable"; type: t };
+export type NullableType<t extends CanBeNullable = CanBeNullable> = { kind: "nullable"; type: t };
 
-type CanBeInCollection = CanBeNullType | AnyType;
-type CanBeNullType = PrimitiveType | ModelType | StructType;
+type BaseType = AnyType | PrimitiveType | NullType | ModelType | StructType;
+type CanBeInCollection = CanBeNullable | AnyType;
+type CanBeNullable = PrimitiveType | ModelType | StructType;
 
 export type Type =
   | AnyType
@@ -23,14 +27,25 @@ export type Type =
   | CollectionType
   | NullableType;
 
-export const anyType: AnyType = { kind: "any" };
-export const integerType: PrimitiveType = { kind: "primitive", primitiveKind: "integer" };
-export const floatType: PrimitiveType = { kind: "primitive", primitiveKind: "float" };
-export const booleanType: PrimitiveType = { kind: "primitive", primitiveKind: "boolean" };
-export const stringType: PrimitiveType = { kind: "primitive", primitiveKind: "string" };
-export const nullType: NullType = { kind: "null" };
+export const Type = {
+  any: { kind: "any" } as AnyType,
+  primitive: (primitiveKind: (typeof primitiveTypes)[number]): PrimitiveType => ({
+    kind: "primitive",
+    primitiveKind,
+  }),
+  integer: { kind: "primitive", primitiveKind: "integer" } as PrimitiveType,
+  float: { kind: "primitive", primitiveKind: "float" } as PrimitiveType,
+  boolean: { kind: "primitive", primitiveKind: "boolean" } as PrimitiveType,
+  string: { kind: "primitive", primitiveKind: "string" } as PrimitiveType,
+  null: { kind: "null" } as NullType,
+  model: (model: string): ModelType => ({ kind: "model", model }),
+  struct: (types: Record<string, Type>): StructType => ({ kind: "struct", types }),
+  collection: createCollection,
+  nullable: createNullable,
+};
 
-export function addNullable(type: Type): Type {
+function createNullable<t extends Type>(type: t): t extends CanBeNullable ? NullableType<t> : t;
+function createNullable(type: Type): Type {
   switch (type.kind) {
     case "primitive":
     case "model":
@@ -41,7 +56,14 @@ export function addNullable(type: Type): Type {
   }
 }
 
-export function addCollection(type: Type): Type {
+function createCollection<t extends Type>(
+  type: t
+): t extends CanBeInCollection
+  ? CollectionType<t>
+  : t extends NullableType
+  ? CollectionType<t["type"]>
+  : t;
+function createCollection(type: Type): Type {
   switch (type.kind) {
     case "primitive":
     case "model":
@@ -56,7 +78,10 @@ export function addCollection(type: Type): Type {
   }
 }
 
-export function baseType(type: Type): AnyType | PrimitiveType | NullType | ModelType | StructType {
+export function baseType<t extends Type>(
+  type: t
+): t extends CollectionType | NullableType ? t["type"] : t;
+export function baseType(type: Type): BaseType {
   switch (type.kind) {
     case "any":
     case "primitive":
@@ -70,11 +95,15 @@ export function baseType(type: Type): AnyType | PrimitiveType | NullType | Model
   }
 }
 
+export function removeNullable<t extends Type>(type: t): t extends NullableType ? t["type"] : t;
 export function removeNullable(type: Type): Type {
   if (type.kind === "nullable") return type.type;
   return type;
 }
 
+export function getTypeModel<t extends Type>(
+  type: t
+): t extends ModelType ? string : t extends BaseType ? undefined : undefined | string;
 export function getTypeModel(type: Type): string | undefined {
   const base = baseType(type);
   switch (base.kind) {
@@ -84,7 +113,7 @@ export function getTypeModel(type: Type): string | undefined {
     case "primitive":
     case "null":
     case "struct":
-      undefined;
+      return undefined;
   }
 }
 
@@ -97,9 +126,8 @@ export function getTypeCardinality(
   if (baseCardinality === "collection") return "collection";
   switch (type.kind) {
     case "collection":
-      return "collection";
     case "nullable":
-      return "nullable";
+      return type.kind;
     case "any":
     case "model":
     case "struct":

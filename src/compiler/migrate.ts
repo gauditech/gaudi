@@ -2,7 +2,7 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
-import { Type, addNullable, booleanType, getTypeModel, integerType } from "./ast/type";
+import { Type, getTypeModel } from "./ast/type";
 import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
@@ -84,7 +84,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         name: "id",
         unique: true,
       },
-      type: integerType,
+      type: Type.integer,
       primary: true,
       validators: [],
     };
@@ -167,7 +167,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     ensureExists(query.name.ref);
     const model = query.name.ref.parentModel;
     const initialPath: Spec.IdentifierRef[] = [
-      { text: model, ref: { kind: "model", model }, type: { kind: "model", model } },
+      { text: model, ref: { kind: "model", model }, type: Type.model(model) },
     ];
     return migrateQuery(initialPath, query.name.text, query.atoms);
   }
@@ -177,9 +177,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const from = kindFind(query.atoms, "from");
     if (!from) {
       ensureExists(model);
-      initialPath = [
-        { text: model, ref: { kind: "model", model }, type: { kind: "model", model } },
-      ];
+      initialPath = [{ text: model, ref: { kind: "model", model }, type: Type.model(model) }];
     }
     return migrateQuery(initialPath, "$query", query.atoms);
   }
@@ -261,7 +259,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       : {
           text: `$target_${depth}`,
           ref: { kind: "target", targetKind: "entrypoint" },
-          type: { kind: "model", model },
+          type: Type.model(model),
         };
 
     const astAuthorize = kindFind(entrypoint.atoms, "authorize")?.expr;
@@ -370,7 +368,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return {
       kind: "function",
       name: "and",
-      type: booleanType,
+      type: Type.boolean,
       args: [a, b],
     };
   }
@@ -442,7 +440,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
               expr: {
                 kind: "identifier",
                 identifier: [...parentPath, generateModelIdIdentifier(contextRelation.parentModel)],
-                type: integerType,
+                type: Type.integer,
               },
             },
           },
@@ -633,14 +631,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
             name: referenceName,
             unique: false,
           },
-          type: integerType,
+          type: Type.integer,
         },
         set: {
           kind: "expression",
           expr: {
             kind: "identifier",
             identifier: [parentAlias, generateModelIdIdentifier(target.ref.parentModel)],
-            type: integerType,
+            type: Type.integer,
           },
         },
       };
@@ -814,7 +812,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         return {
           kind: "function",
           name: "is not",
-          args: [migrateExpr(expr.expr), { kind: "literal", literal: true, type: booleanType }],
+          args: [migrateExpr(expr.expr), { kind: "literal", literal: true, type: Type.boolean }],
           type: expr.type,
         };
       case "path":
@@ -840,8 +838,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   ): Spec.IdentifierRef<AST.RefModelField> {
     const name = `${reference.ref.name}_id`;
 
-    let type: Type = integerType;
-    if (reference.type.kind === "nullable") type = addNullable(type);
+    let type: Type = Type.integer;
+    if (reference.type.kind === "nullable") type = Type.nullable(type);
 
     return {
       text: name,
@@ -860,7 +858,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return {
       text: "id",
       ref: { kind: "modelAtom", atomKind: "field", name: "id", parentModel: model, unique: true },
-      type: integerType,
+      type: Type.integer,
     };
   }
 
