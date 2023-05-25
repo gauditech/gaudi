@@ -28,7 +28,7 @@ describe("auth client lib", () => {
     const client = createClient({
       requestFn: testRequestFn,
     });
-    const resp = await client.api.Auth.authUser.login({ username: "first", password: "1234" });
+    const resp = await client.api.auth.authUser.login({ username: "first", password: "1234" });
 
     // type narrowing for simpler later code
     ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
@@ -126,7 +126,7 @@ describe("auth client lib", () => {
       expect(response2.status).toBe(200);
 
       // logout
-      const response3 = await authClient.api.Auth.authUser.logout();
+      const response3 = await authClient.api.auth.authUser.logout();
       expect(response3.status).toBe(204);
 
       // UNauthorized request again

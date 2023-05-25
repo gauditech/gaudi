@@ -63,6 +63,7 @@ function buildClient(def: Definition, apis: ApiDef[]): string {
   `;
 }
 
+type ApiName = Pick<TargetName, "identifierName" | "path" | "builder">;
 type TargetName = {
   /**
    * Segment name is name in API heirarchy.
@@ -93,7 +94,10 @@ type EntrypointApiEntry = { name: string; path: string; builderName: string; bui
 function buildApisObject(apis: ApiDef[]): string {
   const rootApi = apis.find((api) => !api.name);
   const otherApis = apis.filter((api) => api.name);
-  const properties = otherApis.map((api) => `${api.name}: ${buildApiObject(api)}`);
+  const properties = otherApis.map((api) => {
+    const info = createApiInfo(api);
+    return `${info.identifierName}: ${buildApiObject(api)}`;
+  });
   if (rootApi) {
     properties.push(`...${buildApiObject(rootApi)}`);
   }
@@ -106,7 +110,9 @@ function buildApisObject(apis: ApiDef[]): string {
 }
 
 function buildApiObject(api: ApiDef): string {
-  return `build${api.name || ""}Api(internalOptions ?? {})`;
+  const info = createApiInfo(api);
+
+  return `${info.builder}(internalOptions ?? {})`;
 }
 
 function buildApis(def: Definition, apis: ApiDef[]): string {
@@ -114,17 +120,18 @@ function buildApis(def: Definition, apis: ApiDef[]): string {
 }
 
 function buildApi(def: Definition, api: ApiDef): string {
-  const apiEntries = api.entrypoints.map((sub) => buildEntrypointApi(def, sub));
+  const info = createApiInfo(api);
+  const apiEntries = api.entrypoints.map((sub) => buildEntrypointObject(def, sub));
 
   const builderFns = apiEntries.map((sub) => sub.builderFn).flat();
 
   return `
-    function build${api.name || ""}Api(options: ApiClientOptions) {
+    function ${info.builder}(options: ApiClientOptions) {
       ${builderFns.join("\n")}
 
       return {
         ${apiEntries
-          .map((sub) => `${sub.name}: ${sub.builderName}(options, "${api.path}/${sub.path}")`)
+          .map((sub) => `${sub.name}: ${sub.builderName}(options, "${info.path}/${sub.path}")`)
           .join(",\n")}
       }
     }
@@ -133,14 +140,14 @@ function buildApi(def: Definition, api: ApiDef): string {
 
 // --- entrypoint API
 
-function buildEntrypointApi(def: Definition, entrypoint: EntrypointDef): EntrypointApiEntry {
+function buildEntrypointObject(def: Definition, entrypoint: EntrypointDef): EntrypointApiEntry {
   const targetInfo = createIdentifierTargetInfo(
     entrypoint.target.name,
     entrypoint.target.identifyWith.type,
     entrypoint.target.retType
   );
 
-  const entrypointEntries = entrypoint.entrypoints.map((sub) => buildEntrypointApi(def, sub));
+  const entrypointEntries = entrypoint.entrypoints.map((sub) => buildEntrypointObject(def, sub));
   const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints);
   const endpointTypes = compactTypesArray(endpointEntries.map((epe) => epe.types).flat());
 
@@ -803,6 +810,13 @@ function buildCommonCode(): string {
 
 // ----- utils
 
+function createApiInfo(api: ApiDef): ApiName {
+  return {
+    identifierName: _.camelCase(api.name || ""),
+    path: api.path,
+    builder: _.camelCase(`build${_.capitalize(api.name || "")}Api`),
+  };
+}
 function createIdentifierTargetInfo(
   name: string,
   identifierType: TargetDef["identifyWith"]["type"],
