@@ -24,7 +24,7 @@
 
     return {
     api: {
-      User: buildUserApi(internalOptions ?? {}),
+      user: buildUserApi(internalOptions ?? {}),
 ...buildApi(internalOptions ?? {})
     }
   };
