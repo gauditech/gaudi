@@ -2,7 +2,7 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
-import { Type, addTypeModifier, getTypeModel } from "./ast/type";
+import { Type, addNullable, booleanType, getTypeModel, integerType } from "./ast/type";
 import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
@@ -84,7 +84,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         name: "id",
         unique: true,
       },
-      type: { kind: "primitive", primitiveKind: "integer" },
+      type: integerType,
       primary: true,
       validators: [],
     };
@@ -159,7 +159,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ref: relation.name.ref,
       through: through.identifier.ref,
       unique: through.identifier.ref.unique,
-      nullable: through.identifier.ref.unique && through.identifier.type?.kind === "nullable",
+      nullable: through.identifier.ref.unique && through.identifier.type.kind === "nullable",
     };
   }
 
@@ -206,7 +206,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     ];
 
     const sourceModel = getTypeModel(fromModel[0].type)!;
-    const targetModel = getTypeModel(fromModel.at(-1)?.type)!;
+    const targetModel = getTypeModel(fromModel.at(-1)!.type)!;
 
     return {
       name,
@@ -370,7 +370,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return {
       kind: "function",
       name: "and",
-      type: { kind: "primitive", primitiveKind: "boolean" },
+      type: booleanType,
       args: [a, b],
     };
   }
@@ -442,7 +442,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
               expr: {
                 kind: "identifier",
                 identifier: [...parentPath, generateModelIdIdentifier(contextRelation.parentModel)],
-                type: { kind: "primitive", primitiveKind: "integer" },
+                type: integerType,
               },
             },
           },
@@ -459,7 +459,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       const denied = deniedFields.find((i) => i.text === field.name);
       if (denied) return [];
 
-      const nullable = field.type?.kind === "nullable";
+      const nullable = field.type.kind === "nullable";
       return [
         {
           kind: "input",
@@ -524,7 +524,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ensureEqual(set.set.kind, "expr");
       const expr = migrateExpr(set.set.expr);
       ensureEqual(expr.kind, "identifier");
-      const model = getTypeModel(expr.identifier.at(-1)?.type)!;
+      const model = getTypeModel(expr.identifier.at(-1)!.type)!;
       ensureExists(model);
       expr.identifier.push(generateModelIdIdentifier(model));
 
@@ -633,14 +633,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
             name: referenceName,
             unique: false,
           },
-          type: { kind: "primitive", primitiveKind: "integer" },
+          type: integerType,
         },
         set: {
           kind: "expression",
           expr: {
             kind: "identifier",
             identifier: [parentAlias, generateModelIdIdentifier(target.ref.parentModel)],
-            type: { kind: "primitive", primitiveKind: "integer" },
+            type: integerType,
           },
         },
       };
@@ -762,12 +762,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         throw Error("Long select form unsupported in old spec");
       }
       const target = migrateIdentifierRef(s.target.name);
-      const targetModel = getTypeModel(target.type);
-      if (targetModel) {
-        const select = s.select ? migrateSelect(s.select) : createAutoselect(targetModel);
-        return { kind: "nested", name: target.text, target, select };
-      } else {
-        return { kind: "final", name: target.text, target };
+      switch (target.ref.atomKind) {
+        case "query":
+        case "reference":
+        case "relation": {
+          const select = s.select ? migrateSelect(s.select) : createAutoselect(target.ref.model);
+          return { kind: "nested", name: target.text, target, select };
+        }
+        default: {
+          return { kind: "final", name: target.text, target };
+        }
       }
     });
   }
@@ -787,7 +791,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         // this is a quick fix to convert "+" to "concat" when strings are involved
         let name;
         if (
-          expr.lhs.type?.kind === "primitive" &&
+          expr.lhs.type.kind === "primitive" &&
           expr.lhs.type.primitiveKind === "string" &&
           expr.operator === "+"
         ) {
@@ -810,14 +814,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         return {
           kind: "function",
           name: "is not",
-          args: [
-            migrateExpr(expr.expr),
-            {
-              kind: "literal",
-              literal: true,
-              type: { kind: "primitive", primitiveKind: "boolean" },
-            },
-          ],
+          args: [migrateExpr(expr.expr), { kind: "literal", literal: true, type: booleanType }],
           type: expr.type,
         };
       case "path":
@@ -843,8 +840,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   ): Spec.IdentifierRef<AST.RefModelField> {
     const name = `${reference.ref.name}_id`;
 
-    let type: Type = { kind: "primitive", primitiveKind: "integer" };
-    if (reference.type?.kind === "nullable") type = addTypeModifier(type, "nullable");
+    let type: Type = integerType;
+    if (reference.type.kind === "nullable") type = addNullable(type);
 
     return {
       text: name,
@@ -863,7 +860,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return {
       text: "id",
       ref: { kind: "modelAtom", atomKind: "field", name: "id", parentModel: model, unique: true },
-      type: { kind: "primitive", primitiveKind: "integer" },
+      type: integerType,
     };
   }
 

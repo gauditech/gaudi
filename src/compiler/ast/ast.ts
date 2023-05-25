@@ -338,7 +338,7 @@ export type AnonymousQuery = {
   kind: "anonymousQuery";
   keyword: TokenData;
   atoms: QueryAtom[];
-  type?: Type;
+  type: Type;
 };
 
 export type Select = {
@@ -364,7 +364,7 @@ export type Expr<kind extends ExprKind = ExprKind> = (
   | { kind: "path"; path: IdentifierRef[] }
   | { kind: "literal"; literal: Literal }
   | { kind: "function"; name: Identifier; args: Expr<kind>[] }
-) & { type?: Type; sourcePos: TokenData };
+) & { type: Type; sourcePos: TokenData };
 export type BinaryOperator =
   | "or"
   | "and"
@@ -469,7 +469,7 @@ export type IdentifierRef<R extends Ref = Ref> = {
   text: string;
   token: TokenData;
   ref?: R;
-  type?: Type;
+  type: Type;
 };
 
 export type TokenData = { start: number; end: number };

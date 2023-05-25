@@ -1,16 +1,12 @@
-import { Type } from "./type";
-
-const stringT: Type = { kind: "primitive", primitiveKind: "string" };
-const integerT: Type = { kind: "primitive", primitiveKind: "integer" };
-const booleanT: Type = { kind: "primitive", primitiveKind: "boolean" };
+import { Type, anyType, booleanType, integerType, stringType } from "./type";
 
 export const builtinFunctions: { name: string; args: Type[]; result: Type }[] = [
-  { name: "length", args: [stringT], result: integerT },
-  { name: "lower", args: [stringT], result: stringT },
-  { name: "upper", args: [stringT], result: stringT },
-  { name: "now", args: [], result: integerT },
-  { name: "cryptoHash", args: [stringT, integerT], result: stringT },
-  { name: "cryptoCompare", args: [stringT, stringT], result: booleanT },
-  { name: "cryptoToken", args: [integerT], result: stringT },
-  { name: "stringify", args: [undefined], result: stringT },
+  { name: "length", args: [stringType], result: integerType },
+  { name: "lower", args: [stringType], result: stringType },
+  { name: "upper", args: [stringType], result: stringType },
+  { name: "now", args: [], result: integerType },
+  { name: "cryptoHash", args: [stringType, integerType], result: stringType },
+  { name: "cryptoCompare", args: [stringType, stringType], result: booleanType },
+  { name: "cryptoToken", args: [integerType], result: stringType },
+  { name: "stringify", args: [anyType], result: stringType },
 ];

@@ -47,12 +47,19 @@ import {
   Type,
   TypeCardinality,
   TypeCategory,
-  addTypeModifier,
+  addCollection,
+  addNullable,
+  anyType,
+  baseType,
+  booleanType,
+  floatType,
   getTypeCardinality,
   getTypeModel,
+  integerType,
   isExpectedType,
+  nullType,
   primitiveTypes,
-  removeTypeModifier,
+  stringType,
 } from "./ast/type";
 import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
@@ -143,7 +150,7 @@ export function resolve(projectASTs: ProjectASTs) {
       unique: !!kindFind(field.atoms, "unique"),
     };
 
-    let type: Type;
+    let type: Type = anyType;
     const typeAtom = kindFind(field.atoms, "type");
     if (typeAtom) {
       const typeText = typeAtom.identifier.text;
@@ -154,7 +161,7 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
     const nullable = kindFind(field.atoms, "nullable");
-    if (nullable) type = addTypeModifier(type, "nullable");
+    if (nullable) type = addNullable(type);
     field.name.type = type;
   }
 
@@ -182,7 +189,7 @@ export function resolve(projectASTs: ProjectASTs) {
       };
       let type: Type = { kind: "model", model: to.identifier.ref.model };
       const nullable = kindFind(reference.atoms, "nullable");
-      if (nullable) type = addTypeModifier(type, "nullable");
+      if (nullable) type = addNullable(type);
       reference.name.type = type;
     }
   }
@@ -214,7 +221,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
       const type: Type = { kind: "model", model: from.identifier.ref.model };
       const isOne = through.identifier.ref.unique;
-      relation.name.type = addTypeModifier(type, isOne ? "nullable" : "collection");
+      relation.name.type = isOne ? addNullable(type) : addCollection(type);
     }
   }
 
@@ -229,7 +236,7 @@ export function resolve(projectASTs: ProjectASTs) {
       from.identifierPath.forEach((identifier) => {
         currentModel = getTypeModel(identifier.type);
         cardinality = getTypeCardinality(identifier.type, cardinality);
-        identifier.type = removeTypeModifier(identifier.type, "collection", "nullable");
+        identifier.type = baseType(identifier.type);
       });
 
       if (from.as) {
@@ -285,14 +292,19 @@ export function resolve(projectASTs: ProjectASTs) {
           type = baseType;
           break;
         case "first":
-          type = cardinality === "one" ? baseType : addTypeModifier(baseType, "nullable");
+          type = cardinality === "one" ? baseType : addNullable(baseType);
           break;
         case "count":
         case "sum":
-          type = { kind: "primitive", primitiveKind: "integer" };
+          type = integerType;
           break;
         case undefined:
-          type = cardinality === "one" ? baseType : addTypeModifier(baseType, cardinality);
+          type =
+            cardinality === "one"
+              ? baseType
+              : cardinality === "nullable"
+              ? addNullable(baseType)
+              : addCollection(baseType);
           break;
       }
 
@@ -327,9 +339,9 @@ export function resolve(projectASTs: ProjectASTs) {
           // TODO: is it correct cardinality?
           targetType = target.identifierPath.at(-1)!.type;
         }
-        if (targetType?.kind === "model") {
+        if (targetType.kind === "model") {
           name += "_id";
-          targetType = { kind: "primitive", primitiveKind: "integer" };
+          targetType = integerType;
         }
       }
       type.types[name] = targetType;
@@ -357,7 +369,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (
       !exprType ||
       exprType.kind === "primitive" ||
-      (exprType.kind === "nullable" && exprType.type?.kind === "primitive")
+      (exprType.kind === "nullable" && exprType.type.kind === "primitive")
     ) {
       computed.name.type = computed.expr.type;
     } else {
@@ -394,7 +406,7 @@ export function resolve(projectASTs: ProjectASTs) {
       resolveModelRef(entrypoint.target);
     } else {
       resolveModelAtomRef(entrypoint.target, parentModel, "relation");
-      entrypoint.target.type = removeTypeModifier(entrypoint.target.type, "collection", "nullable");
+      entrypoint.target.type = baseType(entrypoint.target.type);
     }
     const currentModel = entrypoint.target.ref?.model;
     if (entrypoint.as) {
@@ -412,7 +424,7 @@ export function resolve(projectASTs: ProjectASTs) {
     const authorize = kindFind(entrypoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
-      checkExprType(authorize.expr, { kind: "primitive", primitiveKind: "boolean" });
+      checkExprType(authorize.expr, booleanType);
       scope = addTypeGuard(authorize.expr, scope, false);
     }
 
@@ -456,7 +468,7 @@ export function resolve(projectASTs: ProjectASTs) {
     const authorize = kindFind(endpoint.atoms, "authorize");
     if (authorize) {
       resolveExpression(authorize.expr, scope);
-      checkExprType(authorize.expr, { kind: "primitive", primitiveKind: "boolean" });
+      checkExprType(authorize.expr, booleanType);
       scope = addTypeGuard(authorize.expr, scope, false);
     }
 
@@ -534,7 +546,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (action.target) {
       resolveIdentifierRefPath(action.target, scope, { allowGlobal: action.kind === "create" });
       const lastTarget = action.target.at(-1);
-      currentModel = getTypeModel(lastTarget?.type);
+      currentModel = getTypeModel(lastTarget!.type);
 
       if (lastTarget?.ref && action.kind === "create") {
         switch (lastTarget.ref.kind) {
@@ -667,7 +679,7 @@ export function resolve(projectASTs: ProjectASTs) {
       resolveQuery(query, scope);
       action.name.ref = { kind: "action" };
       // TODO: for now, we magicaly get non modified type from fetch query
-      action.name.type = removeTypeModifier(query.type, "collection", "nullable");
+      action.name.type = baseType(query.type);
       addToScope(scope, action.name);
     }
   }
@@ -684,7 +696,7 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput, scope: Scope) {
-    let type: Type;
+    let type: Type = anyType;
     const typeAtom = kindFind(virtualInput.atoms, "type");
     if (typeAtom) {
       const typeText = typeAtom.identifier.text;
@@ -695,7 +707,7 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
     if (kindFind(virtualInput.atoms, "nullable")) {
-      type = addTypeModifier(type, "nullable");
+      type = addNullable(type);
     }
     virtualInput.name.ref = { kind: "virtualInput" };
     virtualInput.name.type = type;
@@ -718,12 +730,10 @@ export function resolve(projectASTs: ProjectASTs) {
     parentModel: string | undefined | null,
     scope: Scope
   ) {
-    let currentModel: string | undefined;
     let through: string | undefined;
 
     if (parentModel === null) {
       resolveModelRef(populate.target);
-      currentModel = populate.target.ref?.kind === "model" ? populate.target.ref.model : undefined;
     } else {
       resolveModelAtomRef(populate.target, parentModel, "relation");
       if (
@@ -732,9 +742,9 @@ export function resolve(projectASTs: ProjectASTs) {
       ) {
         through = populate.target.ref.through;
       }
-      populate.target.type = removeTypeModifier(populate.target.type, "collection", "nullable");
-      currentModel = getTypeModel(populate.target.type);
+      populate.target.type = baseType(populate.target.type);
     }
+    const currentModel = populate.target.ref?.model;
     scope.model = currentModel;
     if (populate.as) {
       populate.as.identifier.ref = { kind: "target", targetKind: "populate" };
@@ -748,9 +758,9 @@ export function resolve(projectASTs: ProjectASTs) {
         repeat.as.identifier.type = {
           kind: "struct",
           types: {
-            start: { kind: "primitive", primitiveKind: "integer" },
-            end: { kind: "primitive", primitiveKind: "integer" },
-            current: { kind: "primitive", primitiveKind: "integer" },
+            start: integerType,
+            end: integerType,
+            current: integerType,
           },
         };
         addToScope(scope, repeat.as.identifier);
@@ -862,7 +872,7 @@ export function resolve(projectASTs: ProjectASTs) {
         type = target.name.type;
       } else {
         resolveIdentifierRefPath(target.identifierPath, scope);
-        type = target.identifierPath.at(-1)?.type;
+        type = target.identifierPath.at(-1)!.type;
       }
       if (select) {
         const model = getTypeModel(type);
@@ -894,7 +904,7 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "binary" }, (binary) => {
         resolveExpression(binary.lhs, scope);
         let rhsScope = scope;
-        if (binary.lhs.type?.kind === "primitive" && binary.lhs.type.primitiveKind === "boolean") {
+        if (binary.lhs.type.kind === "primitive" && binary.lhs.type.primitiveKind === "boolean") {
           if (binary.operator === "and") {
             rhsScope = addTypeGuard(binary.lhs, scope, false);
           } else if (binary.operator === "or") {
@@ -917,12 +927,12 @@ export function resolve(projectASTs: ProjectASTs) {
           modelAtomKinds: scope.environment === "entrypoint" ? ["field"] : undefined,
         };
         resolveIdentifierRefPath(path.path, scope, resolveOptions);
-        path.type = path.path.at(-1)?.type;
+        path.type = path.path.at(-1)!.type;
       })
       .with({ kind: "literal" }, (literal) => {
         literal.type =
           literal.literal.kind === "null"
-            ? { kind: "null" }
+            ? nullType
             : { kind: "primitive", primitiveKind: literal.literal.kind };
       })
       .with({ kind: "function" }, (function_) => {
@@ -990,13 +1000,13 @@ export function resolve(projectASTs: ProjectASTs) {
         return;
       } else {
         head.ref = { kind: "auth", model: model.name.text };
-        head.type = addTypeModifier({ kind: "model", model: model.name.text }, "nullable");
+        head.type = addNullable({ kind: "model", model: model.name.text });
       }
     }
     // simple nullable string, we don't check if auth plugin is present for this for now
     else if (headName === "@requestAuthToken") {
       head.ref = { kind: "authToken" };
-      head.type = addTypeModifier({ kind: "primitive", primitiveKind: "string" }, "nullable");
+      head.type = addNullable(stringType);
     } else {
       // fail resolve
       errors.push(new CompilerError(head.token, ErrorCode.CantFindNameInScope, { name: headName }));
@@ -1014,9 +1024,9 @@ export function resolve(projectASTs: ProjectASTs) {
         .join("|");
       const typeGuardOperation = scope.typeGuard[key];
       if (typeGuardOperation === "notNull") {
-        identifier.type = removeTypeModifier(identifier.type, "nullable");
+        identifier.type = addNullable(identifier.type);
       } else if (typeGuardOperation === "null") {
-        identifier.type = { kind: "null" };
+        identifier.type = nullType;
       }
     });
   }
@@ -1034,7 +1044,9 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveNextRef(identifier: IdentifierRef, previousType: Type): boolean {
-    switch (previousType?.kind) {
+    switch (previousType.kind) {
+      case "any":
+        return true;
       case "model": {
         return tryResolveModelAtomRef(identifier, previousType.model);
       }
@@ -1050,19 +1062,22 @@ export function resolve(projectASTs: ProjectASTs) {
         }
       }
       case "collection":
+        if (!resolveNextRef(identifier, previousType.type)) {
+          return false;
+        }
+        identifier.type = addCollection(identifier.type);
+        return true;
       case "nullable": {
         if (!resolveNextRef(identifier, previousType.type)) {
           return false;
         }
-        identifier.type = addTypeModifier(identifier.type, previousType.kind);
+        identifier.type = addNullable(identifier.type);
         return true;
       }
       case "null":
       case "primitive":
         errors.push(new CompilerError(identifier.token, ErrorCode.TypeHasNoMembers));
         return false;
-      case undefined:
-        return true;
     }
   }
 
@@ -1109,11 +1124,9 @@ export function resolve(projectASTs: ProjectASTs) {
           name,
           unique: false,
         };
-        const baseType: Type = { kind: "primitive", primitiveKind: "integer" };
+        const baseType: Type = integerType;
         identifier.type =
-          referenceAtom.name.type?.kind === "nullable"
-            ? addTypeModifier(baseType, "nullable")
-            : baseType;
+          referenceAtom.name.type.kind === "nullable" ? addNullable(baseType) : baseType;
         return true;
       }
     }
@@ -1126,10 +1139,7 @@ export function resolve(projectASTs: ProjectASTs) {
         name,
         unique: true,
       };
-      identifier.type = {
-        kind: "primitive",
-        primitiveKind: "integer",
-      };
+      identifier.type = integerType;
       identifier.type;
       return true;
     }
@@ -1166,10 +1176,6 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function getBinaryOperatorType(op: BinaryOperator, lhs: Expr, rhs: Expr): Type {
-    const booleanType: Type = { kind: "primitive", primitiveKind: "boolean" };
-    const integerType: Type = { kind: "primitive", primitiveKind: "integer" };
-    const floatType: Type = { kind: "primitive", primitiveKind: "float" };
-
     switch (op) {
       case "or":
       case "and": {
@@ -1187,7 +1193,7 @@ export function resolve(projectASTs: ProjectASTs) {
       }
       case "in":
       case "not in": {
-        checkExprType(rhs, addTypeModifier(lhs.type, "collection"));
+        checkExprType(rhs, addCollection(lhs.type));
         return booleanType;
       }
       case "<":
@@ -1206,7 +1212,7 @@ export function resolve(projectASTs: ProjectASTs) {
         return booleanType;
       }
       case "+": {
-        if (!lhs.type || !rhs.type) return undefined;
+        if (lhs.type.kind === "any" || rhs.type.kind === "any") return anyType;
         const lhsOk = checkExprType(lhs, "addable");
         const rhsOk = checkExprType(rhs, "addable");
         if (lhsOk && rhsOk) {
@@ -1226,12 +1232,12 @@ export function resolve(projectASTs: ProjectASTs) {
         } else if (rhsOk) {
           return rhs.type;
         } else {
-          return undefined;
+          return anyType;
         }
       }
       case "-":
       case "*": {
-        if (!lhs.type || !rhs.type) return undefined;
+        if (lhs.type.kind === "any" || rhs.type.kind === "any") return anyType;
         const lhsOk = checkExprType(lhs, "number");
         const rhsOk = checkExprType(rhs, "number");
         if (lhsOk && rhsOk) {
@@ -1245,7 +1251,7 @@ export function resolve(projectASTs: ProjectASTs) {
         } else if (rhsOk) {
           return rhs.type;
         } else {
-          return undefined;
+          return anyType;
         }
       }
       case "/": {
@@ -1257,8 +1263,6 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function getUnaryOperatorType(op: UnaryOperator, expr: Expr): Type {
-    const booleanType: Type = { kind: "primitive", primitiveKind: "boolean" };
-
     switch (op) {
       case "not": {
         checkExprType(expr, booleanType);

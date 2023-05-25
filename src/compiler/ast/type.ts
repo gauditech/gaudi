@@ -1,14 +1,21 @@
 export const primitiveTypes = ["integer", "float", "boolean", "string"] as const;
 
+export type AnyType = { kind: "any" };
 export type PrimitiveType = { kind: "primitive"; primitiveKind: (typeof primitiveTypes)[number] };
 export type NullType = { kind: "null" };
 export type ModelType = { kind: "model"; model: string };
 export type StructType = { kind: "struct"; types: Record<string, Type> };
-export type CollectionType = { kind: "collection"; type: Type };
-export type NullableType = { kind: "nullable"; type: Type };
+export type CollectionType<t extends CanBeInCollection = CanBeInCollection> = {
+  kind: "collection";
+  type: t;
+};
+export type NullableType<t extends CanBeNullType = CanBeNullType> = { kind: "nullable"; type: t };
+
+type CanBeInCollection = CanBeNullType | AnyType;
+type CanBeNullType = PrimitiveType | ModelType | StructType;
 
 export type Type =
-  | undefined
+  | AnyType
   | PrimitiveType
   | NullType
   | ModelType
@@ -16,52 +23,68 @@ export type Type =
   | CollectionType
   | NullableType;
 
-// types are generated in a way that nesting will always be collection > nullable
-export type TypeModifier = "collection" | "nullable";
+export const anyType: AnyType = { kind: "any" };
+export const integerType: PrimitiveType = { kind: "primitive", primitiveKind: "integer" };
+export const floatType: PrimitiveType = { kind: "primitive", primitiveKind: "float" };
+export const booleanType: PrimitiveType = { kind: "primitive", primitiveKind: "boolean" };
+export const stringType: PrimitiveType = { kind: "primitive", primitiveKind: "string" };
+export const nullType: NullType = { kind: "null" };
 
-export function addTypeModifier(type: Type, modifier: TypeModifier): Type {
-  switch (modifier) {
-    case "nullable": {
-      if (!type) return undefined;
-      if (type.kind === "nullable" || type.kind === "collection") return type;
+export function addNullable(type: Type): Type {
+  switch (type.kind) {
+    case "primitive":
+    case "model":
+    case "struct":
       return { kind: "nullable", type };
-    }
-    case "collection": {
-      type = removeTypeModifier(type, "nullable");
-      if (type?.kind === "collection") return type;
-      return { kind: "collection", type };
-    }
+    default:
+      return type;
   }
 }
 
-export function removeTypeModifier(type: Type, ...modifiers: TypeModifier[]): Type {
-  if (type === undefined) return undefined;
-
+export function addCollection(type: Type): Type {
   switch (type.kind) {
+    case "primitive":
     case "model":
     case "struct":
+    case "any":
+      return { kind: "collection", type };
+    case "nullable":
+      return { kind: "collection", type: type.type };
+    case "null":
+    case "collection":
+      return type;
+  }
+}
+
+export function baseType(type: Type): AnyType | PrimitiveType | NullType | ModelType | StructType {
+  switch (type.kind) {
+    case "any":
     case "primitive":
     case "null":
+    case "model":
+    case "struct":
       return type;
-    default: {
-      const nested = removeTypeModifier(type.type, ...modifiers);
-      return modifiers.includes(type.kind) ? type.type : { ...type, type: nested };
-    }
+    case "collection":
+    case "nullable":
+      return baseType(type.type);
   }
+}
+
+export function removeNull(type: Type): Type {
+  if (type.kind === "nullable") return type.type;
+  return type;
 }
 
 export function getTypeModel(type: Type): string | undefined {
-  if (!type) return undefined;
-
-  switch (type.kind) {
+  const base = baseType(type);
+  switch (base.kind) {
+    case "model":
+      return base.model;
+    case "any":
     case "primitive":
     case "null":
     case "struct":
-      return undefined;
-    case "model":
-      return type.model;
-    default:
-      return getTypeModel(type.type);
+      undefined;
   }
 }
 
@@ -71,19 +94,18 @@ export function getTypeCardinality(
   type: Type,
   baseCardinality: TypeCardinality = "one"
 ): TypeCardinality {
-  if (!type) return baseCardinality;
-
   if (baseCardinality === "collection") return "collection";
   switch (type.kind) {
     case "collection":
       return "collection";
+    case "nullable":
+      return "nullable";
+    case "any":
     case "model":
     case "struct":
     case "primitive":
     case "null":
       return baseCardinality;
-    case "nullable":
-      return getTypeCardinality(type.type, "nullable");
   }
 }
 

@@ -102,7 +102,7 @@ function createTypeGuardFromPath(expr: Expr, guardOperation: TypeGuardOperation)
       const result: TypeGuard = {};
       if (guardOperation === "notNull") {
         expr.path.forEach((identifier, i) => {
-          if (identifier.type?.kind !== "nullable") return;
+          if (identifier.type.kind !== "nullable") return;
           const path = expr.path
             .slice(0, i + 1)
             .map((i) => i.text)
@@ -110,7 +110,7 @@ function createTypeGuardFromPath(expr: Expr, guardOperation: TypeGuardOperation)
           result[path] = "notNull";
         });
       }
-      if (guardOperation === "null" && expr.path.at(-1)?.type?.kind === "nullable") {
+      if (guardOperation === "null" && expr.path.at(-1)?.type.kind === "nullable") {
         const path = expr.path.map((i) => i.text).join("|");
         result[path] = "null";
       }
@@ -122,8 +122,8 @@ function createTypeGuardFromPath(expr: Expr, guardOperation: TypeGuardOperation)
 }
 
 function getTypeGuardOperation(expr: Expr): TypeGuardOperation | undefined {
-  switch (expr.type?.kind) {
-    case undefined:
+  switch (expr.type.kind) {
+    case "any":
     case "nullable":
       return undefined;
     case "null":

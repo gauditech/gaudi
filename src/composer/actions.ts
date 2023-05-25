@@ -251,8 +251,8 @@ function atomToChangesetOperation(
     }
     case "input": {
       const astType =
-        atom.target.type?.kind === "nullable" ? atom.target.type.type : atom.target.type;
-      ensureEqual(astType?.kind, "primitive");
+        atom.target.type.kind === "nullable" ? atom.target.type.type : atom.target.type;
+      ensureEqual(astType.kind, "primitive");
       const type =
         astType.primitiveKind === "string"
           ? "text"
@@ -293,8 +293,8 @@ function atomToChangesetOperation(
  *       by proposed changes in `getTypedPathFromContext`.
  */
 function findChangesetModel(specTargetPath: Spec.IdentifierRef[]): string {
-  const modelName = getTypeModel(specTargetPath.at(-1)?.type);
-  if (!modelName) return getTypeModel(specTargetPath.at(-2)?.type)!;
+  const modelName = getTypeModel(specTargetPath.at(-1)!.type);
+  if (!modelName) return getTypeModel(specTargetPath.at(-2)!.type)!;
   return modelName;
 }
 

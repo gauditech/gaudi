@@ -91,7 +91,7 @@ function calculateIdentifyWith(
 ): TargetDef["identifyWith"] {
   const type = identifyThrough.type;
   if (
-    type?.kind !== "primitive" ||
+    type.kind !== "primitive" ||
     (type.primitiveKind !== "integer" && type.primitiveKind !== "string")
   ) {
     throw new Error(`Invalid type of identifiyWith ${JSON.stringify(type)}`);
