@@ -11,9 +11,9 @@ import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { compileToOldSpec, compose } from "@src/index";
 import { RuntimeConfig } from "@src/runtime/config";
+import { setupDefinitionApis } from "@src/runtime/server/api";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
-import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
 import { bindAppContextHandler, errorHandler, requestLogger } from "@src/runtime/server/middleware";
 import { Definition } from "@src/types/definition";
 
@@ -100,9 +100,7 @@ export function createApiTestSetup(
     server = await createAppServer(context, (app) => {
       bindAppContext(app, context);
 
-      buildEndpointConfig(def, def.entrypoints).forEach((epc) => {
-        registerServerEndpoint(app, epc, "");
-      });
+      setupDefinitionApis(def, app);
     });
     console.info(`  created app server`);
 

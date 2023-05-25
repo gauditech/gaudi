@@ -9,6 +9,7 @@ import {
   ActionAtomVirtualInput,
   ActionHook,
   AnonymousQuery,
+  Api,
   Authenticator,
   Computed,
   Endpoint,
@@ -86,7 +87,7 @@ export function buildTokens(
     document.forEach((d) => {
       match(d)
         .with({ kind: "model" }, buildModel)
-        .with({ kind: "entrypoint" }, buildEntrypoint)
+        .with({ kind: "api" }, buildApi)
         .with({ kind: "populator" }, buildPopulator)
         .with({ kind: "runtime" }, buildRuntime)
         .with({ kind: "authenticator" }, buildAuthenticator)
@@ -218,6 +219,12 @@ export function buildTokens(
       })
       .with({ kind: "hook" }, buildFieldValidationHook)
       .exhaustive();
+  }
+
+  function buildApi({ keyword, name, atoms }: Api) {
+    buildKeyword(keyword);
+    if (name) push(name.token, TokenTypes.variable);
+    atoms.forEach((a) => match(a).with({ kind: "entrypoint" }, buildEntrypoint).exhaustive());
   }
 
   function buildEntrypoint({ keyword, target, as, atoms }: Entrypoint) {
@@ -492,10 +499,6 @@ export function buildTokens(
         g.atoms.forEach((a) => {
           match(a)
             .with({ kind: "target" }, (a) => {
-              buildKeyword(a.keyword);
-              buildKeyword(a.keywordValue);
-            })
-            .with({ kind: "api" }, (a) => {
               buildKeyword(a.keyword);
               buildKeyword(a.keywordValue);
             })

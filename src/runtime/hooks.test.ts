@@ -69,21 +69,23 @@ describe("hooks", () => {
         field avg { type integer }
       }
 
-      entrypoint Result {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                runtime TextRuntime
-                arg value "First Last"
-                arg prefix "Mr. "
-                source prefix from "hooks2.js"
-              }
-              set avg hook {
-                // thisi is from the default runtime
-                arg x 100
-                arg y 20
-                source prefix from "hooks.js"
+      api {
+        entrypoint Result {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  runtime TextRuntime
+                  arg value "First Last"
+                  arg prefix "Mr. "
+                  source prefix from "hooks2.js"
+                }
+                set avg hook {
+                  // thisi is from the default runtime
+                  arg x 100
+                  arg y 20
+                  source prefix from "hooks.js"
+                }
               }
             }
           }
@@ -93,7 +95,7 @@ describe("hooks", () => {
     `;
 
       const result = compose(compileToOldSpec(bp));
-      const action = result.entrypoints[0].endpoints
+      const action = result.apis[0].entrypoints[0].endpoints
         .filter((ep): ep is CreateEndpointDef => ep.kind === "create")
         .shift()
         ?.actions.at(0);

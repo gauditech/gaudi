@@ -13,29 +13,31 @@ describe("openAPI", () => {
       reference org { to Org }
       field name { type string }
     }
-    entrypoint Org {
-      identify { through slug }
-
-      get endpoint {}
-      list endpoint { pageable }
-      create endpoint {}
-      update endpoint {}
-      delete endpoint {}
-
-      entrypoint repos {
-        response { id, name }
+    api Test {
+      entrypoint Org {
+        identify { through slug }
 
         get endpoint {}
         list endpoint { pageable }
         create endpoint {}
         update endpoint {}
         delete endpoint {}
+
+        entrypoint repos {
+          response { id, name }
+
+          get endpoint {}
+          list endpoint { pageable }
+          create endpoint {}
+          update endpoint {}
+          delete endpoint {}
+        }
       }
     }
     `;
 
     const def = compose(compileToOldSpec(bp));
 
-    expect(buildOpenAPI(def, "/api-test")).toMatchSnapshot();
+    expect(buildOpenAPI(def)).toMatchSnapshot();
   });
 });

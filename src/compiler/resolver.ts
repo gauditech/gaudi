@@ -7,6 +7,7 @@ import {
   ActionAtomVirtualInput,
   ActionHook,
   AnonymousQuery,
+  Api,
   BinaryOperator,
   Computed,
   DeleteAction,
@@ -216,14 +217,7 @@ export function resolve(projectASTs: ProjectASTs) {
     document.forEach((a) =>
       match(a)
         .with({ kind: "model" }, resolveModel)
-        .with({ kind: "entrypoint" }, (entrypoint) =>
-          resolveEntrypoint(entrypoint, null, {
-            environment: "entrypoint",
-            model: undefined,
-            context: {},
-            typeGuard: {},
-          })
-        )
+        .with({ kind: "api" }, resolveApi)
         .with({ kind: "populator" }, resolvePopulator)
         .with({ kind: "runtime" }, () => undefined)
         .with({ kind: "authenticator" }, () => undefined)
@@ -509,6 +503,21 @@ export function resolve(projectASTs: ProjectASTs) {
         new CompilerError(computed.keyword, ErrorCode.ComputedType, { exprType: exprType.kind })
       );
     }
+  }
+
+  function resolveApi(api: Api) {
+    api.atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "entrypoint" }, (entrypoint) =>
+          resolveEntrypoint(entrypoint, null, {
+            environment: "entrypoint",
+            model: undefined,
+            context: {},
+            typeGuard: {},
+          })
+        )
+        .exhaustive()
+    );
   }
 
   // passing null as a parent model means this is root model, while undefined means it is unresolved

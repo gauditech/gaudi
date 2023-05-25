@@ -93,24 +93,13 @@ export async function buildApiClients(
       const kind = g.target;
       switch (kind) {
         case "js": {
-          let entrypoints;
-          switch (g.api) {
-            case "entrypoint":
-              entrypoints = definition.entrypoints;
-              break;
-            case "model":
-              throw Error(`"api model" is not implemented`);
-            default:
-              assertUnreachable(g.api);
-          }
-
           // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
           const outFolder = g.output ?? path.join(outputFolder, "client");
-          const outFileName = `api-client-${g.api}.ts`;
+          const outFileName = `api-client.ts`;
           const outPath = path.join(outFolder, outFileName);
 
           return (
-            renderApiClient({ definition, entrypoints })
+            renderApiClient({ definition, apis: definition.apis })
               .then((content) => {
                 return storeTemplateOutput(outPath, content);
               })

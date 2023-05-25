@@ -1,12 +1,12 @@
 
   // ----- API client
-  
+
   export type ApiClientOptions = {
     /** Server API path prefix */
     rootPath?: string;
     /**
      * Function that implements HTTP calls and returns it's result.
-     * 
+     *
      * This lib does not implement it's own HTTP calls which allows users
      * to use any HTTP client lib of their choice.
      */
@@ -23,96 +23,92 @@
     }
 
     return {
-      api: buildApi(internalOptions ?? {}),
-    };
+    api: {
+      ...buildApi(internalOptions ?? {})
+    }
+  };
   }
 
   
     function buildApi(options: ApiClientOptions) {
-      return {
-        org: buildOrgApi(options, "org")
-      }
-    }
-
-    
-  function buildOrgApi(options: ApiClientOptions, parentPath: string) {
+      
+  function buildOrgEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
-    type GetResp = { name: string,
+    type CustomOneActionError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CustomManyActionError = CustomOneActionError;
+type CustomOneActionRespondsError = CustomOneActionError;
+type CustomManyActionRespondsError = CustomOneActionError;
+type CustomOneQueryActionError = CustomOneActionError;
+type CustomFetchActionError = CustomOneActionError;
+type HookErrorResponseError = CustomOneActionError;
+type CustomGetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomUpdateError = CustomOneActionError;
+type CustomDeleteError = CustomGetError;
+type CustomListError = CustomGetError;
+type CustomCreateError = CustomOneActionError;
+type GetResp = { name: string,
 slug: string,
 description: string,
-repos: { issues: { title: string,
-body: string,
-repo: { org: { id: number,
-name: string,
-slug: string,
-description: string,
-optOut: string|null } } }[] }[],
-members: { id: number,
-name: string }[],
-public_repos: { id: number,
-name: string,
-slug: string,
-description: string,
-is_public: boolean,
-org_id: number }[],
-public_issues: { id: number,
-title: string,
-body: string,
-repo_id: number }[],
+summary: string,
 nameAndDesc: unknown };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetError = CustomGetError;
 type ListResp = GetResp;
-type ListError = GetError;
+type ListError = CustomGetError;
 type CreateData = { name: string,
 slug: string,
-description: string,
-optOut: string|null };
+description: string };
 type CreateResp = GetResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CreateError = CustomOneActionError;
 type UpdateData = { name?: string,
 slug?: string,
-description?: string,
-optOut?: string|null };
+description?: string };
 type UpdateResp = GetResp;
-type UpdateError = CreateError;
+type UpdateError = CustomOneActionError;
+type DeleteError = CustomGetError;
 
     // entrypoint function
     function api(id: string) {
       const baseUrl = `${parentPath}/${id}`;
       return {
-        repos: buildReposApi(options, `${baseUrl}/repos`)
+        repos: buildReposEntrypoint(options, `${baseUrl}/repos`)
       }
     }
 
     // endpoint functions
-    return Object.assign(api, 
+    return Object.assign(api,
       {
-        get: buildGetFn<string, GetResp, GetError>(options, parentPath),
+        customOneAction: buildCustomOneSubmitFn<string, any, any, CustomOneActionError>(options, parentPath, "customOneAction", "POST"),
+customManyAction: buildCustomManySubmitFn<any, any, CustomManyActionError>(options, parentPath, "customManyAction", "PATCH"),
+customOneActionResponds: buildCustomOneSubmitFn<string, any, any, CustomOneActionRespondsError>(options, parentPath, "customOneActionResponds", "POST"),
+customManyActionResponds: buildCustomManySubmitFn<any, any, CustomManyActionRespondsError>(options, parentPath, "customManyActionResponds", "PATCH"),
+customOneQueryAction: buildCustomOneSubmitFn<string, any, any, CustomOneQueryActionError>(options, parentPath, "customOneQueryAction", "POST"),
+customFetchAction: buildCustomOneSubmitFn<string, any, any, CustomFetchActionError>(options, parentPath, "customFetchAction", "POST"),
+hookErrorResponse: buildCustomManySubmitFn<any, any, HookErrorResponseError>(options, parentPath, "hookErrorResponse", "POST"),
+customGet: buildCustomOneFetchFn<string, any, CustomGetError>(options, parentPath, "customGet", "GET"),
+customUpdate: buildCustomOneSubmitFn<string, any, any, CustomUpdateError>(options, parentPath, "customUpdate", "PATCH"),
+customDelete: buildCustomOneFetchFn<string, any, CustomDeleteError>(options, parentPath, "customDelete", "DELETE"),
+customList: buildCustomManyFetchFn<any, CustomListError>(options, parentPath, "customList", "GET"),
+customCreate: buildCustomManySubmitFn<any, any, CustomCreateError>(options, parentPath, "customCreate", "POST"),
+get: buildGetFn<string, GetResp, GetError>(options, parentPath),
 list: buildPaginatedListFn<ListResp, ListError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
-update: buildUpdateFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath)
+update: buildUpdateFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+delete: buildDeleteFn<string, DeleteError>(options, parentPath)
       }
     )
   }
 
-  function buildReposApi(options: ApiClientOptions, parentPath: string) {
+  function buildReposEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type GetResp = { id: number,
 slug: string,
 description: string,
-org_id: number,
-issues: { repo: { id: number,
-name: string,
-slug: string,
-description: string,
-is_public: boolean,
-org_id: number } }[] };
+org_id: number };
 type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type ListResp = GetResp;
 type ListError = GetError;
-type CreateData = { name: string,
-slug: string,
-description: string,
+type CreateData = { raw_description: string,
+name: string,
 is_public: boolean };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
@@ -120,10 +116,57 @@ type UpdateData = { name?: string,
 slug?: string,
 description?: string,
 is_public?: boolean,
+latest_num?: number,
 org_id?: number };
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type DeleteError = GetError;
+
+    // entrypoint function
+    function api(id: number) {
+      const baseUrl = `${parentPath}/${id}`;
+      return {
+        issues: buildIssuesEntrypoint(options, `${baseUrl}/issues`)
+      }
+    }
+
+    // endpoint functions
+    return Object.assign(api,
+      {
+        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
+list: buildListFn<ListResp, ListError>(options, parentPath),
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
+update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+delete: buildDeleteFn<number, DeleteError>(options, parentPath)
+      }
+    )
+  }
+
+  function buildIssuesEntrypoint(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
+    type GetResp = { id: number,
+title: string,
+repo: { id: number,
+name: string,
+slug: string,
+description: string,
+is_public: boolean,
+latest_num: number,
+org_id: number },
+number: number,
+comments: { id: number,
+body: string,
+issue_id: number }[] };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CreateData = { title: string,
+repo2: { name?: string,
+slug?: string,
+description?: string,
+is_public?: boolean,
+org_id?: number },
+c: { body: string } };
+type CreateResp = GetResp;
+type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 
     // entrypoint function
     function api(id: number) {
@@ -134,16 +177,46 @@ type DeleteError = GetError;
     }
 
     // endpoint functions
-    return Object.assign(api, 
+    return Object.assign(api,
       {
         get: buildGetFn<number, GetResp, GetError>(options, parentPath),
-list: buildListFn<ListResp, ListError>(options, parentPath),
-create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
-update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
-delete: buildDeleteFn<number, DeleteError>(options, parentPath)
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath)
       }
     )
   }
+
+  function buildRepoEntrypoint(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
+    type ListResp = { id: number,
+slug: string,
+description: string,
+org_id: number };
+type ListError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetResp = ListResp;
+type GetError = ListError;
+
+    // entrypoint function
+    function api(id: number) {
+      const baseUrl = `${parentPath}/${id}`;
+      return {
+        
+      }
+    }
+
+    // endpoint functions
+    return Object.assign(api,
+      {
+        list: buildListFn<ListResp, ListError>(options, parentPath),
+get: buildGetFn<number, GetResp, GetError>(options, parentPath)
+      }
+    )
+  }
+
+      return {
+        org: buildOrgEntrypoint(options, "/api/org"),
+repo: buildRepoEntrypoint(options, "/api/repo")
+      }
+    }
   
 
   
@@ -161,13 +234,13 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     /** Response body data. */
     data?: any;
   };
-  
+
   /**
    * Function that performs request call and returns result.
-   * This allows for any custom HTTP client (fetch, axios, ...) implementation 
+   * This allows for any custom HTTP client (fetch, axios, ...) implementation
    * to be used regardless of environment (node, browser, ...).
-   * 
-   * Return value from this function is wrapped by client in {ApiResponse} 
+   *
+   * Return value from this function is wrapped by client in {ApiResponse}
    * structure and returned to the caller.
    *
    * @param url {string} request URL
@@ -175,7 +248,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
    * @returns {ApiRequestFnData}
    */
   export type ApiRequestFn = (url: string, init: ApiRequestInit) => Promise<ApiRequestFnData>;
-  
+
   /** API request additional parameters. */
   export type ApiRequestInit = {
     /** A BodyInit object or null to set request's body. */
@@ -185,9 +258,9 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     /** A string to set request's method. */
     method: EndpointHttpMethod;
   }
-  
+
   export type ApiRequestBody = any;
-  
+
   export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
     ? {
         code: C;
@@ -195,7 +268,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
         data?: D;
       }
     : never;
-  
+
   export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
 
   export type ApiResponseSuccess<D, E extends string> = {
@@ -219,11 +292,11 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     totalPages: number;
     totalCount: number;
     data: T[];
-  };  
+  };
 
   // TODO: add list search/filter parameter
   export type PaginatedListData = { pageSize?: number; page?: number };
-  
+
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -253,7 +326,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
-  
+
   export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -279,7 +352,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
 
   function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -289,12 +362,12 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildCreateFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): CreateApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -305,12 +378,12 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): UpdateApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -321,10 +394,10 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -334,10 +407,10 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
     return async (options) => {
-      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const urlPath = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, urlPath, {
@@ -347,10 +420,10 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
     return async (data, options) => {
-      const urlPath = `${clientOptions.rootPath ?? ''}/${parentPath}`;
+      const urlPath = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       const params = new URLSearchParams()
       Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
@@ -374,7 +447,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     method: EndpointHttpMethod
   ): CustomOneFetchApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -384,7 +457,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -392,7 +465,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     method: EndpointHttpMethod
   ): CustomOneSubmitApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${id}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -403,7 +476,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildCustomManyFetchFn<R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -411,8 +484,8 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     method: EndpointHttpMethod
   ): CustomManyFetchApiClientFn<R, E> {
     return async (options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${path}`;
-  
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
+
       return (
         makeRequest(clientOptions, url, {
           method,
@@ -421,7 +494,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
       );
     };
   }
-  
+
   function buildCustomManySubmitFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -429,7 +502,7 @@ delete: buildDeleteFn<number, DeleteError>(options, parentPath)
     method: EndpointHttpMethod
   ): CustomManySubmitApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = `${clientOptions.rootPath ?? ''}/${parentPath}/${path}`;
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {

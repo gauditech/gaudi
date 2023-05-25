@@ -2,7 +2,7 @@ import { HookCode } from "@src/types/common";
 
 export type Definition = {
   models: ModelDef[];
-  entrypoints: EntrypointDef[];
+  apis: ApiDef[];
   populators: PopulatorDef[];
   runtimes: ExecutionRuntimeDef[];
   authenticator: AuthenticatorDef | undefined;
@@ -171,6 +171,12 @@ type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
 type LiteralTextDef = { kind: "literal"; type: "text"; value: string };
 type LiteralNullDef = { kind: "literal"; type: "null"; value: null };
 type LiteralBooleanDef = { kind: "literal"; type: "boolean"; value: boolean };
+
+export type ApiDef = {
+  name?: string;
+  path: string;
+  entrypoints: EntrypointDef[];
+};
 
 /**
  * ENTRYPOINTS
@@ -628,11 +634,9 @@ export type AuthenticatorBasicMethodDef = {
 export type GeneratorDef = GeneratorClientDef;
 
 export type GeneratorClientTarget = "js";
-export type GeneratorClientApi = "entrypoint" | "model";
 
 export type GeneratorClientDef = {
   kind: "generator-client";
   target: GeneratorClientTarget;
-  api: GeneratorClientApi;
   output?: string;
 };

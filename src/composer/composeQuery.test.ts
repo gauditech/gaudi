@@ -61,19 +61,20 @@ describe("compose action queries", () => {
       model Repo {
       }
 
-      entrypoint Org {
-
-        // test in native endpoint
-        update endpoint {
-          action {
-            update {}
-            // target
-            fetch as cOrg {
-              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-            }
-            // other model
-            fetch as cRepo {
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+      api {
+        entrypoint Org {
+          // test in native endpoint
+          update endpoint {
+            action {
+              update {}
+              // target
+              fetch as cOrg {
+                query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
+              }
+              // other model
+              fetch as cRepo {
+                query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+              }
             }
           }
         }
@@ -82,7 +83,7 @@ describe("compose action queries", () => {
 
       const def = compose(compileToOldSpec(bp));
       expect(
-        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
     });
     it("custom endpoint", () => {
@@ -94,22 +95,24 @@ describe("compose action queries", () => {
       model Repo {
       }
 
-      entrypoint Org {
+      api {
+        entrypoint Org {
 
-        // test in custom endpoint
-        custom endpoint {
-          path "customPath"
-          method POST
-          cardinality one
+          // test in custom endpoint
+          custom endpoint {
+            path "customPath"
+            method POST
+            cardinality one
 
-          action {
-            // target
-            fetch as cOrg {
-              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-            }
-            // other model
-            fetch as cRepo {
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+            action {
+              // target
+              fetch as cOrg {
+                query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
+              }
+              // other model
+              fetch as cRepo {
+                query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+              }
             }
           }
         }
@@ -118,7 +121,7 @@ describe("compose action queries", () => {
 
       const def = compose(compileToOldSpec(bp));
       expect(
-        (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
     });
   });

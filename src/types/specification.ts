@@ -23,7 +23,7 @@ export type IdentifierRef<R extends Ref = Ref> = { text: string; ref: R; type: T
 
 export type Specification = {
   models: Model[];
-  entrypoints: Entrypoint[];
+  apis: Api[];
   populators: Populator[];
   runtimes: ExecutionRuntime[];
   authenticator: Authenticator | undefined;
@@ -96,6 +96,11 @@ export type Expr = { type: Type } & (
   | { kind: "literal"; literal: LiteralValue }
   | { kind: "function"; name: string; args: Expr[] }
 );
+
+export type Api = {
+  name?: string;
+  entrypoints: Entrypoint[];
+};
 
 export type Entrypoint = {
   name: string;
@@ -291,6 +296,5 @@ export type AuthenticatorBasicMethod = {
 export type Generator = {
   kind: "generator-client";
   target: string;
-  api: string;
   output?: string;
 };

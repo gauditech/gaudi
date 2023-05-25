@@ -36,18 +36,10 @@ describe("Endpoint queries", () => {
 
     // ----- entrypoints
 
-    entrypoint Org {
-      identify { through slug }
-      response { name, slug }
-
-      get endpoint {}
-      list endpoint {}
-      create endpoint {}
-      update endpoint {}
-      delete endpoint {}
-
-      entrypoint repos {
-        response { id, slug, org_id }
+    api {
+      entrypoint Org {
+        identify { through slug }
+        response { name, slug }
 
         get endpoint {}
         list endpoint {}
@@ -55,20 +47,30 @@ describe("Endpoint queries", () => {
         update endpoint {}
         delete endpoint {}
 
-        entrypoint issues {
-          response { id, name, repo_id }
+        entrypoint repos {
+          response { id, slug, org_id }
 
           get endpoint {}
           list endpoint {}
           create endpoint {}
           update endpoint {}
           delete endpoint {}
+
+          entrypoint issues {
+            response { id, name, repo_id }
+
+            get endpoint {}
+            list endpoint {}
+            create endpoint {}
+            update endpoint {}
+            delete endpoint {}
+          }
         }
       }
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    const entrypoint = def.entrypoints[0].entrypoints[0].entrypoints[0];
+    const entrypoint = def.apis[0].entrypoints[0].entrypoints[0].entrypoints[0];
     const range = entrypoint.endpoints.map((ep) => [ep.kind, ep] as [string, EndpointDef]);
     it.each(range)("test %s endpoint", (_kind, endpoint) => {
       const q = buildEndpointQueries(def, endpoint);
@@ -89,17 +91,19 @@ describe("Endpoint queries", () => {
         field name { type string }
       }
 
-      entrypoint Item {
-        list endpoint {
-          ${options?.paging ? "pageable" : ""}
-          ${options?.orderBy ? "order by { name desc }" : ""}
-          ${options?.filter ? 'filter { name is "asdf" }' : ""}
+      api {
+        entrypoint Item {
+          list endpoint {
+            ${options?.paging ? "pageable" : ""}
+            ${options?.orderBy ? "order by { name desc }" : ""}
+            ${options?.filter ? 'filter { name is "asdf" }' : ""}
+          }
         }
       }
     `;
 
       const def = compose(compileToOldSpec(bp));
-      const ep = def.entrypoints[0].endpoints[0] as ListEndpointDef;
+      const ep = def.apis[0].entrypoints[0].endpoints[0] as ListEndpointDef;
       let qt = buildEndpointQueries(def, ep).responseQueryTree;
 
       if (options?.paging) {
@@ -147,20 +151,22 @@ describe("Endpoint queries", () => {
         field name { type string }
       }
 
-      entrypoint Item1 {
+      api {
+        entrypoint Item1 {
 
-        entrypoint item2 {
-          list endpoint {
-            ${options?.paging ? "pageable" : ""}
-            ${options?.orderBy ? "order by { name desc }" : ""}
-            ${options?.filter ? 'filter { name is "asdf" }' : ""}
+          entrypoint item2 {
+            list endpoint {
+              ${options?.paging ? "pageable" : ""}
+              ${options?.orderBy ? "order by { name desc }" : ""}
+              ${options?.filter ? 'filter { name is "asdf" }' : ""}
+            }
           }
         }
       }
     `;
 
       const def = compose(compileToOldSpec(bp));
-      const ep = def.entrypoints[0].entrypoints[0].endpoints[0] as ListEndpointDef;
+      const ep = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as ListEndpointDef;
       let qt = buildEndpointQueries(def, ep).responseQueryTree;
 
       if (options?.paging) {

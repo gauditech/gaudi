@@ -10,6 +10,7 @@ import {
   ActionHook,
   AggregateType,
   AnonymousQuery,
+  Api,
   Authenticator,
   AuthenticatorAtom,
   BinaryOperator,
@@ -35,7 +36,6 @@ import {
   FloatLiteral,
   Generator,
   GeneratorClientAtom,
-  GeneratorClientAtomApi,
   GeneratorClientAtomTarget,
   GeneratorType,
   GlobalAtom,
@@ -99,7 +99,7 @@ class GaudiParser extends EmbeddedActionsParser {
     this.MANY(() => {
       this.OR([
         { ALT: () => document.push(this.SUBRULE(this.model)) },
-        { ALT: () => document.push(this.SUBRULE(this.entrypoint)) },
+        { ALT: () => document.push(this.SUBRULE(this.api)) },
         { ALT: () => document.push(this.SUBRULE(this.populator)) },
         { ALT: () => document.push(this.SUBRULE(this.runtime)) },
         { ALT: () => document.push(this.SUBRULE(this.authenticator)) },
@@ -486,6 +486,27 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return orderBy;
+  });
+
+  api = this.RULE("api", (): Api => {
+    const atoms: Api["atoms"] = [];
+
+    const keyword = getTokenData(this.CONSUME(L.Api));
+    const name = this.OPTION(() => this.SUBRULE(this.identifier));
+
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        {
+          ALT: () => {
+            atoms.push(this.SUBRULE(this.entrypoint));
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "api", keyword, name, atoms };
   });
 
   entrypoint = this.RULE("entrypoint", (): Entrypoint => {
@@ -1083,18 +1104,6 @@ class GaudiParser extends EmbeddedActionsParser {
             const keywordValue = getTokenData(typeToken);
             const value = typeToken.image as GeneratorClientAtomTarget;
             atoms.push({ kind: "target", keyword, value, keywordValue });
-          },
-        },
-        {
-          ALT: () => {
-            const keyword = getTokenData(this.CONSUME(L.Api));
-            const typeToken = this.OR4([
-              { ALT: () => this.CONSUME(L.Entrypoint) },
-              { ALT: () => this.CONSUME(L.Model) },
-            ]);
-            const keywordValue = getTokenData(typeToken);
-            const value = typeToken.image as GeneratorClientAtomApi;
-            atoms.push({ kind: "api", keyword, value, keywordValue });
           },
         },
         {

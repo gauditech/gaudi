@@ -5,6 +5,7 @@ import {
   Action,
   ActionAtomVirtualInput,
   AnonymousQuery,
+  Api,
   Authenticator,
   Computed,
   DeleteAction,
@@ -98,7 +99,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     document.forEach((a) =>
       match(a)
         .with({ kind: "model" }, checkModel)
-        .with({ kind: "entrypoint" }, checkEntrypoint)
+        .with({ kind: "api" }, checkApi)
         .with({ kind: "populator" }, checkPopulator)
         .with({ kind: "runtime" }, () => undefined) // runtime is checked first
         .with({ kind: "authenticator" }, () => checkAuthenticator)
@@ -184,6 +185,10 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkComputed(_computed: Computed) {
     // TODO: do nothing?
+  }
+
+  function checkApi(api: Api) {
+    api.atoms.forEach((a) => match(a).with({ kind: "entrypoint" }, checkEntrypoint).exhaustive());
   }
 
   function checkEntrypoint(entrypoint: Entrypoint) {
@@ -421,8 +426,8 @@ export function checkForm(projectASTs: ProjectASTs) {
     match(generator).with({ type: "client" }, checkClientGenerator).exhaustive();
   }
   function checkClientGenerator(generator: Generator) {
-    containsAtoms(generator, ["target", "api"]);
-    noDuplicateAtoms(generator, ["target", "api"]);
+    containsAtoms(generator, ["target"]);
+    noDuplicateAtoms(generator, ["target"]);
   }
 
   function checkNoDuplicateGenerators(generators: Generator[]) {
@@ -433,15 +438,13 @@ export function checkForm(projectASTs: ProjectASTs) {
         .with({ type: "client" }, (g) => {
           const type = g.type;
           const target = kindFind(g.atoms, "target")?.value;
-          const api = kindFind(g.atoms, "api")?.value;
 
-          const tag = `${type}-${target}-${api}`;
+          const tag = `${type}-${target}`;
           if (generatorTag.includes(tag)) {
             errors.push(
               new CompilerError(g.keyword, ErrorCode.DuplicateGenerator, {
                 type,
                 target,
-                api,
               })
             );
           }

@@ -13,7 +13,7 @@ describe("authenticator composer", () => {
 
     expect(def.authenticator).toMatchSnapshot();
     expect(def.models).toMatchSnapshot();
-    expect(def.entrypoints).toMatchSnapshot();
+    expect(def.apis[0].entrypoints).toMatchSnapshot();
   });
 
   it("resolves authenticator model implicit relations", () => {

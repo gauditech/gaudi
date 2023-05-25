@@ -1,4 +1,4 @@
-import { composeEntrypoints } from "./entrypoints";
+import { composeApis } from "./entrypoints";
 import { composeModels } from "./models";
 
 import { composeAuthenticator } from "@src/composer/authenticator";
@@ -13,7 +13,7 @@ export function compose(input: Specification): Definition {
   // sub-composers are expected to mutate it
   const def: Definition = {
     models: [],
-    entrypoints: [],
+    apis: [],
     populators: [],
     runtimes: [],
     authenticator: undefined,
@@ -24,7 +24,7 @@ export function compose(input: Specification): Definition {
   composeExecutionRuntimes(def, input.runtimes);
   composeModels(def, input.models);
   composeAuthenticator(def, input.authenticator);
-  composeEntrypoints(def, input.entrypoints);
+  composeApis(def, input.apis);
   composePopulators(def, input.populators);
   composeGenerators(def, input.generators);
 

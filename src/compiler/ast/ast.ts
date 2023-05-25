@@ -5,7 +5,7 @@ export type ProjectASTs = {
   document: GlobalAtom[];
 };
 
-export type GlobalAtom = Model | Entrypoint | Populator | Runtime | Authenticator | Generator;
+export type GlobalAtom = Model | Api | Populator | Runtime | Authenticator | Generator;
 
 export type Model = {
   kind: "model";
@@ -104,6 +104,13 @@ export type Computed = {
   ref: Ref;
   type: Type;
   expr: Expr<Db>;
+};
+
+export type Api = {
+  kind: "api";
+  keyword: TokenData;
+  name?: Identifier;
+  atoms: Entrypoint[];
 };
 
 export type Entrypoint = {
@@ -291,10 +298,8 @@ export type GeneratorClientAtom =
       value: GeneratorClientAtomTarget;
       keywordValue: TokenData;
     }
-  | { kind: "api"; keyword: TokenData; value: GeneratorClientAtomApi; keywordValue: TokenData }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
 export type GeneratorClientAtomTarget = "js";
-export type GeneratorClientAtomApi = "entrypoint" | "model";
 
 export type Runtime = {
   kind: "runtime";
