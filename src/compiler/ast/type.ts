@@ -70,7 +70,7 @@ export function baseType(type: Type): AnyType | PrimitiveType | NullType | Model
   }
 }
 
-export function removeNull(type: Type): Type {
+export function removeNullable(type: Type): Type {
   if (type.kind === "nullable") return type.type;
   return type;
 }
@@ -118,7 +118,7 @@ const typeCategories = {
 export type TypeCategory = keyof typeof typeCategories;
 
 export function isExpectedType(type: Type, expected: Type | TypeCategory): boolean {
-  if (!type || !expected) return true;
+  if (type.kind === "any") return true;
 
   // typeof string means expected is a `TypeCategory`
   if (typeof expected === "string") {
@@ -126,24 +126,34 @@ export function isExpectedType(type: Type, expected: Type | TypeCategory): boole
     return type.kind === "primitive" && expectedKinds.includes(type.primitiveKind);
   }
 
-  if (expected.kind === "collection" && type.kind === "collection") {
-    return isExpectedType(type.type, expected.type);
-  }
-  if (expected.kind === "nullable") {
-    if (type.kind === "nullable") {
-      return isExpectedType(type.type, expected.type);
-    }
-    if (type.kind === "null") {
+  switch (expected.kind) {
+    case "any":
       return true;
-    }
-    return isExpectedType(type, expected.type);
+    case "primitive":
+      return type.kind === "primitive" && expected.primitiveKind === type.primitiveKind;
+    case "null":
+      return type.kind === "null";
+    case "model":
+      return type.kind === "model" && expected.model === type.model;
+    case "struct":
+      if (type.kind !== "struct") return false;
+      for (const key in type.types) {
+        if (Object.prototype.hasOwnProperty.call(type.types, key)) {
+          const typeChild = type.types[key];
+          const expectedChild = expected.types[key];
+          if (!isExpectedType(typeChild, expectedChild)) return false;
+        }
+      }
+      return true;
+    case "collection":
+      return type.kind === "collection" && isExpectedType(type.type, expected.type);
+    case "nullable":
+      if (type.kind === "nullable") {
+        return isExpectedType(type.type, expected.type);
+      }
+      if (type.kind === "null") {
+        return true;
+      }
+      return isExpectedType(type, expected.type);
   }
-  if (expected.kind === "model" && type.kind === "model") {
-    return expected.model === type.model;
-  }
-  if (expected.kind === "primitive" && type.kind === "primitive") {
-    return expected.primitiveKind === type.primitiveKind;
-  }
-
-  return false;
 }

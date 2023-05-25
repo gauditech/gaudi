@@ -80,8 +80,8 @@ export function composeAggregate(qspec: Spec.Query): AggregateDef {
 
 function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: string[]): TypedExprDef {
   // Change name to concat if using "+" with "string" type
-  const firstType = args.at(0)!.type;
-  if (name === "+" && firstType.kind === "primitive" && firstType.primitiveKind === "string") {
+  const firstType = args.at(0)?.type;
+  if (name === "+" && firstType?.kind === "primitive" && firstType.primitiveKind === "string") {
     name = "concat";
   }
 

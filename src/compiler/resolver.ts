@@ -59,6 +59,7 @@ import {
   isExpectedType,
   nullType,
   primitiveTypes,
+  removeNullable,
   stringType,
 } from "./ast/type";
 import { CompilerError, ErrorCode } from "./compilerError";
@@ -246,7 +247,6 @@ export function resolve(projectASTs: ProjectASTs) {
         from.as.identifierPath.forEach((as, i) => {
           const target = from.identifierPath[i];
           const path = [...initialPath, ...from.identifierPath.slice(0, i + 1).map((i) => i.text)];
-          console.log(rootRef);
           as.ref = { kind: "queryTarget", path };
           as.type = target.type;
           addToScope(scope, as);
@@ -954,6 +954,7 @@ export function resolve(projectASTs: ProjectASTs) {
               })
             );
           }
+          function_.type = builtin.result;
         } else {
           errors.push(new CompilerError(function_.name.token, ErrorCode.UnknownFunction));
         }
@@ -1024,7 +1025,7 @@ export function resolve(projectASTs: ProjectASTs) {
         .join("|");
       const typeGuardOperation = scope.typeGuard[key];
       if (typeGuardOperation === "notNull") {
-        identifier.type = addNullable(identifier.type);
+        identifier.type = removeNullable(identifier.type);
       } else if (typeGuardOperation === "null") {
         identifier.type = nullType;
       }
