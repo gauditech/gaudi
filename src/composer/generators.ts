@@ -16,19 +16,12 @@ function composeGenerator(def: Definition, generator: Generator): GeneratorDef {
         throw new Error(`Unsupported client generator target "${target}"`);
       }
 
-      // api
-      const api = generator.api;
-      if (api !== "entrypoint" && api !== "model") {
-        throw new Error(`Unsupported client generator api "${api}"`);
-      }
-
       // output
       const output = generator.output;
 
       return {
         kind: "generator-client",
         target,
-        api,
         output,
       };
     }

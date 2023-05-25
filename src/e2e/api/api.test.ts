@@ -29,21 +29,21 @@ describe("API endpoints", () => {
     // --- regular endpoints
 
     it("get", async () => {
-      const response = await request(getServer()).get("/org/org1");
+      const response = await request(getServer()).get("/api/org/org1");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();
     });
 
     it("list with paging", async () => {
-      const response = await request(getServer()).get("/org");
+      const response = await request(getServer()).get("/api/org");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();
     });
 
     it("list with non default paging", async () => {
-      const response = await request(getServer()).get("/org?page=2&pageSize=2");
+      const response = await request(getServer()).get("/api/org?page=2&pageSize=2");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();
@@ -55,10 +55,10 @@ describe("API endpoints", () => {
         slug: "orgNEW",
         description: "Org NEW description",
       };
-      const postResp = await request(getServer()).post("/org").send(data);
+      const postResp = await request(getServer()).post("/api/org").send(data);
 
       expect(postResp.statusCode).toBe(200);
-      const getResp = await request(getServer()).get("/org/orgNEW");
+      const getResp = await request(getServer()).get("/api/org/orgNEW");
 
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
@@ -70,10 +70,10 @@ describe("API endpoints", () => {
     it("update", async () => {
       const data = { slug: "org2", name: "Org 2A", description: "Org 2A description" };
 
-      const patchResp = await request(getServer()).patch("/org/org2").send(data);
+      const patchResp = await request(getServer()).patch("/api/org/org2").send(data);
       expect(patchResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/org/org2");
+      const getResp = await request(getServer()).get("/api/org/org2");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
 
@@ -82,17 +82,17 @@ describe("API endpoints", () => {
     });
 
     it("delete", async () => {
-      const patchResp = await request(getServer()).delete("/org/org3");
+      const patchResp = await request(getServer()).delete("/api/org/org3");
       expect(patchResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/org/org3");
+      const getResp = await request(getServer()).get("/api/org/org3");
       expect(getResp.statusCode).toBe(404);
     });
 
     // --- custom endpoints
 
     it("custom get", async () => {
-      const postResp = await request(getServer()).get("/org/org2/customGet").send();
+      const postResp = await request(getServer()).get("/api/org/org2/customGet").send();
 
       // custom endpoint return empty body so we can check only status
       expect(postResp.statusCode).toBe(204);
@@ -106,12 +106,12 @@ describe("API endpoints", () => {
           description: "Org custom NEW description",
         },
       };
-      const postResp = await request(getServer()).post("/org/customCreate").send(data);
+      const postResp = await request(getServer()).post("/api/org/customCreate").send(data);
 
       expect(postResp.statusCode).toBe(204);
 
       // check via standard endpoint
-      const getResp = await request(getServer()).get("/org/orgCustomNEW");
+      const getResp = await request(getServer()).get("/api/org/orgCustomNEW");
 
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
@@ -126,25 +126,25 @@ describe("API endpoints", () => {
         },
       };
 
-      const patchResp = await request(getServer()).patch("/org/org2/customUpdate").send(data);
+      const patchResp = await request(getServer()).patch("/api/org/org2/customUpdate").send(data);
       expect(patchResp.statusCode).toBe(204);
 
-      const getResp = await request(getServer()).get("/org/org2");
+      const getResp = await request(getServer()).get("/api/org/org2");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
     });
 
     // TODO: fix delete actions
     it("custom delete", async () => {
-      const patchResp = await request(getServer()).delete("/org/org4/customDelete");
+      const patchResp = await request(getServer()).delete("/api/org/org4/customDelete");
       expect(patchResp.statusCode).toBe(204);
 
-      const getResp = await request(getServer()).get("/org/org4");
+      const getResp = await request(getServer()).get("/api/org/org4");
       expect(getResp.statusCode).toBe(404);
     });
 
     it("custom list", async () => {
-      const postResp = await request(getServer()).get("/org/customList").send();
+      const postResp = await request(getServer()).get("/api/org/customList").send();
 
       // custom endpoint return empty body so we can check only status
       expect(postResp.statusCode).toBe(204);
@@ -154,7 +154,7 @@ describe("API endpoints", () => {
 
     it("custom one action", async () => {
       const data = { name: "Org Custom One", counter: 1 };
-      const postResp = await request(getServer()).post("/org/org1/customOneAction").send(data);
+      const postResp = await request(getServer()).post("/api/org/org1/customOneAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
       // header should contain the same data sent we've sent
@@ -163,7 +163,7 @@ describe("API endpoints", () => {
 
     it("custom many action", async () => {
       const data = { name: "Org Custom Many", counter: 1 };
-      const postResp = await request(getServer()).patch("/org/customManyAction").send(data);
+      const postResp = await request(getServer()).patch("/api/org/customManyAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
       // header should contain the same data sent we've sent
@@ -175,7 +175,7 @@ describe("API endpoints", () => {
     it("custom one endpoint - action responds", async () => {
       const data = { name: "Org Custom One", counter: 1 };
       const postResp = await request(getServer())
-        .post("/org/org1/customOneActionResponds")
+        .post("/api/org/org1/customOneActionResponds")
         .send(data);
 
       expect(postResp.statusCode).toBe(200);
@@ -189,7 +189,9 @@ describe("API endpoints", () => {
 
     it("custom many endpoint - action responds", async () => {
       const data = { name: "Org Custom Many", counter: 1 };
-      const postResp = await request(getServer()).patch("/org/customManyActionResponds").send(data);
+      const postResp = await request(getServer())
+        .patch("/api/org/customManyActionResponds")
+        .send(data);
 
       expect(postResp.statusCode).toBe(200);
       expect(postResp.body).toMatchInlineSnapshot(`
@@ -204,7 +206,9 @@ describe("API endpoints", () => {
 
     it("custom one endpoint - action with query", async () => {
       const data = { name: "Org 1", orgId: 1 };
-      const postResp = await request(getServer()).post("/org/org1/customOneQueryAction").send(data);
+      const postResp = await request(getServer())
+        .post("/api/org/org1/customOneQueryAction")
+        .send(data);
 
       expect(postResp.statusCode).toBe(200);
       expect(postResp.body).toMatchSnapshot();
@@ -212,7 +216,9 @@ describe("API endpoints", () => {
 
     it("custom endpoint - fetch action", async () => {
       const data = { name: "Fetch me org 1" };
-      const postResp = await request(getServer()).post("/org/org1/customFetchAction").send(data);
+      const postResp = await request(getServer())
+        .post("/api/org/org1/customFetchAction")
+        .send(data);
 
       expect(postResp.statusCode).toBe(200);
       expect(postResp.body).toMatchSnapshot();
@@ -223,7 +229,7 @@ describe("API endpoints", () => {
     it("Hook throws specific HTTP error response", async () => {
       const data = { status: 451, code: "UNAVAILABLE", message: "Unavailable For Legal Reasons" };
 
-      const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
+      const response = await request(getServer()).post("/api/org/hookErrorResponse").send(data);
       expect(response.statusCode).toBe(data.status);
       expect(response.text).toEqual(data.message);
     });
@@ -234,7 +240,7 @@ describe("API endpoints", () => {
         status: 505,
       };
 
-      const response = await request(getServer()).post("/org/hookErrorResponse").send(data);
+      const response = await request(getServer()).post("/api/org/hookErrorResponse").send(data);
       expect(response.statusCode).toBe(505);
       expect(response.text).toBe("Custom error");
     });
@@ -249,14 +255,14 @@ describe("API endpoints", () => {
     });
 
     it("get", async () => {
-      const response = await request(getServer()).get("/org/org1/repos/1");
+      const response = await request(getServer()).get("/api/org/org1/repos/1");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();
     });
 
     it("list", async () => {
-      const response = await request(getServer()).get("/org/org1/repos");
+      const response = await request(getServer()).get("/api/org/org1/repos");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();
@@ -269,10 +275,10 @@ describe("API endpoints", () => {
         raw_description: "Repo 6 description",
         is_public: true,
       };
-      const postResp = await request(getServer()).post("/org/org1/repos").send(data);
+      const postResp = await request(getServer()).post("/api/org/org1/repos").send(data);
       expect(postResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/org/org1/repos/6");
+      const getResp = await request(getServer()).get("/api/org/org1/repos/6");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
     });
@@ -280,19 +286,19 @@ describe("API endpoints", () => {
     it("update", async () => {
       const data = { slug: "repo2", name: "Repo 2A", description: "Repo 2A description" };
 
-      const patchResp = await request(getServer()).patch("/org/org1/repos/2").send(data);
+      const patchResp = await request(getServer()).patch("/api/org/org1/repos/2").send(data);
       expect(patchResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/org/org1/repos/2");
+      const getResp = await request(getServer()).get("/api/org/org1/repos/2");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
     });
 
     it("delete", async () => {
-      const patchResp = await request(getServer()).delete("/org/org1/repos/1");
+      const patchResp = await request(getServer()).delete("/api/org/org1/repos/1");
       expect(patchResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/org/org1/repos/1");
+      const getResp = await request(getServer()).get("/api/org/org1/repos/1");
       expect(getResp.statusCode).toBe(404);
     });
   });
@@ -312,10 +318,10 @@ describe("API endpoints", () => {
           body: "Comment body",
         },
       };
-      const postResp = await request(getServer()).post("/org/org1/repos/1/issues").send(data);
+      const postResp = await request(getServer()).post("/api/org/org1/repos/1/issues").send(data);
       expect(postResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/org/org1/repos/1/issues/1");
+      const getResp = await request(getServer()).get("/api/org/org1/repos/1/issues/1");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
     });
@@ -330,7 +336,7 @@ describe("API endpoints", () => {
     });
 
     it("list", async () => {
-      const response = await request(getServer()).get("/repo");
+      const response = await request(getServer()).get("/api/repo");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();

@@ -8,8 +8,7 @@ import { buildOpenAPI } from "@src/builder/openAPI";
 import { saveOutputFile } from "@src/common/utils";
 import { getAppContext } from "@src/runtime/server/context";
 import { buildEndpointConfig, registerServerEndpoint } from "@src/runtime/server/endpoints";
-import { EndpointConfig } from "@src/runtime/server/types";
-import { Definition, EntrypointDef } from "@src/types/definition";
+import { Definition } from "@src/types/definition";
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {
@@ -19,70 +18,32 @@ export function setupServerApis(definition: Definition, app: Express) {
   const specOutputFolder = path.join(config.outputFolder, "api-spec");
   app.use("/api-spec", staticHandler(specOutputFolder));
 
-  // --- definition API (aka the "blueprint")
-  const definitionEntrypoints = definition.entrypoints;
-  const definitionEndpointConfigs = buildEndpointConfig(definition, definitionEntrypoints);
-  setupEntrypointApi(
-    "api",
-    definition,
-    definitionEntrypoints,
-    definitionEndpointConfigs,
-    app,
-    specOutputFolder
-  );
+  setupDefinitionApis(definition, app);
+
+  setupDefinitionApisSpec(definition, app, path.join(specOutputFolder, "api.openapi.json"));
 }
 
-/** Create API endpoints from entrypoints.*/
-function setupEntrypointApi(
-  name: string,
-  definition: Definition,
-  entrypoints: EntrypointDef[],
-  endpointConfigs: EndpointConfig[],
-  app: Express,
-  outputFolder: string
-) {
-  const basePath = `/${name}`;
-  const specFile = path.join(outputFolder, `${name}.openapi.json`);
-
-  endpointConfigs.forEach((epc) => registerServerEndpoint(app, epc, basePath));
-
-  setupEntrypointApiSpec(definition, entrypoints, app, basePath, specFile);
+export function setupDefinitionApis(def: Definition, app: Express) {
+  def.apis.forEach((api) => {
+    buildEndpointConfig(def, api.entrypoints).forEach((epc) =>
+      registerServerEndpoint(app, epc, api.path)
+    );
+  });
 }
 
-/** Create API OpenAPI spec from entrpyoints */
-function setupEntrypointApiSpec(
-  definition: Definition,
-  entrypoints: EntrypointDef[],
-  app: Express,
-  basePath: string,
-  outputFile: string
-) {
-  const openApi = buildOpenAPI({ ...definition, entrypoints }, basePath);
+/** Create API OpenAPI spec from definition */
+function setupDefinitionApisSpec(definition: Definition, app: Express, outputFile: string) {
+  const openApi = buildOpenAPI(definition);
 
   saveOutputFile(outputFile, JSON.stringify(openApi, undefined, 2));
 
-  setupEntrypointApiSwagger(openApi, app, basePath);
+  setupEntrypointApiSwagger(openApi, app);
 }
 
-function setupEntrypointApiSwagger(
-  openApiDocument: OpenAPIV3.Document,
-  app: Express,
-  apiPath: string
-) {
-  const swaggerPath = `${apiPath}-docs`;
+function setupEntrypointApiSwagger(openApiDocument: OpenAPIV3.Document, app: Express) {
+  const swaggerPath = `/api-docs`;
 
   app.use(swaggerPath, serve, (_req: Request, _resp: Response, _next: NextFunction) =>
     setup(openApiDocument)(_req, _resp, _next)
   );
-}
-
-/** Setup API endpoints from endpoint configs */
-function setupConfigEndpoints(name: string, configs: EndpointConfig[], app: Express) {
-  const basePath = `/${name}`;
-
-  configs.forEach((epc) => {
-    registerServerEndpoint(app, epc, basePath);
-  });
-
-  // NOTE: we cannot currently create OpenAPI spec from endpoint configs
 }

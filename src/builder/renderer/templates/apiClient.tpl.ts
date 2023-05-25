@@ -3,6 +3,7 @@ import _ from "lodash";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
 import {
+  ApiDef,
   Definition,
   EndpointDef,
   EntrypointDef,
@@ -15,28 +16,28 @@ import {
 
 export type BuildApiClientData = {
   definition: Definition;
-  entrypoints: EntrypointDef[];
+  apis: ApiDef[];
 };
 
 /** Template renderer */
 export function render(data: BuildApiClientData): string {
-  return buildClient(data.definition, data.entrypoints);
+  return buildClient(data.definition, data.apis);
 }
 
 // --- API client
 
-function buildClient(def: Definition, entrypoints: EntrypointDef[]): string {
+function buildClient(def: Definition, apis: ApiDef[]): string {
   // TODO: read target and api from generator def block
 
   return `
   // ----- API client
-  
+
   export type ApiClientOptions = {
     /** Server API path prefix */
     rootPath?: string;
     /**
      * Function that implements HTTP calls and returns it's result.
-     * 
+     *
      * This lib does not implement it's own HTTP calls which allows users
      * to use any HTTP client lib of their choice.
      */
@@ -52,18 +53,17 @@ function buildClient(def: Definition, entrypoints: EntrypointDef[]): string {
       headers: {...(options.headers ?? {})},
     }
 
-    return {
-      api: buildApi(internalOptions ?? {}),
-    };
+    return ${buildApisObject(apis)};
   }
 
-  ${buildApi(def, entrypoints, "")}
+  ${buildApis(def, apis)}
 
   ${buildCommonCode()}
 
   `;
 }
 
+type ApiName = Pick<TargetName, "identifierName" | "path" | "builder">;
 type TargetName = {
   /**
    * Segment name is name in API heirarchy.
@@ -91,40 +91,63 @@ type TargetWithIdentifierName = TargetName & {
 
 type EntrypointApiEntry = { name: string; path: string; builderName: string; builderFn: string[] };
 
-function buildApi(def: Definition, entrypoints: EntrypointDef[], basePath: string): string {
-  const apiEntries = entrypoints.map((sub) => buildEntrypointApi(def, sub, basePath));
+function buildApisObject(apis: ApiDef[]): string {
+  const rootApi = apis.find((api) => !api.name);
+  const otherApis = apis.filter((api) => api.name);
+  const properties = otherApis.map((api) => {
+    const info = createApiInfo(api);
+    return `${info.identifierName}: ${buildApiObject(api)}`;
+  });
+  if (rootApi) {
+    properties.push(`...${buildApiObject(rootApi)}`);
+  }
+
+  return `{
+    api: {
+      ${properties.join(",\n")}
+    }
+  }`;
+}
+
+function buildApiObject(api: ApiDef): string {
+  const info = createApiInfo(api);
+
+  return `${info.builder}(internalOptions ?? {})`;
+}
+
+function buildApis(def: Definition, apis: ApiDef[]): string {
+  return apis.map((api) => buildApi(def, api)).join("\n");
+}
+
+function buildApi(def: Definition, api: ApiDef): string {
+  const info = createApiInfo(api);
+  const apiEntries = api.entrypoints.map((sub) => buildEntrypointObject(def, sub));
 
   const builderFns = apiEntries.map((sub) => sub.builderFn).flat();
 
   return `
-    function buildApi(options: ApiClientOptions) {
+    function ${info.builder}(options: ApiClientOptions) {
+      ${builderFns.join("\n")}
+
       return {
         ${apiEntries
-          .map((sub) => `${sub.name}: ${sub.builderName}(options, "${sub.path}")`)
+          .map((sub) => `${sub.name}: ${sub.builderName}(options, "${info.path}/${sub.path}")`)
           .join(",\n")}
       }
     }
-
-    ${builderFns.join("\n")}
   `;
 }
 
 // --- entrypoint API
 
-function buildEntrypointApi(
-  def: Definition,
-  entrypoint: EntrypointDef,
-  basePath: string
-): EntrypointApiEntry {
+function buildEntrypointObject(def: Definition, entrypoint: EntrypointDef): EntrypointApiEntry {
   const targetInfo = createIdentifierTargetInfo(
     entrypoint.target.name,
     entrypoint.target.identifyWith.type,
     entrypoint.target.retType
   );
 
-  const entrypointEntries = entrypoint.entrypoints.map((sub) =>
-    buildEntrypointApi(def, sub, basePath)
-  );
+  const entrypointEntries = entrypoint.entrypoints.map((sub) => buildEntrypointObject(def, sub));
   const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints);
   const endpointTypes = compactTypesArray(endpointEntries.map((epe) => epe.types).flat());
 
@@ -135,7 +158,7 @@ function buildEntrypointApi(
 
     // entrypoint function
     function api(id: ${targetInfo.identifierType}) {
-      const baseUrl = \`${basePath}\${parentPath}/\${id}\`;
+      const baseUrl = \`\${parentPath}/\${id}\`;
       return {
         ${entrypointEntries
           .map((sub) => `${sub.name}: ${sub.builderName}(options, \`\${baseUrl}/${sub.path}\`)`)
@@ -144,7 +167,7 @@ function buildEntrypointApi(
     }
 
     // endpoint functions
-    return Object.assign(api, 
+    return Object.assign(api,
       {
         ${endpointEntries.map((epb) => `${epb.name}: ${epb.builder}`).join(",\n")}
       }
@@ -427,13 +450,13 @@ function buildCommonCode(): string {
     /** Response body data. */
     data?: any;
   };
-  
+
   /**
    * Function that performs request call and returns result.
-   * This allows for any custom HTTP client (fetch, axios, ...) implementation 
+   * This allows for any custom HTTP client (fetch, axios, ...) implementation
    * to be used regardless of environment (node, browser, ...).
-   * 
-   * Return value from this function is wrapped by client in {ApiResponse} 
+   *
+   * Return value from this function is wrapped by client in {ApiResponse}
    * structure and returned to the caller.
    *
    * @param url {string} request URL
@@ -441,7 +464,7 @@ function buildCommonCode(): string {
    * @returns {ApiRequestFnData}
    */
   export type ApiRequestFn = (url: string, init: ApiRequestInit) => Promise<ApiRequestFnData>;
-  
+
   /** API request additional parameters. */
   export type ApiRequestInit = {
     /** A BodyInit object or null to set request's body. */
@@ -451,9 +474,9 @@ function buildCommonCode(): string {
     /** A string to set request's method. */
     method: EndpointHttpMethod;
   }
-  
+
   export type ApiRequestBody = any;
-  
+
   export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
     ? {
         code: C;
@@ -461,7 +484,7 @@ function buildCommonCode(): string {
         data?: D;
       }
     : never;
-  
+
   export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
 
   export type ApiResponseSuccess<D, E extends string> = {
@@ -485,11 +508,11 @@ function buildCommonCode(): string {
     totalPages: number;
     totalCount: number;
     data: T[];
-  };  
+  };
 
   // TODO: add list search/filter parameter
   export type PaginatedListData = { pageSize?: number; page?: number };
-  
+
   export type GetApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -519,7 +542,7 @@ function buildCommonCode(): string {
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
-  
+
   export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
@@ -545,7 +568,7 @@ function buildCommonCode(): string {
 
   function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -555,12 +578,12 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildCreateFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): CreateApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -571,12 +594,12 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
   ): UpdateApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -587,10 +610,10 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
     return async (id, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -600,10 +623,10 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): ListApiClientFn<R, E> {
     return async (options) => {
-      const urlPath = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
+      const urlPath = \`\${clientOptions.rootPath ?? ''}\${parentPath}\`;
 
       return (
         makeRequest(clientOptions, urlPath, {
@@ -613,10 +636,10 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildPaginatedListFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): PaginatedListApiClientFn<R, E> {
     return async (data, options) => {
-      const urlPath = \`\${clientOptions.rootPath ?? ''}/\${parentPath}\`;
+      const urlPath = \`\${clientOptions.rootPath ?? ''}\${parentPath}\`;
 
       const params = new URLSearchParams()
       Object.entries(data ?? {}).map(([key, value]) => params.set(key, JSON.stringify(value)))
@@ -640,7 +663,7 @@ function buildCommonCode(): string {
     method: EndpointHttpMethod
   ): CustomOneFetchApiClientFn<ID, R, E> {
     return async (id, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}/\${path}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}/\${path}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -650,7 +673,7 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -658,7 +681,7 @@ function buildCommonCode(): string {
     method: EndpointHttpMethod
   ): CustomOneSubmitApiClientFn<ID, D, R, E> {
     return async (id, data, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${id}/\${path}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}/\${path}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -669,7 +692,7 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildCustomManyFetchFn<R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -677,8 +700,8 @@ function buildCommonCode(): string {
     method: EndpointHttpMethod
   ): CustomManyFetchApiClientFn<R, E> {
     return async (options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${path}\`;
-  
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${path}\`;
+
       return (
         makeRequest(clientOptions, url, {
           method,
@@ -687,7 +710,7 @@ function buildCommonCode(): string {
       );
     };
   }
-  
+
   function buildCustomManySubmitFn<D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
@@ -695,7 +718,7 @@ function buildCommonCode(): string {
     method: EndpointHttpMethod
   ): CustomManySubmitApiClientFn<D, R, E> {
     return async (data, options) => {
-      const url = \`\${clientOptions.rootPath ?? ''}/\${parentPath}/\${path}\`;
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${path}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -787,6 +810,13 @@ function buildCommonCode(): string {
 
 // ----- utils
 
+function createApiInfo(api: ApiDef): ApiName {
+  return {
+    identifierName: _.camelCase(api.name || ""),
+    path: api.path,
+    builder: _.camelCase(`build${_.capitalize(api.name || "")}Api`),
+  };
+}
 function createIdentifierTargetInfo(
   name: string,
   identifierType: TargetDef["identifyWith"]["type"],
@@ -805,7 +835,7 @@ function createTargetInfo(name: string, retTypeName: string): TargetName {
       .reduce((w, l, i) => w + (i === 0 ? l.toUpperCase() : l), ""),
     retTypeName,
     path: _.snakeCase(name),
-    builder: _.camelCase(`build${_.capitalize(name)}Api`),
+    builder: _.camelCase(`build${_.capitalize(name)}Entrypoint`),
   };
 }
 

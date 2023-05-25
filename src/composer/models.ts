@@ -217,7 +217,6 @@ export function defineType(type: Type, nullable = false): VariablePrimitiveType 
           return { kind: type.primitiveKind, nullable };
       }
     }
-    case "unknown":
     case "null":
       return { kind: "null", nullable: true };
     case "nullable":

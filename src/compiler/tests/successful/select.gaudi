@@ -8,10 +8,12 @@ model Student {
   reference class { to Class }
 }
 
-entrypoint Class {
-  response { year, students { name } }
-}
+api {
+  entrypoint Class {
+    response { year, students { name } }
+  }
 
-entrypoint Student {
-  response { name, class { year } }
+  entrypoint Student {
+    response { name, class { year } }
+  }
 }

@@ -102,7 +102,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.DuplicateHookArg:
       return `Duplicate hook argument`;
     case ErrorCode.DuplicateGenerator:
-      return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}" and api "${params?.api}"`;
+      return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}"`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
       return `Actions with "responds" can only be used in "custom" endpoints`;
     case ErrorCode.QueryFromAliasWrongLength:

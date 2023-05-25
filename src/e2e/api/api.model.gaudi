@@ -75,228 +75,202 @@ model Comment {
 
 // ----- entrypoints
 
-// Orgs
-entrypoint Org as org {
-  identify { through slug }
-  response { name, slug, description, summary, nameAndDesc, blank_repos { id, total_issues } }
+api {
+  // Orgs
+  entrypoint Org as org {
+    identify { through slug }
+    response { name, slug, description, summary, nameAndDesc, blank_repos { id, total_issues } }
 
-  // --- endpoints with "execute" actions
-  // register BEFORE other endpoints to avoid mismatching with other endpoints
+    // --- endpoints with "execute" actions
+    // register BEFORE other endpoints to avoid mismatching with other endpoints
 
-  custom endpoint {
-    cardinality one
-    method POST
-    path "customOneAction"
-    action {
-      execute {
-        virtual input name { type string }
-        virtual input counter { type integer }
-        hook {
-          arg name name
-          arg counter counter
-          source customAction from "hooks.js"
-        }
-      }
-    }
-  }
-
-  custom endpoint {
-    cardinality many
-    method PATCH
-    path "customManyAction"
-    action {
-      execute {
-        virtual input name { type string }
-        virtual input counter { type integer }
-        hook {
-          arg name name
-          arg counter counter
-          source customAction from "hooks.js"
-        }
-      }
-    }
-  }
-
-  // custom one endpoint - "execute" action responds
-  custom endpoint {
-    cardinality one
-    method POST
-    path "customOneActionResponds"
-    action {
-      execute {
-        virtual input counter { type integer }
-        virtual input name { type string }
-
-        responds
-        hook {
-          arg name name
-          arg counter counter
-          source customActionResponds from "hooks.js"
-        }
-      }
-    }
-  }
-
-  // custom many endpoint - "execute" action responds
-  custom endpoint {
-    cardinality many
-    method PATCH
-    path "customManyActionResponds"
-    action {
-      execute {
-        virtual input name { type string }
-        virtual input counter { type integer }
-        responds
-        hook {
-          arg name name
-          arg counter counter
-          source customActionResponds from "hooks.js"
-        }
-      }
-    }
-  }
-
-  // custom ep/action with action query
-  custom endpoint {
-    cardinality one
-    method POST
-    path "customOneQueryAction"
-    action {
-      execute {
-        virtual input name { type string }
-        virtual input orgId { type integer }
-        responds
-        hook {
-          arg inputName name
-          arg inputOrgId orgId
-          arg orgByName query { from Org as o, filter {lower(o.name) is lower(name)}, select {name} }
-          arg orgById query { from Org as o, filter { o.id is orgId }, select {name} }
-          // arg orgByInputId query { from Org as o, filter { o.id is inputOrgId }, select {name} }
-          source customActionResponds from "hooks.js"
-        }
-      }
-    }
-  }
-
-  // custom ep/action with action query
-  custom endpoint {
-    cardinality one
-    method POST
-    path "customFetchAction"
-    action {
-      fetch as fRepo {
-        query { from Repo, filter { id is 1 }, select {slug}} // TODO: read from ctx - id
-      }
-      execute {
-        virtual input name { type string }
-        responds
-        hook {
-          arg name name
-          arg repoSlug fRepo.slug
-          source customActionResponds from "hooks.js"
-        }
-      }
-    }
-  }
-
-  // hook error response
-  custom endpoint {
-    path "hookErrorResponse"
-    method POST
-    cardinality many
-
-    action {
-      execute {
-        virtual input status { type integer }
-        virtual input message { type string }
-
-        hook {
-          arg status status
-          arg message message
-
-          source customHttpErrorResponse from "hooks.js"
-        }
-      }
-    }
-  }
-
-  // --- custom-one endpoints
-
-  custom endpoint {
-    cardinality one
-    method GET
-    path "customGet"
-  }
-  custom endpoint {
-    cardinality one
-    method PATCH
-    path "customUpdate"
-    action {
-      update org as newOrg {}
-    }
-  }
-  custom endpoint {
-    cardinality one
-    method DELETE
-    path "customDelete"
-    action {
-      delete org {}
-    }
-  }
-
-  // --- custom-many endpoints
-
-  custom endpoint {
-    cardinality many
-    method GET
-    path "customList"
-  }
-  custom endpoint {
-    cardinality many
-    method POST
-    path "customCreate"
-    action {
-      create Org as newOrg {}
-    }
-  }
-
-  // --- regular endpoints
-
-  get endpoint {}
-  list endpoint {
-    pageable
-    order by { slug desc }
-  }
-  create endpoint {
-    action {
-      create {}
-    }
-  }
-  update endpoint {
-    action {
-      update {}
-    }
-  }
-  delete endpoint {}
-
-
-  // --- Repos
-  entrypoint repos as repo {
-    response { id, slug, description, org_id }
-
-    get endpoint {}
-    list endpoint {}
-    create endpoint {
+    custom endpoint {
+      cardinality one
+      method POST
+      path "customOneAction"
       action {
-        create as repo {
-          set latest_num 0
-          virtual input raw_description { type string }
-          set description "Description: " + raw_description
-          set slug hook {
-            arg org org.name
-            source randomSlug from "hooks.js"
+        execute {
+          virtual input name { type string }
+          virtual input counter { type integer }
+          hook {
+            arg name name
+            arg counter counter
+            source customAction from "hooks.js"
           }
         }
+      }
+    }
+
+    custom endpoint {
+      cardinality many
+      method PATCH
+      path "customManyAction"
+      action {
+        execute {
+          virtual input name { type string }
+          virtual input counter { type integer }
+          hook {
+            arg name name
+            arg counter counter
+            source customAction from "hooks.js"
+          }
+        }
+      }
+    }
+
+    // custom one endpoint - "execute" action responds
+    custom endpoint {
+      cardinality one
+      method POST
+      path "customOneActionResponds"
+      action {
+        execute {
+          virtual input counter { type integer }
+          virtual input name { type string }
+
+          responds
+          hook {
+            arg name name
+            arg counter counter
+            source customActionResponds from "hooks.js"
+          }
+        }
+      }
+    }
+
+    // custom many endpoint - "execute" action responds
+    custom endpoint {
+      cardinality many
+      method PATCH
+      path "customManyActionResponds"
+      action {
+        execute {
+          virtual input name { type string }
+          virtual input counter { type integer }
+          responds
+          hook {
+            arg name name
+            arg counter counter
+            source customActionResponds from "hooks.js"
+          }
+        }
+      }
+    }
+
+    // custom ep/action with action query
+    custom endpoint {
+      cardinality one
+      method POST
+      path "customOneQueryAction"
+      action {
+        execute {
+          virtual input name { type string }
+          virtual input orgId { type integer }
+          responds
+          hook {
+            arg inputName name
+            arg inputOrgId orgId
+            arg orgByName query { from Org as o, filter {lower(o.name) is lower(name)}, select {name} }
+            arg orgById query { from Org as o, filter { o.id is orgId }, select {name} }
+            // arg orgByInputId query { from Org as o, filter { o.id is inputOrgId }, select {name} }
+            source customActionResponds from "hooks.js"
+          }
+        }
+      }
+    }
+
+    // custom ep/action with action query
+    custom endpoint {
+      cardinality one
+      method POST
+      path "customFetchAction"
+      action {
+        fetch as fRepo {
+          query { from Repo, filter { id is 1 }, select {slug}} // TODO: read from ctx - id
+        }
+        execute {
+          virtual input name { type string }
+          responds
+          hook {
+            arg name name
+            arg repoSlug fRepo.slug
+            source customActionResponds from "hooks.js"
+          }
+        }
+      }
+    }
+
+    // hook error response
+    custom endpoint {
+      path "hookErrorResponse"
+      method POST
+      cardinality many
+
+      action {
+        execute {
+          virtual input status { type integer }
+          virtual input message { type string }
+
+          hook {
+            arg status status
+            arg message message
+
+            source customHttpErrorResponse from "hooks.js"
+          }
+        }
+      }
+    }
+
+    // --- custom-one endpoints
+
+    custom endpoint {
+      cardinality one
+      method GET
+      path "customGet"
+    }
+    custom endpoint {
+      cardinality one
+      method PATCH
+      path "customUpdate"
+      action {
+        update org as newOrg {}
+      }
+    }
+    custom endpoint {
+      cardinality one
+      method DELETE
+      path "customDelete"
+      action {
+        delete org {}
+      }
+    }
+
+    // --- custom-many endpoints
+
+    custom endpoint {
+      cardinality many
+      method GET
+      path "customList"
+    }
+    custom endpoint {
+      cardinality many
+      method POST
+      path "customCreate"
+      action {
+        create Org as newOrg {}
+      }
+    }
+
+    // --- regular endpoints
+
+    get endpoint {}
+    list endpoint {
+      pageable
+      order by { slug desc }
+    }
+    create endpoint {
+      action {
+        create {}
       }
     }
     update endpoint {
@@ -306,35 +280,63 @@ entrypoint Org as org {
     }
     delete endpoint {}
 
-    // Issues
-    entrypoint issues as issue {
-      response { id, title, repo, number, comments }
+
+    // --- Repos
+    entrypoint repos as repo {
+      response { id, slug, description, org_id }
 
       get endpoint {}
+      list endpoint {}
       create endpoint {
         action {
-          create as issue {
-            set number repo.latest_num + 1
+          create as repo {
+            set latest_num 0
+            virtual input raw_description { type string }
+            set description "Description: " + raw_description
+            set slug hook {
+              arg org org.name
+              source randomSlug from "hooks.js"
+            }
           }
+        }
+      }
+      update endpoint {
+        action {
+          update {}
+        }
+      }
+      delete endpoint {}
 
-          update repo as repo2 {
-            set latest_num repo.latest_num + 1
+      // Issues
+      entrypoint issues as issue {
+        response { id, title, repo, number, comments }
+
+        get endpoint {}
+        create endpoint {
+          action {
+            create as issue {
+              set number repo.latest_num + 1
+            }
+
+            update repo as repo2 {
+              set latest_num repo.latest_num + 1
+            }
+
+            create issue.comments as c {}
           }
-
-          create issue.comments as c {}
         }
       }
     }
   }
-}
 
-// --- Repos
-entrypoint Repo {
-  response { id, slug, description, org_id }
+  // --- Repos
+  entrypoint Repo {
+    response { id, slug, description, org_id }
 
-  list endpoint {
-    // test filtered
-    filter { is_public is true and org.slug is "org2" }
+    list endpoint {
+      // test filtered
+      filter { is_public is true and org.slug is "org2" }
+    }
+    get endpoint {}
   }
-  get endpoint {}
 }

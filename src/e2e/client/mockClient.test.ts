@@ -4,7 +4,7 @@ import {
   ApiRequestInit as EntrypointApiRequestInit,
   PaginatedListResponse,
   createClient as createClientEntrypoint,
-} from "@src/e2e/client/__snapshots__/mockClient/client/api-client-entrypoint";
+} from "@src/e2e/client/__snapshots__/mockClient/client/api-client";
 
 // test are slow
 jest.setTimeout(20000);
@@ -47,7 +47,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
@@ -94,7 +94,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
@@ -144,7 +144,7 @@ describe("mock client lib", () => {
         );
 
         // rest request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
@@ -194,7 +194,7 @@ describe("mock client lib", () => {
         );
 
         // rest request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
@@ -242,7 +242,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "DELETE",
         });
@@ -286,7 +286,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneFetch`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/customOneFetch`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
@@ -325,7 +325,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/customOneSubmit`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/customOneSubmit`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
@@ -367,7 +367,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManyFetch`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/customManyFetch`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "GET",
         });
@@ -408,7 +408,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/customManySubmit`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/customManySubmit`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
@@ -445,7 +445,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
           headers: {},
           method: "GET",
         });
@@ -484,7 +484,7 @@ describe("mock client lib", () => {
         );
 
         // rest request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
           headers: {},
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
@@ -524,7 +524,7 @@ describe("mock client lib", () => {
         );
 
         // rest request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos`, {
           headers: {},
           method: "POST",
           body: {
@@ -567,7 +567,7 @@ describe("mock client lib", () => {
         );
 
         // rest request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos`, {
           headers: {},
           method: "GET",
         });
@@ -606,7 +606,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
           headers: {},
           method: "DELETE",
         });
@@ -643,7 +643,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1/customOneFetch`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/customOneFetch`, {
           headers: {},
           method: "GET",
         });
@@ -675,7 +675,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1/customOneSubmit`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/customOneSubmit`, {
           headers: {},
           method: "PATCH",
           body: { slug: "slug1", name: "test name", description: "test description" },
@@ -708,7 +708,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/customManyFetch`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/customManyFetch`, {
           headers: {},
           method: "GET",
         });
@@ -740,7 +740,7 @@ describe("mock client lib", () => {
         );
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/customManySubmit`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/customManySubmit`, {
           headers: {},
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
@@ -774,7 +774,7 @@ describe("mock client lib", () => {
         ensureEqual(resp.kind, "error" as const, `API response is not "error" but "${resp.kind}`);
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos/1`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
           headers: {},
           method: "GET",
         });
@@ -819,7 +819,7 @@ describe("mock client lib", () => {
         ensureEqual(resp.kind, "error" as const, `API response is not "error" but "${resp.kind}`);
 
         // test request
-        expect(requestFn).toHaveBeenCalledWith(`/rootPath/org/slug1/repos`, {
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos`, {
           headers: {},
           method: "POST",
           body: {

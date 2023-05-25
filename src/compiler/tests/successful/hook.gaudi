@@ -31,30 +31,32 @@ model User {
   }
 }
 
-entrypoint User as user{
-  create endpoint {
-    action {
-      create {
-        set fieldOne hook {
-          arg second fieldTwo
-          source foo from "customHooks"
+api {
+  entrypoint User as user{
+    create endpoint {
+      action {
+        create {
+          set fieldOne hook {
+            arg second fieldTwo
+            source foo from "customHooks"
+          }
         }
       }
     }
-  }
 
-  custom endpoint {
-    path "somePath"
-    method POST
-    cardinality one
+    custom endpoint {
+      path "somePath"
+      method POST
+      cardinality one
 
-    action {
-      execute {
-        responds
-        hook {
-          arg name user.name
-          runtime MyRuntime
-          source foo from "customHooks"
+      action {
+        execute {
+          responds
+          hook {
+            arg name user.name
+            runtime MyRuntime
+            source foo from "customHooks"
+          }
         }
       }
     }

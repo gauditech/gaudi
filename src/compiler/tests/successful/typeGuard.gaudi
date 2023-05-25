@@ -8,15 +8,17 @@ model Bar {
   reference foo { to Foo }
 }
 
-entrypoint Bar as bar {
-  update endpoint {
-    authorize { bar.b is not null and bar.foo.a1 is bar.b }
-    action {
-      update bar.foo as foo {
-        set a bar.foo.a1
-      }
-      update {
-        set foo foo
+api {
+  entrypoint Bar as bar {
+    update endpoint {
+      authorize { bar.b is not null and bar.foo.a1 is bar.b }
+      action {
+        update bar.foo as foo {
+          set a bar.foo.a1
+        }
+        update {
+          set foo foo
+        }
       }
     }
   }

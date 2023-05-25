@@ -33,25 +33,27 @@ model Student {
   computed is_senior { class.year >= 4 }
 }
 
-entrypoint Class {
-  create endpoint {
-    action {
-      create {}
+api {
+  entrypoint Class {
+    create endpoint {
+      action {
+        create {}
 
-      // test query in fetch action
-      fetch as fClass {
-        query {
-          from Class, filter { id is 1 }
+        // test query in fetch action
+        fetch as fClass {
+          query {
+            from Class, filter { id is 1 }
+          }
         }
-      }
 
-      execute {
+        execute {
 
-        // test arg query
-        hook {
-          arg prop2 query { from Class, filter { id is 1 } }
+          // test arg query
+          hook {
+            arg prop2 query { from Class, filter { id is 1 } }
 
-          source foo from "bar"
+            source foo from "bar"
+          }
         }
       }
     }

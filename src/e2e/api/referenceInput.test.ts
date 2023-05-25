@@ -29,12 +29,12 @@ describe("Reference Input", () => {
     it("create with a valid reference", async () => {
       const extraData = { slug: "extra" };
 
-      const extraPostResponse = await request(getServer()).post("/extra").send(extraData);
+      const extraPostResponse = await request(getServer()).post("/api/extra").send(extraData);
       expect(extraPostResponse.statusCode).toBe(200);
 
       const data = { name: "element", extra_slug: "extra" };
 
-      const postResponse = await request(getServer()).post("/element").send(data);
+      const postResponse = await request(getServer()).post("/api/element").send(data);
       expect(postResponse.statusCode).toBe(200);
       expect(postResponse.body).toMatchSnapshot();
     });
@@ -42,7 +42,7 @@ describe("Reference Input", () => {
     it("create with an invalid reference", async () => {
       const data = { name: "element", extra_slug: "baz" };
 
-      const postResponse = await request(getServer()).post("/element").send(data);
+      const postResponse = await request(getServer()).post("/api/element").send(data);
       expect(postResponse.statusCode).toBe(400);
       expect(postResponse.body).toMatchSnapshot();
     });

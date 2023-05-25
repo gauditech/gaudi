@@ -8,7 +8,7 @@ exports[`openAPI build spec 1`] = `
   },
   "openapi": "3.0.3",
   "paths": {
-    "/api-test/org": {
+    "/api/test/org": {
       "get": {
         "parameters": [
           {
@@ -81,6 +81,9 @@ exports[`openAPI build spec 1`] = `
             "description": "Successful response",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
       "post": {
         "parameters": [],
@@ -127,9 +130,12 @@ exports[`openAPI build spec 1`] = `
             "description": "Successful response",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
     },
-    "/api-test/org/{org_slug}": {
+    "/api/test/org/{org_slug}": {
       "delete": {
         "parameters": [
           {
@@ -142,16 +148,7 @@ exports[`openAPI build spec 1`] = `
           },
         ],
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {},
-                  "required": [],
-                  "type": "object",
-                },
-              },
-            },
+          "204": {
             "description": "Successful response",
           },
           "404": {
@@ -170,6 +167,9 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
       "get": {
         "parameters": [
@@ -223,6 +223,9 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
       "patch": {
         "parameters": [
@@ -293,9 +296,12 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
     },
-    "/api-test/org/{org_slug}/repos": {
+    "/api/test/org/{org_slug}/repos": {
       "get": {
         "parameters": [
           {
@@ -391,6 +397,9 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
       "post": {
         "parameters": [
@@ -461,9 +470,12 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
     },
-    "/api-test/org/{org_slug}/repos/{repo_id}": {
+    "/api/test/org/{org_slug}/repos/{repo_id}": {
       "delete": {
         "parameters": [
           {
@@ -484,16 +496,7 @@ exports[`openAPI build spec 1`] = `
           },
         ],
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {},
-                  "required": [],
-                  "type": "object",
-                },
-              },
-            },
+          "204": {
             "description": "Successful response",
           },
           "404": {
@@ -512,6 +515,9 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
       "get": {
         "parameters": [
@@ -573,6 +579,9 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
       "patch": {
         "parameters": [
@@ -655,6 +664,9 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "tags": [
+          "Test",
+        ],
       },
     },
   },

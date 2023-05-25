@@ -198,100 +198,106 @@ exports[`compose hooks composes action hook 1`] = `
 
 exports[`compose hooks composes source hooks 1`] = `
 {
-  "authenticator": undefined,
-  "entrypoints": [
+  "apis": [
     {
-      "endpoints": [
+      "entrypoints": [
         {
-          "actions": [
+          "endpoints": [
             {
-              "alias": "$action_0",
-              "changeset": [
+              "actions": [
                 {
-                  "name": "name",
-                  "setter": {
-                    "args": [],
-                    "hook": {
-                      "file": "hooks.js",
-                      "kind": "source",
-                      "runtimeName": "MyRuntime",
-                      "target": "someHook",
+                  "alias": "$action_0",
+                  "changeset": [
+                    {
+                      "name": "name",
+                      "setter": {
+                        "args": [],
+                        "hook": {
+                          "file": "hooks.js",
+                          "kind": "source",
+                          "runtimeName": "MyRuntime",
+                          "target": "someHook",
+                        },
+                        "kind": "fieldset-hook",
+                      },
                     },
-                    "kind": "fieldset-hook",
-                  },
+                  ],
+                  "isPrimary": true,
+                  "kind": "create-one",
+                  "model": "Org",
+                  "select": [],
+                  "targetPath": [
+                    "Org",
+                  ],
                 },
               ],
-              "isPrimary": true,
-              "kind": "create-one",
-              "model": "Org",
-              "select": [],
-              "targetPath": [
-                "Org",
+              "authSelect": [],
+              "authorize": undefined,
+              "fieldset": {
+                "kind": "record",
+                "nullable": false,
+                "record": {},
+              },
+              "kind": "create",
+              "parentContext": [],
+              "response": [
+                {
+                  "alias": "id",
+                  "kind": "field",
+                  "name": "id",
+                  "namePath": [
+                    "Org",
+                    "id",
+                  ],
+                  "refKey": "Org.id",
+                },
+                {
+                  "alias": "name",
+                  "kind": "field",
+                  "name": "name",
+                  "namePath": [
+                    "Org",
+                    "name",
+                  ],
+                  "refKey": "Org.name",
+                },
               ],
+              "target": {
+                "alias": "$target_0",
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "retType": "Org",
+                "select": [],
+              },
             },
           ],
-          "authSelect": [],
-          "authorize": undefined,
-          "fieldset": {
-            "kind": "record",
-            "nullable": false,
-            "record": {},
-          },
-          "kind": "create",
-          "parentContext": [],
-          "response": [
-            {
-              "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "Org",
-                "id",
-              ],
-              "refKey": "Org.id",
-            },
-            {
-              "alias": "name",
-              "kind": "field",
-              "name": "name",
-              "namePath": [
-                "Org",
-                "name",
-              ],
-              "refKey": "Org.name",
-            },
-          ],
+          "entrypoints": [],
+          "name": "",
           "target": {
             "alias": "$target_0",
+            "identifyWith": {
+              "name": "id",
+              "paramName": "org_id",
+              "refKey": "Org.id",
+              "type": "integer",
+            },
             "kind": "model",
             "name": "Org",
             "namePath": [
               "Org",
             ],
             "retType": "Org",
-            "select": [],
           },
         },
       ],
-      "entrypoints": [],
-      "name": "",
-      "target": {
-        "alias": "$target_0",
-        "identifyWith": {
-          "name": "id",
-          "paramName": "org_id",
-          "refKey": "Org.id",
-          "type": "integer",
-        },
-        "kind": "model",
-        "name": "Org",
-        "namePath": [
-          "Org",
-        ],
-        "retType": "Org",
-      },
+      "name": undefined,
+      "path": "/api",
     },
   ],
+  "authenticator": undefined,
   "generators": [],
   "models": [
     {
@@ -450,98 +456,104 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
 
 exports[`compose hooks inline hooks 1`] = `
 {
-  "authenticator": undefined,
-  "entrypoints": [
+  "apis": [
     {
-      "endpoints": [
+      "entrypoints": [
         {
-          "actions": [
+          "endpoints": [
             {
-              "alias": "$action_0",
-              "changeset": [
+              "actions": [
                 {
-                  "name": "name",
-                  "setter": {
-                    "args": [],
-                    "hook": {
-                      "inline": "'test name'",
-                      "kind": "inline",
+                  "alias": "$action_0",
+                  "changeset": [
+                    {
+                      "name": "name",
+                      "setter": {
+                        "args": [],
+                        "hook": {
+                          "inline": "'test name'",
+                          "kind": "inline",
+                        },
+                        "kind": "fieldset-hook",
+                      },
                     },
-                    "kind": "fieldset-hook",
-                  },
+                  ],
+                  "isPrimary": true,
+                  "kind": "create-one",
+                  "model": "Org",
+                  "select": [],
+                  "targetPath": [
+                    "Org",
+                  ],
                 },
               ],
-              "isPrimary": true,
-              "kind": "create-one",
-              "model": "Org",
-              "select": [],
-              "targetPath": [
-                "Org",
+              "authSelect": [],
+              "authorize": undefined,
+              "fieldset": {
+                "kind": "record",
+                "nullable": false,
+                "record": {},
+              },
+              "kind": "create",
+              "parentContext": [],
+              "response": [
+                {
+                  "alias": "id",
+                  "kind": "field",
+                  "name": "id",
+                  "namePath": [
+                    "Org",
+                    "id",
+                  ],
+                  "refKey": "Org.id",
+                },
+                {
+                  "alias": "name",
+                  "kind": "field",
+                  "name": "name",
+                  "namePath": [
+                    "Org",
+                    "name",
+                  ],
+                  "refKey": "Org.name",
+                },
               ],
+              "target": {
+                "alias": "$target_0",
+                "kind": "model",
+                "name": "Org",
+                "namePath": [
+                  "Org",
+                ],
+                "retType": "Org",
+                "select": [],
+              },
             },
           ],
-          "authSelect": [],
-          "authorize": undefined,
-          "fieldset": {
-            "kind": "record",
-            "nullable": false,
-            "record": {},
-          },
-          "kind": "create",
-          "parentContext": [],
-          "response": [
-            {
-              "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "Org",
-                "id",
-              ],
-              "refKey": "Org.id",
-            },
-            {
-              "alias": "name",
-              "kind": "field",
-              "name": "name",
-              "namePath": [
-                "Org",
-                "name",
-              ],
-              "refKey": "Org.name",
-            },
-          ],
+          "entrypoints": [],
+          "name": "",
           "target": {
             "alias": "$target_0",
+            "identifyWith": {
+              "name": "id",
+              "paramName": "org_id",
+              "refKey": "Org.id",
+              "type": "integer",
+            },
             "kind": "model",
             "name": "Org",
             "namePath": [
               "Org",
             ],
             "retType": "Org",
-            "select": [],
           },
         },
       ],
-      "entrypoints": [],
-      "name": "",
-      "target": {
-        "alias": "$target_0",
-        "identifyWith": {
-          "name": "id",
-          "paramName": "org_id",
-          "refKey": "Org.id",
-          "type": "integer",
-        },
-        "kind": "model",
-        "name": "Org",
-        "namePath": [
-          "Org",
-        ],
-        "retType": "Org",
-      },
+      "name": undefined,
+      "path": "/api",
     },
   ],
+  "authenticator": undefined,
   "generators": [],
   "models": [
     {

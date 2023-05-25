@@ -16,36 +16,38 @@ describe("entrypoint", () => {
       field title { type string }
     }
 
-    entrypoint Org as org {
-      identify { through slug }
+    api {
+      entrypoint Org as org {
+        identify { through slug }
 
-      list endpoint {
-        pageable
-        order by { slug desc }
-      }
-      get endpoint {}
-
-      entrypoint repos {
-        response { id, org }
-
-        list endpoint {}
+        list endpoint {
+          pageable
+          order by { slug desc }
+        }
         get endpoint {}
-        create endpoint {}
 
-        custom endpoint {
-          cardinality one
-          method PATCH
-          path "somePath"
+        entrypoint repos {
+          response { id, org }
 
-          action {
-            update org as newOrg {}
+          list endpoint {}
+          get endpoint {}
+          create endpoint {}
+
+          custom endpoint {
+            cardinality one
+            method PATCH
+            path "somePath"
+
+            action {
+              update org as newOrg {}
+            }
           }
         }
       }
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    expect(def.entrypoints).toMatchSnapshot();
+    expect(def.apis[0].entrypoints).toMatchSnapshot();
   });
   it("adds validators into fieldsets", () => {
     const bp = `
@@ -53,12 +55,14 @@ describe("entrypoint", () => {
       field name { type string, validate { min 4, max 100 } }
     }
 
-    entrypoint Org {
-      create endpoint {}
+    api {
+      entrypoint Org {
+        create endpoint {}
+      }
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    const endpoint = def.entrypoints[0].endpoints[0] as CreateEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.fieldset).toMatchSnapshot();
   });
 
@@ -70,21 +74,23 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    entrypoint Org {
+    api {
+      entrypoint Org {
 
-      // endpoint W/ responding action
-      custom endpoint {
-        path "somePath1"
-        method POST
-        cardinality many
+        // endpoint W/ responding action
+        custom endpoint {
+          path "somePath1"
+          method POST
+          cardinality many
 
-        action {
-          execute {
-            responds
-            hook {
-              runtime MyRuntime
-              source testFn from "t/h/p"
+          action {
+            execute {
+              responds
+              hook {
+                runtime MyRuntime
+                source testFn from "t/h/p"
 
+              }
             }
           }
         }
@@ -93,7 +99,7 @@ describe("entrypoint", () => {
     `;
     const def = compose(compileToOldSpec(bp));
 
-    const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
 
     expect(action.responds).toBe(true);
@@ -108,19 +114,21 @@ describe("entrypoint", () => {
 
     model Org {}
 
-    entrypoint Org {
+    api {
+      entrypoint Org {
 
-      // endpoint W/O responding action
-      custom endpoint {
-        path "somePath1"
-        method POST
-        cardinality many
+        // endpoint W/O responding action
+        custom endpoint {
+          path "somePath1"
+          method POST
+          cardinality many
 
-        action {
-          execute {
-            hook {
-              runtime MyRuntime
-              source testFn from "t/h/p"
+          action {
+            execute {
+              hook {
+                runtime MyRuntime
+                source testFn from "t/h/p"
+              }
             }
           }
         }
@@ -129,7 +137,7 @@ describe("entrypoint", () => {
     `;
     const def = compose(compileToOldSpec(bp));
 
-    const endpoint = def.entrypoints[0].endpoints[0] as CustomManyEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
 
     expect(action.responds).toBe(false);
@@ -162,15 +170,17 @@ describe("entrypoint", () => {
       field orgCoef { type integer }
     }
 
-    entrypoint Org as org {
-      entrypoint repos as repo {
-        create endpoint {
-          action {
-            create as repo {}
-            create repo.issues as i {
-              set source org.name + repo.name
-              set orgDesc org.desc
-              set orgCoef org.repoCount * org.coef
+    api {
+      entrypoint Org as org {
+        entrypoint repos as repo {
+          create endpoint {
+            action {
+              create as repo {}
+              create repo.issues as i {
+                set source org.name + repo.name
+                set orgDesc org.desc
+                set orgCoef org.repoCount * org.coef
+              }
             }
           }
         }
@@ -178,7 +188,7 @@ describe("entrypoint", () => {
     }
     `;
     const def = compose(compileToOldSpec(bp));
-    const endpoint = def.entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
+    const endpoint = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     const orgSelect = endpoint.parentContext[0].select.map((s) => s.alias);
     const repoSelect = endpoint.target.select.map((s) => s.alias);
     const actionSelects = endpoint.actions.map((a) =>

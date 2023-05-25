@@ -10,6 +10,7 @@ import {
   QueryDef,
   QueryOrderByAtomDef,
   TypedExprDef,
+  VariablePrimitiveType,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
@@ -106,7 +107,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
         case "sum":
         case "count": {
           let nullable: boolean;
-          let primitiveType: string;
+          let primitiveType;
           if (expr.type.kind === "nullable") {
             nullable = true;
             ensureEqual(expr.type.type.kind, "primitive");
@@ -133,7 +134,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
           return {
             kind: "aggregate-function",
             fnName: expr.name,
-            type: { kind: primitiveType as any, nullable },
+            type: { kind: primitiveType as VariablePrimitiveType["kind"], nullable },
             sourcePath,
             targetPath,
           };
@@ -167,21 +168,21 @@ export function composeRefPath(
         kind: "alias",
         namePath: [...head.ref.path, ...tail.map((i) => i.text)],
       };
-    case "context":
-      switch (head.ref.contextKind) {
-        case "virtualInput":
-          return {
-            kind: "variable",
-            name: `___changeset___${path.map((i) => i.text).join("___")}`,
-          };
-        case "authToken":
-          return { kind: "variable", name: `___requestAuthToken` };
-        case "repeat":
-          throw new Error("TODO");
-        default:
-          return { kind: "alias", namePath: path.map((i) => i.text) };
-      }
-    default:
-      throw new Error("Unexpected unresolved reference");
+    case "virtualInput":
+      return {
+        kind: "variable",
+        name: `___changeset___${path.map((i) => i.text).join("___")}`,
+      };
+    case "target":
+    case "action":
+      return { kind: "alias", namePath: path.map((i) => i.text) };
+    case "authToken":
+      return { kind: "variable", name: `___requestAuthToken` };
+    case "auth":
+      return { kind: "alias", namePath: path.map((i) => i.text) };
+    case "struct":
+      throw new UnreachableError("Unexpected struct reference in first identifier");
+    case "repeat":
+      throw new Error("TODO");
   }
 }

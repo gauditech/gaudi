@@ -17,13 +17,13 @@ memberships orgmembership[] @relation("OrgMembershiporg")
 }
     model orgmembership {
 id Int @id @unique @default(autoincrement())
-org_id Int
 user_id Int
+org_id Int
 
 
 
-org org @relation("OrgMembershiporg", fields: [org_id], references: [id])
 user user @relation("OrgMembershipuser", fields: [user_id], references: [id])
+org org @relation("OrgMembershiporg", fields: [org_id], references: [id])
 }
     model repo {
 id Int @id @unique @default(autoincrement())

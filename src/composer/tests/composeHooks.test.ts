@@ -25,13 +25,15 @@ describe("compose hooks", () => {
         }
       }
 
-      entrypoint Org {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                runtime MyRuntime
-                source someHook from "hooks.js"
+      api {
+        entrypoint Org {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  runtime MyRuntime
+                  source someHook from "hooks.js"
+                }
               }
             }
           }
@@ -66,12 +68,14 @@ describe("compose hooks", () => {
         }
       }
 
-      entrypoint Org {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                inline "'test name'"
+      api {
+        entrypoint Org {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  inline "'test name'"
+                }
               }
             }
           }
@@ -97,12 +101,14 @@ describe("compose hooks", () => {
 
       model Org { field name { type string } }
 
-      entrypoint Org {
-        create endpoint {
-          action {
-            create {
-              set name hook {
-                source randomSlug from "hooks.js"
+      api {
+        entrypoint Org {
+          create endpoint {
+            action {
+              create {
+                set name hook {
+                  source randomSlug from "hooks.js"
+                }
               }
             }
           }
@@ -113,7 +119,7 @@ describe("compose hooks", () => {
 
     const result = compose(compileToOldSpec(bp));
 
-    expect(result.entrypoints[0].endpoints[0]).toMatchSnapshot();
+    expect(result.apis[0].entrypoints[0].endpoints[0]).toMatchSnapshot();
   });
 
   it("action hook", () => {
@@ -126,25 +132,27 @@ describe("compose hooks", () => {
         field name { type string }
       }
 
-      entrypoint Org as org {
+      api {
+        entrypoint Org as org {
 
-        custom endpoint {
-          path "somePath"
-          method POST
-          cardinality one
+          custom endpoint {
+            path "somePath"
+            method POST
+            cardinality one
 
-          action {
-            execute {
-              // test action inputs
-              virtual input termsOfUse { type boolean }
+            action {
+              execute {
+                // test action inputs
+                virtual input termsOfUse { type boolean }
 
-              hook {
-                // test hook args
-                arg name org.name
-                arg terms termsOfUse
+                hook {
+                  // test hook args
+                  arg name org.name
+                  arg terms termsOfUse
 
-                runtime MyRuntime
-                source someHook from "hooks.js"
+                  runtime MyRuntime
+                  source someHook from "hooks.js"
+                }
               }
             }
           }
@@ -153,32 +161,34 @@ describe("compose hooks", () => {
     `;
     const result = compose(compileToOldSpec(bp));
 
-    expect(result.entrypoints[0].endpoints).toMatchSnapshot();
+    expect(result.apis[0].entrypoints[0].endpoints).toMatchSnapshot();
   });
 
   it("composes action hook", () => {
     const bp = `
       model Org { field name { type string} }
 
-      entrypoint Org {
+      api {
+        entrypoint Org {
 
-        // login
-        custom endpoint {
-          path "somePath"
-          method POST
-          cardinality one
+          // login
+          custom endpoint {
+            path "somePath"
+            method POST
+            cardinality one
 
-          action {
-            execute {
+            action {
+              execute {
 
-              virtual input prop { type string }
+                virtual input prop { type string }
 
-              hook {
-                // action arg hook
-                arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id
+                hook {
+                  // action arg hook
+                  arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id
 
-                runtime @GAUDI_INTERNAL
-                source login from "hooks/auth"
+                  runtime @GAUDI_INTERNAL
+                  source login from "hooks/auth"
+                }
               }
             }
           }
@@ -186,7 +196,7 @@ describe("compose hooks", () => {
       }
     `;
     const def = compose(compileToOldSpec(bp));
-    const action = (def.entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
+    const action = (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
 
     expect(action).toMatchSnapshot();
   });

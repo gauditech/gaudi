@@ -8,15 +8,17 @@ model Extra {
   relation element { from Element, through extra }
 }
 
-entrypoint Extra {
-  create endpoint {}
-}
+api {
+  entrypoint Extra {
+    create endpoint {}
+  }
 
-entrypoint Element {
-  create endpoint {
-    action {
-      create {
-        reference extra through slug
+  entrypoint Element {
+    create endpoint {
+      action {
+        create {
+          reference extra through slug
+        }
       }
     }
   }
