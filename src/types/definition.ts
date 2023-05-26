@@ -158,6 +158,8 @@ export type FunctionName =
   | "cryptoToken"
   | "stringify";
 
+export type AggregateFunctionName = "count" | "sum";
+
 export type TypedFunction = {
   kind: "function";
   name: FunctionName;
@@ -165,7 +167,21 @@ export type TypedFunction = {
   type?: TypedVariableType;
 };
 
-export type TypedExprDef = LiteralValueDef | TypedAlias | TypedVariable | TypedFunction | undefined;
+export type TypedExprDef =
+  | LiteralValueDef
+  | TypedAlias
+  | TypedVariable
+  | TypedFunction
+  | TypedAggregateFunction
+  | undefined;
+
+type TypedAggregateFunction = {
+  kind: "aggregate-function";
+  fnName: FunctionName | AggregateFunctionName;
+  type: VariablePrimitiveType;
+  sourcePath: string[];
+  targetPath: string[];
+};
 
 type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
 type LiteralTextDef = { kind: "literal"; type: "text"; value: string };

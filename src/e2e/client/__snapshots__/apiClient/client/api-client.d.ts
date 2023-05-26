@@ -124,6 +124,10 @@ export declare function createClient(options: ApiClientOptions): {
                 description: string;
                 summary: string;
                 nameAndDesc: unknown;
+                blank_repos: {
+                    id: number;
+                    total_issues: number;
+                }[];
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             list: PaginatedListApiClientFn<{
                 name: string;
@@ -131,6 +135,10 @@ export declare function createClient(options: ApiClientOptions): {
                 description: string;
                 summary: string;
                 nameAndDesc: unknown;
+                blank_repos: {
+                    id: number;
+                    total_issues: number;
+                }[];
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             create: CreateApiClientFn<{
                 name: string;
@@ -142,6 +150,10 @@ export declare function createClient(options: ApiClientOptions): {
                 description: string;
                 summary: string;
                 nameAndDesc: unknown;
+                blank_repos: {
+                    id: number;
+                    total_issues: number;
+                }[];
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             update: UpdateApiClientFn<string, {
                 name?: string | undefined;
@@ -153,6 +165,10 @@ export declare function createClient(options: ApiClientOptions): {
                 description: string;
                 summary: string;
                 nameAndDesc: unknown;
+                blank_repos: {
+                    id: number;
+                    total_issues: number;
+                }[];
             }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             delete: DeleteApiClientFn<string, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
         };

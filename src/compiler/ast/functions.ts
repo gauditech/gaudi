@@ -1,6 +1,6 @@
 import { Type } from "./type";
 
-export const builtinFunctions: { name: string; args: Type[]; result: Type }[] = [
+export const builtinFunctions = [
   { name: "length", args: [Type.string], result: Type.integer },
   { name: "lower", args: [Type.string], result: Type.string },
   { name: "upper", args: [Type.string], result: Type.string },
@@ -9,4 +9,6 @@ export const builtinFunctions: { name: string; args: Type[]; result: Type }[] = 
   { name: "cryptoCompare", args: [Type.string, Type.string], result: Type.boolean },
   { name: "cryptoToken", args: [Type.integer], result: Type.string },
   { name: "stringify", args: [Type.any], result: Type.string },
-];
+  { name: "count", args: [Type.collection(Type.any)], result: Type.integer },
+  { name: "sum", args: [Type.collection(Type.any)] },
+] as const;

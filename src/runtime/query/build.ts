@@ -1,7 +1,5 @@
 import _ from "lodash";
 
-import { mkJoinConnection } from "./stringify";
-
 import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
 import { HookCode } from "@src/types/common";
@@ -12,6 +10,7 @@ import {
   QueryDef,
   QueryOrderByAtomDef,
   SelectDef,
+  SelectFieldItem,
   SelectHookItem,
   SelectItem,
   SelectableItem,
@@ -147,11 +146,6 @@ export function queryFromParts(
 
   const sourceModel = getRef.model(def, _.first(fromPath)!);
 
-  const filterPaths = getFilterPaths(filter);
-  const paths = uniqueNamePaths([fromPath, ...filterPaths]);
-  const direct = getDirectChildren(paths);
-  ensureEqual(direct.length, 1);
-
   return {
     kind: "query",
     refKey: "N/A",
@@ -178,21 +172,6 @@ export function getDirectChildren(paths: NamePath[]): string[] {
 
 export function getRelatedPaths(paths: NamePath[], direct: string): NamePath[] {
   return paths.filter((path) => path[0] === direct).map(_.tail);
-}
-
-export function getFilterPaths(filter: TypedExprDef): string[][] {
-  switch (filter?.kind) {
-    case undefined:
-    case "literal":
-    case "variable":
-      return [];
-    case "alias": {
-      return [[...filter.namePath]];
-    }
-    case "function": {
-      return filter.args.flatMap((arg) => getFilterPaths(arg));
-    }
-  }
 }
 
 /**
@@ -316,8 +295,21 @@ export function transformExpressionPaths(
         args: exp.args.map((arg) => transformExpressionPaths(arg, from, to)),
       };
     }
+    case "aggregate-function": {
+      return { ...exp, sourcePath: transformNamePath(exp.sourcePath, from, to) };
+    }
     default: {
       assertUnreachable(exp);
     }
   }
+}
+
+function mkJoinConnection(model: ModelDef): SelectFieldItem {
+  return {
+    kind: "field",
+    refKey: `${model.name}.id`,
+    alias: "__join_connection",
+    name: "id",
+    namePath: [model.name, "id"],
+  };
 }

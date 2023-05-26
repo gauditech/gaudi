@@ -89,6 +89,16 @@ describe("api client lib", () => {
       expect(response.status).toBe(200);
       expect(response.data).toMatchInlineSnapshot(`
         {
+          "blank_repos": [
+            {
+              "id": 2,
+              "total_issues": "0",
+            },
+            {
+              "id": 1,
+              "total_issues": "0",
+            },
+          ],
           "description": "Org 1 description (odd)",
           "id": 1,
           "name": "Org 1",
@@ -109,6 +119,7 @@ describe("api client lib", () => {
         {
           "data": [
             {
+              "blank_repos": [],
               "description": "Org 4 description (even)",
               "id": 4,
               "name": "Org 4",
@@ -117,6 +128,7 @@ describe("api client lib", () => {
               "summary": "Org 4Org 4 description (even)",
             },
             {
+              "blank_repos": [],
               "description": "Org 3 description (odd)",
               "id": 3,
               "name": "Org 3",
@@ -125,6 +137,12 @@ describe("api client lib", () => {
               "summary": "Org 3Org 3 description (odd)",
             },
             {
+              "blank_repos": [
+                {
+                  "id": 4,
+                  "total_issues": "0",
+                },
+              ],
               "description": "Org 2 description (even)",
               "id": 2,
               "name": "Org 2",
@@ -133,6 +151,16 @@ describe("api client lib", () => {
               "summary": "Org 2Org 2 description (even)",
             },
             {
+              "blank_repos": [
+                {
+                  "id": 2,
+                  "total_issues": "0",
+                },
+                {
+                  "id": 1,
+                  "total_issues": "0",
+                },
+              ],
               "description": "Org 1 description (odd)",
               "id": 1,
               "name": "Org 1",
@@ -159,6 +187,12 @@ describe("api client lib", () => {
         {
           "data": [
             {
+              "blank_repos": [
+                {
+                  "id": 4,
+                  "total_issues": "0",
+                },
+              ],
               "description": "Org 2 description (even)",
               "id": 2,
               "name": "Org 2",
@@ -167,6 +201,16 @@ describe("api client lib", () => {
               "summary": "Org 2Org 2 description (even)",
             },
             {
+              "blank_repos": [
+                {
+                  "id": 2,
+                  "total_issues": "0",
+                },
+                {
+                  "id": 1,
+                  "total_issues": "0",
+                },
+              ],
               "description": "Org 1 description (odd)",
               "id": 1,
               "name": "Org 1",
@@ -201,6 +245,7 @@ describe("api client lib", () => {
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
+          "blank_repos": [],
           "description": "Org NEW description",
           "id": 5,
           "name": "Org NEW",
@@ -228,6 +273,12 @@ describe("api client lib", () => {
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
+          "blank_repos": [
+            {
+              "id": 4,
+              "total_issues": "0",
+            },
+          ],
           "description": "Org 2A description",
           "id": 2,
           "name": "Org 2A",
@@ -280,6 +331,7 @@ describe("api client lib", () => {
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
+          "blank_repos": [],
           "description": "Org custom NEW description",
           "id": 6,
           "name": "Org Custom NEW",
@@ -308,6 +360,12 @@ describe("api client lib", () => {
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
+          "blank_repos": [
+            {
+              "id": 4,
+              "total_issues": "0",
+            },
+          ],
           "description": "Org custom 2A description",
           "id": 2,
           "name": "Org custom 2A",

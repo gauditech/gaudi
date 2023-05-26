@@ -28,6 +28,13 @@ model Org {
 
   computed summary { name + description }
 
+  query blank_repos {
+    from repos,
+    filter { is_public is true and total_issues is 0 },
+    order by { id desc },
+    limit 5
+  }
+
   hook nameAndDesc {
     arg test query {
       select { name, description }
@@ -47,6 +54,8 @@ model Repo {
   field latest_num { type integer }
 
   relation issues { from Issue, through repo }
+
+  computed total_issues { count(issues.id) }
 }
 
 
@@ -70,7 +79,7 @@ api {
   // Orgs
   entrypoint Org as org {
     identify { through slug }
-    response { name, slug, description, summary, nameAndDesc }
+    response { name, slug, description, summary, nameAndDesc, blank_repos { id, total_issues } }
 
     // --- endpoints with "execute" actions
     // register BEFORE other endpoints to avoid mismatching with other endpoints

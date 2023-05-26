@@ -6,7 +6,8 @@ import {
   decorateWithOrderBy,
   decorateWithPaging,
 } from "./endpointQueries";
-import { queryToString } from "./stringify";
+import { buildQueryPlan } from "./queryPlan";
+import { queryPlanToString } from "./stringify";
 
 import { compileToOldSpec, compose } from "@src/index";
 import { EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
@@ -76,7 +77,7 @@ describe("Endpoint queries", () => {
       const q = buildEndpointQueries(def, endpoint);
       expect(extractEndpointQueries(q)).toMatchSnapshot();
       expect(
-        extractEndpointQueries(q).map((q) => queryToString(def, q) + "\n\n\n")
+        extractEndpointQueries(q).map((q) => queryPlanToString(buildQueryPlan(def, q)) + "\n\n\n")
       ).toMatchSnapshot();
       expect(endpoint.target).toMatchSnapshot();
       expect(endpoint.parentContext).toMatchSnapshot();
@@ -133,7 +134,7 @@ describe("Endpoint queries", () => {
     it.each(Object.entries(queries))("test %s query endpoint", (_name, q) => {
       expect(extractQueryTree(q)).toMatchSnapshot();
       expect(
-        extractQueryTree(q).map((q) => queryToString(plainBp.def, q) + "\n\n\n")
+        extractQueryTree(q).map((q) => queryPlanToString(buildQueryPlan(plainBp.def, q)) + "\n\n\n")
       ).toMatchSnapshot();
     });
   });
@@ -196,7 +197,7 @@ describe("Endpoint queries", () => {
     it.each(Object.entries(queries))("test %s query endpoint", (_name, q) => {
       expect(extractQueryTree(q)).toMatchSnapshot();
       expect(
-        extractQueryTree(q).map((q) => queryToString(plainBp.def, q) + "\n\n\n")
+        extractQueryTree(q).map((q) => queryPlanToString(buildQueryPlan(plainBp.def, q)) + "\n\n\n")
       ).toMatchSnapshot();
     });
   });
@@ -220,7 +221,7 @@ describe("Orderby, limit and offset", () => {
     const def = compose(compileToOldSpec(bp));
     const q = def.models[0].queries[0];
 
-    expect(queryToString(def, q)).toMatchSnapshot();
+    expect(queryPlanToString(buildQueryPlan(def, q))).toMatchSnapshot();
   });
   it("supports orderby, limit and offset in batching query", () => {
     const bp = `
@@ -257,7 +258,7 @@ describe("Orderby, limit and offset", () => {
     expect(extractQueryTree(qt)).toMatchSnapshot();
     expect(
       extractQueryTree(qt)
-        .map((q) => queryToString(def, q))
+        .map((q) => queryPlanToString(buildQueryPlan(def, q)))
         .join("\n\n\n")
     ).toMatchSnapshot();
   });

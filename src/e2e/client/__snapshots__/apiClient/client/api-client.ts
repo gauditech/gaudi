@@ -50,7 +50,9 @@ type GetResp = { name: string,
 slug: string,
 description: string,
 summary: string,
-nameAndDesc: unknown };
+nameAndDesc: unknown,
+blank_repos: { id: number,
+total_issues: number }[] };
 type GetError = CustomGetError;
 type ListResp = GetResp;
 type ListError = CustomGetError;

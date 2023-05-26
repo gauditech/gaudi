@@ -1,0 +1,457 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
+{
+  "entry": "Org",
+  "filter": {
+    "args": [
+      {
+        "kind": "alias",
+        "value": [
+          "Org",
+          "SUM",
+          "latest_repos",
+          "collectedPoints",
+          "result",
+        ],
+      },
+      {
+        "kind": "literal",
+        "type": "integer",
+        "value": 100,
+      },
+    ],
+    "fnName": ">",
+    "kind": "function",
+  },
+  "fromPath": [
+    "Org",
+  ],
+  "groupBy": [],
+  "joins": [
+    {
+      "joinOn": [
+        [
+          "Org",
+          "id",
+        ],
+        [
+          "Org",
+          "SUM",
+          "latest_repos",
+          "collectedPoints",
+          "__join_connection",
+        ],
+      ],
+      "joinType": "left",
+      "kind": "subquery",
+      "namePath": [
+        "Org",
+        "SUM",
+        "latest_repos",
+        "collectedPoints",
+      ],
+      "plan": {
+        "entry": "Org",
+        "fromPath": [
+          "Org",
+          "latest_repos",
+        ],
+        "groupBy": [
+          [
+            "Org",
+            "id",
+          ],
+        ],
+        "joins": [
+          {
+            "joinOn": [
+              [
+                "Org",
+                "id",
+              ],
+              [
+                "Org",
+                "latest_repos",
+                "__join_connection",
+              ],
+            ],
+            "joinType": "left",
+            "kind": "subquery",
+            "namePath": [
+              "Org",
+              "latest_repos",
+            ],
+            "plan": {
+              "entry": "Org",
+              "filter": undefined,
+              "fromPath": [
+                "Org",
+                "repos",
+              ],
+              "groupBy": [],
+              "joins": [
+                {
+                  "joinOn": [
+                    [
+                      "Org",
+                      "id",
+                    ],
+                    [
+                      "Org",
+                      "repos",
+                      "org_id",
+                    ],
+                  ],
+                  "joinType": "inner",
+                  "kind": "inline",
+                  "modelName": "Repo",
+                  "namePath": [
+                    "Org",
+                    "repos",
+                  ],
+                  "target": "repos",
+                },
+              ],
+              "limit": 5,
+              "offset": undefined,
+              "orderBy": [
+                [
+                  {
+                    "kind": "alias",
+                    "value": [
+                      "Org",
+                      "repos",
+                      "id",
+                    ],
+                  },
+                  "desc",
+                ],
+              ],
+              "select": undefined,
+            },
+          },
+        ],
+        "select": {
+          "__join_connection": {
+            "kind": "alias",
+            "value": [
+              "Org",
+              "id",
+            ],
+          },
+          "result": {
+            "args": [
+              {
+                "kind": "alias",
+                "value": [
+                  "Org",
+                  "latest_repos",
+                  "collectedpoints",
+                ],
+              },
+            ],
+            "fnName": "sum",
+            "kind": "function",
+          },
+        },
+      },
+    },
+  ],
+  "limit": undefined,
+  "offset": undefined,
+  "orderBy": undefined,
+  "select": {
+    "id": {
+      "kind": "alias",
+      "value": [
+        "Org",
+        "id",
+      ],
+    },
+  },
+}
+`;
+
+exports[`Query plan subqueries using partition/over: SQL snapshot 1`] = `
+"SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org"."id" AS "__join_connection",
+      sum("Org.latest_repos"."collectedpoints") AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN (
+        SELECT
+          *
+        FROM
+          (
+            SELECT
+              "Org.repos".*,
+              "Org"."id" AS "__join_connection",
+              ROW_NUMBER() OVER (
+                PARTITION BY
+                  "Org"."id"
+                ORDER BY
+                  "Org.repos"."id" desc
+              ) AS "__row_number"
+            FROM
+              "org" AS "Org"
+              INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+          ) AS topn
+        WHERE
+          topn."__row_number" <= 5
+          AND topn."__row_number" > 0
+      ) AS "Org.latest_repos" ON "Org"."id" = "Org.latest_repos"."__join_connection"
+    GROUP BY
+      "Org"."id"
+  ) AS "Org.SUM.latest_repos.collectedPoints" ON "Org"."id" = "Org.SUM.latest_repos.collectedPoints"."__join_connection"
+WHERE
+  "Org.SUM.latest_repos.collectedPoints"."result" > 100"
+`;
+
+exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
+{
+  "filter": {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "fnName": "count",
+                "kind": "aggregate-function",
+                "sourcePath": [
+                  "Org",
+                  "repos",
+                ],
+                "targetPath": [
+                  "issues",
+                  "id",
+                ],
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
+              },
+              {
+                "fnName": "count",
+                "kind": "aggregate-function",
+                "sourcePath": [
+                  "Org",
+                  "repos",
+                ],
+                "targetPath": [
+                  "issues",
+                  "repo",
+                  "id",
+                ],
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
+              },
+            ],
+            "kind": "function",
+            "name": "+",
+          },
+          {
+            "fnName": "sum",
+            "kind": "aggregate-function",
+            "sourcePath": [
+              "Org",
+              "repos",
+            ],
+            "targetPath": [
+              "issues",
+              "id",
+            ],
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "+",
+      },
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "fnName": "count",
+                "kind": "aggregate-function",
+                "sourcePath": [
+                  "Org",
+                  "repos",
+                ],
+                "targetPath": [
+                  "issues",
+                  "repo_name",
+                ],
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
+              },
+              {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "repos",
+                  "ref_number",
+                ],
+              },
+            ],
+            "kind": "function",
+            "name": "+",
+          },
+          {
+            "fnName": "count",
+            "kind": "aggregate-function",
+            "sourcePath": [
+              "Org",
+            ],
+            "targetPath": [
+              "repos",
+              "id",
+            ],
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "+",
+      },
+    ],
+    "kind": "function",
+    "name": ">",
+  },
+  "fromPath": [
+    "Org",
+    "repos",
+  ],
+  "kind": "query",
+  "limit": undefined,
+  "modelRefKey": "Org",
+  "name": "$query",
+  "offset": undefined,
+  "orderBy": undefined,
+  "refKey": "N/A",
+  "retType": "Repo",
+  "select": [
+    {
+      "alias": "id",
+      "kind": "field",
+      "name": "id",
+      "namePath": [
+        "Org",
+        "repos",
+        "id",
+      ],
+      "refKey": "Repo.id",
+    },
+    {
+      "alias": "name",
+      "kind": "field",
+      "name": "name",
+      "namePath": [
+        "Org",
+        "repos",
+        "name",
+      ],
+      "refKey": "Repo.name",
+    },
+    {
+      "alias": "org_name",
+      "kind": "computed",
+      "name": "org_name",
+      "namePath": [
+        "Org",
+        "repos",
+        "org_name",
+      ],
+      "refKey": "Repo.org_name",
+    },
+  ],
+}
+`;
+
+exports[`Query plan works with complex aggregates: SQL snapshot 1`] = `
+"SELECT
+  "Org.repos"."id" AS "id",
+  "Org.repos"."name" AS "name",
+  "Org.repos.org"."name" AS "org_name"
+FROM
+  "org" AS "Org"
+  INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+  INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+  LEFT JOIN (
+    SELECT
+      "Org"."id" AS "__join_connection",
+      COALESCE(count("Org.repos"."id"), 0) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+    GROUP BY
+      "Org"."id"
+  ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
+  LEFT JOIN (
+    SELECT
+      "Repo"."id" AS "__join_connection",
+      COALESCE(count("Repo.issues"."id"), 0) AS "result"
+    FROM
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+    GROUP BY
+      "Repo"."id"
+  ) AS "Org.repos.COUNT.issues.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.id"."__join_connection"
+  LEFT JOIN (
+    SELECT
+      "Repo"."id" AS "__join_connection",
+      COALESCE(count("Repo.issues.repo"."id"), 0) AS "result"
+    FROM
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+      LEFT JOIN "repo" AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
+    GROUP BY
+      "Repo"."id"
+  ) AS "Org.repos.COUNT.issues.repo.id" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo.id"."__join_connection"
+  LEFT JOIN (
+    SELECT
+      "Repo"."id" AS "__join_connection",
+      COALESCE(count("Repo.issues.repo"."name"), 0) AS "result"
+    FROM
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+      LEFT JOIN "repo" AS "Repo.issues.repo" ON "Repo.issues"."repo_id" = "Repo.issues.repo"."id"
+    GROUP BY
+      "Repo"."id"
+  ) AS "Org.repos.COUNT.issues.repo_name" ON "Org.repos"."id" = "Org.repos.COUNT.issues.repo_name"."__join_connection"
+  LEFT JOIN (
+    SELECT
+      "Repo"."id" AS "__join_connection",
+      sum("Repo.issues"."id") AS "result"
+    FROM
+      "repo" AS "Repo"
+      LEFT JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
+    GROUP BY
+      "Repo"."id"
+  ) AS "Org.repos.SUM.issues.id" ON "Org.repos"."id" = "Org.repos.SUM.issues.id"."__join_connection"
+WHERE
+  (
+    (
+      "Org.repos.COUNT.issues.id"."result" + "Org.repos.COUNT.issues.repo.id"."result"
+    ) + "Org.repos.SUM.issues.id"."result"
+  ) > (
+    (
+      "Org.repos.COUNT.issues.repo_name"."result" + "Org.repos"."ref_number"
+    ) + "Org.COUNT.repos.id"."result"
+  )"
+`;
