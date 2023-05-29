@@ -145,7 +145,10 @@ export function collectQueryAtoms(def: Definition, q: QueryDef): QueryAtom[] {
       })
   );
   const filterAtoms = pathsFromExpr(expandExpression(def, q.filter));
-  return getFinalQueryAtoms([fromPathAtom, ...selectAtoms, ...filterAtoms]);
+  const orderByAtoms = (q.orderBy ?? []).flatMap((order) =>
+    pathsFromExpr(expandExpression(def, order.exp))
+  );
+  return getFinalQueryAtoms([fromPathAtom, ...selectAtoms, ...filterAtoms, ...orderByAtoms]);
 }
 
 function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
