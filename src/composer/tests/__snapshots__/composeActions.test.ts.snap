@@ -102,13 +102,18 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
       "select": [
         {
           "alias": "id",
-          "kind": "field",
-          "name": "id",
-          "namePath": [
-            "Org",
-            "id",
-          ],
-          "refKey": "Org.id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
       ],
     },
@@ -273,23 +278,28 @@ exports[`compose actions native actions can create nested relations through tran
     "select": [
       {
         "alias": "org",
-        "kind": "reference",
-        "name": "org",
+        "kind": "nested-select",
         "namePath": [
           "repo",
           "org",
         ],
+        "refKey": "Repo.org",
         "select": [
           {
             "alias": "id",
-            "kind": "field",
-            "name": "id",
-            "namePath": [
-              "repo",
-              "org",
-              "id",
-            ],
-            "refKey": "Org.id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "repo",
+                "org",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         ],
       },
@@ -464,13 +474,18 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "e",
-          "id",
-        ],
-        "refKey": "OrgExtra.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "e",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
     "targetPath": [
@@ -518,13 +533,18 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "org",
-          "id",
-        ],
-        "refKey": "Org.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
     "targetPath": [

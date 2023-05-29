@@ -93,13 +93,18 @@ exports[`populator composer succeeds for nested iterations 1`] = `
           "select": [
             {
               "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "org",
-                "id",
-              ],
-              "refKey": "Org.id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
             },
           ],
           "targetPath": [
@@ -216,23 +221,33 @@ exports[`populator composer succeeds for nested populators 1`] = `
           "select": [
             {
               "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "org",
-                "id",
-              ],
-              "refKey": "Org.id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
             },
             {
               "alias": "name",
-              "kind": "field",
-              "name": "name",
-              "namePath": [
-                "org",
-                "name",
-              ],
-              "refKey": "Org.name",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "name",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "text",
+                "nullable": false,
+              },
             },
           ],
           "targetPath": [
@@ -277,23 +292,33 @@ exports[`populator composer succeeds for nested populators 1`] = `
               "select": [
                 {
                   "alias": "id",
-                  "kind": "field",
-                  "name": "id",
-                  "namePath": [
-                    "repo",
-                    "id",
-                  ],
-                  "refKey": "Repo.id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "repo",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "name",
-                  "kind": "field",
-                  "name": "name",
-                  "namePath": [
-                    "repo",
-                    "name",
-                  ],
-                  "refKey": "Repo.name",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "repo",
+                      "name",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
               ],
               "targetPath": [
@@ -679,13 +704,18 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
           "select": [
             {
               "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "org",
-                "id",
-              ],
-              "refKey": "Org.id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
             },
           ],
           "targetPath": [

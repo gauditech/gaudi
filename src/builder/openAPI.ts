@@ -20,32 +20,18 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
    */
   function buildRequiredProperties(select: SelectItem[]) {
     return select
-      .map((select): [string, boolean] => {
-        switch (select.kind) {
-          case "field": {
-            const field = getRef.field(definition, select.refKey);
-            return [select.alias, !field.nullable];
-          }
-          case "reference":
-          case "relation":
-          case "query": {
+      .map((select) => {
+        return (
+          match<typeof select, [string, boolean]>(select)
+            .with({ kind: "expression" }, (item) => [item.alias, !item.type.nullable])
+            // FIXME hook is currently always nullable
+            .with({ kind: "model-hook" }, (item) => [item.alias, false])
             // reference/releation/query are always required themselves
             // their properties are handled for each object separately
-            return [select.alias, true];
-          }
-          case "aggregate": {
-            // FIXME read the type from the `AggregateDef`
-            return [select.name, true];
-          }
-          case "computed": {
-            const computed = getRef.computed(definition, select.refKey);
-            return [select.name, computed.type.nullable];
-          }
-          case "model-hook": {
-            // FIXME - add required type to hooks
-            return [select.name, false]; // with hooks, everything is optional
-          }
-        }
+            // FIXME respect cardinality and nullable!!
+            .with({ kind: "nested-select" }, (item) => [item.alias, true])
+            .exhaustive()
+        );
       })
       .filter(([_name, required]) => required)
       .map(([name]) => name);
@@ -54,49 +40,31 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
   /** Create OpenAPI schema properties. */
   function buildSchemaProperties(select: SelectItem[]) {
     const schemaEntries = select.map((select): [string, OpenAPIV3.SchemaObject] => {
-      switch (select.kind) {
-        case "field": {
-          const field = getRef.field(definition, select.refKey);
-          return [
-            select.alias,
-            { type: convertToOpenAPIType(field.type), nullable: field.nullable },
-          ];
-        }
-        // NOTE: not yet implemented; TODO: rename to `literal`
-        // case "constant":
-        //   return [select.alias, { type: convertToOpenAPIType(select.type) }];
-        case "reference":
-        case "relation":
-        case "query": {
-          const isObject = select.kind === "reference";
-          const properties = buildSchemaProperties(select.select);
-          const required = buildRequiredProperties(select.select);
-          if (isObject) {
-            return [select.alias, { type: "object", properties, required }];
-          } else {
-            return [
-              select.alias,
-              { type: "array", items: { type: "object", properties, required } },
-            ];
-          }
-        }
-        case "aggregate": {
-          // FIXME read the type from the `AggregateDef`
-          return [select.name, { type: "integer" }];
-        }
-        case "computed": {
-          const computed = getRef.computed(definition, select.refKey);
-          // FIXME - add return type to computeds
-          return [
-            select.name,
-            { type: convertToOpenAPIType(computed.type.kind), nullable: computed.type.nullable },
-          ];
-        }
-        case "model-hook": {
-          // FIXME - add return type to hooks
-          return [select.name, {}];
-        }
-      }
+      return (
+        match<typeof select, [string, OpenAPIV3.SchemaObject]>(select)
+          .with({ kind: "expression" }, (item) => [
+            item.alias,
+            { type: convertToOpenAPIType(item.type.kind), nullable: item.type.nullable },
+          ])
+          // FIXME missing type info for hooks
+          .with({ kind: "model-hook" }, (item) => [item.alias, {}])
+          .with({ kind: "nested-select" }, (item) => {
+            const ref = getRef(definition, item.refKey);
+            // FIXME proper cardinality checks!
+            const isObject = ref.kind === "reference";
+            const properties = buildSchemaProperties(item.select);
+            const required = buildRequiredProperties(item.select);
+            if (isObject) {
+              return [item.alias, { type: "object", properties, required }];
+            } else {
+              return [
+                item.alias,
+                { type: "array", items: { type: "object", properties, required } },
+              ];
+            }
+          })
+          .exhaustive()
+      );
     });
 
     return Object.fromEntries(schemaEntries);

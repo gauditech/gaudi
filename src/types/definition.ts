@@ -309,46 +309,18 @@ export type CustomManyEndpointDef = {
   responds: boolean;
 };
 
-export type SelectableItem =
-  | SelectFieldItem
-  | SelectComputedItem
-  | SelectAggregateItem
-  | SelectExpressionItem;
-
-export type SelectFieldItem = {
-  kind: "field";
-  refKey: string;
-  name: string;
-  alias: string;
-  namePath: string[];
-  // nullable: boolean;
-};
-
-export type SelectComputedItem = {
-  kind: "computed";
-  refKey: string;
-  name: string;
-  alias: string;
-  namePath: string[];
-  // nullable: boolean
-};
-
-export type SelectAggregateItem = {
-  kind: "aggregate";
-  refKey: string;
-  name: string;
-  alias: string;
-  namePath: string[];
-};
-
-export type SelectExpressionItem = {
+export type SelectableExpression = {
   kind: "expression";
-  fnName: FunctionName;
   alias: string;
-  args: SelectableItem[];
+  expr: TypedExprDef;
+  type: VariablePrimitiveType;
 };
 
-export type SelectHookItem = {
+/**
+ * NOTE: hooks currently cannot be part of expressions.
+ */
+
+export type SelectHook = {
   kind: "model-hook";
   refKey: string;
   name: string;
@@ -356,17 +328,15 @@ export type SelectHookItem = {
   namePath: string[];
 };
 
-export type DeepSelectItem = {
-  kind: "reference" | "relation" | "query";
-  name: string;
+export type NestedSelect = {
+  kind: "nested-select";
+  refKey: string;
   namePath: string[];
   alias: string;
-  // nullable: boolean;
-  // retType: string;
   select: SelectItem[];
 };
 
-export type SelectItem = SelectableItem | DeepSelectItem | SelectHookItem;
+export type SelectItem = SelectableExpression | NestedSelect | SelectHook;
 
 export type SelectDef = SelectItem[];
 

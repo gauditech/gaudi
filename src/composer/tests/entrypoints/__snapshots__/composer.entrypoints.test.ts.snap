@@ -86,33 +86,48 @@ exports[`entrypoint composes basic example 1`] = `
         "response": [
           {
             "alias": "id",
-            "kind": "field",
-            "name": "id",
-            "namePath": [
-              "Org",
-              "id",
-            ],
-            "refKey": "Org.id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
           {
             "alias": "slug",
-            "kind": "field",
-            "name": "slug",
-            "namePath": [
-              "Org",
-              "slug",
-            ],
-            "refKey": "Org.slug",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "slug",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "text",
+              "nullable": false,
+            },
           },
           {
             "alias": "name",
-            "kind": "field",
-            "name": "name",
-            "namePath": [
-              "Org",
-              "name",
-            ],
-            "refKey": "Org.name",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "name",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "text",
+              "nullable": false,
+            },
           },
         ],
         "target": {
@@ -134,33 +149,48 @@ exports[`entrypoint composes basic example 1`] = `
         "response": [
           {
             "alias": "id",
-            "kind": "field",
-            "name": "id",
-            "namePath": [
-              "Org",
-              "id",
-            ],
-            "refKey": "Org.id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
           {
             "alias": "slug",
-            "kind": "field",
-            "name": "slug",
-            "namePath": [
-              "Org",
-              "slug",
-            ],
-            "refKey": "Org.slug",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "slug",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "text",
+              "nullable": false,
+            },
           },
           {
             "alias": "name",
-            "kind": "field",
-            "name": "name",
-            "namePath": [
-              "Org",
-              "name",
-            ],
-            "refKey": "Org.name",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Org",
+                "name",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "text",
+              "nullable": false,
+            },
           },
         ],
         "target": {
@@ -212,60 +242,80 @@ exports[`entrypoint composes basic example 1`] = `
             "response": [
               {
                 "alias": "id",
-                "kind": "field",
-                "name": "id",
-                "namePath": [
-                  "Org",
-                  "repos",
-                  "id",
-                ],
-                "refKey": "Repo.id",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "Org",
+                    "repos",
+                    "id",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
               {
                 "alias": "org",
-                "kind": "reference",
-                "name": "org",
+                "kind": "nested-select",
                 "namePath": [
                   "Org",
                   "repos",
                   "org",
                 ],
+                "refKey": "Repo.org",
                 "select": [
                   {
                     "alias": "id",
-                    "kind": "field",
-                    "name": "id",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "id",
-                    ],
-                    "refKey": "Org.id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
                   },
                   {
                     "alias": "slug",
-                    "kind": "field",
-                    "name": "slug",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "slug",
-                    ],
-                    "refKey": "Org.slug",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "slug",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "text",
+                      "nullable": false,
+                    },
                   },
                   {
                     "alias": "name",
-                    "kind": "field",
-                    "name": "name",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "name",
-                    ],
-                    "refKey": "Org.name",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "name",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "text",
+                      "nullable": false,
+                    },
                   },
                 ],
               },
@@ -307,60 +357,80 @@ exports[`entrypoint composes basic example 1`] = `
             "response": [
               {
                 "alias": "id",
-                "kind": "field",
-                "name": "id",
-                "namePath": [
-                  "Org",
-                  "repos",
-                  "id",
-                ],
-                "refKey": "Repo.id",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "Org",
+                    "repos",
+                    "id",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
               {
                 "alias": "org",
-                "kind": "reference",
-                "name": "org",
+                "kind": "nested-select",
                 "namePath": [
                   "Org",
                   "repos",
                   "org",
                 ],
+                "refKey": "Repo.org",
                 "select": [
                   {
                     "alias": "id",
-                    "kind": "field",
-                    "name": "id",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "id",
-                    ],
-                    "refKey": "Org.id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
                   },
                   {
                     "alias": "slug",
-                    "kind": "field",
-                    "name": "slug",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "slug",
-                    ],
-                    "refKey": "Org.slug",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "slug",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "text",
+                      "nullable": false,
+                    },
                   },
                   {
                     "alias": "name",
-                    "kind": "field",
-                    "name": "name",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "name",
-                    ],
-                    "refKey": "Org.name",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "name",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "text",
+                      "nullable": false,
+                    },
                   },
                 ],
               },
@@ -455,13 +525,18 @@ exports[`entrypoint composes basic example 1`] = `
                 "select": [
                   {
                     "alias": "id",
-                    "kind": "field",
-                    "name": "id",
-                    "namePath": [
-                      "Org",
-                      "id",
-                    ],
-                    "refKey": "Org.id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
                   },
                 ],
               },
@@ -469,60 +544,80 @@ exports[`entrypoint composes basic example 1`] = `
             "response": [
               {
                 "alias": "id",
-                "kind": "field",
-                "name": "id",
-                "namePath": [
-                  "Org",
-                  "repos",
-                  "id",
-                ],
-                "refKey": "Repo.id",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "Org",
+                    "repos",
+                    "id",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
               {
                 "alias": "org",
-                "kind": "reference",
-                "name": "org",
+                "kind": "nested-select",
                 "namePath": [
                   "Org",
                   "repos",
                   "org",
                 ],
+                "refKey": "Repo.org",
                 "select": [
                   {
                     "alias": "id",
-                    "kind": "field",
-                    "name": "id",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "id",
-                    ],
-                    "refKey": "Org.id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
                   },
                   {
                     "alias": "slug",
-                    "kind": "field",
-                    "name": "slug",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "slug",
-                    ],
-                    "refKey": "Org.slug",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "slug",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "text",
+                      "nullable": false,
+                    },
                   },
                   {
                     "alias": "name",
-                    "kind": "field",
-                    "name": "name",
-                    "namePath": [
-                      "Org",
-                      "repos",
-                      "org",
-                      "name",
-                    ],
-                    "refKey": "Org.name",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "repos",
+                        "org",
+                        "name",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "text",
+                      "nullable": false,
+                    },
                   },
                 ],
               },
@@ -627,13 +722,18 @@ exports[`entrypoint composes basic example 1`] = `
                 "select": [
                   {
                     "alias": "id",
-                    "kind": "field",
-                    "name": "id",
-                    "namePath": [
-                      "Org",
-                      "id",
-                    ],
-                    "refKey": "Org.id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
                   },
                 ],
               },

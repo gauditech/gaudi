@@ -91,13 +91,18 @@ exports[`compose hooks action hook 1`] = `
       "select": [
         {
           "alias": "name",
-          "kind": "field",
-          "name": "name",
-          "namePath": [
-            "Org",
-            "name",
-          ],
-          "refKey": "Org.name",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "text",
+            "nullable": false,
+          },
         },
       ],
     },
@@ -161,23 +166,33 @@ exports[`compose hooks composes action hook 1`] = `
             "select": [
               {
                 "alias": "id",
-                "kind": "field",
-                "name": "id",
-                "namePath": [
-                  "Org",
-                  "id",
-                ],
-                "refKey": "Org.id",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "Org",
+                    "id",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
               {
                 "alias": "name",
-                "kind": "field",
-                "name": "name",
-                "namePath": [
-                  "Org",
-                  "name",
-                ],
-                "refKey": "Org.name",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "Org",
+                    "name",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "text",
+                  "nullable": false,
+                },
               },
             ],
           },
@@ -243,23 +258,33 @@ exports[`compose hooks composes source hooks 1`] = `
               "response": [
                 {
                   "alias": "id",
-                  "kind": "field",
-                  "name": "id",
-                  "namePath": [
-                    "Org",
-                    "id",
-                  ],
-                  "refKey": "Org.id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "name",
-                  "kind": "field",
-                  "name": "name",
-                  "namePath": [
-                    "Org",
-                    "name",
-                  ],
-                  "refKey": "Org.name",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "name",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
               ],
               "target": {
@@ -422,23 +447,33 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
   "response": [
     {
       "alias": "id",
-      "kind": "field",
-      "name": "id",
-      "namePath": [
-        "Org",
-        "id",
-      ],
-      "refKey": "Org.id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
     },
     {
       "alias": "name",
-      "kind": "field",
-      "name": "name",
-      "namePath": [
-        "Org",
-        "name",
-      ],
-      "refKey": "Org.name",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "text",
+        "nullable": false,
+      },
     },
   ],
   "target": {
@@ -499,23 +534,33 @@ exports[`compose hooks inline hooks 1`] = `
               "response": [
                 {
                   "alias": "id",
-                  "kind": "field",
-                  "name": "id",
-                  "namePath": [
-                    "Org",
-                    "id",
-                  ],
-                  "refKey": "Org.id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "name",
-                  "kind": "field",
-                  "name": "name",
-                  "namePath": [
-                    "Org",
-                    "name",
-                  ],
-                  "refKey": "Org.name",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "name",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
               ],
               "target": {

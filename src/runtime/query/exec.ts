@@ -3,7 +3,7 @@ import _ from "lodash";
 import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
-import { QueryTree, selectableId } from "./build";
+import { QueryTree } from "./build";
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
@@ -35,25 +35,19 @@ export async function executeQuery(
   params: Vars,
   contextIds: number[]
 ): Promise<NestedRow[]> {
-  const hasId = q.select.find((s) => s.kind === "field" && s.alias === "id");
-  let query = q;
-  if (!hasId) {
-    query = { ...q, select: [...q.select, selectableId(def, query.fromPath)] };
-  }
+  const query = q;
   const sqlTpl = queryPlanToString(buildQueryPlan(def, query)).replace(
     ":@context_ids",
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  console.info(sqlTpl);
   const result: Result = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
   return result.rows.map((row: Row): Row => {
-    // FIXME find results of aggregates and cast to integers, since `node-postgres`
-    // makes them strings due to loss of precision (BigInt)
-
     const cast = query.select.map((item: SelectItem): [string, string | number] => {
       const value = row[item.alias];
-      if (item.kind === "aggregate" && typeof value === "string") {
+      // FIXME this casts strings that are expected to be integers
+      // but it should be some kind of bigint instead
+      if (item.kind === "expression" && item.type.kind === "integer" && typeof value === "string") {
         return [item.alias, parseInt(value, 10)];
       } else {
         return [item.alias, value];
@@ -63,6 +57,15 @@ export async function executeQuery(
   });
   // return result.rows;
 }
+
+// export function selectableId(def: Definition, namePath: NamePath): SelectableExpression {
+//   return {
+//     kind: "expression",
+//     alias: "id",
+//     expr: { kind: "alias", namePath: [...namePath, "id"] },
+//     type: { kind: "integer", nullable: false },
+//   };
+// }
 
 export async function executeQueryTree(
   conn: DbConn,
