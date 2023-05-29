@@ -15,7 +15,8 @@ FROM
       "org" AS "Org"
       LEFT JOIN (
         SELECT
-          "Org.repos.issues".*
+          "Org.repos.issues".*,
+          "Org"."id" AS "__join_connection"
         FROM
           "org" AS "Org"
           INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
@@ -73,12 +74,14 @@ FROM
       "org" AS "Org"
       LEFT JOIN (
         SELECT
-          "Org.all_repos".*
+          "Org.all_repos".*,
+          "Org"."id" AS "__join_connection"
         FROM
           "org" AS "Org"
           INNER JOIN (
             SELECT
-              "Org.repos".*
+              "Org.repos".*,
+              "Org"."id" AS "__join_connection"
             FROM
               "org" AS "Org"
               INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"

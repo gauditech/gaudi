@@ -2697,7 +2697,8 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
 
 exports[`Orderby, limit and offset supports orderby, limit and offset in batching query 2`] = `
 "SELECT
-  "Org".*
+  "Org".*,
+  "Org"."id" AS "__join_connection"
 FROM
   "org" AS "Org"
 
@@ -2735,7 +2736,8 @@ WHERE
 
 exports[`Orderby, limit and offset supports orderby, limit and offset in non-batching query 1`] = `
 "SELECT
-  "Org.repos".*
+  "Org.repos".*,
+  "Org"."id" AS "__join_connection"
 FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"

@@ -119,11 +119,15 @@ function joinsToString(joins: QueryPlanJoin[]): string {
 }
 
 export function queryPlanToString(plan: QueryPlan, isSubquery = false): string {
+  const selectAllFrag = `${namepathToQuoted(plan.fromPath)}.*,
+  ${namepathToQuotedPair([plan.entry, "id"])} AS "__join_connection"`;
+
   const selectFrag = plan.select
     ? Object.entries(plan.select)
         .map(([alias, expr]) => `${exprToString(expr)} AS "${alias}"`)
         .join(", ")
-    : `${namepathToQuoted(plan.fromPath)}.*`;
+    : selectAllFrag;
+
   const limitFrag = plan.limit ? `LIMIT ${plan.limit}` : "";
   const orderFrag = plan.orderBy
     ? `ORDER BY ${plan.orderBy.map(([expr, dir]): string => `${exprToString(expr)} ${dir}`)}`
@@ -144,7 +148,6 @@ export function queryPlanToString(plan: QueryPlan, isSubquery = false): string {
     const sql = `
     SELECT * FROM
       (SELECT ${selectFrag},
-        ${namepathToQuotedPair([plan.entry, "id"])} AS "__join_connection",
         ROW_NUMBER() OVER (PARTITION BY "${plan.entry}"."id" ${orderFrag}) AS "__row_number"
       FROM "${plan.entry.toLowerCase()}" AS "${plan.entry}"
       ${joinFrags}
