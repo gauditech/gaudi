@@ -309,7 +309,11 @@ export type CustomManyEndpointDef = {
   responds: boolean;
 };
 
-export type SelectableItem = SelectFieldItem | SelectComputedItem | SelectAggregateItem;
+export type SelectableItem =
+  | SelectFieldItem
+  | SelectComputedItem
+  | SelectAggregateItem
+  | SelectExpressionItem;
 
 export type SelectFieldItem = {
   kind: "field";
@@ -335,6 +339,13 @@ export type SelectAggregateItem = {
   name: string;
   alias: string;
   namePath: string[];
+};
+
+export type SelectExpressionItem = {
+  kind: "expression";
+  fnName: FunctionName;
+  alias: string;
+  args: SelectableItem[];
 };
 
 export type SelectHookItem = {
