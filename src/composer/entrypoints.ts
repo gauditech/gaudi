@@ -1,14 +1,11 @@
 import _ from "lodash";
 
-import { defineType } from "./models";
-
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
 import { RefModelField } from "@src/compiler/ast/ast";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression, composeSelect } from "@src/composer/query";
-import { getTypedPath, refKeyFromRef } from "@src/composer/utils";
-import { uniqueNamePaths } from "@src/runtime/query/build";
+import { refKeyFromRef } from "@src/composer/utils";
 import {
   ActionDef,
   Definition,
@@ -484,9 +481,9 @@ function wrapTargetsWithSelect(
   deps: SelectDep[]
 ): TargetWithSelectDef[] {
   return targets.map((target) => {
-    const targetPaths = uniqueNamePaths(
-      deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
-    );
+    const targetPaths = deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access);
+    // make sure we always request an `id` for a target
+    targetPaths.push(["id"]);
     const targetModel = getRef.model(def, target.retType);
     const select = pathsToSelectDef(def, targetModel, targetPaths, target.namePath);
     return { ...target, select };
@@ -506,7 +503,7 @@ export function wrapActionsWithSelect(
   return actions.map((a): ActionDef => {
     if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one") return a;
 
-    const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
+    const paths = deps.filter((d) => d.alias === a.alias).map((a) => a.access);
     const model = getRef.model(def, a.model);
 
     const select = pathsToSelectDef(def, model, paths, [a.alias]);
@@ -516,9 +513,7 @@ export function wrapActionsWithSelect(
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
   if (!def.authenticator) return [];
-  const paths = uniqueNamePaths(
-    deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access)
-  );
+  const paths = deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access);
   const model = getRef.model(def, def.authenticator.authUserModel.refKey);
   return pathsToSelectDef(def, model, paths, [model.name]);
 }

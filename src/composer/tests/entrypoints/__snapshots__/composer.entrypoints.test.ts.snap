@@ -138,7 +138,23 @@ exports[`entrypoint composes basic example 1`] = `
             "Org",
           ],
           "retType": "Org",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
       {
@@ -207,7 +223,23 @@ exports[`entrypoint composes basic example 1`] = `
             "Org",
           ],
           "retType": "Org",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "Org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
     ],
@@ -236,7 +268,23 @@ exports[`entrypoint composes basic example 1`] = `
                   "Org",
                 ],
                 "retType": "Org",
-                "select": [],
+                "select": [
+                  {
+                    "alias": "id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
+                  },
+                ],
               },
             ],
             "response": [
@@ -329,7 +377,24 @@ exports[`entrypoint composes basic example 1`] = `
                 "repos",
               ],
               "retType": "Repo",
-              "select": [],
+              "select": [
+                {
+                  "alias": "id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
+                },
+              ],
             },
           },
           {
@@ -351,7 +416,23 @@ exports[`entrypoint composes basic example 1`] = `
                   "Org",
                 ],
                 "retType": "Org",
-                "select": [],
+                "select": [
+                  {
+                    "alias": "id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
+                  },
+                ],
               },
             ],
             "response": [
@@ -450,7 +531,24 @@ exports[`entrypoint composes basic example 1`] = `
                 "repos",
               ],
               "retType": "Repo",
-              "select": [],
+              "select": [
+                {
+                  "alias": "id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
+                },
+              ],
             },
           },
           {
@@ -631,7 +729,24 @@ exports[`entrypoint composes basic example 1`] = `
                 "repos",
               ],
               "retType": "Repo",
-              "select": [],
+              "select": [
+                {
+                  "alias": "id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
+                },
+              ],
             },
           },
           {
@@ -756,7 +871,24 @@ exports[`entrypoint composes basic example 1`] = `
                 "repos",
               ],
               "retType": "Repo",
-              "select": [],
+              "select": [
+                {
+                  "alias": "id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "Org",
+                      "repos",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
+                },
+              ],
             },
           },
         ],

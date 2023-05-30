@@ -104,6 +104,21 @@ exports[`compose hooks action hook 1`] = `
             "nullable": false,
           },
         },
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
       ],
     },
   },
@@ -295,7 +310,23 @@ exports[`compose hooks composes source hooks 1`] = `
                   "Org",
                 ],
                 "retType": "Org",
-                "select": [],
+                "select": [
+                  {
+                    "alias": "id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
+                  },
+                ],
               },
             },
           ],
@@ -484,7 +515,23 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 }
 `;
@@ -571,7 +618,23 @@ exports[`compose hooks inline hooks 1`] = `
                   "Org",
                 ],
                 "retType": "Org",
-                "select": [],
+                "select": [
+                  {
+                    "alias": "id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "Org",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
+                  },
+                ],
               },
             },
           ],

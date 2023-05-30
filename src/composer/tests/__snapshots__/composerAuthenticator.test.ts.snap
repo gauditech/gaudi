@@ -544,7 +544,23 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "AuthUser",
           ],
           "retType": "AuthUser",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "AuthUser",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
       {
@@ -699,7 +715,23 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "AuthUser",
           ],
           "retType": "AuthUser",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "AuthUser",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
       {
@@ -971,7 +1003,23 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "AuthUser",
           ],
           "retType": "AuthUser",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "AuthUser",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
     ],

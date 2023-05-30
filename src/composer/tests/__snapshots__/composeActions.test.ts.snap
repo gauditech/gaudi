@@ -27,7 +27,23 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "Org",
       ],
       "retType": "Org",
-      "select": [],
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
     },
   },
   {
@@ -151,7 +167,23 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "Org",
       ],
       "retType": "Org",
-      "select": [],
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
     },
   },
   {
@@ -173,7 +205,23 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "Org",
       ],
       "retType": "Org",
-      "select": [],
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
     },
   },
   {
@@ -238,7 +286,23 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "Org",
       ],
       "retType": "Org",
-      "select": [],
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
     },
   },
 ]

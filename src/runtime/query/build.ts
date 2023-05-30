@@ -23,6 +23,7 @@ export type QueryTree = {
   name: string;
   alias: string;
   query: QueryDef;
+  queryIdAlias: string | undefined;
   hooks: {
     name: string;
     args: { name: string; query: QueryTree }[];
@@ -33,16 +34,48 @@ export type QueryTree = {
 
 export type NamePath = string[];
 
+export const GAUDI_INTERNAL_TARGET_ID_ALIAS = "__gaudi__target_id";
+
 /**
  * Utils
  */
 
-export function uniqueNamePaths(paths: NamePath[]): NamePath[] {
-  return _.uniqWith(paths, _.isEqual);
+/**
+ * TODO turn this into Queryable
+ *
+ * Converts QueryDef into a QueryDef with only selectable expressions.
+ * Ensures the `id` field is selected any non-selectable item is requeste.d
+ */
+function queryToQueriable(query: QueryDef): QueryDef {
+  const selectables = kindFilter(query.select, "expression");
+  const targetIdAlias = findTargetIdAlias(query);
+  if (targetIdAlias === GAUDI_INTERNAL_TARGET_ID_ALIAS) {
+    selectables.push({
+      kind: "expression",
+      alias: GAUDI_INTERNAL_TARGET_ID_ALIAS,
+      expr: { kind: "alias", namePath: [...query.fromPath, "id"] },
+      type: { kind: "integer", nullable: false },
+    });
+  }
+
+  return { ...query, select: selectables };
 }
 
-export function selectToSelectable(select: SelectDef): SelectableExpression[] {
-  return kindFilter(select, "expression");
+function findTargetIdAlias(query: QueryDef): string | undefined {
+  const selectables = kindFilter(query.select, "expression");
+  const hasNested = kindFilter(query.select, "nested-select");
+  const hasHooks = kindFilter(query.select, "model-hook");
+  const id = selectables.find(
+    (s) =>
+      s.alias === "id" &&
+      s.expr?.kind === "alias" &&
+      _.isEqual(s.expr.namePath, [...query.fromPath, "id"])
+  );
+  if (id) {
+    return "id";
+  } else if (hasHooks || hasNested) {
+    return GAUDI_INTERNAL_TARGET_ID_ALIAS;
+  }
 }
 
 export function selectToHooks(select: SelectDef): SelectHook[] {
@@ -138,7 +171,7 @@ export function getRelatedPaths(paths: NamePath[], direct: string): NamePath[] {
  */
 
 export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
-  const query = { ...q, select: selectToSelectable(q.select) };
+  const query = queryToQueriable(q);
   const hooks = selectToHooks(q.select).map(({ name, refKey }) => {
     const modelHook = getRef.modelHook(def, refKey);
     return {
@@ -164,6 +197,7 @@ export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
     name: query.name,
     alias: query.name,
     query,
+    queryIdAlias: findTargetIdAlias(q),
     hooks,
     related: queriesFromSelect(def, model, q.select).map((q) => buildQueryTree(def, q)),
   };
@@ -260,6 +294,15 @@ function mkJoinConnection(model: ModelDef): SelectableExpression {
     kind: "expression",
     alias: "__join_connection",
     expr: { kind: "alias", namePath: [model.name, "id"] },
+    type: { kind: "integer", nullable: false },
+  };
+}
+
+export function selectableId(namePath: NamePath): SelectableExpression {
+  return {
+    kind: "expression",
+    alias: GAUDI_INTERNAL_TARGET_ID_ALIAS,
+    expr: { kind: "alias", namePath: [...namePath, "id"] },
     type: { kind: "integer", nullable: false },
   };
 }

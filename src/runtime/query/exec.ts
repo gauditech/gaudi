@@ -3,11 +3,11 @@ import _ from "lodash";
 import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
-import { QueryTree } from "./build";
+import { GAUDI_INTERNAL_TARGET_ID_ALIAS, QueryTree } from "./build";
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
-import { ensureEqual } from "@src/common/utils";
+import { ensureEqual, ensureNot } from "@src/common/utils";
 import { getTypedPath } from "@src/composer/utils";
 import logger from "@src/logger";
 import { DbConn } from "@src/runtime/server/dbConn";
@@ -19,23 +19,20 @@ export type Result = {
 };
 
 export interface NestedRow {
-  id: number;
   [key: string]: string | number | NestedRow[];
 }
 
 export interface Row {
-  id: number;
   [key: string]: string | number;
 }
 
 export async function executeQuery(
   conn: DbConn,
   def: Definition,
-  q: QueryDef,
+  query: QueryDef,
   params: Vars,
   contextIds: number[]
 ): Promise<NestedRow[]> {
-  const query = q;
   const sqlTpl = queryPlanToString(buildQueryPlan(def, query)).replace(
     ":@context_ids",
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
@@ -55,17 +52,7 @@ export async function executeQuery(
     });
     return Object.fromEntries(cast) as Row;
   });
-  // return result.rows;
 }
-
-// export function selectableId(def: Definition, namePath: NamePath): SelectableExpression {
-//   return {
-//     kind: "expression",
-//     alias: "id",
-//     expr: { kind: "alias", namePath: [...namePath, "id"] },
-//     type: { kind: "integer", nullable: false },
-//   };
-// }
 
 export async function executeQueryTree(
   conn: DbConn,
@@ -76,14 +63,20 @@ export async function executeQueryTree(
 ): Promise<NestedRow[]> {
   const results = await executeQuery(conn, def, qt.query, params, contextIds);
   if (results.length === 0) return [];
-  const resultIds = _.uniq(results.map((r) => r.id));
+
+  const resultIds = qt.queryIdAlias
+    ? _.uniq(results.map((r) => r[qt.queryIdAlias!] as number))
+    : [];
 
   // tree
   for (const rel of qt.related) {
+    const noAliasErrMsg = "Query has nested selects but 'id' field was not found in the parent";
+    ensureNot(qt.queryIdAlias, undefined, noAliasErrMsg);
+
     const relResults = await executeQueryTree(conn, def, rel, params, resultIds);
     const groupedById = _.groupBy(relResults, "__join_connection");
     results.forEach((r) => {
-      const relResultsForId = (groupedById[r.id] ?? []).map((relR) =>
+      const relResultsForId = (groupedById[r[qt.queryIdAlias!] as number] ?? []).map((relR) =>
         _.omit(relR, "__join_connection")
       );
       // if property kind is reference (todo: unique relationships in general)
@@ -120,7 +113,9 @@ export async function executeQueryTree(
           _.omit(
             // FIXME we shouldn't have `[0]` here but we lack type checking feature
             // to figure out the query cardinality so we hardcode "one" for now...
-            argResults[arg.name].filter((res) => res["__join_connection"] === result.id)[0],
+            argResults[arg.name].filter(
+              (res) => res["__join_connection"] === result[qt.queryIdAlias!]
+            )[0],
             "__join_connection"
           ),
         ])
@@ -129,7 +124,9 @@ export async function executeQueryTree(
       result[hook.name] = await executeHook(def, hook.hook, args);
     }
   }
-
+  if (qt.queryIdAlias === GAUDI_INTERNAL_TARGET_ID_ALIAS) {
+    return results.map((r) => _.omit(r, GAUDI_INTERNAL_TARGET_ID_ALIAS));
+  }
   return results;
 }
 

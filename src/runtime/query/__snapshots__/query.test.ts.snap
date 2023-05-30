@@ -73,7 +73,23 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -196,7 +212,24 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -288,7 +321,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
 exports[`Endpoint queries Deeply nested entrypoints test create endpoint 2`] = `
 [
   "SELECT
-  "Org".*
+  "Org"."id" AS "id"
 FROM
   "org" AS "Org"
 WHERE
@@ -308,7 +341,7 @@ WHERE
 
 ",
   "SELECT
-  "Repo.issues".*
+  "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
   INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
@@ -342,7 +375,25 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -362,7 +413,23 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -436,7 +503,23 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -503,7 +586,24 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -570,7 +670,24 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -608,7 +725,23 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
-    "select": [],
+    "select": [
+      {
+        "alias": "__gaudi__target_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -616,7 +749,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
 exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 2`] = `
 [
   "SELECT
-  "Org".*
+  "Org"."id" AS "id"
 FROM
   "org" AS "Org"
 WHERE
@@ -625,7 +758,7 @@ WHERE
 
 ",
   "SELECT
-  "Org.repos".*
+  "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
@@ -636,7 +769,7 @@ WHERE
 
 ",
   "SELECT
-  "Repo.issues".*
+  "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
   INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
@@ -647,7 +780,7 @@ WHERE
 
 ",
   "SELECT
-  "Issue".*
+  "Issue"."id" AS "__gaudi__target_id"
 FROM
   "issue" AS "Issue"
 WHERE
@@ -675,7 +808,25 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -695,7 +846,23 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -712,7 +879,24 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -752,7 +936,23 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -819,7 +1019,24 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -886,7 +1103,24 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -978,7 +1212,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
 exports[`Endpoint queries Deeply nested entrypoints test get endpoint 2`] = `
 [
   "SELECT
-  "Org".*
+  "Org"."id" AS "id"
 FROM
   "org" AS "Org"
 WHERE
@@ -987,7 +1221,7 @@ WHERE
 
 ",
   "SELECT
-  "Org.repos".*
+  "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
@@ -998,7 +1232,7 @@ WHERE
 
 ",
   "SELECT
-  "Repo.issues".*
+  "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
   INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
@@ -1039,7 +1273,25 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -1059,7 +1311,23 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -1076,7 +1344,24 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -1116,7 +1401,23 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -1183,7 +1484,24 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -1222,7 +1540,24 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Issue",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -1318,7 +1653,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
 exports[`Endpoint queries Deeply nested entrypoints test list endpoint 2`] = `
 [
   "SELECT
-  "Org".*
+  "Org"."id" AS "id"
 FROM
   "org" AS "Org"
 WHERE
@@ -1327,7 +1662,7 @@ WHERE
 
 ",
   "SELECT
-  "Org.repos".*
+  "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
@@ -1338,7 +1673,7 @@ WHERE
 
 ",
   "SELECT
-  "Repo.issues".*
+  "Repo.issues"."id" AS "id"
 FROM
   "repo" AS "Repo"
   INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
@@ -1373,7 +1708,25 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -1393,7 +1746,23 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -1410,7 +1779,24 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -1450,7 +1836,23 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -1517,7 +1919,24 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -1693,7 +2112,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
 exports[`Endpoint queries Deeply nested entrypoints test update endpoint 2`] = `
 [
   "SELECT
-  "Org".*
+  "Org"."id" AS "id"
 FROM
   "org" AS "Org"
 WHERE
@@ -1702,7 +2121,7 @@ WHERE
 
 ",
   "SELECT
-  "Org.repos".*
+  "Org.repos"."id" AS "id"
 FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
@@ -1792,7 +2211,23 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -1809,7 +2244,24 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -2647,7 +3099,23 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "__gaudi__target_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -2725,8 +3193,7 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
 
 exports[`Orderby, limit and offset supports orderby, limit and offset in batching query 2`] = `
 "SELECT
-  "Org".*,
-  "Org"."id" AS "__join_connection"
+  "Org"."id" AS "__gaudi__target_id"
 FROM
   "org" AS "Org"
 

@@ -145,7 +145,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -218,7 +218,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -300,7 +300,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -403,7 +403,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -508,7 +508,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -573,7 +573,7 @@ export function buildCustomOneEndpoint(
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -668,7 +668,7 @@ export function buildCustomManyEndpoint(
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           // no target query here because this is endpoint has "many" cardinality, all we know are parents
