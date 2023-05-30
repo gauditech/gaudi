@@ -92,15 +92,14 @@ describe("api client lib", () => {
           "blank_repos": [
             {
               "id": 2,
-              "total_issues": "0",
+              "total_issues": 0,
             },
             {
               "id": 1,
-              "total_issues": "0",
+              "total_issues": 0,
             },
           ],
           "description": "Org 1 description (odd)",
-          "id": 1,
           "name": "Org 1",
           "nameAndDesc": "Org 1: Org 1 description (odd)",
           "slug": "org1",
@@ -121,7 +120,6 @@ describe("api client lib", () => {
             {
               "blank_repos": [],
               "description": "Org 4 description (even)",
-              "id": 4,
               "name": "Org 4",
               "nameAndDesc": "Org 4: Org 4 description (even)",
               "slug": "org4",
@@ -130,7 +128,6 @@ describe("api client lib", () => {
             {
               "blank_repos": [],
               "description": "Org 3 description (odd)",
-              "id": 3,
               "name": "Org 3",
               "nameAndDesc": "Org 3: Org 3 description (odd)",
               "slug": "org3",
@@ -140,11 +137,10 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 4,
-                  "total_issues": "0",
+                  "total_issues": 0,
                 },
               ],
               "description": "Org 2 description (even)",
-              "id": 2,
               "name": "Org 2",
               "nameAndDesc": "Org 2: Org 2 description (even)",
               "slug": "org2",
@@ -154,15 +150,14 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 2,
-                  "total_issues": "0",
+                  "total_issues": 0,
                 },
                 {
                   "id": 1,
-                  "total_issues": "0",
+                  "total_issues": 0,
                 },
               ],
               "description": "Org 1 description (odd)",
-              "id": 1,
               "name": "Org 1",
               "nameAndDesc": "Org 1: Org 1 description (odd)",
               "slug": "org1",
@@ -190,11 +185,10 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 4,
-                  "total_issues": "0",
+                  "total_issues": 0,
                 },
               ],
               "description": "Org 2 description (even)",
-              "id": 2,
               "name": "Org 2",
               "nameAndDesc": "Org 2: Org 2 description (even)",
               "slug": "org2",
@@ -204,15 +198,14 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 2,
-                  "total_issues": "0",
+                  "total_issues": 0,
                 },
                 {
                   "id": 1,
-                  "total_issues": "0",
+                  "total_issues": 0,
                 },
               ],
               "description": "Org 1 description (odd)",
-              "id": 1,
               "name": "Org 1",
               "nameAndDesc": "Org 1: Org 1 description (odd)",
               "slug": "org1",
@@ -247,7 +240,6 @@ describe("api client lib", () => {
         {
           "blank_repos": [],
           "description": "Org NEW description",
-          "id": 5,
           "name": "Org NEW",
           "nameAndDesc": "Org NEW: Org NEW description",
           "slug": "orgNEW",
@@ -276,11 +268,10 @@ describe("api client lib", () => {
           "blank_repos": [
             {
               "id": 4,
-              "total_issues": "0",
+              "total_issues": 0,
             },
           ],
           "description": "Org 2A description",
-          "id": 2,
           "name": "Org 2A",
           "nameAndDesc": "Org 2A: Org 2A description",
           "slug": "org2",
@@ -333,7 +324,6 @@ describe("api client lib", () => {
         {
           "blank_repos": [],
           "description": "Org custom NEW description",
-          "id": 6,
           "name": "Org Custom NEW",
           "nameAndDesc": "Org Custom NEW: Org custom NEW description",
           "slug": "orgCustomNEW",
@@ -363,11 +353,10 @@ describe("api client lib", () => {
           "blank_repos": [
             {
               "id": 4,
-              "total_issues": "0",
+              "total_issues": 0,
             },
           ],
           "description": "Org custom 2A description",
-          "id": 2,
           "name": "Org custom 2A",
           "nameAndDesc": "Org custom 2A: Org custom 2A description",
           "slug": "org2",
@@ -458,13 +447,11 @@ describe("api client lib", () => {
           "inputOrgId": 1,
           "orgById": [
             {
-              "id": 1,
               "name": "Org 1",
             },
           ],
           "orgByName": [
             {
-              "id": 1,
               "name": "Org 1",
             },
           ],
