@@ -30,7 +30,7 @@ import {
   decorateWithOrderBy,
   decorateWithPaging,
 } from "@src/runtime/query/endpointQueries";
-import { NestedRow, executeQueryTree } from "@src/runtime/query/exec";
+import { NestedRow, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
 import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
@@ -48,6 +48,7 @@ import {
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
+  QueryDef,
   TypedExprDef,
   TypedFunction,
   UpdateEndpointDef,
@@ -897,14 +898,28 @@ async function createListEndpointResponse(
     const data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
 
     // exec count query
-    // using original `qt` var without any paging/ordering/...
-    // TODO: this query should be a "count query" but it's currently not possible
-    const totalData = await executeQueryTree(conn, def, qt, params, contextIds);
+    // using query from original `qt` without any paging/ordering/...
+    const query: QueryDef = {
+      ...qt.query,
+      select: [
+        {
+          kind: "expression",
+          type: { kind: "integer", nullable: true },
+          alias: "totalCount",
+          expr: {
+            kind: "function",
+            name: "count" as any, // FIXME "count" is not supported here
+            args: [{ kind: "literal", type: "integer", value: 1 }],
+          },
+        },
+      ],
+    };
+    const total = await executeQuery(conn, def, query, params, contextIds);
+    const totalCount = (findOne(total)["totalCount"] as number | null) ?? 0;
 
     // resolve paging data
     const pageSize = resultQuery.query.limit ?? 0;
     const page = pageSize > 0 ? Math.floor((resultQuery.query.offset ?? 0) / pageSize) + 1 : 1;
-    const totalCount = totalData.length;
     const totalPages = Math.ceil(totalCount / pageSize);
 
     return {
