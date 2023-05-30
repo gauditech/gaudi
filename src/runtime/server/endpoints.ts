@@ -310,8 +310,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           logger.debug("BODY", body);
 
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+          logger.debug("Reference IDs", referenceIds);
+          const fieldset = _.cloneDeep(endpoint.fieldset);
+          assignNoReferenceValidators(fieldset, referenceIds);
+          const validationResult = await validateEndpointFieldset(def, fieldset, body);
           logger.debug("Validation result", validationResult);
 
           await executeEndpointActions(
@@ -412,8 +414,10 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           logger.debug("FIELDSET", endpoint.fieldset);
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+          logger.debug("Reference IDs", referenceIds);
+          const fieldset = _.cloneDeep(endpoint.fieldset);
+          assignNoReferenceValidators(fieldset, referenceIds);
+          const validationResult = await validateEndpointFieldset(def, fieldset, body);
           logger.debug("Validation result", validationResult);
 
           await executeEndpointActions(
@@ -586,9 +590,10 @@ export function buildCustomOneEndpoint(
             logger.debug("BODY", body);
 
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-
-            validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+            logger.debug("Reference IDs", referenceIds);
+            const fieldset = _.cloneDeep(endpoint.fieldset);
+            assignNoReferenceValidators(fieldset, referenceIds);
+            validationResult = await validateEndpointFieldset(def, fieldset, body);
             logger.debug("Validation result", validationResult);
           }
 
@@ -682,9 +687,10 @@ export function buildCustomManyEndpoint(
             logger.debug("BODY", body);
 
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-
-            validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+            logger.debug("Reference IDs", referenceIds);
+            const fieldset = _.cloneDeep(endpoint.fieldset);
+            assignNoReferenceValidators(fieldset, referenceIds);
+            validationResult = await validateEndpointFieldset(def, fieldset, body);
             logger.debug("Validation result", validationResult);
           }
 
