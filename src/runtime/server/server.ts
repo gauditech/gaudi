@@ -1,4 +1,5 @@
 import express, { json } from "express";
+import fileUpload from "express-fileupload";
 
 import { RuntimeConfig } from "@src/runtime/config";
 import { setupServerApis } from "@src/runtime/server/api";
@@ -23,6 +24,7 @@ export function createServer(definition: Definition, config: RuntimeConfig) {
   app.use(bindAppContextHandler(app, ctx));
 
   app.use(json()); // middleware for parsing application/json body
+  app.use(fileUpload()); // middleware for parsing files from request body, eg. `curl -F`
   app.use(requestLogger);
 
   setupServerApis(definition, app);

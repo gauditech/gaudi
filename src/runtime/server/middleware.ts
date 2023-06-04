@@ -1,6 +1,6 @@
 import { Express, NextFunction, Request, Response } from "express";
 
-import { AppContext, bindAppContext, getAppContext } from "@src/runtime/server/context";
+import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { HttpResponseError } from "@src/runtime/server/error";
 import { ServerRequestHandler } from "@src/runtime/server/types";
 
