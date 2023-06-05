@@ -240,17 +240,19 @@ describe("Orderby, limit and offset", () => {
     const def = compose(compileToOldSpec(bp));
     const qt = queryTreeFromParts(def, "test", ["Org"], undefined, [
       {
-        kind: "query",
+        kind: "nested-select",
+        refKey: "Org.recent_repos",
         alias: "recent_repos",
-        name: "recent_repos",
         namePath: ["Org", "recent_repos"],
         select: [
           {
-            kind: "field",
+            kind: "expression",
             alias: "id",
-            name: "id",
-            namePath: ["Org", "recent_repos", "id"],
-            refKey: "Repo.id",
+            expr: {
+              kind: "alias",
+              namePath: ["Org", "recent_repos", "id"],
+            },
+            type: { kind: "integer", nullable: false },
           },
         ],
       },

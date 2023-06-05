@@ -4,9 +4,8 @@ import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
 import { RefModelField } from "@src/compiler/ast/ast";
 import { composeActionBlock } from "@src/composer/actions";
-import { composeExpression } from "@src/composer/query";
+import { composeExpression, composeSelect } from "@src/composer/query";
 import { refKeyFromRef } from "@src/composer/utils";
-import { uniqueNamePaths } from "@src/runtime/query/build";
 import {
   ActionDef,
   Definition,
@@ -143,7 +142,7 @@ function processEndpoints(
           kind: "get",
           authSelect,
           authorize,
-          response: processSelect(endSpec.response, context.namePath),
+          response: composeSelect(endSpec.response, context.namePath),
           // actions,
           parentContext,
           target,
@@ -155,12 +154,12 @@ function processEndpoints(
           authSelect,
           authorize,
           pageable: endSpec.pageable,
-          response: processSelect(endSpec.response, context.namePath),
+          response: composeSelect(endSpec.response, context.namePath),
           // actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
           orderBy: processOrderBy(context.namePath, endSpec.orderBy),
-          filter: processFilter(context.namePath, endSpec.filter),
+          filter: composeFilter(context.namePath, endSpec.filter),
         };
       }
       case "create": {
@@ -173,7 +172,7 @@ function processEndpoints(
           target: _.omit(target, "identifyWith"),
           authSelect,
           authorize,
-          response: processSelect(endSpec.response, context.namePath),
+          response: composeSelect(endSpec.response, context.namePath),
         };
       }
       case "update": {
@@ -186,7 +185,7 @@ function processEndpoints(
           target: _.first(wrapTargetsWithSelect(def, [target], selectDeps))!,
           authSelect,
           authorize,
-          response: processSelect(endSpec.response, context.namePath),
+          response: composeSelect(endSpec.response, context.namePath),
         };
       }
       case "delete": {
@@ -269,59 +268,11 @@ export function processOrderBy(
   );
 }
 
-export function processFilter(
+export function composeFilter(
   fromPath: string[],
   filter: Spec.Expr | undefined
 ): TypedExprDef | undefined {
   return filter && composeExpression(filter, fromPath);
-}
-
-export function processSelect(select: Spec.Select, parentNamePath: string[]): SelectDef {
-  return select.map((select): SelectItem => {
-    const target = select.target;
-    const namePath = [...parentNamePath, select.target.ref.name];
-
-    switch (target.ref.atomKind) {
-      case "field":
-      case "computed":
-        return {
-          kind: target.ref.atomKind,
-          refKey: refKeyFromRef(target.ref),
-          name: target.ref.name,
-          alias: target.text,
-          namePath,
-        };
-      case "hook":
-        return {
-          kind: "model-hook",
-          refKey: refKeyFromRef(target.ref),
-          name: target.ref.name,
-          alias: target.text,
-          namePath,
-        };
-      case "reference":
-      case "relation":
-      case "query": {
-        if (select.kind === "final") {
-          return {
-            kind: "aggregate",
-            refKey: refKeyFromRef(target.ref),
-            name: target.ref.name,
-            alias: target.text,
-            namePath,
-          };
-        } else {
-          return {
-            kind: target.ref.atomKind,
-            name: target.ref.name,
-            alias: target.text,
-            namePath,
-            select: processSelect(select.select, namePath),
-          };
-        }
-      }
-    }
-  });
 }
 
 export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
@@ -530,9 +481,9 @@ function wrapTargetsWithSelect(
   deps: SelectDep[]
 ): TargetWithSelectDef[] {
   return targets.map((target) => {
-    const targetPaths = uniqueNamePaths(
-      deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access)
-    );
+    const targetPaths = deps.filter((dep) => dep.alias === target.alias).map((dep) => dep.access);
+    // make sure we always request an `id` for a target
+    targetPaths.push(["id"]);
     const targetModel = getRef.model(def, target.retType);
     const select = pathsToSelectDef(def, targetModel, targetPaths, target.namePath);
     return { ...target, select };
@@ -552,7 +503,7 @@ export function wrapActionsWithSelect(
   return actions.map((a): ActionDef => {
     if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one") return a;
 
-    const paths = uniqueNamePaths(deps.filter((d) => d.alias === a.alias).map((a) => a.access));
+    const paths = deps.filter((d) => d.alias === a.alias).map((a) => a.access);
     const model = getRef.model(def, a.model);
 
     const select = pathsToSelectDef(def, model, paths, [a.alias]);
@@ -562,9 +513,7 @@ export function wrapActionsWithSelect(
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
   if (!def.authenticator) return [];
-  const paths = uniqueNamePaths(
-    deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access)
-  );
+  const paths = deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access);
   const model = getRef.model(def, def.authenticator.authUserModel.refKey);
   return pathsToSelectDef(def, model, paths, [model.name]);
 }
@@ -600,35 +549,34 @@ function pathsToSelectDef(
       .filter((p) => p.length > 0);
 
     switch (ref.kind) {
-      case "field":
-      case "computed":
-      case "aggregate": {
-        // ensure the ref is the leaf of the path
-        // For a path Org.name.foo.bar, example error would be:
-        //   Org.name is a field, can't access foo.bar
-        if (relatedPaths.length) {
-          throw new Error(
-            `Path ${[...namespace, name].join(".")} is a leaf, can't access ${relatedPaths.join(
-              "."
-            )}`
-          );
-        }
+      case "field": {
         return {
-          kind: ref.kind,
+          kind: "expression",
           alias: name,
-          name,
-          refKey: ref.refKey,
-          namePath: [...namespace, name],
+          expr: { kind: "alias", namePath: [...namespace, name] },
+          type: { kind: ref.type, nullable: ref.nullable },
         };
+      }
+      case "computed": {
+        return {
+          kind: "expression",
+          alias: name,
+          expr: { kind: "alias", namePath: [...namespace, name] },
+          type: { kind: ref.type.kind, nullable: ref.type.nullable },
+        };
+      }
+      case "aggregate": {
+        throw new UnreachableError("Aggregates are deprecated");
       }
       default: {
         const newModel = getTargetModel(def, ref.refKey);
+        const select = pathsToSelectDef(def, newModel, relatedPaths, [...namespace, name]);
         return {
-          kind: ref.kind,
+          kind: "nested-select",
+          refKey: ref.refKey,
           alias: name,
-          name,
           namePath: [...namespace, name],
-          select: pathsToSelectDef(def, newModel, relatedPaths, [...namespace, name]),
+          select,
         };
       }
     }

@@ -181,6 +181,15 @@ export function assertUnreachable(value: never): never {
   throw new UnreachableError(`Unexpected value: "${value}"`);
 }
 
+/** Function that returns an argument-less callback function
+ * that throws `UnreachableError` when invoked.
+ */
+export function shouldBeUnreachableCb(message: string) {
+  return () => {
+    throw new UnreachableError(message);
+  };
+}
+
 export class UnreachableError extends Error {
   constructor(message: string) {
     super(`Unreachable code path. ${message}`);

@@ -39,13 +39,18 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
     "select": [
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Org",
-          "name",
-        ],
-        "refKey": "Org.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
     ],
   },

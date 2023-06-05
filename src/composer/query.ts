@@ -1,14 +1,17 @@
 import _ from "lodash";
 import { match } from "ts-pattern";
 
+import { defineType } from "./models";
+
 import { UnreachableError, ensureEqual } from "@src/common/utils";
-import { processSelect } from "@src/composer/entrypoints";
-import { getTypedLiteralValue } from "@src/composer/utils";
+import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
 import {
   AggregateDef,
   FunctionName,
   QueryDef,
   QueryOrderByAtomDef,
+  SelectDef,
+  SelectItem,
   TypedExprDef,
   VariablePrimitiveType,
 } from "@src/types/definition";
@@ -23,16 +26,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
 
   const filter = qspec.filter && composeExpression(qspec.filter, fromPath);
 
-  const select = processSelect(qspec.select, fromPath);
-  if (select.length === 0) {
-    select.push({
-      kind: "field",
-      alias: "id",
-      name: "id",
-      namePath: [...fromPath, "id"],
-      refKey: `${qspec.sourceModel}.id`,
-    });
-  }
+  const select = composeSelect(qspec.select, fromPath);
 
   const orderBy = qspec.orderBy?.map(
     ({ field, order }): QueryOrderByAtomDef => ({
@@ -185,4 +179,45 @@ export function composeRefPath(
     case "repeat":
       throw new Error("TODO");
   }
+}
+
+export function composeSelect(select: Spec.Select, parentNamePath: string[]): SelectDef {
+  return select.map((select): SelectItem => {
+    const target = select.target;
+    const namePath = [...parentNamePath, select.target.ref.name];
+
+    switch (target.ref.atomKind) {
+      case "field":
+      case "computed":
+        return {
+          kind: "expression",
+          expr: { kind: "alias", namePath },
+          alias: target.text,
+          type: defineType(target.type),
+        };
+      case "hook":
+        return {
+          kind: "model-hook",
+          refKey: refKeyFromRef(target.ref),
+          name: target.ref.name,
+          alias: target.text,
+          namePath,
+        };
+      case "reference":
+      case "relation":
+      case "query": {
+        if (select.kind === "final") {
+          throw new UnreachableError("Aggregates are deprecated");
+        } else {
+          return {
+            kind: "nested-select",
+            refKey: refKeyFromRef(target.ref),
+            alias: target.text,
+            namePath,
+            select: composeSelect(select.select, namePath),
+          };
+        }
+      }
+    }
+  });
 }

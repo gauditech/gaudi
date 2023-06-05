@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { match } from "ts-pattern";
 
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
@@ -922,56 +923,31 @@ function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
     type: "object",
     properties: Object.fromEntries<SchemaField | SchemaObject | SchemaArray>(
       select.map((item) => {
-        const selectKind = item.kind;
-        switch (selectKind) {
-          case "field": {
-            const field = getRef.field(def, item.refKey);
-            return [
-              item.alias,
-              {
-                type: convertFieldToSchemaType(field.type),
-                nullable: field.nullable,
-                optional: false,
-              },
-            ];
-          }
-          case "reference":
-          case "relation":
-          case "query": {
-            // TODO: check optional/nullable
-            const isObject = item.kind === "reference";
+        const schema = match<typeof item, SchemaField | SchemaObject | SchemaArray>(item)
+          .with({ kind: "expression" }, (item) => ({
+            type: convertFieldToSchemaType(item.type.kind),
+            nullable: item.type.nullable,
+            optional: false,
+          }))
+          .with({ kind: "model-hook" }, () => ({
+            type: "unknown",
+            nullable: false,
+            optional: false,
+          }))
+          .with({ kind: "nested-select" }, (item) => {
+            const ref = getRef(def, item.refKey);
+            // FIXME use cardinality instead
+            const isObject = ref.kind === "reference";
             const properties = selectToSchema(def, item.select);
             if (isObject) {
-              return [item.alias, properties];
+              return properties;
             } else {
-              return [
-                item.alias,
-                { type: "array", items: properties, nullable: false, optional: false },
-              ];
+              return { type: "array", items: properties, nullable: false, optional: false };
             }
-          }
-          case "aggregate": {
-            // FIXME read the type from the `AggregateDef`
-            return [item.name, { type: "number", nullable: false, optional: false }];
-          }
-          case "computed": {
-            // TODO: check optional/nullable
-            const computed = getRef.computed(def, item.refKey);
-            const computedType = convertFieldToSchemaType(computed.type.kind);
+          })
+          .exhaustive();
 
-            return [
-              item.name,
-              { type: computedType, nullable: computed.type.nullable, optional: false },
-            ];
-          }
-          case "model-hook": {
-            // FIXME - add return type to hooks
-            return [item.name, { type: "unknown", nullable: false, optional: false }];
-          }
-
-          default:
-            assertUnreachable(selectKind);
-        }
+        return [item.alias, schema];
       })
     ),
     nullable: false,

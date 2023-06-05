@@ -5,7 +5,13 @@ import { NamePath, transformExpressionPaths } from "./build";
 
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureEqual, ensureNot } from "@src/common/utils";
+import {
+  UnreachableError,
+  assertUnreachable,
+  ensureEqual,
+  ensureNot,
+  shouldBeUnreachableCb,
+} from "@src/common/utils";
 import { getTypedPath } from "@src/composer/utils";
 import {
   AggregateFunctionName,
@@ -109,17 +115,15 @@ export function buildQueryPlan(def: Definition, q: QueryDef): QueryPlan {
 }
 
 function buildSelect(def: Definition, items: SelectItem[]): QueryPlan["select"] {
+  if (items.length === 0) return undefined;
+
   const pairs = items.map((item) =>
     match(item)
-      .with({ kind: "field" }, { kind: "computed" }, (item) => [
+      .with({ kind: "expression" }, (item) => [
         item.alias,
-        toQueryExpr(def, expandExpression(def, { kind: "alias", namePath: item.namePath })),
+        toQueryExpr(def, expandExpression(def, item.expr)),
       ])
-      .otherwise(() => {
-        throw new UnreachableError(
-          `Select can currently be built only from fields and computeds, got ${item.kind} instead`
-        );
-      })
+      .otherwise(shouldBeUnreachableCb(`${item.kind} is not selectable item`))
   );
   return Object.fromEntries(pairs);
 }
@@ -129,20 +133,12 @@ export function collectQueryAtoms(def: Definition, q: QueryDef): QueryAtom[] {
 
   // collect from select
   const selectAtoms = q.select.flatMap((item) =>
-    match(item)
-      .with({ kind: "field" }, (f): QueryAtom[] => [
-        { kind: "table-namespace", namePath: _.initial(f.namePath) },
-      ])
-      .with({ kind: "computed" }, (c): QueryAtom[] => {
-        const expr = expandExpression(def, { kind: "alias", namePath: c.namePath });
+    match<typeof item, QueryAtom[]>(item)
+      .with({ kind: "expression" }, (item) => {
+        const expr = expandExpression(def, item.expr);
         return pathsFromExpr(expr);
       })
-      .with({ kind: "aggregate" }, () => {
-        throw new UnreachableError("Aggregates not supported");
-      })
-      .otherwise((i) => {
-        throw new UnreachableError(`${i.kind} is not selectable item`);
-      })
+      .otherwise(shouldBeUnreachableCb(`${item.kind} is not selectable item`))
   );
   const filterAtoms = pathsFromExpr(expandExpression(def, q.filter));
   const orderByAtoms = (q.orderBy ?? []).flatMap((order) =>
