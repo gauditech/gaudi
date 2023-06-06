@@ -14,15 +14,27 @@
     "node": ">=16.15.0"
   },
   "dependencies": {
+    "bcrypt": "^5.1.0",
+    "chevrotain": "^10.5.0",
     "chokidar": "^3.5.3",
     "common-tags": "^1.8.2",
     "copyfiles": "^2.4.1",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "knex": "^2.3.0",
     "lodash": "^4.17.21",
     "module-alias": "^2.2.2",
     "nodemon": "^2.0.20",
+    "openapi-types": "^12.1.0",
+    "passport": "^0.6.0",
+    "passport-http-bearer": "^1.0.1",
+    "pg": "^8.8.0",
     "prisma": "^4.4.0",
+    "sql-formatter": "^12.0.4",
+    "swagger-ui-express": "^4.5.0",
+    "ts-morph": "^18.0.0",
+    "ts-pattern": "^4.2.2",
+    "winston": "^3.8.2",
     "yargs": "^17.6.2",
     "yup": "^0.32.11"
   }

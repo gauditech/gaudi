@@ -36,28 +36,43 @@ function parseArguments(config: EngineConfig) {
   yargs(hideBin(process.argv))
     .usage("$0 <command> [arguments]")
     .command({
-      command: "build",
+      command: "build [root]",
       describe:
         "Build entire project. Compiles Gaudi blueprint, pushes changes to DB and copies files to output folder",
       handler: (args) => buildCommandHandler(args, config),
-    })
-    .command({
-      command: "dev",
-      describe: "Start project dev builder which rebuilds project on detected blueprint changes.",
-      handler: (args) => devCommandHandler(args, config),
       builder: (yargs) =>
-        yargs.option("gaudi-dev", {
-          hidden: true, // this is hidden option for devloping gaudi itself
-          type: "boolean",
-          description: "Watch additional Gaudi resources when developing Gaudi itself",
+        yargs.positional("root", {
+          type: "string",
+          describe: "project root folder",
         }),
     })
     .command({
-      command: "start",
+      command: "dev [root]",
+      describe: "Start project dev builder which rebuilds project on detected blueprint changes.",
+      handler: (args) => devCommandHandler(args, config),
+      builder: (yargs) =>
+        yargs
+          .positional("root", {
+            type: "string",
+            describe: "project root folder",
+          })
+          .option("gaudi-dev", {
+            hidden: true, // this is a hidden option for developing gaudi itself
+            type: "boolean",
+            description: "Watch additional Gaudi resources when developing Gaudi itself",
+          }),
+    })
+    .command({
+      command: "start [root]",
       describe: "Start Gaudi project",
       handler: (args) => {
         startCommandHandler(args, config);
       },
+      builder: (yargs) =>
+        yargs.positional("root", {
+          type: "string",
+          describe: "project root folder",
+        }),
     })
     .command({
       command: "init <name>",
@@ -165,25 +180,50 @@ function parseArguments(config: EngineConfig) {
 
 // --- build command
 
-async function buildCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
+type BuildCommandArgs = {
+  /** Project root folder */
+  root?: string;
+};
+async function buildCommandHandler(
+  args: ArgumentsCamelCase<BuildCommandArgs>,
+  config: EngineConfig
+) {
   console.log("Building entire project ...");
 
+  // change root/working dir
+  if (args.root) {
+    const resolvedRoot = path.resolve(args.root);
+    process.chdir(resolvedRoot);
+    console.log(`Working directory set to "${resolvedRoot}"`);
+  }
+
   await compile(args, config).start();
-  await dbPush(args, config).start();
+  await dbPush(config).start();
   await copyStatic(args, config);
 }
 
 // --- dev command
 
-type DevOptions = {
-  /** Gaudi dev mode */
+type DevCommandArgs = {
+  /** Project root folder */
+  root?: string;
+  /** Gaudi dev mode. Adds `node_modules/@gaudi/engine` to file watch list. Option convenient when developing Gaudi itself */
   gaudiDev?: boolean;
 };
 
-async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: EngineConfig) {
+async function devCommandHandler(args: ArgumentsCamelCase<DevCommandArgs>, config: EngineConfig) {
   console.log("Starting project dev build ...");
+
+  // gaudi development
   if (args.gaudiDev) {
     console.log("Gaudi dev mode enabled.");
+  }
+
+  // change root/working dir
+  if (args.root) {
+    const resolvedRoot = path.resolve(args.root);
+    process.chdir(resolvedRoot);
+    console.log(`Working directory set to "${resolvedRoot}"`);
   }
 
   const children: Stoppable[] = [];
@@ -213,7 +253,7 @@ async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: E
 }
 
 function watchCompileCommand(
-  args: ArgumentsCamelCase<DevOptions>,
+  args: ArgumentsCamelCase<DevCommandArgs>,
   config: EngineConfig
 ): Stoppable {
   // create async queue to serialize multiple command calls
@@ -232,8 +272,9 @@ function watchCompileCommand(
   };
 
   const resources = _.compact([
-    // compiler input path
+    // watch compiler input path
     path.join(config.inputPath),
+    // watch gaudi files (during Gaudi dev)
     args.gaudiDev ? "./node_modules/@gaudi/engine/" : null,
   ]);
 
@@ -246,7 +287,7 @@ function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Sto
 
   const run = async () => {
     enqueue(() =>
-      dbPush(args, config)
+      dbPush(config)
         .start()
         .catch((err) => {
           // just use catch to prevent error from leaking to node and finishing entire watch process
@@ -287,10 +328,13 @@ function watchCopyStaticCommand(args: ArgumentsCamelCase, config: EngineConfig):
   return watchResources(resources, run);
 }
 
-function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineConfig): Stoppable {
+function watchStartCommand(
+  args: ArgumentsCamelCase<DevCommandArgs>,
+  config: EngineConfig
+): Stoppable {
   // no need for async enqueueing since `nodemon` is a long running process and we cannot await for it to finish
 
-  const command = start(args, config);
+  const command = start(config);
 
   const run = async () => {
     if (!command.isRunning()) {
@@ -325,8 +369,23 @@ function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineC
 
 // --- start command
 
-async function startCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
-  return start(args, config).start();
+type StartCommandArgs = {
+  /** Project root folder */
+  root?: string;
+};
+
+async function startCommandHandler(
+  args: ArgumentsCamelCase<StartCommandArgs>,
+  config: EngineConfig
+) {
+  // change root/working dir
+  if (args.root) {
+    const resolvedRoot = path.resolve(args.root);
+    process.chdir(resolvedRoot);
+    console.log(`Working directory set to "${resolvedRoot}"`);
+  }
+
+  return start(config).start();
 }
 
 // --- init project command
@@ -340,13 +399,13 @@ async function initCommandHandler(
 
 // -- DB push command
 function dbPushCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
-  return dbPush(args, config).start();
+  return dbPush(config).start();
 }
 
 // --- DB reset
 
 function dbResetCommandHandler(args: ArgumentsCamelCase, config: EngineConfig) {
-  return dbReset(args, config).start();
+  return dbReset(config).start();
 }
 
 // --- DB populate

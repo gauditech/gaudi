@@ -18,11 +18,11 @@ type ProjectConfig = {
   distDir: string;
 };
 
-// --- init project
-
 export type InitProjectOptions = {
+  /** New project name  */
   name: string;
 };
+
 export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config: EngineConfig) {
   const projectName = sanitizeProjectName(args.name);
   const rootDir = resolveRootDirPath(projectName);
