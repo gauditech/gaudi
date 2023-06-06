@@ -92,7 +92,7 @@ type FetchAuthTokenError = CreateError;
     return Object.assign(api,
       {
         list: buildListFn<ListResp, ListError>(options, parentPath),
-get: buildGetFn<string, GetResp, GetError>(options, parentPath),
+get: buildGetManyFn<string, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
 fetchAuthToken: buildCustomManySubmitFn<any, any, FetchAuthTokenError>(options, parentPath, "fetchAuthToken", "POST")
       }
@@ -118,7 +118,7 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     // endpoint functions
     return Object.assign(api,
       {
-        get: buildGetFn<string, GetResp, GetError>(options, parentPath)
+        get: buildGetManyFn<string, GetResp, GetError>(options, parentPath)
       }
     )
   }
@@ -207,8 +207,12 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
   // TODO: add list search/filter parameter
   export type PaginatedListData = { pageSize?: number; page?: number };
 
-  export type GetApiClientFn<ID, R, E extends string> = (
+  export type GetApiClientManyFn<ID, R, E extends string> = (
     id: ID,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type GetApiClientOneFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
@@ -217,8 +221,13 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
-  export type UpdateApiClientFn<ID, D, R, E extends string> = (
+  export type UpdateApiClientManyFn<ID, D, R, E extends string> = (
     id: ID,
+    data: D,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type UpdateApiClientOneFn<D, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -232,18 +241,31 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
 
-  export type DeleteApiClientFn<ID, E extends string> = (
+  export type DeleteApiClientManyFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
 
-  export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
+  export type DeleteApiClientOneFn<E extends string> = (
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<void, E>>;
+
+  export type CustomOneFetchApiClientManyFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
-  export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
+  export type CustomOneSubmitApiClientManyFn<ID, D, R, E extends string> = (
     id: ID,
+    data?: D,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type CustomOneFetchApiClientOneFn<R, E extends string> = (
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type CustomOneSubmitApiClientOneFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -260,9 +282,22 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
 
   // ----- API fn factories
 
-  function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
+  function buildGetManyFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientManyFn<ID, R, E> {
     return async (id, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildGetOneFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientOneFn<R, E> {
+    return async (options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -289,9 +324,9 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     };
   }
 
-  function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
+  function buildUpdateManyFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
-  ): UpdateApiClientFn<ID, D, R, E> {
+  ): UpdateApiClientManyFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
@@ -305,9 +340,38 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     };
   }
 
-  function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
+  function buildUpdateOneFn<D extends ApiRequestBody, R, E extends string>(
+    clientOptions: ApiClientOptions, parentPath: string
+  ): UpdateApiClientOneFn<D, R, E> {
+    return async (data, options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "PATCH",
+          body: data,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildDeleteManyFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientManyFn<ID, E> {
     return async (id, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "DELETE",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildDeleteOneFn<E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientOneFn<E> {
+    return async (options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -350,12 +414,12 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     };
   }
 
-  function buildCustomOneFetchFn<ID, R, E extends string>(
+  function buildCustomOneFetchManyFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneFetchApiClientFn<ID, R, E> {
+  ): CustomOneFetchApiClientManyFn<ID, R, E> {
     return async (id, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
@@ -368,14 +432,51 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     };
   }
 
-  function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
+  function buildCustomOneSubmitManyFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneSubmitApiClientFn<ID, D, R, E> {
+  ): CustomOneSubmitApiClientManyFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method,
+          body: data,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildCustomOneFetchOneFn<R, E extends string>(
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
+  ): CustomOneFetchApiClientOneFn<R, E> {
+    return async (options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildCustomOneSubmitOneFn<D extends ApiRequestBody, R, E extends string>(
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
+  ): CustomOneSubmitApiClientOneFn<D, R, E> {
+    return async (data, options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {

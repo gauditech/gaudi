@@ -699,3 +699,678 @@ exports[`entrypoint composes basic example 1`] = `
   },
 ]
 `;
+
+exports[`entrypoint composes single cardinality 1`] = `
+{
+  "endpoints": [
+    {
+      "authSelect": [],
+      "authorize": undefined,
+      "kind": "get",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "user_id",
+            "refKey": "User.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "User",
+          "namePath": [
+            "User",
+          ],
+          "retType": "User",
+          "select": [],
+        },
+      ],
+      "response": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "User",
+            "address",
+            "id",
+          ],
+          "refKey": "Address.id",
+        },
+        {
+          "alias": "name",
+          "kind": "field",
+          "name": "name",
+          "namePath": [
+            "User",
+            "address",
+            "name",
+          ],
+          "refKey": "Address.name",
+        },
+      ],
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "reference",
+        "name": "address",
+        "namePath": [
+          "User",
+          "address",
+        ],
+        "retType": "Address",
+        "select": [],
+      },
+    },
+    {
+      "actions": [
+        {
+          "alias": "$action_0",
+          "changeset": [
+            {
+              "name": "name",
+              "setter": {
+                "fieldsetAccess": [
+                  "name",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "text",
+              },
+            },
+          ],
+          "filter": undefined,
+          "isPrimary": true,
+          "kind": "update-one",
+          "model": "Address",
+          "select": [],
+          "targetPath": [
+            "$target_1",
+          ],
+        },
+      ],
+      "authSelect": [],
+      "authorize": undefined,
+      "fieldset": {
+        "kind": "record",
+        "nullable": false,
+        "record": {
+          "name": {
+            "kind": "field",
+            "nullable": false,
+            "required": false,
+            "type": "text",
+            "validators": [],
+          },
+        },
+      },
+      "kind": "update",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "user_id",
+            "refKey": "User.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "User",
+          "namePath": [
+            "User",
+          ],
+          "retType": "User",
+          "select": [],
+        },
+      ],
+      "response": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "User",
+            "address",
+            "id",
+          ],
+          "refKey": "Address.id",
+        },
+        {
+          "alias": "name",
+          "kind": "field",
+          "name": "name",
+          "namePath": [
+            "User",
+            "address",
+            "name",
+          ],
+          "refKey": "Address.name",
+        },
+      ],
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "reference",
+        "name": "address",
+        "namePath": [
+          "User",
+          "address",
+        ],
+        "retType": "Address",
+        "select": [
+          {
+            "alias": "id",
+            "kind": "field",
+            "name": "id",
+            "namePath": [
+              "User",
+              "address",
+              "id",
+            ],
+            "refKey": "Address.id",
+          },
+        ],
+      },
+    },
+    {
+      "actions": [],
+      "authSelect": [],
+      "authorize": undefined,
+      "fieldset": undefined,
+      "kind": "custom-one",
+      "method": "GET",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "user_id",
+            "refKey": "User.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "User",
+          "namePath": [
+            "User",
+          ],
+          "retType": "User",
+          "select": [],
+        },
+      ],
+      "path": "custom",
+      "responds": true,
+      "response": undefined,
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "reference",
+        "name": "address",
+        "namePath": [
+          "User",
+          "address",
+        ],
+        "retType": "Address",
+        "select": [],
+      },
+    },
+  ],
+  "entrypoints": [],
+  "name": "",
+  "target": {
+    "alias": "$target_1",
+    "identifyWith": undefined,
+    "kind": "reference",
+    "name": "address",
+    "namePath": [
+      "User",
+      "address",
+    ],
+    "retType": "Address",
+  },
+}
+`;
+
+exports[`entrypoint composes single cardinality 2`] = `
+{
+  "endpoints": [
+    {
+      "actions": [
+        {
+          "alias": "$action_0",
+          "changeset": [
+            {
+              "name": "name",
+              "setter": {
+                "fieldsetAccess": [
+                  "name",
+                ],
+                "kind": "fieldset-input",
+                "required": true,
+                "type": "text",
+              },
+            },
+            {
+              "name": "address_id",
+              "setter": {
+                "kind": "reference-value",
+                "target": {
+                  "access": [
+                    "id",
+                  ],
+                  "alias": "$target_0",
+                },
+              },
+            },
+          ],
+          "isPrimary": true,
+          "kind": "create-one",
+          "model": "User",
+          "select": [],
+          "targetPath": [
+            "user",
+          ],
+        },
+      ],
+      "authSelect": [],
+      "authorize": undefined,
+      "fieldset": {
+        "kind": "record",
+        "nullable": false,
+        "record": {
+          "name": {
+            "kind": "field",
+            "nullable": false,
+            "required": true,
+            "type": "text",
+            "validators": [],
+          },
+        },
+      },
+      "kind": "create",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "address_id",
+            "refKey": "Address.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "Address",
+          "namePath": [
+            "Address",
+          ],
+          "retType": "Address",
+          "select": [
+            {
+              "alias": "id",
+              "kind": "field",
+              "name": "id",
+              "namePath": [
+                "Address",
+                "id",
+              ],
+              "refKey": "Address.id",
+            },
+          ],
+        },
+      ],
+      "response": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "Address",
+            "user",
+            "id",
+          ],
+          "refKey": "User.id",
+        },
+        {
+          "alias": "name",
+          "kind": "field",
+          "name": "name",
+          "namePath": [
+            "Address",
+            "user",
+            "name",
+          ],
+          "refKey": "User.name",
+        },
+        {
+          "alias": "address_id",
+          "kind": "field",
+          "name": "address_id",
+          "namePath": [
+            "Address",
+            "user",
+            "address_id",
+          ],
+          "refKey": "User.address_id",
+        },
+      ],
+      "target": {
+        "alias": "$target_1",
+        "kind": "relation",
+        "name": "user",
+        "namePath": [
+          "Address",
+          "user",
+        ],
+        "retType": "User",
+        "select": [],
+      },
+    },
+    {
+      "authSelect": [],
+      "authorize": undefined,
+      "kind": "get",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "address_id",
+            "refKey": "Address.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "Address",
+          "namePath": [
+            "Address",
+          ],
+          "retType": "Address",
+          "select": [],
+        },
+      ],
+      "response": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "Address",
+            "user",
+            "id",
+          ],
+          "refKey": "User.id",
+        },
+        {
+          "alias": "name",
+          "kind": "field",
+          "name": "name",
+          "namePath": [
+            "Address",
+            "user",
+            "name",
+          ],
+          "refKey": "User.name",
+        },
+        {
+          "alias": "address_id",
+          "kind": "field",
+          "name": "address_id",
+          "namePath": [
+            "Address",
+            "user",
+            "address_id",
+          ],
+          "refKey": "User.address_id",
+        },
+      ],
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "relation",
+        "name": "user",
+        "namePath": [
+          "Address",
+          "user",
+        ],
+        "retType": "User",
+        "select": [],
+      },
+    },
+    {
+      "actions": [
+        {
+          "alias": "$action_0",
+          "changeset": [
+            {
+              "name": "name",
+              "setter": {
+                "fieldsetAccess": [
+                  "name",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "text",
+              },
+            },
+            {
+              "name": "address_id",
+              "setter": {
+                "fieldsetAccess": [
+                  "address_id",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "integer",
+              },
+            },
+          ],
+          "filter": undefined,
+          "isPrimary": true,
+          "kind": "update-one",
+          "model": "User",
+          "select": [],
+          "targetPath": [
+            "$target_1",
+          ],
+        },
+      ],
+      "authSelect": [],
+      "authorize": undefined,
+      "fieldset": {
+        "kind": "record",
+        "nullable": false,
+        "record": {
+          "address_id": {
+            "kind": "field",
+            "nullable": false,
+            "required": false,
+            "type": "integer",
+            "validators": [],
+          },
+          "name": {
+            "kind": "field",
+            "nullable": false,
+            "required": false,
+            "type": "text",
+            "validators": [],
+          },
+        },
+      },
+      "kind": "update",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "address_id",
+            "refKey": "Address.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "Address",
+          "namePath": [
+            "Address",
+          ],
+          "retType": "Address",
+          "select": [],
+        },
+      ],
+      "response": [
+        {
+          "alias": "id",
+          "kind": "field",
+          "name": "id",
+          "namePath": [
+            "Address",
+            "user",
+            "id",
+          ],
+          "refKey": "User.id",
+        },
+        {
+          "alias": "name",
+          "kind": "field",
+          "name": "name",
+          "namePath": [
+            "Address",
+            "user",
+            "name",
+          ],
+          "refKey": "User.name",
+        },
+        {
+          "alias": "address_id",
+          "kind": "field",
+          "name": "address_id",
+          "namePath": [
+            "Address",
+            "user",
+            "address_id",
+          ],
+          "refKey": "User.address_id",
+        },
+      ],
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "relation",
+        "name": "user",
+        "namePath": [
+          "Address",
+          "user",
+        ],
+        "retType": "User",
+        "select": [
+          {
+            "alias": "id",
+            "kind": "field",
+            "name": "id",
+            "namePath": [
+              "Address",
+              "user",
+              "id",
+            ],
+            "refKey": "User.id",
+          },
+        ],
+      },
+    },
+    {
+      "actions": [
+        {
+          "kind": "delete-one",
+          "model": "User",
+          "targetPath": [
+            "$target_1",
+          ],
+        },
+      ],
+      "authSelect": [],
+      "authorize": undefined,
+      "kind": "delete",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "address_id",
+            "refKey": "Address.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "Address",
+          "namePath": [
+            "Address",
+          ],
+          "retType": "Address",
+          "select": [],
+        },
+      ],
+      "response": undefined,
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "relation",
+        "name": "user",
+        "namePath": [
+          "Address",
+          "user",
+        ],
+        "retType": "User",
+        "select": [],
+      },
+    },
+    {
+      "actions": [],
+      "authSelect": [],
+      "authorize": undefined,
+      "fieldset": undefined,
+      "kind": "custom-one",
+      "method": "GET",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "address_id",
+            "refKey": "Address.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "Address",
+          "namePath": [
+            "Address",
+          ],
+          "retType": "Address",
+          "select": [],
+        },
+      ],
+      "path": "custom",
+      "responds": true,
+      "response": undefined,
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "relation",
+        "name": "user",
+        "namePath": [
+          "Address",
+          "user",
+        ],
+        "retType": "User",
+        "select": [],
+      },
+    },
+  ],
+  "entrypoints": [],
+  "name": "",
+  "target": {
+    "alias": "$target_1",
+    "identifyWith": undefined,
+    "kind": "relation",
+    "name": "user",
+    "namePath": [
+      "Address",
+      "user",
+    ],
+    "retType": "User",
+  },
+}
+`;

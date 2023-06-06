@@ -34,7 +34,7 @@ export function render(data: BuildDbSchemaData): string {
         ${(model.relations ?? []).map(
           (relation) => oneLine`
           ${relation.name}
-            ${getRef.model(d, relation.fromModelRefKey).dbname}${!relation.unique ? "[]" : ""}${relation.unique && relation.nullable ? "?" : ""}
+            ${getRef.model(d, relation.fromModelRefKey).dbname}${relation.unique ? "?" : "[]"}
           @relation("${relation.fromModel}${relation.through}")
         `)}
 

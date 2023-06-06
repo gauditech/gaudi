@@ -2,7 +2,7 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
-import { Type, getTypeModel } from "./ast/type";
+import { Type, getTypeCardinality, getTypeModel } from "./ast/type";
 import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
@@ -65,7 +65,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
               },
               through: reference.ref,
               unique: reference.unique,
-              nullable: reference.unique && reference.nullable,
             };
             implicitModel.relations.push(relation);
           }
@@ -159,7 +158,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ref: relation.name.ref,
       through: through.identifier.ref,
       unique: through.identifier.ref.unique,
-      nullable: through.identifier.ref.unique && through.identifier.type.kind === "nullable",
     };
   }
 
@@ -247,12 +245,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   ): Spec.Entrypoint {
     const target = migrateIdentifierRef(entrypoint.target);
     const model = target.ref.model;
+    const cardinality = getTypeCardinality(target.type);
 
-    const identify = kindFind(entrypoint.atoms, "identify");
-    const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifier;
-    const identifyThrough: Spec.IdentifierRef<AST.RefModelField> = identifyThroughAst
-      ? migrateIdentifierRef(identifyThroughAst)
-      : generateModelIdIdentifier(model);
+    let identifyThrough: Spec.IdentifierRef<AST.RefModelField> | undefined;
+    if (cardinality === "collection") {
+      const identify = kindFind(entrypoint.atoms, "identify");
+      const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifier;
+      identifyThrough = identifyThroughAst
+        ? migrateIdentifierRef(identifyThroughAst)
+        : generateModelIdIdentifier(model);
+    }
 
     const alias: Spec.IdentifierRef<AST.RefTarget> = entrypoint.as
       ? migrateIdentifierRef(entrypoint.as.identifier)
@@ -281,6 +283,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       // TODO: use name from param, alias and target?
       name: "",
       model,
+      cardinality,
       alias,
       target,
       identifyThrough,
@@ -655,6 +658,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
     return {
       target,
+      cardinality: getTypeCardinality(target.type),
       alias,
       setters,
       populates,

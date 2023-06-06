@@ -296,7 +296,7 @@ describe("api client lib", () => {
       const deleteResp = await client.api.org.delete("org3");
 
       ensureEqual(deleteResp.kind, "success" as const); // type narrowing for simpler later code
-      expect(deleteResp.status).toBe(200);
+      expect(deleteResp.status).toBe(204);
 
       // test that it's not there anymore
       const getResp = await client.api.org.get("org3");

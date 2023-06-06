@@ -196,4 +196,50 @@ describe("entrypoint", () => {
     );
     expect({ orgSelect, repoSelect, actionSelects }).toMatchSnapshot();
   });
+  it("composes single cardinality", () => {
+    const bp = `
+    model User {
+      field name { type string }
+      reference address { to Address, unique }
+    }
+
+    model Address {
+      field name { type string }
+      relation user { from User, through address }
+    }
+
+    api {
+      entrypoint User {
+        entrypoint address {
+          // cardinality is one
+          get endpoint {}
+          update endpoint {}
+          custom endpoint {
+            method GET
+            cardinality one
+            path "custom"
+          }
+        }
+      }
+
+      entrypoint Address {
+        entrypoint user {
+          // cardinality is nullable
+          create endpoint {}
+          get endpoint {}
+          update endpoint {}
+          delete endpoint {}
+          custom endpoint {
+            method GET
+            cardinality one
+            path "custom"
+          }
+        }
+      }
+    }
+    `;
+    const def = compose(compileToOldSpec(bp));
+    expect(def.apis[0].entrypoints[0].entrypoints[0]).toMatchSnapshot();
+    expect(def.apis[0].entrypoints[1].entrypoints[0]).toMatchSnapshot();
+  });
 });

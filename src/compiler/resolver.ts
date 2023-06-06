@@ -396,20 +396,26 @@ export function resolve(projectASTs: ProjectASTs) {
     if (parentModel === null) {
       resolveModelRef(entrypoint.target);
     } else {
-      resolveModelAtomRef(entrypoint.target, parentModel, "relation");
-      entrypoint.target.type = baseType(entrypoint.target.type);
+      resolveModelAtomRef(entrypoint.target, parentModel, "reference", "relation");
     }
+    const cardinality = getTypeCardinality(entrypoint.target.type);
     const currentModel = entrypoint.target.ref?.model;
     if (entrypoint.as) {
       entrypoint.as.identifier.ref = { kind: "target", targetKind: "entrypoint" };
-      entrypoint.as.identifier.type = entrypoint.target.type;
+      entrypoint.as.identifier.type = baseType(entrypoint.target.type);
       alias = entrypoint.as.identifier;
     }
 
     const identify = kindFind(entrypoint.atoms, "identify");
     if (identify) {
-      const through = kindFind(identify.atoms, "through");
-      if (through) resolveModelAtomRef(through.identifier, currentModel, "field");
+      if (cardinality === "collection") {
+        const through = kindFind(identify.atoms, "through");
+        if (through) resolveModelAtomRef(through.identifier, currentModel, "field");
+      } else {
+        errors.push(
+          new CompilerError(identify.keyword, ErrorCode.SingleCardinalityEntrypointHasIdentify)
+        );
+      }
     }
 
     const authorize = kindFind(entrypoint.atoms, "authorize");
@@ -423,7 +429,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (response) resolveSelect(response.select, currentModel, scope);
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
-      resolveEndpoint(endpoint, currentModel, alias, _.cloneDeep(scope))
+      resolveEndpoint(endpoint, currentModel, cardinality, alias, _.cloneDeep(scope))
     );
 
     const childEntrypointScope = _.cloneDeep(scope);
@@ -436,6 +442,7 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveEndpoint(
     endpoint: Endpoint,
     model: string | undefined,
+    parentCardinality: TypeCardinality,
     alias: IdentifierRef | undefined,
     scope: Scope
   ) {
@@ -454,6 +461,32 @@ export function resolve(projectASTs: ProjectASTs) {
       }
       default:
         break;
+    }
+
+    const isSupportedByParentCardinality = match(endpoint.type)
+      .with("get", "update", () => true)
+      .with(
+        "delete",
+        "create",
+        () => parentCardinality === "collection" || parentCardinality === "nullable"
+      )
+      .with("list", () => parentCardinality === "collection")
+      .with(
+        "custom",
+        () =>
+          kindFind(endpoint.atoms, "cardinality")?.cardinality !== "many" ||
+          parentCardinality === "collection"
+      )
+      .exhaustive();
+    if (!isSupportedByParentCardinality) {
+      const endpointString = endpoint.type === "custom" ? "custom-many" : endpoint.type;
+      errors.push(
+        new CompilerError(
+          endpoint.keywordType,
+          ErrorCode.UnsupportedEndpointByEntrypointCardinality,
+          { endpoint: endpointString, cardinality: parentCardinality }
+        )
+      );
     }
 
     const authorize = kindFind(endpoint.atoms, "authorize");
@@ -731,13 +764,12 @@ export function resolve(projectASTs: ProjectASTs) {
       ) {
         through = populate.target.ref.through;
       }
-      populate.target.type = baseType(populate.target.type);
     }
     const currentModel = populate.target.ref?.model;
     scope.model = currentModel;
     if (populate.as) {
       populate.as.identifier.ref = { kind: "target", targetKind: "populate" };
-      populate.as.identifier.type = populate.target.type;
+      populate.as.identifier.type = baseType(populate.target.type);
       addToScope(scope, populate.as.identifier);
     }
 
@@ -1083,7 +1115,7 @@ export function resolve(projectASTs: ProjectASTs) {
       errors.push(new CompilerError(identifier.token, ErrorCode.CantResolveModel));
     } else {
       identifier.ref = { kind: "model", model: model.name.text };
-      identifier.type = Type.model(model.name.text);
+      identifier.type = Type.collection(Type.model(model.name.text));
     }
   }
 

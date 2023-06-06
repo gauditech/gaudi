@@ -65,13 +65,13 @@ type CustomManySubmitError = CreateError;
     // endpoint functions
     return Object.assign(api,
       {
-        get: buildGetFn<string, GetResp, GetError>(options, parentPath),
+        get: buildGetManyFn<string, GetResp, GetError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
-update: buildUpdateFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+update: buildUpdateManyFn<string, UpdateData,UpdateResp, UpdateError>(options, parentPath),
 list: buildListFn<ListResp, ListError>(options, parentPath),
-delete: buildDeleteFn<string, DeleteError>(options, parentPath),
-customOneFetch: buildCustomOneFetchFn<string, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
-customOneSubmit: buildCustomOneSubmitFn<string, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
+delete: buildDeleteManyFn<string, DeleteError>(options, parentPath),
+customOneFetch: buildCustomOneFetchManyFn<string, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
+customOneSubmit: buildCustomOneSubmitManyFn<string, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
 customManyFetch: buildCustomManyFetchFn<any, CustomManyFetchError>(options, parentPath, "customManyFetch", "GET"),
 customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(options, parentPath, "customManySubmit", "POST")
       }
@@ -86,12 +86,14 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
 type CreateData = { virtProp: string,
 slug: string,
 name: string,
-description: string };
+description: string,
+owner_id?: number|null };
 type CreateResp = GetResp;
 type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type UpdateData = { name?: string,
 description?: string,
-org_id?: number };
+org_id?: number,
+owner_id?: number|null };
 type UpdateResp = GetResp;
 type UpdateError = CreateError;
 type ListResp = GetResp;
@@ -106,6 +108,48 @@ type CustomManySubmitError = CreateError;
     function api(id: number) {
       const baseUrl = `${parentPath}/${id}`;
       return {
+        owner: buildOwnerEntrypoint(options, `${baseUrl}/owner`)
+      }
+    }
+
+    // endpoint functions
+    return Object.assign(api,
+      {
+        get: buildGetManyFn<number, GetResp, GetError>(options, parentPath),
+create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
+update: buildUpdateManyFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
+list: buildPaginatedListFn<ListResp, ListError>(options, parentPath),
+delete: buildDeleteManyFn<number, DeleteError>(options, parentPath),
+customOneFetch: buildCustomOneFetchManyFn<number, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
+customOneSubmit: buildCustomOneSubmitManyFn<number, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
+customManyFetch: buildCustomManyFetchFn<any, CustomManyFetchError>(options, parentPath, "customManyFetch", "GET"),
+customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(options, parentPath, "customManySubmit", "POST")
+      }
+    )
+  }
+
+  function buildOwnerEntrypoint(options: ApiClientOptions, parentPath: string) {
+    // endpoint types
+    type GetResp = { id: number,
+slug: string,
+name: string };
+type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type UpdateData = { slug?: string,
+name?: string };
+type UpdateResp = GetResp;
+type UpdateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CreateData = { slug: string,
+name: string };
+type CreateResp = GetResp;
+type CreateError = UpdateError;
+type DeleteError = GetError;
+type CustomOneFetchError = GetError;
+type CustomOneSubmitError = UpdateError;
+
+    // entrypoint function
+    function api() {
+      const baseUrl = `${parentPath}`;
+      return {
         
       }
     }
@@ -113,15 +157,12 @@ type CustomManySubmitError = CreateError;
     // endpoint functions
     return Object.assign(api,
       {
-        get: buildGetFn<number, GetResp, GetError>(options, parentPath),
+        get: buildGetOneFn<GetResp, GetError>(options, parentPath),
+update: buildUpdateOneFn<UpdateData,UpdateResp, UpdateError>(options, parentPath),
 create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath),
-update: buildUpdateFn<number, UpdateData,UpdateResp, UpdateError>(options, parentPath),
-list: buildPaginatedListFn<ListResp, ListError>(options, parentPath),
-delete: buildDeleteFn<number, DeleteError>(options, parentPath),
-customOneFetch: buildCustomOneFetchFn<number, any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
-customOneSubmit: buildCustomOneSubmitFn<number, any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH"),
-customManyFetch: buildCustomManyFetchFn<any, CustomManyFetchError>(options, parentPath, "customManyFetch", "GET"),
-customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(options, parentPath, "customManySubmit", "POST")
+delete: buildDeleteOneFn<DeleteError>(options, parentPath),
+customOneFetch: buildCustomOneFetchOneFn<any, CustomOneFetchError>(options, parentPath, "customOneFetch", "GET"),
+customOneSubmit: buildCustomOneSubmitOneFn<any, any, CustomOneSubmitError>(options, parentPath, "customOneSubmit", "PATCH")
       }
     )
   }
@@ -210,8 +251,12 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
   // TODO: add list search/filter parameter
   export type PaginatedListData = { pageSize?: number; page?: number };
 
-  export type GetApiClientFn<ID, R, E extends string> = (
+  export type GetApiClientManyFn<ID, R, E extends string> = (
     id: ID,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type GetApiClientOneFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
@@ -220,8 +265,13 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
-  export type UpdateApiClientFn<ID, D, R, E extends string> = (
+  export type UpdateApiClientManyFn<ID, D, R, E extends string> = (
     id: ID,
+    data: D,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type UpdateApiClientOneFn<D, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -235,18 +285,31 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
 
-  export type DeleteApiClientFn<ID, E extends string> = (
+  export type DeleteApiClientManyFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
 
-  export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
+  export type DeleteApiClientOneFn<E extends string> = (
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<void, E>>;
+
+  export type CustomOneFetchApiClientManyFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
-  export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
+  export type CustomOneSubmitApiClientManyFn<ID, D, R, E extends string> = (
     id: ID,
+    data?: D,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type CustomOneFetchApiClientOneFn<R, E extends string> = (
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type CustomOneSubmitApiClientOneFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -263,9 +326,22 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
 
   // ----- API fn factories
 
-  function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
+  function buildGetManyFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientManyFn<ID, R, E> {
     return async (id, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildGetOneFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientOneFn<R, E> {
+    return async (options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -292,9 +368,9 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     };
   }
 
-  function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
+  function buildUpdateManyFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
-  ): UpdateApiClientFn<ID, D, R, E> {
+  ): UpdateApiClientManyFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
 
@@ -308,9 +384,38 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     };
   }
 
-  function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
+  function buildUpdateOneFn<D extends ApiRequestBody, R, E extends string>(
+    clientOptions: ApiClientOptions, parentPath: string
+  ): UpdateApiClientOneFn<D, R, E> {
+    return async (data, options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "PATCH",
+          body: data,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildDeleteManyFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientManyFn<ID, E> {
     return async (id, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "DELETE",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildDeleteOneFn<E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientOneFn<E> {
+    return async (options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -353,12 +458,12 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     };
   }
 
-  function buildCustomOneFetchFn<ID, R, E extends string>(
+  function buildCustomOneFetchManyFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneFetchApiClientFn<ID, R, E> {
+  ): CustomOneFetchApiClientManyFn<ID, R, E> {
     return async (id, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
 
@@ -371,14 +476,51 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     };
   }
 
-  function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
+  function buildCustomOneSubmitManyFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneSubmitApiClientFn<ID, D, R, E> {
+  ): CustomOneSubmitApiClientManyFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method,
+          body: data,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildCustomOneFetchOneFn<R, E extends string>(
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
+  ): CustomOneFetchApiClientOneFn<R, E> {
+    return async (options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildCustomOneSubmitOneFn<D extends ApiRequestBody, R, E extends string>(
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
+  ): CustomOneSubmitApiClientOneFn<D, R, E> {
+    return async (data, options) => {
+      const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
 
       return (
         makeRequest(clientOptions, url, {

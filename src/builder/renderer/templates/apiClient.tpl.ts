@@ -11,7 +11,6 @@ import {
   FieldsetFieldDef,
   FieldsetRecordDef,
   SelectItem,
-  TargetDef,
 } from "@src/types/definition";
 
 export type BuildApiClientData = {
@@ -141,15 +140,25 @@ function buildApi(def: Definition, api: ApiDef): string {
 // --- entrypoint API
 
 function buildEntrypointObject(def: Definition, entrypoint: EntrypointDef): EntrypointApiEntry {
-  const targetInfo = createIdentifierTargetInfo(
-    entrypoint.target.name,
-    entrypoint.target.identifyWith.type,
-    entrypoint.target.retType
-  );
+  let targetInfo, identifierType;
+  if (entrypoint.target.identifyWith) {
+    targetInfo = createIdentifierTargetInfo(
+      entrypoint.target.name,
+      entrypoint.target.identifyWith.type,
+      entrypoint.target.retType
+    );
+    identifierType = targetInfo.identifierType;
+  } else {
+    targetInfo = createTargetInfo(entrypoint.target.name, entrypoint.target.retType);
+    identifierType = undefined;
+  }
 
   const entrypointEntries = entrypoint.entrypoints.map((sub) => buildEntrypointObject(def, sub));
   const endpointEntries = buildEndpointsApi(def, entrypoint.endpoints);
   const endpointTypes = compactTypesArray(endpointEntries.map((epe) => epe.types).flat());
+
+  const entrypointFunctionParams = identifierType ? `id: ${identifierType}` : "";
+  const entrypointUrl = identifierType ? `\`\${parentPath}/\${id}\`` : `\`\${parentPath}\``;
 
   const builderFn = `
   function ${targetInfo.builder}(options: ApiClientOptions, parentPath: string) {
@@ -157,8 +166,8 @@ function buildEntrypointObject(def: Definition, entrypoint: EntrypointDef): Entr
     ${endpointTypes.map((t) => `type ${t.name} = ${t.body};`).join("\n")}
 
     // entrypoint function
-    function api(id: ${targetInfo.identifierType}) {
-      const baseUrl = \`\${parentPath}/\${id}\`;
+    function api(${entrypointFunctionParams}) {
+      const baseUrl = ${entrypointUrl};
       return {
         ${entrypointEntries
           .map((sub) => `${sub.name}: ${sub.builderName}(options, \`\${baseUrl}/${sub.path}\`)`)
@@ -236,21 +245,28 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
   const epKind = endpoint.kind;
   switch (epKind) {
     case "get": {
-      const targetInfo = createIdentifierTargetInfo(
-        endpoint.target.name,
-        endpoint.target.identifyWith.type,
-        endpoint.target.retType
-      );
-
       const responseTypeName = `GetResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
-      const identifierType = targetInfo.identifierType;
       const errorTypeName = "GetError";
       const errorType = commonErrorTypes.join("|");
+
+      let builder;
+      if (endpoint.target.identifyWith) {
+        const targetInfo = createIdentifierTargetInfo(
+          endpoint.target.name,
+          endpoint.target.identifyWith.type,
+          endpoint.target.retType
+        );
+        const identifierType = targetInfo.identifierType;
+        builder = `buildGetManyFn<${identifierType}, ${responseTypeName}, ${errorTypeName}>(options, parentPath)`;
+      } else {
+        builder = `buildGetOneFn<${responseTypeName}, ${errorTypeName}>(options, parentPath)`;
+      }
+
       return {
         name: "get",
-        builder: `buildGetFn<${identifierType}, ${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+        builder,
         types: [
           { name: responseTypeName, body: responseType },
           { name: errorTypeName, body: errorType },
@@ -277,24 +293,31 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       };
     }
     case "update": {
-      const targetInfo = createIdentifierTargetInfo(
-        endpoint.target.name,
-        endpoint.target.identifyWith.type,
-        endpoint.target.retType
-      );
-
       const inputTypeName = "UpdateData";
       const inputType = renderSchema(fieldsetToSchema(def, endpoint.fieldset));
 
-      const identifierType = targetInfo.identifierType;
       const responseTypeName = `UpdateResp`;
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const errorTypeName = "UpdateError";
       const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
+
+      let builder;
+      if (endpoint.target.identifyWith) {
+        const targetInfo = createIdentifierTargetInfo(
+          endpoint.target.name,
+          endpoint.target.identifyWith.type,
+          endpoint.target.retType
+        );
+        const identifierType = targetInfo.identifierType;
+        builder = `buildUpdateManyFn<${identifierType}, ${inputTypeName},${responseTypeName}, ${errorTypeName}>(options, parentPath)`;
+      } else {
+        builder = `buildUpdateOneFn<${inputTypeName},${responseTypeName}, ${errorTypeName}>(options, parentPath)`;
+      }
+
       return {
         name: "update",
-        builder: `buildUpdateFn<${identifierType}, ${inputTypeName},${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
+        builder,
         types: [
           { name: inputTypeName, body: inputType },
           { name: responseTypeName, body: responseType },
@@ -303,18 +326,25 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       };
     }
     case "delete": {
-      const targetInfo = createIdentifierTargetInfo(
-        endpoint.target.name,
-        endpoint.target.identifyWith.type,
-        endpoint.target.retType
-      );
-
-      const identifierType = targetInfo.identifierType;
       const errorTypeName = "DeleteError";
       const errorType = commonErrorTypes.join("|");
+
+      let builder;
+      if (endpoint.target.identifyWith) {
+        const targetInfo = createIdentifierTargetInfo(
+          endpoint.target.name,
+          endpoint.target.identifyWith.type,
+          endpoint.target.retType
+        );
+        const identifierType = targetInfo.identifierType;
+        builder = `buildDeleteManyFn<${identifierType}, ${errorTypeName}>(options, parentPath)`;
+      } else {
+        builder = `buildDeleteOneFn<${errorTypeName}>(options, parentPath)`;
+      }
+
       return {
         name: "delete",
-        builder: `buildDeleteFn<${identifierType}, ${errorTypeName}>(options, parentPath)`,
+        builder,
         types: [{ name: errorTypeName, body: errorType }],
       };
     }
@@ -346,15 +376,21 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       }
     }
     case "custom-one": {
-      const targetInfo = createIdentifierTargetInfo(
-        endpoint.path,
-        endpoint.target.identifyWith.type,
-        endpoint.target.retType
-      );
+      let targetInfo, identifierType;
+      if (endpoint.target.identifyWith) {
+        targetInfo = createIdentifierTargetInfo(
+          endpoint.path,
+          endpoint.target.identifyWith.type,
+          endpoint.target.retType
+        );
+        identifierType = targetInfo.identifierType;
+      } else {
+        targetInfo = createTargetInfo(endpoint.path, endpoint.target.retType);
+        identifierType = undefined;
+      }
 
       const path = endpoint.path;
       const name = targetInfo.identifierName;
-      const identifierType = targetInfo.identifierType;
       const typeName = targetInfo.typeName;
 
       const method = endpoint.method;
@@ -364,9 +400,16 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
           const errorTypeName = `${typeName}Error`;
           const errorType = commonErrorTypes.join("|");
 
+          let builder;
+          if (identifierType) {
+            builder = `buildCustomOneFetchManyFn<${identifierType}, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
+          } else {
+            builder = `buildCustomOneFetchOneFn<any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
+          }
+
           return {
             name: name,
-            builder: `buildCustomOneFetchFn<${identifierType}, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
+            builder,
             types: [{ name: errorTypeName, body: errorType }],
           };
         }
@@ -375,9 +418,16 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
           const errorTypeName = `${typeName}Error`;
           const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
+          let builder;
+          if (identifierType) {
+            builder = `buildCustomOneSubmitManyFn<${identifierType}, any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
+          } else {
+            builder = `buildCustomOneSubmitOneFn<any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
+          }
+
           return {
             name: name,
-            builder: `buildCustomOneSubmitFn<${identifierType}, any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
+            builder,
             types: [{ name: errorTypeName, body: errorType }],
           };
         }
@@ -513,8 +563,12 @@ function buildCommonCode(): string {
   // TODO: add list search/filter parameter
   export type PaginatedListData = { pageSize?: number; page?: number };
 
-  export type GetApiClientFn<ID, R, E extends string> = (
+  export type GetApiClientManyFn<ID, R, E extends string> = (
     id: ID,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type GetApiClientOneFn<R, E extends string> = (
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
@@ -523,8 +577,13 @@ function buildCommonCode(): string {
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
-  export type UpdateApiClientFn<ID, D, R, E extends string> = (
+  export type UpdateApiClientManyFn<ID, D, R, E extends string> = (
     id: ID,
+    data: D,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type UpdateApiClientOneFn<D, R, E extends string> = (
     data: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -538,18 +597,31 @@ function buildCommonCode(): string {
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<PaginatedListResponse<R>, E>>;
 
-  export type DeleteApiClientFn<ID, E extends string> = (
+  export type DeleteApiClientManyFn<ID, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<void, E>>;
 
-  export type CustomOneFetchApiClientFn<ID, R, E extends string> = (
+  export type DeleteApiClientOneFn<E extends string> = (
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<void, E>>;
+
+  export type CustomOneFetchApiClientManyFn<ID, R, E extends string> = (
     id: ID,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
 
-  export type CustomOneSubmitApiClientFn<ID, D, R, E extends string> = (
+  export type CustomOneSubmitApiClientManyFn<ID, D, R, E extends string> = (
     id: ID,
+    data?: D,
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type CustomOneFetchApiClientOneFn<R, E extends string> = (
+    options?: Partial<ApiRequestInit>
+  ) => Promise<ApiResponse<R, E>>;
+
+  export type CustomOneSubmitApiClientOneFn<D, R, E extends string> = (
     data?: D,
     options?: Partial<ApiRequestInit>
   ) => Promise<ApiResponse<R, E>>;
@@ -566,9 +638,22 @@ function buildCommonCode(): string {
 
   // ----- API fn factories
 
-  function buildGetFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientFn<ID, R, E> {
+  function buildGetManyFn<ID, R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientManyFn<ID, R, E> {
     return async (id, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}\`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "GET",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildGetOneFn<R, E extends string>(clientOptions: ApiClientOptions, parentPath: string): GetApiClientOneFn<R, E> {
+    return async (options) => {
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -595,9 +680,9 @@ function buildCommonCode(): string {
     };
   }
 
-  function buildUpdateFn<ID, D extends ApiRequestBody, R, E extends string>(
+  function buildUpdateManyFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions, parentPath: string
-  ): UpdateApiClientFn<ID, D, R, E> {
+  ): UpdateApiClientManyFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}\`;
 
@@ -611,9 +696,38 @@ function buildCommonCode(): string {
     };
   }
 
-  function buildDeleteFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientFn<ID, E> {
+  function buildUpdateOneFn<D extends ApiRequestBody, R, E extends string>(
+    clientOptions: ApiClientOptions, parentPath: string
+  ): UpdateApiClientOneFn<D, R, E> {
+    return async (data, options) => {
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}\`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "PATCH",
+          body: data,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildDeleteManyFn<ID, E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientManyFn<ID, E> {
     return async (id, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}\`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method: "DELETE",
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildDeleteOneFn<E extends string>(clientOptions: ApiClientOptions, parentPath: string): DeleteApiClientOneFn<E> {
+    return async (options) => {
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -656,12 +770,12 @@ function buildCommonCode(): string {
     };
   }
 
-  function buildCustomOneFetchFn<ID, R, E extends string>(
+  function buildCustomOneFetchManyFn<ID, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneFetchApiClientFn<ID, R, E> {
+  ): CustomOneFetchApiClientManyFn<ID, R, E> {
     return async (id, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}/\${path}\`;
 
@@ -674,14 +788,51 @@ function buildCommonCode(): string {
     };
   }
 
-  function buildCustomOneSubmitFn<ID, D extends ApiRequestBody, R, E extends string>(
+  function buildCustomOneSubmitManyFn<ID, D extends ApiRequestBody, R, E extends string>(
     clientOptions: ApiClientOptions,
     parentPath: string,
     path: string,
     method: EndpointHttpMethod
-  ): CustomOneSubmitApiClientFn<ID, D, R, E> {
+  ): CustomOneSubmitApiClientManyFn<ID, D, R, E> {
     return async (id, data, options) => {
       const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${id}/\${path}\`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method,
+          body: data,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildCustomOneFetchOneFn<R, E extends string>(
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
+  ): CustomOneFetchApiClientOneFn<R, E> {
+    return async (options) => {
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${path}\`;
+
+      return (
+        makeRequest(clientOptions, url, {
+          method,
+          headers: { ...(options?.headers ?? {}) },
+        })
+      );
+    };
+  }
+
+  function buildCustomOneSubmitOneFn<D extends ApiRequestBody, R, E extends string>(
+    clientOptions: ApiClientOptions,
+    parentPath: string,
+    path: string,
+    method: EndpointHttpMethod
+  ): CustomOneSubmitApiClientOneFn<D, R, E> {
+    return async (data, options) => {
+      const url = \`\${clientOptions.rootPath ?? ''}\${parentPath}/\${path}\`;
 
       return (
         makeRequest(clientOptions, url, {
@@ -819,7 +970,7 @@ function createApiInfo(api: ApiDef): ApiName {
 }
 function createIdentifierTargetInfo(
   name: string,
-  identifierType: TargetDef["identifyWith"]["type"],
+  identifierType: "text" | "integer",
   typeName: string
 ): TargetWithIdentifierName {
   return Object.assign(createTargetInfo(name, typeName), {

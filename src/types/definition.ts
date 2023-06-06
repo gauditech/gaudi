@@ -60,7 +60,6 @@ export type RelationDef = {
   fromModelRefKey: string;
   through: string;
   throughRefKey: string;
-  nullable: boolean;
   unique: boolean;
 };
 
@@ -205,12 +204,14 @@ export type EntrypointDef = {
 };
 
 export type TargetDef = {
-  kind: "model" | "reference" | "relation" | "query";
+  kind: "model" | "reference" | "relation";
   name: string;
   namePath: string[];
   retType: string;
   alias: string;
-  identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
+  identifyWith:
+    | { name: string; refKey: string; type: "text" | "integer"; paramName: string }
+    | undefined;
 };
 
 export type TargetWithSelectDef = TargetDef & { select: SelectDef };

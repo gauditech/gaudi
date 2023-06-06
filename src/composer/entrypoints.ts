@@ -2,7 +2,6 @@ import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
-import { RefModelField } from "@src/compiler/ast/ast";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression } from "@src/composer/query";
 import { refKeyFromRef } from "@src/composer/utils";
@@ -68,7 +67,7 @@ export function calculateTarget(
   const model = spec.target.ref.model;
   const identifyWith: TargetDef["identifyWith"] =
     "identifyThrough" in spec
-      ? calculateIdentifyWith(spec.identifyThrough)
+      ? calculateIdentifyWith(spec)
       : {
           name: "id",
           type: "integer",
@@ -86,9 +85,9 @@ export function calculateTarget(
   };
 }
 
-function calculateIdentifyWith(
-  identifyThrough: Spec.IdentifierRef<RefModelField>
-): TargetDef["identifyWith"] {
+function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"] {
+  if (!spec.identifyThrough) return undefined;
+  const identifyThrough = spec.identifyThrough;
   const type = identifyThrough.type;
   if (
     type.kind !== "primitive" ||

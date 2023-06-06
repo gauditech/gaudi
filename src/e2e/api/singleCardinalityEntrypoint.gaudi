@@ -1,0 +1,39 @@
+model User {
+  field name { type string }
+  reference address { to Address, unique }
+}
+
+model Address {
+  field name { type string }
+  relation user { from User, through address }
+}
+
+api {
+  entrypoint User {
+    entrypoint address as address {
+      // cardinality is one
+      get endpoint {}
+      update endpoint {}
+      custom endpoint {
+        method GET
+        cardinality one
+        path "custom"
+      }
+    }
+  }
+
+  entrypoint Address {
+    entrypoint user {
+      // cardinality is nullable
+      create endpoint {}
+      get endpoint {}
+      update endpoint {}
+      delete endpoint {}
+      custom endpoint {
+        method GET
+        cardinality one
+        path "custom"
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Single Cardinality Entrypoint cardinality nullable delete and create 1`] = `
+{
+  "address_id": 1,
+  "id": 2,
+  "name": "Second",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality nullable get 1`] = `
+{
+  "address_id": 1,
+  "id": 1,
+  "name": "First",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality nullable update 1`] = `
+{
+  "address_id": 1,
+  "id": 1,
+  "name": "Second",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality one get 1`] = `
+{
+  "id": 1,
+  "name": "Address 1",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality one update 1`] = `
+{
+  "id": 1,
+  "name": "Foo 2",
+}
+`;
