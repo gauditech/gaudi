@@ -23,8 +23,8 @@ module.exports = async () => {
         moduleNameMapper: {
           "@src/(.*)": "<rootDir>/src/$1",
         },
-        globalSetup: "<rootDir>/jest/setup.js",
-        globalTeardown: "<rootDir>/jest/teardown.js",
+        globalSetup: "<rootDir>/src/e2e/jest/setup.js",
+        globalTeardown: "<rootDir>/src/e2e/jest/teardown.js",
       },
       // --- client tests
       {
