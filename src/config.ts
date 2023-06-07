@@ -13,6 +13,7 @@ export type EngineConfig = {
   /** Gaudi folder */
   gaudiFolder: string;
   dbConn: ConnectionOptions;
+  embeddedPg: boolean;
 };
 
 /** Read runtime config from environment or provide default values. */
@@ -25,6 +26,7 @@ export function readConfig(configPath?: string): EngineConfig {
   const gaudiFolder = `./${GAUDI_FOLDER_NAME}`;
 
   const dbConn = parseConnectionString(process.env.GAUDI_DATABASE_URL);
+  const embeddedPg = process.env.GAUDI_EMBEDDED_POSTGRESQL_ENABLED?.toLowerCase() === "true";
 
-  return { inputPath, outputFolder, gaudiFolder, dbConn };
+  return { inputPath, outputFolder, gaudiFolder, dbConn, embeddedPg };
 }

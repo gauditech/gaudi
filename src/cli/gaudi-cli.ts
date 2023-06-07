@@ -209,7 +209,9 @@ async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: E
 
   attachProcessCleanup(process, cleanup);
 
-  children.push(embeddedDatabaseCommand(args, config));
+  if (config.embeddedPg) {
+    children.push(embeddedDatabaseCommand(args, config));
+  }
   children.push(watchCompileCommand(args, config));
   children.push(watchDbPushCommand(args, config));
   children.push(watchCopyStaticCommand(args, config));

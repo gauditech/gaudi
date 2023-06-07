@@ -13,7 +13,7 @@ module.exports = async function () {
   const configPath = path.join(__dirname, "..", "api", "api.test.env");
   dotenv.config({ path: configPath, debug: true });
 
-  const embeddedPgEnabled = process.env.GAUDI_EMBEDDED_POSTGRES_ENABLED ?? false;
+  const embeddedPgEnabled = process.env.GAUDI_EMBEDDED_POSTGRESQL_ENABLED ?? false;
 
   if (!embeddedPgEnabled) {
     return;
