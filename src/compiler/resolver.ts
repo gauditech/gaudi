@@ -573,23 +573,36 @@ export function resolve(projectASTs: ProjectASTs) {
       const lastTarget = action.target.at(-1);
       currentModel = getTypeModel(lastTarget!.type);
 
-      if (lastTarget?.ref && action.kind === "create") {
+      if (lastTarget?.ref) {
+        let targetIsSupported;
         switch (lastTarget.ref.kind) {
-          case "model":
+          case "model": {
+            targetIsSupported = action.kind === "create";
             break;
+          }
           case "modelAtom": {
             if (lastTarget.ref.atomKind === "relation") {
-              break;
+              targetIsSupported = action.kind === "create";
             }
-            if (lastTarget.ref.atomKind === "reference" && lastTarget.ref.nullable) {
-              break;
+            if (lastTarget.ref.atomKind === "reference") {
+              targetIsSupported = action.kind === "update" || lastTarget.ref.nullable;
             }
-            // fall through
+            break;
+          }
+          case "action":
+          case "target": {
+            targetIsSupported = action.kind === "update";
+            break;
           }
           default:
-            errors.push(
-              new CompilerError(lastTarget.token, ErrorCode.UnsuportedTargetInCreateAction)
-            );
+            targetIsSupported = false;
+        }
+        if (!targetIsSupported) {
+          const code =
+            action.kind === "create"
+              ? ErrorCode.UnsuportedTargetInCreateAction
+              : ErrorCode.UnsuportedTargetInUpdateAction;
+          errors.push(new CompilerError(lastTarget.token, code));
         }
       }
 

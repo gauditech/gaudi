@@ -253,7 +253,7 @@ describe("compiler errors", () => {
         `;
       expectError(
         bp,
-        `This target is not supported in a "create" action, "create" can only have model and relation as a target`
+        `This target is not supported in a "create" action, "create" can have model, relation and a nullable reference as a target`
       );
     });
 
