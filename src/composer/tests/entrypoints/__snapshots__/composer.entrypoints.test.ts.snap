@@ -954,31 +954,57 @@ exports[`entrypoint composes single cardinality 1`] = `
             "User",
           ],
           "retType": "User",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "User",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       ],
       "response": [
         {
           "alias": "id",
-          "kind": "field",
-          "name": "id",
-          "namePath": [
-            "User",
-            "address",
-            "id",
-          ],
-          "refKey": "Address.id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "User",
+              "address",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
         {
           "alias": "name",
-          "kind": "field",
-          "name": "name",
-          "namePath": [
-            "User",
-            "address",
-            "name",
-          ],
-          "refKey": "Address.name",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "User",
+              "address",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "text",
+            "nullable": false,
+          },
         },
       ],
       "target": {
@@ -991,7 +1017,24 @@ exports[`entrypoint composes single cardinality 1`] = `
           "address",
         ],
         "retType": "Address",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "User",
+                "address",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
       },
     },
     {
@@ -1052,31 +1095,57 @@ exports[`entrypoint composes single cardinality 1`] = `
             "User",
           ],
           "retType": "User",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "User",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       ],
       "response": [
         {
           "alias": "id",
-          "kind": "field",
-          "name": "id",
-          "namePath": [
-            "User",
-            "address",
-            "id",
-          ],
-          "refKey": "Address.id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "User",
+              "address",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
         {
           "alias": "name",
-          "kind": "field",
-          "name": "name",
-          "namePath": [
-            "User",
-            "address",
-            "name",
-          ],
-          "refKey": "Address.name",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "User",
+              "address",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "text",
+            "nullable": false,
+          },
         },
       ],
       "target": {
@@ -1092,14 +1161,19 @@ exports[`entrypoint composes single cardinality 1`] = `
         "select": [
           {
             "alias": "id",
-            "kind": "field",
-            "name": "id",
-            "namePath": [
-              "User",
-              "address",
-              "id",
-            ],
-            "refKey": "Address.id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "User",
+                "address",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         ],
       },
@@ -1126,7 +1200,23 @@ exports[`entrypoint composes single cardinality 1`] = `
             "User",
           ],
           "retType": "User",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "User",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       ],
       "path": "custom",
@@ -1142,7 +1232,24 @@ exports[`entrypoint composes single cardinality 1`] = `
           "address",
         ],
         "retType": "Address",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "User",
+                "address",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
       },
     },
   ],
@@ -1237,13 +1344,18 @@ exports[`entrypoint composes single cardinality 2`] = `
           "select": [
             {
               "alias": "id",
-              "kind": "field",
-              "name": "id",
-              "namePath": [
-                "Address",
-                "id",
-              ],
-              "refKey": "Address.id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "Address",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
             },
           ],
         },
@@ -1251,36 +1363,51 @@ exports[`entrypoint composes single cardinality 2`] = `
       "response": [
         {
           "alias": "id",
-          "kind": "field",
-          "name": "id",
-          "namePath": [
-            "Address",
-            "user",
-            "id",
-          ],
-          "refKey": "User.id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
         {
           "alias": "name",
-          "kind": "field",
-          "name": "name",
-          "namePath": [
-            "Address",
-            "user",
-            "name",
-          ],
-          "refKey": "User.name",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "text",
+            "nullable": false,
+          },
         },
         {
           "alias": "address_id",
-          "kind": "field",
-          "name": "address_id",
-          "namePath": [
-            "Address",
-            "user",
-            "address_id",
-          ],
-          "refKey": "User.address_id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "address_id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
       ],
       "target": {
@@ -1292,7 +1419,24 @@ exports[`entrypoint composes single cardinality 2`] = `
           "user",
         ],
         "retType": "User",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Address",
+                "user",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
       },
     },
     {
@@ -1314,42 +1458,73 @@ exports[`entrypoint composes single cardinality 2`] = `
             "Address",
           ],
           "retType": "Address",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "Address",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       ],
       "response": [
         {
           "alias": "id",
-          "kind": "field",
-          "name": "id",
-          "namePath": [
-            "Address",
-            "user",
-            "id",
-          ],
-          "refKey": "User.id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
         {
           "alias": "name",
-          "kind": "field",
-          "name": "name",
-          "namePath": [
-            "Address",
-            "user",
-            "name",
-          ],
-          "refKey": "User.name",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "text",
+            "nullable": false,
+          },
         },
         {
           "alias": "address_id",
-          "kind": "field",
-          "name": "address_id",
-          "namePath": [
-            "Address",
-            "user",
-            "address_id",
-          ],
-          "refKey": "User.address_id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "address_id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
       ],
       "target": {
@@ -1362,7 +1537,24 @@ exports[`entrypoint composes single cardinality 2`] = `
           "user",
         ],
         "retType": "User",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Address",
+                "user",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
       },
     },
     {
@@ -1441,42 +1633,73 @@ exports[`entrypoint composes single cardinality 2`] = `
             "Address",
           ],
           "retType": "Address",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "Address",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       ],
       "response": [
         {
           "alias": "id",
-          "kind": "field",
-          "name": "id",
-          "namePath": [
-            "Address",
-            "user",
-            "id",
-          ],
-          "refKey": "User.id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
         {
           "alias": "name",
-          "kind": "field",
-          "name": "name",
-          "namePath": [
-            "Address",
-            "user",
-            "name",
-          ],
-          "refKey": "User.name",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "text",
+            "nullable": false,
+          },
         },
         {
           "alias": "address_id",
-          "kind": "field",
-          "name": "address_id",
-          "namePath": [
-            "Address",
-            "user",
-            "address_id",
-          ],
-          "refKey": "User.address_id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "address_id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
         },
       ],
       "target": {
@@ -1492,14 +1715,19 @@ exports[`entrypoint composes single cardinality 2`] = `
         "select": [
           {
             "alias": "id",
-            "kind": "field",
-            "name": "id",
-            "namePath": [
-              "Address",
-              "user",
-              "id",
-            ],
-            "refKey": "User.id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Address",
+                "user",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
           },
         ],
       },
@@ -1532,7 +1760,23 @@ exports[`entrypoint composes single cardinality 2`] = `
             "Address",
           ],
           "retType": "Address",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "Address",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       ],
       "response": undefined,
@@ -1546,7 +1790,24 @@ exports[`entrypoint composes single cardinality 2`] = `
           "user",
         ],
         "retType": "User",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Address",
+                "user",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
       },
     },
     {
@@ -1571,7 +1832,23 @@ exports[`entrypoint composes single cardinality 2`] = `
             "Address",
           ],
           "retType": "Address",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "Address",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       ],
       "path": "custom",
@@ -1587,7 +1864,24 @@ exports[`entrypoint composes single cardinality 2`] = `
           "user",
         ],
         "retType": "User",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "Address",
+                "user",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
       },
     },
   ],
