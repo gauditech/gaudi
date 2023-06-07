@@ -220,6 +220,7 @@ async function createProject(projectConfig: DefaultProjectConfig) {
   createDir(projectConfig.rootDir);
 
   createGitignore(projectConfig);
+  createEslintrc(projectConfig);
 }
 
 async function createGitignore(projectConfig: DefaultProjectConfig) {
@@ -230,6 +231,34 @@ async function createGitignore(projectConfig: DefaultProjectConfig) {
     `
 node_modules
 ${projectConfig.distDir}
+`
+  );
+}
+
+async function createEslintrc(projectConfig: DefaultProjectConfig) {
+  const eslintrcPath = path.join(projectConfig.rootDir, ".eslintrc.js");
+
+  storeTemplateOutput(
+    eslintrcPath,
+    `
+module.exports = ${JSON.stringify(
+      {
+        root: true,
+        parser: "@typescript-eslint/parser",
+        plugins: ["@typescript-eslint", "import"],
+        extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+        ignorePatterns: ["dist"],
+        env: {
+          es6: true,
+          node: true,
+        },
+        parserOptions: {
+          ecmaVersion: 2020,
+        },
+      },
+      undefined,
+      2
+    )}
 `
   );
 }
@@ -263,9 +292,13 @@ function renderPackageJsonTemplate(projectConfig: DefaultProjectConfig): string 
         clean: `rimraf ${projectConfig.distDir}`,
       },
       devDependencies: {
+        "@typescript-eslint/eslint-plugin": "^5.57.0",
+        "@typescript-eslint/parser": "^5.57.0",
         concurrently: "^7.6.0",
         rimraf: "^3.0.2",
         typescript: "^5.0.3",
+        eslint: "^8.37.0",
+        "eslint-plugin-import": "^2.27.5",
       },
     },
     undefined,
