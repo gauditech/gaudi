@@ -1,0 +1,23 @@
+HTML,
+BODY,
+#root {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.container {
+  display: grid;
+  grid-template-rows: 1fr 4fr;
+
+  height: 100%;
+}
+
+.button-container {
+}
+.output-container {
+  overflow: auto;
+  border: 1px solid gray;
+  background-color: lightgray;
+}

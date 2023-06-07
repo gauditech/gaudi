@@ -1,0 +1,37 @@
+{
+  "name": "bookreviews",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "// --- build": "",
+    "build": "npm run build:server:hooks && npm run build:server:api && npm run build:client",
+    "build:server:api": "npx gaudi-cli build app/server",
+    "build:server:hooks": "tsc --preserveWatchOutput --project app/server",
+    "build:client": "vite build app/client",
+    "// --- dev": "",
+    "dev": "concurrently --names hooks,gaudi,client \"npm run dev:server:hooks\" \"npm run dev:server:api\" \"npm run dev:client\" ",
+    "dev:server:api": "npx gaudi-cli dev app/server",
+    "dev:server:hooks": "npm run build:server:hooks -- --watch --incremental",
+    "dev:client": "vite dev app/client",
+    "// --- start": "",
+    "start": "npx gaudi-cli start",
+    "// --- other": "",
+    "clean": "rimraf ./dist"
+  },
+  "devDependencies": {
+    "@gaudi/engine": "@gaudi/engine",
+    "@types/node": "^20.2.5",
+    "@types/react": "^18.2.7",
+    "@types/react-dom": "^18.2.4",
+    "@vitejs/plugin-react": "^4.0.0",
+    "concurrently": "^7.6.0",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.8.3",
+    "vite": "^4.3.9"
+  },
+  "dependencies": {
+    "@sindresorhus/slugify": "^1.1.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

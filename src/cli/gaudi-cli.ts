@@ -75,14 +75,19 @@ function parseArguments(config: EngineConfig) {
         }),
     })
     .command({
-      command: "init <name>",
+      command: "init <name> [template]",
       describe: "Init new Gaudi project",
       builder: (yargs) =>
-        yargs.positional("name", {
-          type: "string",
-          description: "new project name",
-          demandOption: true,
-        }),
+        yargs
+          .positional("name", {
+            type: "string",
+            description: "new project name",
+            demandOption: true,
+          })
+          .option("template", {
+            type: "string",
+            description: "New project template name. Available templates",
+          }),
       handler: (args) => {
         initCommandHandler(args, config);
       },

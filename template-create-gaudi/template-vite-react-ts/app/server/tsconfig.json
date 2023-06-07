@@ -8,15 +8,14 @@
     "noImplicitAny": true,
     "moduleResolution": "node",
     "sourceMap": true,
-    "outDir": "dist",
-    "baseUrl": ".",
+    "outDir": "../../dist/server",
+    "rootDir": "src",
+    "baseUrl": "src",
     "strict": true,
     "paths": {
-      "*": ["node_modules/*"],
-      "@src/*": ["src/*"]
+      "*": ["node_modules/*"]
     },
     "lib": ["es2020"]
   },
-  "include": ["src"],
-  "ignore": ["template-create-gaudi"]
+  "include": ["src/hooks"]
 }
