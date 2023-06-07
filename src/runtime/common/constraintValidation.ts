@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { queryFromParts } from "../query/build";
+import { GAUDI_INTERNAL_TARGET_ID_ALIAS, queryFromParts, selectableId } from "../query/build";
 import { executeQuery } from "../query/exec";
 import { DbConn } from "../server/dbConn";
 import { Vars } from "../server/vars";
@@ -52,7 +52,9 @@ export async function fetchReferenceIds(
       ],
     };
     const queryName = field.modelRefKey + "." + field.name;
-    const query = queryFromParts(def, queryName, [field.modelRefKey], filter, []);
+    const query = queryFromParts(def, queryName, [field.modelRefKey], filter, [
+      selectableId([field.modelRefKey]),
+    ]);
     const inputValue = _.get(input, setter.fieldsetAccess);
     const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
 
@@ -65,7 +67,10 @@ export async function fetchReferenceIds(
       );
     }
 
-    return { fieldsetAccess: setter.fieldsetAccess, value: result[0].id as number };
+    return {
+      fieldsetAccess: setter.fieldsetAccess,
+      value: result[0][GAUDI_INTERNAL_TARGET_ID_ALIAS] as number,
+    };
   });
   return Promise.all(promiseEntries);
 }

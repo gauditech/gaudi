@@ -3,11 +3,11 @@ import _ from "lodash";
 import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
-import { QueryTree, selectableId } from "./build";
+import { GAUDI_INTERNAL_TARGET_ID_ALIAS, QueryTree } from "./build";
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
-import { ensureEqual } from "@src/common/utils";
+import { ensureEqual, ensureNot } from "@src/common/utils";
 import { getTypedPath } from "@src/composer/utils";
 import logger from "@src/logger";
 import { DbConn } from "@src/runtime/server/dbConn";
@@ -19,41 +19,32 @@ export type Result = {
 };
 
 export interface NestedRow {
-  id: number;
   [key: string]: string | number | NestedRow[];
 }
 
 export interface Row {
-  id: number;
   [key: string]: string | number;
 }
 
 export async function executeQuery(
   conn: DbConn,
   def: Definition,
-  q: QueryDef,
+  query: QueryDef,
   params: Vars,
   contextIds: number[]
 ): Promise<NestedRow[]> {
-  const hasId = q.select.find((s) => s.kind === "field" && s.alias === "id");
-  let query = q;
-  if (!hasId) {
-    query = { ...q, select: [...q.select, selectableId(def, query.fromPath)] };
-  }
   const sqlTpl = queryPlanToString(buildQueryPlan(def, query)).replace(
     ":@context_ids",
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  console.info(sqlTpl);
   const result: Result = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
   return result.rows.map((row: Row): Row => {
-    // FIXME find results of aggregates and cast to integers, since `node-postgres`
-    // makes them strings due to loss of precision (BigInt)
-
     const cast = query.select.map((item: SelectItem): [string, string | number] => {
       const value = row[item.alias];
-      if (item.kind === "aggregate" && typeof value === "string") {
+      // FIXME this casts strings that are expected to be integers
+      // but it should be some kind of bigint instead
+      if (item.kind === "expression" && item.type.kind === "integer" && typeof value === "string") {
         return [item.alias, parseInt(value, 10)];
       } else {
         return [item.alias, value];
@@ -61,7 +52,6 @@ export async function executeQuery(
     });
     return Object.fromEntries(cast) as Row;
   });
-  // return result.rows;
 }
 
 export async function executeQueryTree(
@@ -73,14 +63,20 @@ export async function executeQueryTree(
 ): Promise<NestedRow[]> {
   const results = await executeQuery(conn, def, qt.query, params, contextIds);
   if (results.length === 0) return [];
-  const resultIds = _.uniq(results.map((r) => r.id));
+
+  const resultIds = qt.queryIdAlias
+    ? _.uniq(results.map((r) => r[qt.queryIdAlias!] as number))
+    : [];
 
   // tree
   for (const rel of qt.related) {
+    const noAliasErrMsg = "Query has nested selects but 'id' field was not found in the parent";
+    ensureNot(qt.queryIdAlias, undefined, noAliasErrMsg);
+
     const relResults = await executeQueryTree(conn, def, rel, params, resultIds);
     const groupedById = _.groupBy(relResults, "__join_connection");
     results.forEach((r) => {
-      const relResultsForId = (groupedById[r.id] ?? []).map((relR) =>
+      const relResultsForId = (groupedById[r[qt.queryIdAlias!] as number] ?? []).map((relR) =>
         _.omit(relR, "__join_connection")
       );
       // if property kind is reference (todo: unique relationships in general)
@@ -117,7 +113,9 @@ export async function executeQueryTree(
           _.omit(
             // FIXME we shouldn't have `[0]` here but we lack type checking feature
             // to figure out the query cardinality so we hardcode "one" for now...
-            argResults[arg.name].filter((res) => res["__join_connection"] === result.id)[0],
+            argResults[arg.name].filter(
+              (res) => res["__join_connection"] === result[qt.queryIdAlias!]
+            )[0],
             "__join_connection"
           ),
         ])
@@ -126,7 +124,9 @@ export async function executeQueryTree(
       result[hook.name] = await executeHook(def, hook.hook, args);
     }
   }
-
+  if (qt.queryIdAlias === GAUDI_INTERNAL_TARGET_ID_ALIAS) {
+    return results.map((r) => _.omit(r, GAUDI_INTERNAL_TARGET_ID_ALIAS));
+  }
   return results;
 }
 

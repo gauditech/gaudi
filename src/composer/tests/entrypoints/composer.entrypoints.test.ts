@@ -152,7 +152,7 @@ describe("entrypoint", () => {
 
       relation repos { from Repo, through org }
 
-      query repoCount { from repos, count }
+      computed repoCount { count(repos.id) }
       computed coef { 2 }
     }
     model Repo {

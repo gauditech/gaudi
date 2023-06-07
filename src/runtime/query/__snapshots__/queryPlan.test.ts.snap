@@ -348,36 +348,51 @@ exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
   "select": [
     {
       "alias": "id",
-      "kind": "field",
-      "name": "id",
-      "namePath": [
-        "Org",
-        "repos",
-        "id",
-      ],
-      "refKey": "Repo.id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
     },
     {
       "alias": "name",
-      "kind": "field",
-      "name": "name",
-      "namePath": [
-        "Org",
-        "repos",
-        "name",
-      ],
-      "refKey": "Repo.name",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "name",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "text",
+        "nullable": false,
+      },
     },
     {
       "alias": "org_name",
-      "kind": "computed",
-      "name": "org_name",
-      "namePath": [
-        "Org",
-        "repos",
-        "org_name",
-      ],
-      "refKey": "Repo.org_name",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "org_name",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "text",
+        "nullable": false,
+      },
     },
   ],
 }

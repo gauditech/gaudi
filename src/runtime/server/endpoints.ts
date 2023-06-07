@@ -30,7 +30,7 @@ import {
   decorateWithOrderBy,
   decorateWithPaging,
 } from "@src/runtime/query/endpointQueries";
-import { NestedRow, executeQueryTree } from "@src/runtime/query/exec";
+import { NestedRow, executeQuery, executeQueryTree } from "@src/runtime/query/exec";
 import { buildAuthenticationHandler } from "@src/runtime/server/authentication";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
@@ -48,6 +48,7 @@ import {
   EntrypointDef,
   GetEndpointDef,
   ListEndpointDef,
+  QueryDef,
   TypedExprDef,
   TypedFunction,
   UpdateEndpointDef,
@@ -145,7 +146,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -218,7 +219,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -300,7 +301,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -310,8 +311,10 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           logger.debug("BODY", body);
 
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+          logger.debug("Reference IDs", referenceIds);
+          const fieldset = _.cloneDeep(endpoint.fieldset);
+          assignNoReferenceValidators(fieldset, referenceIds);
+          const validationResult = await validateEndpointFieldset(def, fieldset, body);
           logger.debug("Validation result", validationResult);
 
           await executeEndpointActions(
@@ -401,7 +404,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -412,8 +415,10 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           logger.debug("FIELDSET", endpoint.fieldset);
           const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-          assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+          logger.debug("Reference IDs", referenceIds);
+          const fieldset = _.cloneDeep(endpoint.fieldset);
+          assignNoReferenceValidators(fieldset, referenceIds);
+          const validationResult = await validateEndpointFieldset(def, fieldset, body);
           logger.debug("Validation result", validationResult);
 
           await executeEndpointActions(
@@ -504,7 +509,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -569,7 +574,7 @@ export function buildCustomOneEndpoint(
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(endpoint, contextVars);
@@ -586,9 +591,10 @@ export function buildCustomOneEndpoint(
             logger.debug("BODY", body);
 
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-
-            validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+            logger.debug("Reference IDs", referenceIds);
+            const fieldset = _.cloneDeep(endpoint.fieldset);
+            assignNoReferenceValidators(fieldset, referenceIds);
+            validationResult = await validateEndpointFieldset(def, fieldset, body);
             logger.debug("Validation result", validationResult);
           }
 
@@ -663,7 +669,7 @@ export function buildCustomManyEndpoint(
             const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
             const result = findOne(results);
             contextVars.set(qt.alias, result);
-            pids = [result.id];
+            pids = [result[qt.queryIdAlias!] as number];
           }
 
           // no target query here because this is endpoint has "many" cardinality, all we know are parents
@@ -682,9 +688,10 @@ export function buildCustomManyEndpoint(
             logger.debug("BODY", body);
 
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            assignNoReferenceValidators(endpoint.fieldset, referenceIds);
-
-            validationResult = await validateEndpointFieldset(def, endpoint.fieldset, body);
+            logger.debug("Reference IDs", referenceIds);
+            const fieldset = _.cloneDeep(endpoint.fieldset);
+            assignNoReferenceValidators(fieldset, referenceIds);
+            validationResult = await validateEndpointFieldset(def, fieldset, body);
             logger.debug("Validation result", validationResult);
           }
 
@@ -891,14 +898,28 @@ async function createListEndpointResponse(
     const data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
 
     // exec count query
-    // using original `qt` var without any paging/ordering/...
-    // TODO: this query should be a "count query" but it's currently not possible
-    const totalData = await executeQueryTree(conn, def, qt, params, contextIds);
+    // using query from original `qt` without any paging/ordering/...
+    const query: QueryDef = {
+      ...qt.query,
+      select: [
+        {
+          kind: "expression",
+          type: { kind: "integer", nullable: true },
+          alias: "totalCount",
+          expr: {
+            kind: "function",
+            name: "count" as any, // FIXME "count" is not supported here
+            args: [{ kind: "literal", type: "integer", value: 1 }],
+          },
+        },
+      ],
+    };
+    const total = await executeQuery(conn, def, query, params, contextIds);
+    const totalCount = (findOne(total)["totalCount"] as number | null) ?? 0;
 
     // resolve paging data
     const pageSize = resultQuery.query.limit ?? 0;
     const page = pageSize > 0 ? Math.floor((resultQuery.query.offset ?? 0) / pageSize) + 1 : 1;
-    const totalCount = totalData.length;
     const totalPages = Math.ceil(totalCount / pageSize);
 
     return {

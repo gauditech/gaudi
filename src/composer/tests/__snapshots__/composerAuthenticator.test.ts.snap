@@ -282,43 +282,63 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "select": [
                 {
                   "alias": "id",
-                  "kind": "field",
-                  "name": "id",
-                  "namePath": [
-                    "AuthUser",
-                    "id",
-                  ],
-                  "refKey": "AuthUser.id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUser",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "name",
-                  "kind": "field",
-                  "name": "name",
-                  "namePath": [
-                    "AuthUser",
-                    "name",
-                  ],
-                  "refKey": "AuthUser.name",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUser",
+                      "name",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "username",
-                  "kind": "field",
-                  "name": "username",
-                  "namePath": [
-                    "AuthUser",
-                    "username",
-                  ],
-                  "refKey": "AuthUser.username",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUser",
+                      "username",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "passwordHash",
-                  "kind": "field",
-                  "name": "passwordHash",
-                  "namePath": [
-                    "AuthUser",
-                    "passwordHash",
-                  ],
-                  "refKey": "AuthUser.passwordHash",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUser",
+                      "passwordHash",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
               ],
             },
@@ -432,13 +452,18 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "select": [
               {
                 "alias": "token",
-                "kind": "field",
-                "name": "token",
-                "namePath": [
-                  "accessToken",
-                  "token",
-                ],
-                "refKey": "AuthUserAccessToken.token",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "accessToken",
+                    "token",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "text",
+                  "nullable": false,
+                },
               },
             ],
             "targetPath": [
@@ -517,7 +542,23 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "AuthUser",
           ],
           "retType": "AuthUser",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "AuthUser",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
       {
@@ -559,43 +600,63 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "select": [
                 {
                   "alias": "id",
-                  "kind": "field",
-                  "name": "id",
-                  "namePath": [
-                    "AuthUserAccessToken",
-                    "id",
-                  ],
-                  "refKey": "AuthUserAccessToken.id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUserAccessToken",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "token",
-                  "kind": "field",
-                  "name": "token",
-                  "namePath": [
-                    "AuthUserAccessToken",
-                    "token",
-                  ],
-                  "refKey": "AuthUserAccessToken.token",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUserAccessToken",
+                      "token",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "expiryDate",
-                  "kind": "field",
-                  "name": "expiryDate",
-                  "namePath": [
-                    "AuthUserAccessToken",
-                    "expiryDate",
-                  ],
-                  "refKey": "AuthUserAccessToken.expiryDate",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUserAccessToken",
+                      "expiryDate",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "text",
+                    "nullable": false,
+                  },
                 },
                 {
                   "alias": "authUser_id",
-                  "kind": "field",
-                  "name": "authUser_id",
-                  "namePath": [
-                    "AuthUserAccessToken",
-                    "authUser_id",
-                  ],
-                  "refKey": "AuthUserAccessToken.authUser_id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "AuthUserAccessToken",
+                      "authUser_id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
                 },
               ],
             },
@@ -652,7 +713,23 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "AuthUser",
           ],
           "retType": "AuthUser",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "AuthUser",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
       {
@@ -734,33 +811,48 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "select": [
               {
                 "alias": "id",
-                "kind": "field",
-                "name": "id",
-                "namePath": [
-                  "authUser",
-                  "id",
-                ],
-                "refKey": "AuthUser.id",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "authUser",
+                    "id",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
               },
               {
                 "alias": "name",
-                "kind": "field",
-                "name": "name",
-                "namePath": [
-                  "authUser",
-                  "name",
-                ],
-                "refKey": "AuthUser.name",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "authUser",
+                    "name",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "text",
+                  "nullable": false,
+                },
               },
               {
                 "alias": "username",
-                "kind": "field",
-                "name": "username",
-                "namePath": [
-                  "authUser",
-                  "username",
-                ],
-                "refKey": "AuthUser.username",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "authUser",
+                    "username",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "text",
+                  "nullable": false,
+                },
               },
             ],
             "targetPath": [
@@ -909,7 +1001,23 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "AuthUser",
           ],
           "retType": "AuthUser",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "AuthUser",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
         },
       },
     ],

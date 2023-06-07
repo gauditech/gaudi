@@ -76,13 +76,18 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -154,14 +159,19 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "repos",
-          "id",
-        ],
-        "refKey": "Repo.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -205,14 +215,19 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Repo",
-          "issues",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -255,33 +270,48 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Issue",
-          "name",
-        ],
-        "refKey": "Issue.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "repo_id",
-        "kind": "field",
-        "name": "repo_id",
-        "namePath": [
-          "Issue",
-          "repo_id",
-        ],
-        "refKey": "Issue.repo_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "repo_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -345,7 +375,25 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -365,7 +413,23 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -385,14 +449,19 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "repos",
-          "id",
-        ],
-        "refKey": "Repo.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -437,13 +506,18 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -515,14 +589,19 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "repos",
-          "id",
-        ],
-        "refKey": "Repo.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -594,14 +673,19 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Repo",
-          "issues",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -643,14 +727,19 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "retType": "Issue",
     "select": [
       {
-        "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "alias": "__gaudi__target_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -691,7 +780,7 @@ WHERE
 
 ",
   "SELECT
-  "Issue"."id" AS "id"
+  "Issue"."id" AS "__gaudi__target_id"
 FROM
   "issue" AS "Issue"
 WHERE
@@ -719,7 +808,25 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -739,7 +846,23 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -756,7 +879,24 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -799,13 +939,18 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -877,14 +1022,19 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "repos",
-          "id",
-        ],
-        "refKey": "Repo.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -956,14 +1106,19 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Repo",
-          "issues",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1006,33 +1161,48 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Issue",
-          "name",
-        ],
-        "refKey": "Issue.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "repo_id",
-        "kind": "field",
-        "name": "repo_id",
-        "namePath": [
-          "Issue",
-          "repo_id",
-        ],
-        "refKey": "Issue.repo_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "repo_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1103,7 +1273,25 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -1123,7 +1311,23 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -1140,7 +1344,24 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -1183,13 +1404,18 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1261,14 +1487,19 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "repos",
-          "id",
-        ],
-        "refKey": "Repo.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1312,14 +1543,19 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Repo",
-          "issues",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1363,36 +1599,51 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Repo",
-          "issues",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Repo",
-          "issues",
-          "name",
-        ],
-        "refKey": "Issue.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "repo_id",
-        "kind": "field",
-        "name": "repo_id",
-        "namePath": [
-          "Repo",
-          "issues",
-          "repo_id",
-        ],
-        "refKey": "Issue.repo_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "repo_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1457,7 +1708,25 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 3`] = `
     "issues",
   ],
   "retType": "Issue",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
 }
 `;
 
@@ -1477,7 +1746,23 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -1494,7 +1779,24 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -1537,13 +1839,18 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1615,14 +1922,19 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "repos",
-          "id",
-        ],
-        "refKey": "Repo.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1694,14 +2006,19 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Repo",
-          "issues",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "issues",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1744,33 +2061,48 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Issue",
-          "id",
-        ],
-        "refKey": "Issue.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Issue",
-          "name",
-        ],
-        "refKey": "Issue.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "repo_id",
-        "kind": "field",
-        "name": "repo_id",
-        "namePath": [
-          "Issue",
-          "repo_id",
-        ],
-        "refKey": "Issue.repo_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Issue",
+            "repo_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1844,15 +2176,20 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 3`] = `
   "select": [
     {
       "alias": "id",
-      "kind": "field",
-      "name": "id",
-      "namePath": [
-        "Org",
-        "repos",
-        "issues",
-        "id",
-      ],
-      "refKey": "Issue.id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "repos",
+          "issues",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
     },
   ],
 }
@@ -1874,7 +2211,23 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
       "Org",
     ],
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "alias": "$target_1",
@@ -1891,7 +2244,24 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
       "repos",
     ],
     "retType": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
 ]
 `;
@@ -1925,23 +2295,33 @@ exports[`Endpoint queries List endpoint response queries test orderBy query endp
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item",
-          "id",
-        ],
-        "refKey": "Item.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item",
-          "name",
-        ],
-        "refKey": "Item.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -1981,23 +2361,33 @@ exports[`Endpoint queries List endpoint response queries test paging query endpo
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item",
-          "id",
-        ],
-        "refKey": "Item.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item",
-          "name",
-        ],
-        "refKey": "Item.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2073,23 +2463,33 @@ exports[`Endpoint queries List endpoint response queries test paging/order/filte
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item",
-          "id",
-        ],
-        "refKey": "Item.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item",
-          "name",
-        ],
-        "refKey": "Item.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2136,23 +2536,33 @@ exports[`Endpoint queries List endpoint response queries test plain query endpoi
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item",
-          "id",
-        ],
-        "refKey": "Item.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item",
-          "name",
-        ],
-        "refKey": "Item.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2226,36 +2636,51 @@ exports[`Endpoint queries List nested endpoint response queries test orderBy que
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "id",
-        ],
-        "refKey": "Item2.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item1",
-          "item2",
-          "name",
-        ],
-        "refKey": "Item2.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "item1_id",
-        "kind": "field",
-        "name": "item1_id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "item1_id",
-        ],
-        "refKey": "Item2.item1_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "item1_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2323,36 +2748,51 @@ exports[`Endpoint queries List nested endpoint response queries test paging quer
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "id",
-        ],
-        "refKey": "Item2.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item1",
-          "item2",
-          "name",
-        ],
-        "refKey": "Item2.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "item1_id",
-        "kind": "field",
-        "name": "item1_id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "item1_id",
-        ],
-        "refKey": "Item2.item1_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "item1_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2459,36 +2899,51 @@ exports[`Endpoint queries List nested endpoint response queries test paging/orde
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "id",
-        ],
-        "refKey": "Item2.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item1",
-          "item2",
-          "name",
-        ],
-        "refKey": "Item2.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "item1_id",
-        "kind": "field",
-        "name": "item1_id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "item1_id",
-        ],
-        "refKey": "Item2.item1_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "item1_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2561,36 +3016,51 @@ exports[`Endpoint queries List nested endpoint response queries test plain query
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "id",
-        ],
-        "refKey": "Item2.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "name",
-        "kind": "field",
-        "name": "name",
-        "namePath": [
-          "Item1",
-          "item2",
-          "name",
-        ],
-        "refKey": "Item2.name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "text",
+          "nullable": false,
+        },
       },
       {
         "alias": "item1_id",
-        "kind": "field",
-        "name": "item1_id",
-        "namePath": [
-          "Item1",
-          "item2",
-          "item1_id",
-        ],
-        "refKey": "Item2.item1_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Item1",
+            "item2",
+            "item1_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2629,7 +3099,23 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
     "orderBy": undefined,
     "refKey": "N/A",
     "retType": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "__gaudi__target_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
   },
   {
     "filter": {
@@ -2671,24 +3157,34 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
     "select": [
       {
         "alias": "id",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "recent_repos",
-          "id",
-        ],
-        "refKey": "Repo.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "recent_repos",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
       {
         "alias": "__join_connection",
-        "kind": "field",
-        "name": "id",
-        "namePath": [
-          "Org",
-          "id",
-        ],
-        "refKey": "Org.id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
       },
     ],
   },
@@ -2697,8 +3193,7 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
 
 exports[`Orderby, limit and offset supports orderby, limit and offset in batching query 2`] = `
 "SELECT
-  "Org".*,
-  "Org"."id" AS "__join_connection"
+  "Org"."id" AS "__gaudi__target_id"
 FROM
   "org" AS "Org"
 
