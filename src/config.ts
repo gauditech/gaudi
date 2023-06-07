@@ -1,4 +1,7 @@
 import dotenv from "dotenv";
+import { ConnectionOptions } from "pg-connection-string";
+
+import { parseConnectionString } from "./common/utils";
 
 import { GAUDI_FOLDER_NAME } from "@src/const";
 
@@ -9,6 +12,7 @@ export type EngineConfig = {
   outputFolder: string;
   /** Gaudi folder */
   gaudiFolder: string;
+  dbConn: ConnectionOptions;
 };
 
 /** Read runtime config from environment or provide default values. */
@@ -20,5 +24,7 @@ export function readConfig(configPath?: string): EngineConfig {
   // gaudi folder's path should probably be determined by the position of (future) gaudi config file
   const gaudiFolder = `./${GAUDI_FOLDER_NAME}`;
 
-  return { inputPath, outputFolder, gaudiFolder };
+  const dbConn = parseConnectionString(process.env.GAUDI_DATABASE_URL);
+
+  return { inputPath, outputFolder, gaudiFolder, dbConn };
 }

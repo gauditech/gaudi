@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import _ from "lodash";
+import { ConnectionOptions, parse } from "pg-connection-string";
 
 export function ensureFind<T>(
   arr: T[],
@@ -223,4 +224,14 @@ export function saveOutputFile(destination: string, content: string): boolean {
   }
 
   return contentChanged;
+}
+
+/**
+ * Parse database connection string, or provide a default one if missing.
+ */
+export function parseConnectionString(conn: string | undefined): ConnectionOptions {
+  if (!conn) {
+    throw new Error("Connection string is missing!");
+  }
+  return parse(conn);
 }

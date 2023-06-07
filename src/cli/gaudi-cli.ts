@@ -6,8 +6,11 @@ import "../common/setupAliases";
 import path from "path";
 
 import _ from "lodash";
+import waitOn from "wait-on";
 import yargs, { ArgumentsCamelCase } from "yargs";
 import { hideBin } from "yargs/helpers";
+
+import { startEmbeddedPg } from "./command/startEmbeddedPg";
 
 import { compile } from "@src/cli/command/compile";
 import { copyStatic } from "@src/cli/command/copyStatic";
@@ -206,10 +209,18 @@ async function devCommandHandler(args: ArgumentsCamelCase<DevOptions>, config: E
 
   attachProcessCleanup(process, cleanup);
 
+  children.push(embeddedDatabaseCommand(args, config));
   children.push(watchCompileCommand(args, config));
   children.push(watchDbPushCommand(args, config));
   children.push(watchCopyStaticCommand(args, config));
   children.push(watchStartCommand(args, config));
+}
+
+function embeddedDatabaseCommand(
+  args: ArgumentsCamelCase<DevOptions>,
+  config: EngineConfig
+): Stoppable {
+  return startEmbeddedPg(args, config);
 }
 
 function watchCompileCommand(
@@ -245,6 +256,9 @@ function watchDbPushCommand(args: ArgumentsCamelCase, config: EngineConfig): Sto
   const enqueue = createAsyncQueueContext();
 
   const run = async () => {
+    // wait until database is up and running
+    await waitOnDb(config);
+
     enqueue(() =>
       dbPush(args, config)
         .start()
@@ -293,6 +307,9 @@ function watchStartCommand(args: ArgumentsCamelCase<DevOptions>, config: EngineC
   const command = start(args, config);
 
   const run = async () => {
+    // wait until database is up and running
+    await waitOnDb(config);
+
     if (!command.isRunning()) {
       await command.start().catch((err) => {
         // just use catch to prevent error from leaking to node and finishing entire watch process
@@ -374,4 +391,25 @@ function dbMigrateCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, con
 
 function dbDeployCommandHandler(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   return dbDeploy(args, config).start();
+}
+
+// --- wait-on postgres connection
+
+async function waitOnDb(config: EngineConfig) {
+  const port = config.dbConn.port ?? 5432;
+
+  return waitOn({
+    interval: 50,
+    timeout: 10000,
+    simultaneous: 1,
+    resources: [`tcp:${port}`],
+  })
+    .then(() => console.log("Database connection detected!"))
+    .catch((e) => {
+      console.error(
+        `Unable to establish a connection to the database!
+        Make sure it's running on port ${port}!`
+      );
+      throw e;
+    });
 }

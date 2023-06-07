@@ -24,9 +24,9 @@ module.exports = async function () {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gaudi-jest-embpg-"));
   const pg = new EmbeddedPostgres({
     database_dir: dir,
-    user: url.user ?? "gaudi",
-    password: url.password ?? "gaudip",
-    port: url.port ?? 5433,
+    user: url.user,
+    password: url.password,
+    port: url.port,
     persistent: false,
   });
   await pg.initialise();
