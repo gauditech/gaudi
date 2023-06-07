@@ -2,7 +2,7 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
-import { Type, getTypeCardinality, getTypeModel } from "./ast/type";
+import { Type, baseType, getTypeCardinality, getTypeModel } from "./ast/type";
 import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
@@ -301,8 +301,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     response: Spec.Select
   ): Spec.Endpoint {
     const actions = (
-      kindFind(endpoint.atoms, "action")?.actions ?? generatePrimaryAction(endpoint)
-    ).map((a, i) => migrateAction(a, i, target, alias, parentAlias));
+      kindFind(endpoint.atoms, "action")?.actions ??
+      generatePrimaryAction(endpoint, target, parentAlias)
+    ).flatMap((a, i) => migrateAction(a, i, target, alias, parentAlias));
 
     const astAuthorize = kindFind(endpoint.atoms, "authorize")?.expr;
     const authorize = combineExprWithAnd(
@@ -342,14 +343,63 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     }
   }
 
-  function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
+  function generatePrimaryAction(
+    endpoint: AST.Endpoint,
+    target: Spec.IdentifierRef,
+    parentAlias: Spec.IdentifierRef | undefined
+  ): AST.Action[] {
+    const zeroToken = { start: 0, end: 0 };
     switch (endpoint.type) {
-      case "create":
+      case "create": {
+        const aliasIdentifier: AST.IdentifierRef<AST.RefAction> = {
+          token: zeroToken,
+          text: "$action_0",
+          ref: { kind: "action" },
+          type: baseType(target.type),
+        };
+        const contextActions: AST.Action[] = [];
+        if (target.ref.kind === "modelAtom" && target.ref.atomKind === "reference" && parentAlias) {
+          contextActions.push({
+            kind: "update",
+            keyword: zeroToken,
+            target: [{ ...parentAlias, token: zeroToken }],
+            atoms: [
+              {
+                kind: "set",
+                keyword: zeroToken,
+                target: { ...target, ref: target.ref, token: zeroToken },
+                set: {
+                  kind: "expr",
+                  expr: {
+                    kind: "path",
+                    sourcePos: zeroToken,
+                    path: [aliasIdentifier],
+                    type: aliasIdentifier.type,
+                  },
+                },
+              },
+            ],
+          });
+        }
+        return [
+          {
+            kind: endpoint.type,
+            keyword: zeroToken,
+            as: {
+              keyword: zeroToken,
+              identifier: aliasIdentifier,
+            },
+            atoms: [],
+            isPrimary: true,
+          },
+          ...contextActions,
+        ];
+      }
       case "update": {
         return [
           {
             kind: endpoint.type,
-            keyword: { start: 0, end: 0 },
+            keyword: zeroToken,
             atoms: [],
             isPrimary: true,
           },
@@ -389,7 +439,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       )
       .with({ kind: "delete" }, (a) => migrateDeleteAction(a, alias))
       .with({ kind: "execute" }, (a) => migrateExecuteAction(a, index))
-      .with({ kind: "fetch" }, migrateFetchAction)
+      .with({ kind: "fetch" }, (a) => migrateFetchAction(a))
       .exhaustive();
   }
 
@@ -524,10 +574,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     if (target.ref.atomKind === "reference") {
       ensureEqual(set.set.kind, "expr");
       const expr = migrateExpr(set.set.expr);
-      ensureEqual(expr.kind, "identifier");
-      const model = getTypeModel(expr.identifier.at(-1)!.type)!;
-      ensureExists(model);
-      expr.identifier.push(generateModelIdIdentifier(model));
+      if (expr.kind === "literal") {
+        ensureEqual(expr.literal, null);
+      } else {
+        ensureEqual(expr.kind, "identifier");
+        const model = getTypeModel(expr.identifier.at(-1)!.type)!;
+        ensureExists(model);
+        expr.identifier.push(generateModelIdIdentifier(model));
+      }
 
       return {
         kind: "set",

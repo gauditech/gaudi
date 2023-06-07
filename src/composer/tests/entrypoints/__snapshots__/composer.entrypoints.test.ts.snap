@@ -1278,6 +1278,328 @@ exports[`entrypoint composes single cardinality 2`] = `
           "alias": "$action_0",
           "changeset": [
             {
+              "name": "text",
+              "setter": {
+                "fieldsetAccess": [
+                  "text",
+                ],
+                "kind": "fieldset-input",
+                "required": true,
+                "type": "text",
+              },
+            },
+          ],
+          "isPrimary": true,
+          "kind": "create-one",
+          "model": "Details",
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "$action_0",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
+          "targetPath": [
+            "details",
+          ],
+        },
+        {
+          "alias": "$action_1",
+          "changeset": [
+            {
+              "name": "name",
+              "setter": {
+                "fieldsetAccess": [
+                  "$action_1",
+                  "name",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "text",
+              },
+            },
+            {
+              "name": "address_id",
+              "setter": {
+                "fieldsetAccess": [
+                  "$action_1",
+                  "address_id",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "integer",
+              },
+            },
+            {
+              "name": "details_id",
+              "setter": {
+                "kind": "reference-value",
+                "target": {
+                  "access": [
+                    "id",
+                  ],
+                  "alias": "$action_0",
+                },
+              },
+            },
+          ],
+          "filter": undefined,
+          "isPrimary": false,
+          "kind": "update-one",
+          "model": "User",
+          "select": [],
+          "targetPath": [
+            "$target_0",
+          ],
+        },
+      ],
+      "authSelect": [],
+      "authorize": undefined,
+      "fieldset": {
+        "kind": "record",
+        "nullable": false,
+        "record": {
+          "$action_1": {
+            "kind": "record",
+            "nullable": false,
+            "record": {
+              "address_id": {
+                "kind": "field",
+                "nullable": false,
+                "required": false,
+                "type": "integer",
+                "validators": [],
+              },
+              "name": {
+                "kind": "field",
+                "nullable": false,
+                "required": false,
+                "type": "text",
+                "validators": [],
+              },
+            },
+          },
+          "text": {
+            "kind": "field",
+            "nullable": false,
+            "required": true,
+            "type": "text",
+            "validators": [],
+          },
+        },
+      },
+      "kind": "create",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "user_id",
+            "refKey": "User.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "User",
+          "namePath": [
+            "User",
+          ],
+          "retType": "User",
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "User",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
+        },
+      ],
+      "response": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "User",
+              "details",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+        {
+          "alias": "text",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "User",
+              "details",
+              "text",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "text",
+            "nullable": false,
+          },
+        },
+      ],
+      "target": {
+        "alias": "$target_1",
+        "kind": "reference",
+        "name": "details",
+        "namePath": [
+          "User",
+          "details",
+        ],
+        "retType": "Details",
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "User",
+                "details",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
+      },
+    },
+    {
+      "actions": [
+        {
+          "kind": "delete-one",
+          "model": "Details",
+          "targetPath": [
+            "$target_1",
+          ],
+        },
+      ],
+      "authSelect": [],
+      "authorize": undefined,
+      "kind": "delete",
+      "parentContext": [
+        {
+          "alias": "$target_0",
+          "identifyWith": {
+            "name": "id",
+            "paramName": "user_id",
+            "refKey": "User.id",
+            "type": "integer",
+          },
+          "kind": "model",
+          "name": "User",
+          "namePath": [
+            "User",
+          ],
+          "retType": "User",
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "User",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
+        },
+      ],
+      "response": undefined,
+      "target": {
+        "alias": "$target_1",
+        "identifyWith": undefined,
+        "kind": "reference",
+        "name": "details",
+        "namePath": [
+          "User",
+          "details",
+        ],
+        "retType": "Details",
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "User",
+                "details",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
+      },
+    },
+  ],
+  "entrypoints": [],
+  "name": "",
+  "target": {
+    "alias": "$target_1",
+    "identifyWith": undefined,
+    "kind": "reference",
+    "name": "details",
+    "namePath": [
+      "User",
+      "details",
+    ],
+    "retType": "Details",
+  },
+}
+`;
+
+exports[`entrypoint composes single cardinality 3`] = `
+{
+  "endpoints": [
+    {
+      "actions": [
+        {
+          "alias": "$action_0",
+          "changeset": [
+            {
               "name": "name",
               "setter": {
                 "fieldsetAccess": [
@@ -1300,6 +1622,17 @@ exports[`entrypoint composes single cardinality 2`] = `
                 },
               },
             },
+            {
+              "name": "details_id",
+              "setter": {
+                "fieldsetAccess": [
+                  "details_id",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "integer",
+              },
+            },
           ],
           "isPrimary": true,
           "kind": "create-one",
@@ -1316,6 +1649,13 @@ exports[`entrypoint composes single cardinality 2`] = `
         "kind": "record",
         "nullable": false,
         "record": {
+          "details_id": {
+            "kind": "field",
+            "nullable": true,
+            "required": false,
+            "type": "integer",
+            "validators": [],
+          },
           "name": {
             "kind": "field",
             "nullable": false,
@@ -1407,6 +1747,22 @@ exports[`entrypoint composes single cardinality 2`] = `
           "type": {
             "kind": "integer",
             "nullable": false,
+          },
+        },
+        {
+          "alias": "details_id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "details_id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": true,
           },
         },
       ],
@@ -1526,6 +1882,22 @@ exports[`entrypoint composes single cardinality 2`] = `
             "nullable": false,
           },
         },
+        {
+          "alias": "details_id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "details_id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": true,
+          },
+        },
       ],
       "target": {
         "alias": "$target_1",
@@ -1584,6 +1956,17 @@ exports[`entrypoint composes single cardinality 2`] = `
                 "type": "integer",
               },
             },
+            {
+              "name": "details_id",
+              "setter": {
+                "fieldsetAccess": [
+                  "details_id",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "integer",
+              },
+            },
           ],
           "filter": undefined,
           "isPrimary": true,
@@ -1604,6 +1987,13 @@ exports[`entrypoint composes single cardinality 2`] = `
           "address_id": {
             "kind": "field",
             "nullable": false,
+            "required": false,
+            "type": "integer",
+            "validators": [],
+          },
+          "details_id": {
+            "kind": "field",
+            "nullable": true,
             "required": false,
             "type": "integer",
             "validators": [],
@@ -1699,6 +2089,22 @@ exports[`entrypoint composes single cardinality 2`] = `
           "type": {
             "kind": "integer",
             "nullable": false,
+          },
+        },
+        {
+          "alias": "details_id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Address",
+              "user",
+              "details_id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": true,
           },
         },
       ],

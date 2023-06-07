@@ -1,6 +1,7 @@
 model User {
   field name { type string }
   reference address { to Address, unique }
+  reference details { to Details, unique, nullable }
 }
 
 model Address {
@@ -8,9 +9,15 @@ model Address {
   relation user { from User, through address }
 }
 
+model Details {
+  field text { type string }
+  relation user { from User, through details }
+}
+
 api {
-  entrypoint User {
-    entrypoint address as address {
+  entrypoint User as user {
+    get endpoint {}
+    entrypoint address {
       // cardinality is one
       get endpoint {}
       update endpoint {}
@@ -19,6 +26,11 @@ api {
         cardinality one
         path "custom"
       }
+    }
+    entrypoint details as details {
+      // cardinality is nullable
+      create endpoint {}
+      delete endpoint {}
     }
   }
 

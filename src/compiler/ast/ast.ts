@@ -412,6 +412,7 @@ export type RefModelReference = {
   name: string;
   model: string;
   unique: boolean;
+  nullable: boolean;
 };
 export type RefModelRelation = {
   kind: "modelAtom";

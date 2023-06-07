@@ -201,11 +201,17 @@ describe("entrypoint", () => {
     model User {
       field name { type string }
       reference address { to Address, unique }
+      reference details { to Details, unique, nullable }
     }
 
     model Address {
       field name { type string }
       relation user { from User, through address }
+    }
+
+    model Details {
+      field text { type string }
+      relation user { from User, through details }
     }
 
     api {
@@ -219,6 +225,11 @@ describe("entrypoint", () => {
             cardinality one
             path "custom"
           }
+        }
+        entrypoint details {
+          // cardinality is nullable
+          create endpoint {}
+          delete endpoint {}
         }
       }
 
@@ -240,6 +251,7 @@ describe("entrypoint", () => {
     `;
     const def = compose(compileToOldSpec(bp));
     expect(def.apis[0].entrypoints[0].entrypoints[0]).toMatchSnapshot();
+    expect(def.apis[0].entrypoints[0].entrypoints[1]).toMatchSnapshot();
     expect(def.apis[0].entrypoints[1].entrypoints[0]).toMatchSnapshot();
   });
 });

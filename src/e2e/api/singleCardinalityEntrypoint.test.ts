@@ -28,7 +28,7 @@ describe("Single Cardinality Entrypoint", () => {
     await destroy();
   });
 
-  describe("cardinality one", () => {
+  describe("cardinality one reference", () => {
     it("get", async () => {
       const getResponse = await request(getServer()).get("/api/user/1/address");
       expect(getResponse.statusCode).toBe(200);
@@ -48,7 +48,34 @@ describe("Single Cardinality Entrypoint", () => {
     });
   });
 
-  describe("cardinality nullable", () => {
+  describe("cardinality nullable reference", () => {
+    it("fail to delete when not existing", async () => {
+      const deleteResponse = await request(getServer()).delete("/api/user/1/details");
+      expect(deleteResponse.statusCode).toBe(404);
+    });
+
+    it("create and delete", async () => {
+      const data = { text: "some text" };
+      const postResponse = await request(getServer()).post("/api/user/1/details").send(data);
+      expect(postResponse.statusCode).toBe(200);
+      expect(postResponse.body).toMatchSnapshot();
+
+      const getResponse1 = await request(getServer()).get("/api/user/1");
+      expect(getResponse1.statusCode).toBe(200);
+      // Check if user.details is set from context
+      expect(getResponse1.body.details_id).toBe(postResponse.body.id);
+
+      const deleteResponse = await request(getServer()).delete("/api/user/1/details");
+      expect(deleteResponse.statusCode).toBe(204);
+
+      const getResponse2 = await request(getServer()).get("/api/user/1");
+      expect(getResponse2.statusCode).toBe(200);
+      // Check if user.details is unset
+      expect(getResponse2.body.details_id).toBeNull();
+    });
+  });
+
+  describe("cardinality nullable relation", () => {
     it("get", async () => {
       const getResponse = await request(getServer()).get("/api/address/1/user");
       expect(getResponse.statusCode).toBe(200);

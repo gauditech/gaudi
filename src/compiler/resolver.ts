@@ -172,6 +172,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     if (to?.identifier.ref?.kind === "model") {
+      const nullable = !!kindFind(reference.atoms, "nullable");
       reference.name.ref = {
         kind: "modelAtom",
         atomKind: "reference",
@@ -179,9 +180,9 @@ export function resolve(projectASTs: ProjectASTs) {
         name: reference.name.text,
         model: to.identifier.ref.model,
         unique: !!kindFind(reference.atoms, "unique"),
+        nullable,
       };
       const type = Type.model(to.identifier.ref.model);
-      const nullable = kindFind(reference.atoms, "nullable");
       reference.name.type = nullable ? Type.nullable(type) : type;
     }
   }
@@ -578,6 +579,9 @@ export function resolve(projectASTs: ProjectASTs) {
             break;
           case "modelAtom": {
             if (lastTarget.ref.atomKind === "relation") {
+              break;
+            }
+            if (lastTarget.ref.atomKind === "reference" && lastTarget.ref.nullable) {
               break;
             }
             // fall through
