@@ -1,0 +1,54 @@
+.container {
+  display: grid;
+  grid-template-rows: 1fr 4fr;
+
+  height: 100%;
+}
+
+.button-container {
+  padding: 1rem;
+}
+
+.output-container {
+  overflow: auto;
+  border: 1px solid gray;
+  padding: 1rem;
+  background-color: lightgray;
+}
+
+.logo-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.logo {
+  height: 3rem;
+  padding: 0 0.5rem;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+.logo-hearts {
+  padding: 0 1rem;
+  font-size: 3rem;
+  color: red;
+}
+
+.fetcher-container {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+}
+
+.fetcher-button-composite {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
