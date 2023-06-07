@@ -11,7 +11,7 @@ import tsLogo from "/typescript.svg";
 export type AppProps = {
   // TODO: add your props
 };
-export const App: FunctionComponent<AppProps> = (props) => {
+export const App: FunctionComponent<AppProps> = () => {
   const [output, setOutput] = useState<string>("");
   const [ident, setIdent] = useState<string>("");
 
