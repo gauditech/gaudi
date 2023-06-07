@@ -1292,54 +1292,14 @@ exports[`entrypoint composes single cardinality 2`] = `
           "isPrimary": true,
           "kind": "create-one",
           "model": "Details",
-          "select": [
-            {
-              "alias": "id",
-              "expr": {
-                "kind": "alias",
-                "namePath": [
-                  "$action_0",
-                  "id",
-                ],
-              },
-              "kind": "expression",
-              "type": {
-                "kind": "integer",
-                "nullable": false,
-              },
-            },
-          ],
+          "select": [],
           "targetPath": [
             "details",
           ],
         },
         {
-          "alias": "$action_1",
+          "alias": "$action_0_reference",
           "changeset": [
-            {
-              "name": "name",
-              "setter": {
-                "fieldsetAccess": [
-                  "$action_1",
-                  "name",
-                ],
-                "kind": "fieldset-input",
-                "required": false,
-                "type": "text",
-              },
-            },
-            {
-              "name": "address_id",
-              "setter": {
-                "fieldsetAccess": [
-                  "$action_1",
-                  "address_id",
-                ],
-                "kind": "fieldset-input",
-                "required": false,
-                "type": "integer",
-              },
-            },
             {
               "name": "details_id",
               "setter": {
@@ -1348,7 +1308,7 @@ exports[`entrypoint composes single cardinality 2`] = `
                   "access": [
                     "id",
                   ],
-                  "alias": "$action_0",
+                  "alias": "$target_0",
                 },
               },
             },
@@ -1369,26 +1329,6 @@ exports[`entrypoint composes single cardinality 2`] = `
         "kind": "record",
         "nullable": false,
         "record": {
-          "$action_1": {
-            "kind": "record",
-            "nullable": false,
-            "record": {
-              "address_id": {
-                "kind": "field",
-                "nullable": false,
-                "required": false,
-                "type": "integer",
-                "validators": [],
-              },
-              "name": {
-                "kind": "field",
-                "nullable": false,
-                "required": false,
-                "type": "text",
-                "validators": [],
-              },
-            },
-          },
           "text": {
             "kind": "field",
             "nullable": false,

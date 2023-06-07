@@ -2,7 +2,7 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
-import { Type, baseType, getTypeCardinality, getTypeModel } from "./ast/type";
+import { Type, getTypeCardinality, getTypeModel } from "./ast/type";
 import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
@@ -301,8 +301,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     response: Spec.Select
   ): Spec.Endpoint {
     const actions = (
-      kindFind(endpoint.atoms, "action")?.actions ??
-      generatePrimaryAction(endpoint, target, parentAlias)
+      kindFind(endpoint.atoms, "action")?.actions ?? generatePrimaryAction(endpoint)
     ).flatMap((a, i) => migrateAction(a, i, target, alias, parentAlias));
 
     const astAuthorize = kindFind(endpoint.atoms, "authorize")?.expr;
@@ -343,58 +342,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     }
   }
 
-  function generatePrimaryAction(
-    endpoint: AST.Endpoint,
-    target: Spec.IdentifierRef,
-    parentAlias: Spec.IdentifierRef | undefined
-  ): AST.Action[] {
+  function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
     const zeroToken = { start: 0, end: 0 };
     switch (endpoint.type) {
-      case "create": {
-        const aliasIdentifier: AST.IdentifierRef<AST.RefAction> = {
-          token: zeroToken,
-          text: "$action_0",
-          ref: { kind: "action" },
-          type: baseType(target.type),
-        };
-        const contextActions: AST.Action[] = [];
-        if (target.ref.kind === "modelAtom" && target.ref.atomKind === "reference" && parentAlias) {
-          contextActions.push({
-            kind: "update",
-            keyword: zeroToken,
-            target: [{ ...parentAlias, token: zeroToken }],
-            atoms: [
-              {
-                kind: "set",
-                keyword: zeroToken,
-                target: { ...target, ref: target.ref, token: zeroToken },
-                set: {
-                  kind: "expr",
-                  expr: {
-                    kind: "path",
-                    sourcePos: zeroToken,
-                    path: [aliasIdentifier],
-                    type: aliasIdentifier.type,
-                  },
-                },
-              },
-            ],
-          });
-        }
-        return [
-          {
-            kind: endpoint.type,
-            keyword: zeroToken,
-            as: {
-              keyword: zeroToken,
-              identifier: aliasIdentifier,
-            },
-            atoms: [],
-            isPrimary: true,
-          },
-          ...contextActions,
-        ];
-      }
+      case "create":
       case "update": {
         return [
           {
@@ -432,14 +383,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     target: Spec.IdentifierRef,
     alias: Spec.IdentifierRef,
     parentAlias: Spec.IdentifierRef | undefined
-  ): Spec.Action {
+  ): Spec.Action[] {
     return match(action)
       .with({ kind: "create" }, { kind: "update" }, (a) =>
         migrateModelAction(a, index, target, alias, parentAlias)
       )
-      .with({ kind: "delete" }, (a) => migrateDeleteAction(a, alias))
-      .with({ kind: "execute" }, (a) => migrateExecuteAction(a, index))
-      .with({ kind: "fetch" }, (a) => migrateFetchAction(a))
+      .with({ kind: "delete" }, (a) => [migrateDeleteAction(a, alias)])
+      .with({ kind: "execute" }, (a) => [migrateExecuteAction(a, index)])
+      .with({ kind: "fetch" }, (a) => [migrateFetchAction(a)])
       .exhaustive();
   }
 
@@ -449,7 +400,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     target: Spec.IdentifierRef,
     alias: Spec.IdentifierRef,
     parentAlias: Spec.IdentifierRef | undefined
-  ): Spec.ModelAction {
+  ): Spec.ModelAction[] {
     const primaryActionTarget = action.kind === "create" ? target : alias;
     const targetPath: Spec.IdentifierRef[] = action.target?.map((i) => migrateIdentifierRef(i)) ?? [
       primaryActionTarget,
@@ -525,13 +476,49 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       migrateActionAtomVirtualInput
     );
 
-    return {
-      kind: action.kind,
-      targetPath,
-      alias: action.as?.identifier.text ?? `$action_${index}`,
-      actionAtoms: [...virtualInputs, ...actionAtoms],
-      isPrimary: !!action.isPrimary,
-    };
+    const actions: Spec.ModelAction[] = [
+      {
+        kind: action.kind,
+        targetPath,
+        alias: action.as?.identifier.text ?? `$action_${index}`,
+        actionAtoms: [...virtualInputs, ...actionAtoms],
+        isPrimary: !!action.isPrimary,
+      },
+    ];
+
+    // update related reference id when creating a reference
+    if (
+      action.kind === "create" &&
+      last.ref.kind === "modelAtom" &&
+      last.ref.atomKind === "reference"
+    ) {
+      let parentPath = targetPath.slice(0, -1);
+      if (parentPath.length === 0 && parentAlias) {
+        parentPath = [parentAlias];
+      }
+      actions.push({
+        kind: "update",
+        targetPath: parentPath,
+        alias: `$action_${index}_reference`,
+        actionAtoms: [
+          {
+            kind: "set",
+            target: referenceToIdField({ ...last, ref: last.ref }),
+            set: {
+              kind: "expression",
+              expr: {
+                kind: "identifier",
+                identifier: [...parentPath, generateModelIdIdentifier(last.ref.parentModel)],
+                type: Type.integer,
+              },
+            },
+          },
+        ],
+        isPrimary: false,
+      });
+    }
+
+    return actions;
   }
 
   function migrateDeleteAction(
