@@ -118,6 +118,7 @@ async function createGitignore(projectConfig: ProjectConfig) {
     `
 node_modules
 ${projectConfig.distDir}
+data
 `
   );
 }

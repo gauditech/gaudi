@@ -12,7 +12,13 @@ export type EngineConfig = {
   outputFolder: string;
   /** Gaudi folder */
   gaudiFolder: string;
-  dbConn: ConnectionOptions;
+  dbConn: {
+    host: string;
+    port: number;
+    database: string;
+    user: string;
+    password?: string;
+  };
   embeddedPg: boolean;
 };
 
@@ -25,7 +31,14 @@ export function readConfig(configPath?: string): EngineConfig {
   // gaudi folder's path should probably be determined by the position of (future) gaudi config file
   const gaudiFolder = `./${GAUDI_FOLDER_NAME}`;
 
-  const dbConn = parseConnectionString(process.env.GAUDI_DATABASE_URL);
+  const conn = parseConnectionString(process.env.GAUDI_DATABASE_URL);
+  const dbConn: EngineConfig["dbConn"] = {
+    database: conn.database ?? "gaudiapp",
+    host: conn.host ?? "localhost",
+    port: (conn.port && parseInt(conn.port, 10)) || 5432,
+    user: conn.user || "postgres",
+    password: conn.password,
+  };
   const embeddedPg = process.env.GAUDI_EMBEDDED_POSTGRESQL_ENABLED?.toLowerCase() === "true";
 
   return { inputPath, outputFolder, gaudiFolder, dbConn, embeddedPg };

@@ -23,8 +23,8 @@ module.exports = async () => {
         moduleNameMapper: {
           "@src/(.*)": "<rootDir>/src/$1",
         },
-        globalSetup: "<rootDir>/src/e2e/jest/setup.js",
-        globalTeardown: "<rootDir>/src/e2e/jest/teardown.js",
+        globalSetup: "<rootDir>/src/e2e/jest/setupApi.ts",
+        globalTeardown: "<rootDir>/src/e2e/jest/teardownApi.ts",
       },
       // --- client tests
       {
@@ -35,7 +35,8 @@ module.exports = async () => {
         moduleNameMapper: {
           "@src/(.*)": "<rootDir>/src/$1",
         },
-        globalSetup: "<rootDir>/src/e2e/client/setupTests.ts",
+        globalSetup: "<rootDir>/src/e2e/jest/setupClient.ts",
+        globalTeardown: "<rootDir>/src/e2e/jest/teardownClient.ts",
       },
     ],
   };
