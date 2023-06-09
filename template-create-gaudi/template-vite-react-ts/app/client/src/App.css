@@ -1,19 +1,5 @@
-.container {
-  display: grid;
-  grid-template-rows: 1fr 4fr;
-
-  height: 100%;
-}
-
-.button-container {
-  padding: 1rem;
-}
-
-.output-container {
-  overflow: auto;
-  border: 1px solid gray;
-  padding: 1rem;
-  background-color: lightgray;
+.page-title {
+  text-align: center;
 }
 
 .logo-container {
@@ -21,6 +7,7 @@
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
+  justify-content: center;
 }
 
 .logo {
@@ -42,13 +29,16 @@
 }
 
 .fetcher-container {
-  display: flex;
-  flex-direction: row;
-  gap: 2rem;
+  padding: 2rem;
 }
-
-.fetcher-button-composite {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
+.output-container {
+  overflow: auto;
+  border: 1px solid gray;
+  padding: 1rem;
+  background-color: lightgray;
+  overflow-y: scroll;
+  color: #242424;
+  width: 50rem;
+  max-width: calc(100% - 4rem); /* width - paddings */
+  height: 20rem;
 }

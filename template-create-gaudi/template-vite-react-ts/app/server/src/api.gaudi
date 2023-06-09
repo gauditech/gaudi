@@ -1,40 +1,6 @@
-model Author {
+model Item {
     field name { type string }
-    // field desc { type string, nullable }
-
-    relation books { from Book, through author }
-    relation reviews_given { from BookReview, through reviewer }
-
-    query books_reviewed { from reviews_given.book }
-    
-    query top_5_popular_books {
-        from books,
-        filter { review_score > 0 },
-        order by { positive_reviews_count desc },
-        limit 5
-    }
-}
-
-model Book {
-    reference author { to Author }
-    field title { type string, validate { min 4, max 40 } }
-
-    relation reviews { from BookReview, through book }
-
-    computed review_score { positive_reviews_count - negative_reviews_count }    
-    computed positive_reviews_count { count(positive_reviews.id) }
-    computed negative_reviews_count { count(negative_reviews.id) }
-
-    query positive_reviews { from reviews, filter { is_positive is true } }
-    query negative_reviews { from reviews, filter { is_positive is false } }
-
-}
-
-model BookReview {
-    reference reviewer { to Author }
-    reference book { to Book }
-
-    field is_positive { type boolean, default true }
+    field description { type string, nullable }
 }
 
 runtime JsRuntime {
@@ -47,81 +13,25 @@ generate client {
     // output directly to client folder so it can be imported
     output "../client/src/api"
 }
-// 
-auth {
-    method basic {}
-}
 
 api {
-    entrypoint Author {
-        response {
-            id,
-            name,
-            top_5_popular_books {
-                id,
-                title,
-                review_score
-            }
-        }
-
+    entrypoint Item {
+        get endpoint {}
+        update endpoint {}
+        delete endpoint {}
         create endpoint {}
         list endpoint {
             pageable
         }
-
-        get endpoint {}
-        update endpoint {}
-        delete endpoint {}
-        // custom endpoint ...
-
-        entrypoint books {
-            list endpoint {}
-            create endpoint {
-                authorize {
-                    @auth.id is not null
-                }
-
-                action {
-                    create as book {}
-                    create book.reviews as review {
-                        set is_positive true
-                        set reviewer book.author
-                    }
-                }
-            }
-        }
     }
 }
 
 
-
 populator Dev {
-    populate Author as author {
-        repeat as aIter 3
+    populate Item as item {
+        repeat as iter 15
 
-        set name "Author " + stringify(aIter.current)
-
-        populate books {
-            repeat as bIter 2
-
-            set title "Book " + stringify(bIter.current) +
-                      " by " + author.name
-        }
-    }
-
-    populate BookReview {
-        repeat as iter 8
-        set reviewer_id hook {
-            arg index iter.current - 1
-            inline "[1, 1, 1, 1, 2, 2, 3, 3][index]"
-        }
-        set book_id hook {
-            arg index iter.current - 1
-            inline "[3, 4, 5, 6, 5, 6, 1, 2][index]"
-        }
-        set is_positive hook {
-            arg current iter.current
-            inline "[4, 6, 8].indexOf(current) === -1"
-        }
+        set name "Item " + stringify(iter.current)
+        set description "Description of item " + stringify(iter.current)
     }
 }

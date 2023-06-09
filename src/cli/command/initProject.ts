@@ -56,7 +56,7 @@ function initTemplateProject(args: ArgumentsCamelCase<InitProjectOptions>, _conf
   // locate template in current project
   const templateDir = path.resolve(
     __dirname,
-    "../../../template-create-gaudi",
+    "../../template-create-gaudi",
     `template-${templateName}`
   );
   if (!pathExists(templateDir)) throw `Template dir not found: "${templateDir}"`;

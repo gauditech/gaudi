@@ -11,5 +11,6 @@ module.exports = {
   rules: {
     "react-refresh/only-export-components": "warn",
   },
+  // server generates API client lib directly to "client" package" so we'll ignore that since it's generated code
   ignorePatterns: ["src/api"],
 };
