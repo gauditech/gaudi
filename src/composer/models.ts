@@ -153,7 +153,6 @@ function defineRelation(rspec: Spec.Relation): RelationDef {
     fromModelRefKey: rspec.through.parentModel,
     through: rspec.through.name,
     throughRefKey: refKeyFromRef(rspec.through),
-    nullable: rspec.nullable,
     unique: rspec.unique,
   };
 }

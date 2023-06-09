@@ -2,7 +2,7 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
-import { Type, getTypeModel } from "./ast/type";
+import { Type, getTypeCardinality, getTypeModel } from "./ast/type";
 import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
@@ -65,7 +65,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
               },
               through: reference.ref,
               unique: reference.unique,
-              nullable: reference.unique && reference.nullable,
             };
             implicitModel.relations.push(relation);
           }
@@ -159,7 +158,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ref: relation.name.ref,
       through: through.identifier.ref,
       unique: through.identifier.ref.unique,
-      nullable: through.identifier.ref.unique && through.identifier.type.kind === "nullable",
     };
   }
 
@@ -247,12 +245,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   ): Spec.Entrypoint {
     const target = migrateIdentifierRef(entrypoint.target);
     const model = target.ref.model;
+    const cardinality = getTypeCardinality(target.type);
 
-    const identify = kindFind(entrypoint.atoms, "identify");
-    const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifier;
-    const identifyThrough: Spec.IdentifierRef<AST.RefModelField> = identifyThroughAst
-      ? migrateIdentifierRef(identifyThroughAst)
-      : generateModelIdIdentifier(model);
+    let identifyThrough: Spec.IdentifierRef<AST.RefModelField> | undefined;
+    if (cardinality === "collection") {
+      const identify = kindFind(entrypoint.atoms, "identify");
+      const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifier;
+      identifyThrough = identifyThroughAst
+        ? migrateIdentifierRef(identifyThroughAst)
+        : generateModelIdIdentifier(model);
+    }
 
     const alias: Spec.IdentifierRef<AST.RefTarget> = entrypoint.as
       ? migrateIdentifierRef(entrypoint.as.identifier)
@@ -281,6 +283,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       // TODO: use name from param, alias and target?
       name: "",
       model,
+      cardinality,
       alias,
       target,
       identifyThrough,
@@ -299,7 +302,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   ): Spec.Endpoint {
     const actions = (
       kindFind(endpoint.atoms, "action")?.actions ?? generatePrimaryAction(endpoint)
-    ).map((a, i) => migrateAction(a, i, target, alias, parentAlias));
+    ).flatMap((a, i) => migrateAction(a, i, target, alias, parentAlias));
 
     const astAuthorize = kindFind(endpoint.atoms, "authorize")?.expr;
     const authorize = combineExprWithAnd(
@@ -340,13 +343,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
+    const zeroToken = { start: 0, end: 0 };
     switch (endpoint.type) {
       case "create":
       case "update": {
         return [
           {
             kind: endpoint.type,
-            keyword: { start: 0, end: 0 },
+            keyword: zeroToken,
             atoms: [],
             isPrimary: true,
           },
@@ -379,14 +383,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     target: Spec.IdentifierRef,
     alias: Spec.IdentifierRef,
     parentAlias: Spec.IdentifierRef | undefined
-  ): Spec.Action {
+  ): Spec.Action[] {
     return match(action)
       .with({ kind: "create" }, { kind: "update" }, (a) =>
         migrateModelAction(a, index, target, alias, parentAlias)
       )
-      .with({ kind: "delete" }, (a) => migrateDeleteAction(a, alias))
-      .with({ kind: "execute" }, (a) => migrateExecuteAction(a, index))
-      .with({ kind: "fetch" }, migrateFetchAction)
+      .with({ kind: "delete" }, (a) => [migrateDeleteAction(a, alias)])
+      .with({ kind: "execute" }, (a) => [migrateExecuteAction(a, index)])
+      .with({ kind: "fetch" }, (a) => [migrateFetchAction(a)])
       .exhaustive();
   }
 
@@ -396,7 +400,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     target: Spec.IdentifierRef,
     alias: Spec.IdentifierRef,
     parentAlias: Spec.IdentifierRef | undefined
-  ): Spec.ModelAction {
+  ): Spec.ModelAction[] {
     const primaryActionTarget = action.kind === "create" ? target : alias;
     const targetPath: Spec.IdentifierRef[] = action.target?.map((i) => migrateIdentifierRef(i)) ?? [
       primaryActionTarget,
@@ -472,13 +476,49 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       migrateActionAtomVirtualInput
     );
 
-    return {
-      kind: action.kind,
-      targetPath,
-      alias: action.as?.identifier.text ?? `$action_${index}`,
-      actionAtoms: [...virtualInputs, ...actionAtoms],
-      isPrimary: !!action.isPrimary,
-    };
+    const actions: Spec.ModelAction[] = [
+      {
+        kind: action.kind,
+        targetPath,
+        alias: action.as?.identifier.text ?? `$action_${index}`,
+        actionAtoms: [...virtualInputs, ...actionAtoms],
+        isPrimary: !!action.isPrimary,
+      },
+    ];
+
+    // update related reference id when creating a reference
+    if (
+      action.kind === "create" &&
+      last.ref.kind === "modelAtom" &&
+      last.ref.atomKind === "reference"
+    ) {
+      let parentPath = targetPath.slice(0, -1);
+      if (parentPath.length === 0 && parentAlias) {
+        parentPath = [parentAlias];
+      }
+      actions.push({
+        kind: "update",
+        targetPath: parentPath,
+        alias: `$action_${index}_reference`,
+        actionAtoms: [
+          {
+            kind: "set",
+            target: referenceToIdField({ ...last, ref: last.ref }),
+            set: {
+              kind: "expression",
+              expr: {
+                kind: "identifier",
+                identifier: [...parentPath, generateModelIdIdentifier(last.ref.parentModel)],
+                type: Type.integer,
+              },
+            },
+          },
+        ],
+        isPrimary: false,
+      });
+    }
+
+    return actions;
   }
 
   function migrateDeleteAction(
@@ -521,10 +561,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     if (target.ref.atomKind === "reference") {
       ensureEqual(set.set.kind, "expr");
       const expr = migrateExpr(set.set.expr);
-      ensureEqual(expr.kind, "identifier");
-      const model = getTypeModel(expr.identifier.at(-1)!.type)!;
-      ensureExists(model);
-      expr.identifier.push(generateModelIdIdentifier(model));
+      if (expr.kind === "literal") {
+        ensureEqual(expr.literal, null);
+      } else {
+        ensureEqual(expr.kind, "identifier");
+        const model = getTypeModel(expr.identifier.at(-1)!.type)!;
+        ensureExists(model);
+        expr.identifier.push(generateModelIdIdentifier(model));
+      }
 
       return {
         kind: "set",
@@ -655,6 +699,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
     return {
       target,
+      cardinality: getTypeCardinality(target.type),
       alias,
       setters,
       populates,

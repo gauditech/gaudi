@@ -46,7 +46,7 @@ function buildApi(options) {
         // endpoint functions
         return Object.assign(api, {
             list: buildListFn(options, parentPath),
-            get: buildGetFn(options, parentPath),
+            get: buildGetManyFn(options, parentPath),
             create: buildCreateFn(options, parentPath),
             fetchAuthToken: buildCustomManySubmitFn(options, parentPath, "fetchAuthToken", "POST")
         });
@@ -59,7 +59,7 @@ function buildApi(options) {
         }
         // endpoint functions
         return Object.assign(api, {
-            get: buildGetFn(options, parentPath)
+            get: buildGetManyFn(options, parentPath)
         });
     }
     return {
@@ -67,9 +67,18 @@ function buildApi(options) {
     };
 }
 // ----- API fn factories
-function buildGetFn(clientOptions, parentPath) {
+function buildGetManyFn(clientOptions, parentPath) {
     return async (id, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+        return (makeRequest(clientOptions, url, {
+            method: "GET",
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildGetOneFn(clientOptions, parentPath) {
+    return async (options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
         return (makeRequest(clientOptions, url, {
             method: "GET",
             headers: { ...(options?.headers ?? {}) },
@@ -86,7 +95,7 @@ function buildCreateFn(clientOptions, parentPath) {
         }));
     };
 }
-function buildUpdateFn(clientOptions, parentPath) {
+function buildUpdateManyFn(clientOptions, parentPath) {
     return async (id, data, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
         return (makeRequest(clientOptions, url, {
@@ -96,9 +105,28 @@ function buildUpdateFn(clientOptions, parentPath) {
         }));
     };
 }
-function buildDeleteFn(clientOptions, parentPath) {
+function buildUpdateOneFn(clientOptions, parentPath) {
+    return async (data, options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
+        return (makeRequest(clientOptions, url, {
+            method: "PATCH",
+            body: data,
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildDeleteManyFn(clientOptions, parentPath) {
     return async (id, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+        return (makeRequest(clientOptions, url, {
+            method: "DELETE",
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildDeleteOneFn(clientOptions, parentPath) {
+    return async (options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
         return (makeRequest(clientOptions, url, {
             method: "DELETE",
             headers: { ...(options?.headers ?? {}) },
@@ -127,7 +155,7 @@ function buildPaginatedListFn(clientOptions, parentPath) {
         }));
     };
 }
-function buildCustomOneFetchFn(clientOptions, parentPath, path, method) {
+function buildCustomOneFetchManyFn(clientOptions, parentPath, path, method) {
     return async (id, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
         return (makeRequest(clientOptions, url, {
@@ -136,9 +164,28 @@ function buildCustomOneFetchFn(clientOptions, parentPath, path, method) {
         }));
     };
 }
-function buildCustomOneSubmitFn(clientOptions, parentPath, path, method) {
+function buildCustomOneSubmitManyFn(clientOptions, parentPath, path, method) {
     return async (id, data, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
+        return (makeRequest(clientOptions, url, {
+            method,
+            body: data,
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildCustomOneFetchOneFn(clientOptions, parentPath, path, method) {
+    return async (options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
+        return (makeRequest(clientOptions, url, {
+            method,
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildCustomOneSubmitOneFn(clientOptions, parentPath, path, method) {
+    return async (data, options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
         return (makeRequest(clientOptions, url, {
             method,
             body: data,

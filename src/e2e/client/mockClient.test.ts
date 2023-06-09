@@ -432,7 +432,7 @@ describe("mock client lib", () => {
 
     // ---------- 2nd level API calls
 
-    describe(`2nd level API"`, () => {
+    describe(`2nd level API`, () => {
       it("get", async () => {
         const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn).api.org("slug1").repos.get(1);
@@ -629,7 +629,7 @@ describe("mock client lib", () => {
 
       // ----- custom endpoints
 
-      it("customOneFeth", async () => {
+      it("customOneFetch", async () => {
         const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
@@ -745,6 +745,247 @@ describe("mock client lib", () => {
           method: "POST",
           body: { slug: "slug1", name: "test name", description: "test description" },
         });
+
+        // test response
+        expect(resp).toMatchInlineSnapshot(`
+        {
+          "data": undefined,
+          "headers": {},
+          "kind": "success",
+          "status": 200,
+        }
+      `);
+
+        // no return type checking since we don't know return type of custom endpoints
+      });
+    });
+
+    // ---------- 3rd level cardinality one API
+
+    describe(`3rd level cardinality one API`, () => {
+      it("get", async () => {
+        const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+        const resp = await createTestEntrypointClient(requestFn)
+          .api.org("slug1")
+          .repos(1)
+          .owner.get();
+
+        // type narrowing for simpler later code
+        ensureEqual(
+          resp.kind,
+          "success" as const,
+          `API response is not "success" but "${resp.kind}`
+        );
+
+        // test request
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
+          headers: {},
+          method: "GET",
+        });
+
+        // test response
+        expect(resp).toMatchInlineSnapshot(`
+        {
+          "data": {
+            "description": "test description",
+            "name": "test name",
+            "slug": "slug1",
+          },
+          "headers": {},
+          "kind": "success",
+          "status": 200,
+        }
+      `);
+
+        // test return type
+        // @ts-expect-no-error
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const typeTest: RespData = resp.data;
+      });
+
+      it("update", async () => {
+        const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+        const resp = await createTestEntrypointClient(requestFn)
+          .api.org("slug1")
+          .repos(1)
+          .owner.update(testData);
+
+        // type narrowing for simpler later code
+        ensureEqual(
+          resp.kind,
+          "success" as const,
+          `API response is not "success" but "${resp.kind}`
+        );
+
+        // rest request
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
+          headers: {},
+          method: "PATCH",
+          body: { slug: "slug1", name: "test name", description: "test description" },
+        });
+
+        // test response
+        expect(resp).toMatchInlineSnapshot(`
+        {
+          "data": {
+            "description": "test description",
+            "name": "test name",
+            "slug": "slug1",
+          },
+          "headers": {},
+          "kind": "success",
+          "status": 200,
+        }
+      `);
+
+        // test return type
+        // @ts-expect-no-error
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const typeTest: RespData = resp.data;
+      });
+
+      it("create", async () => {
+        const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
+        const resp = await createTestEntrypointClient(requestFn)
+          .api.org("slug1")
+          .repos(1)
+          .owner.create(testData);
+
+        // type narrowing for simpler later code
+        ensureEqual(
+          resp.kind,
+          "success" as const,
+          `API response is not "success" but "${resp.kind}`
+        );
+
+        // rest request
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
+          headers: {},
+          method: "POST",
+          body: {
+            slug: "slug1",
+            name: "test name",
+            description: "test description",
+          },
+        });
+
+        // test response
+        expect(resp).toMatchInlineSnapshot(`
+        {
+          "data": {
+            "description": "test description",
+            "name": "test name",
+            "slug": "slug1",
+          },
+          "headers": {},
+          "kind": "success",
+          "status": 200,
+        }
+      `);
+
+        // test return type
+        // @ts-expect-no-error
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const typeTest: RespData = resp.data;
+      });
+
+      it("delete", async () => {
+        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+        const resp = await createTestEntrypointClient(requestFn)
+          .api.org("slug1")
+          .repos(1)
+          .owner.delete();
+
+        // type narrowing for simpler later code
+        ensureEqual(
+          resp.kind,
+          "success" as const,
+          `API response is not "success" but "${resp.kind}`
+        );
+
+        // test request
+        expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
+          headers: {},
+          method: "DELETE",
+        });
+
+        // test response
+        expect(resp).toMatchInlineSnapshot(`
+        {
+          "data": undefined,
+          "headers": {},
+          "kind": "success",
+          "status": 200,
+        }
+      `);
+
+        // test return type
+        // @ts-expect-no-error
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const typeTest: void = resp.data;
+      });
+
+      // ----- custom endpoints
+
+      it("customOneFetch", async () => {
+        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+        const resp = await createTestEntrypointClient(requestFn)
+          .api.org("slug1")
+          .repos(1)
+          .owner.customOneFetch();
+
+        // type narrowing for simpler later code
+        ensureEqual(
+          resp.kind,
+          "success" as const,
+          `API response is not "success" but "${resp.kind}`
+        );
+
+        // test request
+        expect(requestFn).toHaveBeenCalledWith(
+          `/rootPath/api/org/slug1/repos/1/owner/customOneFetch`,
+          {
+            headers: {},
+            method: "GET",
+          }
+        );
+
+        // test response
+        expect(resp).toMatchInlineSnapshot(`
+        {
+          "data": undefined,
+          "headers": {},
+          "kind": "success",
+          "status": 200,
+        }
+      `);
+
+        // no return type checking since we don't know return type of custom endpoints
+      });
+
+      it("customOneSubmit", async () => {
+        const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
+        const resp = await createTestEntrypointClient(requestFn)
+          .api.org("slug1")
+          .repos(1)
+          .owner.customOneSubmit(testData);
+
+        // type narrowing for simpler later code
+        ensureEqual(
+          resp.kind,
+          "success" as const,
+          `API response is not "success" but "${resp.kind}`
+        );
+
+        // test request
+        expect(requestFn).toHaveBeenCalledWith(
+          `/rootPath/api/org/slug1/repos/1/owner/customOneSubmit`,
+          {
+            headers: {},
+            method: "PATCH",
+            body: { slug: "slug1", name: "test name", description: "test description" },
+          }
+        );
 
         // test response
         expect(resp).toMatchInlineSnapshot(`

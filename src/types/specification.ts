@@ -3,12 +3,11 @@ import {
   RefModel,
   RefModelAtom,
   RefModelField,
-  RefModelQuery,
   RefModelReference,
   RefModelRelation,
   RefTarget,
 } from "@src/compiler/ast/ast";
-import { Type } from "@src/compiler/ast/type";
+import { Type, TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
 
 export type LiteralValue = null | boolean | number | string;
@@ -70,7 +69,6 @@ export type Relation = {
   ref: RefModelRelation;
   through: RefModelReference;
   unique: boolean;
-  nullable: boolean;
 };
 
 export type Query = {
@@ -106,12 +104,13 @@ export type Api = {
   entrypoints: Entrypoint[];
 };
 
-export type Entrypoint = {
+export type Entrypoint<c extends TypeCardinality = TypeCardinality> = {
   name: string;
   model: string;
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  cardinality: c;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   alias: IdentifierRef<RefTarget>;
-  identifyThrough: IdentifierRef<RefModelField>;
+  identifyThrough: c extends "collection" ? IdentifierRef<RefModelField> : undefined;
   endpoints: Endpoint[];
   entrypoints: Entrypoint[];
 };
@@ -239,8 +238,9 @@ export type Populator = {
   populates: Populate[];
 };
 
-export type Populate = {
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+export type Populate<c extends TypeCardinality = TypeCardinality> = {
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
+  cardinality: c;
   alias: IdentifierRef<RefTarget>;
   setters: ActionAtomSet[];
   populates: Populate[];

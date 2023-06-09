@@ -106,7 +106,7 @@ export type Api = {
 export type Entrypoint = {
   kind: "entrypoint";
   keyword: TokenData;
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
   atoms: EntrypointAtom[];
 };
@@ -248,7 +248,7 @@ export type Populator = {
 export type Populate = {
   kind: "populate";
   keyword: TokenData;
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
   atoms: PopulateAtom[];
 };
@@ -412,6 +412,7 @@ export type RefModelReference = {
   name: string;
   model: string;
   unique: boolean;
+  nullable: boolean;
 };
 export type RefModelRelation = {
   kind: "modelAtom";

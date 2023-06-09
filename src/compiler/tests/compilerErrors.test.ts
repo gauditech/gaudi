@@ -1,9 +1,11 @@
 import { compileToAST } from "../index";
 import { authUserModelName } from "../plugins/authenticator";
 
-function expectError(source: string, errorMessage: string) {
+function expectError(source: string, ...errorMessages: string[]) {
   const { errors } = compileToAST(source);
-  expect(errors.at(0)?.message).toBe(errorMessage);
+  errorMessages.forEach((errorMessage, i) => {
+    expect(errors.at(i)?.message).toBe(errorMessage);
+  });
 }
 
 describe("compiler errors", () => {
@@ -251,7 +253,7 @@ describe("compiler errors", () => {
         `;
       expectError(
         bp,
-        `This target is not supported in a "create" action, "create" can only have model and relation as a target`
+        `This target is not supported in a "create" action, "create" can have model, relation and a nullable reference as a target`
       );
     });
 
@@ -598,6 +600,54 @@ describe("compiler errors", () => {
         }
         `;
       expectError(bp, `Expecting token of type --> RCurly <-- but found --> 'responds' <--`);
+    });
+    it("fails on wrong endpoint cardinality", () => {
+      const bp = `
+      model User {
+        field name { type string }
+        reference address { to Address, unique }
+      }
+
+      model Address {
+        field name { type string }
+        relation user { from User, through address }
+      }
+
+      api {
+        entrypoint User {
+          entrypoint address {
+            create endpoint {}
+            list endpoint {}
+            delete endpoint {}
+            custom endpoint {
+              method GET
+              cardinality many
+              path "custom"
+            }
+          }
+        }
+
+        entrypoint Address {
+          entrypoint user {
+            list endpoint {}
+            custom endpoint {
+              method GET
+              cardinality many
+              path "custom"
+            }
+          }
+        }
+      }
+      `;
+      expectError(
+        bp,
+        `"create" endpoint is not supported in one cardinality entrypoint`,
+        `"list" endpoint is not supported in one cardinality entrypoint`,
+        `"delete" endpoint is not supported in one cardinality entrypoint`,
+        `"custom-many" endpoint is not supported in one cardinality entrypoint`,
+        `"list" endpoint is not supported in nullable cardinality entrypoint`,
+        `"custom-many" endpoint is not supported in nullable cardinality entrypoint`
+      );
     });
   });
 

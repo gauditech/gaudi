@@ -26,23 +26,23 @@ function buildApi(options) {
         }
         // endpoint functions
         return Object.assign(api, {
-            customOneAction: buildCustomOneSubmitFn(options, parentPath, "customOneAction", "POST"),
+            customOneAction: buildCustomOneSubmitManyFn(options, parentPath, "customOneAction", "POST"),
             customManyAction: buildCustomManySubmitFn(options, parentPath, "customManyAction", "PATCH"),
-            customOneActionResponds: buildCustomOneSubmitFn(options, parentPath, "customOneActionResponds", "POST"),
+            customOneActionResponds: buildCustomOneSubmitManyFn(options, parentPath, "customOneActionResponds", "POST"),
             customManyActionResponds: buildCustomManySubmitFn(options, parentPath, "customManyActionResponds", "PATCH"),
-            customOneQueryAction: buildCustomOneSubmitFn(options, parentPath, "customOneQueryAction", "POST"),
-            customFetchAction: buildCustomOneSubmitFn(options, parentPath, "customFetchAction", "POST"),
+            customOneQueryAction: buildCustomOneSubmitManyFn(options, parentPath, "customOneQueryAction", "POST"),
+            customFetchAction: buildCustomOneSubmitManyFn(options, parentPath, "customFetchAction", "POST"),
             hookErrorResponse: buildCustomManySubmitFn(options, parentPath, "hookErrorResponse", "POST"),
-            customGet: buildCustomOneFetchFn(options, parentPath, "customGet", "GET"),
-            customUpdate: buildCustomOneSubmitFn(options, parentPath, "customUpdate", "PATCH"),
-            customDelete: buildCustomOneFetchFn(options, parentPath, "customDelete", "DELETE"),
+            customGet: buildCustomOneFetchManyFn(options, parentPath, "customGet", "GET"),
+            customUpdate: buildCustomOneSubmitManyFn(options, parentPath, "customUpdate", "PATCH"),
+            customDelete: buildCustomOneFetchManyFn(options, parentPath, "customDelete", "DELETE"),
             customList: buildCustomManyFetchFn(options, parentPath, "customList", "GET"),
             customCreate: buildCustomManySubmitFn(options, parentPath, "customCreate", "POST"),
-            get: buildGetFn(options, parentPath),
+            get: buildGetManyFn(options, parentPath),
             list: buildPaginatedListFn(options, parentPath),
             create: buildCreateFn(options, parentPath),
-            update: buildUpdateFn(options, parentPath),
-            delete: buildDeleteFn(options, parentPath)
+            update: buildUpdateManyFn(options, parentPath),
+            delete: buildDeleteManyFn(options, parentPath)
         });
     }
     function buildReposEntrypoint(options, parentPath) {
@@ -55,11 +55,11 @@ function buildApi(options) {
         }
         // endpoint functions
         return Object.assign(api, {
-            get: buildGetFn(options, parentPath),
+            get: buildGetManyFn(options, parentPath),
             list: buildListFn(options, parentPath),
             create: buildCreateFn(options, parentPath),
-            update: buildUpdateFn(options, parentPath),
-            delete: buildDeleteFn(options, parentPath)
+            update: buildUpdateManyFn(options, parentPath),
+            delete: buildDeleteManyFn(options, parentPath)
         });
     }
     function buildIssuesEntrypoint(options, parentPath) {
@@ -70,7 +70,7 @@ function buildApi(options) {
         }
         // endpoint functions
         return Object.assign(api, {
-            get: buildGetFn(options, parentPath),
+            get: buildGetManyFn(options, parentPath),
             create: buildCreateFn(options, parentPath)
         });
     }
@@ -83,7 +83,7 @@ function buildApi(options) {
         // endpoint functions
         return Object.assign(api, {
             list: buildListFn(options, parentPath),
-            get: buildGetFn(options, parentPath)
+            get: buildGetManyFn(options, parentPath)
         });
     }
     return {
@@ -92,9 +92,18 @@ function buildApi(options) {
     };
 }
 // ----- API fn factories
-function buildGetFn(clientOptions, parentPath) {
+function buildGetManyFn(clientOptions, parentPath) {
     return async (id, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+        return (makeRequest(clientOptions, url, {
+            method: "GET",
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildGetOneFn(clientOptions, parentPath) {
+    return async (options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
         return (makeRequest(clientOptions, url, {
             method: "GET",
             headers: { ...(options?.headers ?? {}) },
@@ -111,7 +120,7 @@ function buildCreateFn(clientOptions, parentPath) {
         }));
     };
 }
-function buildUpdateFn(clientOptions, parentPath) {
+function buildUpdateManyFn(clientOptions, parentPath) {
     return async (id, data, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
         return (makeRequest(clientOptions, url, {
@@ -121,9 +130,28 @@ function buildUpdateFn(clientOptions, parentPath) {
         }));
     };
 }
-function buildDeleteFn(clientOptions, parentPath) {
+function buildUpdateOneFn(clientOptions, parentPath) {
+    return async (data, options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
+        return (makeRequest(clientOptions, url, {
+            method: "PATCH",
+            body: data,
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildDeleteManyFn(clientOptions, parentPath) {
     return async (id, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}`;
+        return (makeRequest(clientOptions, url, {
+            method: "DELETE",
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildDeleteOneFn(clientOptions, parentPath) {
+    return async (options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}`;
         return (makeRequest(clientOptions, url, {
             method: "DELETE",
             headers: { ...(options?.headers ?? {}) },
@@ -152,7 +180,7 @@ function buildPaginatedListFn(clientOptions, parentPath) {
         }));
     };
 }
-function buildCustomOneFetchFn(clientOptions, parentPath, path, method) {
+function buildCustomOneFetchManyFn(clientOptions, parentPath, path, method) {
     return async (id, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
         return (makeRequest(clientOptions, url, {
@@ -161,9 +189,28 @@ function buildCustomOneFetchFn(clientOptions, parentPath, path, method) {
         }));
     };
 }
-function buildCustomOneSubmitFn(clientOptions, parentPath, path, method) {
+function buildCustomOneSubmitManyFn(clientOptions, parentPath, path, method) {
     return async (id, data, options) => {
         const url = `${clientOptions.rootPath ?? ''}${parentPath}/${id}/${path}`;
+        return (makeRequest(clientOptions, url, {
+            method,
+            body: data,
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildCustomOneFetchOneFn(clientOptions, parentPath, path, method) {
+    return async (options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
+        return (makeRequest(clientOptions, url, {
+            method,
+            headers: { ...(options?.headers ?? {}) },
+        }));
+    };
+}
+function buildCustomOneSubmitOneFn(clientOptions, parentPath, path, method) {
+    return async (data, options) => {
+        const url = `${clientOptions.rootPath ?? ''}${parentPath}/${path}`;
         return (makeRequest(clientOptions, url, {
             method,
             body: data,

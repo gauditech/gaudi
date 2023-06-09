@@ -46,9 +46,12 @@ export enum ErrorCode {
   CantResolveModelAtomWrongKind,
   CantResolveExpressionReference,
   SelectCantNest,
+  SingleCardinalityEntrypointHasIdentify,
+  UnsupportedEndpointByEntrypointCardinality,
   InvalidDefaultAction,
   NonDefaultModelActionRequiresAlias,
   UnsuportedTargetInCreateAction,
+  UnsuportedTargetInUpdateAction,
   ActionBlockAlreadyHasPrimaryAction,
   ActionBlockDoesNotHavePrimaryAciton,
   PrimaryActionInWrongEntrypoint,
@@ -145,12 +148,18 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve expression reference`;
     case ErrorCode.SelectCantNest:
       return `Can't write nested select for this reference`;
+    case ErrorCode.SingleCardinalityEntrypointHasIdentify:
+      return `Single cardinality entrypoint can't have identify`;
+    case ErrorCode.UnsupportedEndpointByEntrypointCardinality:
+      return `"${params?.endpoint}" endpoint is not supported in ${params?.cardinality} cardinality entrypoint`;
     case ErrorCode.InvalidDefaultAction:
       return `When overriding default action, its kind must match with current endpoint kind. "${params?.action}" is not a valid default action override in "${params?.endpoint}" endpoint`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
     case ErrorCode.UnsuportedTargetInCreateAction:
-      return `This target is not supported in a "create" action, "create" can only have model and relation as a target`;
+      return `This target is not supported in a "create" action, "create" can have model, relation and a nullable reference as a target`;
+    case ErrorCode.UnsuportedTargetInUpdateAction:
+      return `This target is not supported in a "update" action`;
     case ErrorCode.ActionBlockAlreadyHasPrimaryAction:
       return `This action block has already defined primary action`;
     case ErrorCode.ActionBlockDoesNotHavePrimaryAciton:

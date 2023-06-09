@@ -83,7 +83,7 @@ describe("API endpoints", () => {
 
     it("delete", async () => {
       const patchResp = await request(getServer()).delete("/api/org/org3");
-      expect(patchResp.statusCode).toBe(200);
+      expect(patchResp.statusCode).toBe(204);
 
       const getResp = await request(getServer()).get("/api/org/org3");
       expect(getResp.statusCode).toBe(404);
@@ -296,7 +296,7 @@ describe("API endpoints", () => {
 
     it("delete", async () => {
       const patchResp = await request(getServer()).delete("/api/org/org1/repos/1");
-      expect(patchResp.statusCode).toBe(200);
+      expect(patchResp.statusCode).toBe(204);
 
       const getResp = await request(getServer()).get("/api/org/org1/repos/1");
       expect(getResp.statusCode).toBe(404);

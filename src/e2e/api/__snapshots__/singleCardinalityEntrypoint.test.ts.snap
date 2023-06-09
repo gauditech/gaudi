@@ -1,0 +1,49 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Single Cardinality Entrypoint cardinality nullable reference create and delete 1`] = `
+{
+  "id": 1,
+  "text": "some text",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality nullable relation delete and create 1`] = `
+{
+  "address_id": 1,
+  "details_id": null,
+  "id": 2,
+  "name": "Second",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality nullable relation get 1`] = `
+{
+  "address_id": 1,
+  "details_id": null,
+  "id": 1,
+  "name": "First",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality nullable relation update 1`] = `
+{
+  "address_id": 1,
+  "details_id": null,
+  "id": 1,
+  "name": "Second",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality one reference get 1`] = `
+{
+  "id": 1,
+  "name": "Address 1",
+}
+`;
+
+exports[`Single Cardinality Entrypoint cardinality one reference update 1`] = `
+{
+  "id": 1,
+  "name": "Foo 2",
+}
+`;

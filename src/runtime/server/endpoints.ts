@@ -519,7 +519,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
 
           await tx.commit();
 
-          resp.sendStatus(200);
+          resp.sendStatus(204);
         } catch (err) {
           await tx?.rollback();
 
