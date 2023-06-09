@@ -344,7 +344,7 @@ export type AnonymousQuery = {
 export type Select = {
   target:
     | { kind: "short"; name: IdentifierRef<RefModelAtom> }
-    | { kind: "long"; name: Identifier; identifierPath: IdentifierRef[] };
+    | { kind: "long"; name: Identifier; expr: Expr<Code> };
   select?: Select;
 }[];
 

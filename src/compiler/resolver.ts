@@ -267,7 +267,9 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     const select = kindFind(query.atoms, "select");
-    if (select) resolveSelect(select.select, currentModel, scope);
+    if (select) {
+      resolveSelect(select.select, { ..._.cloneDeep(scope), model: currentModel });
+    }
 
     if (currentModel) {
       let baseType: Type;
@@ -328,8 +330,7 @@ export function resolve(projectASTs: ProjectASTs) {
         if (target.kind === "short") {
           targetType = target.name.type;
         } else {
-          // TODO: is it correct cardinality?
-          targetType = target.identifierPath.at(-1)!.type;
+          targetType = target.expr.type;
         }
         if (targetType.kind === "model") {
           name += "_id";
@@ -427,7 +428,9 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     const response = kindFind(entrypoint.atoms, "response");
-    if (response) resolveSelect(response.select, currentModel, scope);
+    if (response) {
+      resolveSelect(response.select, { ..._.cloneDeep(scope), model: currentModel });
+    }
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
       resolveEndpoint(endpoint, currentModel, cardinality, alias, _.cloneDeep(scope))
@@ -897,37 +900,25 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveSelect(select: Select, model: string | undefined, scope: Scope) {
+  function resolveSelect(select: Select, scope: Scope) {
     select.forEach(({ target, select }) => {
       let type: Type;
+      console.log(scope);
       if (target.kind === "short") {
-        tryResolveModelAtomRef(target.name, model);
+        tryResolveModelAtomRef(target.name, scope.model);
         type = target.name.type;
       } else {
-        resolveIdentifierRefPath(target.identifierPath, scope);
-        type = target.identifierPath.at(-1)!.type;
+        resolveExpression(target.expr, scope);
+        type = target.expr.type;
       }
       if (select) {
         const model = getTypeModel(type);
         if (!model) {
-          const errorToken =
-            target.kind === "short" ? target.name.token : target.identifierPath.at(-1)!.token;
+          const errorToken = target.kind === "short" ? target.name.token : target.expr.sourcePos;
           errors.push(new CompilerError(errorToken, ErrorCode.SelectCantNest));
           return;
         }
-        const nestedScope = _.cloneDeep(scope);
-        if (target.kind === "short") {
-          nestedScope.model = model;
-        } else {
-          const identifier: IdentifierRef = {
-            text: target.name.text,
-            token: target.name.token,
-            ref: target.identifierPath.at(-1)!.ref,
-            type,
-          };
-          addToScope(nestedScope, identifier);
-        }
-        resolveSelect(select, model, nestedScope);
+        resolveSelect(select, { ..._.cloneDeep(scope), model });
       }
     });
   }

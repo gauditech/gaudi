@@ -1132,7 +1132,7 @@ class GaudiParser extends EmbeddedActionsParser {
     return this.RULE(ruleName, (): h => {
       const keyword = getTokenData(this.CONSUME(L.Hook));
 
-      const name = kind === "model" ? this.SUBRULE1(this.identifier) : undefined;
+      const name = kind === "model" ? this.SUBRULE1(this.identifierRef) : undefined;
 
       const atoms: unknown[] = [];
 
@@ -1216,8 +1216,9 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const name = this.SUBRULE(this.identifier);
-              const identifierPath = this.SUBRULE(this.identifierRefPath);
-              return { kind: "long", name, identifierPath };
+              this.CONSUME(L.Colon);
+              const expr = this.SUBRULE(this.expr);
+              return { kind: "long", name, expr };
             },
           },
           {

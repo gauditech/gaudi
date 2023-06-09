@@ -801,20 +801,19 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateSelect(select: AST.Select): Spec.Select {
     return select.map((s): Spec.SingleSelect => {
+      let expr: Spec.Expr;
       if (s.target.kind === "long") {
-        throw Error("Long select form unsupported in old spec");
+        expr = migrateExpr(s.target.expr);
+      } else {
+        const identifier = migrateIdentifierRef(s.target.name);
+        expr = { kind: "identifier", identifier: [identifier], type: identifier.type };
       }
-      const target = migrateIdentifierRef(s.target.name);
-      switch (target.ref.atomKind) {
-        case "query":
-        case "reference":
-        case "relation": {
-          const select = s.select ? migrateSelect(s.select) : createAutoselect(target.ref.model);
-          return { kind: "nested", name: target.text, target, select };
-        }
-        default: {
-          return { kind: "final", name: target.text, target };
-        }
+      const model = getTypeModel(expr.type);
+      if (model) {
+        const select = s.select ? migrateSelect(s.select) : createAutoselect(model);
+        return { kind: "nested", name: s.target.name.text, expr, select };
+      } else {
+        return { kind: "final", name: s.target.name.text, expr };
       }
     });
   }
@@ -824,7 +823,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return migrateFields(model).map((field) => ({
       kind: "final",
       name: field.name,
-      target: { text: field.name, ref: field.ref, type: field.type },
+      expr: {
+        kind: "identifier",
+        identifier: [{ text: field.name, ref: field.ref, type: field.type }],
+        type: field.type,
+      },
     }));
   }
 

@@ -13,7 +13,7 @@ import { HookCode } from "@src/types/common";
 export type LiteralValue = null | boolean | number | string;
 
 export type Select = SingleSelect[];
-export type SingleSelect = { name: string; target: IdentifierRef<RefModelAtom> } & (
+export type SingleSelect = { name: string; expr: Expr } & (
   | { kind: "final" }
   | { kind: "nested"; select: Select }
 );
