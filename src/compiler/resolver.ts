@@ -263,7 +263,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
     const orderBy = kindFind(query.atoms, "orderBy");
     if (orderBy) {
-      orderBy.orderBy.forEach((orderBy) => resolveIdentifierRefPath(orderBy.identifierPath, scope));
+      orderBy.orderBy.forEach((orderBy) => resolveExpression(orderBy.expr, scope));
     }
 
     const select = kindFind(query.atoms, "select");
@@ -529,9 +529,7 @@ export function resolve(projectASTs: ProjectASTs) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
       const modelScope: Scope = { ...scope, model, environment: "model" };
-      orderBy.orderBy.forEach((orderBy) =>
-        resolveIdentifierRefPath(orderBy.identifierPath, modelScope)
-      );
+      orderBy.orderBy.forEach((orderBy) => resolveExpression(orderBy.expr, modelScope));
     }
 
     const filter = kindFind(endpoint.atoms, "filter");

@@ -468,16 +468,16 @@ class GaudiParser extends EmbeddedActionsParser {
     this.MANY_SEP({
       SEP: L.Comma,
       DEF: () => {
-        const identifierPath = this.SUBRULE(this.identifierRefPath);
+        const expr = this.SUBRULE(this.expr);
         const orderToken = this.OPTION(() =>
           this.OR([{ ALT: () => this.CONSUME(L.Asc) }, { ALT: () => this.CONSUME(L.Desc) }])
         );
         if (orderToken) {
           const order = orderToken.image as OrderType;
           const keyword = getTokenData(orderToken);
-          orderBy.push({ identifierPath, order, keyword });
+          orderBy.push({ expr, order, keyword });
         } else {
-          orderBy.push({ identifierPath });
+          orderBy.push({ expr });
         }
       },
     });

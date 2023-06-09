@@ -85,7 +85,7 @@ export type Query = {
   aggregate?: string;
 };
 
-export type QueryOrderBy = { field: string[]; order?: "asc" | "desc" };
+export type QueryOrderBy = { expr: Expr; order?: "asc" | "desc" };
 
 export type Computed = {
   name: string;

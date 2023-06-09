@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { match } from "ts-pattern";
 
+import { processOrderBy } from "./entrypoints";
 import { defineType } from "./models";
 
 import { UnreachableError, ensureEqual } from "@src/common/utils";
@@ -9,7 +10,6 @@ import {
   AggregateDef,
   FunctionName,
   QueryDef,
-  QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
   TypedExprDef,
@@ -28,12 +28,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
 
   const select = composeSelect(qspec.select, fromPath);
 
-  const orderBy = qspec.orderBy?.map(
-    ({ field, order }): QueryOrderByAtomDef => ({
-      exp: { kind: "alias", namePath: [...fromPath, ...field] },
-      direction: order ?? "asc",
-    })
-  );
+  const orderBy = processOrderBy(fromPath, qspec.orderBy);
 
   return {
     kind: "query",

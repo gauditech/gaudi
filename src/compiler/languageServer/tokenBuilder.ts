@@ -186,7 +186,7 @@ export function buildTokens(
         .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
           buildKeyword(keyword);
           orderBy.forEach((orderBy) => {
-            buildIdentifierPath(orderBy.identifierPath);
+            buildExpr(orderBy.expr);
             if (orderBy.keyword) buildKeyword(orderBy.keyword);
           });
         })
@@ -292,7 +292,7 @@ export function buildTokens(
         .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
           buildKeyword(keyword);
           orderBy.forEach((orderBy) => {
-            buildIdentifierPath(orderBy.identifierPath);
+            buildExpr(orderBy.expr);
             if (orderBy.keyword) buildKeyword(orderBy.keyword);
           });
         })

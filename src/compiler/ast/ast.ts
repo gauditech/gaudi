@@ -77,12 +77,12 @@ export type QueryAtom = { keyword: TokenData } & (
 export type AggregateType = "count" | "sum" | "one" | "first";
 export type OrderBy = (
   | {
-      identifierPath: IdentifierRef[];
+      expr: Expr<"db">;
       keyword?: undefined;
       order?: undefined;
     }
   | {
-      identifierPath: IdentifierRef[];
+      expr: Expr<"db">;
       order: OrderType;
       keyword: TokenData;
     }

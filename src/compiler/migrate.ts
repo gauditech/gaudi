@@ -188,7 +188,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const from = kindFind(atoms, "from");
     const filter = kindFind(atoms, "filter");
     const orderBy = kindFind(atoms, "orderBy")?.orderBy.map((a) => ({
-      field: a.identifierPath.map((i) => i.text),
+      expr: migrateExpr(a.expr),
       order: a.order,
     }));
     const limit = kindFind(atoms, "limit");
@@ -314,7 +314,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       case "list": {
         const pageable = !!kindFind(endpoint.atoms, "pageable");
         const orderBy = kindFind(endpoint.atoms, "orderBy")?.orderBy.map((a) => ({
-          field: a.identifierPath.map((i) => i.text),
+          expr: migrateExpr(a.expr),
           order: a.order,
         }));
         const filterAst = kindFind(endpoint.atoms, "filter")?.expr;

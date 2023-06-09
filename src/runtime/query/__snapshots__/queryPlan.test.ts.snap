@@ -1,5 +1,145 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Query plan order by expression 1`] = `
+{
+  "entry": "Org",
+  "filter": undefined,
+  "fromPath": [
+    "Org",
+  ],
+  "groupBy": [],
+  "joins": [
+    {
+      "joinOn": [
+        [
+          "Org",
+          "id",
+        ],
+        [
+          "Org",
+          "COUNT",
+          "repos",
+          "id",
+          "__join_connection",
+        ],
+      ],
+      "joinType": "left",
+      "kind": "subquery",
+      "namePath": [
+        "Org",
+        "COUNT",
+        "repos",
+        "id",
+      ],
+      "plan": {
+        "entry": "Org",
+        "fromPath": [
+          "Org",
+          "repos",
+        ],
+        "groupBy": [
+          [
+            "Org",
+            "id",
+          ],
+        ],
+        "joins": [
+          {
+            "joinOn": [
+              [
+                "Org",
+                "id",
+              ],
+              [
+                "Org",
+                "repos",
+                "org_id",
+              ],
+            ],
+            "joinType": "left",
+            "kind": "inline",
+            "modelName": "Repo",
+            "namePath": [
+              "Org",
+              "repos",
+            ],
+            "target": "repos",
+          },
+        ],
+        "select": {
+          "__join_connection": {
+            "kind": "alias",
+            "value": [
+              "Org",
+              "id",
+            ],
+          },
+          "result": {
+            "args": [
+              {
+                "kind": "alias",
+                "value": [
+                  "Org",
+                  "repos",
+                  "id",
+                ],
+              },
+            ],
+            "fnName": "count",
+            "kind": "function",
+          },
+        },
+      },
+    },
+  ],
+  "limit": undefined,
+  "offset": undefined,
+  "orderBy": [
+    [
+      {
+        "kind": "alias",
+        "value": [
+          "Org",
+          "COUNT",
+          "repos",
+          "id",
+          "result",
+        ],
+      },
+      "asc",
+    ],
+  ],
+  "select": {
+    "id": {
+      "kind": "alias",
+      "value": [
+        "Org",
+        "id",
+      ],
+    },
+  },
+}
+`;
+
+exports[`Query plan order by expression 2`] = `
+"SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+  LEFT JOIN (
+    SELECT
+      "Org"."id" AS "__join_connection",
+      COALESCE(count("Org.repos"."id"), 0) AS "result"
+    FROM
+      "org" AS "Org"
+      LEFT JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+    GROUP BY
+      "Org"."id"
+  ) AS "Org.COUNT.repos.id" ON "Org"."id" = "Org.COUNT.repos.id"."__join_connection"
+ORDER BY
+  "Org.COUNT.repos.id"."result" asc"
+`;
+
 exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
 {
   "entry": "Org",

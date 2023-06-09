@@ -11,24 +11,24 @@ describe("Query plan", () => {
     model Org {
       field name { type string }
       relation repos { from Repo, through org }
-  
+
       computed total_issues { count(repos.issues.id) }
     }
-    
+
     model Repo {
       reference org { to Org }
       field name { type string }
       field ref_number { type integer }
       relation issues { from Issue, through repo }
-  
+
       computed org_name { org.name }
       computed org_total_issues { org.total_issues + 1 }
     }
-    
+
     model Issue {
       field name { type string }
       reference repo { to Repo }
-  
+
       computed repo_name { repo.name }
     }
   `;
@@ -82,6 +82,31 @@ describe("Query plan", () => {
     expect(plan).toMatchSnapshot("QueryPlan snapshot");
     const sql = queryPlanToString(plan);
     expect(sql).toMatchSnapshot("SQL snapshot");
+  });
+
+  it("order by expression", () => {
+    const modelBp = `
+    model Org {
+      relation repos { from Repo, through org }
+    }
+    model Repo {
+      reference org { to Org }
+    }
+    `;
+
+    const queryBp = `
+    query {
+      from Org,
+      select { id },
+      order by { count(repos.id) }
+    }
+    `;
+
+    const { def, query } = makeTestQuery(modelBp, queryBp);
+    const plan = buildQueryPlan(def, query);
+    expect(plan).toMatchSnapshot();
+    const sql = queryPlanToString(plan);
+    expect(sql).toMatchSnapshot();
   });
 });
 

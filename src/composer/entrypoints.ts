@@ -260,8 +260,8 @@ export function processOrderBy(
   if (orderBy == null) return;
 
   return orderBy?.map(
-    ({ field, order }): QueryOrderByAtomDef => ({
-      exp: { kind: "alias", namePath: [...fromPath, ...field] },
+    ({ expr, order }): QueryOrderByAtomDef => ({
+      exp: composeExpression(expr, fromPath),
       direction: order ?? "asc",
     })
   );
