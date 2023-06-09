@@ -3,7 +3,7 @@ import _ from "lodash";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
-import { composeExpression, composeSelect } from "@src/composer/query";
+import { composeExpression, composeOrderBy, composeSelect } from "@src/composer/query";
 import { refKeyFromRef } from "@src/composer/utils";
 import {
   ActionDef,
@@ -18,7 +18,6 @@ import {
   FieldsetDef,
   FieldsetFieldDef,
   ModelDef,
-  QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
   TargetDef,
@@ -157,7 +156,7 @@ function processEndpoints(
           // actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
-          orderBy: processOrderBy(context.namePath, endSpec.orderBy),
+          orderBy: composeOrderBy(context.namePath, endSpec.orderBy),
           filter: composeFilter(context.namePath, endSpec.filter),
         };
       }
@@ -251,20 +250,6 @@ function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
     default:
       assertUnreachable(method);
   }
-}
-
-export function processOrderBy(
-  fromPath: string[],
-  orderBy: Spec.QueryOrderBy[] | undefined
-): QueryOrderByAtomDef[] | undefined {
-  if (orderBy == null) return;
-
-  return orderBy?.map(
-    ({ expr, order }): QueryOrderByAtomDef => ({
-      exp: composeExpression(expr, fromPath),
-      direction: order ?? "asc",
-    })
-  );
 }
 
 export function composeFilter(

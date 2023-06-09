@@ -1,7 +1,6 @@
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { processOrderBy } from "./entrypoints";
 import { defineType } from "./models";
 
 import { UnreachableError, ensureEqual } from "@src/common/utils";
@@ -10,6 +9,7 @@ import {
   AggregateDef,
   FunctionName,
   QueryDef,
+  QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
   TypedExprDef,
@@ -28,7 +28,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
 
   const select = composeSelect(qspec.select, fromPath);
 
-  const orderBy = processOrderBy(fromPath, qspec.orderBy);
+  const orderBy = composeOrderBy(fromPath, qspec.orderBy);
 
   return {
     kind: "query",
@@ -69,6 +69,19 @@ export function composeAggregate(qspec: Spec.Query): AggregateDef {
   };
 }
 
+export function composeOrderBy(
+  fromPath: string[],
+  orderBy: Spec.QueryOrderBy[] | undefined
+): QueryOrderByAtomDef[] | undefined {
+  if (orderBy == null) return;
+
+  return orderBy?.map(
+    ({ expr, order }): QueryOrderByAtomDef => ({
+      exp: composeExpression(expr, fromPath),
+      direction: order ?? "asc",
+    })
+  );
+}
 function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: string[]): TypedExprDef {
   // Change name to concat if using "+" with "string" type
   const firstType = args.at(0)?.type;
