@@ -46,7 +46,7 @@ export function buildBasicAuthenticationHandler(def: Definition, options?: Authe
 
             // allow anonymous access
             if (!user && !(options?.allowAnonymous ?? false)) {
-              throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Incorrect token credentials");
+              throw new BusinessError("ERROR_CODE_UNAUTHENTICATED", "Incorrect token credentials");
             }
 
             // share user with other handlers

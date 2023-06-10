@@ -5,16 +5,16 @@ import _ from "lodash";
 import { assertUnreachable } from "@src/common/utils";
 
 //** Error reponse codes  */
-export type ErrorCode =
+export type HTTPErrorCode =
   | "ERROR_CODE_SERVER_ERROR"
   | "ERROR_CODE_RESOURCE_NOT_FOUND"
   | "ERROR_CODE_VALIDATION"
-  | "ERROR_CODE_UNAUTHORIZED"
+  | "ERROR_CODE_UNAUTHENTICATED"
   | "ERROR_CODE_FORBIDDEN";
 
 //** Response error body */
 export type ResponseErrorBody = {
-  code: ErrorCode;
+  code: HTTPErrorCode;
   message: string;
   data?: unknown;
 };
@@ -28,7 +28,7 @@ export type ResponseErrorBody = {
 export class BusinessError<T = unknown> extends Error {
   constructor(
     /** Error code */
-    public readonly code: ErrorCode,
+    public readonly code: HTTPErrorCode,
     /** Descriptive error message */
     message: string,
     /** Additional error data. (eg. validation errors) */
@@ -80,7 +80,7 @@ export function errorResponse(cause: unknown) {
       throw new HttpResponseError(400, body);
     } else if (cause.code === "ERROR_CODE_RESOURCE_NOT_FOUND") {
       throw new HttpResponseError(404, body);
-    } else if (cause.code === "ERROR_CODE_UNAUTHORIZED") {
+    } else if (cause.code === "ERROR_CODE_UNAUTHENTICATED") {
       throw new HttpResponseError(401, body);
     } else if (cause.code === "ERROR_CODE_FORBIDDEN") {
       throw new HttpResponseError(403, body);
