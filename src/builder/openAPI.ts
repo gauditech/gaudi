@@ -136,7 +136,10 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
         description: "Resource not found",
         content: {
           "application/json": {
-            schema: { type: "object", properties: { message: { type: "string" } } },
+            schema: {
+              type: "object",
+              properties: { message: { type: "string", enum: ["ERROR_CODE_RESOURCE_NOT_FOUND"] } },
+            },
           },
         },
       };
@@ -147,7 +150,10 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
         description: "Unauthenticated",
         content: {
           "application/json": {
-            schema: { type: "object", properties: { message: { type: "string" } } },
+            schema: {
+              type: "object",
+              properties: { message: { type: "string", enum: ["ERROR_CODE_UNAUTHENTICATED"] } },
+            },
           },
         },
       };
@@ -158,7 +164,10 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
         description: "Unauthorized",
         content: {
           "application/json": {
-            schema: { type: "object", properties: { message: { type: "string" } } },
+            schema: {
+              type: "object",
+              properties: { message: { type: "string", enum: ["ERROR_CODE_FORBIDDEN"] } },
+            },
           },
         },
       };
@@ -169,6 +178,24 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     if (fieldset) {
       const schema = buildSchemaFromFieldset(fieldset);
       operation.requestBody = { content: { "application/json": { schema } } };
+
+      operation.responses[400] = {
+        description: "Validation error",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                message: { type: "string", enum: ["Validation error"] },
+                code: { type: "string", enum: ["ERROR_CODE_VALIDATION"] },
+                // FIXME post validation v2:
+                // * calculate `anyOf` for all the validation messages
+                data: { type: "object" },
+              },
+            },
+          },
+        },
+      };
     }
 
     if (endpoint.authorize) {

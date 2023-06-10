@@ -53,6 +53,33 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "ERROR_CODE_VALIDATION",
+                      ],
+                      "type": "string",
+                    },
+                    "data": {
+                      "type": "object",
+                    },
+                    "message": {
+                      "enum": [
+                        "Validation error",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Validation error",
+          },
         },
         "tags": [
           "Auth",
@@ -84,6 +111,33 @@ exports[`openAPI build spec 1`] = `
               },
             },
             "description": "Successful response",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "ERROR_CODE_VALIDATION",
+                      ],
+                      "type": "string",
+                    },
+                    "data": {
+                      "type": "object",
+                    },
+                    "message": {
+                      "enum": [
+                        "Validation error",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Validation error",
           },
         },
         "tags": [
@@ -139,6 +193,33 @@ exports[`openAPI build spec 1`] = `
               },
             },
             "description": "Successful response",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "ERROR_CODE_VALIDATION",
+                      ],
+                      "type": "string",
+                    },
+                    "data": {
+                      "type": "object",
+                    },
+                    "message": {
+                      "enum": [
+                        "Validation error",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Validation error",
           },
         },
         "tags": [
@@ -267,6 +348,33 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "ERROR_CODE_VALIDATION",
+                      ],
+                      "type": "string",
+                    },
+                    "data": {
+                      "type": "object",
+                    },
+                    "message": {
+                      "enum": [
+                        "Validation error",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Validation error",
+          },
         },
         "tags": [
           "Test",
@@ -295,6 +403,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_UNAUTHENTICATED",
+                      ],
                       "type": "string",
                     },
                   },
@@ -310,6 +421,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_FORBIDDEN",
+                      ],
                       "type": "string",
                     },
                   },
@@ -325,6 +439,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
@@ -386,6 +503,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_UNAUTHENTICATED",
+                      ],
                       "type": "string",
                     },
                   },
@@ -401,6 +521,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
@@ -473,12 +596,42 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "ERROR_CODE_VALIDATION",
+                      ],
+                      "type": "string",
+                    },
+                    "data": {
+                      "type": "object",
+                    },
+                    "message": {
+                      "enum": [
+                        "Validation error",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Validation error",
+          },
           "403": {
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_FORBIDDEN",
+                      ],
                       "type": "string",
                     },
                   },
@@ -494,6 +647,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
@@ -600,6 +756,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
@@ -667,12 +826,42 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "ERROR_CODE_VALIDATION",
+                      ],
+                      "type": "string",
+                    },
+                    "data": {
+                      "type": "object",
+                    },
+                    "message": {
+                      "enum": [
+                        "Validation error",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Validation error",
+          },
           "404": {
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
@@ -718,6 +907,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
@@ -782,6 +974,9 @@ exports[`openAPI build spec 1`] = `
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
@@ -861,12 +1056,42 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "ERROR_CODE_VALIDATION",
+                      ],
+                      "type": "string",
+                    },
+                    "data": {
+                      "type": "object",
+                    },
+                    "message": {
+                      "enum": [
+                        "Validation error",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Validation error",
+          },
           "404": {
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
                     "message": {
+                      "enum": [
+                        "ERROR_CODE_RESOURCE_NOT_FOUND",
+                      ],
                       "type": "string",
                     },
                   },
