@@ -34,18 +34,18 @@
       
   function buildOrgEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
-    type CustomOneActionError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type CustomManyActionError = CustomOneActionError;
+    type CustomOneActionError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_VALIDATION";
+type CustomManyActionError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type CustomOneActionRespondsError = CustomOneActionError;
-type CustomManyActionRespondsError = CustomOneActionError;
+type CustomManyActionRespondsError = CustomManyActionError;
 type CustomOneQueryActionError = CustomOneActionError;
 type CustomFetchActionError = CustomOneActionError;
-type HookErrorResponseError = CustomOneActionError;
-type CustomGetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type HookErrorResponseError = CustomManyActionError;
+type CustomGetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND";
 type CustomUpdateError = CustomOneActionError;
 type CustomDeleteError = CustomGetError;
-type CustomListError = CustomGetError;
-type CustomCreateError = CustomOneActionError;
+type CustomListError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type CustomCreateError = CustomManyActionError;
 type GetResp = { name: string,
 slug: string,
 description: string,
@@ -55,12 +55,12 @@ blank_repos: { id: number,
 total_issues: number }[] };
 type GetError = CustomGetError;
 type ListResp = GetResp;
-type ListError = CustomGetError;
+type ListError = CustomListError;
 type CreateData = { name: string,
 slug: string,
 description: string };
 type CreateResp = GetResp;
-type CreateError = CustomOneActionError;
+type CreateError = CustomManyActionError;
 type UpdateData = { name?: string,
 slug?: string,
 description?: string };
@@ -106,14 +106,14 @@ delete: buildDeleteManyFn<string, DeleteError>(options, parentPath)
 slug: string,
 description: string,
 org_id: number };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND";
 type ListResp = GetResp;
 type ListError = GetError;
 type CreateData = { raw_description: string,
 name: string,
 is_public: boolean };
 type CreateResp = GetResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CreateError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_VALIDATION";
 type UpdateData = { name?: string,
 slug?: string,
 description?: string,
@@ -159,7 +159,7 @@ number: number,
 comments: { id: number,
 body: string,
 issue_id: number }[] };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND";
 type CreateData = { title: string,
 repo2: { name?: string,
 slug?: string,
@@ -168,7 +168,7 @@ is_public?: boolean,
 org_id?: number },
 c: { body: string } };
 type CreateResp = GetResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CreateError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_VALIDATION";
 
     // entrypoint function
     function api(id: number) {
@@ -193,9 +193,9 @@ create: buildCreateFn<CreateData,CreateResp, CreateError>(options, parentPath)
 slug: string,
 description: string,
 org_id: number };
-type ListError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type ListError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type GetResp = ListResp;
-type GetError = ListError;
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND";
 
     // entrypoint function
     function api(id: number) {

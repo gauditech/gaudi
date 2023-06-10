@@ -4,7 +4,12 @@ import { P, match } from "ts-pattern";
 
 import { buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
-import { endpointUsesAuthentication, endpointUsesAuthorization } from "@src/composer/entrypoints";
+import {
+  endpointHasContext,
+  endpointUsesAuthentication,
+  endpointUsesAuthorization,
+  getEndpointFieldset,
+} from "@src/composer/entrypoints";
 import {
   Definition,
   EndpointDef,
@@ -74,8 +79,7 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
   function buildEndpointOperation(
     endpoint: EndpointDef,
     apiName: string | undefined,
-    parameters: OpenAPIV3.ParameterObject[],
-    hasContext: boolean
+    parameters: OpenAPIV3.ParameterObject[]
   ): OpenAPIV3.OperationObject {
     const properties = buildSchemaProperties(endpoint.response ?? []);
     const required = buildRequiredProperties(endpoint.response ?? []);
@@ -127,7 +131,7 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
       };
     }
 
-    if (hasContext) {
+    if (endpointHasContext(endpoint)) {
       operation.responses[404] = {
         description: "Resource not found",
         content: {
@@ -161,13 +165,11 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     }
 
     operation.parameters = parameters;
-    match(endpoint)
-      .with({ kind: P.union("get", "list", "delete") }, () => undefined)
-      .otherwise((ep) => {
-        if (!ep.fieldset) return;
-        const schema = buildSchemaFromFieldset(ep.fieldset!);
-        operation.requestBody = { content: { "application/json": { schema } } };
-      });
+    const fieldset = getEndpointFieldset(endpoint);
+    if (fieldset) {
+      const schema = buildSchemaFromFieldset(fieldset);
+      operation.requestBody = { content: { "application/json": { schema } } };
+    }
 
     if (endpoint.authorize) {
       operation.security = [{ bearerAuth: [] }];
@@ -218,10 +220,8 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
           .compact()
           .value();
 
-        // has parent or target context iow. identifier in URL
-        const hasContext = endpointPath.fragments.some((f) => f.kind === "identifier");
         const pathItem = paths[path] ?? {};
-        pathItem[method] = buildEndpointOperation(endpoint, api.name, parameters, hasContext);
+        pathItem[method] = buildEndpointOperation(endpoint, api.name, parameters);
         paths[path] = pathItem;
       })
     )

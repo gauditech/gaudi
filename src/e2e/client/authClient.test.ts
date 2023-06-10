@@ -24,7 +24,7 @@ describe("auth client lib", () => {
     DATA
   );
 
-  async function loginTestUser(): Promise<string> {
+  async function loginOwner(): Promise<string> {
     const client = createClient({
       requestFn: testRequestFn,
     });
@@ -35,13 +35,6 @@ describe("auth client lib", () => {
 
     // TODO: login returns any[] type and not any/unknown
     return (resp.data as any).token;
-  }
-
-  async function loginTestUser2() {
-    const loginResponse = await request(getServer())
-      .post("/auth_user/login")
-      .send({ username: "second", password: "1234" });
-    return loginResponse.body.token;
   }
 
   /**
@@ -112,10 +105,10 @@ describe("auth client lib", () => {
       const response1 = await publicClient.api.box.list();
       expect(response1.status).toBe(401);
       ensureEqual(response1.kind, "error" as const); // type narrowing
-      expect(response1.error.code).toEqual("ERROR_CODE_UNAUTHORIZED");
+      expect(response1.error.code).toEqual("ERROR_CODE_UNAUTHENTICATED");
 
       // login
-      const token = await loginTestUser();
+      const token = await loginOwner();
       expect(token?.length).toBeGreaterThan(0);
 
       // new authorized client
@@ -133,7 +126,7 @@ describe("auth client lib", () => {
       const response4 = await authClient.api.box.list();
       expect(response4.status).toBe(401);
       ensureEqual(response4.kind, "error" as const); // type narrowing
-      expect(response4.error.code).toEqual("ERROR_CODE_UNAUTHORIZED");
+      expect(response4.error.code).toEqual("ERROR_CODE_UNAUTHENTICATED");
     });
   });
 });

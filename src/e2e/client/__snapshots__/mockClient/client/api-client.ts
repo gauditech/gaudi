@@ -37,21 +37,21 @@
     type GetResp = { id: number,
 slug: string,
 name: string };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND";
 type CreateData = { slug: string,
 name: string };
 type CreateResp = GetResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CreateError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type UpdateData = { slug?: string,
 name?: string };
 type UpdateResp = GetResp;
-type UpdateError = CreateError;
+type UpdateError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_VALIDATION";
 type ListResp = GetResp;
-type ListError = GetError;
+type ListError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
 type DeleteError = GetError;
 type CustomOneFetchError = GetError;
-type CustomOneSubmitError = CreateError;
-type CustomManyFetchError = GetError;
+type CustomOneSubmitError = UpdateError;
+type CustomManyFetchError = ListError;
 type CustomManySubmitError = CreateError;
 
     // entrypoint function
@@ -82,14 +82,14 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     // endpoint types
     type GetResp = { slug: string,
 name: string };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND";
 type CreateData = { virtProp: string,
 slug: string,
 name: string,
 description: string,
 owner_id?: number|null };
 type CreateResp = GetResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type CreateError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_VALIDATION";
 type UpdateData = { name?: string,
 description?: string,
 org_id?: number,
@@ -133,11 +133,11 @@ customManySubmit: buildCustomManySubmitFn<any, any, CustomManySubmitError>(optio
     type GetResp = { id: number,
 slug: string,
 name: string };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND";
 type UpdateData = { slug?: string,
 name?: string };
 type UpdateResp = GetResp;
-type UpdateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+type UpdateError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_VALIDATION";
 type CreateData = { slug: string,
 name: string };
 type CreateResp = GetResp;

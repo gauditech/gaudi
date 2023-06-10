@@ -1,6 +1,8 @@
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
+import { buildEndpointPath } from "@src/builder/query";
+import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
@@ -573,6 +575,14 @@ function pathsToSelectDef(
  */
 
 /**
+ * Checks if endpoint has path fragments / if it can return 404.
+ */
+export function endpointHasContext(endpoint: EndpointDef): boolean {
+  const epath = buildEndpointPath(endpoint);
+  return kindFilter(epath.fragments, "identifier").length > 0;
+}
+
+/**
  * Checks if endpoint `authorize` block relies on `@auth`
  */
 export function endpointUsesAuthentication(endpoint: EndpointDef): boolean {
@@ -626,4 +636,14 @@ export function endpointUsesAuthorization(endpoint: EndpointDef): boolean {
   }
 
   return isAnotherExpression(endpoint.authorize);
+}
+
+/**
+ * Gets endpoint fieldset, if any.
+ */
+
+export function getEndpointFieldset(endpoint: EndpointDef): FieldsetDef | undefined {
+  return match(endpoint)
+    .with({ kind: P.union("get", "list", "delete") }, () => undefined)
+    .otherwise((ep) => ep.fieldset);
 }

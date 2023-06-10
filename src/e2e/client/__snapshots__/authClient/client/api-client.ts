@@ -35,7 +35,7 @@
       
   function buildAuthuserEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
-    type LoginError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
+    type LoginError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 type LogoutError = LoginError;
 type RegisterError = LoginError;
 
@@ -71,14 +71,14 @@ register: buildCustomManySubmitFn<any, any, RegisterError>(options, parentPath, 
 name: string,
 is_public: boolean,
 owner_id: number };
-type ListError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type ListError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_UNAUTHENTICATED";
 type GetResp = ListResp;
-type GetError = ListError;
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_UNAUTHENTICATED"|"ERROR_CODE_FORBIDDEN";
 type CreateData = { name: string,
 is_public: boolean };
 type CreateResp = ListResp;
-type CreateError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
-type FetchAuthTokenError = CreateError;
+type CreateError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_UNAUTHENTICATED"|"ERROR_CODE_VALIDATION";
+type FetchAuthTokenError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_VALIDATION";
 
     // entrypoint function
     function api(id: string) {
@@ -101,11 +101,13 @@ fetchAuthToken: buildCustomManySubmitFn<any, any, FetchAuthTokenError>(options, 
 
   function buildItemsEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
-    type GetResp = { id: number,
+    type ListResp = { id: number,
 name: string,
 is_public: boolean,
 box_id: number };
-type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER";
+type ListError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_UNAUTHENTICATED"|"ERROR_CODE_FORBIDDEN";
+type GetResp = ListResp;
+type GetError = "ERROR_CODE_SERVER_ERROR"|"ERROR_CODE_OTHER"|"ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_FORBIDDEN";
 
     // entrypoint function
     function api(id: string) {
@@ -118,7 +120,8 @@ type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND"|"ERROR_CODE_RESOURCE_NOT_FOUND"|
     // endpoint functions
     return Object.assign(api,
       {
-        get: buildGetManyFn<string, GetResp, GetError>(options, parentPath)
+        list: buildListFn<ListResp, ListError>(options, parentPath),
+get: buildGetManyFn<string, GetResp, GetError>(options, parentPath)
       }
     )
   }
