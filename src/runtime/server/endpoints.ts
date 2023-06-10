@@ -826,9 +826,14 @@ function findOne<T>(result: T[]): T {
 
 async function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
   if (!endpoint.authorize) return;
+  // check if logged in
+  if (contextVars.get("@auth") === undefined) {
+    throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthenticated");
+  }
+
   const authorizeResult = await executeTypedExpr(endpoint.authorize, contextVars);
   if (!authorizeResult) {
-    throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
+    throw new BusinessError("ERROR_CODE_FORBIDDEN", "Unauthorized");
   }
 }
 

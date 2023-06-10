@@ -104,7 +104,7 @@ describe("Auth", () => {
       const getResponse = await request(getServer())
         .get("/api/box/private")
         .set("Authorization", "bearer " + token);
-      expect(getResponse.statusCode).toBe(401);
+      expect(getResponse.statusCode).toBe(403);
     });
 
     it("Fail private no auth", async () => {
@@ -125,7 +125,7 @@ describe("Auth", () => {
       const getResponse = await request(getServer())
         .get("/api/box/private/items/private")
         .set("Authorization", "bearer " + token);
-      expect(getResponse.statusCode).toBe(401);
+      expect(getResponse.statusCode).toBe(403);
     });
 
     it("Fail public > private", async () => {
@@ -133,7 +133,7 @@ describe("Auth", () => {
       const getResponse = await request(getServer())
         .get("/api/box/public/items/private")
         .set("Authorization", "bearer " + token);
-      expect(getResponse.statusCode).toBe(401);
+      expect(getResponse.statusCode).toBe(403);
     });
 
     it("Success private owned > public", async () => {
