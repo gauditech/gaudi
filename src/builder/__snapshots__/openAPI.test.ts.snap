@@ -3,7 +3,12 @@
 exports[`openAPI build spec 1`] = `
 {
   "components": {
-    "securitySchemes": {},
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "type": "http",
+      },
+    },
   },
   "info": {
     "title": "Title",
@@ -11,6 +16,136 @@ exports[`openAPI build spec 1`] = `
   },
   "openapi": "3.0.3",
   "paths": {
+    "/api/auth/auth_user/login": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "password": {
+                    "type": "string",
+                  },
+                  "username": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "username",
+                  "password",
+                ],
+                "type": "object",
+              },
+            },
+          },
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {},
+                  "required": [],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+        },
+        "tags": [
+          "Auth",
+        ],
+      },
+    },
+    "/api/auth/auth_user/logout": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {},
+                "type": "object",
+              },
+            },
+          },
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {},
+                  "required": [],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+        },
+        "tags": [
+          "Auth",
+        ],
+      },
+    },
+    "/api/auth/auth_user/register": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "authUser": {
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                      },
+                      "password": {
+                        "type": "string",
+                      },
+                      "username": {
+                        "type": "string",
+                      },
+                    },
+                    "required": [
+                      "password",
+                      "name",
+                      "username",
+                    ],
+                    "type": "object",
+                  },
+                },
+                "required": [
+                  "authUser",
+                ],
+                "type": "object",
+              },
+            },
+          },
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {},
+                  "required": [],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful response",
+          },
+        },
+        "tags": [
+          "Auth",
+        ],
+      },
+    },
     "/api/test/org": {
       "get": {
         "parameters": [
@@ -154,6 +289,36 @@ exports[`openAPI build spec 1`] = `
           "204": {
             "description": "Successful response",
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Unauthenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Unauthorized",
+          },
           "404": {
             "content": {
               "application/json": {
@@ -170,6 +335,11 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "security": [
+          {
+            "bearerAuth": [],
+          },
+        ],
         "tags": [
           "Test",
         ],
@@ -210,6 +380,21 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Unauthenticated",
+          },
           "404": {
             "content": {
               "application/json": {
@@ -226,6 +411,11 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "security": [
+          {
+            "bearerAuth": [],
+          },
+        ],
         "tags": [
           "Test",
         ],
@@ -283,6 +473,21 @@ exports[`openAPI build spec 1`] = `
             },
             "description": "Successful response",
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Unauthorized",
+          },
           "404": {
             "content": {
               "application/json": {
@@ -299,6 +504,11 @@ exports[`openAPI build spec 1`] = `
             "description": "Resource not found",
           },
         },
+        "security": [
+          {
+            "bearerAuth": [],
+          },
+        ],
         "tags": [
           "Test",
         ],

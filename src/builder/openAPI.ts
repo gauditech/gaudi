@@ -4,6 +4,7 @@ import { P, match } from "ts-pattern";
 
 import { buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
+import { endpointUsesAuthentication, endpointUsesAuthorization } from "@src/composer/entrypoints";
 import {
   Definition,
   EndpointDef,
@@ -129,6 +130,28 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     if (hasContext) {
       operation.responses[404] = {
         description: "Resource not found",
+        content: {
+          "application/json": {
+            schema: { type: "object", properties: { message: { type: "string" } } },
+          },
+        },
+      };
+    }
+
+    if (endpointUsesAuthentication(endpoint)) {
+      operation.responses[401] = {
+        description: "Unauthenticated",
+        content: {
+          "application/json": {
+            schema: { type: "object", properties: { message: { type: "string" } } },
+          },
+        },
+      };
+    }
+
+    if (endpointUsesAuthorization(endpoint)) {
+      operation.responses[403] = {
+        description: "Unauthorized",
         content: {
           "application/json": {
             schema: { type: "object", properties: { message: { type: "string" } } },
