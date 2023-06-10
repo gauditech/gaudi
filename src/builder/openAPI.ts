@@ -142,10 +142,13 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
       .with({ kind: P.union("get", "list", "delete") }, () => undefined)
       .otherwise((ep) => {
         if (!ep.fieldset) return;
-        console.dir([ep.kind, ep.fieldset === undefined]);
         const schema = buildSchemaFromFieldset(ep.fieldset!);
         operation.requestBody = { content: { "application/json": { schema } } };
       });
+
+    if (endpoint.authorize) {
+      operation.security = [{ bearerAuth: [] }];
+    }
 
     return operation;
   }
@@ -201,7 +204,19 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     )
   );
 
-  return { openapi: "3.0.3", info: { title: "Title", version: "1.0.0" }, paths };
+  const securitySchemes: Record<string, OpenAPIV3.SecuritySchemeObject> = {};
+  if (definition.authenticator) {
+    securitySchemes["bearerAuth"] = { type: "http", scheme: "bearer" };
+  }
+
+  return {
+    openapi: "3.0.3",
+    info: { title: "Title", version: "1.0.0" },
+    paths,
+    components: {
+      securitySchemes,
+    },
+  };
 }
 
 function buildSchemaFromFieldset(fieldset: FieldsetDef): OpenAPIV3.SchemaObject {

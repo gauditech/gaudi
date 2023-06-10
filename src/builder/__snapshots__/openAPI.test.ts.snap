@@ -2,6 +2,9 @@
 
 exports[`openAPI build spec 1`] = `
 {
+  "components": {
+    "securitySchemes": {},
+  },
   "info": {
     "title": "Title",
     "version": "1.0.0",
