@@ -1,6 +1,6 @@
 import _, { flatMap, mapValues } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 import { buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
@@ -138,11 +138,14 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
     }
 
     operation.parameters = parameters;
-
-    if (endpoint.kind === "create" || endpoint.kind === "update") {
-      const schema = buildSchemaFromFieldset(endpoint.fieldset);
-      operation.requestBody = { content: { "application/json": { schema } } };
-    }
+    match(endpoint)
+      .with({ kind: P.union("get", "list", "delete") }, () => undefined)
+      .otherwise((ep) => {
+        if (!ep.fieldset) return;
+        console.dir([ep.kind, ep.fieldset === undefined]);
+        const schema = buildSchemaFromFieldset(ep.fieldset!);
+        operation.requestBody = { content: { "application/json": { schema } } };
+      });
 
     return operation;
   }
