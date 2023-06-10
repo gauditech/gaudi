@@ -2,6 +2,7 @@
 module.exports = async () => {
   return {
     verbose: true,
+    showSeed: true,
     projects: [
       // --- unit tests
       {
