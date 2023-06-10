@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { P, match } from "ts-pattern";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
@@ -565,4 +566,64 @@ function pathsToSelectDef(
       }
     }
   });
+}
+
+/**
+ * UTILS
+ */
+
+/**
+ * Checks if endpoint `authorize` block relies on `@auth`
+ */
+export function endpointUsesAuthentication(endpoint: EndpointDef): boolean {
+  if (!endpoint.authorize) return false;
+
+  // find @auth in context
+  function isAuthInExpression(expr: TypedExprDef): boolean {
+    return match(expr)
+      .with({ kind: "alias" }, (a) => a.namePath[0] === "@auth")
+      .with({ kind: "function" }, (fn) => {
+        return _.some(fn.args, isAuthInExpression);
+      })
+      .otherwise(() => false);
+  }
+
+  return isAuthInExpression(endpoint.authorize);
+}
+
+/**
+ * Checks if endpoint `authorize` blocks relies on anything other than
+ * checking if user is logged in
+ */
+export function endpointUsesAuthorization(endpoint: EndpointDef): boolean {
+  // FIXME this can probably be improved by checking for nullability, eg in
+  // @auth.user.id is not null (doesn't use Authorization unless `user` is nullable)
+  if (!endpoint.authorize) return false;
+
+  // check for anything other than `@auth.id is not null`
+  function isAnotherExpression(expr: TypedExprDef): boolean {
+    function isNull(expr: TypedExprDef): boolean {
+      return expr?.kind === "literal" && expr.type === "null";
+    }
+    function isAuthId(expr: TypedExprDef): boolean {
+      return expr?.kind === "alias" && _.isEqual(expr.namePath, ["@auth", "id"]);
+    }
+    return match(expr)
+      .with(undefined, () => false)
+      .with({ kind: "function", name: "is not" }, (fn) => {
+        if (isAuthId(fn.args[0]) && isNull(fn.args[1])) {
+          return false;
+        } else if (isNull(fn.args[0]) && isAuthId(fn.args[1])) {
+          return false;
+        } else {
+          return true;
+        }
+      })
+      .with({ kind: "function", name: P.union("and", "or") }, (fn) => {
+        return isAnotherExpression(fn.args[0]) || isAnotherExpression(fn.args[1]);
+      })
+      .otherwise(() => true);
+  }
+
+  return isAnotherExpression(endpoint.authorize);
 }

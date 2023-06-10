@@ -13,6 +13,7 @@ import {
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { endpointUsesAuthentication } from "@src/composer/entrypoints";
 import { Logger } from "@src/logger";
 import { executeArithmetics } from "@src/runtime//common/arithmetics";
 import { executeEndpointActions } from "@src/runtime/common/action";
@@ -826,14 +827,25 @@ function findOne<T>(result: T[]): T {
 
 async function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
   if (!endpoint.authorize) return;
-  // check if logged in
-  if (contextVars.get("@auth") === undefined) {
-    throw new BusinessError("ERROR_CODE_UNAUTHENTICATED", "Unauthenticated");
-  }
 
   const authorizeResult = await executeTypedExpr(endpoint.authorize, contextVars);
   if (!authorizeResult) {
-    throw new BusinessError("ERROR_CODE_FORBIDDEN", "Unauthorized");
+    // this can either be result unauthenticated or forbidden
+    const isLoggedIn = contextVars.get("@auth") !== undefined;
+    const hasAuthentication = endpointUsesAuthentication(endpoint);
+
+    if (isLoggedIn) {
+      // it has to be other authorization rules
+      throw new BusinessError("ERROR_CODE_FORBIDDEN", "Unauthorized");
+    } else {
+      // not logged in, does it have authentication rules?
+      if (hasAuthentication) {
+        throw new BusinessError("ERROR_CODE_UNAUTHENTICATED", "Unauthenticated");
+      } else {
+        // logged in and no authorization rules - must be authorization rules
+        throw new BusinessError("ERROR_CODE_FORBIDDEN", "Unauthorized");
+      }
+    }
   }
 }
 
