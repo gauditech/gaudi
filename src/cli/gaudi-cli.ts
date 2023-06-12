@@ -24,6 +24,7 @@ import { InitProjectOptions, initProject } from "@src/cli/command/initProject";
 import { start } from "@src/cli/command/start";
 import { attachProcessCleanup } from "@src/cli/process";
 import { Stoppable } from "@src/cli/types";
+import { resolveModulePath } from "@src/cli/utils";
 import { watchResources } from "@src/cli/watcher";
 import { createAsyncQueueContext } from "@src/common/async/queueAsync";
 import { EngineConfig, readConfig } from "@src/config";
@@ -64,7 +65,7 @@ function parseArguments(config: EngineConfig) {
     })
     .command({
       command: "start [root]",
-      describe: "Start Gaudi project",
+      describe: "Start Gaudi projects",
       handler: (args) => {
         startCommandHandler(args, config);
       },
@@ -280,7 +281,7 @@ function watchCompileCommand(
     // watch compiler input path
     path.join(config.inputPath),
     // watch gaudi files (during Gaudi dev)
-    args.gaudiDev ? "./node_modules/@gaudi/engine/" : null,
+    args.gaudiDev ? resolveModulePath("@gaudi/engine/") : null,
   ]);
 
   return watchResources(resources, run);
@@ -358,7 +359,7 @@ function watchStartCommand(
   const resources = _.compact([
     // gaudi output folder
     path.join(config.outputFolder),
-    args.gaudiDev ? "./node_modules/@gaudi/engine/runtime" : null,
+    args.gaudiDev ? resolveModulePath("@gaudi/engine/") : null,
   ]);
 
   // use our resource watcher instead of `nodemon`'s watching to keep to consistent

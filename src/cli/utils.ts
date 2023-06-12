@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 
+import pkgDir from "pkg-dir";
+
 import { saveOutputFile } from "@src/common/utils";
 
 export function sanitizeProjectName(name: string): string {
@@ -13,6 +15,16 @@ export function sanitizeProjectName(name: string): string {
       // remove start/end "-"
       .replace(/^-+|-+$/, "")
   );
+}
+
+/** Find root directory of a nodejs project or npm package. */
+export function resolveProjectPath() {
+  return pkgDir.sync();
+}
+
+/** Find path to nodejs project module. */
+export function resolveModulePath(module: string) {
+  return path.resolve(resolveProjectPath() ?? "", "node_modules", module);
 }
 
 /** Create dir recursively if it doesn't exist already */
