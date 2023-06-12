@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Query plan order by expression 1`] = `
+exports[`Query plan order by expression: QueryPlan snapshot 1`] = `
 {
   "entry": "Org",
   "filter": undefined,
@@ -121,7 +121,7 @@ exports[`Query plan order by expression 1`] = `
 }
 `;
 
-exports[`Query plan order by expression 2`] = `
+exports[`Query plan order by expression: SQL snapshot 1`] = `
 "SELECT
   "Org"."id" AS "id"
 FROM
@@ -351,6 +351,120 @@ FROM
   ) AS "Org.SUM.latest_repos.collectedPoints" ON "Org"."id" = "Org.SUM.latest_repos.collectedPoints"."__join_connection"
 WHERE
   "Org.SUM.latest_repos.collectedPoints"."result" > 100"
+`;
+
+exports[`Query plan supports exists subqueries: QueryPlan snapshot 1`] = `
+{
+  "entry": "Org",
+  "filter": {
+    "kind": "in-subquery",
+    "lookupAlias": [
+      "Org",
+      "id",
+    ],
+    "operator": "in",
+    "plan": {
+      "entry": "Org",
+      "fromPath": [
+        "Org",
+        "repos",
+        "org",
+      ],
+      "groupBy": [],
+      "joins": [
+        {
+          "joinOn": [
+            [
+              "Org",
+              "id",
+            ],
+            [
+              "Org",
+              "repos",
+              "org_id",
+            ],
+          ],
+          "joinType": "inner",
+          "kind": "inline",
+          "modelName": "Repo",
+          "namePath": [
+            "Org",
+            "repos",
+          ],
+          "target": "repos",
+        },
+        {
+          "joinOn": [
+            [
+              "Org",
+              "repos",
+              "org_id",
+            ],
+            [
+              "Org",
+              "repos",
+              "org",
+              "id",
+            ],
+          ],
+          "joinType": "inner",
+          "kind": "inline",
+          "modelName": "Org",
+          "namePath": [
+            "Org",
+            "repos",
+            "org",
+          ],
+          "target": "org",
+        },
+      ],
+      "select": {
+        "target": {
+          "kind": "alias",
+          "value": [
+            "Org",
+            "repos",
+            "org",
+            "id",
+          ],
+        },
+      },
+    },
+  },
+  "fromPath": [
+    "Org",
+  ],
+  "groupBy": [],
+  "joins": [],
+  "limit": undefined,
+  "offset": undefined,
+  "orderBy": undefined,
+  "select": {
+    "id": {
+      "kind": "alias",
+      "value": [
+        "Org",
+        "id",
+      ],
+    },
+  },
+}
+`;
+
+exports[`Query plan supports exists subqueries: SQL snapshot 1`] = `
+"SELECT
+  "Org"."id" AS "id"
+FROM
+  "org" AS "Org"
+WHERE
+  "Org"."id" IN (
+    SELECT
+      "Org.repos.org"."id" AS "target"
+    FROM
+      "org" AS "Org"
+      INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+  )"
 `;
 
 exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `

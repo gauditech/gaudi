@@ -84,6 +84,31 @@ describe("Query plan", () => {
     expect(sql).toMatchSnapshot("SQL snapshot");
   });
 
+  it("supports exists subqueries", () => {
+    const modelBp = `
+    model Org {
+      relation repos { from Repo, through org }
+    }
+    model Repo {
+      reference org { to Org }
+    }
+    `;
+
+    const queryBp = `
+    query {
+      from Org as o,
+      filter { o.id in o.repos.org.id },
+      select { id }
+    }
+    `;
+
+    const { def, query } = makeTestQuery(modelBp, queryBp);
+    const plan = buildQueryPlan(def, query);
+    expect(plan).toMatchSnapshot("QueryPlan snapshot");
+    const sql = queryPlanToString(plan);
+    expect(sql).toMatchSnapshot("SQL snapshot");
+  });
+
   it("order by expression", () => {
     const modelBp = `
     model Org {
@@ -104,9 +129,9 @@ describe("Query plan", () => {
 
     const { def, query } = makeTestQuery(modelBp, queryBp);
     const plan = buildQueryPlan(def, query);
-    expect(plan).toMatchSnapshot();
+    expect(plan).toMatchSnapshot("QueryPlan snapshot");
     const sql = queryPlanToString(plan);
-    expect(sql).toMatchSnapshot();
+    expect(sql).toMatchSnapshot("SQL snapshot");
   });
 });
 

@@ -283,6 +283,13 @@ export function transformExpressionPaths(
     case "aggregate-function": {
       return { ...exp, sourcePath: transformNamePath(exp.sourcePath, from, to) };
     }
+    case "in-subquery": {
+      return {
+        ...exp,
+        sourcePath: transformNamePath(exp.sourcePath, from, to),
+        lookupAlias: transformNamePath(exp.lookupAlias, from, to),
+      };
+    }
     default: {
       assertUnreachable(exp);
     }

@@ -141,6 +141,44 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
             targetPath,
           };
         }
+        case "in":
+        case "not in": {
+          const arg0 = expr.args[0];
+          ensureEqual(arg0.kind, "identifier");
+          const [head0, ...tail0] = arg0.identifier;
+          const lookupAlias = match(head0.ref)
+            .with({ kind: "modelAtom" }, () => {
+              return [...namePath, ...arg0.identifier.map((i) => i.text)];
+            })
+            .with({ kind: "queryTarget" }, (ref) => {
+              return [...ref.path, ...tail0.map((i) => i.text)];
+            })
+            .otherwise(() => {
+              throw new UnreachableError(`Invalid ref kind ${head0.ref.kind}`);
+            });
+
+          const arg1 = expr.args[1];
+          ensureEqual(arg1.kind, "identifier");
+          const [head1, ...tail1] = arg1.identifier;
+          const [sourcePath, targetPath] = match(head1.ref)
+            .with({ kind: "modelAtom" }, () => {
+              return [namePath, arg1.identifier.map((i) => i.text)];
+            })
+            .with({ kind: "queryTarget" }, (ref) => {
+              return [ref.path, tail1.map((i) => i.text)];
+            })
+            .otherwise(() => {
+              throw new UnreachableError(`Invalid ref kind ${head1.ref.kind}`);
+            });
+
+          return {
+            kind: "in-subquery",
+            fnName: expr.name,
+            lookupAlias,
+            sourcePath,
+            targetPath,
+          };
+        }
         default: {
           return typedFunctionFromParts(expr.name, expr.args, namePath);
         }

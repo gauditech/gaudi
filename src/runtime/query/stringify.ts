@@ -91,6 +91,14 @@ function exprToString(expr: QueryPlanExpression): string {
           return assertUnreachable(expr.fnName);
       }
     }
+    case "in-subquery": {
+      const subquery = queryPlanToString(expr.plan, false);
+      const operator = expr.operator.toUpperCase();
+      const lookupAlias = namepathToQuotedPair(expr.lookupAlias);
+      return `${lookupAlias} ${operator} (${subquery})`;
+    }
+    default:
+      return assertUnreachable(expr);
   }
 }
 
@@ -167,7 +175,7 @@ export function queryPlanToString(plan: QueryPlan, isSubquery = false): string {
   ${groupByFrag}
   ${orderFrag}
   ${limitFrag}
-  ${offsetFrag} 
+  ${offsetFrag}
   `;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return format(sql, { paramTypes: { named: [":", ":@" as any] }, language: "postgresql" });

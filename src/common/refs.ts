@@ -1,6 +1,7 @@
 import _, { chain } from "lodash";
+import { match } from "ts-pattern";
 
-import { ensureEqual } from "./utils";
+import { UnreachableError, ensureEqual } from "./utils";
 
 import { VarContext, getTypedPath } from "@src/composer/utils";
 import {
@@ -283,4 +284,17 @@ export function fieldDbToModelName(model: ModelDef, dbname: string): string {
     throw new Error(`Field ${model.name}.${dbname} doesn't exist`);
   }
   return field.name;
+}
+
+export function getSourceRef(def: Definition, sourcePath: string[]) {
+  const tpath = getTypedPath(def, sourcePath, {});
+  if (tpath.nodes.length) {
+    return getRef(def, _.last(tpath.nodes)!.refKey);
+  } else {
+    return match(tpath.source)
+      .with({ kind: "model" }, (source) => getRef(def, source.refKey))
+      .otherwise(() => {
+        throw new UnreachableError("Doesn't support paths from the context");
+      });
+  }
 }
