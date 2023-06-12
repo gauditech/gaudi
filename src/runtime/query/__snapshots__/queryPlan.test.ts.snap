@@ -357,79 +357,175 @@ exports[`Query plan supports exists subqueries: QueryPlan snapshot 1`] = `
 {
   "entry": "Org",
   "filter": {
-    "kind": "in-subquery",
-    "lookupAlias": [
-      "Org",
-      "id",
-    ],
-    "operator": "in",
-    "plan": {
-      "entry": "Org",
-      "fromPath": [
-        "Org",
-        "repos",
-        "org",
-      ],
-      "groupBy": [],
-      "joins": [
-        {
-          "joinOn": [
-            [
-              "Org",
-              "id",
-            ],
-            [
-              "Org",
-              "repos",
-              "org_id",
-            ],
+    "args": [
+      {
+        "kind": "in-subquery",
+        "lookupExpression": {
+          "args": [
+            {
+              "kind": "literal",
+              "type": "integer",
+              "value": 5,
+            },
+            {
+              "kind": "literal",
+              "type": "integer",
+              "value": 1,
+            },
           ],
-          "joinType": "inner",
-          "kind": "inline",
-          "modelName": "Repo",
-          "namePath": [
-            "Org",
-            "repos",
-          ],
-          "target": "repos",
+          "fnName": "+",
+          "kind": "function",
         },
-        {
-          "joinOn": [
-            [
-              "Org",
-              "repos",
-              "org_id",
-            ],
-            [
-              "Org",
-              "repos",
-              "org",
-              "id",
-            ],
-          ],
-          "joinType": "inner",
-          "kind": "inline",
-          "modelName": "Org",
-          "namePath": [
+        "operator": "in",
+        "plan": {
+          "entry": "Org",
+          "fromPath": [
             "Org",
             "repos",
             "org",
           ],
-          "target": "org",
+          "groupBy": [],
+          "joins": [
+            {
+              "joinOn": [
+                [
+                  "Org",
+                  "id",
+                ],
+                [
+                  "Org",
+                  "repos",
+                  "org_id",
+                ],
+              ],
+              "joinType": "inner",
+              "kind": "inline",
+              "modelName": "Repo",
+              "namePath": [
+                "Org",
+                "repos",
+              ],
+              "target": "repos",
+            },
+            {
+              "joinOn": [
+                [
+                  "Org",
+                  "repos",
+                  "org_id",
+                ],
+                [
+                  "Org",
+                  "repos",
+                  "org",
+                  "id",
+                ],
+              ],
+              "joinType": "inner",
+              "kind": "inline",
+              "modelName": "Org",
+              "namePath": [
+                "Org",
+                "repos",
+                "org",
+              ],
+              "target": "org",
+            },
+          ],
+          "select": {
+            "target": {
+              "kind": "alias",
+              "value": [
+                "Org",
+                "repos",
+                "org",
+                "id",
+              ],
+            },
+          },
         },
-      ],
-      "select": {
-        "target": {
+      },
+      {
+        "kind": "in-subquery",
+        "lookupExpression": {
           "kind": "alias",
           "value": [
             "Org",
-            "repos",
-            "org",
             "id",
           ],
         },
+        "operator": "in",
+        "plan": {
+          "entry": "Org",
+          "fromPath": [
+            "Org",
+            "repos",
+            "org",
+          ],
+          "groupBy": [],
+          "joins": [
+            {
+              "joinOn": [
+                [
+                  "Org",
+                  "id",
+                ],
+                [
+                  "Org",
+                  "repos",
+                  "org_id",
+                ],
+              ],
+              "joinType": "inner",
+              "kind": "inline",
+              "modelName": "Repo",
+              "namePath": [
+                "Org",
+                "repos",
+              ],
+              "target": "repos",
+            },
+            {
+              "joinOn": [
+                [
+                  "Org",
+                  "repos",
+                  "org_id",
+                ],
+                [
+                  "Org",
+                  "repos",
+                  "org",
+                  "id",
+                ],
+              ],
+              "joinType": "inner",
+              "kind": "inline",
+              "modelName": "Org",
+              "namePath": [
+                "Org",
+                "repos",
+                "org",
+              ],
+              "target": "org",
+            },
+          ],
+          "select": {
+            "target": {
+              "kind": "alias",
+              "value": [
+                "Org",
+                "repos",
+                "org",
+                "id",
+              ],
+            },
+          },
+        },
       },
-    },
+    ],
+    "fnName": "or",
+    "kind": "function",
   },
   "fromPath": [
     "Org",
@@ -457,13 +553,23 @@ exports[`Query plan supports exists subqueries: SQL snapshot 1`] = `
 FROM
   "org" AS "Org"
 WHERE
-  "Org"."id" IN (
-    SELECT
-      "Org.repos.org"."id" AS "target"
-    FROM
-      "org" AS "Org"
-      INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
-      INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+  (
+    (5 + 1) IN (
+      SELECT
+        "Org.repos.org"."id" AS "target"
+      FROM
+        "org" AS "Org"
+        INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+        INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+    )
+    OR "Org"."id" IN (
+      SELECT
+        "Org.repos.org"."id" AS "target"
+      FROM
+        "org" AS "Org"
+        INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+        INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+    )
   )"
 `;
 

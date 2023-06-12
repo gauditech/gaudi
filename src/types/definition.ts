@@ -188,7 +188,7 @@ type TypedAggregateFunction = {
 type TypedExistsSubquery = {
   kind: "in-subquery";
   fnName: InSubqueryFunctionName;
-  lookupAlias: string[];
+  lookupExpression: TypedExprDef;
   sourcePath: string[];
   targetPath: string[];
 };

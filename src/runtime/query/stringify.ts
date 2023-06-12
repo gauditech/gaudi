@@ -94,8 +94,8 @@ function exprToString(expr: QueryPlanExpression): string {
     case "in-subquery": {
       const subquery = queryPlanToString(expr.plan, false);
       const operator = expr.operator.toUpperCase();
-      const lookupAlias = namepathToQuotedPair(expr.lookupAlias);
-      return `${lookupAlias} ${operator} (${subquery})`;
+      const lookupExpr = exprToString(expr.lookupExpression);
+      return `${lookupExpr} ${operator} (${subquery})`;
     }
     default:
       return assertUnreachable(expr);

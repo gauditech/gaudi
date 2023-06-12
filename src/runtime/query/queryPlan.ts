@@ -80,7 +80,7 @@ export type QueryPlanExpression =
       kind: "in-subquery";
       plan: QueryPlan;
       operator: InSubqueryFunctionName;
-      lookupAlias: NamePath;
+      lookupExpression: QueryPlanExpression;
     };
 
 export type QueryAtom = QueryAtomTable | QueryAtomAggregate;
@@ -171,10 +171,7 @@ function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
         targetPath: aggr.targetPath,
       },
     ])
-    .with({ kind: "in-subquery" }, (sub) => [
-      { kind: "table-namespace", namePath: _.initial(sub.lookupAlias) },
-      // FIXME add a subquery option into `QueryAtom`
-    ])
+    .with({ kind: "in-subquery" }, (sub) => pathsFromExpr(sub.lookupExpression))
     .exhaustive();
 }
 
@@ -389,7 +386,12 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
           ),
         },
       };
-      return { kind: "in-subquery", plan, operator: sub.fnName, lookupAlias: sub.lookupAlias };
+      return {
+        kind: "in-subquery",
+        plan,
+        operator: sub.fnName,
+        lookupExpression: toQueryExpr(def, expandExpression(def, sub.lookupExpression)),
+      };
     })
     .with(undefined, () => {
       throw new UnreachableError("");
@@ -406,8 +408,10 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
     return undefined;
   }
   switch (exp.kind) {
+    case "in-subquery": {
+      return { ...exp, lookupExpression: expandExpression(def, exp.lookupExpression) };
+    }
     case "aggregate-function":
-    case "in-subquery": // FIXME we should support expressions in `lookupAlias`
     case "literal":
     case "variable":
       return exp;

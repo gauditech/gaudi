@@ -97,7 +97,8 @@ describe("Query plan", () => {
     const queryBp = `
     query {
       from Org as o,
-      filter { o.id in o.repos.org.id },
+      filter { 5+1 in o.repos.org.id or
+        o.id in o.repos.org.id },
       select { id }
     }
     `;

@@ -3,7 +3,7 @@ import { match } from "ts-pattern";
 
 import { defineType } from "./models";
 
-import { UnreachableError, ensureEqual } from "@src/common/utils";
+import { UnreachableError, ensureEqual, shouldBeUnreachableCb } from "@src/common/utils";
 import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
 import {
   AggregateDef,
@@ -144,18 +144,30 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
         case "in":
         case "not in": {
           const arg0 = expr.args[0];
-          ensureEqual(arg0.kind, "identifier");
-          const [head0, ...tail0] = arg0.identifier;
-          const lookupAlias = match(head0.ref)
-            .with({ kind: "modelAtom" }, () => {
-              return [...namePath, ...arg0.identifier.map((i) => i.text)];
+          const lookupExpression = match<typeof arg0, TypedExprDef>(arg0)
+            .with({ kind: "identifier" }, (arg) => {
+              const [head, ...tail] = arg.identifier;
+              return (
+                match<typeof head.ref, TypedExprDef>(head.ref)
+                  .with({ kind: "modelAtom" }, () => ({
+                    kind: "alias",
+                    namePath: [...namePath, ...arg.identifier.map((i) => i.text)],
+                  }))
+                  .with({ kind: "queryTarget" }, (ref) => ({
+                    kind: "alias",
+                    namePath: [...ref.path, ...tail.map((i) => i.text)],
+                  }))
+                  // FIXME support context vars: auth, struct, target...
+                  .otherwise(shouldBeUnreachableCb(`${head.ref.kind} is not a valid lookup`))
+              );
             })
-            .with({ kind: "queryTarget" }, (ref) => {
-              return [...ref.path, ...tail0.map((i) => i.text)];
-            })
-            .otherwise(() => {
-              throw new UnreachableError(`Invalid ref kind ${head0.ref.kind}`);
-            });
+            .with({ kind: "literal" }, (arg) => ({
+              kind: "literal",
+              value: arg.literal,
+              type: defineType(arg.type).kind as any, // FIXME type refactor
+            }))
+            .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
+            .exhaustive();
 
           const arg1 = expr.args[1];
           ensureEqual(arg1.kind, "identifier");
@@ -174,7 +186,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
           return {
             kind: "in-subquery",
             fnName: expr.name,
-            lookupAlias,
+            lookupExpression,
             sourcePath,
             targetPath,
           };

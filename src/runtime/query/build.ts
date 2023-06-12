@@ -287,7 +287,7 @@ export function transformExpressionPaths(
       return {
         ...exp,
         sourcePath: transformNamePath(exp.sourcePath, from, to),
-        lookupAlias: transformNamePath(exp.lookupAlias, from, to),
+        lookupExpression: transformExpressionPaths(exp, from, to),
       };
     }
     default: {
