@@ -75,6 +75,7 @@ exports[`API endpoints Org custom update 1`] = `
   "blank_repos": [
     {
       "id": 4,
+      "nameAndDesc": "Repo 4 Repo 4 description",
       "total_issues": 0,
     },
   ],
@@ -91,10 +92,12 @@ exports[`API endpoints Org get 1`] = `
   "blank_repos": [
     {
       "id": 2,
+      "nameAndDesc": "Repo 2 Repo 2 description",
       "total_issues": 0,
     },
     {
       "id": 1,
+      "nameAndDesc": "Repo 1 Repo 1 description",
       "total_issues": 0,
     },
   ],
@@ -113,6 +116,7 @@ exports[`API endpoints Org list with non default paging 1`] = `
       "blank_repos": [
         {
           "id": 4,
+          "nameAndDesc": "Repo 4 Repo 4 description",
           "total_issues": 0,
         },
       ],
@@ -126,10 +130,12 @@ exports[`API endpoints Org list with non default paging 1`] = `
       "blank_repos": [
         {
           "id": 2,
+          "nameAndDesc": "Repo 2 Repo 2 description",
           "total_issues": 0,
         },
         {
           "id": 1,
+          "nameAndDesc": "Repo 1 Repo 1 description",
           "total_issues": 0,
         },
       ],
@@ -170,6 +176,7 @@ exports[`API endpoints Org list with paging 1`] = `
       "blank_repos": [
         {
           "id": 4,
+          "nameAndDesc": "Repo 4 Repo 4 description",
           "total_issues": 0,
         },
       ],
@@ -183,10 +190,12 @@ exports[`API endpoints Org list with paging 1`] = `
       "blank_repos": [
         {
           "id": 2,
+          "nameAndDesc": "Repo 2 Repo 2 description",
           "total_issues": 0,
         },
         {
           "id": 1,
+          "nameAndDesc": "Repo 1 Repo 1 description",
           "total_issues": 0,
         },
       ],
@@ -209,6 +218,7 @@ exports[`API endpoints Org update 1`] = `
   "blank_repos": [
     {
       "id": 4,
+      "nameAndDesc": "Repo 4 Repo 4 description",
       "total_issues": 0,
     },
   ],
