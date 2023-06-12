@@ -268,7 +268,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
     const select = kindFind(query.atoms, "select");
     if (select) {
-      resolveSelect(select.select, { ..._.cloneDeep(scope), model: currentModel });
+      resolveSelect(select.select, currentModel, scope);
     }
 
     if (currentModel) {
@@ -429,7 +429,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
     const response = kindFind(entrypoint.atoms, "response");
     if (response) {
-      resolveSelect(response.select, { ..._.cloneDeep(scope), model: currentModel });
+      resolveSelect(response.select, currentModel, { ..._.cloneDeep(scope), model: currentModel });
     }
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
@@ -900,12 +900,11 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveSelect(select: Select, scope: Scope) {
+  function resolveSelect(select: Select, model: string | undefined, scope: Scope) {
     select.forEach(({ target, select }) => {
       let type: Type;
-      console.log(scope);
       if (target.kind === "short") {
-        tryResolveModelAtomRef(target.name, scope.model);
+        tryResolveModelAtomRef(target.name, model);
         type = target.name.type;
       } else {
         resolveExpression(target.expr, scope);
@@ -918,7 +917,7 @@ export function resolve(projectASTs: ProjectASTs) {
           errors.push(new CompilerError(errorToken, ErrorCode.SelectCantNest));
           return;
         }
-        resolveSelect(select, { ..._.cloneDeep(scope), model });
+        resolveSelect(select, model, { ..._.cloneDeep(scope), model });
       }
     });
   }
