@@ -26,6 +26,8 @@ export enum ErrorCode {
   DuplicateGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
   QueryFromAliasWrongLength,
+  LimitOrOffsetWithCardinalityModifier,
+  OrderByWithOne,
   QueryMaxOneAggregate,
   ConfiguringNonCustomEndpoint,
   MoreThanOneRespondsInEndpoint,
@@ -111,6 +113,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Actions with "responds" can only be used in "custom" endpoints`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
+    case ErrorCode.LimitOrOffsetWithCardinalityModifier:
+      return `Query can't have "${params?.limitOrOffset}" when using "${params?.cardinalityModifier}"`;
+    case ErrorCode.OrderByWithOne:
+      return `Query can't have "order by" when using "one"`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
     case ErrorCode.ConfiguringNonCustomEndpoint:

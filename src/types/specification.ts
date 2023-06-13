@@ -75,6 +75,7 @@ export type Query = {
   name: string;
   sourceModel: string;
   targetModel: string;
+  cardinality: TypeCardinality;
   from: IdentifierRef[];
   fromAlias?: IdentifierRef[];
   filter?: Expr;

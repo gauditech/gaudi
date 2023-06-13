@@ -1,3 +1,4 @@
+import { TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
 
 export type Definition = {
@@ -70,7 +71,7 @@ export type QueryDef = {
   name: string;
   // retType: string | "integer";
   retType: string;
-  // retCardinality: "one" | "many";
+  retCardinality: TypeCardinality;
   fromPath: string[];
   // unique: boolean;
   filter: TypedExprDef;
@@ -459,7 +460,7 @@ export type ActionDef =
   | UpdateOneAction
   | DeleteOneAction
   | ExecuteHookAction
-  | FetchOneAction;
+  | FetchAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -500,8 +501,8 @@ export type ExecuteHookAction = {
   responds: boolean;
 };
 
-export type FetchOneAction = {
-  kind: "fetch-one";
+export type FetchAction = {
+  kind: "fetch";
   alias: string;
   model: string;
   changeset: ChangesetDef;

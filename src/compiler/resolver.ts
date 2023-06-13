@@ -720,8 +720,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (query) {
       resolveQuery(query, scope);
       action.name.ref = { kind: "action" };
-      // TODO: for now, we magicaly get non modified type from fetch query
-      action.name.type = baseType(query.type);
+      action.name.type = query.type;
       addToScope(scope, action.name);
     }
   }
@@ -1043,7 +1042,7 @@ export function resolve(projectASTs: ProjectASTs) {
     // try to resolve from global models, if global is allowed
     else if (options?.allowGlobal && findModel(headName)) {
       head.ref = { kind: "model", model: headName };
-      head.type = Type.model(headName);
+      head.type = Type.collection(Type.model(headName));
     }
     // special case, try to resolve @auth
     else if (headName === "@auth") {

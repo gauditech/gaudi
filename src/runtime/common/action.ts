@@ -4,7 +4,7 @@ import {
   queryTreeFromParts,
   transformSelectPath,
 } from "../query/build";
-import { createQueryExecutor, executeQueryTree } from "../query/exec";
+import { castToCardinality, createQueryExecutor, executeQueryTree } from "../query/exec";
 
 import { ValidReferenceIdResult } from "./constraintValidation";
 
@@ -81,7 +81,7 @@ async function _internalExecuteActions(
       const targetId = resolveTargetId(ctx, action.targetPath);
 
       await deleteData(dbConn, dbModel, targetId);
-    } else if (actionKind === "fetch-one") {
+    } else if (actionKind === "fetch") {
       const changeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
 
       const qt = buildQueryTree(def, action.query);
@@ -91,10 +91,11 @@ async function _internalExecuteActions(
       );
       varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
 
-      const result = await qx.executeQueryTree(def, qt, new Vars(varsObj), []);
-      const resultOne = result[0]; // extract the first record since this is "fetch-ONE"
-
-      resultOne && ctx.vars.set(action.alias, resultOne);
+      const result = castToCardinality(
+        await qx.executeQueryTree(def, qt, new Vars(varsObj), []),
+        action.query.retCardinality
+      );
+      ctx.vars.set(action.alias, result);
     } else if (actionKind === "execute-hook") {
       ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
 

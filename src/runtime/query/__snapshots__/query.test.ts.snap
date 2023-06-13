@@ -33,6 +33,7 @@ exports[` 1`] = `
   "offset": undefined,
   "orderBy": undefined,
   "refKey": "Org.issues",
+  "retCardinality": "collection",
   "retType": "Issue",
   "select": [],
 }
@@ -72,6 +73,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [
       {
@@ -155,6 +157,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Repo",
     "select": [
       {
@@ -211,6 +214,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -266,6 +270,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -502,6 +507,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [
       {
@@ -585,6 +591,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Repo",
     "select": [
       {
@@ -669,6 +676,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -724,6 +732,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -935,6 +944,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [
       {
@@ -1018,6 +1028,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Repo",
     "select": [
       {
@@ -1102,6 +1113,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -1157,6 +1169,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -1400,6 +1413,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [
       {
@@ -1483,6 +1497,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Repo",
     "select": [
       {
@@ -1539,6 +1554,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -1595,6 +1611,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -1835,6 +1852,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [
       {
@@ -1918,6 +1936,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Repo",
     "select": [
       {
@@ -2002,6 +2021,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -2057,6 +2077,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Issue",
     "select": [
       {
@@ -2291,6 +2312,7 @@ exports[`Endpoint queries List endpoint response queries test orderBy query endp
       },
     ],
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item",
     "select": [
       {
@@ -2357,6 +2379,7 @@ exports[`Endpoint queries List endpoint response queries test paging query endpo
     "offset": 10,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item",
     "select": [
       {
@@ -2459,6 +2482,7 @@ exports[`Endpoint queries List endpoint response queries test paging/order/filte
       },
     ],
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item",
     "select": [
       {
@@ -2532,6 +2556,7 @@ exports[`Endpoint queries List endpoint response queries test plain query endpoi
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item",
     "select": [
       {
@@ -2632,6 +2657,7 @@ exports[`Endpoint queries List nested endpoint response queries test orderBy que
       },
     ],
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item2",
     "select": [
       {
@@ -2744,6 +2770,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging quer
     "offset": 10,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item2",
     "select": [
       {
@@ -2895,6 +2922,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging/orde
       },
     ],
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item2",
     "select": [
       {
@@ -3012,6 +3040,7 @@ exports[`Endpoint queries List nested endpoint response queries test plain query
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Item2",
     "select": [
       {
@@ -3098,6 +3127,7 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [
       {
@@ -3153,6 +3183,7 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Repo",
     "select": [
       {
