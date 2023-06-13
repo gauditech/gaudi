@@ -1,6 +1,6 @@
-import { createClient } from "./api/api-client.ts";
+import * as api from "./api/api-client";
 
-export const ApiClient = createClient({
+export const ApiClient = api.createClient({
   async requestFn(url, init) {
     return (
       fetch(url, {
