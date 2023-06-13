@@ -2,7 +2,7 @@ import { compileToAST } from "../index";
 import { authUserModelName } from "../plugins/authenticator";
 
 function expectError(source: string, ...errorMessages: string[]) {
-  const { errors } = compileToAST(source);
+  const { errors } = compileToAST([{ source }]);
   errorMessages.forEach((errorMessage, i) => {
     expect(errors.at(i)?.message).toBe(errorMessage);
   });

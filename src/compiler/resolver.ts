@@ -67,9 +67,7 @@ export function resolve(projectASTs: ProjectASTs) {
   const resolvedModelAtoms = new Set<string>();
 
   function getSumDocument(): GlobalAtom[] {
-    return Object.values(projectASTs.plugins)
-      .flatMap((p) => p)
-      .concat(projectASTs.document);
+    return _.concat(...projectASTs.plugins, projectASTs.document);
   }
 
   function getAllModels(): Model[] {

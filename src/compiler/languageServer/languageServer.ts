@@ -2,7 +2,6 @@ import "../../common/setupAliases";
 
 import { createHash } from "crypto";
 
-import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   Diagnostic,
   DiagnosticSeverity,
@@ -15,6 +14,7 @@ import {
   TextDocuments,
   createConnection,
 } from "vscode-languageserver/node";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { CompileResult, compileToAST } from "..";
 import { TokenData } from "../ast/ast";
@@ -61,7 +61,7 @@ function compile(document: TextDocument): CompileResult {
     return previousCompilation.result;
   }
 
-  const result = compileToAST(source);
+  const result = compileToAST([{ source }]);
   compiledFiles.set(document.uri, { hash, result });
   return result;
 }

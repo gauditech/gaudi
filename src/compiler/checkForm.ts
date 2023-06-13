@@ -43,9 +43,7 @@ export function checkForm(projectASTs: ProjectASTs) {
   let hasDefaultRuntime = false;
 
   function getSumDocument(): GlobalAtom[] {
-    return Object.values(projectASTs.plugins)
-      .flatMap((p) => p)
-      .concat(projectASTs.document);
+    return _.concat(...projectASTs.plugins, projectASTs.document);
   }
 
   function getAllModels(): Model[] {

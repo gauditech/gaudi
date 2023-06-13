@@ -203,11 +203,7 @@ export class CompilerError extends Error {
   }
 }
 
-export function compilerErrorsToString(
-  filename: string,
-  source: string,
-  errors: CompilerError[]
-): string {
+export function compilerErrorsToString(source: string, errors: CompilerError[]): string {
   if (errors.length === 0) return "";
 
   const lineIndecies = [0];
@@ -223,6 +219,7 @@ export function compilerErrorsToString(
   errors.forEach((error) => {
     const start = error.errorPosition.start;
     const end = error.errorPosition.end;
+    const filename = error.errorPosition.filename;
     const lineStart = _.findLast(lineIndecies, (i) => i < start) ?? 0;
     const lineEnd = _.find(lineIndecies, (i) => i > end) ?? source.length;
 

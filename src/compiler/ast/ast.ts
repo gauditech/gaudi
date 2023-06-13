@@ -1,7 +1,7 @@
 import { Type } from "./type";
 
 export type ProjectASTs = {
-  plugins: Record<string, GlobalAtom[]>;
+  plugins: GlobalAtom[][];
   document: GlobalAtom[];
 };
 
@@ -474,4 +474,4 @@ export type IdentifierRef<R extends Ref = Ref> = {
   type: Type;
 };
 
-export type TokenData = { start: number; end: number };
+export type TokenData = { start: number; end: number; filename: string };

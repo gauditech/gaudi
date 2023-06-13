@@ -22,41 +22,52 @@ export type CompileResult = {
 function compilePlugins(projectASTs: ProjectASTs) {
   const authenticator = kindFind(projectASTs.document, "authenticator");
   if (authenticator) {
-    const { ast, errors } = compileToAST(AuthPlugin.code);
+    const { ast, errors } = compileToAST([
+      { source: AuthPlugin.code, filename: "plugin::auth.basic.gaudi" },
+    ]);
     if (!ast || errors.length > 0) {
       let errorString;
       if (errors.length > 0) {
-        errorString = compilerErrorsToString("plugin:auth", AuthPlugin.code, errors);
+        errorString = compilerErrorsToString(AuthPlugin.code, errors);
       } else {
         errorString = "Unknown compilation error";
       }
       throw new Error(`Failed to compile auth plugin:\n${errorString}`);
     }
-    projectASTs.plugins["auth"] = ast.document;
+    projectASTs.plugins.push(ast.document);
   }
 }
 
-export function compileToAST(source: string): CompileResult {
-  const lexerResult = L.lexer.tokenize(source);
-  parser.input = lexerResult.tokens;
-
-  const errors = lexerResult.errors.map(toCompilerError);
-
-  const ast = parser.document();
-
-  errors.push(...parser.errors.map(toCompilerError));
-
-  if (ast && errors.length === 0) {
+type Input = { source: string; filename?: string };
+export function compileToAST(inputs: Input[]): CompileResult {
+  const ast: ProjectASTs = {
+    plugins: [],
+    document: [],
+  };
+  const allErrors: CompilerError[] = [];
+  for (const { source, filename } of inputs) {
+    const lexerResult = L.lexer.tokenize(source);
+    parser.input = lexerResult.tokens;
+    parser.filename = filename ?? ":unset:";
+    const fileErrors = lexerResult.errors.map((e) => toCompilerError(e, parser.filename));
+    const document = parser.document();
+    fileErrors.push(...parser.errors.map((e) => toCompilerError(e, parser.filename)));
+    allErrors.push(...fileErrors);
+    if (document && fileErrors.length === 0) {
+      ast.document.push(...document);
+    }
+  }
+  if (allErrors.length === 0) {
     compilePlugins(ast);
-    errors.push(...checkForm(ast));
-    errors.push(...resolve(ast));
+    allErrors.push(...checkForm(ast));
+    allErrors.push(...resolve(ast));
   }
 
-  return { ast, errors };
+  return { ast, errors: allErrors };
 }
 
 export function compileToOldSpec(source: string): Specification {
-  const { ast, errors } = compileToAST(source);
+  const { ast, errors } = compileToAST([{ source }]);
   if (errors.length > 0) {
     throw errors[0];
   } else if (!ast) {
@@ -65,12 +76,12 @@ export function compileToOldSpec(source: string): Specification {
   return migrate(ast);
 }
 
-function toCompilerError(error: ILexingError | IRecognitionException) {
+function toCompilerError(error: ILexingError | IRecognitionException, filename: string) {
   let tokenData: TokenData;
   if ("token" in error) {
-    tokenData = getTokenData(error.token);
+    tokenData = getTokenData(filename, error.token);
   } else {
-    tokenData = { start: error.offset, end: error.offset + 1 };
+    tokenData = { start: error.offset, end: error.offset + 1, filename };
   }
   return new CompilerError(tokenData, ErrorCode.ParserError, { message: error.message });
 }

@@ -343,7 +343,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
-    const zeroToken = { start: 0, end: 0 };
+    const zeroToken = { start: 0, end: 0, filename: ":gaudi:" };
     switch (endpoint.type) {
       case "create":
       case "update": {
@@ -357,7 +357,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         ];
       }
       case "delete":
-        return [{ kind: "delete", keyword: { start: 0, end: 0 }, isPrimary: true }];
+        return [{ kind: "delete", keyword: zeroToken, isPrimary: true }];
       default:
         return [];
     }
