@@ -3,19 +3,21 @@
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
 import "./common/setupAliases";
 
-import fs from "fs";
+import { sync } from "fast-glob";
 
-import { build, compileToOldSpec, compose } from "./index";
+import { compileWorkspace } from "./compiler";
+
+import { build, compose } from "./index";
 
 import { readConfig } from "@src/config";
 
 const { inputPath, outputFolder, gaudiFolder } = readConfig();
 
-if (!fs.existsSync(inputPath)) {
-  throw new Error(`Gaudi engine input file not found: "${inputPath}"`);
+const filenames = sync(inputPath);
+if (!filenames.length) {
+  throw new Error(`No files found matching: "${inputPath}"`);
 }
 
-const input = fs.readFileSync(inputPath).toString("utf-8");
-const specification = compileToOldSpec(input);
+const specification = compileWorkspace(filenames);
 const definition = compose(specification);
 build(definition, { outputFolder, gaudiFolder });

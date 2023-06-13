@@ -1,3 +1,5 @@
+import fs from "fs";
+
 import { ILexingError, IRecognitionException } from "chevrotain";
 import _ from "lodash";
 
@@ -64,6 +66,21 @@ export function compileToAST(inputs: Input[]): CompileResult {
   }
 
   return { ast, errors: allErrors };
+}
+
+export function compileWorkspace(filenames: string[]): Specification {
+  const { ast, errors } = compileToAST(
+    filenames.map((filename) => ({
+      filename,
+      source: fs.readFileSync(filename).toString("utf-8"),
+    }))
+  );
+  if (errors.length > 0) {
+    throw errors[0];
+  } else if (!ast) {
+    throw Error("Unknown compiler error");
+  }
+  return migrate(ast);
 }
 
 export function compileToOldSpec(source: string): Specification {
