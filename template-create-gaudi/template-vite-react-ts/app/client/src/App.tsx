@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { ApiClient } from "./ApiClient";
+import { useApiClient } from "./useApiClient";
 
 import "./App.css";
 
@@ -9,10 +9,11 @@ import viteLogo from "/vite.svg";
 import tsLogo from "/typescript.svg";
 
 export function App() {
+  const fetcher = useApiClient();
   const [output, setOutput] = useState<string>("");
 
   const fetchApiListHandler = useCallback(async () => {
-    const resp = await ApiClient.api.item.list();
+    const resp = await fetcher.api.item.list();
     if (resp.kind === "success") {
       const itemList = resp.data.data;
 
