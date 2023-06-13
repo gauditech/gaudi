@@ -246,7 +246,7 @@ exports[`API endpoints Repo create 1`] = `
   "description": "Description: Repo 6 description",
   "id": 6,
   "org_id": 1,
-  "slug": "org_1-W5JU1e0Kj1Kv",
+  "slug": "org_1-123W5JU1e0Kj1Kv",
 }
 `;
 

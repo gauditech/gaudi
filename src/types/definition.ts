@@ -168,11 +168,18 @@ export type TypedFunction = {
 
 export type TypedExprDef =
   | LiteralValueDef
+  | TypedArray
   | TypedAlias
   | TypedVariable
   | TypedFunction
   | TypedAggregateFunction
   | undefined;
+
+type TypedArray = {
+  kind: "array";
+  elements: TypedExprDef[];
+  type: VariablePrimitiveType;
+};
 
 type TypedAggregateFunction = {
   kind: "aggregate-function";
@@ -585,6 +592,11 @@ export type FieldSetterQuery = {
   query: QueryDef;
 };
 
+export type FieldSetterArray = {
+  kind: "array";
+  elements: FieldSetter[];
+};
+
 export type FieldSetter =
   // TODO add composite expression setter
   | LiteralValueDef
@@ -597,7 +609,8 @@ export type FieldSetter =
   | FieldSetterHttpHandler
   | FieldSetterFunction
   | FieldSetterContextReference
-  | FieldSetterQuery;
+  | FieldSetterQuery
+  | FieldSetterArray;
 
 export type ExecutionRuntimeDef = {
   name: string;

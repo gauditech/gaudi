@@ -96,6 +96,7 @@ export type Computed = {
 export type Expr = { type: Type } & (
   | { kind: "identifier"; identifier: IdentifierRef[] }
   | { kind: "literal"; literal: LiteralValue }
+  | { kind: "array"; elements: Expr[] }
   | { kind: "function"; name: string; args: Expr[] }
 );
 

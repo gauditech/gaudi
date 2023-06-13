@@ -62,6 +62,7 @@ export enum ErrorCode {
   VirtualInputType,
   ComputedType,
   NameAlreadyInScope,
+  CollectionInsideArray,
 }
 
 function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>): string {
@@ -184,6 +185,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:
       return `This name is already defined in current scope`;
+    case ErrorCode.CollectionInsideArray:
+      return `Array literal can't have a collection type as a argument: "${params?.type}"`;
   }
 }
 

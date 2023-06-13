@@ -15,7 +15,7 @@ export type CollectionType<t extends CanBeInCollection = CanBeInCollection> = {
 export type NullableType<t extends CanBeNullable = CanBeNullable> = { kind: "nullable"; type: t };
 
 type BaseType = AnyType | PrimitiveType | NullType | ModelType | StructType;
-type CanBeInCollection = CanBeNullable | AnyType;
+type CanBeInCollection = CanBeNullable | NullableType | NullType | AnyType;
 type CanBeNullable = PrimitiveType | ModelType | StructType;
 
 export type Type =

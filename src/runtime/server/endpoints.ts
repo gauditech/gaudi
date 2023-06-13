@@ -855,6 +855,9 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
         `Unexpected kind variable in runtime execution of expression, name: ${expr.name}`
       );
     }
+    case "array": {
+      return expr.elements.map((e) => executeTypedExpr(e, contextVars));
+    }
     default: {
       return assertUnreachable(expr);
     }

@@ -941,6 +941,27 @@ export function resolve(projectASTs: ProjectASTs) {
         resolveExpression(group.expr, scope);
         group.type = group.expr.type;
       })
+      .with({ kind: "array" }, (array) => {
+        let type: Type | undefined = undefined;
+        for (const element of array.elements) {
+          resolveExpression(element, scope);
+          if (element.type.kind === "collection") {
+            errors.push(
+              new CompilerError(element.sourcePos, ErrorCode.CollectionInsideArray, {
+                type: element.type,
+              })
+            );
+          } else if (!type) {
+            type = element.type;
+          } else if (isExpectedType(type, element.type)) {
+            type = element.type;
+          } else {
+            checkExprType(element, type);
+          }
+        }
+        if (!type) type = Type.any;
+        array.type = Type.collection(type);
+      })
       .with({ kind: "unary" }, (unary) => {
         resolveExpression(unary.expr, scope);
         unary.type = getUnaryOperatorType(unary.operator, unary.expr);

@@ -450,6 +450,9 @@ function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] 
        */
       throw new Error("Not implemented");
     }
+    case "array": {
+      return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
+    }
     default: {
       assertUnreachable(expr);
     }

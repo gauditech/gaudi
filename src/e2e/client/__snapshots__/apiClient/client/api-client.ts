@@ -52,7 +52,8 @@ description: string,
 summary: string,
 nameAndDesc: unknown,
 blank_repos: { id: number,
-total_issues: number }[] };
+total_issues: number,
+nameAndDesc: string }[] };
 type GetError = CustomGetError;
 type ListResp = GetResp;
 type ListError = CustomGetError;

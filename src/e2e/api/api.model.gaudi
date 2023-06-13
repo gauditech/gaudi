@@ -295,6 +295,7 @@ api {
             set description "Description: " + raw_description
             set slug hook {
               arg org org.name
+              arg sequence [1,2,3]
               source randomSlug from "hooks.js"
             }
           }
