@@ -7,9 +7,9 @@ module.exports.noUnicode = function ({ name }) {
   return true;
 };
 
-module.exports.randomSlug = function ({ org }) {
+module.exports.randomSlug = function ({ org, sequence }) {
   const prefix = org.toLocaleLowerCase().replace(/\s/, "_");
-  const randomString = "W5JU1e0Kj1Kv"; // https://xkcd.com/221/
+  const randomString = sequence.map((x) => x.toString()).join("") + "W5JU1e0Kj1Kv"; // https://xkcd.com/221/
   return prefix + "-" + randomString;
 };
 

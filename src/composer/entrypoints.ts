@@ -449,6 +449,9 @@ function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] 
        */
       throw new Error("Not implemented");
     }
+    case "array": {
+      return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
+    }
     default: {
       assertUnreachable(expr);
     }
@@ -484,7 +487,7 @@ export function wrapActionsWithSelect(
   deps: SelectDep[]
 ): ActionDef[] {
   return actions.map((a): ActionDef => {
-    if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one") return a;
+    if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch") return a;
 
     const paths = deps.filter((d) => d.alias === a.alias).map((a) => a.access);
     const model = getRef.model(def, a.model);

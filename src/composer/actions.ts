@@ -20,7 +20,7 @@ import {
   CreateOneAction,
   DeleteOneAction,
   ExecuteHookAction,
-  FetchOneAction,
+  FetchAction,
   FieldSetter,
   FunctionName,
   QueryDef,
@@ -64,12 +64,12 @@ function composeDeleteAction(spec: FilteredByKind<Spec.Action, "delete">): Delet
   };
 }
 
-function composeFetchAction(spec: FilteredByKind<Spec.Action, "fetch">): FetchOneAction {
+function composeFetchAction(spec: FilteredByKind<Spec.Action, "fetch">): FetchAction {
   const changeset = spec.atoms.map((atom) => atomToChangesetOperation(atom, [], []));
   // fetch action's model is derived from it's query
   const query = composeQuery(spec.query);
   return {
-    kind: "fetch-one",
+    kind: "fetch",
     alias: spec.alias,
     changeset,
     model: query.retType,
@@ -190,6 +190,12 @@ function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): Field
         default:
           return assertUnreachable(head.ref);
       }
+    }
+    case "array": {
+      return {
+        kind: "array",
+        elements: expr.elements.map((a) => expandSetterExpression(a, changeset)),
+      };
     }
     case "function": {
       return {

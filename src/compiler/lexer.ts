@@ -13,6 +13,8 @@ export const LCurly = createToken({ name: "LCurly", pattern: "{" });
 export const RCurly = createToken({ name: "RCurly", pattern: "}" });
 export const LRound = createToken({ name: "LRound", pattern: "(" });
 export const RRound = createToken({ name: "RRound", pattern: ")" });
+export const LSquare = createToken({ name: "LSquare", pattern: "[" });
+export const RSquare = createToken({ name: "RSquare", pattern: "]" });
 
 export const Dot = createToken({ name: "Dot", pattern: "." });
 export const Colon = createToken({ name: "Colon", pattern: ":" });
@@ -158,6 +160,8 @@ export const GaudiTokens = [
   RCurly,
   LRound,
   RRound,
+  LSquare,
+  RSquare,
   Dot,
   Colon,
   Mul,

@@ -13,7 +13,7 @@ import { HookCode } from "@src/types/common";
 export type LiteralValue = null | boolean | number | string;
 
 export type Select = SingleSelect[];
-export type SingleSelect = { name: string; target: IdentifierRef<RefModelAtom> } & (
+export type SingleSelect = { name: string; expr: Expr } & (
   | { kind: "final" }
   | { kind: "nested"; select: Select }
 );
@@ -75,6 +75,7 @@ export type Query = {
   name: string;
   sourceModel: string;
   targetModel: string;
+  cardinality: TypeCardinality;
   from: IdentifierRef[];
   fromAlias?: IdentifierRef[];
   filter?: Expr;
@@ -96,6 +97,7 @@ export type Computed = {
 export type Expr = { type: Type } & (
   | { kind: "identifier"; identifier: IdentifierRef[] }
   | { kind: "literal"; literal: LiteralValue }
+  | { kind: "array"; elements: Expr[] }
   | { kind: "function"; name: string; args: Expr[] }
 );
 

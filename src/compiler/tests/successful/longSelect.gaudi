@@ -1,0 +1,11 @@
+model Foo {
+  field bar { type string }
+}
+
+api {
+  entrypoint Foo {
+    response {
+      baz: bar + " baz"
+    }
+  }
+}

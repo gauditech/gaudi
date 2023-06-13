@@ -267,7 +267,9 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     const select = kindFind(query.atoms, "select");
-    if (select) resolveSelect(select.select, currentModel, scope);
+    if (select) {
+      resolveSelect(select.select, currentModel, scope);
+    }
 
     if (currentModel) {
       let baseType: Type;
@@ -328,8 +330,7 @@ export function resolve(projectASTs: ProjectASTs) {
         if (target.kind === "short") {
           targetType = target.name.type;
         } else {
-          // TODO: is it correct cardinality?
-          targetType = target.identifierPath.at(-1)!.type;
+          targetType = target.expr.type;
         }
         if (targetType.kind === "model") {
           name += "_id";
@@ -427,7 +428,9 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     const response = kindFind(entrypoint.atoms, "response");
-    if (response) resolveSelect(response.select, currentModel, scope);
+    if (response) {
+      resolveSelect(response.select, currentModel, { ..._.cloneDeep(scope), model: currentModel });
+    }
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
       resolveEndpoint(endpoint, currentModel, cardinality, alias, _.cloneDeep(scope))
@@ -717,8 +720,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (query) {
       resolveQuery(query, scope);
       action.name.ref = { kind: "action" };
-      // TODO: for now, we magicaly get non modified type from fetch query
-      action.name.type = baseType(query.type);
+      action.name.type = query.type;
       addToScope(scope, action.name);
     }
   }
@@ -904,30 +906,17 @@ export function resolve(projectASTs: ProjectASTs) {
         tryResolveModelAtomRef(target.name, model);
         type = target.name.type;
       } else {
-        resolveIdentifierRefPath(target.identifierPath, scope);
-        type = target.identifierPath.at(-1)!.type;
+        resolveExpression(target.expr, scope);
+        type = target.expr.type;
       }
       if (select) {
         const model = getTypeModel(type);
         if (!model) {
-          const errorToken =
-            target.kind === "short" ? target.name.token : target.identifierPath.at(-1)!.token;
+          const errorToken = target.kind === "short" ? target.name.token : target.expr.sourcePos;
           errors.push(new CompilerError(errorToken, ErrorCode.SelectCantNest));
           return;
         }
-        const nestedScope = _.cloneDeep(scope);
-        if (target.kind === "short") {
-          nestedScope.model = model;
-        } else {
-          const identifier: IdentifierRef = {
-            text: target.name.text,
-            token: target.name.token,
-            ref: target.identifierPath.at(-1)!.ref,
-            type,
-          };
-          addToScope(nestedScope, identifier);
-        }
-        resolveSelect(select, model, nestedScope);
+        resolveSelect(select, model, { ..._.cloneDeep(scope), model });
       }
     });
   }
@@ -950,6 +939,27 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "group" }, (group) => {
         resolveExpression(group.expr, scope);
         group.type = group.expr.type;
+      })
+      .with({ kind: "array" }, (array) => {
+        let type: Type | undefined = undefined;
+        for (const element of array.elements) {
+          resolveExpression(element, scope);
+          if (element.type.kind === "collection") {
+            errors.push(
+              new CompilerError(element.sourcePos, ErrorCode.CollectionInsideArray, {
+                type: element.type,
+              })
+            );
+          } else if (!type) {
+            type = element.type;
+          } else if (isExpectedType(type, element.type)) {
+            type = element.type;
+          } else {
+            checkExprType(element, type);
+          }
+        }
+        if (!type) type = Type.any;
+        array.type = Type.collection(type);
       })
       .with({ kind: "unary" }, (unary) => {
         resolveExpression(unary.expr, scope);
@@ -1032,7 +1042,7 @@ export function resolve(projectASTs: ProjectASTs) {
     // try to resolve from global models, if global is allowed
     else if (options?.allowGlobal && findModel(headName)) {
       head.ref = { kind: "model", model: headName };
-      head.type = Type.model(headName);
+      head.type = Type.collection(Type.model(headName));
     }
     // special case, try to resolve @auth
     else if (headName === "@auth") {

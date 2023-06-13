@@ -26,6 +26,8 @@ export enum ErrorCode {
   DuplicateGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
   QueryFromAliasWrongLength,
+  LimitOrOffsetWithCardinalityModifier,
+  OrderByWithOne,
   QueryMaxOneAggregate,
   ConfiguringNonCustomEndpoint,
   MoreThanOneRespondsInEndpoint,
@@ -62,6 +64,7 @@ export enum ErrorCode {
   VirtualInputType,
   ComputedType,
   NameAlreadyInScope,
+  CollectionInsideArray,
 }
 
 function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>): string {
@@ -110,6 +113,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Actions with "responds" can only be used in "custom" endpoints`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
+    case ErrorCode.LimitOrOffsetWithCardinalityModifier:
+      return `Query can't have "${params?.limitOrOffset}" when using "${params?.cardinalityModifier}"`;
+    case ErrorCode.OrderByWithOne:
+      return `Query can't have "order by" when using "one"`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
     case ErrorCode.ConfiguringNonCustomEndpoint:
@@ -184,6 +191,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:
       return `This name is already defined in current scope`;
+    case ErrorCode.CollectionInsideArray:
+      return `Array literal can't have a collection type as a argument: "${params?.type}"`;
   }
 }
 

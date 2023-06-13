@@ -1,3 +1,4 @@
+import { TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
 
 export type Definition = {
@@ -70,7 +71,7 @@ export type QueryDef = {
   name: string;
   // retType: string | "integer";
   retType: string;
-  // retCardinality: "one" | "many";
+  retCardinality: TypeCardinality;
   fromPath: string[];
   // unique: boolean;
   filter: TypedExprDef;
@@ -170,12 +171,19 @@ export type TypedFunction = {
 
 export type TypedExprDef =
   | LiteralValueDef
+  | TypedArray
   | TypedAlias
   | TypedVariable
   | TypedFunction
   | TypedAggregateFunction
   | TypedExistsSubquery
   | undefined;
+
+type TypedArray = {
+  kind: "array";
+  elements: TypedExprDef[];
+  type: VariablePrimitiveType;
+};
 
 type TypedAggregateFunction = {
   kind: "aggregate-function";
@@ -463,7 +471,7 @@ export type ActionDef =
   | UpdateOneAction
   | DeleteOneAction
   | ExecuteHookAction
-  | FetchOneAction;
+  | FetchAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -504,8 +512,8 @@ export type ExecuteHookAction = {
   responds: boolean;
 };
 
-export type FetchOneAction = {
-  kind: "fetch-one";
+export type FetchAction = {
+  kind: "fetch";
   alias: string;
   model: string;
   changeset: ChangesetDef;
@@ -596,6 +604,11 @@ export type FieldSetterQuery = {
   query: QueryDef;
 };
 
+export type FieldSetterArray = {
+  kind: "array";
+  elements: FieldSetter[];
+};
+
 export type FieldSetter =
   // TODO add composite expression setter
   | LiteralValueDef
@@ -608,7 +621,8 @@ export type FieldSetter =
   | FieldSetterHttpHandler
   | FieldSetterFunction
   | FieldSetterContextReference
-  | FieldSetterQuery;
+  | FieldSetterQuery
+  | FieldSetterArray;
 
 export type ExecutionRuntimeDef = {
   name: string;

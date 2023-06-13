@@ -1132,7 +1132,7 @@ class GaudiParser extends EmbeddedActionsParser {
     return this.RULE(ruleName, (): h => {
       const keyword = getTokenData(this.CONSUME(L.Hook));
 
-      const name = kind === "model" ? this.SUBRULE1(this.identifier) : undefined;
+      const name = kind === "model" ? this.SUBRULE1(this.identifierRef) : undefined;
 
       const atoms: unknown[] = [];
 
@@ -1216,8 +1216,9 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const name = this.SUBRULE(this.identifier);
-              const identifierPath = this.SUBRULE(this.identifierRefPath);
-              return { kind: "long", name, identifierPath };
+              this.CONSUME(L.Colon);
+              const expr = this.SUBRULE(this.expr);
+              return { kind: "long", name, expr };
             },
           },
           {
@@ -1247,6 +1248,7 @@ class GaudiParser extends EmbeddedActionsParser {
     return this.OR<Expr>([
       { ALT: () => this.SUBRULE(this.fnExpr) },
       { ALT: () => this.SUBRULE(this.groupExpr) },
+      { ALT: () => this.SUBRULE(this.arrayExpr) },
       { ALT: () => this.SUBRULE(this.notExpr) },
       {
         ALT: () => {
@@ -1292,6 +1294,18 @@ class GaudiParser extends EmbeddedActionsParser {
     const rRound = getTokenData(this.CONSUME(L.RRound));
     const sourcePos = this.ACTION(() => ({ start: lRound.start, end: rRound.end }));
     return { kind: "group", expr, sourcePos, type: Type.any };
+  });
+
+  arrayExpr = this.RULE("arrayExpr", (): Expr => {
+    const elements: Expr[] = [];
+    const lSquare = getTokenData(this.CONSUME(L.LSquare));
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () => elements.push(this.SUBRULE(this.expr)),
+    });
+    const rSquare = getTokenData(this.CONSUME(L.RSquare));
+    const sourcePos = this.ACTION(() => ({ start: lSquare.start, end: rSquare.end }));
+    return { kind: "array", elements, sourcePos, type: Type.any };
   });
 
   notExpr = this.RULE("notExpr", (): Expr => {

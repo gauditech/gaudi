@@ -58,6 +58,42 @@ describe("compiler errors", () => {
     });
   });
 
+  describe("query", () => {
+    it("fails when using first with limit or offset", () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz }
+        }
+        model Baz {
+          relation foos { from Foo, through baz }
+          query foo { from foos, first, limit 10, offset 10 }
+        }
+        `;
+      expectError(
+        bp,
+        `Query can't have "limit" when using "first"`,
+        `Query can't have "offset" when using "first"`
+      );
+    });
+    it("fails when using one with limit, offset or order by", () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz }
+        }
+        model Baz {
+          relation foos { from Foo, through baz }
+          query foo { from foos, one, limit 10, offset 10, order by { id } }
+        }
+        `;
+      expectError(
+        bp,
+        `Query can't have "limit" when using "one"`,
+        `Query can't have "offset" when using "one"`,
+        `Query can't have "order by" when using "one"`
+      );
+    });
+  });
+
   describe("action", () => {
     it("fails when default action override is invalid type", () => {
       const bp = `

@@ -344,7 +344,7 @@ export type AnonymousQuery = {
 export type Select = {
   target:
     | { kind: "short"; name: IdentifierRef<RefModelAtom> }
-    | { kind: "long"; name: Identifier; identifierPath: IdentifierRef[] };
+    | { kind: "long"; name: Identifier; expr: Expr<Code> };
   select?: Select;
 }[];
 
@@ -360,6 +360,7 @@ export type Expr<kind extends ExprKind = ExprKind> = (
       rhs: Expr<kind>;
     }
   | { kind: "group"; expr: Expr<kind> }
+  | { kind: "array"; elements: Expr<kind>[] }
   | { kind: "unary"; keyword: TokenData; operator: UnaryOperator; expr: Expr<kind> }
   | { kind: "path"; path: IdentifierRef[] }
   | { kind: "literal"; literal: Literal }

@@ -3,7 +3,13 @@ import { match } from "ts-pattern";
 
 import { defineType } from "./models";
 
-import { UnreachableError, ensureEqual, shouldBeUnreachableCb } from "@src/common/utils";
+import {
+  UnreachableError,
+  assertUnreachable,
+  ensureEqual,
+  shouldBeUnreachableCb,
+} from "@src/common/utils";
+import { Type } from "@src/compiler/ast/type";
 import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
 import {
   AggregateDef,
@@ -13,12 +19,11 @@ import {
   SelectDef,
   SelectItem,
   TypedExprDef,
-  VariablePrimitiveType,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
 export function composeQuery(qspec: Spec.Query): QueryDef {
-  if (qspec.aggregate) {
+  if (qspec.aggregate && qspec.aggregate !== "first" && qspec.aggregate !== "one") {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
 
@@ -37,11 +42,11 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     filter,
     fromPath,
     name: qspec.name,
-    // retCardinality: "many", // FIXME,
+    retCardinality: qspec.cardinality,
     retType: qspec.targetModel,
     select,
     orderBy,
-    limit: qspec.limit,
+    limit: qspec.aggregate ? 1 : qspec.limit,
     offset: qspec.offset,
   };
 }
@@ -108,17 +113,6 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
       switch (expr.name) {
         case "sum":
         case "count": {
-          let nullable: boolean;
-          let primitiveType;
-          if (expr.type.kind === "nullable") {
-            nullable = true;
-            ensureEqual(expr.type.type.kind, "primitive");
-            primitiveType = expr.type.type.primitiveKind;
-          } else {
-            nullable = false;
-            ensureEqual(expr.type.kind, "primitive");
-            primitiveType = expr.type.primitiveKind;
-          }
           const arg = expr.args[0];
           ensureEqual(arg.kind, "identifier");
           const [head, ...tail] = arg.identifier;
@@ -136,7 +130,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
           return {
             kind: "aggregate-function",
             fnName: expr.name,
-            type: { kind: primitiveType as VariablePrimitiveType["kind"], nullable },
+            type: defineType(expr.type),
             sourcePath,
             targetPath,
           };
@@ -167,6 +161,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
               type: defineType(arg.type).kind as any, // FIXME type refactor
             }))
             .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
+            .with({ kind: "array" }, shouldBeUnreachableCb(`TODO`))
             .exhaustive();
 
           const arg1 = expr.args[1];
@@ -196,6 +191,15 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
         }
       }
     }
+    case "array": {
+      return {
+        kind: "array",
+        elements: expr.elements.map((e) => composeExpression(e, namePath)),
+        type: defineType(expr.type.kind === "collection" ? expr.type.type : Type.any),
+      };
+    }
+    default:
+      return assertUnreachable(expr);
   }
 }
 
@@ -241,41 +245,39 @@ export function composeRefPath(
 
 export function composeSelect(select: Spec.Select, parentNamePath: string[]): SelectDef {
   return select.map((select): SelectItem => {
-    const target = select.target;
-    const namePath = [...parentNamePath, select.target.ref.name];
-
-    switch (target.ref.atomKind) {
-      case "field":
-      case "computed":
-        return {
-          kind: "expression",
-          expr: { kind: "alias", namePath },
-          alias: target.text,
-          type: defineType(target.type),
-        };
-      case "hook":
+    if (select.expr.kind === "identifier") {
+      const last = select.expr.identifier.at(-1);
+      if (last?.ref.kind === "modelAtom" && last.ref.atomKind === "hook") {
         return {
           kind: "model-hook",
-          refKey: refKeyFromRef(target.ref),
-          name: target.ref.name,
-          alias: target.text,
-          namePath,
+          refKey: refKeyFromRef(last.ref),
+          name: last.ref.name,
+          alias: last.text,
+          namePath: [...parentNamePath, ...select.expr.identifier.map((i) => i.text)],
         };
-      case "reference":
-      case "relation":
-      case "query": {
-        if (select.kind === "final") {
-          throw new UnreachableError("Aggregates are deprecated");
-        } else {
-          return {
-            kind: "nested-select",
-            refKey: refKeyFromRef(target.ref),
-            alias: target.text,
-            namePath,
-            select: composeSelect(select.select, namePath),
-          };
-        }
       }
     }
+    if (select.kind === "nested") {
+      ensureEqual(select.expr.kind, "identifier");
+      const namePath = [...parentNamePath, ...select.expr.identifier.map((i) => i.text)];
+      const last = select.expr.identifier.at(-1);
+      if (last?.ref.kind !== "model") {
+        ensureEqual(last?.ref.kind, "modelAtom");
+      }
+      return {
+        kind: "nested-select",
+        refKey: refKeyFromRef(last.ref),
+        alias: select.name,
+        namePath,
+        select: composeSelect(select.select, namePath),
+      };
+    }
+    const expr = composeExpression(select.expr, parentNamePath);
+    return {
+      kind: "expression",
+      expr,
+      alias: select.name,
+      type: defineType(select.expr.type),
+    };
   });
 }

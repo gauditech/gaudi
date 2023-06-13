@@ -145,7 +145,7 @@ export function queryFromParts(
     filter,
     fromPath,
     name,
-    // retCardinality: "many", // FIXME,
+    retCardinality: "collection",
     retType: getPathRetType(def, fromPath).refKey,
     select,
     orderBy,
@@ -209,9 +209,9 @@ function queriesFromSelect(def: Definition, model: ModelDef, select: SelectDef):
 }
 
 function selectToQuery(def: Definition, model: ModelDef, select: NestedSelect): QueryDef {
-  const ref = getRef(def, select.refKey);
+  const ref = getRef(def, select.refKey, undefined, ["reference", "relation", "query"]);
   const namePath = [model.name, ref.name];
-  return queryFromParts(
+  const query = queryFromParts(
     def,
     select.alias,
     namePath,
@@ -221,6 +221,14 @@ function selectToQuery(def: Definition, model: ModelDef, select: NestedSelect): 
       mkJoinConnection(model),
     ]
   );
+
+  query.retCardinality = match(ref)
+    .with({ kind: "reference" }, ({ nullable }) => (nullable ? "nullable" : "one"))
+    .with({ kind: "relation" }, ({ unique }) => (unique ? "nullable" : "collection"))
+    .with({ kind: "query" }, ({ retCardinality }) => retCardinality)
+    .exhaustive();
+
+  return query;
 }
 
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
@@ -288,6 +296,12 @@ export function transformExpressionPaths(
         ...exp,
         sourcePath: transformNamePath(exp.sourcePath, from, to),
         lookupExpression: transformExpressionPaths(exp, from, to),
+      };
+    }
+    case "array": {
+      return {
+        ...exp,
+        elements: exp.elements.map((arg) => transformExpressionPaths(arg, from, to)),
       };
     }
     default: {

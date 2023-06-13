@@ -172,6 +172,7 @@ function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
       },
     ])
     .with({ kind: "in-subquery" }, (sub) => pathsFromExpr(sub.lookupExpression))
+    .with({ kind: "array" }, (array) => array.elements.flatMap((e) => pathsFromExpr(e)))
     .exhaustive();
 }
 
@@ -393,6 +394,7 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
         lookupExpression: toQueryExpr(def, expandExpression(def, sub.lookupExpression)),
       };
     })
+    .with({ kind: "array" }, shouldBeUnreachableCb("TODO"))
     .with(undefined, () => {
       throw new UnreachableError("");
     })
@@ -439,6 +441,12 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
       return {
         ...exp,
         args: exp.args.map((arg) => expandExpression(def, arg)),
+      };
+    }
+    case "array": {
+      return {
+        ...exp,
+        elements: exp.elements.map((arg) => expandExpression(def, arg)),
       };
     }
     default: {
