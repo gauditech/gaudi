@@ -588,6 +588,7 @@ export function buildTokens(
         buildExpr(rhs);
       })
       .with({ kind: "group" }, ({ expr }) => buildExpr(expr))
+      .with({ kind: "array" }, ({ elements }) => elements.forEach((e) => buildExpr(e)))
       .with({ kind: "unary" }, ({ keyword, expr }) => {
         buildKeyword(keyword);
         buildExpr(expr);

@@ -105,6 +105,9 @@ export async function buildChangeset(
         const qt = buildQueryTree(def, setter.query);
         return qx.executeQueryTree(def, qt, vars, []);
       }
+      case "array": {
+        return await Promise.all(setter.elements.map((e) => getValue(e)));
+      }
       default: {
         return assertUnreachable(setter);
       }

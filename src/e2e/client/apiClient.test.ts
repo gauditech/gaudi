@@ -92,10 +92,12 @@ describe("api client lib", () => {
           "blank_repos": [
             {
               "id": 2,
+              "nameAndDesc": "Repo 2 Repo 2 description",
               "total_issues": 0,
             },
             {
               "id": 1,
+              "nameAndDesc": "Repo 1 Repo 1 description",
               "total_issues": 0,
             },
           ],
@@ -137,6 +139,7 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 4,
+                  "nameAndDesc": "Repo 4 Repo 4 description",
                   "total_issues": 0,
                 },
               ],
@@ -150,10 +153,12 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 2,
+                  "nameAndDesc": "Repo 2 Repo 2 description",
                   "total_issues": 0,
                 },
                 {
                   "id": 1,
+                  "nameAndDesc": "Repo 1 Repo 1 description",
                   "total_issues": 0,
                 },
               ],
@@ -185,6 +190,7 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 4,
+                  "nameAndDesc": "Repo 4 Repo 4 description",
                   "total_issues": 0,
                 },
               ],
@@ -198,10 +204,12 @@ describe("api client lib", () => {
               "blank_repos": [
                 {
                   "id": 2,
+                  "nameAndDesc": "Repo 2 Repo 2 description",
                   "total_issues": 0,
                 },
                 {
                   "id": 1,
+                  "nameAndDesc": "Repo 1 Repo 1 description",
                   "total_issues": 0,
                 },
               ],
@@ -268,6 +276,7 @@ describe("api client lib", () => {
           "blank_repos": [
             {
               "id": 4,
+              "nameAndDesc": "Repo 4 Repo 4 description",
               "total_issues": 0,
             },
           ],
@@ -353,6 +362,7 @@ describe("api client lib", () => {
           "blank_repos": [
             {
               "id": 4,
+              "nameAndDesc": "Repo 4 Repo 4 description",
               "total_issues": 0,
             },
           ],

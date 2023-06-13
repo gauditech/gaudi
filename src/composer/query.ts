@@ -3,7 +3,8 @@ import { match } from "ts-pattern";
 
 import { defineType } from "./models";
 
-import { UnreachableError, ensureEqual } from "@src/common/utils";
+import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
+import { Type } from "@src/compiler/ast/type";
 import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
 import {
   AggregateDef,
@@ -13,7 +14,6 @@ import {
   SelectDef,
   SelectItem,
   TypedExprDef,
-  VariablePrimitiveType,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
@@ -108,17 +108,6 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
       switch (expr.name) {
         case "sum":
         case "count": {
-          let nullable: boolean;
-          let primitiveType;
-          if (expr.type.kind === "nullable") {
-            nullable = true;
-            ensureEqual(expr.type.type.kind, "primitive");
-            primitiveType = expr.type.type.primitiveKind;
-          } else {
-            nullable = false;
-            ensureEqual(expr.type.kind, "primitive");
-            primitiveType = expr.type.primitiveKind;
-          }
           const arg = expr.args[0];
           ensureEqual(arg.kind, "identifier");
           const [head, ...tail] = arg.identifier;
@@ -136,7 +125,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
           return {
             kind: "aggregate-function",
             fnName: expr.name,
-            type: { kind: primitiveType as VariablePrimitiveType["kind"], nullable },
+            type: defineType(expr.type),
             sourcePath,
             targetPath,
           };
@@ -146,6 +135,15 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
         }
       }
     }
+    case "array": {
+      return {
+        kind: "array",
+        elements: expr.elements.map((e) => composeExpression(e, namePath)),
+        type: defineType(expr.type.kind === "collection" ? expr.type.type : Type.any),
+      };
+    }
+    default:
+      return assertUnreachable(expr);
   }
 }
 

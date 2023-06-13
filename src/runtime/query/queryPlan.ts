@@ -161,6 +161,7 @@ function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
       { kind: "table-namespace", namePath: _.initial(a.namePath) },
     ])
     .with({ kind: "function" }, (fn) => fn.args.flatMap((a) => pathsFromExpr(a)))
+    .with({ kind: "array" }, (array) => array.elements.flatMap((e) => pathsFromExpr(e)))
     .with({ kind: "literal" }, { kind: "variable" }, undefined, () => [])
     .exhaustive();
 }
@@ -371,6 +372,9 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
         value: [...aggr.sourcePath, aggr.fnName.toUpperCase(), ...aggr.targetPath, "result"],
       })
     )
+    .with({ kind: "array" }, (array): QueryPlanExpression => {
+      throw Error("Unimplemented");
+    })
     .with(undefined, () => {
       throw new UnreachableError("");
     })
@@ -414,6 +418,12 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
       return {
         ...exp,
         args: exp.args.map((arg) => expandExpression(def, arg)),
+      };
+    }
+    case "array": {
+      return {
+        ...exp,
+        elements: exp.elements.map((arg) => expandExpression(def, arg)),
       };
     }
     default: {

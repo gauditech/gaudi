@@ -191,6 +191,12 @@ function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): Field
           return assertUnreachable(head.ref);
       }
     }
+    case "array": {
+      return {
+        kind: "array",
+        elements: expr.elements.map((a) => expandSetterExpression(a, changeset)),
+      };
+    }
     case "function": {
       return {
         kind: "function",

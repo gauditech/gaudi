@@ -855,6 +855,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       }
       case "group":
         return migrateExpr(expr.expr);
+      case "array":
+        return { kind: "array", elements: expr.elements.map(migrateExpr), type: expr.type };
       case "unary":
         // converts 'not' to 'is not'
         return {

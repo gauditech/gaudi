@@ -1,6 +1,8 @@
 import { Expr, Ref } from "./ast";
 import { Type } from "./type";
 
+import { assertUnreachable } from "@src/common/utils";
+
 export type Scope = {
   environment: "model" | "entrypoint";
   model: string | undefined;
@@ -29,8 +31,8 @@ function createTypeGuard(expr: Expr, isInverse: boolean): TypeGuard {
     case "binary": {
       switch (expr.operator) {
         case "is": {
-          const lhsOperation = getTypeGuardOperation(expr.lhs);
-          const rhsOperation = getTypeGuardOperation(expr.rhs);
+          const lhsOperation = getTypeGuardOperation(expr.lhs.type);
+          const rhsOperation = getTypeGuardOperation(expr.rhs.type);
           if (lhsOperation && !rhsOperation) {
             return createTypeGuardFromPath(expr.rhs, modifyGuardOperation(lhsOperation, isInverse));
           } else if (!lhsOperation && rhsOperation) {
@@ -39,8 +41,8 @@ function createTypeGuard(expr: Expr, isInverse: boolean): TypeGuard {
           return {};
         }
         case "is not": {
-          const lhsOperation = getTypeGuardOperation(expr.lhs);
-          const rhsOperation = getTypeGuardOperation(expr.rhs);
+          const lhsOperation = getTypeGuardOperation(expr.lhs.type);
+          const rhsOperation = getTypeGuardOperation(expr.rhs.type);
           // use !isInverse because we want double inversion for is not
           if (lhsOperation && !rhsOperation) {
             return createTypeGuardFromPath(
@@ -73,6 +75,25 @@ function createTypeGuard(expr: Expr, isInverse: boolean): TypeGuard {
           });
           return intersection;
         }
+        case "in": {
+          const rhsOperation =
+            expr.rhs.type.kind === "collection" && getTypeGuardOperation(expr.rhs.type.type);
+          if (rhsOperation) {
+            return createTypeGuardFromPath(expr.lhs, modifyGuardOperation(rhsOperation, isInverse));
+          }
+          return {};
+        }
+        case "not in": {
+          const rhsOperation =
+            expr.rhs.type.kind === "collection" && getTypeGuardOperation(expr.rhs.type.type);
+          if (rhsOperation) {
+            return createTypeGuardFromPath(
+              expr.lhs,
+              modifyGuardOperation(rhsOperation, !isInverse)
+            );
+          }
+          return {};
+        }
         default:
           return {};
       }
@@ -80,7 +101,12 @@ function createTypeGuard(expr: Expr, isInverse: boolean): TypeGuard {
     case "group":
       return createTypeGuard(expr.expr, isInverse);
     case "unary":
-      return createTypeGuard(expr.expr, !isInverse);
+      if (expr.operator === "not") {
+        return createTypeGuard(expr.expr, !isInverse);
+      } else {
+        return assertUnreachable(expr);
+      }
+    case "array":
     case "function":
     case "path":
     case "literal":
@@ -121,8 +147,8 @@ function createTypeGuardFromPath(expr: Expr, guardOperation: TypeGuardOperation)
   }
 }
 
-function getTypeGuardOperation(expr: Expr): TypeGuardOperation | undefined {
-  switch (expr.type.kind) {
+function getTypeGuardOperation(type: Type): TypeGuardOperation | undefined {
+  switch (type.kind) {
     case "any":
     case "nullable":
       return undefined;
