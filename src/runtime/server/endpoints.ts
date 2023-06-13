@@ -117,7 +117,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
     method: "get",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -190,7 +190,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     method: "get",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -274,7 +274,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
     method: "post",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -374,7 +374,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
     method: "patch",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -479,7 +479,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
     method: "delete",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -544,7 +544,7 @@ export function buildCustomOneEndpoint(
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -641,7 +641,7 @@ export function buildCustomManyEndpoint(
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;

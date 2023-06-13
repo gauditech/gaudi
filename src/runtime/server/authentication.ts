@@ -6,19 +6,15 @@ import { dataToFieldDbnames, dataToFieldModelNames, getRef } from "@src/common/r
 import { assertUnreachable, ensureNot } from "@src/common/utils";
 import { getAppContext } from "@src/runtime/server/context";
 import { DbConn } from "@src/runtime/server/dbConn";
-import { BusinessError, errorResponse } from "@src/runtime/server/error";
+import { errorResponse } from "@src/runtime/server/error";
 import { Definition } from "@src/types/definition";
 
-export type AuthenticationOptions = {
-  allowAnonymous?: boolean;
-};
-
-export function buildAuthenticationHandler(def: Definition, options?: AuthenticationOptions) {
+export function buildAuthenticationHandler(def: Definition) {
   if (!def.authenticator) return;
 
   const methodKind = def.authenticator.method.kind;
   if (methodKind === "basic") {
-    return buildBasicAuthenticationHandler(def, options);
+    return buildBasicAuthenticationHandler(def);
   } else {
     assertUnreachable(methodKind);
   }
@@ -29,7 +25,7 @@ export function buildAuthenticationHandler(def: Definition, options?: Authentica
 /**
  * Create authentication request handler
  */
-export function buildBasicAuthenticationHandler(def: Definition, options?: AuthenticationOptions) {
+export function buildBasicAuthenticationHandler(def: Definition) {
   const passportInstance = configurePassport(def);
 
   return async (req: Request, resp: Response, next: NextFunction) => {
@@ -41,12 +37,8 @@ export function buildBasicAuthenticationHandler(def: Definition, options?: Authe
         (err: unknown, user?: Express.User) => {
           try {
             if (err) {
-              reject(err);
-            }
-
-            // allow anonymous access
-            if (!user && !(options?.allowAnonymous ?? false)) {
-              throw new BusinessError("ERROR_CODE_UNAUTHENTICATED", "Incorrect token credentials");
+              // FIXME should we `reject` here? why would `passport.authenticate` fail?
+              resolve(undefined);
             }
 
             // share user with other handlers
