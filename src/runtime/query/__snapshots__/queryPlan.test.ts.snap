@@ -755,6 +755,22 @@ exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
         "nullable": false,
       },
     },
+    {
+      "alias": "owner_name",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "owner",
+          "full_name",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "text",
+        "nullable": false,
+      },
+    },
   ],
 }
 `;
@@ -763,9 +779,11 @@ exports[`Query plan works with complex aggregates: SQL snapshot 1`] = `
 "SELECT
   "Org.repos"."id" AS "id",
   "Org.repos"."name" AS "name",
-  "Org.repos.org"."name" AS "org_name"
+  "Org.repos.org"."name" AS "org_name",
+  "Org.owner"."full_name" AS "owner_name"
 FROM
   "org" AS "Org"
+  INNER JOIN "owner" AS "Org.owner" ON "Org"."owner_id" = "Org.owner"."id"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
   INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
   LEFT JOIN (
