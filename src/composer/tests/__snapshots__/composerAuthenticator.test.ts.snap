@@ -248,7 +248,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               },
             ],
-            "kind": "fetch-one",
+            "kind": "fetch",
             "model": "AuthUser",
             "query": {
               "filter": {
@@ -278,6 +278,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "offset": undefined,
               "orderBy": undefined,
               "refKey": "N/A",
+              "retCardinality": "one",
               "retType": "AuthUser",
               "select": [
                 {
@@ -566,7 +567,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
           {
             "alias": "accessToken",
             "changeset": [],
-            "kind": "fetch-one",
+            "kind": "fetch",
             "model": "AuthUserAccessToken",
             "query": {
               "filter": {
@@ -596,6 +597,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "offset": undefined,
               "orderBy": undefined,
               "refKey": "N/A",
+              "retCardinality": "one",
               "retType": "AuthUserAccessToken",
               "select": [
                 {

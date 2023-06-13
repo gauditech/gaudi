@@ -176,6 +176,24 @@ export function checkForm(projectASTs: ProjectASTs) {
       }
     }
 
+    const aggregate = kindFind(query.atoms, "aggregate");
+    const limitOrOffsets = kindFilter(query.atoms, "limit", "offset");
+    if (aggregate?.aggregate === "first" || aggregate?.aggregate === "one") {
+      for (const limitOrOffset of limitOrOffsets) {
+        errors.push(
+          new CompilerError(limitOrOffset.keyword, ErrorCode.LimitOrOffsetWithCardinalityModifier, {
+            limitOrOffset: limitOrOffset.kind,
+            cardinalityModifier: aggregate.aggregate,
+          })
+        );
+      }
+    }
+
+    const orderBy = kindFind(query.atoms, "orderBy");
+    if (orderBy && aggregate?.aggregate === "one") {
+      errors.push(new CompilerError(orderBy.keyword, ErrorCode.OrderByWithOne));
+    }
+
     const select = kindFind(query.atoms, "select");
     if (select) checkSelect(select.select);
   }

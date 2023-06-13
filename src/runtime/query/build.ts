@@ -4,6 +4,7 @@ import { match } from "ts-pattern";
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
+import { TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
 import {
   Definition,
@@ -145,7 +146,7 @@ export function queryFromParts(
     filter,
     fromPath,
     name,
-    // retCardinality: "many", // FIXME,
+    retCardinality: "collection",
     retType: getPathRetType(def, fromPath).refKey,
     select,
     orderBy,
@@ -209,9 +210,9 @@ function queriesFromSelect(def: Definition, model: ModelDef, select: SelectDef):
 }
 
 function selectToQuery(def: Definition, model: ModelDef, select: NestedSelect): QueryDef {
-  const ref = getRef(def, select.refKey);
+  const ref = getRef(def, select.refKey, undefined, ["reference", "relation", "query"]);
   const namePath = [model.name, ref.name];
-  return queryFromParts(
+  const query = queryFromParts(
     def,
     select.alias,
     namePath,
@@ -221,6 +222,14 @@ function selectToQuery(def: Definition, model: ModelDef, select: NestedSelect): 
       mkJoinConnection(model),
     ]
   );
+
+  query.retCardinality = match(ref)
+    .with({ kind: "reference" }, ({ nullable }) => (nullable ? "nullable" : "one"))
+    .with({ kind: "relation" }, ({ unique }) => (unique ? "nullable" : "collection"))
+    .with({ kind: "query" }, ({ retCardinality }) => retCardinality)
+    .exhaustive();
+
+  return query;
 }
 
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {

@@ -18,7 +18,7 @@ import {
 import * as Spec from "@src/types/specification";
 
 export function composeQuery(qspec: Spec.Query): QueryDef {
-  if (qspec.aggregate) {
+  if (qspec.aggregate && qspec.aggregate !== "first" && qspec.aggregate !== "one") {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
 
@@ -37,11 +37,11 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     filter,
     fromPath,
     name: qspec.name,
-    // retCardinality: "many", // FIXME,
+    retCardinality: qspec.cardinality,
     retType: qspec.targetModel,
     select,
     orderBy,
-    limit: qspec.limit,
+    limit: qspec.aggregate ? 1 : qspec.limit,
     offset: qspec.offset,
   };
 }

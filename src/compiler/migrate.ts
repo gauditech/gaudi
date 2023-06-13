@@ -167,7 +167,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const initialPath: Spec.IdentifierRef[] = [
       { text: model, ref: { kind: "model", model }, type: Type.model(model) },
     ];
-    return migrateQuery(initialPath, query.name.text, query.atoms);
+    return migrateQuery(initialPath, query.name.text, query.name.type, query.atoms);
   }
 
   function migrateAnonymousQuery(query: AST.AnonymousQuery, model?: string) {
@@ -177,12 +177,13 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ensureExists(model);
       initialPath = [{ text: model, ref: { kind: "model", model }, type: Type.model(model) }];
     }
-    return migrateQuery(initialPath, "$query", query.atoms);
+    return migrateQuery(initialPath, "$query", query.type, query.atoms);
   }
 
   function migrateQuery(
     initialPath: Spec.IdentifierRef[],
     name: string,
+    type: Type,
     atoms: AST.QueryAtom[]
   ): Spec.Query {
     const from = kindFind(atoms, "from");
@@ -208,6 +209,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       name,
       sourceModel,
       targetModel,
+      cardinality: getTypeCardinality(type),
       from: [...initialPath, ...(from?.identifierPath.map((i) => migrateIdentifierRef(i)) ?? [])],
       fromAlias: from?.as?.identifierPath.map((i) => migrateIdentifierRef(i)),
       filter: filter ? migrateExpr(filter.expr) : undefined,

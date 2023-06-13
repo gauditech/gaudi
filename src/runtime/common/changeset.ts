@@ -7,7 +7,7 @@ import { executeArithmetics } from "./arithmetics";
 import { assertUnreachable, ensureEqual, ensureExists, ensureNot } from "@src/common/utils";
 import { ActionContext } from "@src/runtime/common/action";
 import { HookActionContext, executeHook } from "@src/runtime/hooks";
-import { QueryExecutor } from "@src/runtime/query/exec";
+import { QueryExecutor, castToCardinality } from "@src/runtime/query/exec";
 import { ChangesetDef, Definition, FieldDef, FieldSetter } from "@src/types/definition";
 
 type Changeset = Record<string, unknown>;
@@ -43,7 +43,7 @@ export async function buildChangeset(
         );
       }
       case "reference-value": {
-        return actionContext.vars.get(setter.target.alias, setter.target.access);
+        return actionContext.vars.collect([setter.target.alias, ...setter.target.access]);
       }
       case "fieldset-hook": {
         const args = await buildChangeset(def, qx, epCtx, setter.args, actionContext, changeset);
@@ -103,7 +103,8 @@ export async function buildChangeset(
         });
 
         const qt = buildQueryTree(def, setter.query);
-        return qx.executeQueryTree(def, qt, vars, []);
+        const results = await qx.executeQueryTree(def, qt, vars, []);
+        return castToCardinality(results, setter.query.retCardinality);
       }
       case "array": {
         return await Promise.all(setter.elements.map((e) => getValue(e)));

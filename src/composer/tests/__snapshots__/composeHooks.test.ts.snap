@@ -177,6 +177,7 @@ exports[`compose hooks composes action hook 1`] = `
             "offset": undefined,
             "orderBy": undefined,
             "refKey": "N/A",
+            "retCardinality": "collection",
             "retType": "Org",
             "select": [
               {

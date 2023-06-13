@@ -484,6 +484,7 @@ exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
   "offset": undefined,
   "orderBy": undefined,
   "refKey": "N/A",
+  "retCardinality": "collection",
   "retType": "Repo",
   "select": [
     {

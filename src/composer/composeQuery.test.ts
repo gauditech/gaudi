@@ -124,5 +124,40 @@ describe("compose action queries", () => {
         (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
     });
+    it("query first", () => {
+      const bp = `
+      model Device {
+        relation measurements { from Measurement, through device }
+      }
+
+      model Measurement {
+        field value { type integer }
+        field timestamp { type integer }
+        reference device { to Device }
+      }
+
+      api {
+        entrypoint Device as device {
+
+          custom endpoint {
+            path "current_measurement"
+            method GET
+            cardinality one
+
+            action {
+              fetch as measurement {
+                query { from device.measurements, order by { timestamp desc }, first }
+              }
+            }
+          }
+        }
+      }
+      `;
+
+      const def = compose(compileToOldSpec(bp));
+      expect(
+        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+      ).toMatchSnapshot();
+    });
   });
 });

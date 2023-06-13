@@ -837,9 +837,7 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
 
   switch (expr.kind) {
     case "alias": {
-      // FIXME: cardinality
-      // don't return undefined so user can compare to null, eg @auth.id is not null
-      return _.castArray(contextVars.collect(expr.namePath))[0] ?? null;
+      return contextVars.collect(expr.namePath) ?? null;
     }
     case "function": {
       return executeTypedFunction(expr, contextVars);
