@@ -98,7 +98,6 @@ export async function executeQueryTree(
       const relResultsForId = (groupedById[r[qt.queryIdAlias!] as number] ?? []).map((relR) =>
         _.omit(relR, "__join_connection")
       );
-      console.log(rel.query.retCardinality, relResultsForId);
       Object.assign(r, {
         [rel.name]: castToCardinality(relResultsForId, rel.query.retCardinality),
       });
