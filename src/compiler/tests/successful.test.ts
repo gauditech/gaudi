@@ -18,6 +18,7 @@ describe("compiler", () => {
 
     if (ast && errors.length === 0) {
       migrate(ast);
+      return;
     }
 
     console.log(compilerErrorsToString(source, errors));
@@ -35,7 +36,6 @@ describe("compiler", () => {
     if (ast && errors.length === 0) {
       migrate(ast);
     }
-
     expect(errors.length).toBe(0);
   });
 });
