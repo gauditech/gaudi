@@ -191,41 +191,39 @@ export function composeRefPath(
 
 export function composeSelect(select: Spec.Select, parentNamePath: string[]): SelectDef {
   return select.map((select): SelectItem => {
-    const target = select.target;
-    const namePath = [...parentNamePath, select.target.ref.name];
-
-    switch (target.ref.atomKind) {
-      case "field":
-      case "computed":
-        return {
-          kind: "expression",
-          expr: { kind: "alias", namePath },
-          alias: target.text,
-          type: defineType(target.type),
-        };
-      case "hook":
+    if (select.expr.kind === "identifier") {
+      const last = select.expr.identifier.at(-1);
+      if (last?.ref.kind === "modelAtom" && last.ref.atomKind === "hook") {
         return {
           kind: "model-hook",
-          refKey: refKeyFromRef(target.ref),
-          name: target.ref.name,
-          alias: target.text,
-          namePath,
+          refKey: refKeyFromRef(last.ref),
+          name: last.ref.name,
+          alias: last.text,
+          namePath: [...parentNamePath, ...select.expr.identifier.map((i) => i.text)],
         };
-      case "reference":
-      case "relation":
-      case "query": {
-        if (select.kind === "final") {
-          throw new UnreachableError("Aggregates are deprecated");
-        } else {
-          return {
-            kind: "nested-select",
-            refKey: refKeyFromRef(target.ref),
-            alias: target.text,
-            namePath,
-            select: composeSelect(select.select, namePath),
-          };
-        }
       }
     }
+    if (select.kind === "nested") {
+      ensureEqual(select.expr.kind, "identifier");
+      const namePath = [...parentNamePath, ...select.expr.identifier.map((i) => i.text)];
+      const last = select.expr.identifier.at(-1);
+      if (last?.ref.kind !== "model") {
+        ensureEqual(last?.ref.kind, "modelAtom");
+      }
+      return {
+        kind: "nested-select",
+        refKey: refKeyFromRef(last.ref),
+        alias: select.name,
+        namePath,
+        select: composeSelect(select.select, namePath),
+      };
+    }
+    const expr = composeExpression(select.expr, parentNamePath);
+    return {
+      kind: "expression",
+      expr,
+      alias: select.name,
+      type: defineType(select.expr.type),
+    };
   });
 }

@@ -568,7 +568,7 @@ export function buildTokens(
           break;
         case "long":
           push(target.name.token, TokenTypes.property);
-          buildIdentifierPath(target.identifierPath);
+          buildExpr(target.expr);
           break;
       }
       if (select) buildSelect(select);

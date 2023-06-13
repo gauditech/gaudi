@@ -79,7 +79,7 @@ api {
   // Orgs
   entrypoint Org as org {
     identify { through slug }
-    response { name, slug, description, summary, nameAndDesc, blank_repos { id, total_issues } }
+    response { name, slug, description, summary, nameAndDesc, blank_repos { id, total_issues, nameAndDesc: name + " " + description } }
 
     // --- endpoints with "execute" actions
     // register BEFORE other endpoints to avoid mismatching with other endpoints
