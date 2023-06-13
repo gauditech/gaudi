@@ -1,4 +1,4 @@
-import { compileToOldSpec } from "@src/compiler";
+import { compileBlueprint } from "@src/compiler";
 import { compose } from "@src/composer/composer";
 import { QueryTree } from "@src/runtime/query/build";
 import { NestedRow, QueryExecutor } from "@src/runtime/query/exec";
@@ -57,7 +57,7 @@ export function makeTestQuery(models: string, query: string): { def: Definition;
     }
   }
   `;
-  const def = compose(compileToOldSpec(bp));
+  const def = compose(compileBlueprint(bp));
   const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
   const action = endpoint.actions[0] as FetchOneAction;
   return { def, query: action.query };

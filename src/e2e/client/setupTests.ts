@@ -4,7 +4,7 @@ import "../../common/setupAliases";
 import path from "path";
 
 import { buildApiClients } from "@src/builder/builder";
-import { compileToOldSpec } from "@src/compiler/";
+import { compileBlueprint } from "@src/compiler/";
 import { compose } from "@src/composer/composer";
 import { loadBlueprint } from "@src/e2e/api/setup";
 import { Logger } from "@src/logger";
@@ -42,7 +42,7 @@ async function setupClient(name: string, bpPath: string, appendGenerators = fals
   if (appendGenerators) {
     bp = appendClientGenerator(bp);
   }
-  const definition = compose(compileToOldSpec(bp));
+  const definition = compose(compileBlueprint(bp));
 
   // build and output client lib
   await buildApiClients(definition, clientDest);

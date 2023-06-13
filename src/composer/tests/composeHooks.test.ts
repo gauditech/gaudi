@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileBlueprint, compose } from "@src/index";
 import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose hooks", () => {
@@ -41,7 +41,7 @@ describe("compose hooks", () => {
       }
 
     `;
-    const result = compose(compileToOldSpec(bp));
+    const result = compose(compileBlueprint(bp));
 
     expect(result).toMatchSnapshot();
   });
@@ -83,7 +83,7 @@ describe("compose hooks", () => {
       }
 
     `;
-    const result = compose(compileToOldSpec(bp));
+    const result = compose(compileBlueprint(bp));
 
     expect(result).toMatchSnapshot();
   });
@@ -117,7 +117,7 @@ describe("compose hooks", () => {
 
     `;
 
-    const result = compose(compileToOldSpec(bp));
+    const result = compose(compileBlueprint(bp));
 
     expect(result.apis[0].entrypoints[0].endpoints[0]).toMatchSnapshot();
   });
@@ -159,7 +159,7 @@ describe("compose hooks", () => {
         }
       }
     `;
-    const result = compose(compileToOldSpec(bp));
+    const result = compose(compileBlueprint(bp));
 
     expect(result.apis[0].entrypoints[0].endpoints).toMatchSnapshot();
   });
@@ -195,7 +195,7 @@ describe("compose hooks", () => {
         }
       }
     `;
-    const def = compose(compileToOldSpec(bp));
+    const def = compose(compileBlueprint(bp));
     const action = (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
 
     expect(action).toMatchSnapshot();

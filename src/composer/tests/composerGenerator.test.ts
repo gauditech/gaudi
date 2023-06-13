@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileBlueprint, compose } from "@src/index";
 
 describe("generator composer", () => {
   it("succeeds for JS client generator", () => {
@@ -8,7 +8,7 @@ describe("generator composer", () => {
       }
     `;
 
-    const def = compose(compileToOldSpec(bp));
+    const def = compose(compileBlueprint(bp));
     const generator = def.generators[0];
 
     expect(generator).toMatchSnapshot();
@@ -22,7 +22,7 @@ describe("generator composer", () => {
       }
     `;
 
-    const def = compose(compileToOldSpec(bp));
+    const def = compose(compileBlueprint(bp));
     const generators = def.generators;
 
     expect(generators).toMatchSnapshot();

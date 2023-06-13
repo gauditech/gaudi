@@ -3,7 +3,7 @@ import crypto from "crypto";
 import bcrypt, { hash } from "bcrypt";
 
 import { getTypedLiteralValue } from "@src/composer/utils";
-import { compileToOldSpec, compose } from "@src/index";
+import { compileBlueprint, compose } from "@src/index";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
@@ -319,5 +319,5 @@ describe("runtime", () => {
  * Creates dummy definition struct
  */
 function createTestDefinition(): Definition {
-  return compose(compileToOldSpec(""));
+  return compose(compileBlueprint(""));
 }

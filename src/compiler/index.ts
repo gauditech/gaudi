@@ -83,7 +83,7 @@ export function compileWorkspace(filenames: string[]): Specification {
   return migrate(ast);
 }
 
-export function compileToOldSpec(source: string): Specification {
+export function compileBlueprint(source: string): Specification {
   const { ast, errors } = compileToAST([{ source }]);
   if (errors.length > 0) {
     throw errors[0];

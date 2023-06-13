@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileBlueprint, compose } from "@src/index";
 import {
   buildFieldsetValidationSchema,
   validateEndpointFieldset,
@@ -348,5 +348,5 @@ describe("runtime", () => {
  * Creates dummy definition struct
  */
 function createTestDefinition(): Definition {
-  return compose(compileToOldSpec(""));
+  return compose(compileBlueprint(""));
 }
