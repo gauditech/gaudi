@@ -1,15 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import {
-  Diagnostic,
-  DiagnosticCategory,
-  ModuleKind,
-  Project,
-  ScriptKind,
-  ScriptTarget,
-  ts,
-} from "ts-morph";
+import { Diagnostic, DiagnosticCategory, ModuleKind, Project, ScriptTarget, ts } from "ts-morph";
 
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
@@ -87,11 +79,7 @@ async function buildDb(data: BuildDbSchemaData, outputFolder: string): Promise<u
 // ---------- API client
 
 export async function renderApiClient(data: BuildApiClientData): Promise<string> {
-  const t0 = Date.now();
-  const content = renderApiClientTpl(data);
-  console.log(`Template "ApiClient" generated in [${Date.now() - t0} ms]`);
-
-  return content;
+  return renderApiClientTpl(data);
 }
 
 export async function buildApiClients(
@@ -110,8 +98,7 @@ export async function buildApiClients(
           const outFileName = `api-client.ts`;
           const outPath = path.join(outFolder, outFileName);
 
-          console.log(`Creating API client source file: "${outPath}"`);
-          const t0 = Date.now();
+          const t0 = Date.now(); // start timer
 
           return (
             renderApiClient({ definition, apis: definition.apis })
@@ -124,18 +111,17 @@ export async function buildApiClients(
                 // create virtual source file
                 const sourceFile = project.createSourceFile(outPath, content, {
                   overwrite: true,
-                  scriptKind: ScriptKind.TS,
                 });
 
                 const diagnostics = sourceFile.getPreEmitDiagnostics();
                 // no errors, we can emit files
-                if (diagnostics.length === 0) {
+                if (!hasTsErrors(diagnostics)) {
                   sourceFile.formatText();
 
                   // manually saving output file is nearly instant while ts-morph's `sourceFile.save()` is slower than emitting JS?!
                   saveOutputFile(outPath, sourceFile.getFullText());
 
-                  console.log(`Source file created [${Date.now() - t0} ms]`);
+                  console.log(`Source file created [${Date.now() - t0} ms]: ${outPath}`);
                 }
                 // has errors, no emit
                 else {
@@ -152,8 +138,7 @@ export async function buildApiClients(
           const outFileName = `api-client.ts`;
           const outPath = path.join(outFolder, outFileName);
 
-          console.log(`Compiling API client source file: "${outPath}"`);
-          const t0 = Date.now();
+          const t0 = Date.now(); // start timer
 
           return (
             renderApiClient({ definition, apis: definition.apis })
@@ -177,11 +162,12 @@ export async function buildApiClients(
 
                 const diagnostics = sourceFile.getPreEmitDiagnostics();
                 // no errors, we can emit files
-                if (diagnostics.length === 0) {
+                if (!hasTsErrors(diagnostics)) {
                   sourceFile.formatText();
 
                   return project.emit().then(() => {
-                    console.log(`Source file compiled [${Date.now() - t0} ms]`);
+                    // TODO: do we need to check after-emit diagnostics? this is truly an isolated module so maybe not?
+                    console.log(`Source file compiled [${Date.now() - t0} ms]: ${outPath}`);
                   });
                 }
                 // has errors, no emit
@@ -201,9 +187,13 @@ export async function buildApiClients(
 
   // --- utils
 
+  function hasTsErrors(diagnostics: Diagnostic<ts.Diagnostic>[]) {
+    return diagnostics.some((d) => d.getCategory() === DiagnosticCategory.Error);
+  }
+
   function printTsError(diagnostics: Diagnostic<ts.Diagnostic>[]) {
     for (const diagnostic of diagnostics) {
-      console.error(
+      console.log(
         `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
         `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
         diagnostic.getMessageText()
