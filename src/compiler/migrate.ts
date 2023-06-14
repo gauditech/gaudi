@@ -136,6 +136,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const to = kindFind(reference.atoms, "to");
     const unique = kindFind(reference.atoms, "unique");
     const nullable = kindFind(reference.atoms, "nullable");
+    const onDelete = kindFind(reference.atoms, "onDelete");
     ensureExists(reference.name.ref);
     ensureExists(to?.identifier.ref);
 
@@ -145,6 +146,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       to: to.identifier.ref,
       unique: !!unique,
       nullable: !!nullable,
+      onDelete: onDelete?.action.kind,
     };
   }
 

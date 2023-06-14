@@ -145,7 +145,7 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkReference(reference: Reference) {
     containsAtoms(reference, ["to"]);
-    noDuplicateAtoms(reference, ["to", "nullable", "unique"]);
+    noDuplicateAtoms(reference, ["to", "nullable", "unique", "onDelete"]);
   }
 
   function checkRelation(relation: Relation) {

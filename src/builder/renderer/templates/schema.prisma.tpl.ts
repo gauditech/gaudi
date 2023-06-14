@@ -1,7 +1,8 @@
 import { oneLine, source } from "common-tags";
+import { match } from "ts-pattern";
 
 import { getFieldDbType, getRef } from "@src/common/refs";
-import { Definition } from "@src/types/definition";
+import { Definition, ReferenceDef } from "@src/types/definition";
 
 export type BuildDbSchemaData = {
   definition: Definition;
@@ -22,6 +23,7 @@ export function render(data: BuildDbSchemaData): string {
     ${d.models.map(
       (model) => source`
         model ${model.dbname} {
+        // fields
         ${(model.fields || []).map(
           (field) => oneLine`
             ${field.dbname}
@@ -31,6 +33,7 @@ export function render(data: BuildDbSchemaData): string {
               ${field.dbtype === "serial" ? "@default(autoincrement())" : ""}
           `)}
 
+        // relations
         ${(model.relations ?? []).map(
           (relation) => oneLine`
           ${relation.name}
@@ -38,15 +41,24 @@ export function render(data: BuildDbSchemaData): string {
           @relation("${relation.fromModel}${relation.through}")
         `)}
 
+        // references
         ${(model.references ?? []).map(
           (reference) => oneLine`
             ${reference.name}
               ${getRef.model(d, reference.toModelRefKey).dbname}${reference.nullable ? "?" : ""}
-              @relation("${reference.modelRefKey}${reference.name}", fields: [${getRef.field(d, reference.fieldRefKey).dbname}], references: [${getRef.field(d, reference.toModelFieldRefKey).dbname}]${reference.nullable ? ", onDelete: SetNull" : ""})
+              @relation("${reference.modelRefKey}${reference.name}", fields: [${getRef.field(d, reference.fieldRefKey).dbname}], references: [${getRef.field(d, reference.toModelFieldRefKey).dbname}]${reference.onDelete ? `, onDelete: ${renderReferenceOnDelete(reference)}` : ""})
         `)}
         }
       `
     )}
 
   `;
+}
+
+function renderReferenceOnDelete(reference: ReferenceDef): string {
+  return match(reference.onDelete)
+    .with("setNull", () => "SetNull")
+    .with("cascade", () => "Cascade")
+    .with(undefined, () => "NoAction")
+    .exhaustive();
 }

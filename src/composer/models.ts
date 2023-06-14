@@ -140,6 +140,7 @@ function defineReference(rspec: Spec.Reference): ReferenceDef {
     name: rspec.name,
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
+    onDelete: rspec.onDelete,
   };
 }
 

@@ -145,6 +145,7 @@ export function buildTokens(
         })
         .with({ kind: "unique" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "onDelete" }, ({ keyword }) => buildKeyword(keyword))
         .exhaustive()
     );
   }

@@ -42,6 +42,11 @@ export type ReferenceAtom = { keyword: TokenData } & (
   | { kind: "to"; identifier: IdentifierRef<RefModel> }
   | { kind: "nullable" }
   | { kind: "unique" }
+  | { kind: "onDelete"; action: ReferenceOnDeleteAtomAction }
+);
+export type ReferenceOnDeleteAtomAction = { keyword: TokenData } & (
+  | { kind: "cascade" }
+  | { kind: "setNull" }
 );
 
 export type Relation = {

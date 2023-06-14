@@ -1,31 +1,90 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`builder build DB schema renders DB schema template correctly 1`] = `
+exports[`builder DB schema renders model 1`] = `
 "datasource db {
       provider = "DB_PROVIDER"
       url      = env("GAUDI_DATABASE_URL")
     }
 
     model org {
+// fields
 id Int @id @unique @default(autoincrement())
 name String
 slug String @unique
 description String
 optout String?
 
+// relations
 repos repo[] @relation("Repoorg")
 
+// references
 
 }
     model repo {
+// fields
 id Int @id @unique @default(autoincrement())
 name String
 slug String @unique
 description String
 org_id Int
 
+// relations
 
 
+// references
 org org @relation("Repoorg", fields: [org_id], references: [id])
+}"
+`;
+
+exports[`builder DB schema renders references 1`] = `
+"datasource db {
+      provider = "DB_PROVIDER"
+      url      = env("GAUDI_DATABASE_URL")
+    }
+
+    model parentitem {
+// fields
+id Int @id @unique @default(autoincrement())
+itemnoaction_id Int
+itemcascade_id Int
+itemsetnull_id Int
+
+// relations
+
+
+// references
+itemNoAction referenceditem1 @relation("ParentItemitemNoAction", fields: [itemnoaction_id], references: [id])
+itemCascade referenceditem2 @relation("ParentItemitemCascade", fields: [itemcascade_id], references: [id], onDelete: Cascade)
+itemSetNull referenceditem3 @relation("ParentItemitemSetNull", fields: [itemsetnull_id], references: [id], onDelete: SetNull)
+}
+    model referenceditem1 {
+// fields
+id Int @id @unique @default(autoincrement())
+
+// relations
+parent parentitem[] @relation("ParentItemitemNoAction")
+
+// references
+
+}
+    model referenceditem2 {
+// fields
+id Int @id @unique @default(autoincrement())
+
+// relations
+parent parentitem[] @relation("ParentItemitemCascade")
+
+// references
+
+}
+    model referenceditem3 {
+// fields
+id Int @id @unique @default(autoincrement())
+
+// relations
+parent parentitem[] @relation("ParentItemitemSetNull")
+
+// references
+
 }"
 `;
