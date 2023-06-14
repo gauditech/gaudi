@@ -10,7 +10,7 @@ function createClient(options) {
     };
     return {
         api: {
-            ...buildApi(internalOptions ?? {})
+            ...buildApi(internalOptions)
         }
     };
 }

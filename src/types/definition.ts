@@ -644,7 +644,7 @@ export type AuthenticatorBasicMethodDef = {
 
 export type GeneratorDef = GeneratorClientDef;
 
-export type GeneratorClientTarget = "js";
+export type GeneratorClientTarget = "js" | "ts";
 
 export type GeneratorClientDef = {
   kind: "generator-client";

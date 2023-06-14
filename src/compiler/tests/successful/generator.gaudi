@@ -3,3 +3,8 @@ generate client {
   target js
   output "test/path/something"
 }
+
+generate client {
+  target ts
+  output "test/path/something"
+}

@@ -287,7 +287,7 @@ export type GeneratorClientAtom =
       keywordValue: TokenData;
     }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
-export type GeneratorClientAtomTarget = "js";
+export type GeneratorClientAtomTarget = "js" | "ts";
 
 export type Runtime = {
   kind: "runtime";

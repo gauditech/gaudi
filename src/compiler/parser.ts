@@ -1098,7 +1098,10 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Target));
-            const typeToken = this.OR3([{ ALT: () => this.CONSUME(L.Js) }]);
+            const typeToken = this.OR3([
+              { ALT: () => this.CONSUME(L.Js) },
+              { ALT: () => this.CONSUME(L.Ts) },
+            ]);
             const keywordValue = getTokenData(typeToken);
             const value = typeToken.image as GeneratorClientAtomTarget;
             atoms.push({ kind: "target", keyword, value, keywordValue });
