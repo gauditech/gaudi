@@ -515,7 +515,7 @@ exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
       },
       "kind": "expression",
       "type": {
-        "kind": "text",
+        "kind": "string",
         "nullable": false,
       },
     },
@@ -531,7 +531,7 @@ exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
       },
       "kind": "expression",
       "type": {
-        "kind": "text",
+        "kind": "string",
         "nullable": false,
       },
     },

@@ -2,7 +2,6 @@ import crypto from "crypto";
 
 import bcrypt, { hash } from "bcrypt";
 
-import { getTypedLiteralValue } from "@src/composer/utils";
 import { compileToOldSpec, compose } from "@src/index";
 import { ActionContext } from "@src/runtime/common/action";
 import {
@@ -54,14 +53,14 @@ describe("runtime", () => {
       const data: ChangesetDef = [
         {
           name: "value_prop",
-          setter: { kind: "literal", value: "just value", type: "text" },
+          setter: { kind: "literal", value: "just value", type: "string" },
         },
         {
           name: "input_prop",
           setter: {
             fieldsetAccess: ["input_prop"],
             kind: "fieldset-input",
-            type: "text",
+            type: "string",
             required: true,
           },
         },
@@ -70,7 +69,7 @@ describe("runtime", () => {
           setter: {
             fieldsetAccess: ["__missing__"],
             kind: "fieldset-input",
-            type: "text",
+            type: "string",
             required: false,
           },
         },
@@ -79,7 +78,7 @@ describe("runtime", () => {
           setter: {
             fieldsetAccess: ["virtual_input_prop"],
             kind: "fieldset-virtual-input",
-            type: "text",
+            type: "string",
             required: false,
             nullable: false,
             validators: [],
@@ -132,7 +131,7 @@ describe("runtime", () => {
         // lept field
         {
           name: "input_prop",
-          setter: { kind: "literal", value: "just value", type: "text" },
+          setter: { kind: "literal", value: "just value", type: "string" },
         },
         // removed virtual/transient fileds
         {
@@ -140,7 +139,7 @@ describe("runtime", () => {
           setter: {
             fieldsetAccess: ["virtual_input_prop"],
             kind: "fieldset-virtual-input",
-            type: "text",
+            type: "string",
             required: false,
             nullable: false,
             validators: [],
@@ -180,65 +179,112 @@ describe("runtime", () => {
       });
 
       const changeset: ChangesetDef = [
-        { name: "a", setter: getTypedLiteralValue(2) },
+        { name: "a", setter: { kind: "literal", type: "integer", value: 2 } },
 
-        { name: "foo", setter: getTypedLiteralValue("foo1") },
-        { name: "bar", setter: getTypedLiteralValue("bar2") },
-        { name: "is_a", setter: getTypedLiteralValue(true) },
+        { name: "foo", setter: { kind: "literal", type: "string", value: "foo1" } },
+        { name: "bar", setter: { kind: "literal", type: "string", value: "bar2" } },
+        { name: "is_a", setter: { kind: "literal", type: "boolean", value: true } },
 
-        { name: "plus", setter: mkFn("+", [mkRef("a"), getTypedLiteralValue(4)]) },
-        { name: "minus", setter: mkFn("-", [mkRef("a"), getTypedLiteralValue(-3)]) },
-        { name: "multiply", setter: mkFn("*", [getTypedLiteralValue(6), mkRef("a")]) },
-        { name: "divide", setter: mkFn("/", [getTypedLiteralValue(6), mkRef("a")]) },
+        {
+          name: "plus",
+          setter: mkFn("+", [mkRef("a"), { kind: "literal", type: "integer", value: 4 }]),
+        },
+        {
+          name: "minus",
+          setter: mkFn("-", [mkRef("a"), { kind: "literal", type: "integer", value: -3 }]),
+        },
+        {
+          name: "multiply",
+          setter: mkFn("*", [{ kind: "literal", type: "integer", value: 6 }, mkRef("a")]),
+        },
+        {
+          name: "divide",
+          setter: mkFn("/", [{ kind: "literal", type: "integer", value: 6 }, mkRef("a")]),
+        },
 
-        { name: "gt", setter: mkFn(">", [mkRef("a"), getTypedLiteralValue(2)]) },
-        { name: "gte", setter: mkFn(">=", [mkRef("a"), getTypedLiteralValue(2)]) },
-        { name: "lt", setter: mkFn("<", [mkRef("a"), getTypedLiteralValue(2)]) },
-        { name: "lte", setter: mkFn("<=", [mkRef("a"), getTypedLiteralValue(2)]) },
+        {
+          name: "gt",
+          setter: mkFn(">", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+        },
+        {
+          name: "gte",
+          setter: mkFn(">=", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+        },
+        {
+          name: "lt",
+          setter: mkFn("<", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+        },
+        {
+          name: "lte",
+          setter: mkFn("<=", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+        },
 
-        { name: "and", setter: mkFn("and", [mkRef("is_a"), getTypedLiteralValue(false)]) },
-        { name: "or", setter: mkFn("or", [mkRef("is_a"), getTypedLiteralValue(false)]) },
+        {
+          name: "and",
+          setter: mkFn("and", [mkRef("is_a"), { kind: "literal", type: "boolean", value: false }]),
+        },
+        {
+          name: "or",
+          setter: mkFn("or", [mkRef("is_a"), { kind: "literal", type: "boolean", value: false }]),
+        },
 
-        { name: "is", setter: mkFn("is", [mkRef("a"), getTypedLiteralValue(4)]) },
-        { name: "is not", setter: mkFn("is not", [mkRef("a"), getTypedLiteralValue(4)]) },
+        {
+          name: "is",
+          setter: mkFn("is", [mkRef("a"), { kind: "literal", type: "integer", value: 4 }]),
+        },
+        {
+          name: "is not",
+          setter: mkFn("is not", [mkRef("a"), { kind: "literal", type: "integer", value: 4 }]),
+        },
 
-        { name: "in", setter: getTypedLiteralValue("TODO") },
-        { name: "not in", setter: getTypedLiteralValue("TODO") },
+        { name: "in", setter: { kind: "literal", type: "string", value: "TODO" } },
+        { name: "not in", setter: { kind: "literal", type: "string", value: "TODO" } },
 
         {
           name: "concat",
-          setter: mkFn("concat", [mkRef("foo"), getTypedLiteralValue(" "), mkRef("bar")]),
+          setter: mkFn("concat", [
+            mkRef("foo"),
+            { kind: "literal", type: "string", value: " " },
+            mkRef("bar"),
+          ]),
         },
         { name: "length", setter: mkFn("length", [mkRef("foo")]) },
         { name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
         { name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
         { name: "now", setter: mkFn("now", []) },
-        { name: "stringify", setter: mkFn("stringify", [getTypedLiteralValue(1234)]) },
+        {
+          name: "stringify",
+          setter: mkFn("stringify", [{ kind: "literal", type: "integer", value: 1234 }]),
+        },
         {
           name: "cryptoHash",
           setter: mkFn("cryptoHash", [
-            getTypedLiteralValue("1234567890"),
-            getTypedLiteralValue(10),
+            { kind: "literal", type: "string", value: "1234567890" },
+            { kind: "literal", type: "integer", value: 10 },
           ]),
         },
         {
           name: "cryptoCompare",
           setter: mkFn("cryptoCompare", [
-            getTypedLiteralValue("1234567890"),
-            getTypedLiteralValue("$2b$10$yvIRy64TPxhnvXWcV0IReeFux.3uDoiR/H5bu5YsEqIkGroqk7To."),
+            { kind: "literal", type: "string", value: "1234567890" },
+            {
+              kind: "literal",
+              type: "string",
+              value: "$2b$10$yvIRy64TPxhnvXWcV0IReeFux.3uDoiR/H5bu5YsEqIkGroqk7To.",
+            },
           ]),
         },
         // invalid password
         {
           name: "cryptoCompareFailed",
           setter: mkFn("cryptoCompare", [
-            getTypedLiteralValue("1234567890"),
-            getTypedLiteralValue("invalid hash"),
+            { kind: "literal", type: "string", value: "1234567890" },
+            { kind: "literal", type: "string", value: "invalid hash" },
           ]),
         },
         {
           name: "cryptoToken",
-          setter: mkFn("cryptoToken", [getTypedLiteralValue(32)]),
+          setter: mkFn("cryptoToken", [{ kind: "literal", type: "integer", value: 32 }]),
         },
       ];
       const context: ActionContext = {
@@ -282,17 +328,17 @@ describe("runtime", () => {
 
   describe("formatting", () => {
     it("ignores undefined/null vlaue", () => {
-      expect(formatFieldValue(undefined, "text")).toStrictEqual(undefined);
-      expect(formatFieldValue(null, "text")).toStrictEqual(null);
+      expect(formatFieldValue(undefined, "string")).toStrictEqual(undefined);
+      expect(formatFieldValue(null, "string")).toStrictEqual(null);
       expect(formatFieldValue(undefined, "null")).toStrictEqual(undefined);
       expect(formatFieldValue(null, "null")).toStrictEqual(null);
     });
 
     it("formats text field values", () => {
-      expect(formatFieldValue("asdf", "text")).toStrictEqual("asdf");
-      expect(formatFieldValue(123, "text")).toStrictEqual("123");
-      expect(formatFieldValue([1, 2, 3], "text")).toStrictEqual("1,2,3");
-      expect(formatFieldValue({ a: 1 }, "text")).toStrictEqual("[object Object]");
+      expect(formatFieldValue("asdf", "string")).toStrictEqual("asdf");
+      expect(formatFieldValue(123, "string")).toStrictEqual("123");
+      expect(formatFieldValue([1, 2, 3], "string")).toStrictEqual("1,2,3");
+      expect(formatFieldValue({ a: 1 }, "string")).toStrictEqual("[object Object]");
     });
 
     it("formats integer field values", () => {

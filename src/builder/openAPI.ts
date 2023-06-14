@@ -4,6 +4,7 @@ import { match } from "ts-pattern";
 
 import { buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
+import { FieldType } from "@src/compiler/ast/type";
 import {
   Definition,
   EndpointDef,
@@ -218,16 +219,14 @@ function buildSchemaFromFieldset(fieldset: FieldsetDef): OpenAPIV3.SchemaObject 
   return schema;
 }
 
-function convertToOpenAPIType(
-  type: "boolean" | "integer" | "text" | "unknown" | "null"
-): OpenAPIV3.NonArraySchemaObjectType {
+function convertToOpenAPIType(type: FieldType | "null"): OpenAPIV3.NonArraySchemaObjectType {
   switch (type) {
     case "boolean":
     case "integer":
+    case "string":
       return type;
-    case "text":
-      return "string";
-    case "unknown":
+    case "float":
+      return "number";
     case "null":
       // arbitrary type is "object"
       return "object";

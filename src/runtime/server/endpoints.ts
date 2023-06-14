@@ -774,7 +774,7 @@ function validatePathIdentifier(
 
 function convertPathValue(
   val: string,
-  type: "text" | "integer",
+  type: "string" | "integer",
   defaultValue?: string | number
 ): string | number {
   if (val == null && defaultValue != null) return defaultValue;
@@ -787,7 +787,7 @@ function convertPathValue(
       }
       return n;
     }
-    case "text": {
+    case "string": {
       return val;
     }
   }

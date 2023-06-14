@@ -49,7 +49,7 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -70,7 +70,7 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
         ],
         "kind": "fieldset-input",
         "required": false,
-        "type": "text",
+        "type": "string",
       },
     },
     {
@@ -81,7 +81,7 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
         ],
         "kind": "fieldset-input",
         "required": false,
-        "type": "text",
+        "type": "string",
       },
     },
   ],

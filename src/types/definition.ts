@@ -1,5 +1,12 @@
-import { TypeCardinality } from "@src/compiler/ast/type";
+import { FieldType, TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
+import {
+  BooleanLiteral,
+  FloatLiteral,
+  IntegerLiteral,
+  Literal,
+  StringLiteral,
+} from "@src/types/specification";
 
 export type Definition = {
   models: ModelDef[];
@@ -24,8 +31,6 @@ export type ModelDef = {
   hooks: ModelHookDef[];
 };
 
-export type FieldType = "integer" | "text" | "boolean";
-
 export type FieldDef = {
   kind: "field";
   refKey: string;
@@ -33,7 +38,6 @@ export type FieldDef = {
   name: string;
   dbname: string;
   type: FieldType;
-  dbtype: "serial" | "integer" | "text" | "boolean";
   primary: boolean;
   unique: boolean;
   nullable: boolean;
@@ -110,7 +114,7 @@ export type ModelHookDef = {
 };
 
 export type VariablePrimitiveType = {
-  kind: "integer" | "text" | "boolean" | "unknown" | "null";
+  kind: FieldType | "null";
   nullable: boolean;
 };
 
@@ -123,8 +127,9 @@ type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 
 export type LiteralValueDef =
   | LiteralIntegerDef
+  | LiteralFloatDef
   | LiteralNullDef
-  | LiteralTextDef
+  | LiteralStringDef
   | LiteralBooleanDef;
 
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
@@ -191,7 +196,8 @@ type TypedAggregateFunction = {
 };
 
 type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
-type LiteralTextDef = { kind: "literal"; type: "text"; value: string };
+type LiteralFloatDef = { kind: "literal"; type: "float"; value: number };
+type LiteralStringDef = { kind: "literal"; type: "string"; value: string };
 type LiteralNullDef = { kind: "literal"; type: "null"; value: null };
 type LiteralBooleanDef = { kind: "literal"; type: "boolean"; value: boolean };
 
@@ -218,7 +224,7 @@ export type TargetDef = {
   retType: string;
   alias: string;
   identifyWith:
-    | { name: string; refKey: string; type: "text" | "integer"; paramName: string }
+    | { name: string; refKey: string; type: "string" | "integer"; paramName: string }
     | undefined;
 };
 
@@ -359,85 +365,108 @@ export type FieldsetRecordDef = {
 
 export type IValidatorDef = {
   name: string;
-  inputType: "integer" | "text" | "boolean";
-  args: ConstantDef[];
+  inputType: FieldType;
+  args: Literal[];
 };
 
 export type FieldsetFieldDef = {
   kind: "field";
-  type: FieldDef["type"];
+  type: FieldType;
   nullable: boolean;
   required: boolean;
   validators: ValidatorDef[];
 };
 
 export type ValidatorDef =
-  | MinLengthTextValidator
-  | MaxLengthTextValidator
-  | EmailTextValidator
+  | MinLengthStringValidator
+  | MaxLengthStringValidator
+  | EmailStringValidator
   | MinIntValidator
   | MaxIntValidator
+  | MinFloatValidator
+  | MaxFloatValidator
   | IsBooleanEqual
   | IsIntEqual
-  | IsTextEqual
+  | IsFloatEqual
+  | IsStringEqual
   | HookValidator
   | NoReferenceValidator;
 
 export const ValidatorDefinition = [
-  ["text", "max", "maxLength", ["integer"]],
-  ["text", "min", "minLength", ["integer"]],
-  ["text", "isEmail", "isEmail", []],
-  ["integer", "min", "min", ["integer"]],
-  ["integer", "max", "max", ["integer"]],
+  ["string", "max", "maxLength", ["integer"]],
+  ["string", "min", "minLength", ["integer"]],
+  ["string", "isEmail", "isEmail", []],
+  ["integer", "min", "minInt", ["integer"]],
+  ["integer", "max", "maxInt", ["integer"]],
+  ["float", "min", "minFloat", ["float"]],
+  ["float", "max", "maxFloat", ["float"]],
   ["boolean", "isEqual", "isBoolEqual", ["boolean"]],
   ["integer", "isEqual", "isIntEqual", ["integer"]],
-  ["text", "isEqual", "isTextEqual", ["text"]],
+  ["float", "isEqual", "isFloatEqual", ["float"]],
+  ["string", "isEqual", "isStringEqual", ["string"]],
 ] as const;
 
-export interface MinLengthTextValidator extends IValidatorDef {
+export interface MinLengthStringValidator extends IValidatorDef {
   name: "minLength";
-  inputType: "text";
-  args: [IntConst];
+  inputType: "string";
+  args: [IntegerLiteral];
 }
 
-export interface MaxLengthTextValidator extends IValidatorDef {
+export interface MaxLengthStringValidator extends IValidatorDef {
   name: "maxLength";
-  inputType: "text";
-  args: [IntConst];
+  inputType: "string";
+  args: [IntegerLiteral];
 }
 
-export interface EmailTextValidator extends IValidatorDef {
+export interface EmailStringValidator extends IValidatorDef {
   name: "isEmail";
-  inputType: "text";
+  inputType: "string";
   args: [];
 }
 
 export interface MinIntValidator extends IValidatorDef {
-  name: "min";
+  name: "minInt";
   inputType: "integer";
-  args: [IntConst];
+  args: [IntegerLiteral];
 }
 
 export interface MaxIntValidator extends IValidatorDef {
-  name: "max";
+  name: "maxInt";
   inputType: "integer";
-  args: [IntConst];
+  args: [IntegerLiteral];
+}
+
+export interface MinFloatValidator extends IValidatorDef {
+  name: "minFloat";
+  inputType: "float";
+  args: [FloatLiteral];
+}
+
+export interface MaxFloatValidator extends IValidatorDef {
+  name: "maxFloat";
+  inputType: "float";
+  args: [FloatLiteral];
 }
 
 export interface IsBooleanEqual extends IValidatorDef {
   name: "isBoolEqual";
   inputType: "boolean";
-  args: [BoolConst];
+  args: [BooleanLiteral];
 }
 export interface IsIntEqual extends IValidatorDef {
   name: "isIntEqual";
   inputType: "integer";
-  args: [IntConst];
+  args: [IntegerLiteral];
 }
-export interface IsTextEqual extends IValidatorDef {
-  name: "isTextEqual";
-  inputType: "text";
-  args: [TextConst];
+export interface IsFloatEqual extends IValidatorDef {
+  name: "isFloatEqual";
+  inputType: "float";
+  args: [FloatLiteral];
+}
+export interface IsStringEqual extends IValidatorDef {
+  name: "isStringEqual";
+  inputType: "string";
+  args: [StringLiteral];
 }
 
 export interface HookValidator {
@@ -448,12 +477,6 @@ export interface HookValidator {
 export interface NoReferenceValidator {
   name: "noReference";
 }
-
-export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;
-type BoolConst = { type: "boolean"; value: boolean };
-type IntConst = { type: "integer"; value: number };
-type TextConst = { type: "text"; value: string };
-type NullConst = { type: "null"; value: null };
 
 export type ActionDef =
   | CreateOneAction

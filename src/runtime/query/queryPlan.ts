@@ -20,6 +20,7 @@ import {
   QueryDef,
   SelectItem,
   TypedExprDef,
+  VariablePrimitiveType,
 } from "@src/types/definition";
 
 // FIXME support dbname and real table names
@@ -62,7 +63,7 @@ export type QueryPlanJoin = JoinWithSubquery | InlineJoin;
 export type QueryPlanExpression =
   | {
       kind: "literal";
-      type: "boolean" | "null" | "text" | "integer";
+      type: VariablePrimitiveType["kind"];
       value: unknown;
     }
   | {
