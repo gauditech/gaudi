@@ -4,20 +4,34 @@ model Element {
 }
 
 model Extra {
-  field slug { type string, unique }
+  reference extraData { to ExtraData, unique }
   relation element { from Element, through extra }
+}
+
+model ExtraData {
+  field slug { type string, unique }
+  relation extra { from Extra, through extraData }
 }
 
 api {
   entrypoint Extra {
-    create endpoint {}
+    identify { through extraData.slug }
+    get endpoint {}
+    create endpoint {
+      action {
+        create ExtraData as extraData {}
+        create as extra {
+          set extraData extraData
+        }
+      }
+    }
   }
 
   entrypoint Element {
     create endpoint {
       action {
         create {
-          reference extra through slug
+          reference extra through extraData.slug
         }
       }
     }

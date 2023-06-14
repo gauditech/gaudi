@@ -547,7 +547,7 @@ export type FieldSetterVirtualInput = {
 export type FieldSetterReferenceInput = {
   kind: "fieldset-reference-input";
   fieldsetAccess: string[];
-  throughRefKey: string;
+  through: string[];
   // required: boolean;
 };
 

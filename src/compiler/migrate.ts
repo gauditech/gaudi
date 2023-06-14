@@ -422,7 +422,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const refThroughs = kindFilter(action.atoms, "referenceThrough").map(
       (referenceThrough): Spec.ActionAtomRefThrough => {
         const target = migrateIdentifierRef(referenceThrough.target);
-        const through = migrateIdentifierRef(referenceThrough.through);
+        const through = referenceThrough.through.map((i) => migrateIdentifierRef(i));
         return { kind: "reference", target, through };
       }
     );

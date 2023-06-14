@@ -861,7 +861,9 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
             "extras_name",
           ],
           "kind": "fieldset-reference-input",
-          "throughRefKey": "OrgExtra.name",
+          "through": [
+            "name",
+          ],
         },
       },
     ],

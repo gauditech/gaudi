@@ -650,7 +650,8 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
         .with({ kind: "referenceThrough" }, ({ target, through }) => {
           resolveModelAtomRef(target, currentModel, "reference");
-          resolveModelAtomRef(through, target.ref?.model, "field");
+          const referenceModel = getTypeModel(target.type);
+          resolveIdentifierRefPath(through, { ...scope, model: referenceModel });
         })
         .with({ kind: "deny" }, ({ fields }) => {
           if (fields.kind === "list") {

@@ -280,8 +280,11 @@ function atomToChangesetOperation(
         name: atom.target.text,
         setter: {
           kind: "fieldset-reference-input",
-          throughRefKey: refKeyFromRef(atom.through.ref),
-          fieldsetAccess: [...fieldsetNamespace, `${atom.target.text}_${atom.through.text}`],
+          through: atom.through.map((i) => i.text),
+          fieldsetAccess: [
+            ...fieldsetNamespace,
+            `${atom.target.text}_${atom.through.map((i) => i.text).join("_")}`,
+          ],
         },
       };
     }

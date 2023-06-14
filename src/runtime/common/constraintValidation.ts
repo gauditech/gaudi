@@ -6,6 +6,7 @@ import { DbConn } from "../server/dbConn";
 import { Vars } from "../server/vars";
 
 import { getRef } from "@src/common/refs";
+import { getTypedPath, getTypedPathWithLeaf } from "@src/composer/utils";
 import {
   ActionDef,
   Definition,
@@ -28,21 +29,23 @@ export async function fetchReferenceIds(
     if (action.kind !== "create-one" && action.kind !== "update-one") return [];
     return action.changeset.flatMap(({ name, setter }) => {
       if (setter.kind !== "fieldset-reference-input") return [];
-      return [[name, setter] as const];
+      return [[action.model, name, setter] as const];
     });
   });
 
-  const promiseEntries = referenceInputs.map(async ([_name, setter]) => {
-    const field = getRef.field(def, setter.throughRefKey);
+  const promiseEntries = referenceInputs.map(async ([model, name, setter]) => {
+    const reference = getRef.reference(def, model, name);
+    const tpath = getTypedPathWithLeaf(def, [reference.toModelRefKey, ...setter.through], {});
+    const field = getRef.field(def, tpath.leaf.refKey);
 
-    const varName = field.name + "__input";
+    const varName = [...tpath.fullPath, "_input"].join("_");
     const filter: TypedExprDef = {
       kind: "function",
       name: "is",
       args: [
         {
           kind: "alias",
-          namePath: [field.modelRefKey, field.name],
+          namePath: tpath.fullPath,
         },
         {
           kind: "variable",
@@ -51,12 +54,18 @@ export async function fetchReferenceIds(
         },
       ],
     };
-    const queryName = field.modelRefKey + "." + field.name;
-    const query = queryFromParts(def, queryName, [field.modelRefKey], filter, [
-      selectableId([field.modelRefKey]),
+    const queryName = tpath.fullPath.join(".");
+    const query = queryFromParts(def, queryName, _.initial(tpath.fullPath), filter, [
+      selectableId(_.dropRight(tpath.fullPath, 2)),
     ]);
     const inputValue = _.get(input, setter.fieldsetAccess);
     const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
+
+    console.dir({
+      inputValue,
+      varName,
+      result,
+    });
 
     if (result.length === 0) {
       return { fieldsetAccess: setter.fieldsetAccess, value: "no-reference" as const };

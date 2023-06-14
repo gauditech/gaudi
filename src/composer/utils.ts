@@ -133,6 +133,7 @@ export function getTypedPath(def: Definition, path: string[], ctx: VarContext): 
  */
 interface TypedContextPathWithLeaf extends TypedPath {
   leaf: TypedPathItemField;
+  fullPath: string[];
 }
 /**
  * Constructs typed path from context (`getTypedPathFromContext`), but
@@ -146,8 +147,8 @@ export function getTypedPathWithLeaf(
 ): TypedContextPathWithLeaf {
   const tpath = getTypedPath(def, path, ctx);
   if (tpath.leaf) {
-    return tpath as TypedContextPathWithLeaf;
+    return { ...tpath, fullPath: path } as TypedContextPathWithLeaf;
   } else {
-    return getTypedPath(def, [...path, "id"], ctx) as TypedContextPathWithLeaf;
+    return getTypedPathWithLeaf(def, [...path, "id"], ctx) as TypedContextPathWithLeaf;
   }
 }

@@ -486,9 +486,10 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",

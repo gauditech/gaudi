@@ -820,7 +820,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = getTokenData(this.CONSUME(L.Reference));
     const target = this.SUBRULE1(this.identifierRef);
     const keywordThrough = getTokenData(this.CONSUME(L.Through));
-    const through = this.SUBRULE2(this.identifierRef);
+    const through = this.SUBRULE2(this.identifierRefPath);
 
     return {
       kind: "referenceThrough",

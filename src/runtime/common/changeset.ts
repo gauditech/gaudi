@@ -77,7 +77,11 @@ export async function buildChangeset(
         const referenceIdResult = actionContext.referenceIds.find((result) =>
           _.isEqual(result.fieldsetAccess, setter.fieldsetAccess)
         );
-        ensureNot(referenceIdResult, undefined);
+        ensureNot(
+          referenceIdResult,
+          undefined,
+          `${JSON.stringify(actionContext.referenceIds)} -> ${setter.fieldsetAccess}`
+        );
         return referenceIdResult.value;
       }
       case "request-auth-token": {

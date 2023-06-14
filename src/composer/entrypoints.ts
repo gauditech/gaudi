@@ -1,10 +1,11 @@
 import _ from "lodash";
 
+import { getTypedPath, getTypedPathWithLeaf } from "./utils";
+
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual, ensureOneOf } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@src/composer/query";
-import { refKeyFromRef } from "@src/composer/utils";
 import {
   ActionDef,
   Definition,
@@ -295,7 +296,9 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
               ];
             }
             case "fieldset-reference-input": {
-              const field = getRef.field(def, setter.throughRefKey);
+              ensureOneOf(action.kind, ["create-one", "update-one"]);
+              const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
+              const field = getRef.field(def, tpath.leaf.refKey);
               return [
                 setter.fieldsetAccess,
                 {

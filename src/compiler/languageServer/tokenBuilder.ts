@@ -377,7 +377,7 @@ export function buildTokens(
     buildKeyword(keyword);
     buildIdentifierRef(target);
     buildKeyword(keywordThrough);
-    buildIdentifierRef(through);
+    buildIdentifierPath(through);
   }
 
   function buildActionAtomVirtualInput({ keyword, name, atoms }: ActionAtomVirtualInput) {

@@ -27,12 +27,12 @@ describe("Reference Input", () => {
     });
 
     it("create with a valid reference", async () => {
-      const extraData = { slug: "extra" };
+      const extraData = { extraData: { slug: "extra" } };
 
       const extraPostResponse = await request(getServer()).post("/api/extra").send(extraData);
       expect(extraPostResponse.statusCode).toBe(200);
 
-      const data = { name: "element", extra_slug: "extra" };
+      const data = { name: "element", extra_extraData_slug: "extra" };
 
       const postResponse = await request(getServer()).post("/api/element").send(data);
       expect(postResponse.statusCode).toBe(200);
@@ -40,11 +40,24 @@ describe("Reference Input", () => {
     });
 
     it("create with an invalid reference", async () => {
-      const data = { name: "element", extra_slug: "baz" };
+      const data = { name: "element", extra_extraData_slug: "baz" };
 
       const postResponse = await request(getServer()).post("/api/element").send(data);
       expect(postResponse.statusCode).toBe(400);
       expect(postResponse.body).toMatchSnapshot();
+    });
+
+    it("identifies through nested path", async () => {
+      /**
+       * The following is a copy of 'create with a valid reference' test case
+       */
+      const extraData = { extraData: { slug: "extraslug" } };
+
+      const extraPostResponse = await request(getServer()).post("/api/extra").send(extraData);
+      expect(extraPostResponse.statusCode).toBe(200);
+
+      const getResponse = await request(getServer()).get("/api/extra/extraslug").send();
+      expect(getResponse.statusCode).toBe(200);
     });
   });
 });

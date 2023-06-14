@@ -220,7 +220,7 @@ export type ActionAtomSet = {
 export type ActionAtomRefThrough = {
   kind: "reference";
   target: IdentifierRef<RefModelReference>;
-  through: IdentifierRef<RefModelField>;
+  through: IdentifierRef<RefModelAtom>[];
 };
 export type ActionAtomVirtualInput = {
   kind: "virtual-input";
