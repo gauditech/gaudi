@@ -6,7 +6,7 @@ import { DbConn } from "../server/dbConn";
 import { Vars } from "../server/vars";
 
 import { getRef } from "@src/common/refs";
-import { getTypedPath, getTypedPathWithLeaf } from "@src/composer/utils";
+import { getTypedPathWithLeaf } from "@src/composer/utils";
 import {
   ActionDef,
   Definition,
@@ -60,12 +60,6 @@ export async function fetchReferenceIds(
     ]);
     const inputValue = _.get(input, setter.fieldsetAccess);
     const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
-
-    console.dir({
-      inputValue,
-      varName,
-      result,
-    });
 
     if (result.length === 0) {
       return { fieldsetAccess: setter.fieldsetAccess, value: "no-reference" as const };

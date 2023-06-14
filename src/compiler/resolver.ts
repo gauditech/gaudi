@@ -412,10 +412,9 @@ export function resolve(projectASTs: ProjectASTs) {
     if (identify) {
       if (cardinality === "collection") {
         const through = kindFind(identify.atoms, "through");
-        if (through) {
-          resolveIdentifierRefPath(through.identifierPath, { ...scope, model: currentModel });
+        if (through && currentModel) {
+          resolveRefPath(through.identifierPath, { kind: "model", model: currentModel });
         }
-        // if (through) resolveModelAtomRef(through.identifierPath, currentModel, "field");
       } else {
         errors.push(
           new CompilerError(identify.keyword, ErrorCode.SingleCardinalityEntrypointHasIdentify)
@@ -650,8 +649,9 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
         .with({ kind: "referenceThrough" }, ({ target, through }) => {
           resolveModelAtomRef(target, currentModel, "reference");
-          const referenceModel = getTypeModel(target.type);
-          resolveIdentifierRefPath(through, { ...scope, model: referenceModel });
+          if (target.ref) {
+            resolveRefPath(through, { kind: "model", model: target.ref?.model });
+          }
         })
         .with({ kind: "deny" }, ({ fields }) => {
           if (fields.kind === "list") {
