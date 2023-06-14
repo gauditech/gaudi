@@ -16,9 +16,10 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
     "target": {
       "alias": "org",
       "identifyWith": {
-        "name": "id",
         "paramName": "org_id",
-        "refKey": "Org.id",
+        "path": [
+          "id",
+        ],
         "type": "integer",
       },
       "kind": "model",
@@ -104,9 +105,10 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
     "target": {
       "alias": "org",
       "identifyWith": {
-        "name": "id",
         "paramName": "org_id",
-        "refKey": "Org.id",
+        "path": [
+          "id",
+        ],
         "type": "integer",
       },
       "kind": "model",
@@ -156,9 +158,10 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
     "target": {
       "alias": "org",
       "identifyWith": {
-        "name": "id",
         "paramName": "org_id",
-        "refKey": "Org.id",
+        "path": [
+          "id",
+        ],
         "type": "integer",
       },
       "kind": "model",

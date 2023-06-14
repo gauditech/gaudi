@@ -249,13 +249,13 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const model = target.ref.model;
     const cardinality = getTypeCardinality(target.type);
 
-    let identifyThrough: Spec.IdentifierRef<AST.RefModelField> | undefined;
+    let identifyThrough: Spec.IdentifierRef<AST.Ref>[] | undefined;
     if (cardinality === "collection") {
       const identify = kindFind(entrypoint.atoms, "identify");
-      const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifier;
+      const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifierPath;
       identifyThrough = identifyThroughAst
-        ? migrateIdentifierRef(identifyThroughAst)
-        : generateModelIdIdentifier(model);
+        ? identifyThroughAst.map((i) => migrateIdentifierRef(i))
+        : [generateModelIdIdentifier(model)];
     }
 
     const alias: Spec.IdentifierRef<AST.RefTarget> = entrypoint.as

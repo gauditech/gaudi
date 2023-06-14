@@ -218,7 +218,11 @@ export type TargetDef = {
   retType: string;
   alias: string;
   identifyWith:
-    | { name: string; refKey: string; type: "text" | "integer"; paramName: string }
+    | {
+        path: string[];
+        type: "text" | "integer";
+        paramName: string;
+      }
     | undefined;
 };
 

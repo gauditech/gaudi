@@ -240,9 +240,9 @@ export function buildTokens(
           buildKeyword(keyword);
           atoms.forEach((a) =>
             match(a)
-              .with({ kind: "through" }, ({ keyword, identifier }) => {
+              .with({ kind: "through" }, ({ keyword, identifierPath }) => {
                 buildKeyword(keyword);
-                buildIdentifierRef(identifier);
+                buildIdentifierPath(identifierPath);
               })
               .exhaustive()
           );

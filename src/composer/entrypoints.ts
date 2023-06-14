@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
+import { UnreachableError, assertUnreachable, ensureEqual, ensureOneOf } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@src/composer/query";
 import { refKeyFromRef } from "@src/composer/utils";
@@ -67,9 +67,8 @@ export function calculateTarget(
     "identifyThrough" in spec
       ? calculateIdentifyWith(spec)
       : {
-          name: "id",
+          path: ["id"],
           type: "integer",
-          refKey: `${model}.id`,
           paramName: `${model.toLocaleLowerCase()}_id`,
         };
 
@@ -85,19 +84,17 @@ export function calculateTarget(
 
 function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"] {
   if (!spec.identifyThrough) return undefined;
-  const identifyThrough = spec.identifyThrough;
-  const type = identifyThrough.type;
-  if (
-    type.kind !== "primitive" ||
-    (type.primitiveKind !== "integer" && type.primitiveKind !== "string")
-  ) {
-    throw new Error(`Invalid type of identifiyWith ${JSON.stringify(type)}`);
-  }
+  const leaf = _.last(spec.identifyThrough)!;
+  ensureEqual(leaf.ref.kind, "modelAtom");
+  ensureEqual(leaf.ref.atomKind, "field");
+  ensureEqual(leaf.type.kind, "primitive");
+  ensureOneOf(leaf.type.primitiveKind, ["string", "integer"]);
+  const path = spec.identifyThrough.map((i) => i.text);
+  const type = leaf.type.primitiveKind === "string" ? "text" : leaf.type.primitiveKind;
   return {
-    name: identifyThrough.ref.name,
-    type: type.primitiveKind === "string" ? "text" : type.primitiveKind,
-    refKey: refKeyFromRef(identifyThrough.ref),
-    paramName: `${identifyThrough.ref.parentModel.toLowerCase()}_${identifyThrough.ref.name}`,
+    path,
+    type,
+    paramName: `${leaf.ref.parentModel.toLowerCase()}_${leaf.ref.name}`,
   };
 }
 

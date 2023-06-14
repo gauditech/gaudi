@@ -569,8 +569,8 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Through));
-            const identifier = this.SUBRULE(this.identifierRef);
-            atoms.push({ kind: "through", identifier, keyword });
+            const identifierPath = this.SUBRULE(this.identifierRefPath);
+            atoms.push({ kind: "through", identifierPath, keyword });
           },
         },
       ]);

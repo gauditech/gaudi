@@ -212,9 +212,10 @@ exports[`entrypoint composes basic example 1`] = `
         "target": {
           "alias": "org",
           "identifyWith": {
-            "name": "slug",
             "paramName": "org_slug",
-            "refKey": "Org.slug",
+            "path": [
+              "slug",
+            ],
             "type": "text",
           },
           "kind": "model",
@@ -257,9 +258,10 @@ exports[`entrypoint composes basic example 1`] = `
               {
                 "alias": "org",
                 "identifyWith": {
-                  "name": "slug",
                   "paramName": "org_slug",
-                  "refKey": "Org.slug",
+                  "path": [
+                    "slug",
+                  ],
                   "type": "text",
                 },
                 "kind": "model",
@@ -405,9 +407,10 @@ exports[`entrypoint composes basic example 1`] = `
               {
                 "alias": "org",
                 "identifyWith": {
-                  "name": "slug",
                   "paramName": "org_slug",
-                  "refKey": "Org.slug",
+                  "path": [
+                    "slug",
+                  ],
                   "type": "text",
                 },
                 "kind": "model",
@@ -519,9 +522,10 @@ exports[`entrypoint composes basic example 1`] = `
             "target": {
               "alias": "$target_1",
               "identifyWith": {
-                "name": "id",
                 "paramName": "repo_id",
-                "refKey": "Repo.id",
+                "path": [
+                  "id",
+                ],
                 "type": "integer",
               },
               "kind": "relation",
@@ -609,9 +613,10 @@ exports[`entrypoint composes basic example 1`] = `
               {
                 "alias": "org",
                 "identifyWith": {
-                  "name": "slug",
                   "paramName": "org_slug",
-                  "refKey": "Org.slug",
+                  "path": [
+                    "slug",
+                  ],
                   "type": "text",
                 },
                 "kind": "model",
@@ -823,9 +828,10 @@ exports[`entrypoint composes basic example 1`] = `
               {
                 "alias": "org",
                 "identifyWith": {
-                  "name": "slug",
                   "paramName": "org_slug",
-                  "refKey": "Org.slug",
+                  "path": [
+                    "slug",
+                  ],
                   "type": "text",
                 },
                 "kind": "model",
@@ -859,9 +865,10 @@ exports[`entrypoint composes basic example 1`] = `
             "target": {
               "alias": "$target_1",
               "identifyWith": {
-                "name": "id",
                 "paramName": "repo_id",
-                "refKey": "Repo.id",
+                "path": [
+                  "id",
+                ],
                 "type": "integer",
               },
               "kind": "relation",
@@ -897,9 +904,10 @@ exports[`entrypoint composes basic example 1`] = `
         "target": {
           "alias": "$target_1",
           "identifyWith": {
-            "name": "id",
             "paramName": "repo_id",
-            "refKey": "Repo.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "relation",
@@ -916,9 +924,10 @@ exports[`entrypoint composes basic example 1`] = `
     "target": {
       "alias": "org",
       "identifyWith": {
-        "name": "slug",
         "paramName": "org_slug",
-        "refKey": "Org.slug",
+        "path": [
+          "slug",
+        ],
         "type": "text",
       },
       "kind": "model",
@@ -943,9 +952,10 @@ exports[`entrypoint composes single cardinality 1`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "user_id",
-            "refKey": "User.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -1084,9 +1094,10 @@ exports[`entrypoint composes single cardinality 1`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "user_id",
-            "refKey": "User.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -1189,9 +1200,10 @@ exports[`entrypoint composes single cardinality 1`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "user_id",
-            "refKey": "User.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -1343,9 +1355,10 @@ exports[`entrypoint composes single cardinality 2`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "user_id",
-            "refKey": "User.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -1453,9 +1466,10 @@ exports[`entrypoint composes single cardinality 2`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "user_id",
-            "refKey": "User.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -1610,9 +1624,10 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "address_id",
-            "refKey": "Address.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -1743,9 +1758,10 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "address_id",
-            "refKey": "Address.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -1952,9 +1968,10 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "address_id",
-            "refKey": "Address.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -2095,9 +2112,10 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "address_id",
-            "refKey": "Address.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",
@@ -2167,9 +2185,10 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "$target_0",
           "identifyWith": {
-            "name": "id",
             "paramName": "address_id",
-            "refKey": "Address.id",
+            "path": [
+              "id",
+            ],
             "type": "integer",
           },
           "kind": "model",

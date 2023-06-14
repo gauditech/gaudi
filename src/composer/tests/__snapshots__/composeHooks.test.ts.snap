@@ -77,9 +77,10 @@ exports[`compose hooks action hook 1`] = `
     "target": {
       "alias": "org",
       "identifyWith": {
-        "name": "id",
         "paramName": "org_id",
-        "refKey": "Org.id",
+        "path": [
+          "id",
+        ],
         "type": "integer",
       },
       "kind": "model",
@@ -336,9 +337,10 @@ exports[`compose hooks composes source hooks 1`] = `
           "target": {
             "alias": "$target_0",
             "identifyWith": {
-              "name": "id",
               "paramName": "org_id",
-              "refKey": "Org.id",
+              "path": [
+                "id",
+              ],
               "type": "integer",
             },
             "kind": "model",
@@ -644,9 +646,10 @@ exports[`compose hooks inline hooks 1`] = `
           "target": {
             "alias": "$target_0",
             "identifyWith": {
-              "name": "id",
               "paramName": "org_id",
-              "refKey": "Org.id",
+              "path": [
+                "id",
+              ],
               "type": "integer",
             },
             "kind": "model",

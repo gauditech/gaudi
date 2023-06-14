@@ -112,7 +112,7 @@ export type Entrypoint<c extends TypeCardinality = TypeCardinality> = {
   cardinality: c;
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   alias: IdentifierRef<RefTarget>;
-  identifyThrough: c extends "collection" ? IdentifierRef<RefModelField> : undefined;
+  identifyThrough: c extends "collection" ? IdentifierRef<Ref>[] : undefined;
   endpoints: Endpoint[];
   entrypoints: Entrypoint[];
 };

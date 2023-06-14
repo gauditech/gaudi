@@ -412,7 +412,10 @@ export function resolve(projectASTs: ProjectASTs) {
     if (identify) {
       if (cardinality === "collection") {
         const through = kindFind(identify.atoms, "through");
-        if (through) resolveModelAtomRef(through.identifier, currentModel, "field");
+        if (through) {
+          resolveIdentifierRefPath(through.identifierPath, { ...scope, model: currentModel });
+        }
+        // if (through) resolveModelAtomRef(through.identifierPath, currentModel, "field");
       } else {
         errors.push(
           new CompilerError(identify.keyword, ErrorCode.SingleCardinalityEntrypointHasIdentify)

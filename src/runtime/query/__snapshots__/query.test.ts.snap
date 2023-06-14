@@ -407,9 +407,10 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
   {
     "alias": "$target_0",
     "identifyWith": {
-      "name": "slug",
       "paramName": "org_slug",
-      "refKey": "Org.slug",
+      "path": [
+        "slug",
+      ],
       "type": "text",
     },
     "kind": "model",
@@ -439,9 +440,10 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
   {
     "alias": "$target_1",
     "identifyWith": {
-      "name": "id",
       "paramName": "repo_id",
-      "refKey": "Repo.id",
+      "path": [
+        "id",
+      ],
       "type": "integer",
     },
     "kind": "relation",
@@ -804,9 +806,10 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 3`] = `
 {
   "alias": "$target_2",
   "identifyWith": {
-    "name": "id",
     "paramName": "issue_id",
-    "refKey": "Issue.id",
+    "path": [
+      "id",
+    ],
     "type": "integer",
   },
   "kind": "relation",
@@ -844,9 +847,10 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
   {
     "alias": "$target_0",
     "identifyWith": {
-      "name": "slug",
       "paramName": "org_slug",
-      "refKey": "Org.slug",
+      "path": [
+        "slug",
+      ],
       "type": "text",
     },
     "kind": "model",
@@ -876,9 +880,10 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
   {
     "alias": "$target_1",
     "identifyWith": {
-      "name": "id",
       "paramName": "repo_id",
-      "refKey": "Repo.id",
+      "path": [
+        "id",
+      ],
       "type": "integer",
     },
     "kind": "relation",
@@ -1273,9 +1278,10 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 3`] = `
 {
   "alias": "$target_2",
   "identifyWith": {
-    "name": "id",
     "paramName": "issue_id",
-    "refKey": "Issue.id",
+    "path": [
+      "id",
+    ],
     "type": "integer",
   },
   "kind": "relation",
@@ -1313,9 +1319,10 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
   {
     "alias": "$target_0",
     "identifyWith": {
-      "name": "slug",
       "paramName": "org_slug",
-      "refKey": "Org.slug",
+      "path": [
+        "slug",
+      ],
       "type": "text",
     },
     "kind": "model",
@@ -1345,9 +1352,10 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
   {
     "alias": "$target_1",
     "identifyWith": {
-      "name": "id",
       "paramName": "repo_id",
-      "refKey": "Repo.id",
+      "path": [
+        "id",
+      ],
       "type": "integer",
     },
     "kind": "relation",
@@ -1752,9 +1760,10 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
   {
     "alias": "$target_0",
     "identifyWith": {
-      "name": "slug",
       "paramName": "org_slug",
-      "refKey": "Org.slug",
+      "path": [
+        "slug",
+      ],
       "type": "text",
     },
     "kind": "model",
@@ -1784,9 +1793,10 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
   {
     "alias": "$target_1",
     "identifyWith": {
-      "name": "id",
       "paramName": "repo_id",
-      "refKey": "Repo.id",
+      "path": [
+        "id",
+      ],
       "type": "integer",
     },
     "kind": "relation",
@@ -2181,9 +2191,10 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 3`] = `
 {
   "alias": "$target_2",
   "identifyWith": {
-    "name": "id",
     "paramName": "issue_id",
-    "refKey": "Issue.id",
+    "path": [
+      "id",
+    ],
     "type": "integer",
   },
   "kind": "relation",
@@ -2221,9 +2232,10 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
   {
     "alias": "$target_0",
     "identifyWith": {
-      "name": "slug",
       "paramName": "org_slug",
-      "refKey": "Org.slug",
+      "path": [
+        "slug",
+      ],
       "type": "text",
     },
     "kind": "model",
@@ -2253,9 +2265,10 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
   {
     "alias": "$target_1",
     "identifyWith": {
-      "name": "id",
       "paramName": "repo_id",
-      "refKey": "Repo.id",
+      "path": [
+        "id",
+      ],
       "type": "integer",
     },
     "kind": "relation",
