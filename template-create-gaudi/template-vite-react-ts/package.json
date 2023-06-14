@@ -21,8 +21,6 @@
     "test": "npm run test:server; npm run test:client",
     "test:server": "jest --config=./app/server/jest.config.js",
     "test:client": "jest --config=./app/client/jest.config.js",
-    "// --- start": "",
-    "start": "npx gaudi-cli start",
     "// --- other": "",
     "clean": "rimraf ./dist"
   },
