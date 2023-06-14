@@ -11,7 +11,7 @@ import {
 import { getTypeModel } from "@src/compiler/ast/type";
 import { composeValidators } from "@src/composer/models";
 import { composeQuery } from "@src/composer/query";
-import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
+import { refKeyFromRef } from "@src/composer/utils";
 import {
   ActionDef,
   ActionHookDef,
@@ -148,7 +148,7 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
 function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): FieldSetter {
   switch (expr.kind) {
     case "literal": {
-      return getTypedLiteralValue(expr.literal);
+      return { kind: "literal", literal: expr.literal };
     }
     case "identifier": {
       const [head, ...tail] = expr.identifier;

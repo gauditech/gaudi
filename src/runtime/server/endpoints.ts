@@ -846,7 +846,7 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
       throw new Error("Not implemented: aggregate functions not supported in the runtime");
     }
     case "literal": {
-      return expr.value;
+      return expr.literal.value;
     }
     case "variable": {
       throw new Error(
@@ -910,7 +910,7 @@ async function createListEndpointResponse(
           expr: {
             kind: "function",
             name: "count" as any, // FIXME "count" is not supported here
-            args: [{ kind: "literal", type: "integer", value: 1 }],
+            args: [{ kind: "literal", literal: { kind: "integer", value: 1 } }],
           },
         },
       ],

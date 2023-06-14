@@ -118,19 +118,14 @@ export type VariablePrimitiveType = {
   nullable: boolean;
 };
 
-type VariableCollectionType<T extends VariablePrimitiveType = VariablePrimitiveType> = {
+type VariableCollectionType = {
   kind: "collection";
-  type: T;
+  type: VariablePrimitiveType;
 };
 
 type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 
-export type LiteralValueDef =
-  | LiteralIntegerDef
-  | LiteralFloatDef
-  | LiteralNullDef
-  | LiteralStringDef
-  | LiteralBooleanDef;
+export type LiteralValueDef = { kind: "literal"; literal: Literal };
 
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
 type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
@@ -184,7 +179,7 @@ export type TypedExprDef =
 type TypedArray = {
   kind: "array";
   elements: TypedExprDef[];
-  type: VariablePrimitiveType;
+  type: VariableCollectionType;
 };
 
 type TypedAggregateFunction = {
@@ -194,12 +189,6 @@ type TypedAggregateFunction = {
   sourcePath: string[];
   targetPath: string[];
 };
-
-type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
-type LiteralFloatDef = { kind: "literal"; type: "float"; value: number };
-type LiteralStringDef = { kind: "literal"; type: "string"; value: string };
-type LiteralNullDef = { kind: "literal"; type: "null"; value: null };
-type LiteralBooleanDef = { kind: "literal"; type: "boolean"; value: boolean };
 
 export type ApiDef = {
   name?: string;

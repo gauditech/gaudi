@@ -53,7 +53,7 @@ describe("runtime", () => {
       const data: ChangesetDef = [
         {
           name: "value_prop",
-          setter: { kind: "literal", value: "just value", type: "string" },
+          setter: { kind: "literal", literal: { kind: "string", value: "just value" } },
         },
         {
           name: "input_prop",
@@ -104,8 +104,8 @@ describe("runtime", () => {
           setter: {
             kind: "fieldset-hook",
             args: [
-              { name: "x", setter: { kind: "literal", type: "integer", value: 6 } },
-              { name: "y", setter: { kind: "literal", type: "integer", value: 2 } },
+              { name: "x", setter: { kind: "literal", literal: { kind: "integer", value: 6 } } },
+              { name: "y", setter: { kind: "literal", literal: { kind: "integer", value: 2 } } },
             ],
             hook: { kind: "inline", inline: "x / y" },
           },
@@ -131,7 +131,7 @@ describe("runtime", () => {
         // lept field
         {
           name: "input_prop",
-          setter: { kind: "literal", value: "just value", type: "string" },
+          setter: { kind: "literal", literal: { kind: "string", value: "just value" } },
         },
         // removed virtual/transient fileds
         {
@@ -179,72 +179,108 @@ describe("runtime", () => {
       });
 
       const changeset: ChangesetDef = [
-        { name: "a", setter: { kind: "literal", type: "integer", value: 2 } },
+        { name: "a", setter: { kind: "literal", literal: { kind: "integer", value: 2 } } },
 
-        { name: "foo", setter: { kind: "literal", type: "string", value: "foo1" } },
-        { name: "bar", setter: { kind: "literal", type: "string", value: "bar2" } },
-        { name: "is_a", setter: { kind: "literal", type: "boolean", value: true } },
+        { name: "foo", setter: { kind: "literal", literal: { kind: "string", value: "foo1" } } },
+        { name: "bar", setter: { kind: "literal", literal: { kind: "string", value: "bar2" } } },
+        { name: "is_a", setter: { kind: "literal", literal: { kind: "boolean", value: true } } },
 
         {
           name: "plus",
-          setter: mkFn("+", [mkRef("a"), { kind: "literal", type: "integer", value: 4 }]),
+          setter: mkFn("+", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: 4 } },
+          ]),
         },
         {
           name: "minus",
-          setter: mkFn("-", [mkRef("a"), { kind: "literal", type: "integer", value: -3 }]),
+          setter: mkFn("-", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: -3 } },
+          ]),
         },
         {
           name: "multiply",
-          setter: mkFn("*", [{ kind: "literal", type: "integer", value: 6 }, mkRef("a")]),
+          setter: mkFn("*", [
+            { kind: "literal", literal: { kind: "integer", value: 6 } },
+            mkRef("a"),
+          ]),
         },
         {
           name: "divide",
-          setter: mkFn("/", [{ kind: "literal", type: "integer", value: 6 }, mkRef("a")]),
+          setter: mkFn("/", [
+            { kind: "literal", literal: { kind: "integer", value: 6 } },
+            mkRef("a"),
+          ]),
         },
 
         {
           name: "gt",
-          setter: mkFn(">", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+          setter: mkFn(">", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: 2 } },
+          ]),
         },
         {
           name: "gte",
-          setter: mkFn(">=", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+          setter: mkFn(">=", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: 2 } },
+          ]),
         },
         {
           name: "lt",
-          setter: mkFn("<", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+          setter: mkFn("<", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: 2 } },
+          ]),
         },
         {
           name: "lte",
-          setter: mkFn("<=", [mkRef("a"), { kind: "literal", type: "integer", value: 2 }]),
+          setter: mkFn("<=", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: 2 } },
+          ]),
         },
 
         {
           name: "and",
-          setter: mkFn("and", [mkRef("is_a"), { kind: "literal", type: "boolean", value: false }]),
+          setter: mkFn("and", [
+            mkRef("is_a"),
+            { kind: "literal", literal: { kind: "boolean", value: false } },
+          ]),
         },
         {
           name: "or",
-          setter: mkFn("or", [mkRef("is_a"), { kind: "literal", type: "boolean", value: false }]),
+          setter: mkFn("or", [
+            mkRef("is_a"),
+            { kind: "literal", literal: { kind: "boolean", value: false } },
+          ]),
         },
 
         {
           name: "is",
-          setter: mkFn("is", [mkRef("a"), { kind: "literal", type: "integer", value: 4 }]),
+          setter: mkFn("is", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: 4 } },
+          ]),
         },
         {
           name: "is not",
-          setter: mkFn("is not", [mkRef("a"), { kind: "literal", type: "integer", value: 4 }]),
+          setter: mkFn("is not", [
+            mkRef("a"),
+            { kind: "literal", literal: { kind: "integer", value: 4 } },
+          ]),
         },
 
-        { name: "in", setter: { kind: "literal", type: "string", value: "TODO" } },
-        { name: "not in", setter: { kind: "literal", type: "string", value: "TODO" } },
+        { name: "in", setter: { kind: "literal", literal: { kind: "string", value: "TODO" } } },
+        { name: "not in", setter: { kind: "literal", literal: { kind: "string", value: "TODO" } } },
 
         {
           name: "concat",
           setter: mkFn("concat", [
             mkRef("foo"),
-            { kind: "literal", type: "string", value: " " },
+            { kind: "literal", literal: { kind: "string", value: " " } },
             mkRef("bar"),
           ]),
         },
@@ -254,23 +290,27 @@ describe("runtime", () => {
         { name: "now", setter: mkFn("now", []) },
         {
           name: "stringify",
-          setter: mkFn("stringify", [{ kind: "literal", type: "integer", value: 1234 }]),
+          setter: mkFn("stringify", [
+            { kind: "literal", literal: { kind: "integer", value: 1234 } },
+          ]),
         },
         {
           name: "cryptoHash",
           setter: mkFn("cryptoHash", [
-            { kind: "literal", type: "string", value: "1234567890" },
-            { kind: "literal", type: "integer", value: 10 },
+            { kind: "literal", literal: { kind: "string", value: "1234567890" } },
+            { kind: "literal", literal: { kind: "integer", value: 10 } },
           ]),
         },
         {
           name: "cryptoCompare",
           setter: mkFn("cryptoCompare", [
-            { kind: "literal", type: "string", value: "1234567890" },
+            { kind: "literal", literal: { kind: "string", value: "1234567890" } },
             {
               kind: "literal",
-              type: "string",
-              value: "$2b$10$yvIRy64TPxhnvXWcV0IReeFux.3uDoiR/H5bu5YsEqIkGroqk7To.",
+              literal: {
+                kind: "string",
+                value: "$2b$10$yvIRy64TPxhnvXWcV0IReeFux.3uDoiR/H5bu5YsEqIkGroqk7To.",
+              },
             },
           ]),
         },
@@ -278,13 +318,15 @@ describe("runtime", () => {
         {
           name: "cryptoCompareFailed",
           setter: mkFn("cryptoCompare", [
-            { kind: "literal", type: "string", value: "1234567890" },
-            { kind: "literal", type: "string", value: "invalid hash" },
+            { kind: "literal", literal: { kind: "string", value: "1234567890" } },
+            { kind: "literal", literal: { kind: "string", value: "invalid hash" } },
           ]),
         },
         {
           name: "cryptoToken",
-          setter: mkFn("cryptoToken", [{ kind: "literal", type: "integer", value: 32 }]),
+          setter: mkFn("cryptoToken", [
+            { kind: "literal", literal: { kind: "integer", value: 32 } },
+          ]),
         },
       ];
       const context: ActionContext = {

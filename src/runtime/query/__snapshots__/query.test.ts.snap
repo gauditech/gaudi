@@ -14,8 +14,10 @@ exports[` 1`] = `
       },
       {
         "kind": "literal",
-        "type": "boolean",
-        "value": true,
+        "literal": {
+          "kind": "boolean",
+          "value": true,
+        },
       },
     ],
     "kind": "function",
@@ -2450,8 +2452,10 @@ exports[`Endpoint queries List endpoint response queries test paging/order/filte
             },
             {
               "kind": "literal",
-              "type": "string",
-              "value": "asdf",
+              "literal": {
+                "kind": "string",
+                "value": "asdf",
+              },
             },
           ],
           "kind": "function",
@@ -2864,8 +2868,10 @@ exports[`Endpoint queries List nested endpoint response queries test paging/orde
             },
             {
               "kind": "literal",
-              "type": "string",
-              "value": "asdf",
+              "literal": {
+                "kind": "string",
+                "value": "asdf",
+              },
             },
           ],
           "kind": "function",

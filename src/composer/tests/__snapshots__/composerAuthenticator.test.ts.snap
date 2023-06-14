@@ -393,8 +393,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "args": [
                     {
                       "kind": "literal",
-                      "type": "integer",
-                      "value": 32,
+                      "literal": {
+                        "kind": "integer",
+                        "value": 32,
+                      },
                     },
                   ],
                   "kind": "function",
@@ -414,8 +416,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                         },
                         {
                           "kind": "literal",
-                          "type": "integer",
-                          "value": 3600000,
+                          "literal": {
+                            "kind": "integer",
+                            "value": 3600000,
+                          },
                         },
                       ],
                       "kind": "function",
@@ -471,8 +475,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "name": "status",
                   "setter": {
                     "kind": "literal",
-                    "type": "integer",
-                    "value": 200,
+                    "literal": {
+                      "kind": "integer",
+                      "value": 200,
+                    },
                   },
                 },
                 {
@@ -670,8 +676,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "name": "status",
                   "setter": {
                     "kind": "literal",
-                    "type": "integer",
-                    "value": 204,
+                    "literal": {
+                      "kind": "integer",
+                      "value": 204,
+                    },
                   },
                 },
               ],
@@ -790,8 +798,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     },
                     {
                       "kind": "literal",
-                      "type": "integer",
-                      "value": 10,
+                      "literal": {
+                        "kind": "integer",
+                        "value": 10,
+                      },
                     },
                   ],
                   "kind": "function",
@@ -861,8 +871,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "name": "status",
                   "setter": {
                     "kind": "literal",
-                    "type": "integer",
-                    "value": 201,
+                    "literal": {
+                      "kind": "integer",
+                      "value": 201,
+                    },
                   },
                 },
                 {

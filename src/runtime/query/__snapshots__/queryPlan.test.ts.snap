@@ -157,8 +157,10 @@ exports[`Query plan subqueries using partition/over: QueryPlan snapshot 1`] = `
       },
       {
         "kind": "literal",
-        "type": "integer",
-        "value": 100,
+        "literal": {
+          "kind": "integer",
+          "value": 100,
+        },
       },
     ],
     "fnName": ">",

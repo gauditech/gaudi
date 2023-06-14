@@ -160,8 +160,10 @@ exports[`compose hooks composes action hook 1`] = `
                 },
                 {
                   "kind": "literal",
-                  "type": "integer",
-                  "value": 1,
+                  "literal": {
+                    "kind": "integer",
+                    "value": 1,
+                  },
                 },
               ],
               "kind": "function",

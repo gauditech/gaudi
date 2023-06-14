@@ -33,7 +33,7 @@ export async function buildChangeset(
   async function getValue(setter: FieldSetter): Promise<unknown> {
     switch (setter.kind) {
       case "literal": {
-        return formatFieldValue(setter.value, setter.type);
+        return formatFieldValue(setter.literal.value, setter.literal.kind);
       }
       case "fieldset-virtual-input":
       case "fieldset-input": {
