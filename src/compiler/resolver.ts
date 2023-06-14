@@ -44,7 +44,6 @@ import {
 import { builtinFunctions } from "./ast/functions";
 import { Scope, addTypeGuard } from "./ast/scope";
 import {
-  FieldType,
   Type,
   TypeCardinality,
   TypeCategory,
@@ -139,12 +138,7 @@ export function resolve(projectASTs: ProjectASTs) {
     const nullable = !!kindFind(field.atoms, "nullable");
     const typeAtom = kindFind(field.atoms, "type");
 
-    let type: FieldType | undefined = undefined;
-    if (typeAtom) {
-      for (const t of fieldTypes) {
-        if (typeAtom.identifier.text === t) type = t;
-      }
-    }
+    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
 
     if (type) {
       field.name.ref = {
@@ -158,6 +152,8 @@ export function resolve(projectASTs: ProjectASTs) {
       };
 
       field.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
+    } else if (typeAtom) {
+      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
     }
   }
 
@@ -743,18 +739,15 @@ export function resolve(projectASTs: ProjectASTs) {
     const nullable = !!kindFind(virtualInput.atoms, "nullable");
     const typeAtom = kindFind(virtualInput.atoms, "type");
 
-    let type: FieldType | undefined = undefined;
-    if (typeAtom) {
-      for (const t of fieldTypes) {
-        if (typeAtom.identifier.text === t) type = t;
-      }
-    }
+    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
 
     if (type) {
       virtualInput.name.ref = { kind: "virtualInput", type, nullable };
       virtualInput.name.type = nullable
         ? Type.nullable(Type.primitive(type))
         : Type.primitive(type);
+    } else if (typeAtom) {
+      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
     }
     addToScope(scope, virtualInput.name);
   }
