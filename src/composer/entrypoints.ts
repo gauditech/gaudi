@@ -92,10 +92,15 @@ function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"]
   ensureOneOf(leaf.type.primitiveKind, ["string", "integer"]);
   const path = spec.identifyThrough.map((i) => i.text);
   const type = leaf.type.primitiveKind === "string" ? "text" : leaf.type.primitiveKind;
+  const paramName = [
+    // include current model and append identifyThrough path
+    spec.model.toLowerCase(),
+    ...spec.identifyThrough.map((i) => i.text),
+  ].join("_");
   return {
     path,
     type,
-    paramName: `${leaf.ref.parentModel.toLowerCase()}_${leaf.ref.name}`,
+    paramName,
   };
 }
 
