@@ -3,6 +3,6 @@
 //
 
 /** Testing demo function. Returns the same value it received.  */
-export function testFn(value: any) {
+export function testFn(value: string) {
   return value;
 }

@@ -19,7 +19,7 @@ export function App() {
 
       setOutput(JSON.stringify(itemList, undefined, 2));
     }
-  }, []);
+  }, [fetcher]);
   return (
     <>
       <h1 className="page-title">API fetcher</h1>
