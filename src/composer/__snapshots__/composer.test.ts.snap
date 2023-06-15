@@ -9,7 +9,6 @@ exports[`compose models parses validators 1`] = `
     "fields": [
       {
         "dbname": "id",
-        "dbtype": "serial",
         "kind": "field",
         "modelRefKey": "Org",
         "name": "id",
@@ -22,46 +21,44 @@ exports[`compose models parses validators 1`] = `
       },
       {
         "dbname": "adminemail",
-        "dbtype": "text",
         "kind": "field",
         "modelRefKey": "Org",
         "name": "adminEmail",
         "nullable": false,
         "primary": false,
         "refKey": "Org.adminEmail",
-        "type": "text",
+        "type": "string",
         "unique": false,
         "validators": [
           {
             "args": [
               {
-                "type": "integer",
+                "kind": "integer",
                 "value": 4,
               },
             ],
-            "inputType": "text",
+            "inputType": "string",
             "name": "minLength",
           },
           {
             "args": [
               {
-                "type": "integer",
+                "kind": "integer",
                 "value": 100,
               },
             ],
-            "inputType": "text",
+            "inputType": "string",
             "name": "maxLength",
           },
           {
             "args": [],
-            "inputType": "text",
+            "inputType": "string",
             "name": "isEmail",
           },
         ],
       },
       {
         "dbname": "num_employees",
-        "dbtype": "integer",
         "kind": "field",
         "modelRefKey": "Org",
         "name": "num_employees",
@@ -74,22 +71,22 @@ exports[`compose models parses validators 1`] = `
           {
             "args": [
               {
-                "type": "integer",
+                "kind": "integer",
                 "value": 0,
               },
             ],
             "inputType": "integer",
-            "name": "min",
+            "name": "minInt",
           },
           {
             "args": [
               {
-                "type": "integer",
+                "kind": "integer",
                 "value": 9999,
               },
             ],
             "inputType": "integer",
-            "name": "max",
+            "name": "maxInt",
           },
         ],
       },

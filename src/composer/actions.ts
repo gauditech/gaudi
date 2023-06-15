@@ -9,9 +9,9 @@ import {
   resolveItems,
 } from "@src/common/utils";
 import { getTypeModel } from "@src/compiler/ast/type";
-import { composeValidators, validateFieldType } from "@src/composer/models";
+import { composeValidators } from "@src/composer/models";
 import { composeQuery } from "@src/composer/query";
-import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
+import { refKeyFromRef } from "@src/composer/utils";
 import {
   ActionDef,
   ActionHookDef,
@@ -111,11 +111,11 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
     (atom) => {
       switch (atom.kind) {
         case "input":
-          return atom.target.text;
+          return atom.target.name;
         case "reference":
-          return atom.target.text;
+          return atom.target.name;
         case "set":
-          return atom.target.text;
+          return atom.target.name;
         case "virtual-input":
           return atom.name;
       }
@@ -148,7 +148,7 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
 function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): FieldSetter {
   switch (expr.kind) {
     case "literal": {
-      return getTypedLiteralValue(expr.literal);
+      return { kind: "literal", literal: expr.literal };
     }
     case "identifier": {
       const [head, ...tail] = expr.identifier;
@@ -211,7 +211,7 @@ function setterToChangesetOperation(
   atom: Spec.ActionAtomSet,
   changeset: ChangesetDef
 ): ChangesetOperationDef {
-  return { name: atom.target.text, setter: setterToFieldSetter(atom.set, changeset) };
+  return { name: atom.target.name, setter: setterToFieldSetter(atom.set, changeset) };
 }
 
 function setterToFieldSetter(
@@ -247,41 +247,32 @@ function atomToChangesetOperation(
         name: atom.name,
         setter: {
           kind: "fieldset-virtual-input",
-          type: validateFieldType(atom.type),
+          type: atom.type,
           required: !atom.optional,
           nullable: atom.nullable,
           fieldsetAccess: [...fieldsetNamespace, atom.name],
-          validators: composeValidators(validateFieldType(atom.type), atom.validators),
+          validators: composeValidators(atom.type, atom.validators),
         },
       };
     }
     case "input": {
-      const astType =
-        atom.target.type.kind === "nullable" ? atom.target.type.type : atom.target.type;
-      ensureEqual(astType.kind, "primitive");
-      const type =
-        astType.primitiveKind === "string"
-          ? "text"
-          : astType.primitiveKind === "float"
-          ? "integer"
-          : astType.primitiveKind;
       return {
-        name: atom.target.text,
+        name: atom.target.name,
         setter: {
           kind: "fieldset-input",
-          type,
+          type: atom.target.type,
           required: !atom.optional,
-          fieldsetAccess: [...fieldsetNamespace, atom.target.text],
+          fieldsetAccess: [...fieldsetNamespace, atom.target.name],
         },
       };
     }
     case "reference": {
       return {
-        name: atom.target.text,
+        name: atom.target.name,
         setter: {
           kind: "fieldset-reference-input",
-          throughRefKey: refKeyFromRef(atom.through.ref),
-          fieldsetAccess: [...fieldsetNamespace, `${atom.target.text}_${atom.through.text}`],
+          throughRefKey: refKeyFromRef(atom.through),
+          fieldsetAccess: [...fieldsetNamespace, `${atom.target.name}_${atom.through.name}`],
         },
       };
     }
