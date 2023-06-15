@@ -3,7 +3,7 @@ import { compose } from "@src/composer/composer";
 import { QueryTree } from "@src/runtime/query/build";
 import { NestedRow, QueryExecutor } from "@src/runtime/query/exec";
 import { Vars } from "@src/runtime/server/vars";
-import { CustomManyEndpointDef, Definition, FetchOneAction, QueryDef } from "@src/types/definition";
+import { CustomManyEndpointDef, Definition, FetchAction, QueryDef } from "@src/types/definition";
 
 /**
  * Creates dummy query executor wich always return empty row.
@@ -59,6 +59,6 @@ export function makeTestQuery(models: string, query: string): { def: Definition;
   `;
   const def = compose(compileBlueprint(bp));
   const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
-  const action = endpoint.actions[0] as FetchOneAction;
+  const action = endpoint.actions[0] as FetchAction;
   return { def, query: action.query };
 }

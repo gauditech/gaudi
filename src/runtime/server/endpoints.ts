@@ -774,7 +774,7 @@ function validatePathIdentifier(
 
 function convertPathValue(
   val: string,
-  type: "text" | "integer",
+  type: "string" | "integer",
   defaultValue?: string | number
 ): string | number {
   if (val == null && defaultValue != null) return defaultValue;
@@ -787,7 +787,7 @@ function convertPathValue(
       }
       return n;
     }
-    case "text": {
+    case "string": {
       return val;
     }
   }
@@ -837,9 +837,7 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
 
   switch (expr.kind) {
     case "alias": {
-      // FIXME: cardinality
-      // don't return undefined so user can compare to null, eg @auth.id is not null
-      return _.castArray(contextVars.collect(expr.namePath))[0] ?? null;
+      return contextVars.collect(expr.namePath) ?? null;
     }
     case "function": {
       return executeTypedFunction(expr, contextVars);
@@ -848,7 +846,7 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
       throw new Error("Not implemented: aggregate functions not supported in the runtime");
     }
     case "literal": {
-      return expr.value;
+      return expr.literal.value;
     }
     case "variable": {
       throw new Error(
@@ -912,7 +910,7 @@ async function createListEndpointResponse(
           expr: {
             kind: "function",
             name: "count" as any, // FIXME "count" is not supported here
-            args: [{ kind: "literal", type: "integer", value: 1 }],
+            args: [{ kind: "literal", literal: { kind: "integer", value: 1 } }],
           },
         },
       ],

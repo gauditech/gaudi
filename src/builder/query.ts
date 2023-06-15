@@ -10,14 +10,14 @@ export type EndpointPath = {
 export type PathFragmentNamespace = { kind: "namespace"; name: string };
 export type PathFragmentIdentifier = {
   kind: "identifier";
-  type: "integer" | "text";
+  type: "integer" | "string";
   name: string;
 };
 export type PathQueryParameter = {
   kind: "query";
   name: string;
   required: boolean;
-} & ({ type: "text"; defaultValue?: string } | { type: "integer"; defaultValue?: number });
+} & ({ type: "string"; defaultValue?: string } | { type: "integer"; defaultValue?: number });
 export type PathFragment = PathFragmentNamespace | PathFragmentIdentifier | PathQueryParameter;
 
 export function buildEndpointPath(endpoint: EndpointDef): EndpointPath {

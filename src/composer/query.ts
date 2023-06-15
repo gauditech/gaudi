@@ -5,7 +5,7 @@ import { defineType } from "./models";
 
 import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
 import { Type } from "@src/compiler/ast/type";
-import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
+import { refKeyFromRef } from "@src/composer/utils";
 import {
   AggregateDef,
   FunctionName,
@@ -18,7 +18,7 @@ import {
 import * as Spec from "@src/types/specification";
 
 export function composeQuery(qspec: Spec.Query): QueryDef {
-  if (qspec.aggregate) {
+  if (qspec.aggregate && qspec.aggregate !== "first" && qspec.aggregate !== "one") {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
 
@@ -37,11 +37,11 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     filter,
     fromPath,
     name: qspec.name,
-    // retCardinality: "many", // FIXME,
+    retCardinality: qspec.cardinality,
     retType: qspec.targetModel,
     select,
     orderBy,
-    limit: qspec.limit,
+    limit: qspec.aggregate ? 1 : qspec.limit,
     offset: qspec.offset,
   };
 }
@@ -102,7 +102,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
       return composeRefPath(expr.identifier, namePath);
     }
     case "literal": {
-      return getTypedLiteralValue(expr.literal);
+      return { kind: "literal", literal: expr.literal };
     }
     case "function": {
       switch (expr.name) {
@@ -139,7 +139,10 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
       return {
         kind: "array",
         elements: expr.elements.map((e) => composeExpression(e, namePath)),
-        type: defineType(expr.type.kind === "collection" ? expr.type.type : Type.any),
+        type: {
+          kind: "collection",
+          type: defineType(expr.type.kind === "collection" ? expr.type.type : Type.any),
+        },
       };
     }
     default:

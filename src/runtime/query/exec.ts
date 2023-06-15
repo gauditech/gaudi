@@ -8,8 +8,7 @@ import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
 import { ensureEqual, ensureNot } from "@src/common/utils";
-import { getTypedPath } from "@src/composer/utils";
-import logger from "@src/logger";
+import { TypeCardinality } from "@src/compiler/ast/type";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { Definition, QueryDef, SelectItem } from "@src/types/definition";
 
@@ -19,7 +18,7 @@ export type Result = {
 };
 
 export interface NestedRow {
-  [key: string]: string | number | NestedRow[];
+  [key: string]: string | number | NestedRow | NestedRow[];
 }
 
 export interface Row {
@@ -54,6 +53,26 @@ export async function executeQuery(
   });
 }
 
+export function castToCardinality(
+  results: NestedRow[],
+  cardinality: TypeCardinality
+): NestedRow | NestedRow[] {
+  if (cardinality === "nullable" || cardinality === "one") {
+    ensureEqual(
+      results.length <= 1,
+      true,
+      `Expected a single element but found multiple in a list`
+    );
+    const result = results[0] ?? null;
+    if (cardinality === "one" && result == null) {
+      throw Error(`Failed to get result from query with "one" cardinality`);
+    }
+    return result;
+  } else {
+    return results;
+  }
+}
+
 export async function executeQueryTree(
   conn: DbConn,
   def: Definition,
@@ -79,20 +98,9 @@ export async function executeQueryTree(
       const relResultsForId = (groupedById[r[qt.queryIdAlias!] as number] ?? []).map((relR) =>
         _.omit(relR, "__join_connection")
       );
-      // if property kind is reference (todo: unique relationships in general)
-      // unwrap from the array
-      const tpath = getTypedPath(def, rel.query.fromPath, {});
-      logger.silly("Rel kind", _.last(tpath.nodes)?.kind);
-      if (_.last(tpath.nodes)?.kind === "reference") {
-        ensureEqual(
-          relResultsForId.length <= 1,
-          true,
-          `Expected a single element but found multiple in a list`
-        );
-        Object.assign(r, { [rel.name]: relResultsForId[0] ?? null });
-      } else {
-        Object.assign(r, { [rel.name]: relResultsForId });
-      }
+      Object.assign(r, {
+        [rel.name]: castToCardinality(relResultsForId, rel.query.retCardinality),
+      });
     });
   }
 
@@ -108,17 +116,12 @@ export async function executeQueryTree(
     // for each entry in results, take their arg results and execute hook
     for (const result of results) {
       const args = Object.fromEntries(
-        hook.args.map((arg) => [
-          arg.name,
-          _.omit(
-            // FIXME we shouldn't have `[0]` here but we lack type checking feature
-            // to figure out the query cardinality so we hardcode "one" for now...
-            argResults[arg.name].filter(
-              (res) => res["__join_connection"] === result[qt.queryIdAlias!]
-            )[0],
-            "__join_connection"
-          ),
-        ])
+        hook.args.map((arg) => {
+          const r = argResults[arg.name]
+            .filter((res) => res["__join_connection"] === result[qt.queryIdAlias!])
+            .map((r) => _.omit(r, "__join_connection"));
+          return [arg.name, castToCardinality(r, arg.query.query.retCardinality)];
+        })
       );
 
       result[hook.name] = await executeHook(def, hook.hook, args);

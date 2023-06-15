@@ -24,14 +24,14 @@ describe("runtime", () => {
             kind: "field",
             nullable: true, // nullable field
             required: true,
-            type: "text",
+            type: "string",
             validators: [],
           },
           required: {
             kind: "field",
             nullable: false, // required field
             required: true,
-            type: "text", // text field
+            type: "string", // text field
             validators: [],
           },
           something: {
@@ -50,7 +50,7 @@ describe("runtime", () => {
                 kind: "field",
                 nullable: false,
                 required: true,
-                type: "text",
+                type: "string",
                 validators: [],
               },
             },
@@ -67,27 +67,27 @@ describe("runtime", () => {
               {
                 args: [
                   {
-                    type: "integer",
+                    kind: "integer",
                     value: 0,
                   },
                 ],
                 inputType: "integer",
-                name: "min",
+                name: "minInt",
               },
               {
                 args: [
                   {
-                    type: "integer",
+                    kind: "integer",
                     value: 9999,
                   },
                 ],
                 inputType: "integer",
-                name: "max",
+                name: "maxInt",
               },
               {
                 args: [
                   {
-                    type: "integer",
+                    kind: "integer",
                     value: 123,
                   },
                 ],
@@ -100,46 +100,46 @@ describe("runtime", () => {
             kind: "field",
             nullable: false,
             required: true,
-            type: "text",
+            type: "string",
             validators: [
               {
                 args: [
                   {
-                    type: "integer",
+                    kind: "integer",
                     value: 4,
                   },
                 ],
-                inputType: "text",
+                inputType: "string",
                 name: "minLength",
               },
               {
                 args: [
                   {
-                    type: "integer",
+                    kind: "integer",
                     value: 100,
                   },
                 ],
-                inputType: "text",
+                inputType: "string",
                 name: "maxLength",
               },
               {
                 args: [],
-                inputType: "text",
+                inputType: "string",
                 name: "isEmail",
               },
               {
                 args: [
                   {
-                    type: "text",
+                    kind: "string",
                     value: "asdf",
                   },
                 ],
-                inputType: "text",
-                name: "isTextEqual",
+                inputType: "string",
+                name: "isStringEqual",
               },
               {
                 args: [],
-                inputType: "text",
+                inputType: "string",
                 name: "isEmail",
               },
             ],
@@ -153,7 +153,7 @@ describe("runtime", () => {
               {
                 args: [
                   {
-                    type: "boolean",
+                    kind: "boolean",
                     value: true,
                   },
                 ],
@@ -180,7 +180,7 @@ describe("runtime", () => {
             kind: "field",
             nullable: false,
             required: true,
-            type: "text",
+            type: "string",
             validators: [],
           },
           // integer field - invalid
@@ -201,7 +201,7 @@ describe("runtime", () => {
                 kind: "field",
                 nullable: false,
                 required: true,
-                type: "text",
+                type: "string",
                 validators: [],
               },
             },
@@ -211,7 +211,7 @@ describe("runtime", () => {
             kind: "field",
             nullable: true, // nullable field
             required: true,
-            type: "text",
+            type: "string",
             validators: [],
           },
 
@@ -219,7 +219,7 @@ describe("runtime", () => {
             kind: "field",
             nullable: false, // non-nullable field
             required: true,
-            type: "text",
+            type: "string",
             validators: [],
           },
 
@@ -228,16 +228,16 @@ describe("runtime", () => {
             kind: "field",
             nullable: false,
             required: true,
-            type: "text",
+            type: "string",
             validators: [
               {
                 args: [
                   {
-                    type: "integer",
+                    kind: "integer",
                     value: 4,
                   },
                 ],
-                inputType: "text",
+                inputType: "string",
                 name: "maxLength",
               },
             ],
@@ -246,7 +246,7 @@ describe("runtime", () => {
             kind: "field",
             nullable: false,
             required: true,
-            type: "text",
+            type: "string",
             validators: [
               {
                 name: "hook",
@@ -264,12 +264,12 @@ describe("runtime", () => {
               {
                 args: [
                   {
-                    type: "integer",
+                    kind: "integer",
                     value: 100,
                   },
                 ],
                 inputType: "integer",
-                name: "max",
+                name: "maxInt",
               },
             ],
           },
@@ -282,7 +282,7 @@ describe("runtime", () => {
               {
                 args: [
                   {
-                    type: "boolean",
+                    kind: "boolean",
                     value: true,
                   },
                 ],
@@ -295,7 +295,7 @@ describe("runtime", () => {
             kind: "field",
             nullable: false,
             required: true,
-            type: "text",
+            type: "string",
             validators: [
               {
                 name: "noReference",
