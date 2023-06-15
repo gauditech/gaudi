@@ -10,7 +10,7 @@ model Box {
 }
 
 model Item {
-  field name { type string }
+  field name { type string, unique }
   field is_public { type boolean }
   reference box { to Box }
 }

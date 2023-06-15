@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 import {
   Action,
@@ -412,7 +412,7 @@ export function resolve(projectASTs: ProjectASTs) {
       if (cardinality === "collection") {
         const through = kindFind(identify.atoms, "through");
         if (through && currentModel) {
-          resolveRefPath(through.identifierPath, { kind: "model", model: currentModel });
+          resolveUniqueModelPath(through.identifierPath, currentModel);
         }
       } else {
         errors.push(
@@ -648,8 +648,9 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
         .with({ kind: "referenceThrough" }, ({ target, through }) => {
           resolveModelAtomRef(target, currentModel, "reference");
+
           if (target.ref) {
-            resolveRefPath(through, { kind: "model", model: target.ref?.model });
+            resolveUniqueModelPath(through, target.ref.model);
           }
         })
         .with({ kind: "deny" }, ({ fields }) => {
@@ -1085,6 +1086,40 @@ export function resolve(projectASTs: ProjectASTs) {
         identifier.type = Type.null;
       }
     });
+  }
+
+  function resolveUniqueModelPath(path: IdentifierRef<RefModelAtom>[], modelName: string) {
+    resolveRefPath(path, { kind: "model", model: modelName });
+    for (const item of path) {
+      if (!item.ref || item.type.kind === "any") {
+        // path didn't resolve properly, at this point there is no reason
+        // to continue to the rest of the path items, so we can return immediately
+        return;
+      }
+      match(item.ref)
+        .with({ atomKind: P.union("field", "reference") }, (atom) => {
+          if (!atom.unique) {
+            errors.push(
+              new CompilerError(item.token, ErrorCode.NonUniquePathItem, {
+                atomKind: item.ref!.atomKind,
+              })
+            );
+          }
+        })
+        .with({ atomKind: P.union("relation", "query") }, () => {
+          if (item.type.kind === "collection") {
+            errors.push(new CompilerError(item.token, ErrorCode.NonUniquePathItem));
+          }
+        })
+        .otherwise((ref) => {
+          errors.push(
+            new CompilerError(item.token, ErrorCode.UnexpectedModelAtom, {
+              atomKind: ref.atomKind,
+              expected: "field",
+            })
+          );
+        });
+    }
   }
 
   function resolveRefPath(path: IdentifierRef[], previousType: Type): boolean {
