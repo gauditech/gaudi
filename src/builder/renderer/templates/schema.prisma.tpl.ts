@@ -27,10 +27,10 @@ export function render(data: BuildDbSchemaData): string {
         ${(model.fields || []).map(
           (field) => oneLine`
             ${field.dbname}
-              ${ getFieldDbType(field.dbtype)}${field.nullable ? "?" : ""}
+              ${ getFieldDbType(field.type)}${field.nullable ? "?" : ""}
               ${field.primary ? "@id" : ""}
               ${field.unique ? "@unique" : ""}
-              ${field.dbtype === "serial" ? "@default(autoincrement())" : ""}
+              ${field.primary ? "@default(autoincrement())" : ""}
           `)}
 
         // relations

@@ -95,7 +95,7 @@ function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"]
   }
   return {
     name: identifyThrough.ref.name,
-    type: type.primitiveKind === "string" ? "text" : type.primitiveKind,
+    type: type.primitiveKind,
     refKey: refKeyFromRef(identifyThrough.ref),
     paramName: `${identifyThrough.ref.parentModel.toLowerCase()}_${identifyThrough.ref.name}`,
   };

@@ -18,8 +18,10 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
         },
         {
           "kind": "literal",
-          "type": "integer",
-          "value": 1,
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
         },
       ],
       "kind": "function",
@@ -49,7 +51,7 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -70,7 +72,7 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
         ],
         "kind": "fieldset-input",
         "required": false,
-        "type": "text",
+        "type": "string",
       },
     },
     {
@@ -81,7 +83,7 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
         ],
         "kind": "fieldset-input",
         "required": false,
-        "type": "text",
+        "type": "string",
       },
     },
   ],
@@ -217,8 +219,10 @@ exports[`compose model queries example with nested filters 1`] = `
             },
             {
               "kind": "literal",
-              "type": "integer",
-              "value": 1,
+              "literal": {
+                "kind": "integer",
+                "value": 1,
+              },
             },
           ],
           "kind": "function",

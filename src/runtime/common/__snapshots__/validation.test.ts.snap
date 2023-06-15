@@ -82,6 +82,7 @@ ObjectSchema {
       "deps": [],
       "exclusiveTests": {
         "defined": true,
+        "integer": false,
         "max": true,
         "min": true,
       },
@@ -94,6 +95,7 @@ ObjectSchema {
         "strip": false,
       },
       "tests": [
+        [Function],
         [Function],
         [Function],
         [Function],
@@ -141,15 +143,18 @@ ObjectSchema {
         "list": Set {},
         "refs": Map {},
       },
-      "_mutate": undefined,
+      "_blacklistError": undefined,
       "_typeError": [Function],
       "_whitelist": ReferenceSet {
         "list": Set {},
         "refs": Map {},
       },
+      "_whitelistError": undefined,
       "conditions": [],
       "deps": [],
-      "exclusiveTests": {},
+      "exclusiveTests": {
+        "integer": false,
+      },
       "spec": {
         "abortEarly": true,
         "nullable": false,
@@ -158,7 +163,9 @@ ObjectSchema {
         "strict": false,
         "strip": false,
       },
-      "tests": [],
+      "tests": [
+        [Function],
+      ],
       "transforms": [
         [Function],
       ],

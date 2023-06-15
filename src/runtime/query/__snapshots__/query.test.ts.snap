@@ -14,8 +14,10 @@ exports[` 1`] = `
       },
       {
         "kind": "literal",
-        "type": "boolean",
-        "value": true,
+        "literal": {
+          "kind": "boolean",
+          "value": true,
+        },
       },
     ],
     "kind": "function",
@@ -55,7 +57,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
-            "kind": "text",
+            "kind": "string",
             "nullable": false,
           },
         },
@@ -299,7 +301,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -410,7 +412,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 4`] = `
       "name": "slug",
       "paramName": "org_slug",
       "refKey": "Org.slug",
-      "type": "text",
+      "type": "string",
     },
     "kind": "model",
     "name": "Org",
@@ -489,7 +491,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
-            "kind": "text",
+            "kind": "string",
             "nullable": false,
           },
         },
@@ -847,7 +849,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 4`] = `
       "name": "slug",
       "paramName": "org_slug",
       "refKey": "Org.slug",
-      "type": "text",
+      "type": "string",
     },
     "kind": "model",
     "name": "Org",
@@ -926,7 +928,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
-            "kind": "text",
+            "kind": "string",
             "nullable": false,
           },
         },
@@ -1198,7 +1200,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -1316,7 +1318,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 4`] = `
       "name": "slug",
       "paramName": "org_slug",
       "refKey": "Org.slug",
-      "type": "text",
+      "type": "string",
     },
     "kind": "model",
     "name": "Org",
@@ -1395,7 +1397,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
-            "kind": "text",
+            "kind": "string",
             "nullable": false,
           },
         },
@@ -1642,7 +1644,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -1755,7 +1757,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 4`] = `
       "name": "slug",
       "paramName": "org_slug",
       "refKey": "Org.slug",
-      "type": "text",
+      "type": "string",
     },
     "kind": "model",
     "name": "Org",
@@ -1834,7 +1836,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
           "kind": "variable",
           "name": "org_slug",
           "type": {
-            "kind": "text",
+            "kind": "string",
             "nullable": false,
           },
         },
@@ -2106,7 +2108,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -2224,7 +2226,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 4`] = `
       "name": "slug",
       "paramName": "org_slug",
       "refKey": "Org.slug",
-      "type": "text",
+      "type": "string",
     },
     "kind": "model",
     "name": "Org",
@@ -2341,7 +2343,7 @@ exports[`Endpoint queries List endpoint response queries test orderBy query endp
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -2408,7 +2410,7 @@ exports[`Endpoint queries List endpoint response queries test paging query endpo
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -2450,8 +2452,10 @@ exports[`Endpoint queries List endpoint response queries test paging/order/filte
             },
             {
               "kind": "literal",
-              "type": "text",
-              "value": "asdf",
+              "literal": {
+                "kind": "string",
+                "value": "asdf",
+              },
             },
           ],
           "kind": "function",
@@ -2511,7 +2515,7 @@ exports[`Endpoint queries List endpoint response queries test paging/order/filte
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -2585,7 +2589,7 @@ exports[`Endpoint queries List endpoint response queries test plain query endpoi
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -2688,7 +2692,7 @@ exports[`Endpoint queries List nested endpoint response queries test orderBy que
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -2801,7 +2805,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging quer
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -2864,8 +2868,10 @@ exports[`Endpoint queries List nested endpoint response queries test paging/orde
             },
             {
               "kind": "literal",
-              "type": "text",
-              "value": "asdf",
+              "literal": {
+                "kind": "string",
+                "value": "asdf",
+              },
             },
           ],
           "kind": "function",
@@ -2953,7 +2959,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging/orde
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -3071,7 +3077,7 @@ exports[`Endpoint queries List nested endpoint response queries test plain query
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
