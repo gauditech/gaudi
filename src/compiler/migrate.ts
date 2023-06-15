@@ -75,26 +75,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateFields(model: AST.Model): Spec.Field[] {
     const idField: Spec.Field = {
-      name: "id",
-      ref: {
-        kind: "modelAtom",
-        atomKind: "field",
-        parentModel: model.name.text,
-        name: "id",
-        unique: true,
-      },
-      type: Type.integer,
+      ref: generateModelIdIdentifier(model.name.text).ref,
       primary: true,
       validators: [],
     };
     const fields = kindFilter(model.atoms, "field").map(migrateField);
 
     const references = kindFilter(model.atoms, "reference").map((reference): Spec.Field => {
-      const idField = referenceToIdField(migrateIdentifierRef(reference.name));
+      ensureExists(reference.name.ref);
       return {
-        name: idField.text,
-        ref: idField.ref,
-        type: idField.type,
+        ref: referenceToIdRef(reference.name.ref),
         primary: false,
         validators: [],
       };
@@ -111,10 +101,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     ensureExists(field.name.ref);
 
     return {
-      name: field.name.text,
       ref: field.name.ref,
-      type: field.name.type,
-      default: default_?.literal.value,
+      default: default_ && migrateLiteral(default_.literal),
       primary: false,
       validators: validators,
     };
@@ -125,7 +113,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       return {
         kind: "builtin",
         name: validator.name.text,
-        args: validator.args.map((a) => a.value),
+        args: validator.args.map(migrateLiteral),
       };
     } else {
       return { kind: "hook", hook: migrateFieldValidationHook(validator) };
@@ -421,18 +409,21 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const sets = kindFilter(action.atoms, "set").map(migrateActionAtomSet);
     const refThroughs = kindFilter(action.atoms, "referenceThrough").map(
       (referenceThrough): Spec.ActionAtomRefThrough => {
-        const target = migrateIdentifierRef(referenceThrough.target);
-        const through = referenceThrough.through.map((i) => migrateIdentifierRef(i));
-        return { kind: "reference", target, through };
+        ensureExists(referenceThrough.target.ref);
+        const through = referenceThrough.through.map((i) => {
+          ensureExists(i.ref);
+          return i.ref;
+        });
+        return { kind: "reference", target: referenceThrough.target.ref, through };
       }
     );
 
     const actionAtoms = migrateFields(model).flatMap((field): Spec.ModelActionAtom[] => {
       // id field can't be set or updated
-      if (field.name === "id") return [];
+      if (field.ref.name === "id") return [];
 
       // reference id that is set by context
-      if (contextRelation && field.name === contextRelation.through + "_id") {
+      if (contextRelation && field.ref.name === contextRelation.through + "_id") {
         let parentPath = targetPath.slice(0, -1);
         if (parentPath.length === 0 && parentAlias) {
           parentPath = [parentAlias];
@@ -440,7 +431,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         return [
           {
             kind: "set",
-            target: { text: field.name, ref: field.ref, type: field.type },
+            target: field.ref,
             set: {
               kind: "expression",
               expr: {
@@ -453,23 +444,24 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         ];
       }
 
-      const set = sets.find((s) => s.target.text === field.name);
+      const set = sets.find((s) => s.target.name === field.ref.name);
       if (set) return [set];
-      const refThrough = refThroughs.find((r) => r.target.text + "_id" === field.name);
+      const refThrough = refThroughs.find((r) => r.target.name + "_id" === field.ref.name);
       if (refThrough) return [refThrough];
-      const input = inputs.find((i) => i.target.text === field.name);
+      const input = inputs.find((i) => i.target.name === field.ref.name);
       if (input) return [input];
       if (allDenied) return [];
-      const denied = deniedFields.find((i) => i.text === field.name);
+      const denied = deniedFields.find((i) => i.text === field.ref.name);
       if (denied) return [];
 
-      const nullable = field.type.kind === "nullable";
       return [
         {
           kind: "input",
-          target: { text: field.name, ref: field.ref, type: field.type },
-          optional: nullable || action.kind === "update",
-          default: nullable ? { kind: "literal", value: null } : undefined,
+          target: field.ref,
+          optional: field.ref.nullable || action.kind === "update",
+          default: field.ref.nullable
+            ? { kind: "literal", literal: { kind: "null", value: null } }
+            : undefined,
         },
       ];
     });
@@ -505,7 +497,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         actionAtoms: [
           {
             kind: "set",
-            target: referenceToIdField({ ...last, ref: last.ref }),
+            target: referenceToIdRef(last.ref),
             set: {
               kind: "expression",
               expr: {
@@ -564,7 +556,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ensureEqual(set.set.kind, "expr");
       const expr = migrateExpr(set.set.expr);
       if (expr.kind === "literal") {
-        ensureEqual(expr.literal, null);
+        ensureEqual(expr.literal.kind, "null");
       } else {
         ensureEqual(expr.kind, "identifier");
         const model = getTypeModel(expr.identifier.at(-1)!.type)!;
@@ -574,7 +566,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
       return {
         kind: "set",
-        target: referenceToIdField({ ...target, ref: target.ref }),
+        target: referenceToIdRef(target.ref),
         set: { kind: "expression", expr },
       };
     }
@@ -582,7 +574,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return {
       kind: "set",
       // Typescript bug? just 'target' should be allowed
-      target: { ...target, ref: target.ref },
+      target: target.ref,
       set:
         set.set.kind === "expr"
           ? { kind: "expression", expr: migrateExpr(set.set.expr) }
@@ -597,7 +589,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       let migratedDefault: Spec.ActionAtomInput["default"];
       if (default_) {
         if (default_.kind === "literal") {
-          migratedDefault = { kind: "literal", value: default_.literal.value };
+          migratedDefault = { kind: "literal", literal: migrateLiteral(default_.literal) };
         } else if (default_.kind === "path") {
           migratedDefault = {
             kind: "reference",
@@ -611,8 +603,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       const migratedField = migrateIdentifierRef(field);
       const target =
         migratedField.ref.atomKind === "reference"
-          ? referenceToIdField({ ...migratedField, ref: migratedField.ref })
-          : { ...migratedField, ref: migratedField.ref };
+          ? referenceToIdRef(migratedField.ref)
+          : migratedField.ref;
 
       return {
         kind: "input",
@@ -630,11 +622,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const validators = kindFilter(atoms, "validate").flatMap((v) =>
       v.validators.map(migrateValidator)
     );
-    const type = kindFind(atoms, "type")!.identifier.text;
+    const { ref } = migrateIdentifierRef(name);
     return {
       kind: "virtual-input",
       name: name.text,
-      type: type === "string" ? "text" : type,
+      type: ref.type,
       nullable: !!kindFind(atoms, "nullable"),
       optional: false,
       validators,
@@ -669,15 +661,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       const contextIdSet: Spec.ActionAtomSet = {
         kind: "set",
         target: {
-          text: referenceName,
-          ref: {
-            kind: "modelAtom",
-            atomKind: "field",
-            parentModel: target.ref.model,
-            name: referenceName,
-            unique: false,
-          },
-          type: Type.integer,
+          kind: "modelAtom",
+          atomKind: "field",
+          parentModel: target.ref.model,
+          name: referenceName,
+          type: "integer",
+          // TODO: this is not technically true
+          nullable: false,
+          unique: false,
         },
         set: {
           kind: "expression",
@@ -822,15 +813,20 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function createAutoselect(modelName: string): Spec.Select {
     const model = globalModels.find((m) => m.name.text === modelName)!;
-    return migrateFields(model).map((field) => ({
-      kind: "final",
-      name: field.name,
-      expr: {
-        kind: "identifier",
-        identifier: [{ text: field.name, ref: field.ref, type: field.type }],
-        type: field.type,
-      },
-    }));
+    return migrateFields(model).map((field) => {
+      const type = field.ref.nullable
+        ? Type.nullable(Type.primitive(field.ref.type))
+        : Type.primitive(field.ref.type);
+      return {
+        kind: "final",
+        name: field.ref.name,
+        expr: {
+          kind: "identifier",
+          identifier: [{ text: field.ref.name, ref: field.ref, type }],
+          type,
+        },
+      };
+    });
   }
 
   function migrateExpr(expr: AST.Expr): Spec.Expr {
@@ -864,7 +860,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         return {
           kind: "function",
           name: "is not",
-          args: [migrateExpr(expr.expr), { kind: "literal", literal: true, type: Type.boolean }],
+          args: [
+            migrateExpr(expr.expr),
+            { kind: "literal", literal: { kind: "boolean", value: true }, type: Type.boolean },
+          ],
           type: expr.type,
         };
       case "path":
@@ -874,7 +873,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           type: expr.type,
         };
       case "literal":
-        return { kind: "literal", literal: expr.literal.value, type: expr.type };
+        return { kind: "literal", literal: migrateLiteral(expr.literal), type: expr.type };
       case "function":
         return {
           kind: "function",
@@ -885,31 +884,30 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     }
   }
 
-  function referenceToIdField(
-    reference: Spec.IdentifierRef<AST.RefModelReference>
-  ): Spec.IdentifierRef<AST.RefModelField> {
-    const name = `${reference.ref.name}_id`;
-
-    let type: Type = Type.integer;
-    if (reference.type.kind === "nullable") type = Type.nullable(type);
-
+  function referenceToIdRef(reference: AST.RefModelReference): AST.RefModelField {
     return {
-      text: name,
-      ref: {
-        kind: "modelAtom",
-        atomKind: "field",
-        parentModel: reference.ref.parentModel,
-        name,
-        unique: reference.ref.unique,
-      },
-      type,
+      kind: "modelAtom",
+      atomKind: "field",
+      parentModel: reference.parentModel,
+      name: `${reference.name}_id`,
+      type: "integer",
+      nullable: reference.nullable,
+      unique: reference.unique,
     };
   }
 
   function generateModelIdIdentifier(model: string): Spec.IdentifierRef<AST.RefModelField> {
     return {
       text: "id",
-      ref: { kind: "modelAtom", atomKind: "field", name: "id", parentModel: model, unique: true },
+      ref: {
+        kind: "modelAtom",
+        atomKind: "field",
+        name: "id",
+        type: "integer",
+        nullable: false,
+        parentModel: model,
+        unique: true,
+      },
       type: Type.integer,
     };
   }
@@ -923,6 +921,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ref: identifier.ref,
       type: identifier.type,
     };
+  }
+
+  function migrateLiteral(ast: AST.Literal): Spec.Literal {
+    const { token: _token, ...spec } = ast;
+    return spec;
   }
 
   const models = globalModels.map(migrateModel);

@@ -2,27 +2,10 @@ import _ from "lodash";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import * as AST from "@src/compiler/ast/ast";
-import { Definition, LiteralValueDef, ModelDef } from "@src/types/definition";
-import { LiteralValue } from "@src/types/specification";
+import { Definition, ModelDef } from "@src/types/definition";
 
 export function refKeyFromRef(ref: AST.RefModel | AST.RefModelAtom): string {
   return ref.kind === "model" ? ref.model : `${ref.parentModel}.${ref.name}`;
-}
-
-export function getTypedLiteralValue(literal: LiteralValue): LiteralValueDef {
-  if (typeof literal === "string") {
-    return { type: "text", value: literal, kind: "literal" };
-  }
-  if (typeof literal === "number" && Number.isSafeInteger(literal)) {
-    return { kind: "literal", type: "integer", value: literal };
-  }
-  if (typeof literal === "boolean") {
-    return { kind: "literal", type: "boolean", value: literal };
-  }
-  if (literal === null) {
-    return { kind: "literal", type: "null", value: literal };
-  }
-  throw new Error(`Literal ${literal} not supported`);
 }
 
 export type TypedPathItemModel = { kind: "model"; name: string; refKey: string };

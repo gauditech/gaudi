@@ -101,7 +101,7 @@ exports[`compose hooks action hook 1`] = `
           },
           "kind": "expression",
           "type": {
-            "kind": "text",
+            "kind": "string",
             "nullable": false,
           },
         },
@@ -138,7 +138,7 @@ exports[`compose hooks composes action hook 1`] = `
         "kind": "fieldset-virtual-input",
         "nullable": false,
         "required": true,
-        "type": "text",
+        "type": "string",
         "validators": [],
       },
     },
@@ -161,8 +161,10 @@ exports[`compose hooks composes action hook 1`] = `
                 },
                 {
                   "kind": "literal",
-                  "type": "integer",
-                  "value": 1,
+                  "literal": {
+                    "kind": "integer",
+                    "value": 1,
+                  },
                 },
               ],
               "kind": "function",
@@ -207,7 +209,7 @@ exports[`compose hooks composes action hook 1`] = `
                 },
                 "kind": "expression",
                 "type": {
-                  "kind": "text",
+                  "kind": "string",
                   "nullable": false,
                 },
               },
@@ -299,7 +301,7 @@ exports[`compose hooks composes source hooks 1`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -366,7 +368,6 @@ exports[`compose hooks composes source hooks 1`] = `
       "fields": [
         {
           "dbname": "id",
-          "dbtype": "serial",
           "kind": "field",
           "modelRefKey": "Org",
           "name": "id",
@@ -379,14 +380,13 @@ exports[`compose hooks composes source hooks 1`] = `
         },
         {
           "dbname": "name",
-          "dbtype": "text",
           "kind": "field",
           "modelRefKey": "Org",
           "name": "name",
           "nullable": false,
           "primary": false,
           "refKey": "Org.name",
-          "type": "text",
+          "type": "string",
           "unique": false,
           "validators": [
             {
@@ -505,7 +505,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
       },
       "kind": "expression",
       "type": {
-        "kind": "text",
+        "kind": "string",
         "nullable": false,
       },
     },
@@ -608,7 +608,7 @@ exports[`compose hooks inline hooks 1`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -675,7 +675,6 @@ exports[`compose hooks inline hooks 1`] = `
       "fields": [
         {
           "dbname": "id",
-          "dbtype": "serial",
           "kind": "field",
           "modelRefKey": "Org",
           "name": "id",
@@ -688,14 +687,13 @@ exports[`compose hooks inline hooks 1`] = `
         },
         {
           "dbname": "name",
-          "dbtype": "text",
           "kind": "field",
           "modelRefKey": "Org",
           "name": "name",
           "nullable": false,
           "primary": false,
           "refKey": "Org.name",
-          "type": "text",
+          "type": "string",
           "unique": false,
           "validators": [
             {

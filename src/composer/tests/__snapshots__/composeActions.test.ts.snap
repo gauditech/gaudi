@@ -61,7 +61,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
               ],
               "kind": "fieldset-input",
               "required": false,
-              "type": "text",
+              "type": "string",
             },
           },
         ],
@@ -89,7 +89,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
               "kind": "field",
               "nullable": false,
               "required": false,
-              "type": "text",
+              "type": "string",
               "validators": [],
             },
           },
@@ -241,7 +241,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
               ],
               "kind": "fieldset-input",
               "required": true,
-              "type": "text",
+              "type": "string",
             },
           },
         ],
@@ -268,7 +268,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
               "kind": "field",
               "nullable": false,
               "required": true,
-              "type": "text",
+              "type": "string",
               "validators": [],
             },
           },
@@ -324,7 +324,7 @@ exports[`compose actions native actions can create nested relations through tran
           ],
           "kind": "fieldset-input",
           "required": true,
-          "type": "text",
+          "type": "string",
         },
       },
       {
@@ -443,7 +443,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
           ],
           "kind": "fieldset-input",
           "required": false,
-          "type": "text",
+          "type": "string",
         },
       },
     ],
@@ -474,7 +474,7 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
           ],
           "kind": "fieldset-input",
           "required": true,
-          "type": "text",
+          "type": "string",
         },
       },
       {
@@ -514,7 +514,7 @@ exports[`compose actions native actions sets default action if not given 1`] = `
           ],
           "kind": "fieldset-input",
           "required": false,
-          "type": "text",
+          "type": "string",
         },
       },
     ],
@@ -566,8 +566,10 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
         "name": "is_new",
         "setter": {
           "kind": "literal",
-          "type": "boolean",
-          "value": true,
+          "literal": {
+            "kind": "boolean",
+            "value": true,
+          },
         },
       },
       {
@@ -578,7 +580,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
           ],
           "kind": "fieldset-input",
           "required": true,
-          "type": "text",
+          "type": "string",
         },
       },
       {
@@ -654,8 +656,10 @@ exports[`compose actions native actions succeeds for basic update with a deny ru
         "name": "name",
         "setter": {
           "kind": "literal",
-          "type": "text",
-          "value": "new name",
+          "literal": {
+            "kind": "string",
+            "value": "new name",
+          },
         },
       },
       {
@@ -666,7 +670,7 @@ exports[`compose actions native actions succeeds for basic update with a deny ru
           ],
           "kind": "fieldset-input",
           "required": false,
-          "type": "text",
+          "type": "string",
         },
       },
       {
@@ -707,16 +711,16 @@ exports[`compose actions native actions succeeds when virtual input is defined a
           "kind": "fieldset-virtual-input",
           "nullable": false,
           "required": true,
-          "type": "text",
+          "type": "string",
           "validators": [
             {
               "args": [
                 {
-                  "type": "integer",
+                  "kind": "integer",
                   "value": 4,
                 },
               ],
-              "inputType": "text",
+              "inputType": "string",
               "name": "minLength",
             },
           ],
@@ -728,8 +732,10 @@ exports[`compose actions native actions succeeds when virtual input is defined a
           "args": [
             {
               "kind": "literal",
-              "type": "text",
-              "value": "Mr/Mrs ",
+              "literal": {
+                "kind": "string",
+                "value": "Mr/Mrs ",
+              },
             },
             {
               "kind": "changeset-reference",
@@ -761,8 +767,10 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
         "name": "name",
         "setter": {
           "kind": "literal",
-          "type": "text",
-          "value": "new name",
+          "literal": {
+            "kind": "string",
+            "value": "new name",
+          },
         },
       },
       {
@@ -775,8 +783,10 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
             },
             {
               "kind": "literal",
-              "type": "text",
-              "value": " is great",
+              "literal": {
+                "kind": "string",
+                "value": " is great",
+              },
             },
           ],
           "kind": "function",
@@ -799,8 +809,10 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
             },
             {
               "kind": "literal",
-              "type": "integer",
-              "value": 1,
+              "literal": {
+                "kind": "integer",
+                "value": 1,
+              },
             },
           ],
           "kind": "function",
@@ -828,8 +840,10 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
         "name": "name",
         "setter": {
           "kind": "literal",
-          "type": "text",
-          "value": "new name",
+          "literal": {
+            "kind": "string",
+            "value": "new name",
+          },
         },
       },
       {
@@ -840,7 +854,7 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
           ],
           "kind": "fieldset-input",
           "required": false,
-          "type": "text",
+          "type": "string",
         },
       },
       {
@@ -851,7 +865,7 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
           ],
           "kind": "fieldset-input",
           "required": false,
-          "type": "text",
+          "type": "string",
         },
       },
       {
@@ -892,7 +906,7 @@ exports[`compose actions native actions succeeds with nested sibling reference 1
           ],
           "kind": "fieldset-input",
           "required": true,
-          "type": "text",
+          "type": "string",
         },
       },
       {
@@ -930,7 +944,7 @@ exports[`compose actions native actions succeeds with nested sibling reference 2
       "kind": "field",
       "nullable": false,
       "required": true,
-      "type": "text",
+      "type": "string",
       "validators": [],
     },
   },

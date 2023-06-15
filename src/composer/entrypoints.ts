@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { getTypedPath, getTypedPathWithLeaf } from "./utils";
+import { getTypedPathWithLeaf } from "./utils";
 
 import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual, ensureOneOf } from "@src/common/utils";
@@ -88,10 +88,9 @@ function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"]
   const leaf = _.last(spec.identifyThrough)!;
   ensureEqual(leaf.ref.kind, "modelAtom");
   ensureEqual(leaf.ref.atomKind, "field");
-  ensureEqual(leaf.type.kind, "primitive");
-  ensureOneOf(leaf.type.primitiveKind, ["string", "integer"]);
+  ensureOneOf(leaf.ref.type, ["string", "integer"]);
   const path = spec.identifyThrough.map((i) => i.text);
-  const type = leaf.type.primitiveKind === "string" ? "text" : leaf.type.primitiveKind;
+  const type = leaf.ref.type;
   const paramName = [
     // include current model and append identifyThrough path
     spec.model.toLowerCase(),

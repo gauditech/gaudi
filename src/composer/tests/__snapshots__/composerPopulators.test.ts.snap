@@ -13,16 +13,20 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
               "name": "is_new",
               "setter": {
                 "kind": "literal",
-                "type": "boolean",
-                "value": true,
+                "literal": {
+                  "kind": "boolean",
+                  "value": true,
+                },
               },
             },
             {
               "name": "name",
               "setter": {
                 "kind": "literal",
-                "type": "text",
-                "value": "test name",
+                "literal": {
+                  "kind": "string",
+                  "value": "test name",
+                },
               },
             },
           ],
@@ -75,16 +79,20 @@ exports[`populator composer succeeds for nested iterations 1`] = `
               "name": "is_new",
               "setter": {
                 "kind": "literal",
-                "type": "boolean",
-                "value": true,
+                "literal": {
+                  "kind": "boolean",
+                  "value": true,
+                },
               },
             },
             {
               "name": "name",
               "setter": {
                 "kind": "literal",
-                "type": "text",
-                "value": "test name",
+                "literal": {
+                  "kind": "string",
+                  "value": "test name",
+                },
               },
             },
           ],
@@ -135,8 +143,10 @@ exports[`populator composer succeeds for nested iterations 1`] = `
                   "name": "name",
                   "setter": {
                     "kind": "literal",
-                    "type": "text",
-                    "value": "test name",
+                    "literal": {
+                      "kind": "string",
+                      "value": "test name",
+                    },
                   },
                 },
               ],
@@ -213,8 +223,10 @@ exports[`populator composer succeeds for nested populators 1`] = `
               "name": "name",
               "setter": {
                 "kind": "literal",
-                "type": "text",
-                "value": "test name",
+                "literal": {
+                  "kind": "string",
+                  "value": "test name",
+                },
               },
             },
           ],
@@ -248,7 +260,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
               },
               "kind": "expression",
               "type": {
-                "kind": "text",
+                "kind": "string",
                 "nullable": false,
               },
             },
@@ -319,7 +331,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -455,16 +467,20 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
               "name": "is_new",
               "setter": {
                 "kind": "literal",
-                "type": "boolean",
-                "value": true,
+                "literal": {
+                  "kind": "boolean",
+                  "value": true,
+                },
               },
             },
             {
               "name": "name",
               "setter": {
                 "kind": "literal",
-                "type": "text",
-                "value": "test name",
+                "literal": {
+                  "kind": "string",
+                  "value": "test name",
+                },
               },
             },
           ],
@@ -517,16 +533,20 @@ exports[`populator composer succeeds for range iteration 1`] = `
               "name": "is_new",
               "setter": {
                 "kind": "literal",
-                "type": "boolean",
-                "value": true,
+                "literal": {
+                  "kind": "boolean",
+                  "value": true,
+                },
               },
             },
             {
               "name": "name",
               "setter": {
                 "kind": "literal",
-                "type": "text",
-                "value": "test name",
+                "literal": {
+                  "kind": "string",
+                  "value": "test name",
+                },
               },
             },
           ],
@@ -579,8 +599,10 @@ exports[`populator composer succeeds for simple populator 1`] = `
               "name": "slug",
               "setter": {
                 "kind": "literal",
-                "type": "text",
-                "value": "custom-org",
+                "literal": {
+                  "kind": "string",
+                  "value": "custom-org",
+                },
               },
             },
             {
@@ -589,8 +611,10 @@ exports[`populator composer succeeds for simple populator 1`] = `
                 "args": [
                   {
                     "kind": "literal",
-                    "type": "text",
-                    "value": "test name ",
+                    "literal": {
+                      "kind": "string",
+                      "value": "test name ",
+                    },
                   },
                   {
                     "kind": "changeset-reference",

@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { FieldType } from "@src/compiler/ast/type";
 import {
   ApiDef,
   Definition,
@@ -971,7 +972,7 @@ function createApiInfo(api: ApiDef): ApiName {
 }
 function createIdentifierTargetInfo(
   name: string,
-  identifierType: "text" | "integer",
+  identifierType: "string" | "integer",
   typeName: string
 ): TargetWithIdentifierName {
   return Object.assign(createTargetInfo(name, typeName), {
@@ -1010,18 +1011,14 @@ type SchemaArray = {
 };
 type SchemaItem = SchemaField | SchemaObject | SchemaArray;
 
-function convertFieldToSchemaType(
-  type: "boolean" | "integer" | "text" | "unknown" | "null"
-): SchemaField["type"] {
+function convertFieldToSchemaType(type: FieldType | "null"): SchemaField["type"] {
   switch (type) {
-    case "integer": {
+    case "integer":
+    case "float": {
       return "number";
     }
-    case "text": {
-      return "string";
-    }
+    case "string":
     case "boolean":
-    case "unknown":
     case "null": {
       return type;
     }
@@ -1056,9 +1053,10 @@ function buildFieldsetObjectSchema(def: Definition, field: FieldsetRecordDef): S
 
 function buildFieldsetFieldSchema(def: Definition, field: FieldsetFieldDef): SchemaField {
   switch (field.type) {
-    case "boolean":
     case "integer":
-    case "text":
+    case "float":
+    case "string":
+    case "boolean":
       return {
         type: convertFieldToSchemaType(field.type),
         nullable: field.nullable,

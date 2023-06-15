@@ -40,7 +40,6 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
     "fields": [
       {
         "dbname": "id",
-        "dbtype": "serial",
         "kind": "field",
         "modelRefKey": "AuthUser",
         "name": "id",
@@ -53,72 +52,69 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
       },
       {
         "dbname": "name",
-        "dbtype": "text",
         "kind": "field",
         "modelRefKey": "AuthUser",
         "name": "name",
         "nullable": false,
         "primary": false,
         "refKey": "AuthUser.name",
-        "type": "text",
+        "type": "string",
         "unique": false,
         "validators": [
           {
             "args": [
               {
-                "type": "integer",
+                "kind": "integer",
                 "value": 1,
               },
             ],
-            "inputType": "text",
+            "inputType": "string",
             "name": "minLength",
           },
         ],
       },
       {
         "dbname": "username",
-        "dbtype": "text",
         "kind": "field",
         "modelRefKey": "AuthUser",
         "name": "username",
         "nullable": false,
         "primary": false,
         "refKey": "AuthUser.username",
-        "type": "text",
+        "type": "string",
         "unique": true,
         "validators": [
           {
             "args": [
               {
-                "type": "integer",
+                "kind": "integer",
                 "value": 8,
               },
             ],
-            "inputType": "text",
+            "inputType": "string",
             "name": "minLength",
           },
         ],
       },
       {
         "dbname": "passwordhash",
-        "dbtype": "text",
         "kind": "field",
         "modelRefKey": "AuthUser",
         "name": "passwordHash",
         "nullable": false,
         "primary": false,
         "refKey": "AuthUser.passwordHash",
-        "type": "text",
+        "type": "string",
         "unique": false,
         "validators": [
           {
             "args": [
               {
-                "type": "integer",
+                "kind": "integer",
                 "value": 8,
               },
             ],
-            "inputType": "text",
+            "inputType": "string",
             "name": "minLength",
           },
         ],
@@ -151,7 +147,6 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
     "fields": [
       {
         "dbname": "id",
-        "dbtype": "serial",
         "kind": "field",
         "modelRefKey": "AuthUserAccessToken",
         "name": "id",
@@ -164,33 +159,30 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
       },
       {
         "dbname": "token",
-        "dbtype": "text",
         "kind": "field",
         "modelRefKey": "AuthUserAccessToken",
         "name": "token",
         "nullable": false,
         "primary": false,
         "refKey": "AuthUserAccessToken.token",
-        "type": "text",
+        "type": "string",
         "unique": true,
         "validators": [],
       },
       {
         "dbname": "expirydate",
-        "dbtype": "text",
         "kind": "field",
         "modelRefKey": "AuthUserAccessToken",
         "name": "expiryDate",
         "nullable": false,
         "primary": false,
         "refKey": "AuthUserAccessToken.expiryDate",
-        "type": "text",
+        "type": "string",
         "unique": false,
         "validators": [],
       },
       {
         "dbname": "authuser_id",
-        "dbtype": "integer",
         "kind": "field",
         "modelRefKey": "AuthUserAccessToken",
         "name": "authUser_id",
@@ -243,7 +235,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "kind": "fieldset-virtual-input",
                   "nullable": false,
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                   "validators": [],
                 },
               },
@@ -307,7 +299,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -322,7 +314,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -337,7 +329,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -355,7 +347,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "kind": "fieldset-virtual-input",
                   "nullable": false,
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                   "validators": [],
                 },
               },
@@ -401,8 +393,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "args": [
                     {
                       "kind": "literal",
-                      "type": "integer",
-                      "value": 32,
+                      "literal": {
+                        "kind": "integer",
+                        "value": 32,
+                      },
                     },
                   ],
                   "kind": "function",
@@ -422,8 +416,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                         },
                         {
                           "kind": "literal",
-                          "type": "integer",
-                          "value": 3600000,
+                          "literal": {
+                            "kind": "integer",
+                            "value": 3600000,
+                          },
                         },
                       ],
                       "kind": "function",
@@ -462,7 +458,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
                 "kind": "expression",
                 "type": {
-                  "kind": "text",
+                  "kind": "string",
                   "nullable": false,
                 },
               },
@@ -479,8 +475,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "name": "status",
                   "setter": {
                     "kind": "literal",
-                    "type": "integer",
-                    "value": 200,
+                    "literal": {
+                      "kind": "integer",
+                      "value": 200,
+                    },
                   },
                 },
                 {
@@ -517,14 +515,14 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "kind": "field",
               "nullable": false,
               "required": true,
-              "type": "text",
+              "type": "string",
               "validators": [],
             },
             "username": {
               "kind": "field",
               "nullable": false,
               "required": true,
-              "type": "text",
+              "type": "string",
               "validators": [],
             },
           },
@@ -626,7 +624,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -641,7 +639,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                   "kind": "expression",
                   "type": {
-                    "kind": "text",
+                    "kind": "string",
                     "nullable": false,
                   },
                 },
@@ -678,8 +676,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "name": "status",
                   "setter": {
                     "kind": "literal",
-                    "type": "integer",
-                    "value": 204,
+                    "literal": {
+                      "kind": "integer",
+                      "value": 204,
+                    },
                   },
                 },
               ],
@@ -749,16 +749,16 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "kind": "fieldset-virtual-input",
                   "nullable": false,
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                   "validators": [
                     {
                       "args": [
                         {
-                          "type": "integer",
+                          "kind": "integer",
                           "value": 8,
                         },
                       ],
-                      "inputType": "text",
+                      "inputType": "string",
                       "name": "minLength",
                     },
                   ],
@@ -773,7 +773,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   ],
                   "kind": "fieldset-input",
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                 },
               },
               {
@@ -785,7 +785,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   ],
                   "kind": "fieldset-input",
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                 },
               },
               {
@@ -798,8 +798,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     },
                     {
                       "kind": "literal",
-                      "type": "integer",
-                      "value": 10,
+                      "literal": {
+                        "kind": "integer",
+                        "value": 10,
+                      },
                     },
                   ],
                   "kind": "function",
@@ -837,7 +839,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
                 "kind": "expression",
                 "type": {
-                  "kind": "text",
+                  "kind": "string",
                   "nullable": false,
                 },
               },
@@ -852,7 +854,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
                 "kind": "expression",
                 "type": {
-                  "kind": "text",
+                  "kind": "string",
                   "nullable": false,
                 },
               },
@@ -869,8 +871,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "name": "status",
                   "setter": {
                     "kind": "literal",
-                    "type": "integer",
-                    "value": 201,
+                    "literal": {
+                      "kind": "integer",
+                      "value": 201,
+                    },
                   },
                 },
                 {
@@ -935,16 +939,16 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "kind": "field",
                   "nullable": false,
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                   "validators": [
                     {
                       "args": [
                         {
-                          "type": "integer",
+                          "kind": "integer",
                           "value": 1,
                         },
                       ],
-                      "inputType": "text",
+                      "inputType": "string",
                       "name": "minLength",
                     },
                   ],
@@ -953,16 +957,16 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "kind": "field",
                   "nullable": false,
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                   "validators": [
                     {
                       "args": [
                         {
-                          "type": "integer",
+                          "kind": "integer",
                           "value": 8,
                         },
                       ],
-                      "inputType": "text",
+                      "inputType": "string",
                       "name": "minLength",
                     },
                   ],
@@ -971,16 +975,16 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "kind": "field",
                   "nullable": false,
                   "required": true,
-                  "type": "text",
+                  "type": "string",
                   "validators": [
                     {
                       "args": [
                         {
-                          "type": "integer",
+                          "kind": "integer",
                           "value": 8,
                         },
                       ],
-                      "inputType": "text",
+                      "inputType": "string",
                       "name": "minLength",
                     },
                   ],
