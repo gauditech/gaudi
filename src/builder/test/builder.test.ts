@@ -22,7 +22,7 @@ describe("builder", () => {
       model ParentItem {
         reference itemNoAction { to ReferencedItem1 }
         reference itemCascade { to ReferencedItem2, on delete cascade }
-        reference itemSetNull { to ReferencedItem3, on delete set null }
+        reference itemSetNull { to ReferencedItem3, nullable, on delete set null }
       }
       model ReferencedItem1 {
         relation parent { from ParentItem, through itemNoAction }

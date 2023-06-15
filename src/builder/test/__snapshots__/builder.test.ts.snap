@@ -32,7 +32,7 @@ org_id Int
 
 
 // references
-org org @relation("Repoorg", fields: [org_id], references: [id])
+org org @relation("Repoorg", fields: [org_id], references: [id], onDelete: NoAction)
 }"
 `;
 
@@ -47,15 +47,15 @@ exports[`builder DB schema renders references 1`] = `
 id Int @id @unique @default(autoincrement())
 itemnoaction_id Int
 itemcascade_id Int
-itemsetnull_id Int
+itemsetnull_id Int?
 
 // relations
 
 
 // references
-itemNoAction referenceditem1 @relation("ParentItemitemNoAction", fields: [itemnoaction_id], references: [id])
+itemNoAction referenceditem1 @relation("ParentItemitemNoAction", fields: [itemnoaction_id], references: [id], onDelete: NoAction)
 itemCascade referenceditem2 @relation("ParentItemitemCascade", fields: [itemcascade_id], references: [id], onDelete: Cascade)
-itemSetNull referenceditem3 @relation("ParentItemitemSetNull", fields: [itemsetnull_id], references: [id], onDelete: SetNull)
+itemSetNull referenceditem3? @relation("ParentItemitemSetNull", fields: [itemsetnull_id], references: [id], onDelete: SetNull)
 }
     model referenceditem1 {
 // fields

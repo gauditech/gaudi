@@ -46,7 +46,7 @@ export function render(data: BuildDbSchemaData): string {
           (reference) => oneLine`
             ${reference.name}
               ${getRef.model(d, reference.toModelRefKey).dbname}${reference.nullable ? "?" : ""}
-              @relation("${reference.modelRefKey}${reference.name}", fields: [${getRef.field(d, reference.fieldRefKey).dbname}], references: [${getRef.field(d, reference.toModelFieldRefKey).dbname}]${reference.onDelete ? `, onDelete: ${renderReferenceOnDelete(reference)}` : ""})
+              @relation("${reference.modelRefKey}${reference.name}", fields: [${getRef.field(d, reference.fieldRefKey).dbname}], references: [${getRef.field(d, reference.toModelFieldRefKey).dbname}]${`, onDelete: ${renderReferenceOnDelete(reference)}`})
         `)}
         }
       `
