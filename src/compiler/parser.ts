@@ -251,7 +251,7 @@ class GaudiParser extends EmbeddedActionsParser {
               this.OR1([
                 {
                   ALT: () => {
-                    const actionKeyword = getTokenData(this.CONSUME1(L.Set), this.CONSUME1(L.Null));
+                    const actionKeyword = getTokenData(this.CONSUME(L.Set), this.CONSUME(L.Null));
                     atoms.push({
                       kind: "onDelete",
                       action: { kind: "setNull", keyword: actionKeyword },
@@ -261,7 +261,7 @@ class GaudiParser extends EmbeddedActionsParser {
                 },
                 {
                   ALT: () => {
-                    const actionKeyword = getTokenData(this.CONSUME1(L.Cascade));
+                    const actionKeyword = getTokenData(this.CONSUME(L.Cascade));
                     atoms.push({
                       kind: "onDelete",
                       action: { kind: "cascade", keyword: actionKeyword },
