@@ -279,7 +279,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                   required: setter.required,
                   type: setter.type,
                   nullable: setter.nullable,
-                  validators: setter.validators,
+                  validators: _.cloneDeep(setter.validators),
                 },
               ];
             }
@@ -297,7 +297,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                   required: setter.required,
                   type: setter.type,
                   nullable: field.nullable,
-                  validators: field.validators,
+                  validators: _.cloneDeep(field.validators),
                 },
               ];
             }
@@ -312,7 +312,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                   required: true, // FIXME
                   nullable: field.nullable,
                   type: field.type,
-                  validators: field.validators,
+                  validators: _.cloneDeep(field.validators),
                 },
               ];
             }
