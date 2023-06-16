@@ -366,13 +366,17 @@ exports[`Query plan supports exists subqueries: QueryPlan snapshot 1`] = `
           "args": [
             {
               "kind": "literal",
-              "type": "integer",
-              "value": 5,
+              "literal": {
+                "kind": "integer",
+                "value": 5,
+              },
             },
             {
               "kind": "literal",
-              "type": "integer",
-              "value": 1,
+              "literal": {
+                "kind": "integer",
+                "value": 1,
+              },
             },
           ],
           "fnName": "+",
@@ -769,7 +773,7 @@ exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
       },
       "kind": "expression",
       "type": {
-        "kind": "text",
+        "kind": "string",
         "nullable": false,
       },
     },
