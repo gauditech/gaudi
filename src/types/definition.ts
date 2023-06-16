@@ -162,7 +162,7 @@ export type FunctionName =
 
 export type AggregateFunctionName = "count" | "sum";
 
-export type InSubqueryFunctionName = "in" | "not in";
+export type InCollectionFunctionName = "in" | "not in";
 
 export type TypedFunction = {
   kind: "function";
@@ -197,7 +197,7 @@ type TypedAggregateFunction = {
 
 type TypedExistsSubquery = {
   kind: "in-subquery";
-  fnName: InSubqueryFunctionName;
+  fnName: InCollectionFunctionName;
   lookupExpression: TypedExprDef;
   sourcePath: string[];
   targetPath: string[];

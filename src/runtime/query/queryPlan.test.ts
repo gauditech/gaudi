@@ -63,7 +63,7 @@ describe("Query plan", () => {
     expect(final).toMatchSnapshot("SQL snapshot");
   });
 
-  it("subqueries using partition/over", () => {
+  it("supports subqueries using partition/over", () => {
     const modelBp = `
     model Org {
       relation repos { from Repo, through org }
@@ -90,7 +90,7 @@ describe("Query plan", () => {
     expect(sql).toMatchSnapshot("SQL snapshot");
   });
 
-  it("supports exists subqueries", () => {
+  it("supports 'in' array or subqueries", () => {
     const modelBp = `
     model Org {
       relation repos { from Repo, through org }
@@ -104,7 +104,7 @@ describe("Query plan", () => {
     query {
       from Org as o,
       filter { 5+1 in o.repos.org.id or
-        o.id in o.repos.org.id },
+        o.id in o.repos.org.id or o.id in [1, o.id, 2] },
       select { id }
     }
     `;

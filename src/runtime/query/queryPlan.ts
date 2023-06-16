@@ -17,7 +17,7 @@ import {
   AggregateFunctionName,
   Definition,
   FunctionName,
-  InSubqueryFunctionName,
+  InCollectionFunctionName,
   QueryDef,
   SelectItem,
   TypedExprDef,
@@ -70,6 +70,7 @@ export type QueryPlanExpression =
       kind: "alias";
       value: NamePath;
     }
+  | { kind: "array"; elements: QueryPlanExpression[] }
   | {
       kind: "function";
       fnName: FunctionName | AggregateFunctionName;
@@ -79,7 +80,7 @@ export type QueryPlanExpression =
   | {
       kind: "in-subquery";
       plan: QueryPlan;
-      operator: InSubqueryFunctionName;
+      operator: InCollectionFunctionName;
       lookupExpression: QueryPlanExpression;
     };
 
@@ -394,7 +395,10 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
         lookupExpression: toQueryExpr(def, expandExpression(def, sub.lookupExpression)),
       };
     })
-    .with({ kind: "array" }, shouldBeUnreachableCb("TODO"))
+    .with({ kind: "array" }, (array) => ({
+      kind: "array",
+      elements: array.elements.map((element) => toQueryExpr(def, expandExpression(def, element))),
+    }))
     .with(undefined, () => {
       throw new UnreachableError("");
     })

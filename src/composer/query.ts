@@ -143,6 +143,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
               const [head, ...tail] = arg.identifier;
               return (
                 match<typeof head.ref, TypedExprDef>(head.ref)
+                  // FIXME literals should be supported before IN as well ?
                   .with({ kind: "modelAtom" }, () => ({
                     kind: "alias",
                     namePath: [...namePath, ...arg.identifier.map((i) => i.text)],
@@ -164,26 +165,38 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
             .exhaustive();
 
           const arg1 = expr.args[1];
-          ensureEqual(arg1.kind, "identifier");
-          const [head1, ...tail1] = arg1.identifier;
-          const [sourcePath, targetPath] = match(head1.ref)
-            .with({ kind: "modelAtom" }, () => {
-              return [namePath, arg1.identifier.map((i) => i.text)];
-            })
-            .with({ kind: "queryTarget" }, (ref) => {
-              return [ref.path, tail1.map((i) => i.text)];
-            })
-            .otherwise(() => {
-              throw new UnreachableError(`Invalid ref kind ${head1.ref.kind}`);
-            });
+          return match<typeof arg1, TypedExprDef>(arg1)
+            .with({ kind: "identifier" }, (arg) => {
+              const [head1, ...tail1] = arg.identifier;
+              const [sourcePath, targetPath] = match(head1.ref)
+                .with({ kind: "modelAtom" }, () => {
+                  return [namePath, arg.identifier.map((i) => i.text)];
+                })
+                .with({ kind: "queryTarget" }, (ref) => {
+                  return [ref.path, tail1.map((i) => i.text)];
+                })
+                .otherwise(() => {
+                  throw new UnreachableError(`Invalid ref kind ${head1.ref.kind}`);
+                });
 
-          return {
-            kind: "in-subquery",
-            fnName: expr.name,
-            lookupExpression,
-            sourcePath,
-            targetPath,
-          };
+              return {
+                kind: "in-subquery",
+                fnName: expr.name as "in" | "not in",
+                lookupExpression,
+                sourcePath,
+                targetPath,
+              };
+            })
+            .with({ kind: "array" }, (arg) => {
+              return {
+                kind: "function",
+                name: expr.name as "in" | "not in",
+                args: [lookupExpression, composeExpression(arg, namePath)],
+              };
+            })
+            .otherwise(
+              shouldBeUnreachableCb(`Unexpected ${expr.name} argument kind: ${arg1.kind}`)
+            );
         }
         default: {
           return typedFunctionFromParts(expr.name, expr.args, namePath);
