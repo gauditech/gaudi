@@ -616,7 +616,7 @@ export function endpointUsesAuthorization(endpoint: EndpointDef): boolean {
   // check for anything other than `@auth.id is not null`
   function isAnotherExpression(expr: TypedExprDef): boolean {
     function isNull(expr: TypedExprDef): boolean {
-      return expr?.kind === "literal" && expr.type === "null";
+      return expr?.kind === "literal" && expr.literal.kind === "null";
     }
     function isAuthId(expr: TypedExprDef): boolean {
       return expr?.kind === "alias" && _.isEqual(expr.namePath, ["@auth", "id"]);
