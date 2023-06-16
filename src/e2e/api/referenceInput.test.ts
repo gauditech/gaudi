@@ -35,7 +35,7 @@ describe("Reference Input", () => {
       const data = {
         name: "element",
         extra_extraData_slug: "extra",
-        nullableExtra_extraData_slug: "extra",
+        nullableExtra_extraData_slug: null,
       };
 
       const postResponse = await request(getServer()).post("/api/element").send(data);
@@ -69,9 +69,6 @@ describe("Reference Input", () => {
     });
 
     it("identifies through nested path", async () => {
-      /**
-       * The following is a copy of 'create with a valid reference' test case
-       */
       const extraData = { extraData: { slug: "extraslug" } };
 
       const extraPostResponse = await request(getServer()).post("/api/extra").send(extraData);

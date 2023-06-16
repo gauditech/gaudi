@@ -5,7 +5,7 @@ exports[`Reference Input Element and Extra create with a valid reference 1`] = `
   "extra_id": 1,
   "id": 1,
   "name": "element",
-  "nullableExtra_id": 1,
+  "nullableExtra_id": null,
 }
 `;
 
@@ -64,8 +64,6 @@ exports[`Reference Input Element and Extra validation error with non-nullable re
     "errors": [
       "extra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
  If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
-      "nullableExtra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
- If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
     ],
     "inner": [
       {
@@ -84,25 +82,6 @@ exports[`Reference Input Element and Extra validation error with non-nullable re
           "value": null,
         },
         "path": "extra_extraData_slug",
-        "type": "typeError",
-        "value": null,
-      },
-      {
-        "errors": [
-          "nullableExtra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
- If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
-        ],
-        "inner": [],
-        "message": "nullableExtra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
- If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
-        "name": "ValidationError",
-        "params": {
-          "originalValue": null,
-          "path": "nullableExtra_extraData_slug",
-          "type": "string",
-          "value": null,
-        },
-        "path": "nullableExtra_extraData_slug",
         "type": "typeError",
         "value": null,
       },

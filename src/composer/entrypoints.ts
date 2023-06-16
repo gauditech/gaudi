@@ -304,13 +304,14 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
             case "fieldset-reference-input": {
               ensureOneOf(action.kind, ["create-one", "update-one"]);
               const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
+              const reference = getRef.reference(def, action.model, name);
               const field = getRef.field(def, tpath.leaf.refKey);
               return [
                 setter.fieldsetAccess,
                 {
                   kind: "field",
                   required: true, // FIXME
-                  nullable: field.nullable,
+                  nullable: reference.nullable,
                   type: field.type,
                   validators: _.cloneDeep(field.validators),
                 },
