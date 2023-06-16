@@ -35,7 +35,7 @@ describe("compiler errors", () => {
           relation foo { from Foo, through baz }
         }
         `;
-      expectError(bp, `Reference cannot be set to null on delete because it's not nullable.`);
+      expectError(bp, `Reference cannot be set to null on delete because it's not nullable`);
     });
     it("fails on name colision between field and reference", () => {
       const bp = `
