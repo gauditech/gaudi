@@ -170,7 +170,7 @@ describe("Auth", () => {
     it("Fail private box > get public owned", async () => {
       const token = await loginOwner();
       const getResponse = await request(getServer())
-        .get("/api/box/private/items/public")
+        .get("/api/box/private/items/public2")
         .set("Authorization", "bearer " + token);
       expect(getResponse.statusCode).toBe(403);
     });
