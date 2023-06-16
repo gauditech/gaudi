@@ -152,7 +152,7 @@ export function checkForm(projectASTs: ProjectASTs) {
     // allow "set null" action only on nullable references
     if (onDelete?.action.kind === "setNull" && nullable == null) {
       errors.push(
-        new CompilerError(onDelete.action.keyword, ErrorCode.ReferenceOnDeleteNotNulllable)
+        new CompilerError(onDelete.action.keyword, ErrorCode.ReferenceOnDeleteNotNullable)
       );
     }
   }
