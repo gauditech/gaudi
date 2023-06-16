@@ -116,10 +116,8 @@ export async function buildApiClients(
                 const diagnostics = sourceFile.getPreEmitDiagnostics();
                 // no errors, we can emit files
                 if (!hasTsErrors(diagnostics)) {
-                  sourceFile.formatText();
-
-                  // manually saving output file is nearly instant while ts-morph's `sourceFile.save()` is slower than emitting JS?!
-                  saveOutputFile(outPath, sourceFile.getFullText());
+                  sourceFile.formatText({ indentSize: 2 });
+                  sourceFile.save();
 
                   console.log(`Source file created [${Date.now() - t0} ms]: ${outPath}`);
                 }
