@@ -29,7 +29,7 @@ export function App() {
         <a href="https://gaudi.tech" target="_blank">
           <img src={gaudiLogo} className="logo" alt="Gaudi logo" />
         </a>
-        <div className="logo-hearts">&hearts;</div>
+        <div className="logo-hearts" />
         <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
