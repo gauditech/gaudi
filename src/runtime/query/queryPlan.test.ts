@@ -94,6 +94,7 @@ describe("Query plan", () => {
     const modelBp = `
     model Org {
       relation repos { from Repo, through org }
+      query firstRepo { from repos, first }
     }
     model Repo {
       reference org { to Org }
@@ -104,7 +105,7 @@ describe("Query plan", () => {
     query {
       from Org as o,
       filter { 5+1 in o.repos.org.id or
-        o.id + 1 in o.repos.org.id or o.id in [1, o.id, 2] },
+        o.id + 1 in o.repos.org.id or o.id in [1, o.firstRepo.id, 2] },
       select { id }
     }
     `;

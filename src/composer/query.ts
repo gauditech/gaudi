@@ -51,29 +51,6 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
   };
 }
 
-export function composeAggregate(qspec: Spec.Query): AggregateDef {
-  const aggregate = qspec.aggregate;
-  if (!aggregate) {
-    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
-  }
-  const qdef = composeQuery({ ...qspec, aggregate: undefined });
-  const { refKey } = qdef;
-  const query = _.omit(qdef, ["refKey", "name", "select"]);
-
-  if (aggregate !== "sum" && aggregate !== "count") {
-    throw new Error(`Unknown aggregate function ${aggregate}`);
-  }
-
-  return {
-    refKey,
-    kind: "aggregate",
-    aggrFnName: aggregate,
-    targetPath: [qspec.sourceModel, "id"],
-    name: qspec.name,
-    query,
-  };
-}
-
 export function composeOrderBy(
   fromPath: string[],
   orderBy: Spec.QueryOrderBy[] | undefined

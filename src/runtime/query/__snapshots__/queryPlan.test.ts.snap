@@ -355,6 +355,7 @@ exports[`Query plan supports 'in' array or subqueries: QueryPlan snapshot 1`] = 
                 "kind": "alias",
                 "value": [
                   "Org",
+                  "firstRepo",
                   "id",
                 ],
               },
@@ -380,7 +381,63 @@ exports[`Query plan supports 'in' array or subqueries: QueryPlan snapshot 1`] = 
     "Org",
   ],
   "groupBy": [],
-  "joins": [],
+  "joins": [
+    {
+      "joinOn": [
+        [
+          "Org",
+          "id",
+        ],
+        [
+          "Org",
+          "firstRepo",
+          "__join_connection",
+        ],
+      ],
+      "joinType": "inner",
+      "kind": "subquery",
+      "namePath": [
+        "Org",
+        "firstRepo",
+      ],
+      "plan": {
+        "entry": "Org",
+        "filter": undefined,
+        "fromPath": [
+          "Org",
+          "repos",
+        ],
+        "groupBy": [],
+        "joins": [
+          {
+            "joinOn": [
+              [
+                "Org",
+                "id",
+              ],
+              [
+                "Org",
+                "repos",
+                "org_id",
+              ],
+            ],
+            "joinType": "inner",
+            "kind": "inline",
+            "modelName": "Repo",
+            "namePath": [
+              "Org",
+              "repos",
+            ],
+            "target": "repos",
+          },
+        ],
+        "limit": 1,
+        "offset": undefined,
+        "orderBy": undefined,
+        "select": undefined,
+      },
+    },
+  ],
   "limit": undefined,
   "offset": undefined,
   "orderBy": undefined,
@@ -401,6 +458,26 @@ exports[`Query plan supports 'in' array or subqueries: SQL snapshot 1`] = `
   "Org"."id" AS "id"
 FROM
   "org" AS "Org"
+  INNER JOIN (
+    SELECT
+      *
+    FROM
+      (
+        SELECT
+          "Org.repos".*,
+          "Org"."id" AS "__join_connection",
+          ROW_NUMBER() OVER (
+            PARTITION BY
+              "Org"."id"
+          ) AS "__row_number"
+        FROM
+          "org" AS "Org"
+          INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
+      ) AS topn
+    WHERE
+      topn."__row_number" <= 1
+      AND topn."__row_number" > 0
+  ) AS "Org.firstRepo" ON "Org"."id" = "Org.firstRepo"."__join_connection"
 WHERE
   (
     (
@@ -421,7 +498,7 @@ WHERE
           INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
       )
     )
-    OR "Org"."id" IN (1, "Org"."id", 2)
+    OR "Org"."id" IN (1, "Org.firstRepo"."id", 2)
   )"
 `;
 
