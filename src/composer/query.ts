@@ -3,16 +3,10 @@ import { P, match } from "ts-pattern";
 
 import { defineType } from "./models";
 
-import {
-  UnreachableError,
-  assertUnreachable,
-  ensureEqual,
-  shouldBeUnreachableCb,
-} from "@src/common/utils";
+import { UnreachableError, ensureEqual, shouldBeUnreachableCb } from "@src/common/utils";
 import { Type } from "@src/compiler/ast/type";
 import { refKeyFromRef } from "@src/composer/utils";
 import {
-  AggregateDef,
   FunctionName,
   QueryDef,
   QueryOrderByAtomDef,
