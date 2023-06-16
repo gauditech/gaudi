@@ -387,7 +387,7 @@ export type ValidatorDef =
   | IsFloatEqual
   | IsStringEqual
   | HookValidator
-  | NoReferenceValidator;
+  | ReferenceNotFoundValidator;
 
 export const ValidatorDefinition = [
   ["string", "max", "maxLength", ["integer"]],
@@ -471,8 +471,8 @@ export interface HookValidator {
   arg?: string;
   hook: HookCode;
 }
-export interface NoReferenceValidator {
-  name: "noReference";
+export interface ReferenceNotFoundValidator {
+  name: "reference-not-found";
 }
 
 export type ActionDef =

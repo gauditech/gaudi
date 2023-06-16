@@ -32,18 +32,39 @@ describe("Reference Input", () => {
       const extraPostResponse = await request(getServer()).post("/api/extra").send(extraData);
       expect(extraPostResponse.statusCode).toBe(200);
 
-      const data = { name: "element", extra_extraData_slug: "extra" };
+      const data = {
+        name: "element",
+        extra_extraData_slug: "extra",
+        nullableExtra_extraData_slug: "extra",
+      };
 
       const postResponse = await request(getServer()).post("/api/element").send(data);
       expect(postResponse.statusCode).toBe(200);
       expect(postResponse.body).toMatchSnapshot();
     });
 
-    it("create with an invalid reference", async () => {
-      const data = { name: "element", extra_extraData_slug: "baz" };
+    it("create with an invalid references", async () => {
+      const data = {
+        name: "element",
+        extra_extraData_slug: "baz", // invalid
+        // nullableExtra_extraData_slug <-- missing
+      };
 
       const postResponse = await request(getServer()).post("/api/element").send(data);
       expect(postResponse.statusCode).toBe(400);
+      expect(postResponse.body).toMatchSnapshot();
+    });
+
+    it("validation error with non-nullable reference", async () => {
+      const data = {
+        name: "element",
+        extra_extraData_slug: null, // this should fail
+        nullableExtra_extraData_slug: null, // this should be allowed
+      };
+
+      const postResponse = await request(getServer()).post("/api/element").send(data);
+      expect(postResponse.statusCode).toBe(400);
+
       expect(postResponse.body).toMatchSnapshot();
     });
 

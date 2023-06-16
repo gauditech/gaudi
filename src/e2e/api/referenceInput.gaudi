@@ -1,11 +1,13 @@
 model Element {
   field name { type string }
   reference extra { to Extra } // TODO: unique?
+  reference nullableExtra { to Extra, nullable }
 }
 
 model Extra {
   reference extraData { to ExtraData, unique }
   relation element { from Element, through extra }
+  relation nullableElement { from Element, through nullableExtra }
 }
 
 model ExtraData {
@@ -32,6 +34,7 @@ api {
       action {
         create {
           reference extra through extraData.slug
+          reference nullableExtra through extraData.slug
         }
       }
     }

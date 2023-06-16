@@ -127,8 +127,8 @@ describe("runtime", () => {
         },
         vars: new Vars(),
         referenceIds: [
-          { fieldsetAccess: ["other_slug"], value: 1 },
-          { fieldsetAccess: ["other_myref_slug"], value: 40 },
+          { kind: "reference-found", fieldsetAccess: ["other_slug"], value: 1 },
+          { kind: "reference-found", fieldsetAccess: ["other_myref_slug"], value: 40 },
         ],
       };
 
@@ -164,7 +164,7 @@ describe("runtime", () => {
           virtual_input_prop: "virtual input value",
         },
         vars: new Vars(),
-        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
+        referenceIds: [{ kind: "reference-found", fieldsetAccess: ["slug"], value: 1 }],
       };
 
       expect(

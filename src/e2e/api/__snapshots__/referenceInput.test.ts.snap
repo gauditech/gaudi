@@ -5,15 +5,17 @@ exports[`Reference Input Element and Extra create with a valid reference 1`] = `
   "extra_id": 1,
   "id": 1,
   "name": "element",
+  "nullableExtra_id": 1,
 }
 `;
 
-exports[`Reference Input Element and Extra create with an invalid reference 1`] = `
+exports[`Reference Input Element and Extra create with an invalid references 1`] = `
 {
   "code": "ERROR_CODE_VALIDATION",
   "data": {
     "errors": [
       "Can't find extra_extraData_slug with value: baz",
+      "nullableExtra_extraData_slug must be defined",
     ],
     "inner": [
       {
@@ -29,13 +31,86 @@ exports[`Reference Input Element and Extra create with an invalid reference 1`] 
           "value": "baz",
         },
         "path": "extra_extraData_slug",
-        "type": "noReference",
+        "type": "reference-not-found",
         "value": "baz",
+      },
+      {
+        "errors": [
+          "nullableExtra_extraData_slug must be defined",
+        ],
+        "inner": [],
+        "message": "nullableExtra_extraData_slug must be defined",
+        "name": "ValidationError",
+        "params": {
+          "path": "nullableExtra_extraData_slug",
+        },
+        "path": "nullableExtra_extraData_slug",
+        "type": "defined",
       },
     ],
     "value": {
       "extra_extraData_slug": "baz",
       "name": "element",
+    },
+  },
+  "message": "Validation error",
+}
+`;
+
+exports[`Reference Input Element and Extra validation error with non-nullable reference 1`] = `
+{
+  "code": "ERROR_CODE_VALIDATION",
+  "data": {
+    "errors": [
+      "extra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
+ If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
+      "nullableExtra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
+ If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
+    ],
+    "inner": [
+      {
+        "errors": [
+          "extra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
+ If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
+        ],
+        "inner": [],
+        "message": "extra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
+ If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
+        "name": "ValidationError",
+        "params": {
+          "originalValue": null,
+          "path": "extra_extraData_slug",
+          "type": "string",
+          "value": null,
+        },
+        "path": "extra_extraData_slug",
+        "type": "typeError",
+        "value": null,
+      },
+      {
+        "errors": [
+          "nullableExtra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
+ If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
+        ],
+        "inner": [],
+        "message": "nullableExtra_extraData_slug must be a \`string\` type, but the final value was: \`null\`.
+ If "null" is intended as an empty value be sure to mark the schema as \`.nullable()\`",
+        "name": "ValidationError",
+        "params": {
+          "originalValue": null,
+          "path": "nullableExtra_extraData_slug",
+          "type": "string",
+          "value": null,
+        },
+        "path": "nullableExtra_extraData_slug",
+        "type": "typeError",
+        "value": null,
+      },
+    ],
+    "value": {
+      "extra_extraData_slug": null,
+      "name": "element",
+      "nullableExtra_extraData_slug": null,
     },
   },
   "message": "Validation error",

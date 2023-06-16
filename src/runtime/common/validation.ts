@@ -124,7 +124,7 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(def, v, s);
-      } else if (v.name === "noReference") {
+      } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
     });
@@ -152,7 +152,7 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
         s = s.equals([v.args[0].value]) as NumberSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(def, v, s);
-      } else if (v.name === "noReference") {
+      } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
     });
@@ -180,7 +180,7 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
         s = s.equals([v.args[0].value]) as NumberSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(def, v, s);
-      } else if (v.name === "noReference") {
+      } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
     });
@@ -202,7 +202,7 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
         s = s.equals([v.args[0].value]) as BooleanSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(def, v, s);
-      } else if (v.name === "noReference") {
+      } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
     });
@@ -227,7 +227,7 @@ function buildHookSchema<S extends BaseSchema>(
 
 function buildNoReferenceSchema<S extends BaseSchema>(schema: S): S {
   return schema.test(
-    "noReference",
+    "reference-not-found",
     (params) => `Can't find ${params.path} with value: ${params.value}`,
     () => false
   );
