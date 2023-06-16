@@ -105,7 +105,6 @@ export function buildQueryPlan(def: Definition, q: QueryDef): QueryPlan {
   /**
    * Step 1: collect all the atoms from this query
    */
-  // FIXME
   const atoms = collectQueryAtoms(def, q);
   /**
    * Step 2: build the plan

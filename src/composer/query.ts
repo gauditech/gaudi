@@ -148,7 +148,6 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
               const [head, ...tail] = arg.identifier;
               return (
                 match<typeof head.ref, TypedExprDef>(head.ref)
-                  // FIXME literals should be supported before IN as well ?
                   .with({ kind: "modelAtom" }, () => ({
                     kind: "alias",
                     namePath: [...namePath, ...arg.identifier.map((i) => i.text)],
@@ -166,7 +165,9 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
               literal,
             }))
             .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
-            .with({ kind: "array" }, shouldBeUnreachableCb(`TODO`))
+            .with({ kind: "array" }, () => {
+              throw new UnreachableError(`"array" is not a valid lookup expression`);
+            })
             .exhaustive();
 
           const arg1 = fn.args[1];

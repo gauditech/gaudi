@@ -241,11 +241,24 @@ exports[`Query plan supports 'in' array or subqueries: QueryPlan snapshot 1`] = 
           {
             "kind": "in-subquery",
             "lookupExpression": {
-              "kind": "alias",
-              "value": [
-                "Org",
-                "id",
+              "args": [
+                {
+                  "kind": "alias",
+                  "value": [
+                    "Org",
+                    "id",
+                  ],
+                },
+                {
+                  "kind": "literal",
+                  "literal": {
+                    "kind": "integer",
+                    "value": 1,
+                  },
+                },
               ],
+              "fnName": "+",
+              "kind": "function",
             },
             "operator": "in",
             "plan": {
@@ -399,7 +412,7 @@ WHERE
           INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
           INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
       )
-      OR "Org"."id" IN (
+      OR ("Org"."id" + 1) IN (
         SELECT
           "Org.repos.org"."id" AS "target"
         FROM

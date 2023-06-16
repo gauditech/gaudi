@@ -104,7 +104,7 @@ describe("Query plan", () => {
     query {
       from Org as o,
       filter { 5+1 in o.repos.org.id or
-        o.id in o.repos.org.id or o.id in [1, o.id, 2] },
+        o.id + 1 in o.repos.org.id or o.id in [1, o.id, 2] },
       select { id }
     }
     `;
