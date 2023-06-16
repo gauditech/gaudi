@@ -1,7 +1,7 @@
 model User {
   field name { type string }
   reference address { to Address, unique }
-  reference details { to Details, unique, nullable }
+  reference details { to Details, unique, nullable, on delete set null }
 }
 
 model Address {

@@ -44,15 +44,14 @@ import {
 import { builtinFunctions } from "./ast/functions";
 import { Scope, addTypeGuard } from "./ast/scope";
 import {
-  PrimitiveType,
   Type,
   TypeCardinality,
   TypeCategory,
   baseType,
+  fieldTypes,
   getTypeCardinality,
   getTypeModel,
   isExpectedType,
-  primitiveTypes,
   removeNullable,
 } from "./ast/type";
 import { CompilerError, ErrorCode } from "./compilerError";
@@ -136,26 +135,26 @@ export function resolve(projectASTs: ProjectASTs) {
       validate.validators.forEach(resolveValidator)
     );
 
-    field.name.ref = {
-      kind: "modelAtom",
-      atomKind: "field",
-      parentModel: model.name.text,
-      name: field.name.text,
-      unique: !!kindFind(field.atoms, "unique"),
-    };
-
-    let type: Type = Type.any;
+    const nullable = !!kindFind(field.atoms, "nullable");
     const typeAtom = kindFind(field.atoms, "type");
-    if (typeAtom) {
-      const typeText = typeAtom.identifier.text;
-      if (_.includes(primitiveTypes, typeText)) {
-        type = Type.primitive(typeText as PrimitiveType["primitiveKind"]);
-      } else {
-        errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
-      }
+
+    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
+
+    if (type) {
+      field.name.ref = {
+        kind: "modelAtom",
+        atomKind: "field",
+        parentModel: model.name.text,
+        name: field.name.text,
+        type,
+        nullable,
+        unique: !!kindFind(field.atoms, "unique"),
+      };
+
+      field.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
+    } else if (typeAtom) {
+      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
     }
-    const nullable = kindFind(field.atoms, "nullable");
-    field.name.type = nullable ? Type.nullable(type) : type;
   }
 
   function resolveValidator(validator: Validator) {
@@ -737,19 +736,19 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput, scope: Scope) {
-    let type: Type = Type.any;
+    const nullable = !!kindFind(virtualInput.atoms, "nullable");
     const typeAtom = kindFind(virtualInput.atoms, "type");
-    if (typeAtom) {
-      const typeText = typeAtom.identifier.text;
-      if (_.includes(primitiveTypes, typeText)) {
-        type = Type.primitive(typeText as PrimitiveType["primitiveKind"]);
-      } else {
-        errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.VirtualInputType));
-      }
+
+    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
+
+    if (type) {
+      virtualInput.name.ref = { kind: "virtualInput", type, nullable };
+      virtualInput.name.type = nullable
+        ? Type.nullable(Type.primitive(type))
+        : Type.primitive(type);
+    } else if (typeAtom) {
+      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
     }
-    const nullable = kindFind(virtualInput.atoms, "nullable");
-    virtualInput.name.ref = { kind: "virtualInput" };
-    virtualInput.name.type = nullable ? Type.nullable(type) : type;
     addToScope(scope, virtualInput.name);
   }
 
@@ -1170,16 +1169,17 @@ export function resolve(projectASTs: ProjectASTs) {
     if (name.endsWith("_id")) {
       const referenceAtom = model.atoms.find((m) => m.name.text === name.slice(0, -3));
       if (referenceAtom?.kind === "reference") {
+        const nullable = referenceAtom.name.ref?.nullable ?? false;
         identifier.ref = {
           kind: "modelAtom",
           atomKind: "field",
           parentModel: model.name.text,
           name,
+          type: "integer",
+          nullable,
           unique: false,
         };
-        const baseType: Type = Type.integer;
-        identifier.type =
-          referenceAtom.name.type.kind === "nullable" ? Type.nullable(baseType) : baseType;
+        identifier.type = nullable ? Type.nullable(Type.integer) : Type.integer;
         return true;
       }
     }
@@ -1190,6 +1190,8 @@ export function resolve(projectASTs: ProjectASTs) {
         atomKind: "field",
         parentModel: model.name.text,
         name,
+        type: "integer",
+        nullable: false,
         unique: true,
       };
       identifier.type = Type.integer;

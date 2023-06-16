@@ -22,6 +22,7 @@ import {
   SelectItem,
   TypedExprDef,
 } from "@src/types/definition";
+import { Literal } from "@src/types/specification";
 
 // FIXME support dbname and real table names
 export type QueryPlan = {
@@ -63,8 +64,7 @@ export type QueryPlanJoin = JoinWithSubquery | InlineJoin;
 export type QueryPlanExpression =
   | {
       kind: "literal";
-      type: "boolean" | "null" | "text" | "integer";
-      value: unknown;
+      literal: Literal;
     }
   | {
       kind: "alias";
@@ -355,7 +355,7 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
       fnName: fn.name,
       args: fn.args.map((arg) => toQueryExpr(def, arg)),
     }))
-    .with({ kind: "literal" }, (lit) => ({ kind: "literal", value: lit.value, type: lit.type }))
+    .with({ kind: "literal" }, ({ literal }) => ({ kind: "literal", literal }))
     .with({ kind: "variable" }, (v) => ({ kind: "variable", name: v.name }))
     .with({ kind: "aggregate-function" }, (aggr) => ({
       kind: "alias",

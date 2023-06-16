@@ -245,6 +245,33 @@ class GaudiParser extends EmbeddedActionsParser {
               atoms.push({ kind: "unique", keyword });
             },
           },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.On), this.CONSUME(L.Delete));
+              this.OR1([
+                {
+                  ALT: () => {
+                    const actionKeyword = getTokenData(this.CONSUME(L.Set), this.CONSUME(L.Null));
+                    atoms.push({
+                      kind: "onDelete",
+                      action: { kind: "setNull", keyword: actionKeyword },
+                      keyword,
+                    });
+                  },
+                },
+                {
+                  ALT: () => {
+                    const actionKeyword = getTokenData(this.CONSUME(L.Cascade));
+                    atoms.push({
+                      kind: "onDelete",
+                      action: { kind: "cascade", keyword: actionKeyword },
+                      keyword,
+                    });
+                  },
+                },
+              ]);
+            },
+          },
         ]);
       },
     });

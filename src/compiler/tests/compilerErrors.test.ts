@@ -22,6 +22,17 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `This reference has incorrect model`);
     });
+    it('fails when using "set null" on delete action in non-nullable reference', () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz, on delete set null }
+        }
+        model Baz {
+          relation foo { from Foo, through baz }
+        }
+        `;
+      expectError(bp, `Reference cannot be set to null on delete because it's not nullable`);
+    });
     it("fails on name colision between field and reference", () => {
       const bp = `
         model Org {

@@ -10,7 +10,7 @@ import {
   shouldBeUnreachableCb,
 } from "@src/common/utils";
 import { Type } from "@src/compiler/ast/type";
-import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
+import { refKeyFromRef } from "@src/composer/utils";
 import {
   AggregateDef,
   FunctionName,
@@ -107,7 +107,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
       return composeRefPath(expr.identifier, namePath);
     }
     case "literal": {
-      return getTypedLiteralValue(expr.literal);
+      return { kind: "literal", literal: expr.literal };
     }
     case "function": {
       switch (expr.name) {
@@ -155,10 +155,9 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
                   .otherwise(shouldBeUnreachableCb(`${head.ref.kind} is not a valid lookup`))
               );
             })
-            .with({ kind: "literal" }, (arg) => ({
+            .with({ kind: "literal" }, ({ literal }) => ({
               kind: "literal",
-              value: arg.literal,
-              type: defineType(arg.type).kind as any, // FIXME type refactor
+              literal,
             }))
             .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
             .with({ kind: "array" }, shouldBeUnreachableCb(`TODO`))
@@ -195,7 +194,10 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
       return {
         kind: "array",
         elements: expr.elements.map((e) => composeExpression(e, namePath)),
-        type: defineType(expr.type.kind === "collection" ? expr.type.type : Type.any),
+        type: {
+          kind: "collection",
+          type: defineType(expr.type.kind === "collection" ? expr.type.type : Type.any),
+        },
       };
     }
     default:

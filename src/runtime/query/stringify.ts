@@ -5,7 +5,7 @@ import { match } from "ts-pattern";
 import { NamePath } from "./build";
 import { QueryPlan, QueryPlanExpression, QueryPlanJoin } from "./queryPlan";
 
-import { UnreachableError, assertUnreachable } from "@src/common/utils";
+import { assertUnreachable } from "@src/common/utils";
 
 function namepathToQuotedPair(npath: NamePath): string {
   return `"${_.initial(npath).join(".")}"."${_.last(npath)}"`;
@@ -30,17 +30,12 @@ function exprToString(expr: QueryPlanExpression): string {
       return namepathToQuotedPair(expr.value);
     }
     case "literal": {
-      return match(typeof expr.value)
-        .with("number", "bigint", () => `${expr.value}`)
-        .with("string", () => `'${expr.value}'`)
-        .with("boolean", () => (expr.value ? "TRUE" : "FALSE"))
-        .when(
-          () => expr.value === null,
-          () => "NULL"
-        )
-        .otherwise((t) => {
-          throw new UnreachableError(`Invalid value typeof: ${t} (${expr.value})`);
-        });
+      return match(expr.literal)
+        .with({ kind: "integer" }, { kind: "float" }, ({ value }) => `${value}`)
+        .with({ kind: "string" }, ({ value }) => `'${value}'`)
+        .with({ kind: "boolean" }, ({ value }) => (value ? "TRUE" : "FALSE"))
+        .with({ kind: "null" }, () => "NULL")
+        .exhaustive();
     }
     case "variable": {
       return `:${expr.name}`;

@@ -1,9 +1,16 @@
 import _, { flatMap, mapValues } from "lodash";
 import { OpenAPIV3 } from "openapi-types";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 import { buildEndpointPath } from "@src/builder/query";
 import { getRef } from "@src/common/refs";
+import { FieldType } from "@src/compiler/ast/type";
+import {
+  endpointHasContext,
+  endpointUsesAuthentication,
+  endpointUsesAuthorization,
+  getEndpointFieldset,
+} from "@src/composer/entrypoints";
 import {
   Definition,
   EndpointDef,
@@ -73,8 +80,7 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
   function buildEndpointOperation(
     endpoint: EndpointDef,
     apiName: string | undefined,
-    parameters: OpenAPIV3.ParameterObject[],
-    hasContext: boolean
+    parameters: OpenAPIV3.ParameterObject[]
   ): OpenAPIV3.OperationObject {
     const properties = buildSchemaProperties(endpoint.response ?? []);
     const required = buildRequiredProperties(endpoint.response ?? []);
@@ -126,22 +132,75 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
       };
     }
 
-    if (hasContext) {
+    if (endpointHasContext(endpoint)) {
       operation.responses[404] = {
         description: "Resource not found",
         content: {
           "application/json": {
-            schema: { type: "object", properties: { message: { type: "string" } } },
+            schema: {
+              type: "object",
+              properties: { message: { type: "string", enum: ["ERROR_CODE_RESOURCE_NOT_FOUND"] } },
+            },
+          },
+        },
+      };
+    }
+
+    if (endpointUsesAuthentication(endpoint)) {
+      operation.responses[401] = {
+        description: "Unauthenticated",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: { message: { type: "string", enum: ["ERROR_CODE_UNAUTHENTICATED"] } },
+            },
+          },
+        },
+      };
+    }
+
+    if (endpointUsesAuthorization(endpoint)) {
+      operation.responses[403] = {
+        description: "Unauthorized",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: { message: { type: "string", enum: ["ERROR_CODE_FORBIDDEN"] } },
+            },
           },
         },
       };
     }
 
     operation.parameters = parameters;
-
-    if (endpoint.kind === "create" || endpoint.kind === "update") {
-      const schema = buildSchemaFromFieldset(endpoint.fieldset);
+    const fieldset = getEndpointFieldset(endpoint);
+    if (fieldset) {
+      const schema = buildSchemaFromFieldset(fieldset);
       operation.requestBody = { content: { "application/json": { schema } } };
+
+      operation.responses[400] = {
+        description: "Validation error",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                message: { type: "string", enum: ["Validation error"] },
+                code: { type: "string", enum: ["ERROR_CODE_VALIDATION"] },
+                // FIXME post validation v2:
+                // * calculate `anyOf` for all the validation messages
+                data: { type: "object" },
+              },
+            },
+          },
+        },
+      };
+    }
+
+    if (endpoint.authorize) {
+      operation.security = [{ bearerAuth: [] }];
     }
 
     return operation;
@@ -189,16 +248,26 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
           .compact()
           .value();
 
-        // has parent or target context iow. identifier in URL
-        const hasContext = endpointPath.fragments.some((f) => f.kind === "identifier");
         const pathItem = paths[path] ?? {};
-        pathItem[method] = buildEndpointOperation(endpoint, api.name, parameters, hasContext);
+        pathItem[method] = buildEndpointOperation(endpoint, api.name, parameters);
         paths[path] = pathItem;
       })
     )
   );
 
-  return { openapi: "3.0.3", info: { title: "Title", version: "1.0.0" }, paths };
+  const securitySchemes: Record<string, OpenAPIV3.SecuritySchemeObject> = {};
+  if (definition.authenticator) {
+    securitySchemes["bearerAuth"] = { type: "http", scheme: "bearer" };
+  }
+
+  return {
+    openapi: "3.0.3",
+    info: { title: "Title", version: "1.0.0" },
+    paths,
+    components: {
+      securitySchemes,
+    },
+  };
 }
 
 function buildSchemaFromFieldset(fieldset: FieldsetDef): OpenAPIV3.SchemaObject {
@@ -218,16 +287,14 @@ function buildSchemaFromFieldset(fieldset: FieldsetDef): OpenAPIV3.SchemaObject 
   return schema;
 }
 
-function convertToOpenAPIType(
-  type: "boolean" | "integer" | "text" | "unknown" | "null"
-): OpenAPIV3.NonArraySchemaObjectType {
+function convertToOpenAPIType(type: FieldType | "null"): OpenAPIV3.NonArraySchemaObjectType {
   switch (type) {
     case "boolean":
     case "integer":
+    case "string":
       return type;
-    case "text":
-      return "string";
-    case "unknown":
+    case "float":
+      return "number";
     case "null":
       // arbitrary type is "object"
       return "object";

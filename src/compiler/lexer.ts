@@ -77,6 +77,7 @@ export const Output = createWeakKeyword("output");
 export const Order = createWeakKeyword("order");
 export const Optional = createWeakKeyword("optional");
 export const One = createWeakKeyword("one");
+export const On = createWeakKeyword("on");
 export const Offset = createWeakKeyword("offset");
 export const Nullable = createWeakKeyword("nullable");
 export const Model = createWeakKeyword("model");
@@ -111,6 +112,7 @@ export const Create = createWeakKeyword("create");
 export const Count = createWeakKeyword("count");
 export const Computed = createWeakKeyword("computed");
 export const Client = createWeakKeyword("client");
+export const Cascade = createWeakKeyword("cascade");
 export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
 export const Basic = createWeakKeyword("basic");
@@ -207,6 +209,7 @@ export const GaudiTokens = [
   Order,
   Optional,
   One,
+  On,
   Offset,
   Nullable,
   Model,
@@ -241,6 +244,7 @@ export const GaudiTokens = [
   Count,
   Computed,
   Client,
+  Cascade,
   Cardinality,
   By,
   Basic,

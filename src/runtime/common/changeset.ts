@@ -33,7 +33,7 @@ export async function buildChangeset(
   async function getValue(setter: FieldSetter): Promise<unknown> {
     switch (setter.kind) {
       case "literal": {
-        return formatFieldValue(setter.value, setter.type);
+        return formatFieldValue(setter.literal.value, setter.literal.kind);
       }
       case "fieldset-virtual-input":
       case "fieldset-input": {
@@ -173,11 +173,11 @@ export async function buildStrictChangeset(
  *
  * If `value` is `undefined`/`null`, an `undefined` is returned.
  *
- * This function uses `lodash` to convert "text" and "integer".
+ * This function uses `lodash` to convert "string" and "integer".
  * For details see: https://lodash.com/docs
  *
  * Mappings:
- * - text - `string`, `_.toString()`
+ * - string - `string`, `_.toString()`
  * - integer - `number`, `_.toInteger()`
  * - boolean - `boolean`, see below
  *

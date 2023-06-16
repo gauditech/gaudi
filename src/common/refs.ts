@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 
 import { UnreachableError, ensureEqual } from "./utils";
 
+import { FieldType } from "@src/compiler/ast/type";
 import { VarContext, getTypedPath } from "@src/composer/utils";
 import {
   AggregateDef,
@@ -231,13 +232,13 @@ export function getExecutionRuntime(def: Definition, name: string): ExecutionRun
  *
  * https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#model-field-scalar-types
  */
-export function getFieldDbType(type: FieldDef["dbtype"]): string {
+export function getFieldDbType(type: FieldType): string {
   switch (type) {
-    case "serial":
-      return "Int";
     case "integer":
       return "Int";
-    case "text":
+    case "float":
+      return "Float";
+    case "string":
       return "String";
     case "boolean":
       return "Boolean";
