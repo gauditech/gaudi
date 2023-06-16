@@ -3,6 +3,14 @@ import { match } from "ts-pattern";
 
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { FieldType } from "@src/compiler/ast/type";
+import {
+  endpointHasContext,
+  endpointUsesAuthentication,
+  endpointUsesAuthorization,
+  getEndpointFieldset,
+} from "@src/composer/entrypoints";
+import { HTTPErrorCode } from "@src/runtime/server/error";
 import {
   ApiDef,
   Definition,
@@ -235,13 +243,20 @@ function buildEndpointsApi(def: Definition, endpoints: EndpointDef[]): EndpointA
 function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEntry {
   // endpoints currently don't define their errors so we can only manually hardcode it
   const commonErrorTypes = [
-    // common server errors
-    `"ERROR_CODE_RESOURCE_NOT_FOUND"`,
-    `"ERROR_CODE_RESOURCE_NOT_FOUND"`,
-    `"ERROR_CODE_SERVER_ERROR"`,
+    // server runtime error
+    "ERROR_CODE_SERVER_ERROR",
     // client error - wraps any error that doesn't have structure { code, message, body? }
-    `"ERROR_CODE_OTHER"`,
+    "ERROR_CODE_OTHER",
   ];
+
+  const customErrorTypes: HTTPErrorCode[] = _.compact([
+    endpointHasContext(endpoint) && "ERROR_CODE_RESOURCE_NOT_FOUND",
+    endpointUsesAuthentication(endpoint) && "ERROR_CODE_UNAUTHENTICATED",
+    endpointUsesAuthorization(endpoint) && "ERROR_CODE_FORBIDDEN",
+    getEndpointFieldset(endpoint) && "ERROR_CODE_VALIDATION",
+  ]);
+
+  const errorType = [...commonErrorTypes, ...customErrorTypes].map((err) => `"${err}"`).join("|");
 
   const epKind = endpoint.kind;
   switch (epKind) {
@@ -250,7 +265,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const errorTypeName = "GetError";
-      const errorType = commonErrorTypes.join("|");
 
       let builder;
       if (endpoint.target.identifyWith) {
@@ -282,7 +296,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const errorTypeName = "CreateError";
-      const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
       return {
         name: "create",
         builder: `buildCreateFn<${inputTypeName},${responseTypeName}, ${errorTypeName}>(options, parentPath)`,
@@ -301,7 +314,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const errorTypeName = "UpdateError";
-      const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
       let builder;
       if (endpoint.target.identifyWith) {
@@ -328,7 +340,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
     }
     case "delete": {
       const errorTypeName = "DeleteError";
-      const errorType = commonErrorTypes.join("|");
 
       let builder;
       if (endpoint.target.identifyWith) {
@@ -354,7 +365,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       const responseType = renderSchema(selectToSchema(def, endpoint.response));
 
       const errorTypeName = "ListError";
-      const errorType = commonErrorTypes.join("|");
 
       if (endpoint.pageable) {
         return {
@@ -399,7 +409,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
         case "GET":
         case "DELETE": {
           const errorTypeName = `${typeName}Error`;
-          const errorType = commonErrorTypes.join("|");
 
           let builder;
           if (identifierType) {
@@ -417,7 +426,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
         case "POST":
         case "PATCH": {
           const errorTypeName = `${typeName}Error`;
-          const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
           let builder;
           if (identifierType) {
@@ -452,7 +460,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
         case "GET":
         case "DELETE": {
           const errorTypeName = `${typeName}Error`;
-          const errorType = commonErrorTypes.join("|");
 
           return {
             name: name,
@@ -463,7 +470,6 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
         case "POST":
         case "PATCH": {
           const errorTypeName = `${typeName}Error`;
-          const errorType = [...commonErrorTypes, `"ERROR_CODE_VALIDATION"`].join("|");
 
           return {
             name: name,
@@ -971,7 +977,7 @@ function createApiInfo(api: ApiDef): ApiName {
 }
 function createIdentifierTargetInfo(
   name: string,
-  identifierType: "text" | "integer",
+  identifierType: "string" | "integer",
   typeName: string
 ): TargetWithIdentifierName {
   return Object.assign(createTargetInfo(name, typeName), {
@@ -1010,18 +1016,14 @@ type SchemaArray = {
 };
 type SchemaItem = SchemaField | SchemaObject | SchemaArray;
 
-function convertFieldToSchemaType(
-  type: "boolean" | "integer" | "text" | "unknown" | "null"
-): SchemaField["type"] {
+function convertFieldToSchemaType(type: FieldType | "null"): SchemaField["type"] {
   switch (type) {
-    case "integer": {
+    case "integer":
+    case "float": {
       return "number";
     }
-    case "text": {
-      return "string";
-    }
+    case "string":
     case "boolean":
-    case "unknown":
     case "null": {
       return type;
     }
@@ -1056,9 +1058,10 @@ function buildFieldsetObjectSchema(def: Definition, field: FieldsetRecordDef): S
 
 function buildFieldsetFieldSchema(def: Definition, field: FieldsetFieldDef): SchemaField {
   switch (field.type) {
-    case "boolean":
     case "integer":
-    case "text":
+    case "float":
+    case "string":
+    case "boolean":
       return {
         type: convertFieldToSchemaType(field.type),
         nullable: field.nullable,

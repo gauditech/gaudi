@@ -478,7 +478,9 @@ describe("api client lib", () => {
       expect(postResp.data).toMatchInlineSnapshot(`
         {
           "name": "Fetch me org 1",
-          "repoSlug": "repo1",
+          "repoSlug": [
+            "repo1",
+          ],
         }
       `);
     });

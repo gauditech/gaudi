@@ -22,6 +22,17 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `This reference has incorrect model`);
     });
+    it('fails when using "set null" on delete action in non-nullable reference', () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz, on delete set null }
+        }
+        model Baz {
+          relation foo { from Foo, through baz }
+        }
+        `;
+      expectError(bp, `Reference cannot be set to null on delete because it's not nullable`);
+    });
     it("fails on name colision between field and reference", () => {
       const bp = `
         model Org {
@@ -55,6 +66,42 @@ describe("compiler errors", () => {
         }
         `;
       expectError(bp, `Circular model definition detected in model member definition`);
+    });
+  });
+
+  describe("query", () => {
+    it("fails when using first with limit or offset", () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz }
+        }
+        model Baz {
+          relation foos { from Foo, through baz }
+          query foo { from foos, first, limit 10, offset 10 }
+        }
+        `;
+      expectError(
+        bp,
+        `Query can't have "limit" when using "first"`,
+        `Query can't have "offset" when using "first"`
+      );
+    });
+    it("fails when using one with limit, offset or order by", () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz }
+        }
+        model Baz {
+          relation foos { from Foo, through baz }
+          query foo { from foos, one, limit 10, offset 10, order by { id } }
+        }
+        `;
+      expectError(
+        bp,
+        `Query can't have "limit" when using "one"`,
+        `Query can't have "offset" when using "one"`,
+        `Query can't have "order by" when using "one"`
+      );
     });
   });
 

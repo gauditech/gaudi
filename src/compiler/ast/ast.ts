@@ -1,4 +1,4 @@
-import { Type } from "./type";
+import { FieldType, Type } from "./type";
 
 export type ProjectASTs = {
   plugins: Record<string, GlobalAtom[]>;
@@ -42,6 +42,11 @@ export type ReferenceAtom = { keyword: TokenData } & (
   | { kind: "to"; identifier: IdentifierRef<RefModel> }
   | { kind: "nullable" }
   | { kind: "unique" }
+  | { kind: "onDelete"; action: ReferenceOnDeleteAtomAction }
+);
+export type ReferenceOnDeleteAtomAction = { keyword: TokenData } & (
+  | { kind: "cascade" }
+  | { kind: "setNull" }
 );
 
 export type Relation = {
@@ -404,6 +409,8 @@ export type RefModelField = {
   atomKind: "field";
   parentModel: string;
   name: string;
+  type: FieldType;
+  nullable: boolean;
   unique: boolean;
 };
 export type RefModelReference = {
@@ -450,7 +457,7 @@ export type RefQueryTarget = {
 export type RefTarget = { kind: "target"; targetKind: "entrypoint" | "populate" };
 export type RefAction = { kind: "action" };
 export type RefRepeat = { kind: "repeat" };
-export type RefVirtualInput = { kind: "virtualInput" };
+export type RefVirtualInput = { kind: "virtualInput"; type: FieldType; nullable: boolean };
 export type RefAuth = { kind: "auth"; model: string };
 export type RefAuthToken = { kind: "authToken" };
 export type RefStruct = { kind: "struct" };

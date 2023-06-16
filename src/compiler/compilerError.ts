@@ -26,6 +26,8 @@ export enum ErrorCode {
   DuplicateGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
   QueryFromAliasWrongLength,
+  LimitOrOffsetWithCardinalityModifier,
+  OrderByWithOne,
   QueryMaxOneAggregate,
   ConfiguringNonCustomEndpoint,
   MoreThanOneRespondsInEndpoint,
@@ -40,6 +42,7 @@ export enum ErrorCode {
   CantResolveModelAtom,
   CantResolveStructMember,
   ThroughReferenceHasIncorrectModel,
+  ReferenceOnDeleteNotNullable,
   CircularModelMemberDetected,
   TypeHasNoMembers,
   CantFindNameInScope,
@@ -111,6 +114,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Actions with "responds" can only be used in "custom" endpoints`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
+    case ErrorCode.LimitOrOffsetWithCardinalityModifier:
+      return `Query can't have "${params?.limitOrOffset}" when using "${params?.cardinalityModifier}"`;
+    case ErrorCode.OrderByWithOne:
+      return `Query can't have "order by" when using "one"`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
     case ErrorCode.ConfiguringNonCustomEndpoint:
@@ -137,6 +144,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve member of primitive types`;
     case ErrorCode.ThroughReferenceHasIncorrectModel:
       return `This reference has incorrect model`;
+    case ErrorCode.ReferenceOnDeleteNotNullable:
+      return `Reference cannot be set to null on delete because it's not nullable`;
     case ErrorCode.CircularModelMemberDetected:
       return `Circular model definition detected in model member definition`;
     case ErrorCode.TypeHasNoMembers:

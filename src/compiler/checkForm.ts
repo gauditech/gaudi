@@ -145,7 +145,16 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkReference(reference: Reference) {
     containsAtoms(reference, ["to"]);
-    noDuplicateAtoms(reference, ["to", "nullable", "unique"]);
+    noDuplicateAtoms(reference, ["to", "nullable", "unique", "onDelete"]);
+
+    const nullable = kindFilter(reference.atoms, "nullable")[0];
+    const onDelete = kindFilter(reference.atoms, "onDelete")[0];
+    // allow "set null" action only on nullable references
+    if (onDelete?.action.kind === "setNull" && nullable == null) {
+      errors.push(
+        new CompilerError(onDelete.action.keyword, ErrorCode.ReferenceOnDeleteNotNullable)
+      );
+    }
   }
 
   function checkRelation(relation: Relation) {
@@ -174,6 +183,24 @@ export function checkForm(projectASTs: ProjectASTs) {
           new CompilerError(from.as.identifierPath[0].token, ErrorCode.QueryFromAliasWrongLength)
         );
       }
+    }
+
+    const aggregate = kindFind(query.atoms, "aggregate");
+    const limitOrOffsets = kindFilter(query.atoms, "limit", "offset");
+    if (aggregate?.aggregate === "first" || aggregate?.aggregate === "one") {
+      for (const limitOrOffset of limitOrOffsets) {
+        errors.push(
+          new CompilerError(limitOrOffset.keyword, ErrorCode.LimitOrOffsetWithCardinalityModifier, {
+            limitOrOffset: limitOrOffset.kind,
+            cardinalityModifier: aggregate.aggregate,
+          })
+        );
+      }
+    }
+
+    const orderBy = kindFind(query.atoms, "orderBy");
+    if (orderBy && aggregate?.aggregate === "one") {
+      errors.push(new CompilerError(orderBy.keyword, ErrorCode.OrderByWithOne));
     }
 
     const select = kindFind(query.atoms, "select");
