@@ -65,7 +65,9 @@ export type Reference = {
   to: RefModel;
   unique: boolean;
   nullable: boolean;
+  onDelete?: ReferenceOnDeleteAction;
 };
+export type ReferenceOnDeleteAction = "setNull" | "cascade";
 
 export type Relation = {
   name: string;
