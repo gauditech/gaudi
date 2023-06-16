@@ -10,10 +10,12 @@ import {
   sanitizeProjectName,
   storeTemplateOutput,
 } from "@src/cli/utils";
-import { saveOutputFile } from "@src/common/utils";
+import { assertUnreachable, saveOutputFile } from "@src/common/utils";
 import { EngineConfig } from "@src/config";
 
-export type TemplateName = "vite-react-ts" | "default";
+/** List of all available project init templates. */
+const TEMPLATES = ["vite-react-ts", "default"] as const;
+export type TemplateName = (typeof TEMPLATES)[number];
 
 export type InitProjectOptions = {
   /** New project name  */
@@ -32,7 +34,11 @@ type TemplateProjectConfig = {
 export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config: EngineConfig) {
   const templateName = checkTemplateName(args.template);
   if (templateName == null) {
-    console.error(`Unknown project template "${args.template}"`);
+    console.error(
+      `Unknown project template "${args.template}". Available templates are: ${TEMPLATES.join(
+        ", "
+      )}.`
+    );
     return 1;
   }
 
@@ -40,9 +46,14 @@ export function initProject(args: ArgumentsCamelCase<InitProjectOptions>, config
     case "vite-react-ts":
       return initTemplateProject(args, config);
     case "default":
-    default:
       return initDefaultProject(args, config);
+    default:
+      assertUnreachable(templateName);
   }
+}
+
+export function availableInitTemplates(): TemplateName[] {
+  return [...TEMPLATES];
 }
 
 // ---------- template project builder
@@ -100,13 +111,8 @@ function initTemplateProject(args: ArgumentsCamelCase<InitProjectOptions>, _conf
 function checkTemplateName(name: string | undefined): TemplateName | undefined {
   if (name == null) return "default";
 
-  switch (name) {
-    case "vite-react-ts":
-    case "default":
-      return name;
-    default:
-      return;
-  }
+  // check if "name" exists in the list of templates, if not, "find" returns undefined
+  return TEMPLATES.find((v) => v === name);
 }
 
 function createTemplateProject(config: TemplateProjectConfig) {

@@ -20,7 +20,11 @@ import {
   dbPush,
   dbReset,
 } from "@src/cli/command/db";
-import { InitProjectOptions, initProject } from "@src/cli/command/initProject";
+import {
+  InitProjectOptions,
+  availableInitTemplates,
+  initProject,
+} from "@src/cli/command/initProject";
 import { start } from "@src/cli/command/start";
 import { attachProcessCleanup } from "@src/cli/process";
 import { Stoppable } from "@src/cli/types";
@@ -88,6 +92,7 @@ function parseArguments(config: EngineConfig) {
           .option("template", {
             type: "string",
             description: "New project template name. Available templates",
+            choices: availableInitTemplates(),
           }),
       handler: (args) => {
         initCommandHandler(args, config);
