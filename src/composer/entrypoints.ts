@@ -90,7 +90,6 @@ function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"]
   ensureEqual(leaf.ref.atomKind, "field");
   ensureOneOf(leaf.ref.type, ["string", "integer"]);
   const path = spec.identifyThrough.map((i) => i.text);
-  const type = leaf.ref.type;
   const paramName = [
     // include current model and append identifyThrough path
     spec.model.toLowerCase(),
@@ -98,7 +97,7 @@ function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"]
   ].join("_");
   return {
     path,
-    type,
+    type: leaf.ref.type,
     paramName,
   };
 }

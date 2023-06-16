@@ -215,6 +215,8 @@ export type TargetDef = {
   identifyWith:
     | {
         path: string[];
+        // FIXME we should support any field type that can be represented as a string
+        // as long as there's a unique index
         type: "string" | "integer";
         paramName: string;
       }
