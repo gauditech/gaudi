@@ -4,6 +4,7 @@ describe("compose models", () => {
   it("doesn't crash on empty blueprint", () => {
     expect(() => compose(compileToOldSpec(""))).not.toThrow();
   });
+
   it("parses validators", () => {
     const bp = `
     model Org {
@@ -13,6 +14,7 @@ describe("compose models", () => {
     const def = compose(compileToOldSpec(bp));
     expect(def.models).toMatchSnapshot();
   });
+
   it("fails on invalid validator", () => {
     const bp = `
     model Org {
@@ -21,5 +23,26 @@ describe("compose models", () => {
     }`;
     const spec = compileToOldSpec(bp);
     expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Unknown validator!"`);
+  });
+
+  it("parses model references", () => {
+    const bp = `
+      model ParentItem {
+        reference itemNoAction { to ReferencedItem1 }
+        reference itemCascade { to ReferencedItem2, on delete cascade }
+        reference itemSetNull { to ReferencedItem3, nullable, on delete set null }
+      }
+      model ReferencedItem1 {
+        relation parent { from ParentItem, through itemNoAction }
+      }
+      model ReferencedItem2 {
+        relation parent { from ParentItem, through itemCascade }
+      }
+      model ReferencedItem3 {
+        relation parent { from ParentItem, through itemSetNull }
+      }
+    `;
+    const def = compose(compileToOldSpec(bp));
+    expect(def.models).toMatchSnapshot();
   });
 });

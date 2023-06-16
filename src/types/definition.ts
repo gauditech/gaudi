@@ -54,7 +54,9 @@ export type ReferenceDef = {
   toModelFieldRefKey: string;
   nullable: boolean;
   unique: boolean;
+  onDelete?: ReferenceOnDeleteAction;
 };
+export type ReferenceOnDeleteAction = "setNull" | "cascade";
 
 export type RelationDef = {
   kind: "relation";

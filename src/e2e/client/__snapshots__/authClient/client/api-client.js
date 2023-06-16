@@ -59,6 +59,7 @@ function buildApi(options) {
         }
         // endpoint functions
         return Object.assign(api, {
+            list: buildListFn(options, parentPath),
             get: buildGetManyFn(options, parentPath)
         });
     }

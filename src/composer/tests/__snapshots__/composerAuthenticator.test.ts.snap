@@ -206,6 +206,7 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "modelRefKey": "AuthUserAccessToken",
         "name": "authUser",
         "nullable": false,
+        "onDelete": undefined,
         "refKey": "AuthUserAccessToken.authUser",
         "toModelFieldRefKey": "AuthUser.id",
         "toModelRefKey": "AuthUser",

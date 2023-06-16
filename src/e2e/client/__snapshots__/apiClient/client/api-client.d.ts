@@ -34,7 +34,7 @@ export declare function createClient(options: ApiClientOptions): {
                             body: string;
                             issue_id: number;
                         }[];
-                    }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+                    }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
                     create: CreateApiClientFn<{
                         title: string;
                         repo2: {
@@ -65,7 +65,7 @@ export declare function createClient(options: ApiClientOptions): {
                             body: string;
                             issue_id: number;
                         }[];
-                    }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                    }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
                 };
             }) & {
                 get: GetApiClientManyFn<number, {
@@ -73,13 +73,13 @@ export declare function createClient(options: ApiClientOptions): {
                     slug: string;
                     description: string;
                     org_id: number;
-                }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+                }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
                 list: ListApiClientFn<{
                     id: number;
                     slug: string;
                     description: string;
                     org_id: number;
-                }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+                }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
                 create: CreateApiClientFn<{
                     raw_description: string;
                     name: string;
@@ -89,7 +89,7 @@ export declare function createClient(options: ApiClientOptions): {
                     slug: string;
                     description: string;
                     org_id: number;
-                }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
                 update: UpdateApiClientManyFn<number, {
                     name?: string | undefined;
                     slug?: string | undefined;
@@ -102,22 +102,22 @@ export declare function createClient(options: ApiClientOptions): {
                     slug: string;
                     description: string;
                     org_id: number;
-                }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-                delete: DeleteApiClientManyFn<number, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+                }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+                delete: DeleteApiClientManyFn<number, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
             };
         }) & {
-            customOneAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customManyAction: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customOneActionResponds: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customManyActionResponds: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customOneQueryAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customFetchAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            hookErrorResponse: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customGet: CustomOneFetchApiClientManyFn<string, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            customUpdate: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customDelete: CustomOneFetchApiClientManyFn<string, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            customList: CustomManyFetchApiClientFn<any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            customCreate: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customOneAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customManyAction: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customOneActionResponds: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customManyActionResponds: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customOneQueryAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customFetchAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            hookErrorResponse: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customGet: CustomOneFetchApiClientManyFn<string, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
+            customUpdate: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customDelete: CustomOneFetchApiClientManyFn<string, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
+            customList: CustomManyFetchApiClientFn<any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            customCreate: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             get: GetApiClientManyFn<string, {
                 name: string;
                 slug: string;
@@ -129,7 +129,7 @@ export declare function createClient(options: ApiClientOptions): {
                     total_issues: number;
                     nameAndDesc: string;
                 }[];
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
             list: PaginatedListApiClientFn<{
                 name: string;
                 slug: string;
@@ -141,7 +141,7 @@ export declare function createClient(options: ApiClientOptions): {
                     total_issues: number;
                     nameAndDesc: string;
                 }[];
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             create: CreateApiClientFn<{
                 name: string;
                 slug: string;
@@ -157,7 +157,7 @@ export declare function createClient(options: ApiClientOptions): {
                     total_issues: number;
                     nameAndDesc: string;
                 }[];
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             update: UpdateApiClientManyFn<string, {
                 name?: string | undefined;
                 slug?: string | undefined;
@@ -173,8 +173,8 @@ export declare function createClient(options: ApiClientOptions): {
                     total_issues: number;
                     nameAndDesc: string;
                 }[];
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            delete: DeleteApiClientManyFn<string, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            delete: DeleteApiClientManyFn<string, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
         };
         repo: ((id: number) => {}) & {
             list: ListApiClientFn<{
@@ -182,13 +182,13 @@ export declare function createClient(options: ApiClientOptions): {
                 slug: string;
                 description: string;
                 org_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             get: GetApiClientManyFn<number, {
                 id: number;
                 slug: string;
                 description: string;
                 org_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
         };
     };
 };
