@@ -102,6 +102,7 @@ function initTemplateProject(args: ArgumentsCamelCase<InitProjectOptions>, _conf
       // success
       .then(() => console.log(``))
       .then(() => console.log(`Project initialized succesfully`))
+      .then(() => printTemplateInstructionsMessage(name))
       .catch((err) => {
         console.log(err);
       })
@@ -127,6 +128,15 @@ async function copyTemplatefiles(config: TemplateProjectConfig) {
 
   // copy files recursively
   copyDir(config.templateDir, config.projectDir);
+}
+
+function printTemplateInstructionsMessage(projectName: string) {
+  console.log();
+  console.log("Now run");
+  console.log(`  cd ${projectName}`);
+  console.log("  npm install");
+  console.log("  npm run dev");
+  console.log("");
 }
 
 // ---------- default project builder
@@ -210,6 +220,7 @@ function initDefaultProject(args: ArgumentsCamelCase<InitProjectOptions>, _confi
       // TODO: docker (postgres, adminer, ...)
       .then(() => console.log(``))
       .then(() => console.log(`Project initialized succesfully`))
+      .then(() => printDefaultInstructionsMessage(projectName))
       .catch((err) => {
         console.log(err);
       })
@@ -544,4 +555,13 @@ function createGaudiDir(projectConfig: DefaultProjectConfig) {
   const gaudiDir = path.join(projectConfig.rootDir, projectConfig.gaudiDir);
 
   createDir(gaudiDir);
+}
+
+function printDefaultInstructionsMessage(projectName: string) {
+  console.log();
+  console.log("Now run");
+  console.log(`  cd ${projectName}`);
+  console.log("  npm install");
+  console.log("  npm run dev");
+  console.log("");
 }
