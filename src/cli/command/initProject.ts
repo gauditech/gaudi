@@ -139,7 +139,7 @@ function initDefaultProject(args: ArgumentsCamelCase<InitProjectOptions>, _confi
   const projectName = sanitizeProjectName(args.name);
   const rootDir = resolveRootDirPath(projectName);
 
-  console.log(`Initializing default Gaudi project "${projectName}" ...`);
+  console.log(`Initializing Gaudi project "${projectName}" ...`);
 
   const projectConfig: DefaultProjectConfig = {
     projectName,
