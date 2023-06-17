@@ -215,7 +215,13 @@ export type TargetDef = {
   retType: string;
   alias: string;
   identifyWith:
-    | { name: string; refKey: string; type: "string" | "integer"; paramName: string }
+    | {
+        path: string[];
+        // FIXME we should support any field type that can be represented as a string
+        // as long as there's a unique index
+        type: "string" | "integer";
+        paramName: string;
+      }
     | undefined;
 };
 
@@ -381,7 +387,7 @@ export type ValidatorDef =
   | IsFloatEqual
   | IsStringEqual
   | HookValidator
-  | NoReferenceValidator;
+  | ReferenceNotFoundValidator;
 
 export const ValidatorDefinition = [
   ["string", "max", "maxLength", ["integer"]],
@@ -465,8 +471,8 @@ export interface HookValidator {
   arg?: string;
   hook: HookCode;
 }
-export interface NoReferenceValidator {
-  name: "noReference";
+export interface ReferenceNotFoundValidator {
+  name: "reference-not-found";
 }
 
 export type ActionDef =
@@ -557,7 +563,7 @@ export type FieldSetterVirtualInput = {
 export type FieldSetterReferenceInput = {
   kind: "fieldset-reference-input";
   fieldsetAccess: string[];
-  throughRefKey: string;
+  through: string[];
   // required: boolean;
 };
 

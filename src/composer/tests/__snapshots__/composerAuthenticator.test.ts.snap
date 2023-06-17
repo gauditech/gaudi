@@ -1033,9 +1033,10 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
     "target": {
       "alias": "$target_0",
       "identifyWith": {
-        "name": "id",
         "paramName": "authuser_id",
-        "refKey": "AuthUser.id",
+        "path": [
+          "id",
+        ],
         "type": "integer",
       },
       "kind": "model",

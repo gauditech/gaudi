@@ -166,7 +166,7 @@ describe("compose actions", () => {
       reference extras { to OrgExtra, unique }
     }
     model OrgExtra {
-      field name { type string }
+      field name { type string, unique }
       relation org { from Org, through extras }
     }
     api {

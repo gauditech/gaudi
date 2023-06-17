@@ -1,13 +1,14 @@
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
+import { getTypedPathWithLeaf } from "./utils";
+
 import { buildEndpointPath } from "@src/builder/query";
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
+import { UnreachableError, assertUnreachable, ensureEqual, ensureOneOf } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@src/composer/query";
-import { refKeyFromRef } from "@src/composer/utils";
 import {
   ActionDef,
   Definition,
@@ -70,9 +71,8 @@ export function calculateTarget(
     "identifyThrough" in spec
       ? calculateIdentifyWith(spec)
       : {
-          name: "id",
+          path: ["id"],
           type: "integer",
-          refKey: `${model}.id`,
           paramName: `${model.toLocaleLowerCase()}_id`,
         };
 
@@ -88,19 +88,20 @@ export function calculateTarget(
 
 function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"] {
   if (!spec.identifyThrough) return undefined;
-  const identifyThrough = spec.identifyThrough;
-  const type = identifyThrough.type;
-  if (
-    type.kind !== "primitive" ||
-    (type.primitiveKind !== "integer" && type.primitiveKind !== "string")
-  ) {
-    throw new Error(`Invalid type of identifiyWith ${JSON.stringify(type)}`);
-  }
+  const leaf = _.last(spec.identifyThrough)!;
+  ensureEqual(leaf.ref.kind, "modelAtom");
+  ensureEqual(leaf.ref.atomKind, "field");
+  ensureOneOf(leaf.ref.type, ["string", "integer"]);
+  const path = spec.identifyThrough.map((i) => i.text);
+  const paramName = [
+    // include current model and append identifyThrough path
+    spec.model.toLowerCase(),
+    ...spec.identifyThrough.map((i) => i.text),
+  ].join("_");
   return {
-    name: identifyThrough.ref.name,
-    type: type.primitiveKind,
-    refKey: refKeyFromRef(identifyThrough.ref),
-    paramName: `${identifyThrough.ref.parentModel.toLowerCase()}_${identifyThrough.ref.name}`,
+    path,
+    type: leaf.ref.type,
+    paramName,
   };
 }
 
@@ -278,7 +279,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                   required: setter.required,
                   type: setter.type,
                   nullable: setter.nullable,
-                  validators: setter.validators,
+                  validators: _.cloneDeep(setter.validators),
                 },
               ];
             }
@@ -296,20 +297,23 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                   required: setter.required,
                   type: setter.type,
                   nullable: field.nullable,
-                  validators: field.validators,
+                  validators: _.cloneDeep(field.validators),
                 },
               ];
             }
             case "fieldset-reference-input": {
-              const field = getRef.field(def, setter.throughRefKey);
+              ensureOneOf(action.kind, ["create-one", "update-one"]);
+              const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
+              const reference = getRef.reference(def, action.model, name);
+              const field = getRef.field(def, tpath.leaf.refKey);
               return [
                 setter.fieldsetAccess,
                 {
                   kind: "field",
                   required: true, // FIXME
-                  nullable: field.nullable,
+                  nullable: reference.nullable,
                   type: field.type,
-                  validators: field.validators,
+                  validators: _.cloneDeep(field.validators),
                 },
               ];
             }

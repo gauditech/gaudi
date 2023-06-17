@@ -215,7 +215,7 @@ function targetToFilter(target: TargetDef): TypedExprDef {
     kind: "function",
     name: "is",
     args: [
-      { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
+      { kind: "alias", namePath: [...target.namePath, ...target.identifyWith.path] },
       {
         kind: "variable",
         type: { kind: target.identifyWith.type, nullable: false },

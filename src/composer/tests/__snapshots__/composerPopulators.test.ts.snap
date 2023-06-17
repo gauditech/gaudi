@@ -48,9 +48,10 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",
@@ -167,9 +168,10 @@ exports[`populator composer succeeds for nested iterations 1`] = `
           "target": {
             "alias": "repo",
             "identifyWith": {
-              "name": "id",
               "paramName": "repo_id",
-              "refKey": "Repo.id",
+              "path": [
+                "id",
+              ],
               "type": "integer",
             },
             "kind": "relation",
@@ -190,9 +192,10 @@ exports[`populator composer succeeds for nested iterations 1`] = `
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",
@@ -386,9 +389,10 @@ exports[`populator composer succeeds for nested populators 1`] = `
               "target": {
                 "alias": "issue",
                 "identifyWith": {
-                  "name": "id",
                   "paramName": "issue_id",
-                  "refKey": "Issue.id",
+                  "path": [
+                    "id",
+                  ],
                   "type": "integer",
                 },
                 "kind": "relation",
@@ -409,9 +413,10 @@ exports[`populator composer succeeds for nested populators 1`] = `
           "target": {
             "alias": "repo",
             "identifyWith": {
-              "name": "id",
               "paramName": "repo_id",
-              "refKey": "Repo.id",
+              "path": [
+                "id",
+              ],
               "type": "integer",
             },
             "kind": "relation",
@@ -431,9 +436,10 @@ exports[`populator composer succeeds for nested populators 1`] = `
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",
@@ -496,9 +502,10 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",
@@ -561,9 +568,10 @@ exports[`populator composer succeeds for range iteration 1`] = `
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",
@@ -654,9 +662,10 @@ exports[`populator composer succeeds for simple populator 1`] = `
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",
@@ -808,9 +817,10 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
           "target": {
             "alias": "repo",
             "identifyWith": {
-              "name": "id",
               "paramName": "repo_id",
-              "refKey": "Repo.id",
+              "path": [
+                "id",
+              ],
               "type": "integer",
             },
             "kind": "relation",
@@ -831,9 +841,10 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
       "target": {
         "alias": "org",
         "identifyWith": {
-          "name": "id",
           "paramName": "org_id",
-          "refKey": "Org.id",
+          "path": [
+            "id",
+          ],
           "type": "integer",
         },
         "kind": "model",

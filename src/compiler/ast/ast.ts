@@ -126,7 +126,11 @@ export type EntrypointAtom =
 export type Identify = {
   kind: "identify";
   keyword: TokenData;
-  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef<RefModelField> }[];
+  atoms: {
+    kind: "through";
+    keyword: TokenData;
+    identifierPath: IdentifierRef<RefModelAtom>[];
+  }[];
 };
 
 export type Endpoint = {
@@ -206,7 +210,7 @@ export type ActionAtomReferenceThrough = {
   kind: "referenceThrough";
   keyword: TokenData;
   target: IdentifierRef<RefModelReference>;
-  through: IdentifierRef<RefModelField>;
+  through: IdentifierRef<RefModelAtom>[];
   keywordThrough: TokenData;
 };
 export type ActionAtomDeny = {

@@ -1,8 +1,12 @@
+import _ from "lodash";
+
+import { compilerErrorsToString } from "../compilerError";
 import { compileToAST } from "../index";
 import { authUserModelName } from "../plugins/authenticator";
 
 function expectError(source: string, ...errorMessages: string[]) {
   const { errors } = compileToAST(source);
+  // expect(errors).toHaveLength(errorMessages.length);
   errorMessages.forEach((errorMessage, i) => {
     expect(errors.at(i)?.message).toBe(errorMessage);
   });
@@ -725,6 +729,107 @@ describe("compiler errors", () => {
         bp,
         `Unexpected type\nexpected:\n{"kind":"primitive","primitiveKind":"string"}\ngot:\n{"kind":"primitive","primitiveKind":"integer"}`
       );
+    });
+  });
+
+  describe("reference / identify through", () => {
+    it("succeeds with unique field, reference and relation", () => {
+      const bp = `
+      model Org {
+        reference owner { to User, unique }
+      }
+
+      model User {
+        relation orgs { from Org, through owner }
+        // c:one because of unique relation
+        relation profile { from Profile, through user }
+      }
+
+      model Profile {
+        reference user { to User, unique }
+        reference data { to Data, unique }
+      }
+
+      model Data {
+        relation profile { from Profile, through data }
+        field email { type string, unique, nullable }
+      }
+
+      api {
+        entrypoint Org {
+          identify { through owner.profile.data.email }
+        }
+      }
+      `;
+
+      const { errors } = compileToAST(bp);
+      errors.length && console.log(compilerErrorsToString("", bp, errors));
+      expect(errors).toHaveLength(0);
+    });
+
+    it("fails when computed is used", () => {
+      const bp = `
+      model Org {
+        reference owner { to User, unique }
+      }
+
+      model User {
+        relation orgs { from Org, through owner }
+        // c:one because of unique relation
+        relation profile { from Profile, through user }
+      }
+
+      model Profile {
+        reference user { to User, unique }
+        reference data { to Data, unique }
+      }
+
+      model Data {
+        relation profile { from Profile, through data }
+        field email { type string, unique, nullable }
+        computed email2 { email }
+      }
+
+      api {
+        entrypoint Org {
+          identify { through owner.profile.data.email2 }
+        }
+      }
+      `;
+
+      expectError(bp, `Unexpected model atom:\nexpected:\n"field"\ngot:\n"computed"`);
+    });
+
+    it("fails with non-unique field, reference and relation", () => {
+      const bp = `
+      model Org {
+        reference owner { to User }
+      }
+
+      model User {
+        relation orgs { from Org, through owner }
+        // c:many because of non-unique relation
+        relation profile { from Profile, through user }
+      }
+
+      model Profile {
+        reference user { to User }
+        reference data { to Data }
+      }
+
+      model Data {
+        relation profile { from Profile, through data }
+        field email { type string }
+      }
+
+      api {
+        entrypoint Org {
+          identify { through owner.profile.data.email }
+        }
+      }
+      `;
+
+      expectError(bp, ..._.times(4, () => `All atoms in this path must be "unique"`));
     });
   });
 });

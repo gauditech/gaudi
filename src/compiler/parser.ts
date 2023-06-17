@@ -596,8 +596,8 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Through));
-            const identifier = this.SUBRULE(this.identifierRef);
-            atoms.push({ kind: "through", identifier, keyword });
+            const identifierPath = this.SUBRULE(this.identifierRefPath);
+            atoms.push({ kind: "through", identifierPath, keyword });
           },
         },
       ]);
@@ -847,7 +847,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = getTokenData(this.CONSUME(L.Reference));
     const target = this.SUBRULE1(this.identifierRef);
     const keywordThrough = getTokenData(this.CONSUME(L.Through));
-    const through = this.SUBRULE2(this.identifierRef);
+    const through = this.SUBRULE2(this.identifierRefPath);
 
     return {
       kind: "referenceThrough",
