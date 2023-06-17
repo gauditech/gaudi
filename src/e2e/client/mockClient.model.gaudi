@@ -1,6 +1,6 @@
 
 model Org {
-  field slug { type string }
+  field slug { type string, unique }
   field name { type string }
   relation repos { from Repo, through org }
 }
