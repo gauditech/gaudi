@@ -446,14 +446,13 @@ function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] 
     case "function": {
       return expr.args.flatMap((arg) => collectAuthorizeDeps(def, arg));
     }
+    case "in-subquery":
     case "aggregate-function": {
       /**
-       * Fixme we should support aggregate functions inside of authorize expressions.
-       * However, since authorize is calculated in the application runtime, we would
-       * need to fetch a result of an aggregate function.
-       * We should either:
-       * 1. move authorize logic into SQL (bunch of "variable" to fill aliases)
-       * 2. make aggregate functions selectable - requires SelectableExprItem implementation.
+       * Fixme we should support aggregate functions & subqueries inside of authorize expressions.
+       * SelectableExpression support is here, so even these deps can be collected.
+       * This would require a significant rewrite of `deps` logic because it doesn't support
+       * anonymous expressions, even though they are selectable.
        */
       throw new Error("Not implemented");
     }

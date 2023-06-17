@@ -9,10 +9,16 @@ describe("Query plan", () => {
   it("works with complex aggregates", () => {
     const modelBp = `
     model Org {
+      reference owner { to Owner }
       field name { type string }
       relation repos { from Repo, through org }
 
       computed total_issues { count(repos.issues.id) }
+    }
+
+    model Owner {
+      field full_name { type string }
+      relation orgs { from Org, through owner }
     }
 
     model Repo {
@@ -41,7 +47,7 @@ describe("Query plan", () => {
         + count(r.issues.repo.id) + sum(r.issues.id) > count(r.issues.repo_name) + r.ref_number
         + count(o.repos.id)
       },
-      select { id, name, org_name }
+      select { id, name, org_name, owner_name: o.owner.full_name }
     }
   `;
 
@@ -57,7 +63,7 @@ describe("Query plan", () => {
     expect(final).toMatchSnapshot("SQL snapshot");
   });
 
-  it("subqueries using partition/over", () => {
+  it("supports subqueries using partition/over", () => {
     const modelBp = `
     model Org {
       relation repos { from Repo, through org }
@@ -73,6 +79,33 @@ describe("Query plan", () => {
     query {
       from Org,
       filter { sum(latest_repos.collectedPoints) > 100 },
+      select { id }
+    }
+    `;
+
+    const { def, query } = makeTestQuery(modelBp, queryBp);
+    const plan = buildQueryPlan(def, query);
+    expect(plan).toMatchSnapshot("QueryPlan snapshot");
+    const sql = queryPlanToString(plan);
+    expect(sql).toMatchSnapshot("SQL snapshot");
+  });
+
+  it("supports 'in' array or subqueries", () => {
+    const modelBp = `
+    model Org {
+      relation repos { from Repo, through org }
+      query firstRepo { from repos, first }
+    }
+    model Repo {
+      reference org { to Org }
+    }
+    `;
+
+    const queryBp = `
+    query {
+      from Org as o,
+      filter { 5+1 in o.repos.org.id or
+        o.id + 1 in o.repos.org.id or o.id in [1, o.firstRepo.id, 2] },
       select { id }
     }
     `;
@@ -104,13 +137,14 @@ describe("Query plan", () => {
 
     const { def, query } = makeTestQuery(modelBp, queryBp);
     const plan = buildQueryPlan(def, query);
-    expect(plan).toMatchSnapshot();
+    expect(plan).toMatchSnapshot("QueryPlan snapshot");
     const sql = queryPlanToString(plan);
-    expect(sql).toMatchSnapshot();
+    expect(sql).toMatchSnapshot("SQL snapshot");
   });
 });
 
 const ATOMS: QueryAtom[] = [
+  { kind: "table-namespace", namePath: ["Org", "owner"] },
   { kind: "table-namespace", namePath: ["Org", "repos"] },
   { kind: "table-namespace", namePath: ["Org", "repos", "org"] },
   { kind: "aggregate", fnName: "count", sourcePath: ["Org"], targetPath: ["repos", "id"] },
@@ -143,6 +177,9 @@ const QP: QueryPlan = {
   entry: "Org",
   fromPath: ["Org", "repos"],
   groupBy: [],
+  limit: undefined,
+  offset: undefined,
+  orderBy: undefined,
   filter: {
     kind: "function",
     fnName: ">",
@@ -211,8 +248,23 @@ const QP: QueryPlan = {
     id: { kind: "alias", value: ["Org", "repos", "id"] },
     name: { kind: "alias", value: ["Org", "repos", "name"] },
     org_name: { kind: "alias", value: ["Org", "repos", "org", "name"] },
+    owner_name: { kind: "alias", value: ["Org", "owner", "full_name"] },
   },
   joins: [
+    /**
+     * Main query, join Org->owner
+     */
+    {
+      kind: "inline",
+      joinType: "inner",
+      joinOn: [
+        ["Org", "owner_id"],
+        ["Org", "owner", "id"],
+      ],
+      modelName: "Owner",
+      namePath: ["Org", "owner"],
+      target: "owner",
+    },
     /**
      * Main query, join Org->repos
      */

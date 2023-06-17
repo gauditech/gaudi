@@ -859,8 +859,9 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
     case "function": {
       return executeTypedFunction(expr, contextVars);
     }
+    case "in-subquery":
     case "aggregate-function": {
-      throw new Error("Not implemented: aggregate functions not supported in the runtime");
+      throw new Error(`Not implemented: ${expr.kind} is not supported in the runtime`);
     }
     case "literal": {
       return expr.literal.value;
