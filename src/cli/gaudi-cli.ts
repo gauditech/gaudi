@@ -270,7 +270,7 @@ async function devCommandHandler(args: ArgumentsCamelCase<DevCommandArgs>, confi
 }
 
 function embeddedDatabaseCommand(
-  args: ArgumentsCamelCase<DevOptions>,
+  args: ArgumentsCamelCase<DevCommandArgs>,
   config: EngineConfig
 ): Stoppable {
   return startEmbeddedPg(args, config);
