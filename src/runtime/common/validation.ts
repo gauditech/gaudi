@@ -99,7 +99,7 @@ function buildObjectValidationSchema(def: Definition, field: FieldsetRecordDef):
 }
 
 function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): AnySchema {
-  if (field.type === "text") {
+  if (field.type === "string") {
     // start with nullable because it's the only way to
     let s = string();
 
@@ -119,18 +119,46 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
         s = s.max(v.args[0].value);
       } else if (v.name === "isEmail") {
         s = s.email();
-      } else if (v.name === "isTextEqual") {
+      } else if (v.name === "isStringEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(def, v, s);
-      } else if (v.name === "noReference") {
+      } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
     });
 
     return s;
   } else if (field.type === "integer") {
+    let s = number().integer();
+
+    if (field.nullable) {
+      // TODO: yup's types don't allow expanding return type to `number | undefined | null`
+      s = s.nullable() as NumberSchema;
+    }
+    if (field.required) {
+      // everything except `undefined`
+      s = s.defined();
+    }
+
+    field.validators.forEach((v) => {
+      if (v.name === "minInt") {
+        s = s.min(v.args[0].value);
+      } else if (v.name === "maxInt") {
+        s = s.max(v.args[0].value);
+      } else if (v.name === "isIntEqual") {
+        // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
+        s = s.equals([v.args[0].value]) as NumberSchema;
+      } else if (v.name === "hook") {
+        s = buildHookSchema(def, v, s);
+      } else if (v.name === "reference-not-found") {
+        s = buildNoReferenceSchema(s);
+      }
+    });
+
+    return s;
+  } else if (field.type === "float") {
     let s = number();
 
     if (field.nullable) {
@@ -143,16 +171,16 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
     }
 
     field.validators.forEach((v) => {
-      if (v.name === "min") {
+      if (v.name === "minFloat") {
         s = s.min(v.args[0].value);
-      } else if (v.name === "max") {
+      } else if (v.name === "maxFloat") {
         s = s.max(v.args[0].value);
-      } else if (v.name === "isIntEqual") {
+      } else if (v.name === "isFloatEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
         s = s.equals([v.args[0].value]) as NumberSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(def, v, s);
-      } else if (v.name === "noReference") {
+      } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
     });
@@ -174,7 +202,7 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
         s = s.equals([v.args[0].value]) as BooleanSchema;
       } else if (v.name === "hook") {
         s = buildHookSchema(def, v, s);
-      } else if (v.name === "noReference") {
+      } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
     });
@@ -199,7 +227,7 @@ function buildHookSchema<S extends BaseSchema>(
 
 function buildNoReferenceSchema<S extends BaseSchema>(schema: S): S {
   return schema.test(
-    "noReference",
+    "reference-not-found",
     (params) => `Can't find ${params.path} with value: ${params.value}`,
     () => false
   );

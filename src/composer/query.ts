@@ -1,24 +1,23 @@
 import _ from "lodash";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 import { defineType } from "./models";
 
-import { UnreachableError, ensureEqual } from "@src/common/utils";
-import { getTypedLiteralValue, refKeyFromRef } from "@src/composer/utils";
+import { UnreachableError, ensureEqual, shouldBeUnreachableCb } from "@src/common/utils";
+import { Type } from "@src/compiler/ast/type";
+import { refKeyFromRef } from "@src/composer/utils";
 import {
-  AggregateDef,
   FunctionName,
   QueryDef,
   QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
   TypedExprDef,
-  VariablePrimitiveType,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
 export function composeQuery(qspec: Spec.Query): QueryDef {
-  if (qspec.aggregate) {
+  if (qspec.aggregate && qspec.aggregate !== "first" && qspec.aggregate !== "one") {
     throw new Error(`Can't build a QueryDef when QuerySpec contains an aggregate`);
   }
 
@@ -28,12 +27,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
 
   const select = composeSelect(qspec.select, fromPath);
 
-  const orderBy = qspec.orderBy?.map(
-    ({ field, order }): QueryOrderByAtomDef => ({
-      exp: { kind: "alias", namePath: [...fromPath, ...field] },
-      direction: order ?? "asc",
-    })
-  );
+  const orderBy = composeOrderBy(fromPath, qspec.orderBy);
 
   return {
     kind: "query",
@@ -42,38 +36,28 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     filter,
     fromPath,
     name: qspec.name,
-    // retCardinality: "many", // FIXME,
+    retCardinality: qspec.cardinality,
     retType: qspec.targetModel,
     select,
     orderBy,
-    limit: qspec.limit,
+    limit: qspec.aggregate ? 1 : qspec.limit,
     offset: qspec.offset,
   };
 }
 
-export function composeAggregate(qspec: Spec.Query): AggregateDef {
-  const aggregate = qspec.aggregate;
-  if (!aggregate) {
-    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
-  }
-  const qdef = composeQuery({ ...qspec, aggregate: undefined });
-  const { refKey } = qdef;
-  const query = _.omit(qdef, ["refKey", "name", "select"]);
+export function composeOrderBy(
+  fromPath: string[],
+  orderBy: Spec.QueryOrderBy[] | undefined
+): QueryOrderByAtomDef[] | undefined {
+  if (orderBy == null) return;
 
-  if (aggregate !== "sum" && aggregate !== "count") {
-    throw new Error(`Unknown aggregate function ${aggregate}`);
-  }
-
-  return {
-    refKey,
-    kind: "aggregate",
-    aggrFnName: aggregate,
-    targetPath: [qspec.sourceModel, "id"],
-    name: qspec.name,
-    query,
-  };
+  return orderBy?.map(
+    ({ expr, order }): QueryOrderByAtomDef => ({
+      exp: composeExpression(expr, fromPath),
+      direction: order ?? "asc",
+    })
+  );
 }
-
 function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: string[]): TypedExprDef {
   // Change name to concat if using "+" with "string" type
   const firstType = args.at(0)?.type;
@@ -89,29 +73,24 @@ function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: strin
 }
 
 export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExprDef {
-  switch (expr.kind) {
-    case "identifier": {
-      return composeRefPath(expr.identifier, namePath);
-    }
-    case "literal": {
-      return getTypedLiteralValue(expr.literal);
-    }
-    case "function": {
-      switch (expr.name) {
-        case "sum":
-        case "count": {
-          let nullable: boolean;
-          let primitiveType;
-          if (expr.type.kind === "nullable") {
-            nullable = true;
-            ensureEqual(expr.type.type.kind, "primitive");
-            primitiveType = expr.type.type.primitiveKind;
-          } else {
-            nullable = false;
-            ensureEqual(expr.type.kind, "primitive");
-            primitiveType = expr.type.primitiveKind;
-          }
-          const arg = expr.args[0];
+  return match<typeof expr, TypedExprDef>(expr)
+    .with({ kind: "literal" }, ({ literal }) => ({
+      kind: "literal",
+      literal,
+    }))
+    .with({ kind: "identifier" }, ({ identifier }) => composeRefPath(identifier, namePath))
+    .with({ kind: "array" }, (array) => ({
+      kind: "array",
+      elements: array.elements.map((e) => composeExpression(e, namePath)),
+      type: {
+        kind: "collection",
+        type: defineType(array.type.kind === "collection" ? array.type.type : Type.any),
+      },
+    }))
+    .with({ kind: "function" }, (fn) => {
+      return match<typeof fn, TypedExprDef>(fn)
+        .with({ name: P.union("sum" as const, "count" as const) }, (fn) => {
+          const arg = fn.args[0];
           ensureEqual(arg.kind, "identifier");
           const [head, ...tail] = arg.identifier;
           const [sourcePath, targetPath] = match(head.ref)
@@ -127,18 +106,76 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
 
           return {
             kind: "aggregate-function",
-            fnName: expr.name,
-            type: { kind: primitiveType as VariablePrimitiveType["kind"], nullable },
+            fnName: fn.name,
+            type: defineType(fn.type),
             sourcePath,
             targetPath,
           };
-        }
-        default: {
-          return typedFunctionFromParts(expr.name, expr.args, namePath);
-        }
-      }
-    }
-  }
+        })
+        .with({ name: P.union("in" as const, "not in" as const) }, (fn) => {
+          const arg0 = fn.args[0];
+          const lookupExpression = match<typeof arg0, TypedExprDef>(arg0)
+            .with({ kind: "identifier" }, (arg) => {
+              const [head, ...tail] = arg.identifier;
+              return (
+                match<typeof head.ref, TypedExprDef>(head.ref)
+                  .with({ kind: "modelAtom" }, () => ({
+                    kind: "alias",
+                    namePath: [...namePath, ...arg.identifier.map((i) => i.text)],
+                  }))
+                  .with({ kind: "queryTarget" }, (ref) => ({
+                    kind: "alias",
+                    namePath: [...ref.path, ...tail.map((i) => i.text)],
+                  }))
+                  // FIXME support context vars: auth, struct, target...
+                  .otherwise(shouldBeUnreachableCb(`${head.ref.kind} is not a valid lookup`))
+              );
+            })
+            .with({ kind: "literal" }, ({ literal }) => ({
+              kind: "literal",
+              literal,
+            }))
+            .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
+            .with({ kind: "array" }, () => {
+              throw new UnreachableError(`"array" is not a valid lookup expression`);
+            })
+            .exhaustive();
+
+          const arg1 = fn.args[1];
+          return match<typeof arg1, TypedExprDef>(arg1)
+            .with({ kind: "identifier" }, (arg) => {
+              const [head1, ...tail1] = arg.identifier;
+              const [sourcePath, targetPath] = match(head1.ref)
+                .with({ kind: "modelAtom" }, () => {
+                  return [namePath, arg.identifier.map((i) => i.text)];
+                })
+                .with({ kind: "queryTarget" }, (ref) => {
+                  return [ref.path, tail1.map((i) => i.text)];
+                })
+                .otherwise(() => {
+                  throw new UnreachableError(`Invalid ref kind ${head1.ref.kind}`);
+                });
+
+              return {
+                kind: "in-subquery",
+                fnName: fn.name,
+                lookupExpression,
+                sourcePath,
+                targetPath,
+              };
+            })
+            .with({ kind: "array" }, (arg) => {
+              return {
+                kind: "function",
+                name: fn.name,
+                args: [lookupExpression, composeExpression(arg, namePath)],
+              };
+            })
+            .otherwise(shouldBeUnreachableCb(`Unexpected ${fn.name} argument kind: ${arg1.kind}`));
+        })
+        .otherwise((fn) => typedFunctionFromParts(fn.name, fn.args, namePath));
+    })
+    .exhaustive();
 }
 
 export function composeRefPath(
@@ -183,41 +220,39 @@ export function composeRefPath(
 
 export function composeSelect(select: Spec.Select, parentNamePath: string[]): SelectDef {
   return select.map((select): SelectItem => {
-    const target = select.target;
-    const namePath = [...parentNamePath, select.target.ref.name];
-
-    switch (target.ref.atomKind) {
-      case "field":
-      case "computed":
-        return {
-          kind: "expression",
-          expr: { kind: "alias", namePath },
-          alias: target.text,
-          type: defineType(target.type),
-        };
-      case "hook":
+    if (select.expr.kind === "identifier") {
+      const last = select.expr.identifier.at(-1);
+      if (last?.ref.kind === "modelAtom" && last.ref.atomKind === "hook") {
         return {
           kind: "model-hook",
-          refKey: refKeyFromRef(target.ref),
-          name: target.ref.name,
-          alias: target.text,
-          namePath,
+          refKey: refKeyFromRef(last.ref),
+          name: last.ref.name,
+          alias: last.text,
+          namePath: [...parentNamePath, ...select.expr.identifier.map((i) => i.text)],
         };
-      case "reference":
-      case "relation":
-      case "query": {
-        if (select.kind === "final") {
-          throw new UnreachableError("Aggregates are deprecated");
-        } else {
-          return {
-            kind: "nested-select",
-            refKey: refKeyFromRef(target.ref),
-            alias: target.text,
-            namePath,
-            select: composeSelect(select.select, namePath),
-          };
-        }
       }
     }
+    if (select.kind === "nested") {
+      ensureEqual(select.expr.kind, "identifier");
+      const namePath = [...parentNamePath, ...select.expr.identifier.map((i) => i.text)];
+      const last = select.expr.identifier.at(-1);
+      if (last?.ref.kind !== "model") {
+        ensureEqual(last?.ref.kind, "modelAtom");
+      }
+      return {
+        kind: "nested-select",
+        refKey: refKeyFromRef(last.ref),
+        alias: select.name,
+        namePath,
+        select: composeSelect(select.select, namePath),
+      };
+    }
+    const expr = composeExpression(select.expr, parentNamePath);
+    return {
+      kind: "expression",
+      expr,
+      alias: select.name,
+      type: defineType(select.expr.type),
+    };
   });
 }

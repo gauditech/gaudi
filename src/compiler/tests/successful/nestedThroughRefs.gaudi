@@ -1,0 +1,29 @@
+model User {
+  relation profile { from Profile, through user }
+  relation posts { from Post, through user }
+}
+
+model Profile {
+  reference user { to User, unique }
+  field email { type string, unique }
+}
+
+model Post {
+  reference user { to User }
+}
+
+api {
+  entrypoint User {
+    identify { through profile.email }
+  }
+
+  entrypoint Post {
+    create endpoint {
+      action {
+        create as user {
+          reference user through profile.email
+        }
+      }
+    }
+  }
+}

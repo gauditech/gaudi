@@ -13,6 +13,8 @@ export const LCurly = createToken({ name: "LCurly", pattern: "{" });
 export const RCurly = createToken({ name: "RCurly", pattern: "}" });
 export const LRound = createToken({ name: "LRound", pattern: "(" });
 export const RRound = createToken({ name: "RRound", pattern: ")" });
+export const LSquare = createToken({ name: "LSquare", pattern: "[" });
+export const RSquare = createToken({ name: "RSquare", pattern: "]" });
 
 export const Dot = createToken({ name: "Dot", pattern: "." });
 export const Colon = createToken({ name: "Colon", pattern: ":" });
@@ -49,6 +51,7 @@ export const Validate = createWeakKeyword("validate");
 export const Update = createWeakKeyword("update");
 export const Unique = createWeakKeyword("unique");
 export const Type = createWeakKeyword("type");
+export const Ts = createWeakKeyword("ts");
 export const To = createWeakKeyword("to");
 export const Through = createWeakKeyword("through");
 export const Target = createWeakKeyword("target");
@@ -75,6 +78,7 @@ export const Output = createWeakKeyword("output");
 export const Order = createWeakKeyword("order");
 export const Optional = createWeakKeyword("optional");
 export const One = createWeakKeyword("one");
+export const On = createWeakKeyword("on");
 export const Offset = createWeakKeyword("offset");
 export const Nullable = createWeakKeyword("nullable");
 export const Model = createWeakKeyword("model");
@@ -109,6 +113,7 @@ export const Create = createWeakKeyword("create");
 export const Count = createWeakKeyword("count");
 export const Computed = createWeakKeyword("computed");
 export const Client = createWeakKeyword("client");
+export const Cascade = createWeakKeyword("cascade");
 export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
 export const Basic = createWeakKeyword("basic");
@@ -158,6 +163,8 @@ export const GaudiTokens = [
   RCurly,
   LRound,
   RRound,
+  LSquare,
+  RSquare,
   Dot,
   Colon,
   Mul,
@@ -177,6 +184,7 @@ export const GaudiTokens = [
   Update,
   Unique,
   Type,
+  Ts,
   To,
   Through,
   Target,
@@ -203,6 +211,7 @@ export const GaudiTokens = [
   Order,
   Optional,
   One,
+  On,
   Offset,
   Nullable,
   Model,
@@ -237,6 +246,7 @@ export const GaudiTokens = [
   Count,
   Computed,
   Client,
+  Cascade,
   Cardinality,
   By,
   Basic,

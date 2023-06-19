@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { match } from "ts-pattern";
 
 import { GAUDI_INTERNAL_TARGET_ID_ALIAS, queryFromParts, selectableId } from "../query/build";
 import { executeQuery } from "../query/exec";
@@ -6,6 +7,7 @@ import { DbConn } from "../server/dbConn";
 import { Vars } from "../server/vars";
 
 import { getRef } from "@src/common/refs";
+import { getTypedPathWithLeaf } from "@src/composer/utils";
 import {
   ActionDef,
   Definition,
@@ -14,9 +16,25 @@ import {
   TypedExprDef,
 } from "@src/types/definition";
 
-export type ReferenceIdResult = ValidReferenceIdResult | InvalidReferenceIdResult;
-export type ValidReferenceIdResult = { fieldsetAccess: string[]; value: number };
-export type InvalidReferenceIdResult = { fieldsetAccess: string[]; value: "no-reference" };
+export type ReferenceIdResult =
+  | ValidReferenceIdResult
+  | InvalidReferenceIdResult
+  | InputMissingReferenceIdResult;
+
+export type ValidReferenceIdResult = {
+  kind: "reference-found";
+  fieldsetAccess: string[];
+  value: number;
+};
+type InvalidReferenceIdResult = {
+  kind: "reference-not-found";
+  fieldsetAccess: string[];
+};
+type InputMissingReferenceIdResult = {
+  kind: "reference-input-missing";
+  fieldsetAccess: string[];
+  inputValue: null | undefined;
+};
 
 export async function fetchReferenceIds(
   def: Definition,
@@ -28,50 +46,69 @@ export async function fetchReferenceIds(
     if (action.kind !== "create-one" && action.kind !== "update-one") return [];
     return action.changeset.flatMap(({ name, setter }) => {
       if (setter.kind !== "fieldset-reference-input") return [];
-      return [[name, setter] as const];
+      return [[action.model, name, setter] as const];
     });
   });
 
-  const promiseEntries = referenceInputs.map(async ([_name, setter]) => {
-    const field = getRef.field(def, setter.throughRefKey);
+  const promiseEntries = referenceInputs.map(
+    async ([model, name, setter]): Promise<ReferenceIdResult> => {
+      const inputValue = _.get(input, setter.fieldsetAccess);
+      const { fieldsetAccess } = setter;
+      if (_.isNil(inputValue)) {
+        return {
+          kind: "reference-input-missing",
+          fieldsetAccess,
+          inputValue,
+        };
+      }
+      const reference = getRef.reference(def, model, name);
+      const tpath = getTypedPathWithLeaf(def, [reference.toModelRefKey, ...setter.through], {});
+      const field = getRef.field(def, tpath.leaf.refKey);
 
-    const varName = field.name + "__input";
-    const filter: TypedExprDef = {
-      kind: "function",
-      name: "is",
-      args: [
-        {
-          kind: "alias",
-          namePath: [field.modelRefKey, field.name],
-        },
-        {
-          kind: "variable",
-          name: varName,
-          type: { kind: field.type, nullable: field.nullable },
-        },
-      ],
-    };
-    const queryName = field.modelRefKey + "." + field.name;
-    const query = queryFromParts(def, queryName, [field.modelRefKey], filter, [
-      selectableId([field.modelRefKey]),
-    ]);
-    const inputValue = _.get(input, setter.fieldsetAccess);
-    const result = await executeQuery(dbConn, def, query, new Vars({ [varName]: inputValue }), []);
-
-    if (result.length === 0) {
-      return { fieldsetAccess: setter.fieldsetAccess, value: "no-reference" as const };
-    }
-    if (result.length > 1) {
-      throw Error(
-        `Failed to find reference: There are multiple (${result.length}) '${field.modelRefKey}' where field '${field.name}' is '${inputValue}'`
+      const varName = [...tpath.fullPath, "_input"].join("_");
+      const filter: TypedExprDef = {
+        kind: "function",
+        name: "is",
+        args: [
+          {
+            kind: "alias",
+            namePath: tpath.fullPath,
+          },
+          {
+            kind: "variable",
+            name: varName,
+            type: { kind: field.type, nullable: field.nullable },
+          },
+        ],
+      };
+      const queryName = tpath.fullPath.join(".");
+      const query = queryFromParts(def, queryName, _.initial(tpath.fullPath), filter, [
+        selectableId(_.dropRight(tpath.fullPath, 2)),
+      ]);
+      const result = await executeQuery(
+        dbConn,
+        def,
+        query,
+        new Vars({ [varName]: inputValue }),
+        []
       );
-    }
 
-    return {
-      fieldsetAccess: setter.fieldsetAccess,
-      value: result[0][GAUDI_INTERNAL_TARGET_ID_ALIAS] as number,
-    };
-  });
+      if (result.length === 0) {
+        return { kind: "reference-not-found", fieldsetAccess };
+      }
+      if (result.length > 1) {
+        throw Error(
+          `Failed to find reference: There are multiple (${result.length}) '${field.modelRefKey}' where field '${field.name}' is '${inputValue}'`
+        );
+      }
+
+      return {
+        kind: "reference-found",
+        fieldsetAccess: setter.fieldsetAccess,
+        value: result[0][GAUDI_INTERNAL_TARGET_ID_ALIAS] as number,
+      };
+    }
+  );
   return Promise.all(promiseEntries);
 }
 
@@ -83,11 +120,13 @@ export function assignNoReferenceValidators(
   fieldset: FieldsetDef,
   referenceIds: ReferenceIdResult[]
 ): asserts referenceIds is ValidReferenceIdResult[] {
-  referenceIds.forEach((referenceIdValue) => {
-    const { value, fieldsetAccess } = referenceIdValue;
-    if (typeof value === "number") return;
-    const currentFieldset = getNestedFieldset(fieldset, fieldsetAccess);
-    currentFieldset.validators.push({ name: "noReference" });
+  referenceIds.forEach((referenceIdResult) => {
+    match(referenceIdResult)
+      .with({ kind: "reference-not-found" }, ({ fieldsetAccess }) => {
+        const currentFieldset = getNestedFieldset(fieldset, fieldsetAccess);
+        currentFieldset.validators.push({ name: "reference-not-found" });
+      })
+      .otherwise(_.noop);
   });
 }
 

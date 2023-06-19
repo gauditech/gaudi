@@ -4,7 +4,7 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
 {
   "alias": "cOrg",
   "changeset": [],
-  "kind": "fetch-one",
+  "kind": "fetch",
   "model": "Org",
   "query": {
     "filter": {
@@ -18,8 +18,10 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
         },
         {
           "kind": "literal",
-          "type": "integer",
-          "value": 1,
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
         },
       ],
       "kind": "function",
@@ -35,6 +37,7 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "N/A",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [
       {
@@ -48,7 +51,7 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
         },
         "kind": "expression",
         "type": {
-          "kind": "text",
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -69,7 +72,7 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
         ],
         "kind": "fieldset-input",
         "required": false,
-        "type": "text",
+        "type": "string",
       },
     },
     {
@@ -80,7 +83,7 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
         ],
         "kind": "fieldset-input",
         "required": false,
-        "type": "text",
+        "type": "string",
       },
     },
   ],
@@ -92,6 +95,109 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
   "targetPath": [
     "$target_0",
   ],
+}
+`;
+
+exports[`compose action queries "fetch" action query first 1`] = `
+{
+  "alias": "measurement",
+  "changeset": [],
+  "kind": "fetch",
+  "model": "Measurement",
+  "query": {
+    "filter": undefined,
+    "fromPath": [
+      "device",
+      "measurements",
+    ],
+    "kind": "query",
+    "limit": 1,
+    "modelRefKey": "Device",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": [
+      {
+        "direction": "desc",
+        "exp": {
+          "kind": "alias",
+          "namePath": [
+            "device",
+            "measurements",
+            "timestamp",
+          ],
+        },
+      },
+    ],
+    "refKey": "N/A",
+    "retCardinality": "nullable",
+    "retType": "Measurement",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "device",
+            "measurements",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+      {
+        "alias": "value",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "device",
+            "measurements",
+            "value",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+      {
+        "alias": "timestamp",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "device",
+            "measurements",
+            "timestamp",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+      {
+        "alias": "device_id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "device",
+            "measurements",
+            "device_id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
 }
 `;
 
@@ -113,8 +219,10 @@ exports[`compose model queries example with nested filters 1`] = `
             },
             {
               "kind": "literal",
-              "type": "integer",
-              "value": 1,
+              "literal": {
+                "kind": "integer",
+                "value": 1,
+              },
             },
           ],
           "kind": "function",
@@ -143,6 +251,7 @@ exports[`compose model queries example with nested filters 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "Org.repos_if_one",
+    "retCardinality": "collection",
     "retType": "Repo",
     "select": [],
   },
@@ -165,6 +274,7 @@ exports[`compose model queries nested example without filters 1`] = `
     "offset": undefined,
     "orderBy": undefined,
     "refKey": "Org.back_to_org",
+    "retCardinality": "collection",
     "retType": "Org",
     "select": [],
   },
@@ -197,6 +307,7 @@ exports[`compose model queries order and limit 1`] = `
     },
   ],
   "refKey": "Org.recent_repos",
+  "retCardinality": "collection",
   "retType": "Repo",
   "select": [],
 }

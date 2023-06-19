@@ -1,0 +1,11 @@
+model Device {
+  relation measurements { from Measurement, through device }
+  query current_measurement { from measurements, order by { timestamp desc }, first }
+  query one_measurement { from measurements, one }
+}
+
+model Measurement {
+  field value { type integer }
+  field timestamp { type integer }
+  reference device { to Device }
+}

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 import {
   Action,
@@ -44,15 +44,14 @@ import {
 import { builtinFunctions } from "./ast/functions";
 import { Scope, addTypeGuard } from "./ast/scope";
 import {
-  PrimitiveType,
   Type,
   TypeCardinality,
   TypeCategory,
   baseType,
+  fieldTypes,
   getTypeCardinality,
   getTypeModel,
   isExpectedType,
-  primitiveTypes,
   removeNullable,
 } from "./ast/type";
 import { CompilerError, ErrorCode } from "./compilerError";
@@ -136,26 +135,26 @@ export function resolve(projectASTs: ProjectASTs) {
       validate.validators.forEach(resolveValidator)
     );
 
-    field.name.ref = {
-      kind: "modelAtom",
-      atomKind: "field",
-      parentModel: model.name.text,
-      name: field.name.text,
-      unique: !!kindFind(field.atoms, "unique"),
-    };
-
-    let type: Type = Type.any;
+    const nullable = !!kindFind(field.atoms, "nullable");
     const typeAtom = kindFind(field.atoms, "type");
-    if (typeAtom) {
-      const typeText = typeAtom.identifier.text;
-      if (_.includes(primitiveTypes, typeText)) {
-        type = Type.primitive(typeText as PrimitiveType["primitiveKind"]);
-      } else {
-        errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
-      }
+
+    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
+
+    if (type) {
+      field.name.ref = {
+        kind: "modelAtom",
+        atomKind: "field",
+        parentModel: model.name.text,
+        name: field.name.text,
+        type,
+        nullable,
+        unique: !!kindFind(field.atoms, "unique"),
+      };
+
+      field.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
+    } else if (typeAtom) {
+      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
     }
-    const nullable = kindFind(field.atoms, "nullable");
-    field.name.type = nullable ? Type.nullable(type) : type;
   }
 
   function resolveValidator(validator: Validator) {
@@ -172,6 +171,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     if (to?.identifier.ref?.kind === "model") {
+      const nullable = !!kindFind(reference.atoms, "nullable");
       reference.name.ref = {
         kind: "modelAtom",
         atomKind: "reference",
@@ -179,9 +179,9 @@ export function resolve(projectASTs: ProjectASTs) {
         name: reference.name.text,
         model: to.identifier.ref.model,
         unique: !!kindFind(reference.atoms, "unique"),
+        nullable,
       };
       const type = Type.model(to.identifier.ref.model);
-      const nullable = kindFind(reference.atoms, "nullable");
       reference.name.type = nullable ? Type.nullable(type) : type;
     }
   }
@@ -262,11 +262,13 @@ export function resolve(projectASTs: ProjectASTs) {
 
     const orderBy = kindFind(query.atoms, "orderBy");
     if (orderBy) {
-      orderBy.orderBy.forEach((orderBy) => resolveIdentifierRefPath(orderBy.identifierPath, scope));
+      orderBy.orderBy.forEach((orderBy) => resolveExpression(orderBy.expr, scope));
     }
 
     const select = kindFind(query.atoms, "select");
-    if (select) resolveSelect(select.select, currentModel, scope);
+    if (select) {
+      resolveSelect(select.select, currentModel, scope);
+    }
 
     if (currentModel) {
       let baseType: Type;
@@ -327,8 +329,7 @@ export function resolve(projectASTs: ProjectASTs) {
         if (target.kind === "short") {
           targetType = target.name.type;
         } else {
-          // TODO: is it correct cardinality?
-          targetType = target.identifierPath.at(-1)!.type;
+          targetType = target.expr.type;
         }
         if (targetType.kind === "model") {
           name += "_id";
@@ -396,20 +397,28 @@ export function resolve(projectASTs: ProjectASTs) {
     if (parentModel === null) {
       resolveModelRef(entrypoint.target);
     } else {
-      resolveModelAtomRef(entrypoint.target, parentModel, "relation");
-      entrypoint.target.type = baseType(entrypoint.target.type);
+      resolveModelAtomRef(entrypoint.target, parentModel, "reference", "relation");
     }
+    const cardinality = getTypeCardinality(entrypoint.target.type);
     const currentModel = entrypoint.target.ref?.model;
     if (entrypoint.as) {
       entrypoint.as.identifier.ref = { kind: "target", targetKind: "entrypoint" };
-      entrypoint.as.identifier.type = entrypoint.target.type;
+      entrypoint.as.identifier.type = baseType(entrypoint.target.type);
       alias = entrypoint.as.identifier;
     }
 
     const identify = kindFind(entrypoint.atoms, "identify");
     if (identify) {
-      const through = kindFind(identify.atoms, "through");
-      if (through) resolveModelAtomRef(through.identifier, currentModel, "field");
+      if (cardinality === "collection") {
+        const through = kindFind(identify.atoms, "through");
+        if (through && currentModel) {
+          resolveUniqueModelPath(through.identifierPath, currentModel);
+        }
+      } else {
+        errors.push(
+          new CompilerError(identify.keyword, ErrorCode.SingleCardinalityEntrypointHasIdentify)
+        );
+      }
     }
 
     const authorize = kindFind(entrypoint.atoms, "authorize");
@@ -420,10 +429,12 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     const response = kindFind(entrypoint.atoms, "response");
-    if (response) resolveSelect(response.select, currentModel, scope);
+    if (response) {
+      resolveSelect(response.select, currentModel, { ..._.cloneDeep(scope), model: currentModel });
+    }
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
-      resolveEndpoint(endpoint, currentModel, alias, _.cloneDeep(scope))
+      resolveEndpoint(endpoint, currentModel, cardinality, alias, _.cloneDeep(scope))
     );
 
     const childEntrypointScope = _.cloneDeep(scope);
@@ -436,6 +447,7 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveEndpoint(
     endpoint: Endpoint,
     model: string | undefined,
+    parentCardinality: TypeCardinality,
     alias: IdentifierRef | undefined,
     scope: Scope
   ) {
@@ -454,6 +466,32 @@ export function resolve(projectASTs: ProjectASTs) {
       }
       default:
         break;
+    }
+
+    const isSupportedByParentCardinality = match(endpoint.type)
+      .with("get", "update", () => true)
+      .with(
+        "delete",
+        "create",
+        () => parentCardinality === "collection" || parentCardinality === "nullable"
+      )
+      .with("list", () => parentCardinality === "collection")
+      .with(
+        "custom",
+        () =>
+          kindFind(endpoint.atoms, "cardinality")?.cardinality !== "many" ||
+          parentCardinality === "collection"
+      )
+      .exhaustive();
+    if (!isSupportedByParentCardinality) {
+      const endpointString = endpoint.type === "custom" ? "custom-many" : endpoint.type;
+      errors.push(
+        new CompilerError(
+          endpoint.keywordType,
+          ErrorCode.UnsupportedEndpointByEntrypointCardinality,
+          { endpoint: endpointString, cardinality: parentCardinality }
+        )
+      );
     }
 
     const authorize = kindFind(endpoint.atoms, "authorize");
@@ -495,9 +533,7 @@ export function resolve(projectASTs: ProjectASTs) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
       const modelScope: Scope = { ...scope, model, environment: "model" };
-      orderBy.orderBy.forEach((orderBy) =>
-        resolveIdentifierRefPath(orderBy.identifierPath, modelScope)
-      );
+      orderBy.orderBy.forEach((orderBy) => resolveExpression(orderBy.expr, modelScope));
     }
 
     const filter = kindFind(endpoint.atoms, "filter");
@@ -539,20 +575,36 @@ export function resolve(projectASTs: ProjectASTs) {
       const lastTarget = action.target.at(-1);
       currentModel = getTypeModel(lastTarget!.type);
 
-      if (lastTarget?.ref && action.kind === "create") {
+      if (lastTarget?.ref) {
+        let targetIsSupported;
         switch (lastTarget.ref.kind) {
-          case "model":
+          case "model": {
+            targetIsSupported = action.kind === "create";
             break;
+          }
           case "modelAtom": {
             if (lastTarget.ref.atomKind === "relation") {
-              break;
+              targetIsSupported = action.kind === "create";
             }
-            // fall through
+            if (lastTarget.ref.atomKind === "reference") {
+              targetIsSupported = action.kind === "update" || lastTarget.ref.nullable;
+            }
+            break;
+          }
+          case "action":
+          case "target": {
+            targetIsSupported = action.kind === "update";
+            break;
           }
           default:
-            errors.push(
-              new CompilerError(lastTarget.token, ErrorCode.UnsuportedTargetInCreateAction)
-            );
+            targetIsSupported = false;
+        }
+        if (!targetIsSupported) {
+          const code =
+            action.kind === "create"
+              ? ErrorCode.UnsuportedTargetInCreateAction
+              : ErrorCode.UnsuportedTargetInUpdateAction;
+          errors.push(new CompilerError(lastTarget.token, code));
         }
       }
 
@@ -596,7 +648,10 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
         .with({ kind: "referenceThrough" }, ({ target, through }) => {
           resolveModelAtomRef(target, currentModel, "reference");
-          resolveModelAtomRef(through, target.ref?.model, "field");
+
+          if (target.ref) {
+            resolveUniqueModelPath(through, target.ref.model);
+          }
         })
         .with({ kind: "deny" }, ({ fields }) => {
           if (fields.kind === "list") {
@@ -669,8 +724,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (query) {
       resolveQuery(query, scope);
       action.name.ref = { kind: "action" };
-      // TODO: for now, we magicaly get non modified type from fetch query
-      action.name.type = baseType(query.type);
+      action.name.type = query.type;
       addToScope(scope, action.name);
     }
   }
@@ -687,19 +741,19 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput, scope: Scope) {
-    let type: Type = Type.any;
+    const nullable = !!kindFind(virtualInput.atoms, "nullable");
     const typeAtom = kindFind(virtualInput.atoms, "type");
-    if (typeAtom) {
-      const typeText = typeAtom.identifier.text;
-      if (_.includes(primitiveTypes, typeText)) {
-        type = Type.primitive(typeText as PrimitiveType["primitiveKind"]);
-      } else {
-        errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.VirtualInputType));
-      }
+
+    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
+
+    if (type) {
+      virtualInput.name.ref = { kind: "virtualInput", type, nullable };
+      virtualInput.name.type = nullable
+        ? Type.nullable(Type.primitive(type))
+        : Type.primitive(type);
+    } else if (typeAtom) {
+      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
     }
-    const nullable = kindFind(virtualInput.atoms, "nullable");
-    virtualInput.name.ref = { kind: "virtualInput" };
-    virtualInput.name.type = nullable ? Type.nullable(type) : type;
     addToScope(scope, virtualInput.name);
   }
 
@@ -731,13 +785,12 @@ export function resolve(projectASTs: ProjectASTs) {
       ) {
         through = populate.target.ref.through;
       }
-      populate.target.type = baseType(populate.target.type);
     }
     const currentModel = populate.target.ref?.model;
     scope.model = currentModel;
     if (populate.as) {
       populate.as.identifier.ref = { kind: "target", targetKind: "populate" };
-      populate.as.identifier.type = populate.target.type;
+      populate.as.identifier.type = baseType(populate.target.type);
       addToScope(scope, populate.as.identifier);
     }
 
@@ -857,30 +910,17 @@ export function resolve(projectASTs: ProjectASTs) {
         tryResolveModelAtomRef(target.name, model);
         type = target.name.type;
       } else {
-        resolveIdentifierRefPath(target.identifierPath, scope);
-        type = target.identifierPath.at(-1)!.type;
+        resolveExpression(target.expr, scope);
+        type = target.expr.type;
       }
       if (select) {
         const model = getTypeModel(type);
         if (!model) {
-          const errorToken =
-            target.kind === "short" ? target.name.token : target.identifierPath.at(-1)!.token;
+          const errorToken = target.kind === "short" ? target.name.token : target.expr.sourcePos;
           errors.push(new CompilerError(errorToken, ErrorCode.SelectCantNest));
           return;
         }
-        const nestedScope = _.cloneDeep(scope);
-        if (target.kind === "short") {
-          nestedScope.model = model;
-        } else {
-          const identifier: IdentifierRef = {
-            text: target.name.text,
-            token: target.name.token,
-            ref: target.identifierPath.at(-1)!.ref,
-            type,
-          };
-          addToScope(nestedScope, identifier);
-        }
-        resolveSelect(select, model, nestedScope);
+        resolveSelect(select, model, { ..._.cloneDeep(scope), model });
       }
     });
   }
@@ -903,6 +943,27 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "group" }, (group) => {
         resolveExpression(group.expr, scope);
         group.type = group.expr.type;
+      })
+      .with({ kind: "array" }, (array) => {
+        let type: Type | undefined = undefined;
+        for (const element of array.elements) {
+          resolveExpression(element, scope);
+          if (element.type.kind === "collection") {
+            errors.push(
+              new CompilerError(element.sourcePos, ErrorCode.CollectionInsideArray, {
+                type: element.type,
+              })
+            );
+          } else if (!type) {
+            type = element.type;
+          } else if (isExpectedType(type, element.type)) {
+            type = element.type;
+          } else {
+            checkExprType(element, type);
+          }
+        }
+        if (!type) type = Type.any;
+        array.type = Type.collection(type);
       })
       .with({ kind: "unary" }, (unary) => {
         resolveExpression(unary.expr, scope);
@@ -985,7 +1046,7 @@ export function resolve(projectASTs: ProjectASTs) {
     // try to resolve from global models, if global is allowed
     else if (options?.allowGlobal && findModel(headName)) {
       head.ref = { kind: "model", model: headName };
-      head.type = Type.model(headName);
+      head.type = Type.collection(Type.model(headName));
     }
     // special case, try to resolve @auth
     else if (headName === "@auth") {
@@ -1025,6 +1086,40 @@ export function resolve(projectASTs: ProjectASTs) {
         identifier.type = Type.null;
       }
     });
+  }
+
+  function resolveUniqueModelPath(path: IdentifierRef<RefModelAtom>[], modelName: string) {
+    resolveRefPath(path, { kind: "model", model: modelName });
+    for (const item of path) {
+      if (!item.ref || item.type.kind === "any") {
+        // path didn't resolve properly, at this point there is no reason
+        // to continue to the rest of the path items, so we can return immediately
+        return;
+      }
+      match(item.ref)
+        .with({ atomKind: P.union("field", "reference") }, (atom) => {
+          if (!atom.unique) {
+            errors.push(
+              new CompilerError(item.token, ErrorCode.NonUniquePathItem, {
+                atomKind: item.ref!.atomKind,
+              })
+            );
+          }
+        })
+        .with({ atomKind: P.union("relation", "query") }, () => {
+          if (item.type.kind === "collection") {
+            errors.push(new CompilerError(item.token, ErrorCode.NonUniquePathItem));
+          }
+        })
+        .otherwise((ref) => {
+          errors.push(
+            new CompilerError(item.token, ErrorCode.UnexpectedModelAtom, {
+              atomKind: ref.atomKind,
+              expected: "field",
+            })
+          );
+        });
+    }
   }
 
   function resolveRefPath(path: IdentifierRef[], previousType: Type): boolean {
@@ -1083,7 +1178,7 @@ export function resolve(projectASTs: ProjectASTs) {
       errors.push(new CompilerError(identifier.token, ErrorCode.CantResolveModel));
     } else {
       identifier.ref = { kind: "model", model: model.name.text };
-      identifier.type = Type.model(model.name.text);
+      identifier.type = Type.collection(Type.model(model.name.text));
     }
   }
 
@@ -1113,16 +1208,17 @@ export function resolve(projectASTs: ProjectASTs) {
     if (name.endsWith("_id")) {
       const referenceAtom = model.atoms.find((m) => m.name.text === name.slice(0, -3));
       if (referenceAtom?.kind === "reference") {
+        const nullable = referenceAtom.name.ref?.nullable ?? false;
         identifier.ref = {
           kind: "modelAtom",
           atomKind: "field",
           parentModel: model.name.text,
           name,
+          type: "integer",
+          nullable,
           unique: false,
         };
-        const baseType: Type = Type.integer;
-        identifier.type =
-          referenceAtom.name.type.kind === "nullable" ? Type.nullable(baseType) : baseType;
+        identifier.type = nullable ? Type.nullable(Type.integer) : Type.integer;
         return true;
       }
     }
@@ -1133,6 +1229,8 @@ export function resolve(projectASTs: ProjectASTs) {
         atomKind: "field",
         parentModel: model.name.text,
         name,
+        type: "integer",
+        nullable: false,
         unique: true,
       };
       identifier.type = Type.integer;

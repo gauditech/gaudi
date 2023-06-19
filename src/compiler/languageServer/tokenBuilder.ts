@@ -145,6 +145,10 @@ export function buildTokens(
         })
         .with({ kind: "unique" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "onDelete" }, (onDelete) => {
+          buildKeyword(onDelete.keyword);
+          buildKeyword(onDelete.action.keyword);
+        })
         .exhaustive()
     );
   }
@@ -186,7 +190,7 @@ export function buildTokens(
         .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
           buildKeyword(keyword);
           orderBy.forEach((orderBy) => {
-            buildIdentifierPath(orderBy.identifierPath);
+            buildExpr(orderBy.expr);
             if (orderBy.keyword) buildKeyword(orderBy.keyword);
           });
         })
@@ -240,9 +244,9 @@ export function buildTokens(
           buildKeyword(keyword);
           atoms.forEach((a) =>
             match(a)
-              .with({ kind: "through" }, ({ keyword, identifier }) => {
+              .with({ kind: "through" }, ({ keyword, identifierPath }) => {
                 buildKeyword(keyword);
-                buildIdentifierRef(identifier);
+                buildIdentifierPath(identifierPath);
               })
               .exhaustive()
           );
@@ -292,7 +296,7 @@ export function buildTokens(
         .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
           buildKeyword(keyword);
           orderBy.forEach((orderBy) => {
-            buildIdentifierPath(orderBy.identifierPath);
+            buildExpr(orderBy.expr);
             if (orderBy.keyword) buildKeyword(orderBy.keyword);
           });
         })
@@ -377,7 +381,7 @@ export function buildTokens(
     buildKeyword(keyword);
     buildIdentifierRef(target);
     buildKeyword(keywordThrough);
-    buildIdentifierRef(through);
+    buildIdentifierPath(through);
   }
 
   function buildActionAtomVirtualInput({ keyword, name, atoms }: ActionAtomVirtualInput) {
@@ -568,7 +572,7 @@ export function buildTokens(
           break;
         case "long":
           push(target.name.token, TokenTypes.property);
-          buildIdentifierPath(target.identifierPath);
+          buildExpr(target.expr);
           break;
       }
       if (select) buildSelect(select);
@@ -588,6 +592,7 @@ export function buildTokens(
         buildExpr(rhs);
       })
       .with({ kind: "group" }, ({ expr }) => buildExpr(expr))
+      .with({ kind: "array" }, ({ elements }) => elements.forEach((e) => buildExpr(e)))
       .with({ kind: "unary" }, ({ keyword, expr }) => {
         buildKeyword(keyword);
         buildExpr(expr);

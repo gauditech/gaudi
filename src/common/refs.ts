@@ -1,7 +1,9 @@
 import _, { chain } from "lodash";
+import { match } from "ts-pattern";
 
-import { ensureEqual } from "./utils";
+import { UnreachableError, ensureEqual } from "./utils";
 
+import { FieldType } from "@src/compiler/ast/type";
 import { VarContext, getTypedPath } from "@src/composer/utils";
 import {
   AggregateDef,
@@ -230,13 +232,13 @@ export function getExecutionRuntime(def: Definition, name: string): ExecutionRun
  *
  * https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#model-field-scalar-types
  */
-export function getFieldDbType(type: FieldDef["dbtype"]): string {
+export function getFieldDbType(type: FieldType): string {
   switch (type) {
-    case "serial":
-      return "Int";
     case "integer":
       return "Int";
-    case "text":
+    case "float":
+      return "Float";
+    case "string":
       return "String";
     case "boolean":
       return "Boolean";
@@ -283,4 +285,17 @@ export function fieldDbToModelName(model: ModelDef, dbname: string): string {
     throw new Error(`Field ${model.name}.${dbname} doesn't exist`);
   }
   return field.name;
+}
+
+export function getSourceRef(def: Definition, sourcePath: string[]) {
+  const tpath = getTypedPath(def, sourcePath, {});
+  if (tpath.nodes.length) {
+    return getRef(def, _.last(tpath.nodes)!.refKey);
+  } else {
+    return match(tpath.source)
+      .with({ kind: "model" }, (source) => getRef(def, source.refKey))
+      .otherwise(() => {
+        throw new UnreachableError("Doesn't support paths from the context");
+      });
+  }
 }

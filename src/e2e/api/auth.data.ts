@@ -42,8 +42,8 @@ export const DATA = [
     data: [
       { box_id: 1, name: "public", is_public: true },
       { box_id: 1, name: "private", is_public: false },
-      { box_id: 2, name: "public", is_public: true },
-      { box_id: 2, name: "private", is_public: false },
+      { box_id: 2, name: "public2", is_public: true },
+      { box_id: 2, name: "private2", is_public: false },
     ],
   },
 ];

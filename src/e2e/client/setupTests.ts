@@ -52,14 +52,12 @@ async function setupClient(name: string, bpPath: string, appendGenerators = fals
 function appendClientGenerator(bp: string) {
   return `
 generate client {
-  target js
+  target ts
 }
 
-// "api model" is not implemented
-//generate client {
-//  target js
-//  api model
-//}
+generate client {
+  target js
+}
 
 ${bp}
 `;

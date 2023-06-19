@@ -1,4 +1,4 @@
-import { Type } from "./type";
+import { FieldType, Type } from "./type";
 
 export type ProjectASTs = {
   plugins: Record<string, GlobalAtom[]>;
@@ -42,6 +42,11 @@ export type ReferenceAtom = { keyword: TokenData } & (
   | { kind: "to"; identifier: IdentifierRef<RefModel> }
   | { kind: "nullable" }
   | { kind: "unique" }
+  | { kind: "onDelete"; action: ReferenceOnDeleteAtomAction }
+);
+export type ReferenceOnDeleteAtomAction = { keyword: TokenData } & (
+  | { kind: "cascade" }
+  | { kind: "setNull" }
 );
 
 export type Relation = {
@@ -77,12 +82,12 @@ export type QueryAtom = { keyword: TokenData } & (
 export type AggregateType = "count" | "sum" | "one" | "first";
 export type OrderBy = (
   | {
-      identifierPath: IdentifierRef[];
+      expr: Expr<"db">;
       keyword?: undefined;
       order?: undefined;
     }
   | {
-      identifierPath: IdentifierRef[];
+      expr: Expr<"db">;
       order: OrderType;
       keyword: TokenData;
     }
@@ -106,7 +111,7 @@ export type Api = {
 export type Entrypoint = {
   kind: "entrypoint";
   keyword: TokenData;
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
   atoms: EntrypointAtom[];
 };
@@ -121,7 +126,11 @@ export type EntrypointAtom =
 export type Identify = {
   kind: "identify";
   keyword: TokenData;
-  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef<RefModelField> }[];
+  atoms: {
+    kind: "through";
+    keyword: TokenData;
+    identifierPath: IdentifierRef<RefModelAtom>[];
+  }[];
 };
 
 export type Endpoint = {
@@ -201,7 +210,7 @@ export type ActionAtomReferenceThrough = {
   kind: "referenceThrough";
   keyword: TokenData;
   target: IdentifierRef<RefModelReference>;
-  through: IdentifierRef<RefModelField>;
+  through: IdentifierRef<RefModelAtom>[];
   keywordThrough: TokenData;
 };
 export type ActionAtomDeny = {
@@ -248,7 +257,7 @@ export type Populator = {
 export type Populate = {
   kind: "populate";
   keyword: TokenData;
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
   atoms: PopulateAtom[];
 };
@@ -287,7 +296,7 @@ export type GeneratorClientAtom =
       keywordValue: TokenData;
     }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
-export type GeneratorClientAtomTarget = "js";
+export type GeneratorClientAtomTarget = "js" | "ts";
 
 export type Runtime = {
   kind: "runtime";
@@ -344,7 +353,7 @@ export type AnonymousQuery = {
 export type Select = {
   target:
     | { kind: "short"; name: IdentifierRef<RefModelAtom> }
-    | { kind: "long"; name: Identifier; identifierPath: IdentifierRef[] };
+    | { kind: "long"; name: Identifier; expr: Expr<Code> };
   select?: Select;
 }[];
 
@@ -360,6 +369,7 @@ export type Expr<kind extends ExprKind = ExprKind> = (
       rhs: Expr<kind>;
     }
   | { kind: "group"; expr: Expr<kind> }
+  | { kind: "array"; elements: Expr<kind>[] }
   | { kind: "unary"; keyword: TokenData; operator: UnaryOperator; expr: Expr<kind> }
   | { kind: "path"; path: IdentifierRef[] }
   | { kind: "literal"; literal: Literal }
@@ -403,6 +413,8 @@ export type RefModelField = {
   atomKind: "field";
   parentModel: string;
   name: string;
+  type: FieldType;
+  nullable: boolean;
   unique: boolean;
 };
 export type RefModelReference = {
@@ -412,6 +424,7 @@ export type RefModelReference = {
   name: string;
   model: string;
   unique: boolean;
+  nullable: boolean;
 };
 export type RefModelRelation = {
   kind: "modelAtom";
@@ -448,7 +461,7 @@ export type RefQueryTarget = {
 export type RefTarget = { kind: "target"; targetKind: "entrypoint" | "populate" };
 export type RefAction = { kind: "action" };
 export type RefRepeat = { kind: "repeat" };
-export type RefVirtualInput = { kind: "virtualInput" };
+export type RefVirtualInput = { kind: "virtualInput"; type: FieldType; nullable: boolean };
 export type RefAuth = { kind: "auth"; model: string };
 export type RefAuthToken = { kind: "authToken" };
 export type RefStruct = { kind: "struct" };

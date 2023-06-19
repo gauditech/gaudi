@@ -209,11 +209,13 @@ function buildResponseQueryTree(def: Definition, endpoint: EndpointDef): QueryTr
 }
 
 function targetToFilter(target: TargetDef): TypedExprDef {
+  if (!target.identifyWith) return undefined;
+
   return {
     kind: "function",
     name: "is",
     args: [
-      { kind: "alias", namePath: [...target.namePath, target.identifyWith.name] },
+      { kind: "alias", namePath: [...target.namePath, ...target.identifyWith.path] },
       {
         kind: "variable",
         type: { kind: target.identifyWith.type, nullable: false },

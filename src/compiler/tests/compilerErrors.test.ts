@@ -1,9 +1,15 @@
+import _ from "lodash";
+
+import { compilerErrorsToString } from "../compilerError";
 import { compileToAST } from "../index";
 import { authUserModelName } from "../plugins/authenticator";
 
-function expectError(source: string, errorMessage: string) {
+function expectError(source: string, ...errorMessages: string[]) {
   const { errors } = compileToAST(source);
-  expect(errors.at(0)?.message).toBe(errorMessage);
+  // expect(errors).toHaveLength(errorMessages.length);
+  errorMessages.forEach((errorMessage, i) => {
+    expect(errors.at(i)?.message).toBe(errorMessage);
+  });
 }
 
 describe("compiler errors", () => {
@@ -19,6 +25,17 @@ describe("compiler errors", () => {
         }
         `;
       expectError(bp, `This reference has incorrect model`);
+    });
+    it('fails when using "set null" on delete action in non-nullable reference', () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz, on delete set null }
+        }
+        model Baz {
+          relation foo { from Foo, through baz }
+        }
+        `;
+      expectError(bp, `Reference cannot be set to null on delete because it's not nullable`);
     });
     it("fails on name colision between field and reference", () => {
       const bp = `
@@ -53,6 +70,42 @@ describe("compiler errors", () => {
         }
         `;
       expectError(bp, `Circular model definition detected in model member definition`);
+    });
+  });
+
+  describe("query", () => {
+    it("fails when using first with limit or offset", () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz }
+        }
+        model Baz {
+          relation foos { from Foo, through baz }
+          query foo { from foos, first, limit 10, offset 10 }
+        }
+        `;
+      expectError(
+        bp,
+        `Query can't have "limit" when using "first"`,
+        `Query can't have "offset" when using "first"`
+      );
+    });
+    it("fails when using one with limit, offset or order by", () => {
+      const bp = `
+        model Foo {
+          reference baz { to Baz }
+        }
+        model Baz {
+          relation foos { from Foo, through baz }
+          query foo { from foos, one, limit 10, offset 10, order by { id } }
+        }
+        `;
+      expectError(
+        bp,
+        `Query can't have "limit" when using "one"`,
+        `Query can't have "offset" when using "one"`,
+        `Query can't have "order by" when using "one"`
+      );
     });
   });
 
@@ -251,7 +304,7 @@ describe("compiler errors", () => {
         `;
       expectError(
         bp,
-        `This target is not supported in a "create" action, "create" can only have model and relation as a target`
+        `This target is not supported in a "create" action, "create" can have model, relation and a nullable reference as a target`
       );
     });
 
@@ -599,6 +652,54 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Expecting token of type --> RCurly <-- but found --> 'responds' <--`);
     });
+    it("fails on wrong endpoint cardinality", () => {
+      const bp = `
+      model User {
+        field name { type string }
+        reference address { to Address, unique }
+      }
+
+      model Address {
+        field name { type string }
+        relation user { from User, through address }
+      }
+
+      api {
+        entrypoint User {
+          entrypoint address {
+            create endpoint {}
+            list endpoint {}
+            delete endpoint {}
+            custom endpoint {
+              method GET
+              cardinality many
+              path "custom"
+            }
+          }
+        }
+
+        entrypoint Address {
+          entrypoint user {
+            list endpoint {}
+            custom endpoint {
+              method GET
+              cardinality many
+              path "custom"
+            }
+          }
+        }
+      }
+      `;
+      expectError(
+        bp,
+        `"create" endpoint is not supported in one cardinality entrypoint`,
+        `"list" endpoint is not supported in one cardinality entrypoint`,
+        `"delete" endpoint is not supported in one cardinality entrypoint`,
+        `"custom-many" endpoint is not supported in one cardinality entrypoint`,
+        `"list" endpoint is not supported in nullable cardinality entrypoint`,
+        `"custom-many" endpoint is not supported in nullable cardinality entrypoint`
+      );
+    });
   });
 
   describe("function", () => {
@@ -628,6 +729,107 @@ describe("compiler errors", () => {
         bp,
         `Unexpected type\nexpected:\n{"kind":"primitive","primitiveKind":"string"}\ngot:\n{"kind":"primitive","primitiveKind":"integer"}`
       );
+    });
+  });
+
+  describe("reference / identify through", () => {
+    it("succeeds with unique field, reference and relation", () => {
+      const bp = `
+      model Org {
+        reference owner { to User, unique }
+      }
+
+      model User {
+        relation orgs { from Org, through owner }
+        // c:one because of unique relation
+        relation profile { from Profile, through user }
+      }
+
+      model Profile {
+        reference user { to User, unique }
+        reference data { to Data, unique }
+      }
+
+      model Data {
+        relation profile { from Profile, through data }
+        field email { type string, unique, nullable }
+      }
+
+      api {
+        entrypoint Org {
+          identify { through owner.profile.data.email }
+        }
+      }
+      `;
+
+      const { errors } = compileToAST(bp);
+      errors.length && console.log(compilerErrorsToString("", bp, errors));
+      expect(errors).toHaveLength(0);
+    });
+
+    it("fails when computed is used", () => {
+      const bp = `
+      model Org {
+        reference owner { to User, unique }
+      }
+
+      model User {
+        relation orgs { from Org, through owner }
+        // c:one because of unique relation
+        relation profile { from Profile, through user }
+      }
+
+      model Profile {
+        reference user { to User, unique }
+        reference data { to Data, unique }
+      }
+
+      model Data {
+        relation profile { from Profile, through data }
+        field email { type string, unique, nullable }
+        computed email2 { email }
+      }
+
+      api {
+        entrypoint Org {
+          identify { through owner.profile.data.email2 }
+        }
+      }
+      `;
+
+      expectError(bp, `Unexpected model atom:\nexpected:\n"field"\ngot:\n"computed"`);
+    });
+
+    it("fails with non-unique field, reference and relation", () => {
+      const bp = `
+      model Org {
+        reference owner { to User }
+      }
+
+      model User {
+        relation orgs { from Org, through owner }
+        // c:many because of non-unique relation
+        relation profile { from Profile, through user }
+      }
+
+      model Profile {
+        reference user { to User }
+        reference data { to Data }
+      }
+
+      model Data {
+        relation profile { from Profile, through data }
+        field email { type string }
+      }
+
+      api {
+        entrypoint Org {
+          identify { through owner.profile.data.email }
+        }
+      }
+      `;
+
+      expectError(bp, ..._.times(4, () => `All atoms in this path must be "unique"`));
     });
   });
 });

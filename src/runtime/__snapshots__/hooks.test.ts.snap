@@ -12,16 +12,20 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
             "name": "value",
             "setter": {
               "kind": "literal",
-              "type": "text",
-              "value": "First Last",
+              "literal": {
+                "kind": "string",
+                "value": "First Last",
+              },
             },
           },
           {
             "name": "prefix",
             "setter": {
               "kind": "literal",
-              "type": "text",
-              "value": "Mr. ",
+              "literal": {
+                "kind": "string",
+                "value": "Mr. ",
+              },
             },
           },
         ],
@@ -42,16 +46,20 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
             "name": "x",
             "setter": {
               "kind": "literal",
-              "type": "integer",
-              "value": 100,
+              "literal": {
+                "kind": "integer",
+                "value": 100,
+              },
             },
           },
           {
             "name": "y",
             "setter": {
               "kind": "literal",
-              "type": "integer",
-              "value": 20,
+              "literal": {
+                "kind": "integer",
+                "value": 20,
+              },
             },
           },
         ],

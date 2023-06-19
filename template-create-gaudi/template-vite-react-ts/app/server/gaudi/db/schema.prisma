@@ -1,0 +1,54 @@
+datasource db {
+      provider = "postgresql"
+      url      = env("GAUDI_DATABASE_URL")
+    }
+
+    model authuser {
+id Int @id @unique @default(autoincrement())
+name String
+username String @unique
+passwordhash String
+
+tokens authuseraccesstoken[] @relation("AuthUserAccessTokenauthUser")
+
+
+}
+    model authuseraccesstoken {
+id Int @id @unique @default(autoincrement())
+token String @unique
+expirydate String
+authuser_id Int
+
+
+
+authUser authuser @relation("AuthUserAccessTokenauthUser", fields: [authuser_id], references: [id])
+}
+    model author {
+id Int @id @unique @default(autoincrement())
+name String
+
+books book[] @relation("Bookauthor")
+reviews_given bookreview[] @relation("BookReviewreviewer")
+
+
+}
+    model book {
+id Int @id @unique @default(autoincrement())
+title String
+author_id Int
+
+reviews bookreview[] @relation("BookReviewbook")
+
+author author @relation("Bookauthor", fields: [author_id], references: [id])
+}
+    model bookreview {
+id Int @id @unique @default(autoincrement())
+is_positive Boolean
+reviewer_id Int
+book_id Int
+
+
+
+reviewer author @relation("BookReviewreviewer", fields: [reviewer_id], references: [id])
+book book @relation("BookReviewbook", fields: [book_id], references: [id])
+}

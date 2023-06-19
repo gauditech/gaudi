@@ -49,7 +49,9 @@ exports[`API endpoints Org custom create 1`] = `
 exports[`API endpoints Org custom endpoint - fetch action 1`] = `
 {
   "name": "Fetch me org 1",
-  "repoSlug": "repo1",
+  "repoSlug": [
+    "repo1",
+  ],
 }
 `;
 
@@ -75,6 +77,7 @@ exports[`API endpoints Org custom update 1`] = `
   "blank_repos": [
     {
       "id": 4,
+      "nameAndDesc": "Repo 4 Repo 4 description",
       "total_issues": 0,
     },
   ],
@@ -91,10 +94,12 @@ exports[`API endpoints Org get 1`] = `
   "blank_repos": [
     {
       "id": 2,
+      "nameAndDesc": "Repo 2 Repo 2 description",
       "total_issues": 0,
     },
     {
       "id": 1,
+      "nameAndDesc": "Repo 1 Repo 1 description",
       "total_issues": 0,
     },
   ],
@@ -113,6 +118,7 @@ exports[`API endpoints Org list with non default paging 1`] = `
       "blank_repos": [
         {
           "id": 4,
+          "nameAndDesc": "Repo 4 Repo 4 description",
           "total_issues": 0,
         },
       ],
@@ -126,10 +132,12 @@ exports[`API endpoints Org list with non default paging 1`] = `
       "blank_repos": [
         {
           "id": 2,
+          "nameAndDesc": "Repo 2 Repo 2 description",
           "total_issues": 0,
         },
         {
           "id": 1,
+          "nameAndDesc": "Repo 1 Repo 1 description",
           "total_issues": 0,
         },
       ],
@@ -170,6 +178,7 @@ exports[`API endpoints Org list with paging 1`] = `
       "blank_repos": [
         {
           "id": 4,
+          "nameAndDesc": "Repo 4 Repo 4 description",
           "total_issues": 0,
         },
       ],
@@ -183,10 +192,12 @@ exports[`API endpoints Org list with paging 1`] = `
       "blank_repos": [
         {
           "id": 2,
+          "nameAndDesc": "Repo 2 Repo 2 description",
           "total_issues": 0,
         },
         {
           "id": 1,
+          "nameAndDesc": "Repo 1 Repo 1 description",
           "total_issues": 0,
         },
       ],
@@ -209,6 +220,7 @@ exports[`API endpoints Org update 1`] = `
   "blank_repos": [
     {
       "id": 4,
+      "nameAndDesc": "Repo 4 Repo 4 description",
       "total_issues": 0,
     },
   ],
@@ -236,7 +248,7 @@ exports[`API endpoints Repo create 1`] = `
   "description": "Description: Repo 6 description",
   "id": 6,
   "org_id": 1,
-  "slug": "org_1-W5JU1e0Kj1Kv",
+  "slug": "org_1-123W5JU1e0Kj1Kv",
 }
 `;
 

@@ -1,13 +1,10 @@
 import _ from "lodash";
 
-import { ensureEqual } from "@src/common/utils";
 import { Type } from "@src/compiler/ast/type";
-import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query";
+import { composeExpression, composeQuery } from "@src/composer/query";
 import { refKeyFromRef } from "@src/composer/utils";
 import {
-  AggregateDef,
   ComputedDef,
-  ConstantDef,
   Definition,
   FieldDef,
   IValidatorDef,
@@ -35,43 +32,25 @@ function defineModel(spec: Spec.Model): ModelDef {
     fields: spec.fields.map(defineField),
     references: spec.references.map(defineReference),
     relations: spec.relations.map(defineRelation),
-    queries: spec.queries.filter((qspec) => !qspec.aggregate).map(defineQuery),
-    aggregates: spec.queries.filter((qspec) => qspec.aggregate).map(defineAggregate),
+    queries: spec.queries.map(defineQuery),
+    aggregates: [],
     computeds: spec.computeds.map(defineComputed),
     hooks: spec.hooks.map(defineModelHook),
   };
 }
 
 function defineField(fspec: Spec.Field): FieldDef {
-  let nullable = false;
-  let type;
-  if (fspec.type.kind === "nullable") {
-    nullable = true;
-    ensureEqual(fspec.type.type.kind, "primitive");
-    type = fspec.type.type.primitiveKind;
-  } else {
-    ensureEqual(fspec.type.kind, "primitive");
-    type = fspec.type.primitiveKind;
-  }
-  if (type === "float") {
-    type = "integer" as const;
-  }
-  if (type === "string") {
-    type = "text" as const;
-  }
-
   return {
     kind: "field",
     refKey: refKeyFromRef(fspec.ref),
     modelRefKey: fspec.ref.parentModel,
-    name: fspec.name,
-    dbname: fspec.name.toLowerCase(),
-    type,
-    dbtype: fspec.primary ? "serial" : constructDbType(type),
+    name: fspec.ref.name,
+    dbname: fspec.ref.name.toLowerCase(),
+    type: fspec.ref.type,
     primary: fspec.primary,
     unique: fspec.ref.unique,
-    nullable,
-    validators: composeValidators(type, fspec.validators),
+    nullable: fspec.ref.nullable,
+    validators: composeValidators(fspec.ref.type, fspec.validators),
   };
 }
 
@@ -98,8 +77,8 @@ export function composeValidators(
     }
 
     const name = vspec.name;
-    const args = vspec.args.map(literalToConstantDef);
-    const argt = args.map((a) => a.type);
+    const args = vspec.args;
+    const argt = args.map((a) => a.kind);
 
     for (const v of ValidatorDefinition) {
       const [vType, vBpName, vName, vArgs] = v;
@@ -117,15 +96,6 @@ export function composeValidators(
   });
 }
 
-function literalToConstantDef(literal: Spec.LiteralValue): ConstantDef {
-  if (typeof literal === "number" && Number.isSafeInteger(literal))
-    return { type: "integer", value: literal };
-  if (!!literal === literal) return { type: "boolean", value: literal };
-  if (literal === null) return { type: "null", value: null };
-  if (typeof literal === "string") return { type: "text", value: literal };
-  throw new Error(`Can't detect literal type from ${literal} : ${typeof literal}`);
-}
-
 function defineReference(rspec: Spec.Reference): ReferenceDef {
   const refToModelName = rspec.to.model;
   const refKey = refKeyFromRef(rspec.ref);
@@ -140,6 +110,7 @@ function defineReference(rspec: Spec.Reference): ReferenceDef {
     name: rspec.name,
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
+    onDelete: rspec.onDelete,
   };
 }
 
@@ -153,7 +124,6 @@ function defineRelation(rspec: Spec.Relation): RelationDef {
     fromModelRefKey: rspec.through.parentModel,
     through: rspec.through.name,
     throughRefKey: refKeyFromRef(rspec.through),
-    nullable: rspec.nullable,
     unique: rspec.unique,
   };
 }
@@ -164,15 +134,6 @@ function defineQuery(qspec: Spec.Query): QueryDef {
   const query = composeQuery(qspec);
   query.refKey = refKey;
   query.select = []; // FIXME ??
-
-  return query;
-}
-
-function defineAggregate(qspec: Spec.Query): AggregateDef {
-  const refKey = `${qspec.sourceModel}.${qspec.name}`;
-
-  const query = composeAggregate(qspec);
-  query.refKey = refKey;
 
   return query;
 }
@@ -192,25 +153,12 @@ function defineModelHook(hspec: Spec.ModelHook): ModelHookDef {
   };
 }
 
-export function validateFieldType(type: string): FieldDef["type"] {
-  switch (type) {
-    case "integer":
-      return "integer";
-    case "text":
-      return "text";
-    case "boolean":
-      return "boolean";
-    default:
-      throw new Error(`Field type ${type} is not a valid type`);
-  }
-}
-
 export function defineType(type: Type, nullable = false): VariablePrimitiveType {
   switch (type.kind) {
     case "primitive": {
       switch (type.primitiveKind) {
         case "string":
-          return { kind: "text", nullable };
+          return { kind: "string", nullable };
         case "float":
           return { kind: "integer", nullable };
         default:
@@ -224,8 +172,4 @@ export function defineType(type: Type, nullable = false): VariablePrimitiveType 
     default:
       throw new Error(`Invalid computed field type: "${type}"`);
   }
-}
-
-function constructDbType(type: FieldDef["type"]): FieldDef["dbtype"] {
-  return type;
 }

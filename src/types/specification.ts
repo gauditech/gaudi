@@ -3,18 +3,22 @@ import {
   RefModel,
   RefModelAtom,
   RefModelField,
-  RefModelQuery,
   RefModelReference,
   RefModelRelation,
   RefTarget,
 } from "@src/compiler/ast/ast";
-import { Type } from "@src/compiler/ast/type";
+import { FieldType, Type, TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
 
-export type LiteralValue = null | boolean | number | string;
+export type Literal = IntegerLiteral | FloatLiteral | BooleanLiteral | NullLiteral | StringLiteral;
+export type IntegerLiteral = { kind: "integer"; value: number };
+export type FloatLiteral = { kind: "float"; value: number };
+export type BooleanLiteral = { kind: "boolean"; value: boolean };
+export type NullLiteral = { kind: "null"; value: null };
+export type StringLiteral = { kind: "string"; value: string };
 
 export type Select = SingleSelect[];
-export type SingleSelect = { name: string; target: IdentifierRef<RefModelAtom> } & (
+export type SingleSelect = { name: string; expr: Expr } & (
   | { kind: "final" }
   | { kind: "nested"; select: Select }
 );
@@ -45,17 +49,15 @@ export type Model = {
 };
 
 export type Field = {
-  name: string;
   ref: RefModelField;
-  type: Type;
   primary: boolean;
-  default?: LiteralValue;
+  default?: Literal;
   validators: Validator[];
 };
 
 export type Validator =
   | { kind: "hook"; hook: FieldValidatorHook }
-  | { kind: "builtin"; name: string; args: LiteralValue[] };
+  | { kind: "builtin"; name: string; args: Literal[] };
 
 export type Reference = {
   name: string;
@@ -63,20 +65,22 @@ export type Reference = {
   to: RefModel;
   unique: boolean;
   nullable: boolean;
+  onDelete?: ReferenceOnDeleteAction;
 };
+export type ReferenceOnDeleteAction = "setNull" | "cascade";
 
 export type Relation = {
   name: string;
   ref: RefModelRelation;
   through: RefModelReference;
   unique: boolean;
-  nullable: boolean;
 };
 
 export type Query = {
   name: string;
   sourceModel: string;
   targetModel: string;
+  cardinality: TypeCardinality;
   from: IdentifierRef[];
   fromAlias?: IdentifierRef[];
   filter?: Expr;
@@ -87,7 +91,7 @@ export type Query = {
   aggregate?: string;
 };
 
-export type QueryOrderBy = { field: string[]; order?: "asc" | "desc" };
+export type QueryOrderBy = { expr: Expr; order?: "asc" | "desc" };
 
 export type Computed = {
   name: string;
@@ -97,7 +101,8 @@ export type Computed = {
 
 export type Expr = { type: Type } & (
   | { kind: "identifier"; identifier: IdentifierRef[] }
-  | { kind: "literal"; literal: LiteralValue }
+  | { kind: "literal"; literal: Literal }
+  | { kind: "array"; elements: Expr[] }
   | { kind: "function"; name: string; args: Expr[] }
 );
 
@@ -106,12 +111,13 @@ export type Api = {
   entrypoints: Entrypoint[];
 };
 
-export type Entrypoint = {
+export type Entrypoint<c extends TypeCardinality = TypeCardinality> = {
   name: string;
   model: string;
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+  cardinality: c;
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   alias: IdentifierRef<RefTarget>;
-  identifyThrough: IdentifierRef<RefModelField>;
+  identifyThrough: c extends "collection" ? IdentifierRef<RefModelAtom>[] : undefined;
   endpoints: Endpoint[];
   entrypoints: Entrypoint[];
 };
@@ -205,26 +211,26 @@ export type ActionAtomSetQuery = { kind: "query"; query: Query };
 
 export type ActionAtomInput = {
   kind: "input";
-  target: IdentifierRef<RefModelField>;
+  target: RefModelField;
   optional: boolean;
   default?:
-    | { kind: "literal"; value: LiteralValue }
+    | { kind: "literal"; literal: Literal }
     | { kind: "reference"; reference: IdentifierRef[] };
 };
 export type ActionAtomSet = {
   kind: "set";
-  target: IdentifierRef<RefModelField>;
+  target: RefModelField;
   set: ActionAtomSetHook | ActionAtomSetExp;
 };
 export type ActionAtomRefThrough = {
   kind: "reference";
-  target: IdentifierRef<RefModelReference>;
-  through: IdentifierRef<RefModelField>;
+  target: RefModelReference;
+  through: RefModelAtom[];
 };
 export type ActionAtomVirtualInput = {
   kind: "virtual-input";
   name: string;
-  type: string;
+  type: FieldType;
   nullable: boolean;
   optional: boolean;
   validators: Validator[];
@@ -239,8 +245,9 @@ export type Populator = {
   populates: Populate[];
 };
 
-export type Populate = {
-  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation | RefModelQuery>;
+export type Populate<c extends TypeCardinality = TypeCardinality> = {
+  target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
+  cardinality: c;
   alias: IdentifierRef<RefTarget>;
   setters: ActionAtomSet[];
   populates: Populate[];

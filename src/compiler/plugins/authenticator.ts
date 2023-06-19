@@ -35,10 +35,9 @@ function getCode(): string {
               query {
                 from ${authUserModelName} as a,
                 filter { a.username is username },
-                limit 1
+                // TODO: this should be checked with validate V2, as it should fail with 401, not 500
+                one
               }
-              // TODO: throw error id user is not resolved
-              // currently, "existingAuthUser" ends up empty and "authenticateUser" hook throws error
             }
 
             execute {
@@ -87,7 +86,7 @@ function getCode(): string {
               query {
                 from ${accessTokenModelName},
                 filter { token is @requestAuthToken },
-                limit 1
+                one
               }
             }
 

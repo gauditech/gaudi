@@ -1,6 +1,6 @@
 
 model Org {
-  field slug { type string }
+  field slug { type string, unique }
   field name { type string }
   relation repos { from Repo, through org }
 }
@@ -10,6 +10,13 @@ model Repo {
   field slug { type string }
   field name { type string }
   field description { type string }
+  reference owner { to Owner, nullable }
+}
+
+model Owner {
+  field slug { type string }
+  field name { type string }
+  relation repo { from Repo, through owner }
 }
 
 generate client {
@@ -102,6 +109,22 @@ api {
           path "customManySubmit"
           method POST
           cardinality many
+      }
+      entrypoint owner {
+        get endpoint {}
+        update endpoint {}
+        create endpoint {}
+        delete endpoint {}
+        custom endpoint {
+          path "customOneFetch"
+          method GET
+          cardinality one
+        }
+        custom endpoint {
+            path "customOneSubmit"
+            method PATCH
+            cardinality one
+        }
       }
     }
   }

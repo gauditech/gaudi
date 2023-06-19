@@ -1,7 +1,7 @@
-export const primitiveTypes = ["integer", "float", "boolean", "string"] as const;
-
 export type AnyType = { kind: "any" };
-export type PrimitiveType = { kind: "primitive"; primitiveKind: (typeof primitiveTypes)[number] };
+export const fieldTypes = ["integer", "float", "boolean", "string"] as const;
+export type FieldType = (typeof fieldTypes)[number];
+export type PrimitiveType = { kind: "primitive"; primitiveKind: FieldType };
 export type NullType = { kind: "null" };
 export type ModelType = { kind: "model"; model: string };
 export type StructType = {
@@ -15,7 +15,7 @@ export type CollectionType<t extends CanBeInCollection = CanBeInCollection> = {
 export type NullableType<t extends CanBeNullable = CanBeNullable> = { kind: "nullable"; type: t };
 
 type BaseType = AnyType | PrimitiveType | NullType | ModelType | StructType;
-type CanBeInCollection = CanBeNullable | AnyType;
+type CanBeInCollection = CanBeNullable | NullableType | NullType | AnyType;
 type CanBeNullable = PrimitiveType | ModelType | StructType;
 
 export type Type =
@@ -29,7 +29,7 @@ export type Type =
 
 export const Type = {
   any: { kind: "any" } as AnyType,
-  primitive: (primitiveKind: (typeof primitiveTypes)[number]): PrimitiveType => ({
+  primitive: (primitiveKind: FieldType): PrimitiveType => ({
     kind: "primitive",
     primitiveKind,
   }),

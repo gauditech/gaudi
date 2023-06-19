@@ -1,4 +1,12 @@
+import { FieldType, TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
+import {
+  BooleanLiteral,
+  FloatLiteral,
+  IntegerLiteral,
+  Literal,
+  StringLiteral,
+} from "@src/types/specification";
 
 export type Definition = {
   models: ModelDef[];
@@ -23,8 +31,6 @@ export type ModelDef = {
   hooks: ModelHookDef[];
 };
 
-export type FieldType = "integer" | "text" | "boolean";
-
 export type FieldDef = {
   kind: "field";
   refKey: string;
@@ -32,7 +38,6 @@ export type FieldDef = {
   name: string;
   dbname: string;
   type: FieldType;
-  dbtype: "serial" | "integer" | "text" | "boolean";
   primary: boolean;
   unique: boolean;
   nullable: boolean;
@@ -49,7 +54,9 @@ export type ReferenceDef = {
   toModelFieldRefKey: string;
   nullable: boolean;
   unique: boolean;
+  onDelete?: ReferenceOnDeleteAction;
 };
+export type ReferenceOnDeleteAction = "setNull" | "cascade";
 
 export type RelationDef = {
   kind: "relation";
@@ -60,7 +67,6 @@ export type RelationDef = {
   fromModelRefKey: string;
   through: string;
   throughRefKey: string;
-  nullable: boolean;
   unique: boolean;
 };
 
@@ -71,7 +77,7 @@ export type QueryDef = {
   name: string;
   // retType: string | "integer";
   retType: string;
-  // retCardinality: "one" | "many";
+  retCardinality: TypeCardinality;
   fromPath: string[];
   // unique: boolean;
   filter: TypedExprDef;
@@ -110,22 +116,18 @@ export type ModelHookDef = {
 };
 
 export type VariablePrimitiveType = {
-  kind: "integer" | "text" | "boolean" | "unknown" | "null";
+  kind: FieldType | "null";
   nullable: boolean;
 };
 
-type VariableCollectionType<T extends VariablePrimitiveType = VariablePrimitiveType> = {
+type VariableCollectionType = {
   kind: "collection";
-  type: T;
+  type: VariablePrimitiveType;
 };
 
 type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 
-export type LiteralValueDef =
-  | LiteralIntegerDef
-  | LiteralNullDef
-  | LiteralTextDef
-  | LiteralBooleanDef;
+export type LiteralValueDef = { kind: "literal"; literal: Literal };
 
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
 type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
@@ -160,6 +162,8 @@ export type FunctionName =
 
 export type AggregateFunctionName = "count" | "sum";
 
+export type InCollectionFunctionName = "in" | "not in";
+
 export type TypedFunction = {
   kind: "function";
   name: FunctionName;
@@ -169,11 +173,19 @@ export type TypedFunction = {
 
 export type TypedExprDef =
   | LiteralValueDef
+  | TypedArray
   | TypedAlias
   | TypedVariable
   | TypedFunction
   | TypedAggregateFunction
+  | TypedExistsSubquery
   | undefined;
+
+type TypedArray = {
+  kind: "array";
+  elements: TypedExprDef[];
+  type: VariableCollectionType;
+};
 
 type TypedAggregateFunction = {
   kind: "aggregate-function";
@@ -183,10 +195,13 @@ type TypedAggregateFunction = {
   targetPath: string[];
 };
 
-type LiteralIntegerDef = { kind: "literal"; type: "integer"; value: number };
-type LiteralTextDef = { kind: "literal"; type: "text"; value: string };
-type LiteralNullDef = { kind: "literal"; type: "null"; value: null };
-type LiteralBooleanDef = { kind: "literal"; type: "boolean"; value: boolean };
+type TypedExistsSubquery = {
+  kind: "in-subquery";
+  fnName: InCollectionFunctionName;
+  lookupExpression: TypedExprDef;
+  sourcePath: string[];
+  targetPath: string[];
+};
 
 export type ApiDef = {
   name?: string;
@@ -205,12 +220,20 @@ export type EntrypointDef = {
 };
 
 export type TargetDef = {
-  kind: "model" | "reference" | "relation" | "query";
+  kind: "model" | "reference" | "relation";
   name: string;
   namePath: string[];
   retType: string;
   alias: string;
-  identifyWith: { name: string; refKey: string; type: "text" | "integer"; paramName: string };
+  identifyWith:
+    | {
+        path: string[];
+        // FIXME we should support any field type that can be represented as a string
+        // as long as there's a unique index
+        type: "string" | "integer";
+        paramName: string;
+      }
+    | undefined;
 };
 
 export type TargetWithSelectDef = TargetDef & { select: SelectDef };
@@ -350,85 +373,108 @@ export type FieldsetRecordDef = {
 
 export type IValidatorDef = {
   name: string;
-  inputType: "integer" | "text" | "boolean";
-  args: ConstantDef[];
+  inputType: FieldType;
+  args: Literal[];
 };
 
 export type FieldsetFieldDef = {
   kind: "field";
-  type: FieldDef["type"];
+  type: FieldType;
   nullable: boolean;
   required: boolean;
   validators: ValidatorDef[];
 };
 
 export type ValidatorDef =
-  | MinLengthTextValidator
-  | MaxLengthTextValidator
-  | EmailTextValidator
+  | MinLengthStringValidator
+  | MaxLengthStringValidator
+  | EmailStringValidator
   | MinIntValidator
   | MaxIntValidator
+  | MinFloatValidator
+  | MaxFloatValidator
   | IsBooleanEqual
   | IsIntEqual
-  | IsTextEqual
+  | IsFloatEqual
+  | IsStringEqual
   | HookValidator
-  | NoReferenceValidator;
+  | ReferenceNotFoundValidator;
 
 export const ValidatorDefinition = [
-  ["text", "max", "maxLength", ["integer"]],
-  ["text", "min", "minLength", ["integer"]],
-  ["text", "isEmail", "isEmail", []],
-  ["integer", "min", "min", ["integer"]],
-  ["integer", "max", "max", ["integer"]],
+  ["string", "max", "maxLength", ["integer"]],
+  ["string", "min", "minLength", ["integer"]],
+  ["string", "isEmail", "isEmail", []],
+  ["integer", "min", "minInt", ["integer"]],
+  ["integer", "max", "maxInt", ["integer"]],
+  ["float", "min", "minFloat", ["float"]],
+  ["float", "max", "maxFloat", ["float"]],
   ["boolean", "isEqual", "isBoolEqual", ["boolean"]],
   ["integer", "isEqual", "isIntEqual", ["integer"]],
-  ["text", "isEqual", "isTextEqual", ["text"]],
+  ["float", "isEqual", "isFloatEqual", ["float"]],
+  ["string", "isEqual", "isStringEqual", ["string"]],
 ] as const;
 
-export interface MinLengthTextValidator extends IValidatorDef {
+export interface MinLengthStringValidator extends IValidatorDef {
   name: "minLength";
-  inputType: "text";
-  args: [IntConst];
+  inputType: "string";
+  args: [IntegerLiteral];
 }
 
-export interface MaxLengthTextValidator extends IValidatorDef {
+export interface MaxLengthStringValidator extends IValidatorDef {
   name: "maxLength";
-  inputType: "text";
-  args: [IntConst];
+  inputType: "string";
+  args: [IntegerLiteral];
 }
 
-export interface EmailTextValidator extends IValidatorDef {
+export interface EmailStringValidator extends IValidatorDef {
   name: "isEmail";
-  inputType: "text";
+  inputType: "string";
   args: [];
 }
 
 export interface MinIntValidator extends IValidatorDef {
-  name: "min";
+  name: "minInt";
   inputType: "integer";
-  args: [IntConst];
+  args: [IntegerLiteral];
 }
 
 export interface MaxIntValidator extends IValidatorDef {
-  name: "max";
+  name: "maxInt";
   inputType: "integer";
-  args: [IntConst];
+  args: [IntegerLiteral];
+}
+
+export interface MinFloatValidator extends IValidatorDef {
+  name: "minFloat";
+  inputType: "float";
+  args: [FloatLiteral];
+}
+
+export interface MaxFloatValidator extends IValidatorDef {
+  name: "maxFloat";
+  inputType: "float";
+  args: [FloatLiteral];
 }
 
 export interface IsBooleanEqual extends IValidatorDef {
   name: "isBoolEqual";
   inputType: "boolean";
-  args: [BoolConst];
+  args: [BooleanLiteral];
 }
 export interface IsIntEqual extends IValidatorDef {
   name: "isIntEqual";
   inputType: "integer";
-  args: [IntConst];
+  args: [IntegerLiteral];
 }
-export interface IsTextEqual extends IValidatorDef {
-  name: "isTextEqual";
-  inputType: "text";
-  args: [TextConst];
+export interface IsFloatEqual extends IValidatorDef {
+  name: "isFloatEqual";
+  inputType: "float";
+  args: [FloatLiteral];
+}
+export interface IsStringEqual extends IValidatorDef {
+  name: "isStringEqual";
+  inputType: "string";
+  args: [StringLiteral];
 }
 
 export interface HookValidator {
@@ -436,22 +482,16 @@ export interface HookValidator {
   arg?: string;
   hook: HookCode;
 }
-export interface NoReferenceValidator {
-  name: "noReference";
+export interface ReferenceNotFoundValidator {
+  name: "reference-not-found";
 }
-
-export type ConstantDef = TextConst | IntConst | BoolConst | NullConst;
-type BoolConst = { type: "boolean"; value: boolean };
-type IntConst = { type: "integer"; value: number };
-type TextConst = { type: "text"; value: string };
-type NullConst = { type: "null"; value: null };
 
 export type ActionDef =
   | CreateOneAction
   | UpdateOneAction
   | DeleteOneAction
   | ExecuteHookAction
-  | FetchOneAction;
+  | FetchAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -492,8 +532,8 @@ export type ExecuteHookAction = {
   responds: boolean;
 };
 
-export type FetchOneAction = {
-  kind: "fetch-one";
+export type FetchAction = {
+  kind: "fetch";
   alias: string;
   model: string;
   changeset: ChangesetDef;
@@ -534,7 +574,7 @@ export type FieldSetterVirtualInput = {
 export type FieldSetterReferenceInput = {
   kind: "fieldset-reference-input";
   fieldsetAccess: string[];
-  throughRefKey: string;
+  through: string[];
   // required: boolean;
 };
 
@@ -584,6 +624,11 @@ export type FieldSetterQuery = {
   query: QueryDef;
 };
 
+export type FieldSetterArray = {
+  kind: "array";
+  elements: FieldSetter[];
+};
+
 export type FieldSetter =
   // TODO add composite expression setter
   | LiteralValueDef
@@ -596,7 +641,8 @@ export type FieldSetter =
   | FieldSetterHttpHandler
   | FieldSetterFunction
   | FieldSetterContextReference
-  | FieldSetterQuery;
+  | FieldSetterQuery
+  | FieldSetterArray;
 
 export type ExecutionRuntimeDef = {
   name: string;
@@ -630,7 +676,7 @@ export type AuthenticatorBasicMethodDef = {
 
 export type GeneratorDef = GeneratorClientDef;
 
-export type GeneratorClientTarget = "js";
+export type GeneratorClientTarget = "js" | "ts";
 
 export type GeneratorClientDef = {
   kind: "generator-client";

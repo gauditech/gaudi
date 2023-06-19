@@ -10,14 +10,14 @@ export type EndpointPath = {
 export type PathFragmentNamespace = { kind: "namespace"; name: string };
 export type PathFragmentIdentifier = {
   kind: "identifier";
-  type: "integer" | "text";
+  type: "integer" | "string";
   name: string;
 };
 export type PathQueryParameter = {
   kind: "query";
   name: string;
   required: boolean;
-} & ({ type: "text"; defaultValue?: string } | { type: "integer"; defaultValue?: number });
+} & ({ type: "string"; defaultValue?: string } | { type: "integer"; defaultValue?: number });
 export type PathFragment = PathFragmentNamespace | PathFragmentIdentifier | PathQueryParameter;
 
 export function buildEndpointPath(endpoint: EndpointDef): EndpointPath {
@@ -35,14 +35,17 @@ export function buildEndpointPath(endpoint: EndpointDef): EndpointPath {
 }
 
 function buildFragments(endpoint: EndpointDef): PathFragment[] {
-  const contextFragments = endpoint.parentContext.flatMap((target): PathFragment[] => [
-    { kind: "namespace", name: _.snakeCase(target.name) },
-    {
-      kind: "identifier",
-      type: target.identifyWith.type,
-      name: target.identifyWith.paramName,
-    },
-  ]);
+  const contextFragments = endpoint.parentContext.flatMap((target): PathFragment[] => {
+    const path: PathFragment[] = [{ kind: "namespace", name: _.snakeCase(target.name) }];
+    if (target.identifyWith) {
+      path.push({
+        kind: "identifier",
+        type: target.identifyWith.type,
+        name: target.identifyWith.paramName,
+      });
+    }
+    return path;
+  });
 
   // --- custom endpoint path suffix
   const targetNs: PathFragment = { kind: "namespace", name: _.snakeCase(endpoint.target.name) };
@@ -84,16 +87,16 @@ function buildFragments(endpoint: EndpointDef): PathFragment[] {
     case "update":
     case "delete":
     case "custom-one": {
-      return [
-        ...contextFragments,
-        targetNs,
-        {
+      const path: PathFragment[] = [...contextFragments, targetNs];
+      if (endpoint.target.identifyWith) {
+        path.push({
           kind: "identifier",
           type: endpoint.target.identifyWith.type,
           name: endpoint.target.identifyWith.paramName,
-        },
-        ...customPathSuffix,
-      ];
+        });
+      }
+      path.push(...customPathSuffix);
+      return path;
     }
     case "create":
     case "list":

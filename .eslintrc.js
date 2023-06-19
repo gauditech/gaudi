@@ -40,6 +40,7 @@ module.exports = {
       },
     ],
   },
+  ignorePatterns: [".eslintrc.js", "dist", "template-create-gaudi/*"],
   env: {
     es6: true,
     node: true,

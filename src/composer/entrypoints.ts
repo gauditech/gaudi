@@ -1,11 +1,14 @@
 import _ from "lodash";
+import { P, match } from "ts-pattern";
 
+import { getTypedPathWithLeaf } from "./utils";
+
+import { buildEndpointPath } from "@src/builder/query";
+import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
-import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
-import { RefModelField } from "@src/compiler/ast/ast";
+import { UnreachableError, assertUnreachable, ensureEqual, ensureOneOf } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
-import { composeExpression, composeSelect } from "@src/composer/query";
-import { refKeyFromRef } from "@src/composer/utils";
+import { composeExpression, composeOrderBy, composeSelect } from "@src/composer/query";
 import {
   ActionDef,
   Definition,
@@ -19,7 +22,6 @@ import {
   FieldsetDef,
   FieldsetFieldDef,
   ModelDef,
-  QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
   TargetDef,
@@ -67,11 +69,10 @@ export function calculateTarget(
   const model = spec.target.ref.model;
   const identifyWith: TargetDef["identifyWith"] =
     "identifyThrough" in spec
-      ? calculateIdentifyWith(spec.identifyThrough)
+      ? calculateIdentifyWith(spec)
       : {
-          name: "id",
+          path: ["id"],
           type: "integer",
-          refKey: `${model}.id`,
           paramName: `${model.toLocaleLowerCase()}_id`,
         };
 
@@ -85,21 +86,22 @@ export function calculateTarget(
   };
 }
 
-function calculateIdentifyWith(
-  identifyThrough: Spec.IdentifierRef<RefModelField>
-): TargetDef["identifyWith"] {
-  const type = identifyThrough.type;
-  if (
-    type.kind !== "primitive" ||
-    (type.primitiveKind !== "integer" && type.primitiveKind !== "string")
-  ) {
-    throw new Error(`Invalid type of identifiyWith ${JSON.stringify(type)}`);
-  }
+function calculateIdentifyWith(spec: Spec.Entrypoint): TargetDef["identifyWith"] {
+  if (!spec.identifyThrough) return undefined;
+  const leaf = _.last(spec.identifyThrough)!;
+  ensureEqual(leaf.ref.kind, "modelAtom");
+  ensureEqual(leaf.ref.atomKind, "field");
+  ensureOneOf(leaf.ref.type, ["string", "integer"]);
+  const path = spec.identifyThrough.map((i) => i.text);
+  const paramName = [
+    // include current model and append identifyThrough path
+    spec.model.toLowerCase(),
+    ...spec.identifyThrough.map((i) => i.text),
+  ].join("_");
   return {
-    name: identifyThrough.ref.name,
-    type: type.primitiveKind === "string" ? "text" : type.primitiveKind,
-    refKey: refKeyFromRef(identifyThrough.ref),
-    paramName: `${identifyThrough.ref.parentModel.toLowerCase()}_${identifyThrough.ref.name}`,
+    path,
+    type: leaf.ref.type,
+    paramName,
   };
 }
 
@@ -158,7 +160,7 @@ function processEndpoints(
           // actions,
           parentContext,
           target: _.omit(target, "identifyWith"),
-          orderBy: processOrderBy(context.namePath, endSpec.orderBy),
+          orderBy: composeOrderBy(context.namePath, endSpec.orderBy),
           filter: composeFilter(context.namePath, endSpec.filter),
         };
       }
@@ -254,20 +256,6 @@ function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
   }
 }
 
-export function processOrderBy(
-  fromPath: string[],
-  orderBy: Spec.QueryOrderBy[] | undefined
-): QueryOrderByAtomDef[] | undefined {
-  if (orderBy == null) return;
-
-  return orderBy?.map(
-    ({ field, order }): QueryOrderByAtomDef => ({
-      exp: { kind: "alias", namePath: [...fromPath, ...field] },
-      direction: order ?? "asc",
-    })
-  );
-}
-
 export function composeFilter(
   fromPath: string[],
   filter: Spec.Expr | undefined
@@ -291,7 +279,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                   required: setter.required,
                   type: setter.type,
                   nullable: setter.nullable,
-                  validators: setter.validators,
+                  validators: _.cloneDeep(setter.validators),
                 },
               ];
             }
@@ -309,20 +297,23 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                   required: setter.required,
                   type: setter.type,
                   nullable: field.nullable,
-                  validators: field.validators,
+                  validators: _.cloneDeep(field.validators),
                 },
               ];
             }
             case "fieldset-reference-input": {
-              const field = getRef.field(def, setter.throughRefKey);
+              ensureOneOf(action.kind, ["create-one", "update-one"]);
+              const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
+              const reference = getRef.reference(def, action.model, name);
+              const field = getRef.field(def, tpath.leaf.refKey);
               return [
                 setter.fieldsetAccess,
                 {
                   kind: "field",
                   required: true, // FIXME
-                  nullable: field.nullable,
+                  nullable: reference.nullable,
                   type: field.type,
-                  validators: field.validators,
+                  validators: _.cloneDeep(field.validators),
                 },
               ];
             }
@@ -455,16 +446,18 @@ function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] 
     case "function": {
       return expr.args.flatMap((arg) => collectAuthorizeDeps(def, arg));
     }
+    case "in-subquery":
     case "aggregate-function": {
       /**
-       * Fixme we should support aggregate functions inside of authorize expressions.
-       * However, since authorize is calculated in the application runtime, we would
-       * need to fetch a result of an aggregate function.
-       * We should either:
-       * 1. move authorize logic into SQL (bunch of "variable" to fill aliases)
-       * 2. make aggregate functions selectable - requires SelectableExprItem implementation.
+       * Fixme we should support aggregate functions & subqueries inside of authorize expressions.
+       * SelectableExpression support is here, so even these deps can be collected.
+       * This would require a significant rewrite of `deps` logic because it doesn't support
+       * anonymous expressions, even though they are selectable.
        */
       throw new Error("Not implemented");
+    }
+    case "array": {
+      return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
     }
     default: {
       assertUnreachable(expr);
@@ -501,7 +494,7 @@ export function wrapActionsWithSelect(
   deps: SelectDep[]
 ): ActionDef[] {
   return actions.map((a): ActionDef => {
-    if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch-one") return a;
+    if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch") return a;
 
     const paths = deps.filter((d) => d.alias === a.alias).map((a) => a.access);
     const model = getRef.model(def, a.model);
@@ -581,4 +574,82 @@ function pathsToSelectDef(
       }
     }
   });
+}
+
+/**
+ * UTILS
+ */
+
+/**
+ * Checks if endpoint has path fragments / if it can return 404.
+ */
+export function endpointHasContext(endpoint: EndpointDef): boolean {
+  const epath = buildEndpointPath(endpoint);
+  return kindFilter(epath.fragments, "identifier").length > 0;
+}
+
+/**
+ * Checks if endpoint `authorize` block relies on `@auth`
+ */
+export function endpointUsesAuthentication(endpoint: EndpointDef): boolean {
+  if (!endpoint.authorize) return false;
+
+  // find @auth in context
+  function isAuthInExpression(expr: TypedExprDef): boolean {
+    return match(expr)
+      .with({ kind: "alias" }, (a) => a.namePath[0] === "@auth")
+      .with({ kind: "function" }, (fn) => {
+        return _.some(fn.args, isAuthInExpression);
+      })
+      .otherwise(() => false);
+  }
+
+  return isAuthInExpression(endpoint.authorize);
+}
+
+/**
+ * Checks if endpoint `authorize` blocks relies on anything other than
+ * checking if user is logged in
+ */
+export function endpointUsesAuthorization(endpoint: EndpointDef): boolean {
+  // FIXME this can probably be improved by checking for nullability, eg in
+  // @auth.user.id is not null (doesn't use Authorization unless `user` is nullable)
+  if (!endpoint.authorize) return false;
+
+  // check for anything other than `@auth.id is not null`
+  function isAnotherExpression(expr: TypedExprDef): boolean {
+    function isNull(expr: TypedExprDef): boolean {
+      return expr?.kind === "literal" && expr.literal.kind === "null";
+    }
+    function isAuthId(expr: TypedExprDef): boolean {
+      return expr?.kind === "alias" && _.isEqual(expr.namePath, ["@auth", "id"]);
+    }
+    return match(expr)
+      .with(undefined, () => false)
+      .with({ kind: "function", name: "is not" }, (fn) => {
+        if (isAuthId(fn.args[0]) && isNull(fn.args[1])) {
+          return false;
+        } else if (isNull(fn.args[0]) && isAuthId(fn.args[1])) {
+          return false;
+        } else {
+          return true;
+        }
+      })
+      .with({ kind: "function", name: P.union("and", "or") }, (fn) => {
+        return isAnotherExpression(fn.args[0]) || isAnotherExpression(fn.args[1]);
+      })
+      .otherwise(() => true);
+  }
+
+  return isAnotherExpression(endpoint.authorize);
+}
+
+/**
+ * Gets endpoint fieldset, if any.
+ */
+
+export function getEndpointFieldset(endpoint: EndpointDef): FieldsetDef | undefined {
+  return match(endpoint)
+    .with({ kind: P.union("get", "list", "delete") }, () => undefined)
+    .otherwise((ep) => ep.fieldset);
 }
