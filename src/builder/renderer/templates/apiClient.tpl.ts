@@ -120,7 +120,7 @@ function buildApisObject(apis: ApiDef[]): string {
 function buildApiObject(api: ApiDef): string {
   const info = createApiInfo(api);
 
-  return `${info.builder}(internalOptions ?? {})`;
+  return `${info.builder}(internalOptions)`;
 }
 
 function buildApis(def: Definition, apis: ApiDef[]): string {

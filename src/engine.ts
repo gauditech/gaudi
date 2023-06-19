@@ -11,9 +11,12 @@ import { readConfig } from "@src/config";
 
 const { inputPath, outputFolder, gaudiFolder } = readConfig();
 
-if (!fs.existsSync(inputPath)) {
+// gaudi engine currently reads from 1 specified file
+if (!fs.existsSync(inputPath) || !fs.lstatSync(inputPath).isFile()) {
   throw new Error(`Gaudi engine input file not found: "${inputPath}"`);
 }
+
+console.log(`Reading Gaudi source from: "${inputPath}"`);
 
 const input = fs.readFileSync(inputPath).toString("utf-8");
 const specification = compileToOldSpec(input);

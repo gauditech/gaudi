@@ -51,6 +51,7 @@ export const Validate = createWeakKeyword("validate");
 export const Update = createWeakKeyword("update");
 export const Unique = createWeakKeyword("unique");
 export const Type = createWeakKeyword("type");
+export const Ts = createWeakKeyword("ts");
 export const To = createWeakKeyword("to");
 export const Through = createWeakKeyword("through");
 export const Target = createWeakKeyword("target");
@@ -183,6 +184,7 @@ export const GaudiTokens = [
   Update,
   Unique,
   Type,
+  Ts,
   To,
   Through,
   Target,

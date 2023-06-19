@@ -44,14 +44,3 @@ export const GAUDI_SCRIPTS = {
   RUNTIME: path.join(__dirname, "../runtime/runtime.js"),
   POPULATOR: path.join(__dirname, "../runtime/populator/populator.js"),
 };
-
-/**
- * Add path to CLI's binary.
- *
- * We don't want to force users to be aware of our binaries which means that
- * they probably won't be available as global binaries thus we have to manually
- * target them in our own `node_modules`.
- */
-export function appendBinPath(binName: string): string {
-  return path.join("./node_modules/@gaudi/engine/node_modules/.bin/", binName);
-}
