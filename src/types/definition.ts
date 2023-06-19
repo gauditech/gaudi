@@ -54,7 +54,9 @@ export type ReferenceDef = {
   toModelFieldRefKey: string;
   nullable: boolean;
   unique: boolean;
+  onDelete?: ReferenceOnDeleteAction;
 };
+export type ReferenceOnDeleteAction = "setNull" | "cascade";
 
 export type RelationDef = {
   kind: "relation";
@@ -160,6 +162,8 @@ export type FunctionName =
 
 export type AggregateFunctionName = "count" | "sum";
 
+export type InCollectionFunctionName = "in" | "not in";
+
 export type TypedFunction = {
   kind: "function";
   name: FunctionName;
@@ -174,6 +178,7 @@ export type TypedExprDef =
   | TypedVariable
   | TypedFunction
   | TypedAggregateFunction
+  | TypedExistsSubquery
   | undefined;
 
 type TypedArray = {
@@ -186,6 +191,14 @@ type TypedAggregateFunction = {
   kind: "aggregate-function";
   fnName: FunctionName | AggregateFunctionName;
   type: VariablePrimitiveType;
+  sourcePath: string[];
+  targetPath: string[];
+};
+
+type TypedExistsSubquery = {
+  kind: "in-subquery";
+  fnName: InCollectionFunctionName;
+  lookupExpression: TypedExprDef;
   sourcePath: string[];
   targetPath: string[];
 };
@@ -213,7 +226,13 @@ export type TargetDef = {
   retType: string;
   alias: string;
   identifyWith:
-    | { name: string; refKey: string; type: "string" | "integer"; paramName: string }
+    | {
+        path: string[];
+        // FIXME we should support any field type that can be represented as a string
+        // as long as there's a unique index
+        type: "string" | "integer";
+        paramName: string;
+      }
     | undefined;
 };
 
@@ -379,7 +398,7 @@ export type ValidatorDef =
   | IsFloatEqual
   | IsStringEqual
   | HookValidator
-  | NoReferenceValidator;
+  | ReferenceNotFoundValidator;
 
 export const ValidatorDefinition = [
   ["string", "max", "maxLength", ["integer"]],
@@ -463,8 +482,8 @@ export interface HookValidator {
   arg?: string;
   hook: HookCode;
 }
-export interface NoReferenceValidator {
-  name: "noReference";
+export interface ReferenceNotFoundValidator {
+  name: "reference-not-found";
 }
 
 export type ActionDef =
@@ -555,7 +574,7 @@ export type FieldSetterVirtualInput = {
 export type FieldSetterReferenceInput = {
   kind: "fieldset-reference-input";
   fieldsetAccess: string[];
-  throughRefKey: string;
+  through: string[];
   // required: boolean;
 };
 
@@ -657,7 +676,7 @@ export type AuthenticatorBasicMethodDef = {
 
 export type GeneratorDef = GeneratorClientDef;
 
-export type GeneratorClientTarget = "js";
+export type GeneratorClientTarget = "js" | "ts";
 
 export type GeneratorClientDef = {
   kind: "generator-client";

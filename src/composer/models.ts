@@ -1,10 +1,9 @@
 import _ from "lodash";
 
 import { Type } from "@src/compiler/ast/type";
-import { composeAggregate, composeExpression, composeQuery } from "@src/composer/query";
+import { composeExpression, composeQuery } from "@src/composer/query";
 import { refKeyFromRef } from "@src/composer/utils";
 import {
-  AggregateDef,
   ComputedDef,
   Definition,
   FieldDef,
@@ -33,8 +32,8 @@ function defineModel(spec: Spec.Model): ModelDef {
     fields: spec.fields.map(defineField),
     references: spec.references.map(defineReference),
     relations: spec.relations.map(defineRelation),
-    queries: spec.queries.filter((qspec) => !qspec.aggregate).map(defineQuery),
-    aggregates: spec.queries.filter((qspec) => qspec.aggregate).map(defineAggregate),
+    queries: spec.queries.map(defineQuery),
+    aggregates: [],
     computeds: spec.computeds.map(defineComputed),
     hooks: spec.hooks.map(defineModelHook),
   };
@@ -111,6 +110,7 @@ function defineReference(rspec: Spec.Reference): ReferenceDef {
     name: rspec.name,
     unique: !!rspec.unique,
     nullable: !!rspec.nullable,
+    onDelete: rspec.onDelete,
   };
 }
 
@@ -134,15 +134,6 @@ function defineQuery(qspec: Spec.Query): QueryDef {
   const query = composeQuery(qspec);
   query.refKey = refKey;
   query.select = []; // FIXME ??
-
-  return query;
-}
-
-function defineAggregate(qspec: Spec.Query): AggregateDef {
-  const refKey = `${qspec.sourceModel}.${qspec.name}`;
-
-  const query = composeAggregate(qspec);
-  query.refKey = refKey;
 
   return query;
 }

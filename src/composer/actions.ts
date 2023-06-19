@@ -11,7 +11,6 @@ import {
 import { getTypeModel } from "@src/compiler/ast/type";
 import { composeValidators } from "@src/composer/models";
 import { composeQuery } from "@src/composer/query";
-import { refKeyFromRef } from "@src/composer/utils";
 import {
   ActionDef,
   ActionHookDef,
@@ -271,8 +270,11 @@ function atomToChangesetOperation(
         name: atom.target.name,
         setter: {
           kind: "fieldset-reference-input",
-          throughRefKey: refKeyFromRef(atom.through),
-          fieldsetAccess: [...fieldsetNamespace, `${atom.target.name}_${atom.through.name}`],
+          through: atom.through.map((r) => r.name),
+          fieldsetAccess: [
+            ...fieldsetNamespace,
+            `${atom.target.name}_${atom.through.map((r) => r.name).join("_")}`,
+          ],
         },
       };
     }

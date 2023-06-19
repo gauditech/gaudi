@@ -10,8 +10,8 @@ function createClient(options) {
     };
     return {
         api: {
-            auth: buildAuthApi(internalOptions ?? {}),
-            ...buildApi(internalOptions ?? {})
+            auth: buildAuthApi(internalOptions),
+            ...buildApi(internalOptions)
         }
     };
 }
@@ -59,6 +59,7 @@ function buildApi(options) {
         }
         // endpoint functions
         return Object.assign(api, {
+            list: buildListFn(options, parentPath),
             get: buildGetManyFn(options, parentPath)
         });
     }

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { DiagnosticCategory, ModuleKind, Project, ScriptTarget } from "ts-morph";
+import { Diagnostic, DiagnosticCategory, ModuleKind, Project, ScriptTarget, ts } from "ts-morph";
 
 import { storeTemplateOutput } from "@src/builder/renderer/renderer";
 import {
@@ -13,7 +13,7 @@ import {
   render as renderDbSchemaTpl,
 } from "@src/builder/renderer/templates/schema.prisma.tpl";
 import { kindFilter } from "@src/common/kindFilter";
-import { assertUnreachable } from "@src/common/utils";
+import { assertUnreachable, saveOutputFile } from "@src/common/utils";
 import { Definition } from "@src/types/definition";
 
 const DB_PROVIDER = "postgresql";
@@ -92,62 +92,87 @@ export async function buildApiClients(
     clientGenerators.map((g) => {
       const kind = g.target;
       switch (kind) {
+        case "ts": {
+          // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
+          const outFolder = g.output ?? path.join(outputFolder, "client");
+          const outFileName = `api-client.ts`;
+          const outPath = path.join(outFolder, outFileName);
+
+          const t0 = Date.now(); // start timer
+
+          return (
+            renderApiClient({ definition, apis: definition.apis })
+              // parse&save
+              .then((content) => {
+                // use TS compiler to check if content is valid
+                const project = new Project({
+                  // not sure if we need any specific compiler options here cause we're only verifying TS content
+                });
+                // create virtual source file
+                const sourceFile = project.createSourceFile(outPath, content, {
+                  overwrite: true,
+                });
+
+                const diagnostics = sourceFile.getPreEmitDiagnostics();
+                // no errors, we can emit files
+                if (!hasTsErrors(diagnostics)) {
+                  sourceFile.formatText({ indentSize: 2 });
+                  sourceFile.save();
+
+                  console.log(`Source file created [${Date.now() - t0} ms]: ${outPath}`);
+                }
+                // has errors, no emit
+                else {
+                  printTsError(diagnostics);
+
+                  throw `Error creating API client source file: ${outPath}`;
+                }
+              })
+          );
+        }
         case "js": {
           // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
           const outFolder = g.output ?? path.join(outputFolder, "client");
           const outFileName = `api-client.ts`;
           const outPath = path.join(outFolder, outFileName);
 
+          const t0 = Date.now(); // start timer
+
           return (
             renderApiClient({ definition, apis: definition.apis })
-              .then((content) => {
-                return storeTemplateOutput(outPath, content);
-              })
-              // compile client TS file to JS and DTS files
-              .then(async (templateChanged) => {
-                if (templateChanged) {
-                  const project = new Project({
-                    compilerOptions: {
-                      // let's support max 3 years old systax level
-                      target: ScriptTarget.ES2020,
-                      module: ModuleKind.CommonJS,
-                      declaration: true,
-                      strict: true,
-                      // these settings make emitting much faster (https://github.com/dsherret/ts-morph/issues/149)
-                      isolatedModules: true,
-                      noResolve: true,
-                    },
+              // compile&emit
+              .then(async (content) => {
+                // TODO: add caching to avoid pointless slow compilations - but there is not file/cache to compare new content against
+                const project = new Project({
+                  compilerOptions: {
+                    // let's support max 3 years old syntax level
+                    target: ScriptTarget.ES2020,
+                    module: ModuleKind.CommonJS,
+                    declaration: true,
+                    strict: true,
+                    // these settings make emitting much faster (https://github.com/dsherret/ts-morph/issues/149)
+                    isolatedModules: true,
+                    noResolve: true,
+                  },
+                });
+                // create virtual source file
+                const sourceFile = project.createSourceFile(outPath, content, { overwrite: true });
+
+                const diagnostics = sourceFile.getPreEmitDiagnostics();
+                // no errors, we can emit files
+                if (!hasTsErrors(diagnostics)) {
+                  sourceFile.formatText();
+
+                  return project.emit().then(() => {
+                    // TODO: do we need to check after-emit diagnostics? this is truly an isolated module so maybe not?
+                    console.log(`Source file compiled [${Date.now() - t0} ms]: ${outPath}`);
                   });
-                  const sourceFile = project.addSourceFileAtPath(outPath);
+                }
+                // has errors, no emit
+                else {
+                  printTsError(diagnostics);
 
-                  const diagnostics = sourceFile.getPreEmitDiagnostics();
-
-                  // no errors, we can emit files
-                  if (diagnostics.length === 0) {
-                    console.log(`Compiling API client source file: "${outFileName}"`);
-                    const t0 = Date.now();
-                    sourceFile.formatText();
-
-                    return project.emit().then(() => {
-                      console.log(`Source file compiled [${Date.now() - t0} ms]`);
-                    });
-                  }
-                  // has errors, no emit
-                  else {
-                    console.log(`Error compiling API client source file: ${outPath}`);
-
-                    for (const diagnostic of diagnostics) {
-                      console.log(
-                        `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
-                        `${diagnostic
-                          .getSourceFile()
-                          ?.getBaseName()}:${diagnostic.getLineNumber()}`,
-                        diagnostic.getMessageText()
-                      );
-                    }
-                  }
-                } else {
-                  console.log(`API client not changed. Building skipped for: "${outFileName}".`);
+                  throw `Error compiling API client source file: ${outPath}`;
                 }
               })
           );
@@ -157,4 +182,20 @@ export async function buildApiClients(
       }
     })
   );
+
+  // --- utils
+
+  function hasTsErrors(diagnostics: Diagnostic<ts.Diagnostic>[]) {
+    return diagnostics.some((d) => d.getCategory() === DiagnosticCategory.Error);
+  }
+
+  function printTsError(diagnostics: Diagnostic<ts.Diagnostic>[]) {
+    for (const diagnostic of diagnostics) {
+      console.log(
+        `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
+        `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
+        diagnostic.getMessageText()
+      );
+    }
+  }
 }

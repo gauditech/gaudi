@@ -12,7 +12,7 @@ function composeGenerator(def: Definition, generator: Generator): GeneratorDef {
     case "generator-client": {
       // target
       const target = generator.target;
-      if (target !== "js") {
+      if (target !== "js" && target !== "ts") {
         throw new Error(`Unsupported client generator target "${target}"`);
       }
 

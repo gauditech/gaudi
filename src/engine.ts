@@ -16,6 +16,8 @@ const { inputPath, outputFolder, gaudiFolder } = readConfig();
 const filenames = sync(inputPath);
 if (!filenames.length) {
   throw new Error(`No files found matching: "${inputPath}"`);
+} else {
+  console.log(`Reading Gaudi source from: "${inputPath}"`);
 }
 
 const specification = compileWorkspace(filenames);

@@ -57,7 +57,6 @@ import {
   Populate,
   PopulateAtom,
   Populator,
-  ProjectASTs,
   Query,
   QueryAtom,
   RefModelField,
@@ -248,6 +247,36 @@ class GaudiParser extends EmbeddedActionsParser {
             ALT: () => {
               const keyword = this.createTokenData(this.CONSUME(L.Unique));
               atoms.push({ kind: "unique", keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = this.createTokenData(this.CONSUME(L.On), this.CONSUME(L.Delete));
+              this.OR1([
+                {
+                  ALT: () => {
+                    const actionKeyword = this.createTokenData(
+                      this.CONSUME(L.Set),
+                      this.CONSUME(L.Null)
+                    );
+                    atoms.push({
+                      kind: "onDelete",
+                      action: { kind: "setNull", keyword: actionKeyword },
+                      keyword,
+                    });
+                  },
+                },
+                {
+                  ALT: () => {
+                    const actionKeyword = this.createTokenData(this.CONSUME(L.Cascade));
+                    atoms.push({
+                      kind: "onDelete",
+                      action: { kind: "cascade", keyword: actionKeyword },
+                      keyword,
+                    });
+                  },
+                },
+              ]);
             },
           },
         ]);
@@ -574,8 +603,8 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = this.createTokenData(this.CONSUME(L.Through));
-            const identifier = this.SUBRULE(this.identifierRef);
-            atoms.push({ kind: "through", identifier, keyword });
+            const identifierPath = this.SUBRULE(this.identifierRefPath);
+            atoms.push({ kind: "through", identifierPath, keyword });
           },
         },
       ]);
@@ -825,8 +854,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = this.createTokenData(this.CONSUME(L.Reference));
     const target = this.SUBRULE1(this.identifierRef);
     const keywordThrough = this.createTokenData(this.CONSUME(L.Through));
-    const through = this.SUBRULE2(this.identifierRef);
-
+    const through = this.SUBRULE2(this.identifierRefPath);
     return {
       kind: "referenceThrough",
       target,
@@ -1103,7 +1131,10 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = this.createTokenData(this.CONSUME(L.Target));
-            const typeToken = this.OR3([{ ALT: () => this.CONSUME(L.Js) }]);
+            const typeToken = this.OR3([
+              { ALT: () => this.CONSUME(L.Js) },
+              { ALT: () => this.CONSUME(L.Ts) },
+            ]);
             const keywordValue = this.createTokenData(typeToken);
             const value = typeToken.image as GeneratorClientAtomTarget;
             atoms.push({ kind: "target", keyword, value, keywordValue });

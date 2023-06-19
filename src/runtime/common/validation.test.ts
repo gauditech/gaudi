@@ -298,7 +298,7 @@ describe("runtime", () => {
             type: "string",
             validators: [
               {
-                name: "noReference",
+                name: "reference-not-found",
               },
             ],
           },

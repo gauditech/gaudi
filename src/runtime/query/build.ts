@@ -4,7 +4,6 @@ import { match } from "ts-pattern";
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef, getTargetModel } from "@src/common/refs";
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
-import { TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
 import {
   Definition,
@@ -291,6 +290,13 @@ export function transformExpressionPaths(
     }
     case "aggregate-function": {
       return { ...exp, sourcePath: transformNamePath(exp.sourcePath, from, to) };
+    }
+    case "in-subquery": {
+      return {
+        ...exp,
+        sourcePath: transformNamePath(exp.sourcePath, from, to),
+        lookupExpression: transformExpressionPaths(exp, from, to),
+      };
     }
     case "array": {
       return {

@@ -124,6 +124,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const to = kindFind(reference.atoms, "to");
     const unique = kindFind(reference.atoms, "unique");
     const nullable = kindFind(reference.atoms, "nullable");
+    const onDelete = kindFind(reference.atoms, "onDelete");
     ensureExists(reference.name.ref);
     ensureExists(to?.identifier.ref);
 
@@ -133,6 +134,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       to: to.identifier.ref,
       unique: !!unique,
       nullable: !!nullable,
+      onDelete: onDelete?.action.kind,
     };
   }
 
@@ -237,13 +239,13 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const model = target.ref.model;
     const cardinality = getTypeCardinality(target.type);
 
-    let identifyThrough: Spec.IdentifierRef<AST.RefModelField> | undefined;
+    let identifyThrough: Spec.IdentifierRef<AST.RefModelAtom>[] | undefined;
     if (cardinality === "collection") {
       const identify = kindFind(entrypoint.atoms, "identify");
-      const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifier;
+      const identifyThroughAst = identify && kindFind(identify.atoms, "through")?.identifierPath;
       identifyThrough = identifyThroughAst
-        ? migrateIdentifierRef(identifyThroughAst)
-        : generateModelIdIdentifier(model);
+        ? identifyThroughAst.map((i) => migrateIdentifierRef(i))
+        : [generateModelIdIdentifier(model)];
     }
 
     const alias: Spec.IdentifierRef<AST.RefTarget> = entrypoint.as
@@ -410,12 +412,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const refThroughs = kindFilter(action.atoms, "referenceThrough").map(
       (referenceThrough): Spec.ActionAtomRefThrough => {
         ensureExists(referenceThrough.target.ref);
-        ensureExists(referenceThrough.through.ref);
-        return {
-          kind: "reference",
-          target: referenceThrough.target.ref,
-          through: referenceThrough.through.ref,
-        };
+        const through = referenceThrough.through.map((i) => {
+          ensureExists(i.ref);
+          return i.ref;
+        });
+        return { kind: "reference", target: referenceThrough.target.ref, through };
       }
     );
 

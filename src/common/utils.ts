@@ -35,6 +35,15 @@ export function ensureEqual<T, Tx extends T>(a: T, b: Tx, message?: string): ass
   throw new Error(message ?? "Not equal");
 }
 
+export function ensureOneOf<T, const Tx extends T>(
+  a: T,
+  b: Tx[],
+  message?: string
+): asserts a is Tx {
+  if (_.includes(b, a)) return;
+  throw new Error(message ?? `Not one of [${b.join(", ")}]`);
+}
+
 export function ensureNot<T, Tx extends T>(
   a: T,
   b: Tx,

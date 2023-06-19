@@ -15,7 +15,7 @@ model Box {
 }
 
 model Item {
-  field name { type string }
+  field name { type string, unique }
   field is_public { type boolean }
   reference box { to Box }
 }
@@ -61,11 +61,12 @@ api {
     entrypoint items as item {
       identify { through name }
 
-      authorize { box.is_public or @auth.id is box.owner.id }
+      authorize { box.is_public }
 
-      get endpoint {
-        authorize { item.is_public }
+      list endpoint {
+        authorize { @auth.id is box.owner.id }
       }
+      get endpoint {}
     }
   }
 }

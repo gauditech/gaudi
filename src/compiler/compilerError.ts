@@ -35,6 +35,7 @@ export enum ErrorCode {
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
   // Resolver Errors
+  UnexpectedModelAtom,
   UnknownFunction,
   UnexpectedFunctionArgumentCount,
   CantResolveModel,
@@ -42,6 +43,7 @@ export enum ErrorCode {
   CantResolveModelAtom,
   CantResolveStructMember,
   ThroughReferenceHasIncorrectModel,
+  ReferenceOnDeleteNotNullable,
   CircularModelMemberDetected,
   TypeHasNoMembers,
   CantFindNameInScope,
@@ -52,6 +54,7 @@ export enum ErrorCode {
   UnsupportedEndpointByEntrypointCardinality,
   InvalidDefaultAction,
   NonDefaultModelActionRequiresAlias,
+  NonUniquePathItem,
   UnsuportedTargetInCreateAction,
   UnsuportedTargetInUpdateAction,
   ActionBlockAlreadyHasPrimaryAction,
@@ -129,6 +132,14 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Hook can't have more than one "source" or "inline" definition`;
     case ErrorCode.DuplicateSelectField:
       return `Duplicate field in select`;
+    case ErrorCode.UnexpectedModelAtom:
+      return (
+        `Unexpected model atom:\n` +
+        "expected:\n" +
+        `${JSON.stringify(params?.expected)}\n` +
+        "got:\n" +
+        `${JSON.stringify(params?.atomKind)}`
+      );
     case ErrorCode.UnknownFunction:
       return `Function with this name doesn't exist`;
     case ErrorCode.UnexpectedFunctionArgumentCount:
@@ -143,6 +154,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't resolve member of primitive types`;
     case ErrorCode.ThroughReferenceHasIncorrectModel:
       return `This reference has incorrect model`;
+    case ErrorCode.ReferenceOnDeleteNotNullable:
+      return `Reference cannot be set to null on delete because it's not nullable`;
     case ErrorCode.CircularModelMemberDetected:
       return `Circular model definition detected in model member definition`;
     case ErrorCode.TypeHasNoMembers:
@@ -163,6 +176,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `When overriding default action, its kind must match with current endpoint kind. "${params?.action}" is not a valid default action override in "${params?.endpoint}" endpoint`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
+    case ErrorCode.NonUniquePathItem:
+      return `All atoms in this path must be "unique"`;
     case ErrorCode.UnsuportedTargetInCreateAction:
       return `This target is not supported in a "create" action, "create" can have model, relation and a nullable reference as a target`;
     case ErrorCode.UnsuportedTargetInUpdateAction:

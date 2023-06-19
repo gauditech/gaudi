@@ -42,6 +42,11 @@ export type ReferenceAtom = { keyword: TokenData } & (
   | { kind: "to"; identifier: IdentifierRef<RefModel> }
   | { kind: "nullable" }
   | { kind: "unique" }
+  | { kind: "onDelete"; action: ReferenceOnDeleteAtomAction }
+);
+export type ReferenceOnDeleteAtomAction = { keyword: TokenData } & (
+  | { kind: "cascade" }
+  | { kind: "setNull" }
 );
 
 export type Relation = {
@@ -121,7 +126,11 @@ export type EntrypointAtom =
 export type Identify = {
   kind: "identify";
   keyword: TokenData;
-  atoms: { kind: "through"; keyword: TokenData; identifier: IdentifierRef<RefModelField> }[];
+  atoms: {
+    kind: "through";
+    keyword: TokenData;
+    identifierPath: IdentifierRef<RefModelAtom>[];
+  }[];
 };
 
 export type Endpoint = {
@@ -201,7 +210,7 @@ export type ActionAtomReferenceThrough = {
   kind: "referenceThrough";
   keyword: TokenData;
   target: IdentifierRef<RefModelReference>;
-  through: IdentifierRef<RefModelField>;
+  through: IdentifierRef<RefModelAtom>[];
   keywordThrough: TokenData;
 };
 export type ActionAtomDeny = {
@@ -287,7 +296,7 @@ export type GeneratorClientAtom =
       keywordValue: TokenData;
     }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
-export type GeneratorClientAtomTarget = "js";
+export type GeneratorClientAtomTarget = "js" | "ts";
 
 export type Runtime = {
   kind: "runtime";

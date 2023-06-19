@@ -1,23 +1,40 @@
 model Element {
   field name { type string }
   reference extra { to Extra } // TODO: unique?
+  reference nullableExtra { to Extra, nullable }
 }
 
 model Extra {
-  field slug { type string, unique }
+  reference extraData { to ExtraData, unique }
   relation element { from Element, through extra }
+  relation nullableElement { from Element, through nullableExtra }
+}
+
+model ExtraData {
+  field slug { type string, unique }
+  relation extra { from Extra, through extraData }
 }
 
 api {
   entrypoint Extra {
-    create endpoint {}
+    identify { through extraData.slug }
+    get endpoint {}
+    create endpoint {
+      action {
+        create ExtraData as extraData {}
+        create as extra {
+          set extraData extraData
+        }
+      }
+    }
   }
 
   entrypoint Element {
     create endpoint {
       action {
         create {
-          reference extra through slug
+          reference extra through extraData.slug
+          reference nullableExtra through extraData.slug
         }
       }
     }

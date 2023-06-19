@@ -1,0 +1,37 @@
+model Item {
+    field name { type string }
+    field description { type string, nullable }
+}
+
+runtime JsRuntime {
+    default
+    source path "./dist/hooks"
+}
+
+generate client {
+    target ts
+    // output directly to client folder so it can be imported
+    output "../client/src/api"
+}
+
+api {
+    entrypoint Item {
+        get endpoint {}
+        update endpoint {}
+        delete endpoint {}
+        create endpoint {}
+        list endpoint {
+            pageable
+        }
+    }
+}
+
+
+populator Dev {
+    populate Item as item {
+        repeat as iter 15
+
+        set name "Item " + stringify(iter.current)
+        set description "Description of item " + stringify(iter.current)
+    }
+}

@@ -1,13 +1,12 @@
 import _ from "lodash";
-import { match } from "ts-pattern";
+import { P, match } from "ts-pattern";
 
 import { defineType } from "./models";
 
-import { UnreachableError, assertUnreachable, ensureEqual } from "@src/common/utils";
+import { UnreachableError, ensureEqual, shouldBeUnreachableCb } from "@src/common/utils";
 import { Type } from "@src/compiler/ast/type";
 import { refKeyFromRef } from "@src/composer/utils";
 import {
-  AggregateDef,
   FunctionName,
   QueryDef,
   QueryOrderByAtomDef,
@@ -46,29 +45,6 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
   };
 }
 
-export function composeAggregate(qspec: Spec.Query): AggregateDef {
-  const aggregate = qspec.aggregate;
-  if (!aggregate) {
-    throw new Error(`Can't build an AggregateDef when QuerySpec doesn't contain an aggregate`);
-  }
-  const qdef = composeQuery({ ...qspec, aggregate: undefined });
-  const { refKey } = qdef;
-  const query = _.omit(qdef, ["refKey", "name", "select"]);
-
-  if (aggregate !== "sum" && aggregate !== "count") {
-    throw new Error(`Unknown aggregate function ${aggregate}`);
-  }
-
-  return {
-    refKey,
-    kind: "aggregate",
-    aggrFnName: aggregate,
-    targetPath: [qspec.sourceModel, "id"],
-    name: qspec.name,
-    query,
-  };
-}
-
 export function composeOrderBy(
   fromPath: string[],
   orderBy: Spec.QueryOrderBy[] | undefined
@@ -97,18 +73,24 @@ function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: strin
 }
 
 export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExprDef {
-  switch (expr.kind) {
-    case "identifier": {
-      return composeRefPath(expr.identifier, namePath);
-    }
-    case "literal": {
-      return { kind: "literal", literal: expr.literal };
-    }
-    case "function": {
-      switch (expr.name) {
-        case "sum":
-        case "count": {
-          const arg = expr.args[0];
+  return match<typeof expr, TypedExprDef>(expr)
+    .with({ kind: "literal" }, ({ literal }) => ({
+      kind: "literal",
+      literal,
+    }))
+    .with({ kind: "identifier" }, ({ identifier }) => composeRefPath(identifier, namePath))
+    .with({ kind: "array" }, (array) => ({
+      kind: "array",
+      elements: array.elements.map((e) => composeExpression(e, namePath)),
+      type: {
+        kind: "collection",
+        type: defineType(array.type.kind === "collection" ? array.type.type : Type.any),
+      },
+    }))
+    .with({ kind: "function" }, (fn) => {
+      return match<typeof fn, TypedExprDef>(fn)
+        .with({ name: P.union("sum" as const, "count" as const) }, (fn) => {
+          const arg = fn.args[0];
           ensureEqual(arg.kind, "identifier");
           const [head, ...tail] = arg.identifier;
           const [sourcePath, targetPath] = match(head.ref)
@@ -124,30 +106,76 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
 
           return {
             kind: "aggregate-function",
-            fnName: expr.name,
-            type: defineType(expr.type),
+            fnName: fn.name,
+            type: defineType(fn.type),
             sourcePath,
             targetPath,
           };
-        }
-        default: {
-          return typedFunctionFromParts(expr.name, expr.args, namePath);
-        }
-      }
-    }
-    case "array": {
-      return {
-        kind: "array",
-        elements: expr.elements.map((e) => composeExpression(e, namePath)),
-        type: {
-          kind: "collection",
-          type: defineType(expr.type.kind === "collection" ? expr.type.type : Type.any),
-        },
-      };
-    }
-    default:
-      return assertUnreachable(expr);
-  }
+        })
+        .with({ name: P.union("in" as const, "not in" as const) }, (fn) => {
+          const arg0 = fn.args[0];
+          const lookupExpression = match<typeof arg0, TypedExprDef>(arg0)
+            .with({ kind: "identifier" }, (arg) => {
+              const [head, ...tail] = arg.identifier;
+              return (
+                match<typeof head.ref, TypedExprDef>(head.ref)
+                  .with({ kind: "modelAtom" }, () => ({
+                    kind: "alias",
+                    namePath: [...namePath, ...arg.identifier.map((i) => i.text)],
+                  }))
+                  .with({ kind: "queryTarget" }, (ref) => ({
+                    kind: "alias",
+                    namePath: [...ref.path, ...tail.map((i) => i.text)],
+                  }))
+                  // FIXME support context vars: auth, struct, target...
+                  .otherwise(shouldBeUnreachableCb(`${head.ref.kind} is not a valid lookup`))
+              );
+            })
+            .with({ kind: "literal" }, ({ literal }) => ({
+              kind: "literal",
+              literal,
+            }))
+            .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
+            .with({ kind: "array" }, () => {
+              throw new UnreachableError(`"array" is not a valid lookup expression`);
+            })
+            .exhaustive();
+
+          const arg1 = fn.args[1];
+          return match<typeof arg1, TypedExprDef>(arg1)
+            .with({ kind: "identifier" }, (arg) => {
+              const [head1, ...tail1] = arg.identifier;
+              const [sourcePath, targetPath] = match(head1.ref)
+                .with({ kind: "modelAtom" }, () => {
+                  return [namePath, arg.identifier.map((i) => i.text)];
+                })
+                .with({ kind: "queryTarget" }, (ref) => {
+                  return [ref.path, tail1.map((i) => i.text)];
+                })
+                .otherwise(() => {
+                  throw new UnreachableError(`Invalid ref kind ${head1.ref.kind}`);
+                });
+
+              return {
+                kind: "in-subquery",
+                fnName: fn.name,
+                lookupExpression,
+                sourcePath,
+                targetPath,
+              };
+            })
+            .with({ kind: "array" }, (arg) => {
+              return {
+                kind: "function",
+                name: fn.name,
+                args: [lookupExpression, composeExpression(arg, namePath)],
+              };
+            })
+            .otherwise(shouldBeUnreachableCb(`Unexpected ${fn.name} argument kind: ${arg1.kind}`));
+        })
+        .otherwise((fn) => typedFunctionFromParts(fn.name, fn.args, namePath));
+    })
+    .exhaustive();
 }
 
 export function composeRefPath(

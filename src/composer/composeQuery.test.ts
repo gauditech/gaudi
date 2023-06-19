@@ -154,7 +154,7 @@ describe("compose action queries", () => {
       }
       `;
 
-      const def = compose(compileToOldSpec(bp));
+      const def = compose(compileBlueprint(bp));
       expect(
         (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();

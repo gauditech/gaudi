@@ -95,8 +95,16 @@ describe("runtime", () => {
           name: "other_model",
           setter: {
             kind: "fieldset-reference-input",
-            throughRefKey: "OtherModel.slug",
-            fieldsetAccess: ["slug"],
+            through: ["slug"],
+            fieldsetAccess: ["other_slug"],
+          },
+        },
+        {
+          name: "deep_other_model",
+          setter: {
+            kind: "fieldset-reference-input",
+            through: ["myref", "slug"],
+            fieldsetAccess: ["other_myref_slug"],
           },
         },
         {
@@ -118,7 +126,10 @@ describe("runtime", () => {
           virtual_input_prop: "virtual input value",
         },
         vars: new Vars(),
-        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
+        referenceIds: [
+          { kind: "reference-found", fieldsetAccess: ["other_slug"], value: 1 },
+          { kind: "reference-found", fieldsetAccess: ["other_myref_slug"], value: 40 },
+        ],
       };
 
       expect(
@@ -153,7 +164,7 @@ describe("runtime", () => {
           virtual_input_prop: "virtual input value",
         },
         vars: new Vars(),
-        referenceIds: [{ fieldsetAccess: ["slug"], value: 1 }],
+        referenceIds: [{ kind: "reference-found", fieldsetAccess: ["slug"], value: 1 }],
       };
 
       expect(

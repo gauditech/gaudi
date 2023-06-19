@@ -15,12 +15,18 @@ export declare function createClient(options: ApiClientOptions): {
     api: {
         box: ((id: string) => {
             items: ((id: string) => {}) & {
+                list: ListApiClientFn<{
+                    id: number;
+                    name: string;
+                    is_public: boolean;
+                    box_id: number;
+                }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_UNAUTHENTICATED" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_FORBIDDEN">;
                 get: GetApiClientManyFn<string, {
                     id: number;
                     name: string;
                     is_public: boolean;
                     box_id: number;
-                }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+                }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_FORBIDDEN">;
             };
         }) & {
             list: ListApiClientFn<{
@@ -28,13 +34,13 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 is_public: boolean;
                 owner_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_UNAUTHENTICATED">;
             get: GetApiClientManyFn<string, {
                 id: number;
                 name: string;
                 is_public: boolean;
                 owner_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_UNAUTHENTICATED" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_FORBIDDEN">;
             create: CreateApiClientFn<{
                 name: string;
                 is_public: boolean;
@@ -43,14 +49,14 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 is_public: boolean;
                 owner_id: number;
-            }, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            fetchAuthToken: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION" | "ERROR_CODE_UNAUTHENTICATED">;
+            fetchAuthToken: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
         };
         auth: {
             authUser: ((id: number) => {}) & {
-                login: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-                logout: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-                register: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                login: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                logout: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                register: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             };
         };
     };

@@ -65,7 +65,9 @@ export type Reference = {
   to: RefModel;
   unique: boolean;
   nullable: boolean;
+  onDelete?: ReferenceOnDeleteAction;
 };
+export type ReferenceOnDeleteAction = "setNull" | "cascade";
 
 export type Relation = {
   name: string;
@@ -115,7 +117,7 @@ export type Entrypoint<c extends TypeCardinality = TypeCardinality> = {
   cardinality: c;
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   alias: IdentifierRef<RefTarget>;
-  identifyThrough: c extends "collection" ? IdentifierRef<RefModelField> : undefined;
+  identifyThrough: c extends "collection" ? IdentifierRef<RefModelAtom>[] : undefined;
   endpoints: Endpoint[];
   entrypoints: Entrypoint[];
 };
@@ -223,7 +225,7 @@ export type ActionAtomSet = {
 export type ActionAtomRefThrough = {
   kind: "reference";
   target: RefModelReference;
-  through: RefModelField;
+  through: RefModelAtom[];
 };
 export type ActionAtomVirtualInput = {
   kind: "virtual-input";

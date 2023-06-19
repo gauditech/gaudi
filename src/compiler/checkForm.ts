@@ -143,7 +143,16 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkReference(reference: Reference) {
     containsAtoms(reference, ["to"]);
-    noDuplicateAtoms(reference, ["to", "nullable", "unique"]);
+    noDuplicateAtoms(reference, ["to", "nullable", "unique", "onDelete"]);
+
+    const nullable = kindFilter(reference.atoms, "nullable")[0];
+    const onDelete = kindFilter(reference.atoms, "onDelete")[0];
+    // allow "set null" action only on nullable references
+    if (onDelete?.action.kind === "setNull" && nullable == null) {
+      errors.push(
+        new CompilerError(onDelete.action.keyword, ErrorCode.ReferenceOnDeleteNotNullable)
+      );
+    }
   }
 
   function checkRelation(relation: Relation) {

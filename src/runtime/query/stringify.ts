@@ -86,6 +86,17 @@ function exprToString(expr: QueryPlanExpression): string {
           return assertUnreachable(expr.fnName);
       }
     }
+    case "array": {
+      return `(${expr.elements.map((element) => exprToString(element)).join(", ")})`;
+    }
+    case "in-subquery": {
+      const subquery = queryPlanToString(expr.plan, false);
+      const operator = expr.operator.toUpperCase();
+      const lookupExpr = exprToString(expr.lookupExpression);
+      return `${lookupExpr} ${operator} (${subquery})`;
+    }
+    default:
+      return assertUnreachable(expr);
   }
 }
 

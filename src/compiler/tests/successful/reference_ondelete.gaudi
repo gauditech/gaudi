@@ -1,0 +1,16 @@
+
+model ParentItem {
+  reference itemNoAction { to ReferencedItem1 }
+  reference itemCascade { to ReferencedItem2, on delete cascade }
+  reference itemSetNull { to ReferencedItem3, nullable, on delete set null }
+}
+
+model ReferencedItem1 {
+  relation parent { from ParentItem, through itemNoAction }
+}
+model ReferencedItem2 {
+  relation parent { from ParentItem, through itemCascade }
+}
+model ReferencedItem3 {
+  relation parent { from ParentItem, through itemSetNull }
+}

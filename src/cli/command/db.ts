@@ -1,23 +1,17 @@
 import _ from "lodash";
 import { ArgumentsCamelCase } from "yargs";
 
-import {
-  GAUDI_SCRIPTS,
-  appendBinPath,
-  getDbSchemaPath,
-  getDefaultNodeOptions,
-} from "@src/cli/config";
+import { GAUDI_SCRIPTS, getDbSchemaPath, getDefaultNodeOptions } from "@src/cli/config";
 import { createCommandRunner } from "@src/cli/runner";
 import { EngineConfig } from "@src/config";
 
 // ---------- DB commands
-
 // --- DB push
-
-export function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
+export function dbPush(config: EngineConfig) {
   console.log("Pushing DB change ...");
 
-  return createCommandRunner(appendBinPath("prisma"), [
+  return createCommandRunner("npx", [
+    "prisma",
     "db",
     "push",
     "--accept-data-loss",
@@ -28,10 +22,11 @@ export function dbPush(_args: ArgumentsCamelCase, config: EngineConfig) {
 
 // --- DB reset
 
-export function dbReset(_args: ArgumentsCamelCase, config: EngineConfig) {
+export function dbReset(config: EngineConfig) {
   console.log("Resetting DB ...");
 
-  return createCommandRunner(appendBinPath("prisma"), [
+  return createCommandRunner("npx", [
+    "prisma",
     "db",
     "push",
     "--force-reset",
@@ -75,7 +70,8 @@ export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 
   console.log(`Creating DB migration "${migrationName}" ...`);
 
-  return createCommandRunner(appendBinPath("prisma"), [
+  return createCommandRunner("npx", [
+    "prisma",
     "migrate",
     "dev",
     `--name=${migrationName}`,
@@ -88,7 +84,8 @@ export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 export function dbDeploy(_args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
-  return createCommandRunner(appendBinPath("prisma"), [
+  return createCommandRunner("npx", [
+    "prisma",
     "migrate",
     "deploy",
     `--schema=${getDbSchemaPath(config)}`,

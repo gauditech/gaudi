@@ -13,6 +13,7 @@ import {
 import { kindFilter } from "@src/common/kindFilter";
 import { getRef } from "@src/common/refs";
 import { assertUnreachable } from "@src/common/utils";
+import { endpointUsesAuthentication } from "@src/composer/entrypoints";
 import { Logger } from "@src/logger";
 import { executeArithmetics } from "@src/runtime//common/arithmetics";
 import { executeEndpointActions } from "@src/runtime/common/action";
@@ -116,7 +117,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
     method: "get",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -189,7 +190,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     method: "get",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -273,7 +274,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
     method: "post",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -373,7 +374,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
     method: "patch",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -478,7 +479,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
     method: "delete",
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -543,7 +544,7 @@ export function buildCustomOneEndpoint(
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -640,7 +641,7 @@ export function buildCustomManyEndpoint(
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
       // prehandlers
-      buildAuthenticationHandler(def, { allowAnonymous: true }),
+      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -826,9 +827,25 @@ function findOne<T>(result: T[]): T {
 
 async function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
   if (!endpoint.authorize) return;
+
   const authorizeResult = await executeTypedExpr(endpoint.authorize, contextVars);
   if (!authorizeResult) {
-    throw new BusinessError("ERROR_CODE_UNAUTHORIZED", "Unauthorized");
+    // this can either be result unauthenticated or forbidden
+    const isLoggedIn = contextVars.get("@auth") !== undefined;
+    const hasAuthentication = endpointUsesAuthentication(endpoint);
+
+    if (isLoggedIn) {
+      // it has to be other authorization rules
+      throw new BusinessError("ERROR_CODE_FORBIDDEN", "Unauthorized");
+    } else {
+      // not logged in, does it have authentication rules?
+      if (hasAuthentication) {
+        throw new BusinessError("ERROR_CODE_UNAUTHENTICATED", "Unauthenticated");
+      } else {
+        // logged in and no authorization rules - must be authorization rules
+        throw new BusinessError("ERROR_CODE_FORBIDDEN", "Unauthorized");
+      }
+    }
   }
 }
 
@@ -842,8 +859,9 @@ async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<
     case "function": {
       return executeTypedFunction(expr, contextVars);
     }
+    case "in-subquery":
     case "aggregate-function": {
-      throw new Error("Not implemented: aggregate functions not supported in the runtime");
+      throw new Error(`Not implemented: ${expr.kind} is not supported in the runtime`);
     }
     case "literal": {
       return expr.literal.value;
