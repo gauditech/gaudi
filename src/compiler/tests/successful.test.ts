@@ -3,39 +3,18 @@ import * as fs from "fs";
 import { sync } from "fast-glob";
 import _ from "lodash";
 
-import { compileToAST } from "..";
-import { compilerErrorsToString } from "../compilerError";
-import { migrate } from "../migrate";
-
-const folder = "./src/compiler/tests/successful";
-const filenames = sync(`${folder}/*.gaudi`);
+import { compileWorkspace } from "..";
 
 describe("compiler", () => {
+  const folder = "./src/compiler/tests/successful";
+  const filenames = sync(`${folder}/*.gaudi`);
+
   test.each(filenames)("compile to AST and migrate: tests/%s", (sourceFilename) => {
-    const source = fs.readFileSync(sourceFilename).toString("utf-8");
-
-    const { ast, errors } = compileToAST([{ source, filename: sourceFilename }]);
-
-    if (ast && errors.length === 0) {
-      migrate(ast);
-      return;
-    }
-
-    console.log(compilerErrorsToString(source, errors));
-    expect(errors.length).toBe(0);
+    expect(() => compileWorkspace([sourceFilename])).not.toThrowError();
   });
 
   test("multi-file project", () => {
     const multiFilenames = sync(`${folder}/multi/*.gaudi`);
-    const { ast, errors } = compileToAST(
-      multiFilenames.map((filename) => ({
-        filename,
-        source: fs.readFileSync(filename).toString("utf-8"),
-      }))
-    );
-    if (ast && errors.length === 0) {
-      migrate(ast);
-    }
-    expect(errors.length).toBe(0);
+    expect(() => compileWorkspace(multiFilenames)).not.toThrowError();
   });
 });
