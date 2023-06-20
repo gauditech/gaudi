@@ -1,6 +1,6 @@
 import { buildOpenAPI } from "./openAPI";
 
-import { compileBlueprint, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 
 describe("openAPI", () => {
   it("build spec", () => {
@@ -43,7 +43,7 @@ describe("openAPI", () => {
     }
     `;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
 
     expect(buildOpenAPI(def)).toMatchSnapshot();
   });

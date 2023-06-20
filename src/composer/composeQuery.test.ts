@@ -1,4 +1,4 @@
-import { compileBlueprint, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose model queries", () => {
@@ -12,7 +12,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     expect(def.models[0].queries).toMatchSnapshot();
   });
   it("example with nested filters", () => {
@@ -26,7 +26,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
 
     expect(def.models[0].queries).toMatchSnapshot();
   });
@@ -45,7 +45,7 @@ describe("compose model queries", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     expect(def.models[0].queries[0]).toMatchSnapshot();
   });
 });
@@ -81,7 +81,7 @@ describe("compose action queries", () => {
       }
       `;
 
-      const def = compose(compileBlueprint(bp));
+      const def = compileFromString(bp);
       expect(
         (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
@@ -119,7 +119,7 @@ describe("compose action queries", () => {
       }
       `;
 
-      const def = compose(compileBlueprint(bp));
+      const def = compileFromString(bp);
       expect(
         (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();
@@ -154,7 +154,7 @@ describe("compose action queries", () => {
       }
       `;
 
-      const def = compose(compileBlueprint(bp));
+      const def = compileFromString(bp);
       expect(
         (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
       ).toMatchSnapshot();

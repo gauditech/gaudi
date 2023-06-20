@@ -42,7 +42,7 @@ async function setupClient(name: string, bpPath: string, appendGenerators = fals
   if (appendGenerators) {
     bp = appendClientGenerator(bp);
   }
-  const definition = compose(compileBlueprint(bp));
+  const definition = compileFromString(bp);
 
   // build and output client lib
   await buildApiClients(definition, clientDest);

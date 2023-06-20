@@ -3,5 +3,5 @@ module.exports.prefix = function ({ value, prefix }) {
 };
 
 module.exports.trim = function ({ value }) {
-  return value.trim()
+  return value.trim();
 };

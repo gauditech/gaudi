@@ -13,6 +13,8 @@ import { AuthPlugin } from "./plugins/authenticator";
 import { resolve } from "./resolver";
 
 import { kindFind } from "@src/common/kindFilter";
+import { compose } from "@src/composer/composer";
+import { Definition } from "@src/types/definition";
 import { Specification } from "@src/types/specification";
 
 export type CompileResult = {
@@ -68,7 +70,7 @@ export function compileToAST(inputs: Input[]): CompileResult {
   return { ast, errors: allErrors };
 }
 
-export function compileWorkspace(filenames: string[]): Specification {
+export function compileFromFiles(filenames: string[]): Specification {
   const { ast, errors } = compileToAST(
     filenames.map((filename) => ({
       filename,
@@ -83,14 +85,17 @@ export function compileWorkspace(filenames: string[]): Specification {
   return migrate(ast);
 }
 
-export function compileBlueprint(source: string): Specification {
+/**
+ * Helper function that compiles directly to definition. This is used in tests.
+ */
+export function compileFromString(source: string): Definition {
   const { ast, errors } = compileToAST([{ source }]);
   if (errors.length > 0) {
     throw errors[0];
   } else if (!ast) {
     throw Error("Unknown compiler error");
   }
-  return migrate(ast);
+  return compose(migrate(ast));
 }
 
 function toCompilerError(error: ILexingError | IRecognitionException, filename: string) {

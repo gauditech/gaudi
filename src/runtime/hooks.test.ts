@@ -1,5 +1,5 @@
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { compileBlueprint, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 import { executeHook } from "@src/runtime/hooks";
 import { CreateEndpointDef, Definition } from "@src/types/definition";
 
@@ -94,7 +94,7 @@ describe("hooks", () => {
 
     `;
 
-      const result = compose(compileBlueprint(bp));
+      const result = compileFromString(bp);
       const action = result.apis[0].entrypoints[0].endpoints
         .filter((ep): ep is CreateEndpointDef => ep.kind === "create")
         .shift()
@@ -132,5 +132,5 @@ function createTestDefinition(): Definition {
       source path "./src/runtime/test/hooks"
     }
   `;
-  return compose(compileBlueprint(bp));
+  return compileFromString(bp);
 }

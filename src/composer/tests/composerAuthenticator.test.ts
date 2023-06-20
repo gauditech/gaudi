@@ -1,5 +1,5 @@
 import { getRef } from "@src/common/refs";
-import { compileBlueprint, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 
 describe("authenticator composer", () => {
   it("succeeds for simple authenticator", () => {
@@ -9,7 +9,7 @@ describe("authenticator composer", () => {
       }
     `;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
 
     expect(def.authenticator).toMatchSnapshot();
     expect(def.models).toMatchSnapshot();
@@ -27,7 +27,7 @@ describe("authenticator composer", () => {
       }
     `;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
 
     const model = getRef.model(def, def.authenticator!.authUserModel.name);
     const relation = model.relations.find((rel) => rel.fromModel === "UserProfile");

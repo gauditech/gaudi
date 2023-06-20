@@ -1,4 +1,4 @@
-import { compileBlueprint, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 
 describe("populator composer", () => {
   it("succeeds for simple populator", () => {
@@ -24,7 +24,7 @@ describe("populator composer", () => {
       }
     }`;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();
@@ -65,7 +65,7 @@ describe("populator composer", () => {
       }
     }`;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();
@@ -87,7 +87,7 @@ describe("populator composer", () => {
       }
     }`;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();
@@ -109,7 +109,7 @@ describe("populator composer", () => {
       }
     }`;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();
@@ -131,7 +131,7 @@ describe("populator composer", () => {
       }
     }`;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();
@@ -167,7 +167,7 @@ describe("populator composer", () => {
       }
     }`;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();
@@ -210,7 +210,7 @@ describe("populator composer", () => {
       }
       `;
 
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const populator = def.populators[0];
 
     expect(populator).toMatchSnapshot();

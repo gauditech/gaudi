@@ -1,8 +1,8 @@
-import { compileBlueprint, compose } from "../index";
+import { compileFromString } from "@src/index";
 
 describe("compose models", () => {
   it("doesn't crash on empty blueprint", () => {
-    expect(() => compose(compileBlueprint(""))).not.toThrow();
+    expect(() => compileFromString("")).not.toThrow();
   });
 
   it("parses validators", () => {
@@ -11,7 +11,7 @@ describe("compose models", () => {
       field adminEmail { type string, validate { min 4, max 100, isEmail } }
       field num_employees { type integer, validate { min 0, max 9999 } }
     }`;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     expect(def.models).toMatchSnapshot();
   });
 
@@ -21,8 +21,7 @@ describe("compose models", () => {
       field adminEmail { type string }
       field num_employees { type integer, validate { isEmail } }
     }`;
-    const spec = compileBlueprint(bp);
-    expect(() => compose(spec)).toThrowErrorMatchingInlineSnapshot(`"Unknown validator!"`);
+    expect(() => compileFromString(bp)).toThrowErrorMatchingInlineSnapshot(`"Unknown validator!"`);
   });
 
   it("parses model references", () => {
@@ -42,7 +41,7 @@ describe("compose models", () => {
         relation parent { from ParentItem, through itemSetNull }
       }
     `;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     expect(def.models).toMatchSnapshot();
   });
 });

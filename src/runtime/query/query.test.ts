@@ -9,7 +9,7 @@ import {
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
-import { compileBlueprint, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 import { EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {
@@ -70,7 +70,7 @@ describe("Endpoint queries", () => {
       }
     }
     `;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const entrypoint = def.apis[0].entrypoints[0].entrypoints[0].entrypoints[0];
     const range = entrypoint.endpoints.map((ep) => [ep.kind, ep] as [string, EndpointDef]);
     it.each(range)("test %s endpoint", (_kind, endpoint) => {
@@ -103,7 +103,7 @@ describe("Endpoint queries", () => {
       }
     `;
 
-      const def = compose(compileBlueprint(bp));
+      const def = compileFromString(bp);
       const ep = def.apis[0].entrypoints[0].endpoints[0] as ListEndpointDef;
       let qt = buildEndpointQueries(def, ep).responseQueryTree;
 
@@ -166,7 +166,7 @@ describe("Endpoint queries", () => {
       }
     `;
 
-      const def = compose(compileBlueprint(bp));
+      const def = compileFromString(bp);
       const ep = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as ListEndpointDef;
       let qt = buildEndpointQueries(def, ep).responseQueryTree;
 
@@ -218,7 +218,7 @@ describe("Orderby, limit and offset", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const q = def.models[0].queries[0];
 
     expect(queryPlanToString(buildQueryPlan(def, q))).toMatchSnapshot();
@@ -237,7 +237,7 @@ describe("Orderby, limit and offset", () => {
       reference org { to Org }
     }
     `;
-    const def = compose(compileBlueprint(bp));
+    const def = compileFromString(bp);
     const qt = queryTreeFromParts(def, "test", ["Org"], undefined, [
       {
         kind: "nested-select",
@@ -284,7 +284,7 @@ describe("Query aliases", () => {
     reference repo { to Repo }
   }
   `;
-  const def = compose(compileBlueprint(bp));
+  const def = compileFromString(bp);
   const q = def.models[0].queries[0];
   expect(q).toMatchSnapshot();
 });
