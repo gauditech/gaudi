@@ -76,7 +76,23 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
   "isPrimary": true,
   "kind": "create-one",
   "model": "Result",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "$action_0",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
   "targetPath": [
     "Result",
   ],

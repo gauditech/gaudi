@@ -33,7 +33,23 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
           "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "Org",
           ],
@@ -153,7 +169,23 @@ exports[`populator composer succeeds for nested iterations 1`] = `
               "isPrimary": false,
               "kind": "create-one",
               "model": "Repo",
-              "select": [],
+              "select": [
+                {
+                  "alias": "id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "repo",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
+                },
+              ],
               "targetPath": [
                 "repos",
               ],
@@ -375,7 +407,23 @@ exports[`populator composer succeeds for nested populators 1`] = `
                   "isPrimary": false,
                   "kind": "create-one",
                   "model": "Issue",
-                  "select": [],
+                  "select": [
+                    {
+                      "alias": "id",
+                      "expr": {
+                        "kind": "alias",
+                        "namePath": [
+                          "issue",
+                          "id",
+                        ],
+                      },
+                      "kind": "expression",
+                      "type": {
+                        "kind": "integer",
+                        "nullable": false,
+                      },
+                    },
+                  ],
                   "targetPath": [
                     "issues",
                   ],
@@ -487,7 +535,23 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
           "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "Org",
           ],
@@ -553,7 +617,23 @@ exports[`populator composer succeeds for range iteration 1`] = `
           "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "Org",
           ],
@@ -648,7 +728,23 @@ exports[`populator composer succeeds for simple populator 1`] = `
           "isPrimary": false,
           "kind": "create-one",
           "model": "Org",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "org",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "Org",
           ],
@@ -802,7 +898,23 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
               "isPrimary": false,
               "kind": "create-one",
               "model": "Repo",
-              "select": [],
+              "select": [
+                {
+                  "alias": "id",
+                  "expr": {
+                    "kind": "alias",
+                    "namePath": [
+                      "repo",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
+                },
+              ],
               "targetPath": [
                 "repos",
               ],

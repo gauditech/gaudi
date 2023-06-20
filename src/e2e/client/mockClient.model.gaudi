@@ -72,11 +72,12 @@ api {
 
       get endpoint {}
       create endpoint {
+        extra inputs {
+          // test changing input fields
+          field virtProp { type string }
+        }
         action {
-          create {
-            // test changing input fields
-            virtual input virtProp { type string }
-          }
+          create {}
         }
       }
       update endpoint {
