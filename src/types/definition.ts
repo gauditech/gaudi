@@ -527,6 +527,7 @@ type DeleteManyAction = {
 
 export type ExecuteHookAction = {
   kind: "execute-hook";
+  alias: string;
   changeset: ChangesetDef;
   hook: ActionHookDef;
   responds: boolean;

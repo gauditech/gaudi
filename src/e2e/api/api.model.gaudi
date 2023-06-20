@@ -89,12 +89,21 @@ api {
       method POST
       path "customOneAction"
       action {
+        // test custom action return value
+        execute as custom {
+          hook {
+            arg prop "custom prop value"
+            source echo from "hooks.js"
+          }
+        }
+ 
         execute {
           virtual input name { type string }
           virtual input counter { type integer }
           hook {
             arg name name
             arg counter counter
+            arg customProp custom
             source customAction from "hooks.js"
           }
         }

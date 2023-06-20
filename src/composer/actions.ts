@@ -89,6 +89,7 @@ function composeExecuteAction(spec: FilteredByKind<Spec.Action, "execute">): Exe
 
   return {
     kind: "execute-hook",
+    alias: spec.alias,
     hook: actionHook,
     changeset,
     responds: spec.responds,

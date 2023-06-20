@@ -714,6 +714,12 @@ export function resolve(projectASTs: ProjectASTs) {
     );
     const hook = kindFind(action.atoms, "hook");
     if (hook) resolveActionHook(hook, scope);
+
+    if (action.name) {
+      action.name.ref = { kind: "action" };
+      action.name.type = Type.any;
+      addToScope(scope, action.name);
+    }
   }
 
   function resolveFetchAction(action: FetchAction, scope: Scope) {
