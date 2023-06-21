@@ -1143,6 +1143,8 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveNextRef(identifier: IdentifierRef, previousType: Type): boolean {
     switch (previousType.kind) {
       case "any":
+        identifier.ref = { kind: "struct" };
+        identifier.type = Type.any;
         return true;
       case "model": {
         return tryResolveModelAtomRef(identifier, previousType.model);
