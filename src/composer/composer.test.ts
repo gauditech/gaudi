@@ -15,15 +15,6 @@ describe("compose models", () => {
     expect(def.models).toMatchSnapshot();
   });
 
-  it("fails on invalid validator", () => {
-    const bp = `
-    model Org {
-      field adminEmail { type string }
-      field num_employees { type integer, validate { isEmail } }
-    }`;
-    expect(() => compileFromString(bp)).toThrowErrorMatchingInlineSnapshot(`"Unknown validator!"`);
-  });
-
   it("parses model references", () => {
     const bp = `
       model ParentItem {

@@ -10,7 +10,7 @@ import _ from "lodash";
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { compileFromString } from "@src/index";
-import { RuntimeConfig } from "@src/runtime/config";
+import { readConfig } from "@src/runtime/config";
 import { setupDefinitionApis } from "@src/runtime/server/api";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
@@ -55,11 +55,8 @@ export type ApiTestSetup = {
   destroy: () => Promise<void>;
 };
 
-export function createApiTestSetup(
-  config: RuntimeConfig,
-  blueprint: string,
-  data: PopulatorData[]
-): ApiTestSetup {
+export function createApiTestSetup(blueprint: string, data: PopulatorData[]): ApiTestSetup {
+  const config = readConfig();
   let server: Server | undefined;
 
   // test context

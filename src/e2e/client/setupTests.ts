@@ -4,9 +4,8 @@ import "../../common/setupAliases";
 import path from "path";
 
 import { buildApiClients } from "@src/builder/builder";
-import { compileBlueprint } from "@src/compiler/";
-import { compose } from "@src/composer/composer";
 import { loadBlueprint } from "@src/e2e/api/setup";
+import { compileFromString } from "@src/index";
 import { Logger } from "@src/logger";
 
 const CLIENT_LIB_DIST_FOLDER = path.join(__dirname, "__snapshots__");

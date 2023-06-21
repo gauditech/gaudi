@@ -2,6 +2,8 @@ import _ from "lodash";
 
 import { TokenData } from "./ast/ast";
 
+import { Input } from ".";
+
 export enum ErrorCode {
   ParserError,
   // Check form Errors
@@ -224,20 +226,30 @@ export class CompilerError extends Error {
   }
 }
 
-export function compilerErrorsToString(source: string, errors: CompilerError[]): string {
+export function compilerErrorsToString(baseInputs: Input[], errors: CompilerError[]): string {
   if (errors.length === 0) return "";
 
-  const lineIndecies = [0];
+  const inputs = baseInputs.map(({ source, filename }) => ({
+    source,
+    filename: filename ?? ":unset:",
+    lineIndecies: [0],
+  }));
 
-  for (let i = 0; i < source.length; i++) {
-    if (source.charAt(i) === "\n") {
-      lineIndecies.push(i + 1);
+  for (const input of inputs) {
+    for (let i = 0; i < input.source.length; i++) {
+      if (input.source.charAt(i) === "\n") {
+        input.lineIndecies.push(i + 1);
+      }
     }
   }
 
   let output = "";
 
   errors.forEach((error) => {
+    const input = inputs.find(({ filename }) => filename === error.errorPosition.filename);
+    const lineIndecies = input?.lineIndecies ?? [0];
+    const source = input?.source ?? "";
+
     const start = error.errorPosition.start;
     const end = error.errorPosition.end;
     const filename = error.errorPosition.filename;

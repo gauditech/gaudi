@@ -3,23 +3,13 @@
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
 import "./common/setupAliases";
 
-import { sync } from "fast-glob";
+import { compileProject } from "./compiler";
 
-import { compileWorkspace } from "./compiler";
-
-import { build, compose } from "./index";
+import { build } from "./index";
 
 import { readConfig } from "@src/config";
 
 const { inputPath, outputFolder, gaudiFolder } = readConfig();
 
-const filenames = sync(inputPath);
-if (!filenames.length) {
-  throw new Error(`No files found matching: "${inputPath}"`);
-} else {
-  console.log(`Reading Gaudi source from: "${inputPath}"`);
-}
-
-const specification = compileWorkspace(filenames);
-const definition = compose(specification);
+const definition = compileProject(inputPath);
 build(definition, { outputFolder, gaudiFolder });

@@ -11,7 +11,7 @@ model Class {
   // test model queries
   query active_students { from students, filter { (is_active or is_registred) and true } }
   query good_students { from students, filter { grade >= 3 or behaviour is not "bad" } }
-  query good_students_count { from good_students, count }
+  computed good_students_count { count(good_students.id) }
   query good_students_alt {
     from students,
     filter {
