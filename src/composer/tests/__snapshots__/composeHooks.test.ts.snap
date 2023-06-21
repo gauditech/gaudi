@@ -6,21 +6,6 @@ exports[`compose hooks action hook 1`] = `
     "actions": [
       {
         "alias": "$action_0",
-        "changeset": [
-          {
-            "name": "termsOfUse",
-            "setter": {
-              "fieldsetAccess": [
-                "termsOfUse",
-              ],
-              "kind": "fieldset-virtual-input",
-              "nullable": false,
-              "required": true,
-              "type": "boolean",
-              "validators": [],
-            },
-          },
-        ],
         "hook": {
           "args": [
             {
@@ -38,8 +23,12 @@ exports[`compose hooks action hook 1`] = `
             {
               "name": "terms",
               "setter": {
-                "kind": "changeset-reference",
-                "referenceName": "termsOfUse",
+                "fieldsetAccess": [
+                  "termsOfUse",
+                ],
+                "kind": "fieldset-input",
+                "required": false,
+                "type": "boolean",
               },
             },
           ],
@@ -130,21 +119,6 @@ exports[`compose hooks action hook 1`] = `
 exports[`compose hooks composes action hook 1`] = `
 {
   "alias": "$action_0",
-  "changeset": [
-    {
-      "name": "prop",
-      "setter": {
-        "fieldsetAccess": [
-          "prop",
-        ],
-        "kind": "fieldset-virtual-input",
-        "nullable": false,
-        "required": true,
-        "type": "string",
-        "validators": [],
-      },
-    },
-  ],
   "hook": {
     "args": [
       {
@@ -261,7 +235,23 @@ exports[`compose hooks composes source hooks 1`] = `
                   "isPrimary": true,
                   "kind": "create-one",
                   "model": "Org",
-                  "select": [],
+                  "select": [
+                    {
+                      "alias": "id",
+                      "expr": {
+                        "kind": "alias",
+                        "namePath": [
+                          "$action_0",
+                          "id",
+                        ],
+                      },
+                      "kind": "expression",
+                      "type": {
+                        "kind": "integer",
+                        "nullable": false,
+                      },
+                    },
+                  ],
                   "targetPath": [
                     "Org",
                   ],
@@ -465,7 +455,23 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
       "isPrimary": true,
       "kind": "create-one",
       "model": "Org",
-      "select": [],
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "$action_0",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
       "targetPath": [
         "Org",
       ],
@@ -568,7 +574,23 @@ exports[`compose hooks inline hooks 1`] = `
                   "isPrimary": true,
                   "kind": "create-one",
                   "model": "Org",
-                  "select": [],
+                  "select": [
+                    {
+                      "alias": "id",
+                      "expr": {
+                        "kind": "alias",
+                        "namePath": [
+                          "$action_0",
+                          "id",
+                        ],
+                      },
+                      "kind": "expression",
+                      "type": {
+                        "kind": "integer",
+                        "nullable": false,
+                      },
+                    },
+                  ],
                   "targetPath": [
                     "Org",
                   ],

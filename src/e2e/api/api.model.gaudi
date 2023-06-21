@@ -88,11 +88,15 @@ api {
       cardinality one
       method POST
       path "customOneAction"
+      extra inputs {
+        field name { type string }
+        field counter { type integer }
+        field customProp { type string }
+      }
       action {
         // test custom action return value
-        // take "customProp" virt. input, return it to "customAlias" and add it back to response
+        // take "customProp" extra input, return it to "customAlias" and add it back to response
         execute as customAlias {
-          virtual input customProp { type string }
           hook {
             arg prop customProp
             // returns struct: { prop }
@@ -101,8 +105,6 @@ api {
         }
 
         execute {
-          virtual input name { type string }
-          virtual input counter { type integer }
           hook {
             arg name name
             arg counter counter
@@ -118,10 +120,12 @@ api {
       cardinality many
       method PATCH
       path "customManyAction"
+      extra inputs {
+        field name { type string }
+        field counter { type integer }
+      }
       action {
         execute {
-          virtual input name { type string }
-          virtual input counter { type integer }
           hook {
             arg name name
             arg counter counter
@@ -136,11 +140,12 @@ api {
       cardinality one
       method POST
       path "customOneActionResponds"
+      extra inputs {
+        field counter { type integer }
+        field name { type string }
+      }
       action {
         execute {
-          virtual input counter { type integer }
-          virtual input name { type string }
-
           responds
           hook {
             arg name name
@@ -156,10 +161,12 @@ api {
       cardinality many
       method PATCH
       path "customManyActionResponds"
+      extra inputs {
+        field name { type string }
+        field counter { type integer }
+      }
       action {
         execute {
-          virtual input name { type string }
-          virtual input counter { type integer }
           responds
           hook {
             arg name name
@@ -175,10 +182,12 @@ api {
       cardinality one
       method POST
       path "customOneQueryAction"
+      extra inputs {
+        field name { type string }
+        field orgId { type integer }
+      }
       action {
         execute {
-          virtual input name { type string }
-          virtual input orgId { type integer }
           responds
           hook {
             arg inputName name
@@ -197,12 +206,12 @@ api {
       cardinality one
       method POST
       path "customFetchAction"
+      extra inputs {
+        field name { type string }
+      }
       action {
-        fetch as fRepo {
-          query { from Repo, filter { id is 1 }, select {slug}} // TODO: read from ctx - id
-        }
+        query as fRepo { from Repo, filter { id is 1 }, select {slug}} // TODO: read from ctx - id
         execute {
-          virtual input name { type string }
           responds
           hook {
             arg name name
@@ -218,12 +227,12 @@ api {
       path "hookErrorResponse"
       method POST
       cardinality many
-
+      extra inputs {
+        field status { type integer }
+        field message { type string }
+      }
       action {
         execute {
-          virtual input status { type integer }
-          virtual input message { type string }
-
           hook {
             arg status status
             arg message message
@@ -301,10 +310,12 @@ api {
       get endpoint {}
       list endpoint {}
       create endpoint {
+        extra inputs {
+          field raw_description { type string }
+        }
         action {
           create as repo {
             set latest_num 0
-            virtual input raw_description { type string }
             set description "Description: " + raw_description
             set slug hook {
               arg org org.name

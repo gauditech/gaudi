@@ -51,7 +51,7 @@ describe("compose model queries", () => {
 });
 
 describe("compose action queries", () => {
-  describe('"fetch" action', () => {
+  describe('"query" action', () => {
     it("native endpoint", () => {
       const bp = `
       model Org {
@@ -68,13 +68,9 @@ describe("compose action queries", () => {
             action {
               update {}
               // target
-              fetch as cOrg {
-                query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-              }
+              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
               // other model
-              fetch as cRepo {
-                query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
-              }
+              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
             }
           }
         }
@@ -106,13 +102,9 @@ describe("compose action queries", () => {
 
             action {
               // target
-              fetch as cOrg {
-                query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-              }
+              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
               // other model
-              fetch as cRepo {
-                query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
-              }
+              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
             }
           }
         }
@@ -145,9 +137,7 @@ describe("compose action queries", () => {
             cardinality one
 
             action {
-              fetch as measurement {
-                query { from device.measurements, order by { timestamp desc }, first }
-              }
+              query { from device.measurements, order by { timestamp desc }, first }
             }
           }
         }

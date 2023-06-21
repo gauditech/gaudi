@@ -491,7 +491,7 @@ export type ActionDef =
   | UpdateOneAction
   | DeleteOneAction
   | ExecuteHookAction
-  | FetchAction;
+  | QueryAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -520,24 +520,17 @@ export type DeleteOneAction = {
   targetPath: string[];
 };
 
-type DeleteManyAction = {
-  kind: "delete-many";
-  filter: TypedExprDef;
-};
-
 export type ExecuteHookAction = {
   kind: "execute-hook";
   alias: string;
-  changeset: ChangesetDef;
   hook: ActionHookDef;
   responds: boolean;
 };
 
-export type FetchAction = {
-  kind: "fetch";
+export type QueryAction = {
+  kind: "query";
   alias: string;
   model: string;
-  changeset: ChangesetDef;
   query: QueryDef;
 };
 
@@ -561,15 +554,6 @@ export type FieldSetterInput = {
   required: boolean;
   // FIXME implement default
   // default?: LiteralValueDef | FieldSetterReferenceValue;
-};
-
-export type FieldSetterVirtualInput = {
-  kind: "fieldset-virtual-input";
-  type: FieldType;
-  fieldsetAccess: string[];
-  required: boolean;
-  nullable: boolean;
-  validators: ValidatorDef[];
 };
 
 export type FieldSetterReferenceInput = {
@@ -635,7 +619,6 @@ export type FieldSetter =
   | LiteralValueDef
   | FieldSetterReferenceValue
   | FieldSetterInput
-  | FieldSetterVirtualInput
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
   | FieldSetterHook

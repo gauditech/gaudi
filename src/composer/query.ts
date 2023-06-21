@@ -25,7 +25,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
 
   const filter = qspec.filter && composeExpression(qspec.filter, fromPath);
 
-  const select = composeSelect(qspec.select, fromPath);
+  const select = qspec.select ? composeSelect(qspec.select, fromPath) : [];
 
   const orderBy = composeOrderBy(fromPath, qspec.orderBy);
 
@@ -35,7 +35,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     modelRefKey: qspec.sourceModel,
     filter,
     fromPath,
-    name: qspec.name,
+    name: qspec.name ?? "$query",
     retCardinality: qspec.cardinality,
     retType: qspec.targetModel,
     select,
@@ -199,7 +199,7 @@ export function composeRefPath(
         kind: "alias",
         namePath: [...head.ref.path, ...tail.map((i) => i.text)],
       };
-    case "virtualInput":
+    case "extraInput":
       return {
         kind: "variable",
         name: `___changeset___${path.map((i) => i.text).join("___")}`,

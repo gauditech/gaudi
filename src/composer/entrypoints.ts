@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
+import { composeValidators } from "./models";
 import { getTypedPathWithLeaf } from "./utils";
 
 import { buildEndpointPath } from "@src/builder/query";
@@ -9,10 +10,11 @@ import { getRef, getTargetModel } from "@src/common/refs";
 import { UnreachableError, assertUnreachable, ensureEqual, ensureOneOf } from "@src/common/utils";
 import { composeActionBlock } from "@src/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@src/composer/query";
+import { transformSelectPath } from "@src/runtime/query/build";
 import {
   ActionDef,
+  CreateOneAction,
   Definition,
-  DeleteOneAction,
   EndpointDef,
   EndpointHttpMethod,
   EntrypointDef,
@@ -21,12 +23,14 @@ import {
   FieldSetterReferenceValue,
   FieldsetDef,
   FieldsetFieldDef,
+  FieldsetRecordDef,
   ModelDef,
   SelectDef,
   SelectItem,
   TargetDef,
   TargetWithSelectDef,
   TypedExprDef,
+  UpdateOneAction,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
@@ -138,6 +142,17 @@ function processEndpoints(
     }
     const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
 
+    const fieldset = fieldsetFromActions(def, actions);
+    endSpec.input.forEach((atom) => {
+      fieldset.record[atom.name] = {
+        kind: "field",
+        type: atom.type,
+        required: !atom.optional,
+        nullable: atom.nullable,
+        validators: composeValidators(atom.type, atom.validators),
+      };
+    });
+
     switch (endSpec.kind) {
       case "get": {
         return {
@@ -165,7 +180,6 @@ function processEndpoints(
         };
       }
       case "create": {
-        const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "create",
           fieldset,
@@ -178,7 +192,6 @@ function processEndpoints(
         };
       }
       case "update": {
-        const fieldset = fieldsetFromActions(def, actions);
         return {
           kind: "update",
           fieldset,
@@ -202,9 +215,7 @@ function processEndpoints(
         };
       }
       case "custom": {
-        const fieldset = isMethodWithFieldset(endSpec.method)
-          ? fieldsetFromActions(def, actions)
-          : undefined;
+        const maybeFieldset = isMethodWithFieldset(endSpec.method) ? fieldset : undefined;
 
         if (endSpec.cardinality === "one") {
           return {
@@ -216,7 +227,7 @@ function processEndpoints(
             target,
             authSelect,
             authorize,
-            fieldset,
+            fieldset: maybeFieldset,
             response: undefined,
             responds,
           };
@@ -230,7 +241,7 @@ function processEndpoints(
             target: _.omit(target, "identifyWith"),
             authSelect,
             authorize,
-            fieldset,
+            fieldset: maybeFieldset,
             response: undefined,
             responds,
           };
@@ -263,32 +274,18 @@ export function composeFilter(
   return filter && composeExpression(filter, fromPath);
 }
 
-export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetDef {
+export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetRecordDef {
   const fieldsetWithPaths = actions
     // filter out actions without fieldset
-    .filter((a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one")
+    .filter(
+      (a): a is CreateOneAction | UpdateOneAction =>
+        a.kind === "create-one" || a.kind === "update-one"
+    )
     .flatMap((action) => {
       return _.chain(action.changeset)
         .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
           switch (setter.kind) {
-            case "fieldset-virtual-input": {
-              return [
-                setter.fieldsetAccess,
-                {
-                  kind: "field",
-                  required: setter.required,
-                  type: setter.type,
-                  nullable: setter.nullable,
-                  validators: _.cloneDeep(setter.validators),
-                },
-              ];
-            }
             case "fieldset-input": {
-              if (action.kind === "execute-hook") {
-                throw new UnreachableError(
-                  `Hook action can't have "fieldset-input" because it doesn't operate on a model.`
-                );
-              }
               const field = getRef.field(def, `${action.model}.${name}`);
               return [
                 setter.fieldsetAccess,
@@ -333,7 +330,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
  * into a `FieldsetDef` that nests `FieldsetRecordDef`s in order to respect
  * desired access path for each `FieldsetFieldDef`.ß
  */
-function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetDef {
+function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetRecordDef {
   const uniqueFieldsetPaths = _.uniqWith(paths, _.isEqual);
 
   const record = _.chain(uniqueFieldsetPaths)
@@ -370,7 +367,8 @@ type SelectDep = FieldSetterReferenceValue["target"];
 export function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
   const nonDeleteActions = actions.filter(
-    (a): a is Exclude<ActionDef, DeleteOneAction> => a.kind !== "delete-one"
+    (a): a is CreateOneAction | UpdateOneAction =>
+      a.kind === "create-one" || a.kind === "update-one"
   );
 
   const targetPaths = _.chain(nonDeleteActions)
@@ -494,12 +492,20 @@ export function wrapActionsWithSelect(
   deps: SelectDep[]
 ): ActionDef[] {
   return actions.map((a): ActionDef => {
-    if (a.kind === "delete-one" || a.kind === "execute-hook" || a.kind === "fetch") return a;
+    if (a.kind !== "create-one" && a.kind !== "update-one" && a.kind !== "query") return a;
+    // don't select deps for query action if it is already selected
+    if (a.kind === "query" && a.query.select.length > 0) return a;
 
     const paths = deps.filter((d) => d.alias === a.alias).map((a) => a.access);
+    // make sure we always request an `id` for a target
+    paths.push(["id"]);
     const model = getRef.model(def, a.model);
 
     const select = pathsToSelectDef(def, model, paths, [a.alias]);
+    if (a.kind === "query") {
+      a.query.select = transformSelectPath(select, [a.alias], a.query.fromPath);
+      return a;
+    }
     return { ...a, select };
   });
 }

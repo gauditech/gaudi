@@ -4,7 +4,6 @@ import { P, match } from "ts-pattern";
 import {
   Action,
   ActionAtomSet,
-  ActionAtomVirtualInput,
   ActionHook,
   AnonymousQuery,
   Api,
@@ -16,7 +15,7 @@ import {
   Entrypoint,
   ExecuteAction,
   Expr,
-  FetchAction,
+  ExtraInput,
   Field,
   FieldValidationHook,
   GlobalAtom,
@@ -30,10 +29,10 @@ import {
   Populator,
   ProjectASTs,
   Query,
+  QueryAction,
   RefModelAtom,
   RefModelField,
   RefModelReference,
-  RefVirtualInput,
   Reference,
   Relation,
   Runtime,
@@ -217,7 +216,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveQuery(query: Query | AnonymousQuery, parentScope: Scope) {
+  function resolveQuery(query: Query | QueryAction | AnonymousQuery, parentScope: Scope) {
     let currentModel: string | undefined;
     const scope: Scope = _.cloneDeep({ ...parentScope, environment: "model" });
     let cardinality = "one" as TypeCardinality;
@@ -301,18 +300,32 @@ export function resolve(projectASTs: ProjectASTs) {
           break;
       }
 
-      if (query.kind === "query" && parentScope.model) {
-        query.name.ref = {
-          kind: "modelAtom",
-          atomKind: "query",
-          parentModel: parentScope.model,
-          name: query.name.text,
-          model: currentModel,
-        };
-        query.name.type = type;
-      }
-      if (query.kind === "anonymousQuery") {
-        query.type = type;
+      switch (query.kind) {
+        case "query": {
+          if (parentScope.model) {
+            query.name.ref = {
+              kind: "modelAtom",
+              atomKind: "query",
+              parentModel: parentScope.model,
+              name: query.name.text,
+              model: currentModel,
+            };
+          }
+          query.name.type = type;
+          break;
+        }
+        case "queryAction": {
+          if (query.name) {
+            query.name.ref = { kind: "action" };
+            query.name.type = type;
+          }
+          query.type = type;
+          break;
+        }
+        case "anonymousQuery": {
+          query.type = type;
+          break;
+        }
       }
     }
   }
@@ -501,6 +514,11 @@ export function resolve(projectASTs: ProjectASTs) {
       scope = addTypeGuard(authorize.expr, scope, false);
     }
 
+    const extraInputs = kindFind(endpoint.atoms, "extraInputs");
+    if (extraInputs) {
+      extraInputs.extraInputs.map((i) => resolveExtraInput(i, scope));
+    }
+
     const action = kindFind(endpoint.atoms, "action");
     if (action) {
       action.actions.forEach((action) => {
@@ -545,6 +563,21 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
+  function resolveExtraInput(extraInput: ExtraInput, scope: Scope) {
+    const nullable = !!kindFind(extraInput.atoms, "nullable");
+    const typeAtom = kindFind(extraInput.atoms, "type");
+
+    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
+
+    if (type) {
+      extraInput.name.ref = { kind: "extraInput", type, nullable };
+      extraInput.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
+    } else if (typeAtom) {
+      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
+    }
+    addToScope(scope, extraInput.name);
+  }
+
   function resolveAction(
     action: Action,
     endpointType: EndpointType,
@@ -558,7 +591,7 @@ export function resolve(projectASTs: ProjectASTs) {
       )
       .with({ kind: "delete" }, (action) => resolveDeleteAction(action, endpointType, scope))
       .with({ kind: "execute" }, (action) => resolveExecuteAction(action, scope))
-      .with({ kind: "fetch" }, (action) => resolveFetchAction(action, scope))
+      .with({ kind: "queryAction" }, (action) => resolveQueryAction(action, scope))
       .exhaustive();
   }
 
@@ -637,14 +670,8 @@ export function resolve(projectASTs: ProjectASTs) {
 
     scope = { ...scope, model: currentModel };
 
-    // first resolve all virtual inputs so they can be referenced
-    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) =>
-      resolveActionAtomVirtualInput(virtualInput, scope)
-    );
-
     action.atoms.forEach((a) =>
       match(a)
-        .with({ kind: "virtualInput" }, () => undefined) // already resolved
         .with({ kind: "set" }, (set) => resolveActionAtomSet(set, currentModel, scope))
         .with({ kind: "referenceThrough" }, ({ target, through }) => {
           resolveModelAtomRef(target, currentModel, "reference");
@@ -670,9 +697,8 @@ export function resolve(projectASTs: ProjectASTs) {
     );
 
     const allIdentifiers = action.atoms.flatMap(
-      (a): IdentifierRef<RefVirtualInput | RefModelField | RefModelReference>[] =>
+      (a): IdentifierRef<RefModelField | RefModelReference>[] =>
         match(a)
-          .with({ kind: "virtualInput" }, ({ name }) => [name])
           .with({ kind: "set" }, ({ target }) => [target])
           .with({ kind: "referenceThrough" }, ({ target }) => [target])
           .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
@@ -709,9 +735,6 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveExecuteAction(action: ExecuteAction, scope: Scope) {
-    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) =>
-      resolveActionAtomVirtualInput(virtualInput, scope)
-    );
     const hook = kindFind(action.atoms, "hook");
     if (hook) resolveActionHook(hook, scope);
 
@@ -722,15 +745,9 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveFetchAction(action: FetchAction, scope: Scope) {
-    kindFilter(action.atoms, "virtualInput").forEach((virtualInput) =>
-      resolveActionAtomVirtualInput(virtualInput, scope)
-    );
-    const query = kindFind(action.atoms, "anonymousQuery");
-    if (query) {
-      resolveQuery(query, scope);
-      action.name.ref = { kind: "action" };
-      action.name.type = query.type;
+  function resolveQueryAction(action: QueryAction, scope: Scope) {
+    resolveQuery(action, scope);
+    if (action.name) {
       addToScope(scope, action.name);
     }
   }
@@ -744,23 +761,6 @@ export function resolve(projectASTs: ProjectASTs) {
         checkExprType(expr, set.target.type);
       })
       .exhaustive();
-  }
-
-  function resolveActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput, scope: Scope) {
-    const nullable = !!kindFind(virtualInput.atoms, "nullable");
-    const typeAtom = kindFind(virtualInput.atoms, "type");
-
-    const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
-
-    if (type) {
-      virtualInput.name.ref = { kind: "virtualInput", type, nullable };
-      virtualInput.name.type = nullable
-        ? Type.nullable(Type.primitive(type))
-        : Type.primitive(type);
-    } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
-    }
-    addToScope(scope, virtualInput.name);
   }
 
   function resolvePopulator(populator: Populator) {
