@@ -76,7 +76,6 @@ export type QueryAtom = { keyword: TokenData } & (
   | { kind: "orderBy"; orderBy: OrderBy }
   | { kind: "limit"; value: IntegerLiteral }
   | { kind: "offset"; value: IntegerLiteral }
-  | { kind: "select"; select: Select }
   | { kind: "aggregate"; aggregate: AggregateType }
 );
 export type AggregateType = "count" | "sum" | "one" | "first";
@@ -145,6 +144,7 @@ export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 export type EndpointCardinality = "one" | "many";
 
 export type EndpointAtom = { keyword: TokenData } & (
+  | { kind: "extraInputs"; extraInputs: ExtraInput[] }
   | { kind: "action"; actions: Action[] }
   | { kind: "authorize"; expr: Expr<Code> }
   | { kind: "method"; method: EndpointMethod; methodKeyword: TokenData }
@@ -155,7 +155,7 @@ export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "filter"; expr: Expr<Db> }
 );
 
-export type Action = ModelAction | DeleteAction | ExecuteAction | FetchAction;
+export type Action = ModelAction | DeleteAction | ExecuteAction | QueryAction;
 
 export type ModelAction = {
   kind: "create" | "update";
@@ -169,8 +169,7 @@ export type ModelActionAtom =
   | ActionAtomSet
   | ActionAtomReferenceThrough
   | ActionAtomDeny
-  | ActionAtomInput
-  | ActionAtomVirtualInput;
+  | ActionAtomInput;
 
 export type DeleteAction = {
   kind: "delete";
@@ -186,19 +185,21 @@ export type ExecuteAction = {
   name?: IdentifierRef<RefAction>;
   atoms: ExecuteActionAtom[];
 };
-export type ExecuteActionAtom =
-  | ActionAtomVirtualInput
-  | ActionHook
-  | { kind: "responds"; keyword: TokenData };
+export type ExecuteActionAtom = ActionHook | { kind: "responds"; keyword: TokenData };
 
-export type FetchAction = {
-  kind: "fetch";
+export type QueryAction = {
+  kind: "queryAction";
   keyword: TokenData;
-  keywordAs: TokenData;
-  name: IdentifierRef<RefAction>;
-  atoms: FetchActionAtom[];
+  keywordAs?: TokenData;
+  name?: IdentifierRef<RefAction>;
+  type: Type;
+  atoms: QueryActionAtom[];
 };
-export type FetchActionAtom = ActionAtomVirtualInput | AnonymousQuery;
+export type QueryActionAtom =
+  | QueryAtom
+  | { kind: "update"; keyword: TokenData; atoms: ActionAtomSet[] }
+  | { kind: "delete"; keyword: TokenData }
+  | { kind: "select"; keyword: TokenData; select: Select };
 
 export type ActionAtomSet = {
   kind: "set";
@@ -235,14 +236,14 @@ export type InputAtom = { keyword: TokenData } & (
   | { kind: "optional" }
   | { kind: "default"; value: Expr<Code> }
 );
-export type ActionAtomVirtualInput = {
-  kind: "virtualInput";
+export type ExtraInput = {
+  kind: "field";
   keyword: TokenData;
-  name: IdentifierRef<RefVirtualInput>;
-  atoms: ActionAtomVirtualInputAtom[];
+  name: IdentifierRef<RefExtraInput>;
+  atoms: ExtraInputAtom[];
 };
 
-export type ActionAtomVirtualInputAtom = { keyword: TokenData } & (
+export type ExtraInputAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
   | { kind: "nullable" }
   | { kind: "validate"; validators: Validator[] }
@@ -346,7 +347,7 @@ export type ActionHook = Hook<"action">;
 export type AnonymousQuery = {
   kind: "anonymousQuery";
   keyword: TokenData;
-  atoms: QueryAtom[];
+  atoms: (QueryAtom | { kind: "select"; keyword: TokenData; select: Select })[];
   type: Type;
 };
 
@@ -461,7 +462,7 @@ export type RefQueryTarget = {
 export type RefTarget = { kind: "target"; targetKind: "entrypoint" | "populate" };
 export type RefAction = { kind: "action" };
 export type RefRepeat = { kind: "repeat" };
-export type RefVirtualInput = { kind: "virtualInput"; type: FieldType; nullable: boolean };
+export type RefExtraInput = { kind: "extraInput"; type: FieldType; nullable: boolean };
 export type RefAuth = { kind: "auth"; model: string };
 export type RefAuthToken = { kind: "authToken" };
 export type RefStruct = { kind: "struct" };
@@ -472,7 +473,7 @@ export type Ref =
   | RefTarget
   | RefAction
   | RefRepeat
-  | RefVirtualInput
+  | RefExtraInput
   | RefAuth
   | RefAuthToken
   | RefStruct;

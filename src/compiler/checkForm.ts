@@ -3,7 +3,6 @@ import { match } from "ts-pattern";
 
 import {
   Action,
-  ActionAtomVirtualInput,
   AnonymousQuery,
   Api,
   Authenticator,
@@ -13,7 +12,7 @@ import {
   EndpointType,
   Entrypoint,
   ExecuteAction,
-  FetchAction,
+  ExtraInput,
   Field,
   Generator,
   GlobalAtom,
@@ -25,6 +24,7 @@ import {
   Populator,
   ProjectASTs,
   Query,
+  QueryAction,
   Reference,
   Relation,
   Runtime,
@@ -160,8 +160,8 @@ export function checkForm(projectASTs: ProjectASTs) {
     noDuplicateAtoms(relation, ["from", "through"]);
   }
 
-  function checkQuery(query: Query | AnonymousQuery) {
-    if (query.kind === "query") {
+  function checkQuery(query: Query | QueryAction | AnonymousQuery) {
+    if (query.kind !== "anonymousQuery") {
       containsAtoms(query, ["from"]);
     }
     noDuplicateAtoms(query, [
@@ -266,6 +266,7 @@ export function checkForm(projectASTs: ProjectASTs) {
 
   function checkEndpoint(endpoint: Endpoint) {
     noDuplicateAtoms(endpoint, [
+      "extraInputs",
       "action",
       "authorize",
       "method",
@@ -296,6 +297,15 @@ export function checkForm(projectASTs: ProjectASTs) {
       );
     }
 
+    const extraInputs = kindFind(endpoint.atoms, "extraInputs");
+    if (extraInputs) {
+      const allIdentifiers = extraInputs.extraInputs.map((extraInput) => {
+        checkExtraInput(extraInput);
+        return extraInput.name;
+      });
+      noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+    }
+
     const action = kindFind(endpoint.atoms, "action");
     if (action) {
       action.actions.map((a) => checkAction(a, endpoint.type));
@@ -323,12 +333,18 @@ export function checkForm(projectASTs: ProjectASTs) {
     }
   }
 
+  function checkExtraInput(field: ExtraInput) {
+    containsAtoms(field, ["type"]);
+    noDuplicateAtoms(field, ["type", "nullable", "validate"]);
+    kindFilter(field.atoms, "validate").map(({ validators }) => validators.forEach(checkValidator));
+  }
+
   function checkAction(action: Action, endpointType: EndpointType) {
     match(action)
       .with({ kind: "create" }, { kind: "update" }, (a) => checkModelAction(a, endpointType))
       .with({ kind: "delete" }, (a) => checkDeleteAction(a, endpointType))
       .with({ kind: "execute" }, (a) => checkExecuteAction(a, endpointType))
-      .with({ kind: "fetch" }, checkFetchAction)
+      .with({ kind: "queryAction" }, checkQueryAction)
       .exhaustive();
   }
 
@@ -354,10 +370,6 @@ export function checkForm(projectASTs: ProjectASTs) {
           return [target];
         })
         .with({ kind: "referenceThrough" }, ({ target }) => [target])
-        .with({ kind: "virtualInput" }, (virtualInput) => {
-          checkActionAtomVirtualInput(virtualInput);
-          return [virtualInput.name];
-        })
         .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
@@ -384,11 +396,6 @@ export function checkForm(projectASTs: ProjectASTs) {
   function checkExecuteAction(action: ExecuteAction, endpointType: EndpointType) {
     containsAtoms(action, ["hook"]);
     noDuplicateAtoms(action, ["hook", "responds"]);
-    const allIdentifiers = kindFilter(action.atoms, "virtualInput").map((virtualInput) => {
-      checkActionAtomVirtualInput(virtualInput);
-      return virtualInput.name;
-    });
-    noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
 
     const hook = kindFind(action.atoms, "hook");
     if (hook) checkHook(hook);
@@ -400,24 +407,24 @@ export function checkForm(projectASTs: ProjectASTs) {
     }
   }
 
-  function checkFetchAction(action: FetchAction) {
-    containsAtoms(action, ["anonymousQuery"]);
-    const allIdentifiers = kindFilter(action.atoms, "virtualInput").map((virtualInput) => {
-      checkActionAtomVirtualInput(virtualInput);
-      return virtualInput.name;
-    });
-    noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+  function checkQueryAction(action: QueryAction) {
+    noDuplicateAtoms(action, ["update", "delete"]);
 
-    const query = kindFind(action.atoms, "anonymousQuery");
-    if (query) checkQuery(query);
-  }
+    const updateOrDelete = kindFilter(action.atoms, "update", "delete");
+    if (updateOrDelete.length > 1) {
+      updateOrDelete.forEach(({ keyword }) =>
+        errors.push(new CompilerError(keyword, ErrorCode.QueryActionOnlyOneUpdateOrDelete))
+      );
+    }
 
-  function checkActionAtomVirtualInput(virtualInput: ActionAtomVirtualInput) {
-    containsAtoms(virtualInput, ["type"]);
-    noDuplicateAtoms(virtualInput, ["type", "nullable", "validate"]);
-    kindFilter(virtualInput.atoms, "validate").map(({ validators }) =>
-      validators.forEach(checkValidator)
-    );
+    const deleteOrSelect = kindFilter(action.atoms, "delete", "select");
+    if (deleteOrSelect.length > 1) {
+      deleteOrSelect.forEach(({ keyword }) =>
+        errors.push(new CompilerError(keyword, ErrorCode.QueryActionOnlyOneDeleteOrSelect))
+      );
+    }
+
+    checkQuery(action);
   }
 
   function checkPopulator(populator: Populator) {

@@ -121,9 +121,9 @@ function buildApi(options: ApiClientOptions) {
     type ListResp = GetResp;
     type ListError = GetError;
     type CreateData = {
-      raw_description: string,
       name: string,
-      is_public: boolean
+      is_public: boolean,
+      raw_description: string
     };
     type CreateResp = GetResp;
     type CreateError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION";

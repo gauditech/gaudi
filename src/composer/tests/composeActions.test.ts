@@ -210,16 +210,18 @@ describe("compose actions", () => {
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
-    it("succeeds when virtual input is defined and referenced", () => {
+    it("succeeds when extra input is defined and referenced", () => {
       const bp = `
     model Org { field name { type string } }
 
     api {
       entrypoint Org as org {
         create endpoint {
+          extra inputs {
+            field iname { type string, validate { min 4 } }
+          }
           action {
             create as org {
-              virtual input iname { type string, validate { min 4 } }
               set name "Mr/Mrs " + iname
             }
           }
@@ -231,6 +233,7 @@ describe("compose actions", () => {
       const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
+      expect(endpoint.fieldset).toMatchSnapshot();
     });
     it.todo("succeeds to update through unique relation");
     it("sets default action if not given", () => {

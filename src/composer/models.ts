@@ -133,7 +133,6 @@ function defineQuery(qspec: Spec.Query): QueryDef {
 
   const query = composeQuery(qspec);
   query.refKey = refKey;
-  query.select = []; // FIXME ??
 
   return query;
 }

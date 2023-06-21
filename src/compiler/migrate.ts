@@ -5,7 +5,7 @@ import * as AST from "./ast/ast";
 import { Type, getTypeCardinality, getTypeModel } from "./ast/type";
 import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
-import { kindFilter, kindFind } from "@src/common/kindFilter";
+import { kindFilter, kindFind, kindReject } from "@src/common/kindFilter";
 import { ensureEqual, ensureExists } from "@src/common/utils";
 import { HookCode } from "@src/types/common";
 import * as Spec from "@src/types/specification";
@@ -151,28 +151,34 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     };
   }
 
-  function migrateModelQuery(query: AST.Query) {
+  function migrateModelQuery(query: AST.Query): Spec.Query {
     ensureExists(query.name.ref);
     const model = query.name.ref.parentModel;
     const initialPath: Spec.IdentifierRef[] = [
       { text: model, ref: { kind: "model", model }, type: Type.model(model) },
     ];
-    return migrateQuery(initialPath, query.name.text, query.name.type, query.atoms);
+    const spec = migrateQuery(initialPath, query.name.type, query.atoms);
+    spec.name = query.name.text;
+    return spec;
   }
 
-  function migrateAnonymousQuery(query: AST.AnonymousQuery, model?: string) {
+  function migrateHookQuery(query: AST.AnonymousQuery, model?: string): Spec.Query {
     let initialPath: Spec.IdentifierRef[] = [];
     const from = kindFind(query.atoms, "from");
     if (!from) {
       ensureExists(model);
       initialPath = [{ text: model, ref: { kind: "model", model }, type: Type.model(model) }];
     }
-    return migrateQuery(initialPath, "$query", query.type, query.atoms);
+
+    const queryAtoms = kindReject(query.atoms, "select");
+    const spec = migrateQuery(initialPath, query.type, queryAtoms);
+    const select = kindFind(query.atoms, "select");
+    spec.select = select ? migrateSelect(select.select) : createAutoselect(spec.targetModel);
+    return spec;
   }
 
   function migrateQuery(
     initialPath: Spec.IdentifierRef[],
-    name: string,
     type: Type,
     atoms: AST.QueryAtom[]
   ): Spec.Query {
@@ -184,7 +190,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     }));
     const limit = kindFind(atoms, "limit");
     const offset = kindFind(atoms, "offset");
-    const select = kindFind(atoms, "select");
     const aggregate = kindFind(atoms, "aggregate");
 
     const fromModel = [
@@ -196,7 +201,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const targetModel = getTypeModel(fromModel.at(-1)!.type)!;
 
     return {
-      name,
+      name: undefined,
       sourceModel,
       targetModel,
       cardinality: getTypeCardinality(type),
@@ -206,8 +211,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       orderBy,
       limit: limit?.value.value,
       offset: offset?.value.value,
-      select: select ? migrateSelect(select.select) : createAutoselect(targetModel),
       aggregate: aggregate?.aggregate,
+      select: undefined,
     };
   }
 
@@ -292,6 +297,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     parentAuthorize: Spec.Expr | undefined,
     response: Spec.Select
   ): Spec.Endpoint {
+    const input = kindFind(endpoint.atoms, "extraInputs")?.extraInputs.map(migrateExtraInput) ?? [];
     const actions = (
       kindFind(endpoint.atoms, "action")?.actions ?? generatePrimaryAction(endpoint)
     ).flatMap((a, i) => migrateAction(a, i, target, alias, parentAlias));
@@ -312,26 +318,41 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         const filterAst = kindFind(endpoint.atoms, "filter")?.expr;
         const filter = filterAst && migrateExpr(filterAst);
 
-        return { kind: "list", actions, authorize, response, pageable, orderBy, filter };
+        return { kind: "list", input, actions, authorize, response, pageable, orderBy, filter };
       }
       case "get": {
-        return { kind: "get", actions, authorize, response };
+        return { kind: "get", input, actions, authorize, response };
       }
       case "create":
       case "update": {
-        return { kind: endpoint.type, actions, authorize, response };
+        return { kind: endpoint.type, input, actions, authorize, response };
       }
       case "delete": {
-        return { kind: "delete", actions, authorize };
+        return { kind: "delete", input, actions, authorize };
       }
       case "custom": {
         const method = kindFind(endpoint.atoms, "method")!.method;
         const cardinality = kindFind(endpoint.atoms, "cardinality")!.cardinality;
         const path = kindFind(endpoint.atoms, "path")!.path.value;
 
-        return { kind: "custom", actions, authorize, method, cardinality, path };
+        return { kind: "custom", input, actions, authorize, method, cardinality, path };
       }
     }
+  }
+
+  function migrateExtraInput({ name, atoms }: AST.ExtraInput): Spec.ExtraInput {
+    const validators = kindFilter(atoms, "validate").flatMap((v) =>
+      v.validators.map(migrateValidator)
+    );
+    const { ref } = migrateIdentifierRef(name);
+    return {
+      kind: "extra-input",
+      name: name.text,
+      type: ref.type,
+      nullable: !!kindFind(atoms, "nullable"),
+      optional: false,
+      validators,
+    };
   }
 
   function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
@@ -382,7 +403,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       )
       .with({ kind: "delete" }, (a) => [migrateDeleteAction(a, alias)])
       .with({ kind: "execute" }, (a) => [migrateExecuteAction(a, index)])
-      .with({ kind: "fetch" }, (a) => [migrateFetchAction(a)])
+      .with({ kind: "queryAction" }, (a) => [migrateQueryAction(a, index)])
       .exhaustive();
   }
 
@@ -468,16 +489,12 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ];
     });
 
-    const virtualInputs = kindFilter(action.atoms, "virtualInput").map(
-      migrateActionAtomVirtualInput
-    );
-
     const actions: Spec.ModelAction[] = [
       {
         kind: action.kind,
         targetPath,
         alias: action.as?.identifier.text ?? `$action_${index}`,
-        actionAtoms: [...virtualInputs, ...actionAtoms],
+        actionAtoms,
         isPrimary: !!action.isPrimary,
       },
     ];
@@ -528,25 +545,38 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function migrateExecuteAction(action: AST.ExecuteAction, index: number): Spec.Action {
-    const atoms = kindFilter(action.atoms, "virtualInput").map(migrateActionAtomVirtualInput);
-
     return {
       kind: "execute",
       alias: action.name?.text ?? `$action_${index}`,
       hook: migrateActionHook(kindFind(action.atoms, "hook")!),
       responds: !!kindFind(action.atoms, "responds"),
-      atoms,
     };
   }
 
-  function migrateFetchAction(action: AST.FetchAction): Spec.Action {
-    const atoms = kindFilter(action.atoms, "virtualInput").map(migrateActionAtomVirtualInput);
+  function migrateQueryAction(action: AST.QueryAction, index: number): Spec.Action {
+    const queryAtoms = kindReject(action.atoms, "update", "delete", "select");
+    const query = migrateQuery([], action.type, queryAtoms);
+    const selectAst = kindFind(action.atoms, "select");
+    query.select = selectAst && migrateSelect(selectAst.select);
 
+    const update = kindFind(action.atoms, "update");
+    const delete_ = kindFind(action.atoms, "delete");
+    let operation: Spec.ActionQueryOperation;
+    if (update) {
+      operation = {
+        kind: "update",
+        atoms: update.atoms.map(migrateActionAtomSet),
+      };
+    } else if (delete_) {
+      operation = { kind: "delete" };
+    } else {
+      operation = { kind: "select" };
+    }
     return {
-      kind: "fetch",
-      alias: action.name.text,
-      query: migrateAnonymousQuery(kindFind(action.atoms, "anonymousQuery")!),
-      atoms,
+      kind: "query",
+      alias: action.name?.text ?? `$action_${index}`,
+      query,
+      operation,
     };
   }
 
@@ -615,24 +645,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         default: migratedDefault,
       };
     });
-  }
-
-  function migrateActionAtomVirtualInput({
-    name,
-    atoms,
-  }: AST.ActionAtomVirtualInput): Spec.ActionAtomVirtualInput {
-    const validators = kindFilter(atoms, "validate").flatMap((v) =>
-      v.validators.map(migrateValidator)
-    );
-    const { ref } = migrateIdentifierRef(name);
-    return {
-      kind: "virtual-input",
-      name: name.text,
-      type: ref.type,
-      nullable: !!kindFind(atoms, "nullable"),
-      optional: false,
-      validators,
-    };
   }
 
   function migratePopulator(populator: AST.Populator): Spec.Populator {
@@ -749,7 +761,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const args = kindFilter(hook.atoms, "arg_query").map((a) => {
       return {
         name: a.name.text,
-        query: migrateAnonymousQuery(a.query, ref.parentModel),
+        query: migrateHookQuery(a.query, ref.parentModel),
       };
     });
     return { name: hook.name.text, ref, code, args };
@@ -774,7 +786,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       (a): Spec.ActionHook["args"][number] => ({
         kind: "query",
         name: a.name.text,
-        query: migrateAnonymousQuery(a.query),
+        query: migrateHookQuery(a.query),
       })
     );
     return { code, args: [...exprArgs, ...queryArgs] };

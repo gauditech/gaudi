@@ -140,11 +140,13 @@ describe("compose hooks", () => {
             method POST
             cardinality one
 
+            extra inputs {
+              // test action inputs
+              field termsOfUse { type boolean }
+            }
+
             action {
               execute {
-                // test action inputs
-                virtual input termsOfUse { type boolean }
-
                 hook {
                   // test hook args
                   arg name org.name
@@ -177,11 +179,12 @@ describe("compose hooks", () => {
             method POST
             cardinality one
 
+            extra inputs {
+              field prop { type string }
+            }
+
             action {
               execute {
-
-                virtual input prop { type string }
-
                 hook {
                   // action arg hook
                   arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id

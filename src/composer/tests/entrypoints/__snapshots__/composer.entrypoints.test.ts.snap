@@ -44,7 +44,9 @@ exports[`entrypoint collects dependencies 1`] = `
       "name",
       "id",
     ],
-    [],
+    [
+      "id",
+    ],
   ],
   "orgSelect": [
     "id",
@@ -587,7 +589,23 @@ exports[`entrypoint composes basic example 1`] = `
                 "isPrimary": true,
                 "kind": "create-one",
                 "model": "Repo",
-                "select": [],
+                "select": [
+                  {
+                    "alias": "id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "$action_0",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
+                  },
+                ],
                 "targetPath": [
                   "repos",
                 ],
@@ -788,7 +806,23 @@ exports[`entrypoint composes basic example 1`] = `
                 "isPrimary": false,
                 "kind": "update-one",
                 "model": "Org",
-                "select": [],
+                "select": [
+                  {
+                    "alias": "id",
+                    "expr": {
+                      "kind": "alias",
+                      "namePath": [
+                        "newOrg",
+                        "id",
+                      ],
+                    },
+                    "kind": "expression",
+                    "type": {
+                      "kind": "integer",
+                      "nullable": false,
+                    },
+                  },
+                ],
                 "targetPath": [
                   "org",
                 ],
@@ -1068,7 +1102,23 @@ exports[`entrypoint composes single cardinality 1`] = `
           "isPrimary": true,
           "kind": "update-one",
           "model": "Address",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "$action_0",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "$target_1",
           ],
@@ -1304,7 +1354,23 @@ exports[`entrypoint composes single cardinality 2`] = `
           "isPrimary": true,
           "kind": "create-one",
           "model": "Details",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "$action_0",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "details",
           ],
@@ -1329,7 +1395,23 @@ exports[`entrypoint composes single cardinality 2`] = `
           "isPrimary": false,
           "kind": "update-one",
           "model": "User",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "$action_0_reference",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "$target_0",
           ],
@@ -1591,7 +1673,23 @@ exports[`entrypoint composes single cardinality 3`] = `
           "isPrimary": true,
           "kind": "create-one",
           "model": "User",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "$action_0",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "user",
           ],
@@ -1928,7 +2026,23 @@ exports[`entrypoint composes single cardinality 3`] = `
           "isPrimary": true,
           "kind": "update-one",
           "model": "User",
-          "select": [],
+          "select": [
+            {
+              "alias": "id",
+              "expr": {
+                "kind": "alias",
+                "namePath": [
+                  "$action_0",
+                  "id",
+                ],
+              },
+              "kind": "expression",
+              "type": {
+                "kind": "integer",
+                "nullable": false,
+              },
+            },
+          ],
           "targetPath": [
             "$target_1",
           ],

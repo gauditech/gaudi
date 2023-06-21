@@ -10,7 +10,7 @@ import { ValidReferenceIdResult } from "./constraintValidation";
 
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
 import { assertUnreachable, ensureExists } from "@src/common/utils";
-import { buildChangeset, buildStrictChangeset } from "@src/runtime/common/changeset";
+import { buildChangeset } from "@src/runtime/common/changeset";
 import { HookActionContext, executeActionHook } from "@src/runtime/hooks";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { HookError } from "@src/runtime/server/error";
@@ -56,7 +56,7 @@ async function _internalExecuteActions(
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildStrictChangeset(def, qx, epCtx, action.changeset, ctx);
+      const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const id = await insertData(dbConn, dbModel, dbData);
@@ -66,7 +66,7 @@ async function _internalExecuteActions(
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildStrictChangeset(def, qx, epCtx, action.changeset, ctx);
+      const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const targetId = resolveTargetId(ctx, action.targetPath);
@@ -81,13 +81,11 @@ async function _internalExecuteActions(
       const targetId = resolveTargetId(ctx, action.targetPath);
 
       await deleteData(dbConn, dbModel, targetId);
-    } else if (actionKind === "fetch") {
-      const changeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
-
+    } else if (actionKind === "query") {
       const qt = buildQueryTree(def, action.query);
       // FIXME this ugly
       const varsObj = Object.fromEntries(
-        Object.keys(changeset).map((k) => [`___changeset___${k}`, changeset[k]])
+        Object.keys(ctx.input).map((k) => [`___changeset___${k}`, ctx.input[k]])
       );
       varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
 
@@ -99,15 +97,7 @@ async function _internalExecuteActions(
     } else if (actionKind === "execute-hook") {
       ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
 
-      const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
-      const argsChangeset = await buildChangeset(
-        def,
-        qx,
-        epCtx,
-        action.hook.args,
-        ctx,
-        actionChangeset
-      );
+      const argsChangeset = await buildChangeset(def, qx, epCtx, action.hook.args, ctx);
 
       try {
         await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);

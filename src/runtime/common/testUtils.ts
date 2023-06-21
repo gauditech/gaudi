@@ -2,7 +2,7 @@ import { compileFromString } from "@src/compiler";
 import { QueryTree } from "@src/runtime/query/build";
 import { NestedRow, QueryExecutor } from "@src/runtime/query/exec";
 import { Vars } from "@src/runtime/server/vars";
-import { CustomManyEndpointDef, Definition, FetchAction, QueryDef } from "@src/types/definition";
+import { CustomManyEndpointDef, Definition, QueryAction, QueryDef } from "@src/types/definition";
 
 /**
  * Creates dummy query executor wich always return empty row.
@@ -48,9 +48,7 @@ export function makeTestQuery(models: string, query: string): { def: Definition;
         cardinality many
         path "/test"
         action {
-          fetch as q {
-            ${query}
-          }
+          ${query}
         }
       }
     }
@@ -58,6 +56,6 @@ export function makeTestQuery(models: string, query: string): { def: Definition;
   `;
   const def = compileFromString(bp);
   const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
-  const action = endpoint.actions[0] as FetchAction;
+  const action = endpoint.actions[0] as QueryAction;
   return { def, query: action.query };
 }

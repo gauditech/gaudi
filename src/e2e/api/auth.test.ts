@@ -215,10 +215,10 @@ describe("Auth", () => {
       const registerResponse = await request(getServer())
         .post("/api/auth/auth_user/register")
         .send({
+          password: "some password",
           authUser: {
             name: "some name",
             username: "somename@example.com",
-            password: "some password",
             userProfile: { displayName: "Profile Display Name" },
           },
         });
@@ -244,10 +244,10 @@ describe("Auth", () => {
 
     it("should fail when creating user with existing username", async () => {
       const data = {
+        password: "some password",
         authUser: {
           name: "some name",
           username: "somename@example.com",
-          password: "some password",
           userProfile: { displayName: "Profile Display Name" },
         },
       };

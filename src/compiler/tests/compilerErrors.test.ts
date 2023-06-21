@@ -382,6 +382,60 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Custom endpoint path clashes with entrypoint: "repos"`);
     });
+    it(`fails on query action has update and delete`, () => {
+      const bp = `
+        model Org {
+          field name { type string }
+        }
+
+        api {
+          entrypoint Org {
+            create endpoint {
+              action {
+                query {
+                  from Org,
+                  update {
+                    set name "foo"
+                  },
+                  delete
+                }
+              }
+            }
+          }
+        }
+        `;
+      expectError(
+        bp,
+        `Query action can't both "delete" and "update"`,
+        `Query action can't both "delete" and "update"`
+      );
+    });
+    it(`fails on query action has delete and select`, () => {
+      const bp = `
+        model Org {
+          field name { type string }
+        }
+
+        api {
+          entrypoint Org {
+            create endpoint {
+              action {
+                query {
+                  from Org,
+                  delete,
+                  select { name }
+                }
+              }
+            }
+          }
+        }
+        `;
+      expectError(
+        bp,
+        `Query action can't both "delete" and "select"`,
+        `Query action can't both "delete" and "select"`
+      );
+    });
   });
 
   describe("authenticator", () => {

@@ -31,6 +31,8 @@ export enum ErrorCode {
   LimitOrOffsetWithCardinalityModifier,
   OrderByWithOne,
   QueryMaxOneAggregate,
+  QueryActionOnlyOneUpdateOrDelete,
+  QueryActionOnlyOneDeleteOrSelect,
   ConfiguringNonCustomEndpoint,
   MoreThanOneRespondsInEndpoint,
   HookMustContainSourceOrInline,
@@ -66,7 +68,7 @@ export enum ErrorCode {
   // Type Errors
   UnexpectedType,
   UnexpectedFieldType,
-  VirtualInputType,
+  ExtraInputType,
   ComputedType,
   NameAlreadyInScope,
   CollectionInsideArray,
@@ -124,6 +126,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Query can't have "order by" when using "one"`;
     case ErrorCode.QueryMaxOneAggregate:
       return `Query can't have more than one aggregate`;
+    case ErrorCode.QueryActionOnlyOneUpdateOrDelete:
+      return `Query action can't both "delete" and "update"`;
+    case ErrorCode.QueryActionOnlyOneDeleteOrSelect:
+      return `Query action can't both "delete" and "select"`;
     case ErrorCode.ConfiguringNonCustomEndpoint:
       return `Only custom endpoint can have method, cardinality and path configuration`;
     case ErrorCode.MoreThanOneRespondsInEndpoint:
@@ -201,9 +207,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
         `${JSON.stringify(params?.got)}`
       );
     case ErrorCode.UnexpectedFieldType:
+    case ErrorCode.ExtraInputType:
       return `Field type must be a non null primitive type`;
-    case ErrorCode.VirtualInputType:
-      return `Virtual input type must be a non null primitive type`;
     case ErrorCode.ComputedType:
       return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:

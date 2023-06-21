@@ -6,7 +6,6 @@ import {
   ActionAtomInput,
   ActionAtomReferenceThrough,
   ActionAtomSet,
-  ActionAtomVirtualInput,
   ActionHook,
   AnonymousQuery,
   Api,
@@ -16,7 +15,7 @@ import {
   Entrypoint,
   ExecuteAction,
   Expr,
-  FetchAction,
+  ExtraInput,
   Field,
   FieldValidationHook,
   Generator,
@@ -30,6 +29,8 @@ import {
   Populate,
   Populator,
   Query,
+  QueryAction,
+  QueryAtom,
   Reference,
   Relation,
   RepeatValue,
@@ -170,43 +171,41 @@ export function buildTokens(
     );
   }
 
-  function buildQuery(query: Query | AnonymousQuery) {
+  function buildQuery(query: Query) {
     buildKeyword(query.keyword);
-    if (query.kind === "query") push(query.name.token, TokenTypes.property);
-    query.atoms.forEach((a) =>
-      match(a)
-        .with({ kind: "from" }, ({ keyword, identifierPath, as }) => {
-          buildKeyword(keyword);
-          buildIdentifierPath(identifierPath);
-          if (as) {
-            buildKeyword(as.keyword);
-            buildIdentifierPath(as.identifierPath);
-          }
-        })
-        .with({ kind: "filter" }, ({ keyword, expr }) => {
-          buildKeyword(keyword);
-          buildExpr(expr);
-        })
-        .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
-          buildKeyword(keyword);
-          orderBy.forEach((orderBy) => {
-            buildExpr(orderBy.expr);
-            if (orderBy.keyword) buildKeyword(orderBy.keyword);
-          });
-        })
-        .with({ kind: "limit" }, { kind: "offset" }, ({ keyword, value }) => {
-          buildKeyword(keyword);
-          buildLiteral(value);
-        })
-        .with({ kind: "select" }, ({ keyword, select }) => {
-          buildKeyword(keyword);
-          buildSelect(select);
-        })
-        .with({ kind: "aggregate" }, ({ keyword }) => {
-          buildKeyword(keyword);
-        })
-        .exhaustive()
-    );
+    push(query.name.token, TokenTypes.property);
+    query.atoms.forEach(buildQueryAtom);
+  }
+
+  function buildQueryAtom(atom: QueryAtom) {
+    match(atom)
+      .with({ kind: "from" }, ({ keyword, identifierPath, as }) => {
+        buildKeyword(keyword);
+        buildIdentifierPath(identifierPath);
+        if (as) {
+          buildKeyword(as.keyword);
+          buildIdentifierPath(as.identifierPath);
+        }
+      })
+      .with({ kind: "filter" }, ({ keyword, expr }) => {
+        buildKeyword(keyword);
+        buildExpr(expr);
+      })
+      .with({ kind: "orderBy" }, ({ keyword, orderBy }) => {
+        buildKeyword(keyword);
+        orderBy.forEach((orderBy) => {
+          buildExpr(orderBy.expr);
+          if (orderBy.keyword) buildKeyword(orderBy.keyword);
+        });
+      })
+      .with({ kind: "limit" }, { kind: "offset" }, ({ keyword, value }) => {
+        buildKeyword(keyword);
+        buildLiteral(value);
+      })
+      .with({ kind: "aggregate" }, ({ keyword }) => {
+        buildKeyword(keyword);
+      })
+      .exhaustive();
   }
 
   function buildComputed({ keyword, name, expr }: Computed) {
@@ -270,6 +269,10 @@ export function buildTokens(
     buildKeyword(keyword);
     atoms.forEach((a) =>
       match(a)
+        .with({ kind: "extraInputs" }, ({ keyword, extraInputs }) => {
+          buildKeyword(keyword);
+          extraInputs.forEach(buildExtraInput);
+        })
         .with({ kind: "action" }, ({ keyword, actions }) => {
           buildKeyword(keyword);
           actions.forEach(buildAction);
@@ -308,6 +311,24 @@ export function buildTokens(
     );
   }
 
+  function buildExtraInput({ keyword, name, atoms }: ExtraInput) {
+    buildKeyword(keyword);
+    push(name.token, TokenTypes.property);
+    atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "type" }, ({ keyword, identifier }) => {
+          buildKeyword(keyword);
+          buildType(identifier);
+        })
+        .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "validate" }, ({ keyword, validators }) => {
+          buildKeyword(keyword);
+          validators.forEach(buildValidator);
+        })
+        .exhaustive()
+    );
+  }
+
   function buildAction(action: Action) {
     match(action)
       .with({ kind: "create" }, { kind: "update" }, buildModelAction)
@@ -316,7 +337,7 @@ export function buildTokens(
         if (target) buildIdentifierPath(target);
       })
       .with({ kind: "execute" }, buildExecuteAction)
-      .with({ kind: "fetch" }, buildFetchAction)
+      .with({ kind: "queryAction" }, buildQueryAction)
       .exhaustive();
   }
 
@@ -331,7 +352,6 @@ export function buildTokens(
       match(a)
         .with({ kind: "set" }, buildActionAtomSet)
         .with({ kind: "referenceThrough" }, buildActionAtomReferenceThrough)
-        .with({ kind: "virtualInput" }, buildActionAtomVirtualInput)
         .with({ kind: "deny" }, buildActionAtomDeny)
         .with({ kind: "input" }, buildActionAtomInput)
         .exhaustive();
@@ -344,22 +364,40 @@ export function buildTokens(
     if (name) push(name.token, TokenTypes.variable);
     atoms.forEach((a) => {
       match(a)
-        .with({ kind: "virtualInput" }, buildActionAtomVirtualInput)
         .with({ kind: "hook" }, buildActionHook)
         .with({ kind: "responds" }, ({ keyword }) => buildKeyword(keyword))
         .exhaustive();
     });
   }
 
-  function buildFetchAction({ keyword, keywordAs, name, atoms }: FetchAction) {
+  function buildAnonymousQuery({ keyword, atoms }: AnonymousQuery) {
+    buildKeyword(keyword);
+    atoms.forEach((a) => {
+      match(a)
+        .with({ kind: "select" }, ({ keyword, select }) => {
+          buildKeyword(keyword);
+          buildSelect(select);
+        })
+        .otherwise(buildQueryAtom);
+    });
+  }
+
+  function buildQueryAction({ keyword, keywordAs, name, atoms }: QueryAction) {
     buildKeyword(keyword);
     if (keywordAs) buildKeyword(keywordAs);
     if (name) push(name.token, TokenTypes.variable);
     atoms.forEach((a) => {
       match(a)
-        .with({ kind: "virtualInput" }, buildActionAtomVirtualInput)
-        .with({ kind: "anonymousQuery" }, buildQuery)
-        .exhaustive();
+        .with({ kind: "update" }, ({ keyword, atoms }) => {
+          buildKeyword(keyword);
+          atoms.forEach(buildActionAtomSet);
+        })
+        .with({ kind: "delete" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "select" }, ({ keyword, select }) => {
+          buildKeyword(keyword);
+          buildSelect(select);
+        })
+        .otherwise(buildQueryAtom);
     });
   }
 
@@ -382,24 +420,6 @@ export function buildTokens(
     buildIdentifierRef(target);
     buildKeyword(keywordThrough);
     buildIdentifierPath(through);
-  }
-
-  function buildActionAtomVirtualInput({ keyword, name, atoms }: ActionAtomVirtualInput) {
-    buildKeyword(keyword);
-    push(name.token, TokenTypes.property);
-    atoms.forEach((a) =>
-      match(a)
-        .with({ kind: "type" }, ({ keyword, identifier }) => {
-          buildKeyword(keyword);
-          buildType(identifier);
-        })
-        .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
-        .with({ kind: "validate" }, ({ keyword, validators }) => {
-          buildKeyword(keyword);
-          validators.forEach(buildValidator);
-        })
-        .exhaustive()
-    );
   }
 
   function buildActionAtomDeny({ keyword, fields }: ActionAtomDeny) {
@@ -541,7 +561,7 @@ export function buildTokens(
       .with({ kind: "arg_query" }, ({ keyword, name, query }) => {
         buildKeyword(keyword);
         push(name.token, TokenTypes.property);
-        buildQuery(query);
+        buildAnonymousQuery(query);
       })
       .with({ kind: "default_arg" }, ({ keyword, name }) => {
         buildKeyword(keyword);

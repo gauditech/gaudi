@@ -40,10 +40,8 @@ api {
         create {}
 
         // test query in fetch action
-        fetch as fClass {
-          query {
-            from Class, filter { id is 1 }
-          }
+        query as fClass {
+          from Class, filter { id is 1 }
         }
 
         execute {
