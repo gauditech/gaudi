@@ -1,6 +1,8 @@
+import { ILexingError, IRecognitionException } from "chevrotain";
 import _ from "lodash";
 
 import { TokenData } from "./ast/ast";
+import { getTokenData } from "./parser";
 
 import { Input } from ".";
 
@@ -272,4 +274,23 @@ export function compilerErrorsToString(baseInputs: Input[], errors: CompilerErro
   });
 
   return output;
+}
+
+export function toCompilerError(
+  error: ILexingError | IRecognitionException,
+  filename: string
+): CompilerError {
+  let tokenData: TokenData;
+  if ("token" in error) {
+    tokenData = getTokenData(filename, error.token);
+  } else {
+    tokenData = { start: error.offset, end: error.offset + 1, filename };
+  }
+  return new CompilerError(tokenData, ErrorCode.ParserError, { message: error.message });
+}
+
+export function unexpectedParserError(): CompilerError {
+  return new CompilerError({ start: 0, end: 0, filename: ":unset:" }, ErrorCode.ParserError, {
+    message: "Unexpected parser error",
+  });
 }

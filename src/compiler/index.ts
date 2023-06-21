@@ -1,15 +1,18 @@
 import fs from "fs";
 
-import { ILexingError, IRecognitionException } from "chevrotain";
 import { sync as glob } from "fast-glob";
-import _ from "lodash";
 
-import { ProjectASTs, TokenData } from "./ast/ast";
+import { ProjectASTs } from "./ast/ast";
 import { checkForm } from "./checkForm";
-import { CompilerError, ErrorCode, compilerErrorsToString } from "./compilerError";
+import {
+  CompilerError,
+  compilerErrorsToString,
+  toCompilerError,
+  unexpectedParserError,
+} from "./compilerError";
 import * as L from "./lexer";
 import { migrate } from "./migrate";
-import { getTokenData, parser } from "./parser";
+import { parser } from "./parser";
 import { AuthPlugin } from "./plugins/authenticator";
 import { resolve } from "./resolver";
 
@@ -64,7 +67,7 @@ export function compileToAST(inputs: Input[]): CompileResult {
     if (ast) {
       return { ast, errors: undefined };
     } else {
-      throw Error("Unexpected compilation error");
+      return { ast, errors: [unexpectedParserError()] };
     }
   }
   return { ast, errors: allErrors };
@@ -99,14 +102,4 @@ export function compileFromString(source: string): Definition {
     throw new Error(`Failed to compile:\n${errorString}`);
   }
   return compose(migrate(ast));
-}
-
-function toCompilerError(error: ILexingError | IRecognitionException, filename: string) {
-  let tokenData: TokenData;
-  if ("token" in error) {
-    tokenData = getTokenData(filename, error.token);
-  } else {
-    tokenData = { start: error.offset, end: error.offset + 1, filename };
-  }
-  return new CompilerError(tokenData, ErrorCode.ParserError, { message: error.message });
 }
