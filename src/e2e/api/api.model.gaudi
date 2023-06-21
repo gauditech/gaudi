@@ -91,12 +91,25 @@ api {
       extra inputs {
         field name { type string }
         field counter { type integer }
+        field customProp { type string }
       }
       action {
+        // test custom action return value
+        // take "customProp" extra input, return it to "customAlias" and add it back to response
+        execute as customAlias {
+          hook {
+            arg prop customProp
+            // returns struct: { prop }
+            source echo from "hooks.js"
+          }
+        }
+
         execute {
           hook {
             arg name name
             arg counter counter
+            // add "customProp" back to response
+            arg customProp customAlias.prop
             source customAction from "hooks.js"
           }
         }

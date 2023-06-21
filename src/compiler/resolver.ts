@@ -737,6 +737,12 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveExecuteAction(action: ExecuteAction, scope: Scope) {
     const hook = kindFind(action.atoms, "hook");
     if (hook) resolveActionHook(hook, scope);
+
+    if (action.name) {
+      action.name.ref = { kind: "action" };
+      action.name.type = Type.any;
+      addToScope(scope, action.name);
+    }
   }
 
   function resolveQueryAction(action: QueryAction, scope: Scope) {
@@ -1137,6 +1143,8 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveNextRef(identifier: IdentifierRef, previousType: Type): boolean {
     switch (previousType.kind) {
       case "any":
+        identifier.ref = { kind: "struct" };
+        identifier.type = Type.any;
         return true;
       case "model": {
         return tryResolveModelAtomRef(identifier, previousType.model);

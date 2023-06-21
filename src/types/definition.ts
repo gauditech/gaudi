@@ -522,6 +522,7 @@ export type DeleteOneAction = {
 
 export type ExecuteHookAction = {
   kind: "execute-hook";
+  alias: string;
   hook: ActionHookDef;
   responds: boolean;
 };

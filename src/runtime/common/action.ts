@@ -100,7 +100,8 @@ async function _internalExecuteActions(
       const argsChangeset = await buildChangeset(def, qx, epCtx, action.hook.args, ctx);
 
       try {
-        await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
+        const result = await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
+        ctx.vars.set(action.alias, result);
       } catch (err) {
         throw new HookError(err);
       }
