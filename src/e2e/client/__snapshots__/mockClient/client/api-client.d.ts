@@ -47,11 +47,11 @@ export declare function createClient(options: ApiClientOptions): {
                     name: string;
                 }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
                 create: CreateApiClientFn<{
-                    virtProp: string;
                     slug: string;
                     name: string;
                     description: string;
                     owner_id?: number | null | undefined;
+                    virtProp: string;
                 }, {
                     slug: string;
                     name: string;

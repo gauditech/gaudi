@@ -113,8 +113,7 @@ FROM
 
 exports[`Expression functions to queries composes a query with expression functions 1`] = `
 "SELECT
-  "Repo"."id" AS "id",
-  "Repo"."name" AS "name"
+  "Repo"."id" AS "id"
 FROM
   "repo" AS "Repo"
 WHERE
@@ -135,10 +134,7 @@ WHERE
 
 exports[`Expressions to queries composes a complex filter expression and computed 1`] = `
 "SELECT
-  "Item"."id" AS "id",
-  "Item"."value" AS "value",
-  "Item"."multiplier" AS "multiplier",
-  "Item"."textual" AS "textual"
+  "Item"."id" AS "id"
 FROM
   "item" AS "Item"
 WHERE

@@ -9,7 +9,6 @@ import {
   resolveItems,
 } from "@src/common/utils";
 import { getTypeModel } from "@src/compiler/ast/type";
-import { composeValidators } from "@src/composer/models";
 import { composeQuery } from "@src/composer/query";
 import {
   ActionDef,
@@ -19,9 +18,9 @@ import {
   CreateOneAction,
   DeleteOneAction,
   ExecuteHookAction,
-  FetchAction,
   FieldSetter,
   FunctionName,
+  QueryAction,
   QueryDef,
   UpdateOneAction,
 } from "@src/types/definition";
@@ -34,7 +33,7 @@ import * as Spec from "@src/types/specification";
  */
 export function composeActionBlock(specs: Spec.Action[]): ActionDef[] {
   // Collect actions from the spec, updating the context during the pass through.
-  const actions = specs.map((atom) => {
+  return specs.map((atom) => {
     switch (atom.kind) {
       case "create":
       case "update": {
@@ -46,13 +45,11 @@ export function composeActionBlock(specs: Spec.Action[]): ActionDef[] {
       case "execute": {
         return composeExecuteAction(atom);
       }
-      case "fetch": {
-        return composeFetchAction(atom);
+      case "query": {
+        return composeQueryAction(atom);
       }
     }
   });
-
-  return actions;
 }
 
 function composeDeleteAction(spec: FilteredByKind<Spec.Action, "delete">): DeleteOneAction {
@@ -63,34 +60,29 @@ function composeDeleteAction(spec: FilteredByKind<Spec.Action, "delete">): Delet
   };
 }
 
-function composeFetchAction(spec: FilteredByKind<Spec.Action, "fetch">): FetchAction {
-  const changeset = spec.atoms.map((atom) => atomToChangesetOperation(atom, [], []));
-  // fetch action's model is derived from it's query
+function composeQueryAction(spec: FilteredByKind<Spec.Action, "query">): QueryAction {
   const query = composeQuery(spec.query);
   return {
-    kind: "fetch",
+    kind: "query",
     alias: spec.alias,
-    changeset,
     model: query.retType,
     query: query,
   };
 }
 
 function composeExecuteAction(spec: FilteredByKind<Spec.Action, "execute">): ExecuteHookAction {
-  const changeset = spec.atoms.map((atom) => atomToChangesetOperation(atom, [], []));
-
   const actionHook: ActionHookDef = {
     args: spec.hook.args.map((arg) => ({
       name: arg.name,
-      setter: setterToFieldSetter(arg, changeset),
+      setter: setterToFieldSetter(arg, []),
     })),
     hook: spec.hook.code,
   };
 
   return {
     kind: "execute-hook",
+    alias: spec.alias,
     hook: actionHook,
-    changeset,
     responds: spec.responds,
   };
 }
@@ -107,18 +99,7 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
     // atoms to be resolved
     spec.actionAtoms,
     // item name resolver
-    (atom) => {
-      switch (atom.kind) {
-        case "input":
-          return atom.target.name;
-        case "reference":
-          return atom.target.name;
-        case "set":
-          return atom.target.name;
-        case "virtual-input":
-          return atom.name;
-      }
-    },
+    (atom) => atom.target.name,
     // item resolver
     (atom) => {
       const op = atomToChangesetOperation(atom, spec.isPrimary ? [] : [spec.alias], changeset);
@@ -174,7 +155,14 @@ function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): Field
             access: ["user", "token"],
           };
         }
-        case "virtualInput":
+        case "extraInput": {
+          return {
+            kind: "fieldset-input",
+            fieldsetAccess: [head.text],
+            required: head.ref.nullable,
+            type: head.ref.type,
+          };
+        }
         case "modelAtom": {
           // if path has more than 1 element, it can't be a sibling call
           ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
@@ -241,19 +229,6 @@ function atomToChangesetOperation(
   changeset: ChangesetDef
 ): ChangesetOperationDef {
   switch (atom.kind) {
-    case "virtual-input": {
-      return {
-        name: atom.name,
-        setter: {
-          kind: "fieldset-virtual-input",
-          type: atom.type,
-          required: !atom.optional,
-          nullable: atom.nullable,
-          fieldsetAccess: [...fieldsetNamespace, atom.name],
-          validators: composeValidators(atom.type, atom.validators),
-        },
-      };
-    }
     case "input": {
       return {
         name: atom.target.name,

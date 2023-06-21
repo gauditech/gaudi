@@ -6,7 +6,6 @@ import {
   ActionAtomInput,
   ActionAtomReferenceThrough,
   ActionAtomSet,
-  ActionAtomVirtualInput,
   ActionHook,
   AggregateType,
   AnonymousQuery,
@@ -28,8 +27,8 @@ import {
   ExecuteAction,
   ExecuteActionAtom,
   Expr,
-  FetchAction,
-  FetchActionAtom,
+  ExtraInput,
+  ExtraInputAtom,
   Field,
   FieldAtom,
   FieldValidationHook,
@@ -59,6 +58,8 @@ import {
   Populator,
   ProjectASTs,
   Query,
+  QueryAction,
+  QueryActionAtom,
   QueryAtom,
   RefModelField,
   RefModelReference,
@@ -327,165 +328,79 @@ class GaudiParser extends EmbeddedActionsParser {
 
     const keyword = getTokenData(this.CONSUME(L.Query));
     const name = this.SUBRULE(this.identifierRef);
-    this.CONSUME1(L.LCurly);
+    this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
-      DEF: () => {
-        this.OR1([
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.From));
-              const identifierPath = this.SUBRULE1(this.identifierRefPath);
-              const as = this.OPTION(() => {
-                const keyword = getTokenData(this.CONSUME(L.As));
-                const identifierPath = this.SUBRULE2(this.identifierRefPath);
-                return { keyword, identifierPath };
-              });
-              atoms.push({
-                kind: "from",
-                identifierPath,
-                as,
-                keyword,
-              });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Filter));
-              this.CONSUME2(L.LCurly);
-              const expr = this.SUBRULE(this.expr) as Expr<Db>;
-              this.CONSUME2(L.RCurly);
-              atoms.push({ kind: "filter", expr, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Order), this.CONSUME(L.By));
-              const orderBy = this.SUBRULE(this.orderBy);
-              atoms.push({ kind: "orderBy", orderBy, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Limit));
-              const value = this.SUBRULE1(this.integer);
-              atoms.push({ kind: "limit", value, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Offset));
-              const value = this.SUBRULE2(this.integer);
-              atoms.push({ kind: "offset", value, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Select));
-              const select = this.SUBRULE(this.select);
-              atoms.push({ kind: "select", select, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const aggregateToken = this.OR2([
-                { ALT: () => this.CONSUME(L.Count) },
-                { ALT: () => this.CONSUME(L.Sum) },
-                { ALT: () => this.CONSUME(L.One) },
-                { ALT: () => this.CONSUME(L.First) },
-              ]);
-              const aggregate = aggregateToken.image as AggregateType;
-              const keyword = getTokenData(aggregateToken);
-              atoms.push({ kind: "aggregate", aggregate, keyword });
-            },
-          },
-        ]);
-      },
+      DEF: () => atoms.push(this.SUBRULE(this.queryAtom)),
     });
-    this.CONSUME1(L.RCurly);
+    this.CONSUME(L.RCurly);
 
     return { kind: "query", name, atoms, keyword };
   });
-  queryAtoms = this.RULE("queryAtoms", (): QueryAtom[] => {
-    const atoms: QueryAtom[] = [];
 
-    this.CONSUME1(L.LCurly);
-    this.MANY_SEP({
-      SEP: L.Comma,
-      DEF: () => {
-        this.OR1([
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.From));
-              const identifierPath = this.SUBRULE1(this.identifierRefPath);
-              const as = this.OPTION(() => {
-                const keyword = getTokenData(this.CONSUME(L.As));
-                const identifierPath = this.SUBRULE2(this.identifierRefPath);
-                return { keyword, identifierPath };
-              });
-              atoms.push({
-                kind: "from",
-                identifierPath,
-                as,
-                keyword,
-              });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Filter));
-              this.CONSUME2(L.LCurly);
-              const expr = this.SUBRULE(this.expr) as Expr<Db>;
-              this.CONSUME2(L.RCurly);
-              atoms.push({ kind: "filter", expr, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Order), this.CONSUME(L.By));
-              const orderBy = this.SUBRULE(this.orderBy);
-              atoms.push({ kind: "orderBy", orderBy, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Limit));
-              const value = this.SUBRULE1(this.integer);
-              atoms.push({ kind: "limit", value, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Offset));
-              const value = this.SUBRULE2(this.integer);
-              atoms.push({ kind: "offset", value, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const keyword = getTokenData(this.CONSUME(L.Select));
-              const select = this.SUBRULE(this.select);
-              atoms.push({ kind: "select", select, keyword });
-            },
-          },
-          {
-            ALT: () => {
-              const aggregateToken = this.OR2([
-                { ALT: () => this.CONSUME(L.Count) },
-                { ALT: () => this.CONSUME(L.One) },
-                { ALT: () => this.CONSUME(L.First) },
-              ]);
-              const aggregate = aggregateToken.image as AggregateType;
-              const keyword = getTokenData(aggregateToken);
-              atoms.push({ kind: "aggregate", aggregate, keyword });
-            },
-          },
-        ]);
+  queryAtom = this.RULE("queryAtom", (): QueryAtom => {
+    return this.OR1<QueryAtom>([
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME(L.From));
+          const identifierPath = this.SUBRULE1(this.identifierRefPath);
+          const as = this.OPTION(() => {
+            const keyword = getTokenData(this.CONSUME(L.As));
+            const identifierPath = this.SUBRULE2(this.identifierRefPath);
+            return { keyword, identifierPath };
+          });
+          return {
+            kind: "from",
+            identifierPath,
+            as,
+            keyword,
+          };
+        },
       },
-    });
-    this.CONSUME1(L.RCurly);
-
-    return atoms;
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME(L.Filter));
+          this.CONSUME(L.LCurly);
+          const expr = this.SUBRULE(this.expr) as Expr<Db>;
+          this.CONSUME(L.RCurly);
+          return { kind: "filter", expr, keyword };
+        },
+      },
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME(L.Order), this.CONSUME(L.By));
+          const orderBy = this.SUBRULE(this.orderBy);
+          return { kind: "orderBy", orderBy, keyword };
+        },
+      },
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME(L.Limit));
+          const value = this.SUBRULE1(this.integer);
+          return { kind: "limit", value, keyword };
+        },
+      },
+      {
+        ALT: () => {
+          const keyword = getTokenData(this.CONSUME(L.Offset));
+          const value = this.SUBRULE2(this.integer);
+          return { kind: "offset", value, keyword };
+        },
+      },
+      {
+        ALT: () => {
+          const aggregateToken = this.OR2([
+            { ALT: () => this.CONSUME(L.Count) },
+            { ALT: () => this.CONSUME(L.Sum) },
+            { ALT: () => this.CONSUME(L.One) },
+            { ALT: () => this.CONSUME(L.First) },
+          ]);
+          const aggregate = aggregateToken.image as AggregateType;
+          const keyword = getTokenData(aggregateToken);
+          return { kind: "aggregate", aggregate, keyword };
+        },
+      },
+    ]);
   });
 
   orderBy = this.RULE("orderBy", (): OrderBy => {
@@ -621,8 +536,20 @@ class GaudiParser extends EmbeddedActionsParser {
     const type = typeToken.image as EndpointType;
     const keyword = getTokenData(this.CONSUME(L.Endpoint));
     this.CONSUME1(L.LCurly);
-    this.MANY(() => {
+    this.MANY1(() => {
       this.OR2([
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.CONSUME(L.Extra), this.CONSUME(L.Inputs));
+            const extraInputs: ExtraInput[] = [];
+            this.CONSUME2(L.LCurly);
+            this.MANY2(() => {
+              extraInputs.push(this.SUBRULE(this.extraInput));
+            });
+            this.CONSUME2(L.RCurly);
+            atoms.push({ kind: "extraInputs", extraInputs, keyword });
+          },
+        },
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Action));
@@ -633,9 +560,9 @@ class GaudiParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             const keyword = getTokenData(this.CONSUME(L.Authorize));
-            this.CONSUME2(L.LCurly);
+            this.CONSUME3(L.LCurly);
             const expr = this.SUBRULE(this.expr);
-            this.CONSUME2(L.RCurly);
+            this.CONSUME3(L.RCurly);
             atoms.push({ kind: "authorize", expr, keyword });
           },
         },
@@ -718,7 +645,7 @@ class GaudiParser extends EmbeddedActionsParser {
       { ALT: () => this.SUBRULE(this.modelAction) },
       { ALT: () => this.SUBRULE(this.deleteAction) },
       { ALT: () => this.SUBRULE(this.executeAction) },
-      { ALT: () => this.SUBRULE(this.fetchAction) },
+      { ALT: () => this.SUBRULE(this.queryAction) },
     ]);
   });
 
@@ -765,7 +692,6 @@ class GaudiParser extends EmbeddedActionsParser {
       this.OR3([
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomSet)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomReference)) },
-        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomVirtualInput)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomDeny)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInput)) },
       ]);
@@ -798,7 +724,6 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
-        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomVirtualInput)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionHook)) },
         {
           ALT: () => {
@@ -813,23 +738,58 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "execute", keywordAs: alias?.keywordAs, name: alias?.name, atoms, keyword };
   });
 
-  fetchAction = this.RULE("fetchAction", (): FetchAction => {
-    const atoms: FetchActionAtom[] = [];
+  queryAction = this.RULE("queryAction", (): QueryAction => {
+    const atoms: QueryActionAtom[] = [];
 
-    const keyword = getTokenData(this.CONSUME(L.Fetch));
-    const keywordAs = getTokenData(this.CONSUME(L.As));
-    const name = this.SUBRULE(this.identifierRef);
-
-    this.CONSUME(L.LCurly);
-    this.MANY(() => {
-      this.OR([
-        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomVirtualInput)) },
-        { ALT: () => atoms.push(this.SUBRULE(this.anonymousQuery)) },
-      ]);
+    const keyword = getTokenData(this.CONSUME(L.Query));
+    const alias = this.OPTION(() => {
+      const keyword = getTokenData(this.CONSUME(L.As));
+      const name = this.SUBRULE(this.identifierRef);
+      return { keyword, name };
     });
-    this.CONSUME(L.RCurly);
 
-    return { kind: "fetch", keywordAs, name, atoms, keyword };
+    this.CONSUME1(L.LCurly);
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () => {
+        this.OR([
+          { ALT: () => atoms.push(this.SUBRULE(this.queryAtom)) },
+          {
+            ALT: () => {
+              const updateAtoms: ActionAtomSet[] = [];
+              const keyword = getTokenData(this.CONSUME(L.Update));
+              this.CONSUME2(L.LCurly);
+              this.MANY2(() => updateAtoms.push(this.SUBRULE(this.actionAtomSet)));
+              this.CONSUME2(L.RCurly);
+              atoms.push({ kind: "update", atoms: updateAtoms, keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Delete));
+              atoms.push({ kind: "delete", keyword });
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Select));
+              const select = this.SUBRULE(this.select);
+              atoms.push({ kind: "select", select, keyword });
+            },
+          },
+        ]);
+      },
+    });
+    this.CONSUME1(L.RCurly);
+
+    return {
+      kind: "queryAction",
+      keywordAs: alias?.keyword,
+      name: alias?.name,
+      type: Type.any,
+      atoms,
+      keyword,
+    };
   });
 
   actionAtomSet = this.RULE("actionAtomSet", (): ActionAtomSet => {
@@ -904,10 +864,10 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "input", fields, keyword };
   });
 
-  actionAtomVirtualInput = this.RULE("actionAtomVirtualInput", (): ActionAtomVirtualInput => {
-    const atoms: ActionAtomVirtualInput["atoms"] = [];
+  extraInput = this.RULE("extraInput", (): ExtraInput => {
+    const atoms: ExtraInputAtom[] = [];
 
-    const keyword = getTokenData(this.CONSUME(L.Virtual), this.CONSUME(L.Input));
+    const keyword = getTokenData(this.CONSUME(L.Field));
     const name = this.SUBRULE(this.identifierRef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
@@ -941,7 +901,7 @@ class GaudiParser extends EmbeddedActionsParser {
     });
     this.CONSUME(L.RCurly);
 
-    return { kind: "virtualInput", name, atoms, keyword };
+    return { kind: "field", name, atoms, keyword };
   });
 
   inputAtoms = this.RULE("inputAtoms", (): InputAtom[] => {
@@ -1230,8 +1190,29 @@ class GaudiParser extends EmbeddedActionsParser {
   }
 
   anonymousQuery = this.RULE("anonymousQuery", (): AnonymousQuery => {
+    const atoms: AnonymousQuery["atoms"] = [];
     const keyword = getTokenData(this.CONSUME(L.Query));
-    const atoms = this.SUBRULE(this.queryAtoms);
+    this.CONSUME(L.LCurly);
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () => {
+        this.OR([
+          {
+            ALT: () => {
+              atoms.push(this.SUBRULE(this.queryAtom));
+            },
+          },
+          {
+            ALT: () => {
+              const keyword = getTokenData(this.CONSUME(L.Select));
+              const select = this.SUBRULE(this.select);
+              atoms.push({ kind: "select", select, keyword });
+            },
+          },
+        ]);
+      },
+    });
+    this.CONSUME(L.RCurly);
     return { kind: "anonymousQuery", atoms, keyword, type: Type.any };
   });
 

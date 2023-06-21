@@ -226,22 +226,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "actions": [
           {
             "alias": "existingAuthUser",
-            "changeset": [
-              {
-                "name": "username",
-                "setter": {
-                  "fieldsetAccess": [
-                    "username",
-                  ],
-                  "kind": "fieldset-virtual-input",
-                  "nullable": false,
-                  "required": true,
-                  "type": "string",
-                  "validators": [],
-                },
-              },
-            ],
-            "kind": "fetch",
+            "kind": "query",
             "model": "AuthUser",
             "query": {
               "filter": {
@@ -290,36 +275,6 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                 },
                 {
-                  "alias": "name",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "AuthUser",
-                      "name",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "string",
-                    "nullable": false,
-                  },
-                },
-                {
-                  "alias": "username",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "AuthUser",
-                      "username",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "string",
-                    "nullable": false,
-                  },
-                },
-                {
                   "alias": "passwordHash",
                   "expr": {
                     "kind": "alias",
@@ -338,28 +293,18 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             },
           },
           {
-            "changeset": [
-              {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "password",
-                  ],
-                  "kind": "fieldset-virtual-input",
-                  "nullable": false,
-                  "required": true,
-                  "type": "string",
-                  "validators": [],
-                },
-              },
-            ],
+            "alias": "$action_1",
             "hook": {
               "args": [
                 {
                   "name": "clearPassword",
                   "setter": {
-                    "kind": "changeset-reference",
-                    "referenceName": "password",
+                    "fieldsetAccess": [
+                      "password",
+                    ],
+                    "kind": "fieldset-input",
+                    "required": false,
+                    "type": "string",
                   },
                 },
                 {
@@ -463,13 +408,28 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "nullable": false,
                 },
               },
+              {
+                "alias": "id",
+                "expr": {
+                  "kind": "alias",
+                  "namePath": [
+                    "accessToken",
+                    "id",
+                  ],
+                },
+                "kind": "expression",
+                "type": {
+                  "kind": "integer",
+                  "nullable": false,
+                },
+              },
             ],
             "targetPath": [
               "AuthUserAccessToken",
             ],
           },
           {
-            "changeset": [],
+            "alias": "$action_3",
             "hook": {
               "args": [
                 {
@@ -565,8 +525,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "actions": [
           {
             "alias": "accessToken",
-            "changeset": [],
-            "kind": "fetch",
+            "kind": "query",
             "model": "AuthUserAccessToken",
             "query": {
               "filter": {
@@ -614,51 +573,6 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     "nullable": false,
                   },
                 },
-                {
-                  "alias": "token",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "AuthUserAccessToken",
-                      "token",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "string",
-                    "nullable": false,
-                  },
-                },
-                {
-                  "alias": "expiryDate",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "AuthUserAccessToken",
-                      "expiryDate",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "string",
-                    "nullable": false,
-                  },
-                },
-                {
-                  "alias": "authUser_id",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "AuthUserAccessToken",
-                      "authUser_id",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "integer",
-                    "nullable": false,
-                  },
-                },
               ],
             },
           },
@@ -670,7 +584,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
-            "changeset": [],
+            "alias": "$action_2",
             "hook": {
               "args": [
                 {
@@ -741,31 +655,6 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "alias": "authUser",
             "changeset": [
               {
-                "name": "password",
-                "setter": {
-                  "fieldsetAccess": [
-                    "authUser",
-                    "password",
-                  ],
-                  "kind": "fieldset-virtual-input",
-                  "nullable": false,
-                  "required": true,
-                  "type": "string",
-                  "validators": [
-                    {
-                      "args": [
-                        {
-                          "kind": "integer",
-                          "value": 8,
-                        },
-                      ],
-                      "inputType": "string",
-                      "name": "minLength",
-                    },
-                  ],
-                },
-              },
-              {
                 "name": "name",
                 "setter": {
                   "fieldsetAccess": [
@@ -794,8 +683,12 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "setter": {
                   "args": [
                     {
-                      "kind": "changeset-reference",
-                      "referenceName": "password",
+                      "fieldsetAccess": [
+                        "password",
+                      ],
+                      "kind": "fieldset-input",
+                      "required": false,
+                      "type": "string",
                     },
                     {
                       "kind": "literal",
@@ -865,7 +758,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
-            "changeset": [],
+            "alias": "$action_1",
             "hook": {
               "args": [
                 {
@@ -954,24 +847,6 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     },
                   ],
                 },
-                "password": {
-                  "kind": "field",
-                  "nullable": false,
-                  "required": true,
-                  "type": "string",
-                  "validators": [
-                    {
-                      "args": [
-                        {
-                          "kind": "integer",
-                          "value": 8,
-                        },
-                      ],
-                      "inputType": "string",
-                      "name": "minLength",
-                    },
-                  ],
-                },
                 "username": {
                   "kind": "field",
                   "nullable": false,
@@ -991,6 +866,24 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   ],
                 },
               },
+            },
+            "password": {
+              "kind": "field",
+              "nullable": false,
+              "required": true,
+              "type": "string",
+              "validators": [
+                {
+                  "args": [
+                    {
+                      "kind": "integer",
+                      "value": 8,
+                    },
+                  ],
+                  "inputType": "string",
+                  "name": "minLength",
+                },
+              ],
             },
           },
         },

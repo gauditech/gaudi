@@ -153,7 +153,11 @@ describe("API endpoints", () => {
     // --- hook action
 
     it("custom one action", async () => {
-      const data = { name: "Org Custom One", counter: 1 };
+      const data = {
+        name: "Org Custom One",
+        counter: 1,
+        customProp: "custom prop value",
+      };
       const postResp = await request(getServer()).post("/api/org/org1/customOneAction").send(data);
 
       expect(postResp.statusCode).toBe(204);

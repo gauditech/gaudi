@@ -46,7 +46,6 @@ export const Lte = createOperator("Lte", "<=");
 export const Lt = createOperator("Lt", "<");
 
 export const With = createWeakKeyword("with");
-export const Virtual = createWeakKeyword("virtual");
 export const Validate = createWeakKeyword("validate");
 export const Update = createWeakKeyword("update");
 export const Unique = createWeakKeyword("unique");
@@ -87,6 +86,7 @@ export const Many = createWeakKeyword("many");
 export const List = createWeakKeyword("list");
 export const Limit = createWeakKeyword("limit");
 export const Js = createWeakKeyword("js");
+export const Inputs = createWeakKeyword("inputs");
 export const Input = createWeakKeyword("input");
 export const Inline = createWeakKeyword("inline");
 export const Identify = createWeakKeyword("identify");
@@ -99,6 +99,7 @@ export const First = createWeakKeyword("first");
 export const Filter = createWeakKeyword("filter");
 export const Field = createWeakKeyword("field");
 export const Fetch = createWeakKeyword("fetch");
+export const Extra = createWeakKeyword("extra");
 export const Execute = createWeakKeyword("execute");
 export const Entrypoint = createWeakKeyword("entrypoint");
 export const Endpoint = createWeakKeyword("endpoint");
@@ -179,7 +180,6 @@ export const GaudiTokens = [
   Float,
   String,
   With,
-  Virtual,
   Validate,
   Update,
   Unique,
@@ -220,6 +220,7 @@ export const GaudiTokens = [
   List,
   Limit,
   Js,
+  Inputs,
   Input,
   Inline,
   Identify,
@@ -232,6 +233,7 @@ export const GaudiTokens = [
   Filter,
   Field,
   Fetch,
+  Extra,
   Execute,
   Entrypoint,
   Endpoint,
