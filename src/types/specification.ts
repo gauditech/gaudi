@@ -77,7 +77,7 @@ export type Relation = {
 };
 
 export type Query = {
-  name: string;
+  name?: string;
   sourceModel: string;
   targetModel: string;
   cardinality: TypeCardinality;
@@ -87,8 +87,8 @@ export type Query = {
   orderBy?: QueryOrderBy[];
   limit?: number;
   offset?: number;
-  select: Select;
   aggregate?: string;
+  select?: Select;
 };
 
 export type QueryOrderBy = { expr: Expr; order?: "asc" | "desc" };
@@ -131,6 +131,7 @@ export type Endpoint =
 
 export type EndpointList = {
   kind: "list";
+  input: ExtraInput[];
   actions: Action[];
   authorize?: Expr;
   response: Select;
@@ -141,6 +142,7 @@ export type EndpointList = {
 
 export type EndpointGet = {
   kind: "get";
+  input: ExtraInput[];
   actions: Action[];
   authorize?: Expr;
   response: Select;
@@ -148,6 +150,7 @@ export type EndpointGet = {
 
 export type EndpointCreateUpdate = {
   kind: "create" | "update";
+  input: ExtraInput[];
   actions: Action[];
   authorize?: Expr;
   response: Select;
@@ -155,6 +158,7 @@ export type EndpointCreateUpdate = {
 
 export type EndpointDelete = {
   kind: "delete";
+  input: ExtraInput[];
   actions: Action[];
   authorize?: Expr;
 };
@@ -164,6 +168,7 @@ export type EndpointMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 export type EndpointCustom = {
   kind: "custom";
+  input: ExtraInput[];
   actions: Action[];
   authorize?: Expr;
   cardinality: EndpointCardinality;
@@ -188,22 +193,22 @@ export type Action =
       alias: string;
       hook: ActionHook;
       responds: boolean;
-      atoms: ActionAtomVirtualInput[];
     }
   | {
-      kind: "fetch";
+      kind: "query";
       alias: string;
       query: Query;
-      atoms: ActionAtomVirtualInput[];
+      operation: ActionQueryOperation;
     };
+
+export type ActionQueryOperation =
+  | { kind: "update"; atoms: ActionAtomSet[] }
+  | { kind: "delete" }
+  | { kind: "select" };
 
 export type ModelAction = Extract<Action, { kind: "create" | "update" }>;
 
-export type ModelActionAtom =
-  | ActionAtomInput
-  | ActionAtomSet
-  | ActionAtomRefThrough
-  | ActionAtomVirtualInput;
+export type ModelActionAtom = ActionAtomInput | ActionAtomSet | ActionAtomRefThrough;
 
 export type ActionAtomSetHook = { kind: "hook"; hook: ActionHook };
 export type ActionAtomSetExp = { kind: "expression"; expr: Expr };
@@ -227,8 +232,8 @@ export type ActionAtomRefThrough = {
   target: RefModelReference;
   through: RefModelAtom[];
 };
-export type ActionAtomVirtualInput = {
-  kind: "virtual-input";
+export type ExtraInput = {
+  kind: "extra-input";
   name: string;
   type: FieldType;
   nullable: boolean;

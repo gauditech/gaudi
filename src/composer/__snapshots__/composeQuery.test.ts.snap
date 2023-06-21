@@ -1,10 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`compose action queries "fetch" action custom endpoint 1`] = `
+exports[`compose action queries "query" action custom endpoint 1`] = `
 {
-  "alias": "cOrg",
-  "changeset": [],
-  "kind": "fetch",
+  "alias": "$action_0",
+  "kind": "query",
   "model": "Org",
   "query": {
     "filter": {
@@ -60,7 +59,7 @@ exports[`compose action queries "fetch" action custom endpoint 1`] = `
 }
 `;
 
-exports[`compose action queries "fetch" action native endpoint 1`] = `
+exports[`compose action queries "query" action native endpoint 1`] = `
 {
   "alias": "$action_0",
   "changeset": [
@@ -91,18 +90,33 @@ exports[`compose action queries "fetch" action native endpoint 1`] = `
   "isPrimary": true,
   "kind": "update-one",
   "model": "Org",
-  "select": [],
+  "select": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "$action_0",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
   "targetPath": [
     "$target_0",
   ],
 }
 `;
 
-exports[`compose action queries "fetch" action query first 1`] = `
+exports[`compose action queries "query" action query first 1`] = `
 {
-  "alias": "measurement",
-  "changeset": [],
-  "kind": "fetch",
+  "alias": "$action_0",
+  "kind": "query",
   "model": "Measurement",
   "query": {
     "filter": undefined,
@@ -140,54 +154,6 @@ exports[`compose action queries "fetch" action query first 1`] = `
             "device",
             "measurements",
             "id",
-          ],
-        },
-        "kind": "expression",
-        "type": {
-          "kind": "integer",
-          "nullable": false,
-        },
-      },
-      {
-        "alias": "value",
-        "expr": {
-          "kind": "alias",
-          "namePath": [
-            "device",
-            "measurements",
-            "value",
-          ],
-        },
-        "kind": "expression",
-        "type": {
-          "kind": "integer",
-          "nullable": false,
-        },
-      },
-      {
-        "alias": "timestamp",
-        "expr": {
-          "kind": "alias",
-          "namePath": [
-            "device",
-            "measurements",
-            "timestamp",
-          ],
-        },
-        "kind": "expression",
-        "type": {
-          "kind": "integer",
-          "nullable": false,
-        },
-      },
-      {
-        "alias": "device_id",
-        "expr": {
-          "kind": "alias",
-          "namePath": [
-            "device",
-            "measurements",
-            "device_id",
           ],
         },
         "kind": "expression",

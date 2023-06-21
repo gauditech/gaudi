@@ -158,23 +158,23 @@ exports[`openAPI build spec 1`] = `
                       "name": {
                         "type": "string",
                       },
-                      "password": {
-                        "type": "string",
-                      },
                       "username": {
                         "type": "string",
                       },
                     },
                     "required": [
-                      "password",
                       "name",
                       "username",
                     ],
                     "type": "object",
                   },
+                  "password": {
+                    "type": "string",
+                  },
                 },
                 "required": [
                   "authUser",
+                  "password",
                 ],
                 "type": "object",
               },

@@ -69,7 +69,23 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "isPrimary": false,
         "kind": "update-one",
         "model": "Org",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "newOrg",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
         "targetPath": [
           "org",
         ],
@@ -248,7 +264,23 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "isPrimary": false,
         "kind": "create-one",
         "model": "Org",
-        "select": [],
+        "select": [
+          {
+            "alias": "id",
+            "expr": {
+              "kind": "alias",
+              "namePath": [
+                "org",
+                "id",
+              ],
+            },
+            "kind": "expression",
+            "type": {
+              "kind": "integer",
+              "nullable": false,
+            },
+          },
+        ],
         "targetPath": [
           "Org",
         ],
@@ -370,6 +402,21 @@ exports[`compose actions native actions can create nested relations through tran
           },
         ],
       },
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "repo",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
     ],
     "targetPath": [
       "Repo",
@@ -395,7 +442,23 @@ exports[`compose actions native actions can create nested relations through tran
     "isPrimary": false,
     "kind": "create-one",
     "model": "OrgLog",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "log",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "repo",
       "org",
@@ -426,7 +489,23 @@ exports[`compose actions native actions can update deeply nested references 1`] 
     "isPrimary": true,
     "kind": "update-one",
     "model": "Issue",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "$action_0",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "issue",
     ],
@@ -451,7 +530,23 @@ exports[`compose actions native actions can update deeply nested references 1`] 
     "isPrimary": false,
     "kind": "update-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "issue",
       "repo",
@@ -493,7 +588,23 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
     "isPrimary": true,
     "kind": "create-one",
     "model": "Repo",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "$action_0",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "repos",
     ],
@@ -522,7 +633,23 @@ exports[`compose actions native actions sets default action if not given 1`] = `
     "isPrimary": true,
     "kind": "update-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "$action_0",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "org",
     ],
@@ -639,7 +766,23 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     "isPrimary": false,
     "kind": "create-one",
     "model": "OrgOwner",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "oo",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "OrgOwner",
     ],
@@ -689,7 +832,23 @@ exports[`compose actions native actions succeeds for basic update with a deny ru
     "isPrimary": true,
     "kind": "update-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "ox",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "org",
     ],
@@ -697,35 +856,11 @@ exports[`compose actions native actions succeeds for basic update with a deny ru
 ]
 `;
 
-exports[`compose actions native actions succeeds when virtual input is defined and referenced 1`] = `
+exports[`compose actions native actions succeeds when extra input is defined and referenced 1`] = `
 [
   {
     "alias": "org",
     "changeset": [
-      {
-        "name": "iname",
-        "setter": {
-          "fieldsetAccess": [
-            "iname",
-          ],
-          "kind": "fieldset-virtual-input",
-          "nullable": false,
-          "required": true,
-          "type": "string",
-          "validators": [
-            {
-              "args": [
-                {
-                  "kind": "integer",
-                  "value": 4,
-                },
-              ],
-              "inputType": "string",
-              "name": "minLength",
-            },
-          ],
-        },
-      },
       {
         "name": "name",
         "setter": {
@@ -738,8 +873,12 @@ exports[`compose actions native actions succeeds when virtual input is defined a
               },
             },
             {
-              "kind": "changeset-reference",
-              "referenceName": "iname",
+              "fieldsetAccess": [
+                "iname",
+              ],
+              "kind": "fieldset-input",
+              "required": false,
+              "type": "string",
             },
           ],
           "kind": "function",
@@ -750,12 +889,55 @@ exports[`compose actions native actions succeeds when virtual input is defined a
     "isPrimary": true,
     "kind": "create-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "Org",
     ],
   },
 ]
+`;
+
+exports[`compose actions native actions succeeds when extra input is defined and referenced 2`] = `
+{
+  "kind": "record",
+  "nullable": false,
+  "record": {
+    "iname": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
+      "type": "string",
+      "validators": [
+        {
+          "args": [
+            {
+              "kind": "integer",
+              "value": 4,
+            },
+          ],
+          "inputType": "string",
+          "name": "minLength",
+        },
+      ],
+    },
+  },
+}
 `;
 
 exports[`compose actions native actions succeeds with arithmetic expressions in setters 1`] = `
@@ -823,7 +1005,23 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
     "isPrimary": true,
     "kind": "create-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "$action_0",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "Org",
     ],
@@ -885,7 +1083,23 @@ exports[`compose actions native actions succeeds with custom inputs 1`] = `
     "isPrimary": true,
     "kind": "update-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "ox",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "org",
     ],
@@ -927,7 +1141,23 @@ exports[`compose actions native actions succeeds with nested sibling reference 1
     "isPrimary": true,
     "kind": "create-one",
     "model": "Org",
-    "select": [],
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "$action_0",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
     "targetPath": [
       "Org",
     ],

@@ -95,10 +95,12 @@ api {
         order by { name desc }
       }
       create endpoint {
+        extra inputs {
+          field raw_description { type string }
+        }
         action {
           create as repo {
             set latest_num 0
-            virtual input raw_description { type string }
             set description "Description: " + raw_description
             set slug hook {
               arg org org.name

@@ -28,21 +28,20 @@ function getCode(): string {
           method POST
           cardinality many
 
-          action {
-            fetch as existingAuthUser {
-              virtual input username { type string }
+          extra inputs {
+            field username { type string }
+            field password { type string }
+          }
 
-              query {
-                from ${authUserModelName} as a,
-                filter { a.username is username },
-                // TODO: this should be checked with validate V2, as it should fail with 401, not 500
-                one
-              }
+          action {
+            query as existingAuthUser {
+              from ${authUserModelName} as a,
+              filter { a.username is username },
+              // TODO: this should be checked with validate V2, as it should fail with 401, not 500
+              one
             }
 
             execute {
-              virtual input password { type string }
-
               hook {
                 arg clearPassword password
                 arg hashPassword existingAuthUser.passwordHash
@@ -56,7 +55,7 @@ function getCode(): string {
             create ${accessTokenModelName} as accessToken {
               set token cryptoToken(32)
               set expiryDate stringify(now() + 3600000) // 1 hour
-              set authUser existingAuthUser
+              set authUser_id existingAuthUser.id
             }
 
             // return token
@@ -81,13 +80,10 @@ function getCode(): string {
           cardinality many
 
           action {
-            fetch as accessToken {
-
-              query {
-                from ${accessTokenModelName},
-                filter { token is @requestAuthToken },
-                one
-              }
+            query as accessToken {
+              from ${accessTokenModelName},
+              filter { token is @requestAuthToken },
+              one
             }
 
             delete accessToken {}
@@ -112,10 +108,13 @@ function getCode(): string {
           method POST
           cardinality many
 
+          extra inputs {
+            field password { type string, validate { min 8 } }
+          }
+
           action {
             create ${authUserModelName} as authUser {
               input { name, username }
-              virtual input password { type string, validate { min 8 } }
               set passwordHash cryptoHash(password, 10)
             }
 

@@ -81,9 +81,9 @@ export declare function createClient(options: ApiClientOptions): {
                     org_id: number;
                 }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
                 create: CreateApiClientFn<{
-                    raw_description: string;
                     name: string;
                     is_public: boolean;
+                    raw_description: string;
                 }, {
                     id: number;
                     slug: string;

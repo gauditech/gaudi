@@ -6,7 +6,6 @@ import { compileToOldSpec, compose } from "@src/index";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
-  buildStrictChangeset,
   fieldsetAccessToPath,
   formatFieldValue,
   getFieldsetProperty,
@@ -74,17 +73,6 @@ describe("runtime", () => {
           },
         },
         {
-          name: "virtual_input_prop",
-          setter: {
-            fieldsetAccess: ["virtual_input_prop"],
-            kind: "fieldset-virtual-input",
-            type: "string",
-            required: false,
-            nullable: false,
-            validators: [],
-          },
-        },
-        {
           name: "input_value_copy",
           setter: {
             kind: "changeset-reference",
@@ -123,7 +111,7 @@ describe("runtime", () => {
       const context: ActionContext = {
         input: {
           input_prop: "input value",
-          virtual_input_prop: "virtual input value",
+          extra_input_prop: "extra input value",
         },
         vars: new Vars(),
         referenceIds: [
@@ -144,37 +132,19 @@ describe("runtime", () => {
           name: "input_prop",
           setter: { kind: "literal", literal: { kind: "string", value: "just value" } },
         },
-        // removed virtual/transient fileds
-        {
-          name: "virtual_input_prop",
-          setter: {
-            fieldsetAccess: ["virtual_input_prop"],
-            kind: "fieldset-virtual-input",
-            type: "string",
-            required: false,
-            nullable: false,
-            validators: [],
-          },
-        },
       ];
 
       const context: ActionContext = {
         input: {
           input_prop: "input value",
-          virtual_input_prop: "virtual input value",
+          extra_input_prop: "extra input value",
         },
         vars: new Vars(),
         referenceIds: [{ kind: "reference-found", fieldsetAccess: ["slug"], value: 1 }],
       };
 
       expect(
-        await buildStrictChangeset(
-          createTestDefinition(),
-          mockQueryExecutor(),
-          undefined,
-          data,
-          context
-        )
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
       ).toMatchSnapshot();
     });
 

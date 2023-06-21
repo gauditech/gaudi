@@ -14,10 +14,6 @@ type Changeset = Record<string, unknown>;
 
 /**
  * Build result record from given action changeset rules and give context (source) inputs.
- *
- * This changeset allows for virtual/transient fields to remain in final changeset.
- * This can tipically be used when we want to leave some non-model based fields
- * in the changeset. For example in hooks.
  */
 export async function buildChangeset(
   def: Definition,
@@ -35,7 +31,6 @@ export async function buildChangeset(
       case "literal": {
         return formatFieldValue(setter.literal.value, setter.literal.kind);
       }
-      case "fieldset-virtual-input":
       case "fieldset-input": {
         return formatFieldValue(
           getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
@@ -99,11 +94,8 @@ export async function buildChangeset(
       case "query": {
         const vars = actionContext.vars.copy();
         vars.set("___requestAuthToken", await getValue({ kind: "request-auth-token", access: [] }));
-        Object.keys(changeset).forEach((key) => {
-          vars.set(`___changeset___${key}`, changeset[key]);
-        });
-        Object.keys(changesetContext).forEach((key) => {
-          vars.set(`___changeset___${key}`, changesetContext[key]);
+        Object.keys(actionContext.input).forEach((key) => {
+          vars.set(`___changeset___${key}`, actionContext.input[key]);
         });
 
         const qt = buildQueryTree(def, setter.query);
@@ -127,44 +119,6 @@ export async function buildChangeset(
       }
       default: {
         changeset[name] = await getValue(setter);
-      }
-    }
-  }
-
-  return changeset;
-}
-
-/**
- * Build strict result record from given action changeset rules and give context (source) inputs.
- *
- * Being strict means that any virtual (transient) fields (eg. "virtual-input") are removed from changeset
- * This is mostly used eg. for actions that wor with pure changesets defined on model.
- */
-export async function buildStrictChangeset(
-  def: Definition,
-  qx: QueryExecutor,
-  epCtx: HookActionContext | undefined,
-  actionChangesetDef: ChangesetDef,
-  actionContext: ActionContext,
-  // `changesetContext` is used for hooks, to be able to pass the "parent context" changeset
-  changesetContext: Changeset = {}
-): Promise<Changeset> {
-  const changeset = await buildChangeset(
-    def,
-    qx,
-    epCtx,
-    actionChangesetDef,
-    actionContext,
-    changesetContext
-  );
-
-  /**
-   * Remove all the virtual fields' values from the changeset.
-   */
-  for (const { name, setter } of actionChangesetDef) {
-    switch (setter.kind) {
-      case "fieldset-virtual-input": {
-        delete changeset[name];
       }
     }
   }
