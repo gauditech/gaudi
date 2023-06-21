@@ -90,20 +90,24 @@ api {
       path "customOneAction"
       action {
         // test custom action return value
-        execute as custom {
+        // take "customProp" virt. input, return it to "customAlias" and add it back to response
+        execute as customAlias {
+          virtual input customProp { type string }
           hook {
-            arg prop "custom prop value"
+            arg prop customProp
+            // returns struct: { prop }
             source echo from "hooks.js"
           }
         }
- 
+
         execute {
           virtual input name { type string }
           virtual input counter { type integer }
           hook {
             arg name name
             arg counter counter
-            arg customProp custom
+            // add "customProp" back to response
+            arg customProp customAlias.prop
             source customAction from "hooks.js"
           }
         }

@@ -156,7 +156,7 @@ describe("API endpoints", () => {
       const data = {
         name: "Org Custom One",
         counter: 1,
-        customProp: { prop: "custom prop value" },
+        customProp: "custom prop value",
       };
       const postResp = await request(getServer()).post("/api/org/org1/customOneAction").send(data);
 

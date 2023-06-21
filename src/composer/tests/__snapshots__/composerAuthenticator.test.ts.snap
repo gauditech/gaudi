@@ -338,6 +338,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             },
           },
           {
+            "alias": "$action_1",
             "changeset": [
               {
                 "name": "password",
@@ -469,6 +470,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
+            "alias": "$action_3",
             "changeset": [],
             "hook": {
               "args": [
@@ -670,6 +672,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
+            "alias": "$action_2",
             "changeset": [],
             "hook": {
               "args": [
@@ -865,6 +868,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             ],
           },
           {
+            "alias": "$action_1",
             "changeset": [],
             "hook": {
               "args": [

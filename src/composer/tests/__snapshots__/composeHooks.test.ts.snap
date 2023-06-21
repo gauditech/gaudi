@@ -5,6 +5,7 @@ exports[`compose hooks action hook 1`] = `
   {
     "actions": [
       {
+        "alias": "$action_0",
         "changeset": [
           {
             "name": "termsOfUse",
@@ -128,6 +129,7 @@ exports[`compose hooks action hook 1`] = `
 
 exports[`compose hooks composes action hook 1`] = `
 {
+  "alias": "$action_0",
   "changeset": [
     {
       "name": "prop",
