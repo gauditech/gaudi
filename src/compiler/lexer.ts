@@ -63,6 +63,7 @@ export const Runtime = createWeakKeyword("runtime");
 export const Returns = createWeakKeyword("returns");
 export const Response = createWeakKeyword("response");
 export const Responds = createWeakKeyword("responds");
+export const Respond = createWeakKeyword("respond");
 export const Repeat = createWeakKeyword("repeat");
 export const Relation = createWeakKeyword("relation");
 export const Reference = createWeakKeyword("reference");
@@ -90,6 +91,8 @@ export const Inputs = createWeakKeyword("inputs");
 export const Input = createWeakKeyword("input");
 export const Inline = createWeakKeyword("inline");
 export const Identify = createWeakKeyword("identify");
+export const HttpStatus = createWeakKeyword("httpStatus");
+export const HttpHeaders = createKeyword("httpHeaders");
 export const Hook = createWeakKeyword("hook");
 export const GET = createWeakKeyword("GET");
 export const Get = createWeakKeyword("get");
@@ -117,6 +120,7 @@ export const Client = createWeakKeyword("client");
 export const Cascade = createWeakKeyword("cascade");
 export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
+export const Body = createWeakKeyword("body");
 export const Basic = createWeakKeyword("basic");
 export const Authorize = createWeakKeyword("authorize");
 export const Auth = createWeakKeyword("auth");
@@ -197,6 +201,7 @@ export const GaudiTokens = [
   Returns,
   Response,
   Responds,
+  Respond,
   Repeat,
   Relation,
   Reference,
@@ -224,6 +229,8 @@ export const GaudiTokens = [
   Input,
   Inline,
   Identify,
+  HttpStatus,
+  HttpHeaders,
   Hook,
   GET,
   Get,
@@ -251,6 +258,7 @@ export const GaudiTokens = [
   Cascade,
   Cardinality,
   By,
+  Body,
   Basic,
   Authorize,
   Auth,

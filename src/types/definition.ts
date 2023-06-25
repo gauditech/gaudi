@@ -491,6 +491,7 @@ export type ActionDef =
   | UpdateOneAction
   | DeleteOneAction
   | ExecuteHookAction
+  | RespondAction
   | QueryAction;
 
 export type CreateOneAction = {
@@ -525,6 +526,13 @@ export type ExecuteHookAction = {
   alias: string;
   hook: ActionHookDef;
   responds: boolean;
+};
+
+export type RespondAction = {
+  kind: "respond";
+  body: FieldSetter;
+  httpStatus?: FieldSetter;
+  httpHeaders?: { name: string; value: FieldSetter }[];
 };
 
 export type QueryAction = {

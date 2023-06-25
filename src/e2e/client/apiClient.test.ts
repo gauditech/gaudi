@@ -443,6 +443,28 @@ describe("api client lib", () => {
       `);
     });
 
+    it("custom many endpoint - respond action with complex response", async () => {
+      const data = {
+        prop1: "Org Custom Many Respond prop1",
+        prop2: 2,
+        statusCode: 201,
+        header1: "header 1",
+        header2: "header 2",
+      };
+      const postResp = await client.api.org.customManyRespondActionComplex(data);
+
+      ensureEqual(postResp.kind, "success" as const); // type narrowing for simpler later code
+      expect(postResp.status).toBe(201);
+      expect(postResp.data).toMatchInlineSnapshot(`
+        {
+          "prop1": "Org Custom Many Respond prop1",
+          "prop2": 2,
+        }
+      `);
+      expect(postResp.headers["header-1"]).toBe(data.header1);
+      expect(postResp.headers["header-2"]).toBe(data.header2);
+    });
+
     // --- hook action with query
 
     it("custom one endpoint - action with query", async () => {

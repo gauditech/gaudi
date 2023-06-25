@@ -38,6 +38,9 @@ function buildApi(options: ApiClientOptions) {
     type CustomManyActionError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION";
     type CustomOneActionRespondsError = CustomOneActionError;
     type CustomManyActionRespondsError = CustomManyActionError;
+    type CustomManyRespondActionStaticError = CustomManyActionError;
+    type CustomManyRespondActionSimpleError = CustomManyActionError;
+    type CustomManyRespondActionComplexError = CustomManyActionError;
     type CustomOneQueryActionError = CustomOneActionError;
     type CustomFetchActionError = CustomOneActionError;
     type HookErrorResponseError = CustomManyActionError;
@@ -92,6 +95,9 @@ function buildApi(options: ApiClientOptions) {
         customManyAction: buildCustomManySubmitFn<any, any, CustomManyActionError>(options, parentPath, "customManyAction", "PATCH"),
         customOneActionResponds: buildCustomOneSubmitManyFn<string, any, any, CustomOneActionRespondsError>(options, parentPath, "customOneActionResponds", "POST"),
         customManyActionResponds: buildCustomManySubmitFn<any, any, CustomManyActionRespondsError>(options, parentPath, "customManyActionResponds", "PATCH"),
+        customManyRespondActionStatic: buildCustomManySubmitFn<any, any, CustomManyRespondActionStaticError>(options, parentPath, "customManyRespondActionStatic", "PATCH"),
+        customManyRespondActionSimple: buildCustomManySubmitFn<any, any, CustomManyRespondActionSimpleError>(options, parentPath, "customManyRespondActionSimple", "PATCH"),
+        customManyRespondActionComplex: buildCustomManySubmitFn<any, any, CustomManyRespondActionComplexError>(options, parentPath, "customManyRespondActionComplex", "PATCH"),
         customOneQueryAction: buildCustomOneSubmitManyFn<string, any, any, CustomOneQueryActionError>(options, parentPath, "customOneQueryAction", "POST"),
         customFetchAction: buildCustomOneSubmitManyFn<string, any, any, CustomFetchActionError>(options, parentPath, "customFetchAction", "POST"),
         hookErrorResponse: buildCustomManySubmitFn<any, any, HookErrorResponseError>(options, parentPath, "hookErrorResponse", "POST"),

@@ -110,6 +110,9 @@ export declare function createClient(options: ApiClientOptions): {
             customManyAction: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             customOneActionResponds: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
             customManyActionResponds: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customManyRespondActionStatic: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customManyRespondActionSimple: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customManyRespondActionComplex: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             customOneQueryAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
             customFetchAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
             hookErrorResponse: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;

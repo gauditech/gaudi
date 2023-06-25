@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import {
   applyFilterIdInContext,
   buildQueryTree,
@@ -15,7 +17,13 @@ import { HookActionContext, executeActionHook } from "@src/runtime/hooks";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { HookError } from "@src/runtime/server/error";
 import { Vars } from "@src/runtime/server/vars";
-import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition";
+import {
+  ActionDef,
+  CreateOneAction,
+  Definition,
+  RespondAction,
+  UpdateOneAction,
+} from "@src/types/definition";
 
 export type ActionContext = {
   input: Record<string, unknown>;
@@ -95,13 +103,48 @@ async function _internalExecuteActions(
       );
       ctx.vars.set(action.alias, result);
     } else if (actionKind === "execute-hook") {
-      ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
+      ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
 
       const argsChangeset = await buildChangeset(def, qx, epCtx, action.hook.args, ctx);
 
       try {
         const result = await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
         ctx.vars.set(action.alias, result);
+      } catch (err) {
+        throw new HookError(err);
+      }
+    } else if (actionKind == "respond") {
+      ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
+
+      try {
+        // construct changeset and resolve action parts
+        const actionChangesetDef = _.compact([
+          { name: "body", setter: action.body },
+          action.httpStatus != null ? { name: "httpStatus", setter: action.httpStatus } : undefined,
+        ]);
+        const changeset = await buildChangeset(def, qx, epCtx, actionChangesetDef, ctx);
+        // http headers are a separate changeset
+        const httpHeadersChangesetDef = (action.httpHeaders ?? []).map((h) => ({
+          name: h.name,
+          setter: h.value,
+        }));
+        const httpHeadersChangeset = await buildChangeset(
+          def,
+          qx,
+          epCtx,
+          httpHeadersChangesetDef,
+          ctx
+        );
+
+        const body = changeset.body;
+        // we're forcing number cause out type system should've made sure that this resolves to appropriate type
+        const httpResponseCode = (changeset.httpStatus ?? 200) as number;
+
+        Object.entries(httpHeadersChangeset).forEach(([name, value]) =>
+          // we're forcing string cause out type system should've made sure that this resolves to appropriate type
+          epCtx.response.set(name, value as string)
+        );
+        epCtx.response.status(httpResponseCode).json(body);
       } catch (err) {
         throw new HookError(err);
       }

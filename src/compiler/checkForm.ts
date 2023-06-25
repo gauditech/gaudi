@@ -27,6 +27,7 @@ import {
   QueryAction,
   Reference,
   Relation,
+  RespondAction,
   Runtime,
   Select,
   TokenData,
@@ -312,12 +313,32 @@ export function checkForm(projectASTs: ProjectASTs) {
     if (action) {
       action.actions.map((a) => checkAction(a, endpoint.type));
 
-      const responds = _.compact(
+      // only single "execute" action with "responds"
+      const executeWithResponds = _.compact(
         kindFilter(action.actions, "execute").map((a) => kindFind(a.atoms, "responds"))
       );
-      if (responds.length > 1) {
+      if (executeWithResponds.length > 1) {
         errors.push(
-          new CompilerError(responds[1].keyword, ErrorCode.MoreThanOneRespondsInEndpoint)
+          new CompilerError(executeWithResponds[1].keyword, ErrorCode.MoreThanOneRespondsInEndpoint)
+        );
+      }
+
+      // only single "respond" action
+      const respondActions = _.compact(kindFilter(action.actions, "respond"));
+      if (respondActions.length > 1) {
+        errors.push(
+          new CompilerError(
+            respondActions[1].keyword,
+            ErrorCode.MoreThanOneRespondsActionInEndpoint
+          )
+        );
+      }
+
+      // only one "execute" action with "responds" or "respond" action
+      if (executeWithResponds.length > 0 && respondActions.length > 0) {
+        errors.push(
+          // pick keyword from one of them, we choose `executeWithResponds` since it will probably be replaced by "respondActions"
+          new CompilerError(executeWithResponds[0].keyword, ErrorCode.MoreThanOneActionThatRespond)
         );
       }
     }
@@ -346,6 +367,7 @@ export function checkForm(projectASTs: ProjectASTs) {
       .with({ kind: "create" }, { kind: "update" }, (a) => checkModelAction(a, endpointType))
       .with({ kind: "delete" }, (a) => checkDeleteAction(a, endpointType))
       .with({ kind: "execute" }, (a) => checkExecuteAction(a, endpointType))
+      .with({ kind: "respond" }, (a) => checkRespondAction(a, endpointType))
       .with({ kind: "queryAction" }, checkQueryAction)
       .exhaustive();
   }
@@ -406,6 +428,14 @@ export function checkForm(projectASTs: ProjectASTs) {
       errors.push(
         new CompilerError(responds.keyword, ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint)
       );
+    }
+  }
+  function checkRespondAction(action: RespondAction, endpointType: EndpointType) {
+    containsAtoms(action, ["body"]);
+    noDuplicateAtoms(action, ["body", "httpStatus", "httpHeaders"]);
+
+    if (endpointType !== "custom") {
+      errors.push(new CompilerError(action.keyword, ErrorCode.RespondActionNotInCustomEndpoint));
     }
   }
 

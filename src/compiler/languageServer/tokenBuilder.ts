@@ -34,6 +34,7 @@ import {
   Reference,
   Relation,
   RepeatValue,
+  RespondAction,
   Runtime,
   Select,
   TokenData,
@@ -337,6 +338,7 @@ export function buildTokens(
         if (target) buildIdentifierPath(target);
       })
       .with({ kind: "execute" }, buildExecuteAction)
+      .with({ kind: "respond" }, buildRespondAction)
       .with({ kind: "queryAction" }, buildQueryAction)
       .exhaustive();
   }
@@ -379,6 +381,17 @@ export function buildTokens(
           buildSelect(select);
         })
         .otherwise(buildQueryAtom);
+    });
+  }
+
+  function buildRespondAction({ keyword, atoms }: RespondAction) {
+    buildKeyword(keyword);
+    atoms.forEach((a) => {
+      match(a)
+        .with({ kind: "body" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "httpStatus" }, ({ keyword }) => buildKeyword(keyword))
+        .with({ kind: "httpHeaders" }, ({ keyword }) => buildKeyword(keyword))
+        .exhaustive();
     });
   }
 

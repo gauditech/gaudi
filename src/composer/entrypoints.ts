@@ -131,15 +131,9 @@ function processEndpoints(
     const authSelect = getAuthSelect(def, selectDeps);
 
     // should endpoint respond - only if something else (eg. action) does not send response before
-    const respondingActions = actions.filter((a) => a.kind === "execute-hook" && a.responds);
-    if (respondingActions.length > 0) {
-      // only one
-      ensureEqual(
-        respondingActions.length,
-        1,
-        'At most one action in entrypoint can have "responds" attribute'
-      );
-    }
+    const respondingActions = actions.filter(
+      (a) => (a.kind === "execute-hook" && a.responds) || a.kind === "respond"
+    );
     const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
 
     const fieldset = fieldsetFromActions(def, actions);
@@ -366,12 +360,12 @@ type SelectDep = FieldSetterReferenceValue["target"];
  */
 export function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
-  const nonDeleteActions = actions.filter(
+  const changesetActions = actions.filter(
     (a): a is CreateOneAction | UpdateOneAction =>
       a.kind === "create-one" || a.kind === "update-one"
   );
 
-  const targetPaths = _.chain(nonDeleteActions)
+  const targetPaths = _.chain(changesetActions)
     .flatMap((a) => {
       switch (a.kind) {
         case "create-one": {
@@ -395,7 +389,6 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     .value();
 
   // collect all targets
-
   function collectReferenceValues(setter: FieldSetter): FieldSetterReferenceValue[] {
     switch (setter.kind) {
       case "reference-value": {
@@ -412,17 +405,27 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
       }
     }
   }
+
   // --- collect changeset targets
-  // action changeset
-  const actionChangesets = nonDeleteActions.flatMap((a) => a.changeset);
-  // hooks changeset
-  const actionHookChangesets = _.chain(actions)
+  // action changeset setters
+  const actionSetters = changesetActions.flatMap((a) => a.changeset).map((c) => c.setter);
+  // hooks changeset setters
+  const actionHookSetters = _.chain(actions)
     .filter((a): a is ExecuteHookAction => a.kind === "execute-hook")
     .flatMap((a) => a.hook.args)
+    .map((c) => c.setter)
     .value();
+  // respond property setters
+  const respondSetters = kindFilter(actions, "respond").flatMap((a) => {
+    return (
+      _.compact([a.body, a.httpStatus, a.httpHeaders?.map((h) => h.value)])
+        // need another flatten due to httpHeaders
+        .flatMap((s) => s)
+    );
+  });
 
-  const changesets = [...actionChangesets, ...actionHookChangesets];
-  const referenceValues = changesets.flatMap(({ setter }) => collectReferenceValues(setter));
+  const setters = [...actionSetters, ...actionHookSetters, ...respondSetters];
+  const referenceValues = setters.flatMap(collectReferenceValues);
   const setterTargets = referenceValues.map((rv) => rv.target);
 
   return [...setterTargets, ...targetPaths];

@@ -25,6 +25,7 @@ export enum ErrorCode {
   DuplicateHookArg,
   DuplicateGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
+  RespondActionNotInCustomEndpoint,
   QueryFromAliasWrongLength,
   LimitOrOffsetWithCardinalityModifier,
   OrderByWithOne,
@@ -33,6 +34,8 @@ export enum ErrorCode {
   QueryActionOnlyOneDeleteOrSelect,
   ConfiguringNonCustomEndpoint,
   MoreThanOneRespondsInEndpoint,
+  MoreThanOneRespondsActionInEndpoint,
+  MoreThanOneActionThatRespond,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -115,7 +118,9 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.DuplicateGenerator:
       return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}"`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
-      return `Actions with "responds" can only be used in "custom" endpoints`;
+      return `Actions with "responds" attribute can only be used in "custom" endpoints`;
+    case ErrorCode.RespondActionNotInCustomEndpoint:
+      return `Respond actions can only be used in "custom" endpoint`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
     case ErrorCode.LimitOrOffsetWithCardinalityModifier:
@@ -131,7 +136,11 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.ConfiguringNonCustomEndpoint:
       return `Only custom endpoint can have method, cardinality and path configuration`;
     case ErrorCode.MoreThanOneRespondsInEndpoint:
-      return `At most one action in endpoint can have "responds" attribute`;
+      return `Endpoint can have at most one "execute" action with "responds" attribute`;
+    case ErrorCode.MoreThanOneRespondsActionInEndpoint:
+      return `Endpoint can have at most one "respond" action`;
+    case ErrorCode.MoreThanOneActionThatRespond:
+      return `Endpoint cannot have both "respond" action and "execute" action with "responds" attribute`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain "source" or "inline" definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:

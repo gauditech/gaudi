@@ -177,6 +177,66 @@ api {
       }
     }
 
+    // custom many endpoint - "respond" action with static response
+    custom endpoint {
+      cardinality many
+      method PATCH
+      path "customManyRespondActionStatic"
+      action {
+        respond {
+          body "static response body"
+          httpStatus 202
+        }
+      }
+    }
+    
+    // custom many endpoint - "respond" action with simple response
+    custom endpoint {
+      cardinality many
+      method PATCH
+      path "customManyRespondActionSimple"
+      extra inputs {
+        field body { type string }
+      }
+      action {
+        respond {
+          body body
+        }
+      }
+    }
+
+    // custom many endpoint - "respond" action with complex response
+    custom endpoint {
+      cardinality many
+      method PATCH
+      path "customManyRespondActionComplex"
+      extra inputs {
+        field prop1 { type string }
+        field prop2 { type integer }
+        field statusCode { type integer }
+        field header1 { type string }
+        field header2 { type string }
+      }
+      action {
+        execute as resp {
+          hook {
+            arg prop1 prop1
+            arg prop2 prop2
+            source echo from "hooks.js"
+          }
+        }
+
+        respond {
+          body resp
+          httpStatus statusCode
+          httpHeaders {
+            "header-1" header1,
+            "header-2" header2
+          }
+        }
+      }
+    }
+
     // custom ep/action with action query
     custom endpoint {
       cardinality one
