@@ -140,10 +140,11 @@ async function _internalExecuteActions(
         // we're forcing number cause out type system should've made sure that this resolves to appropriate type
         const httpResponseCode = (changeset.httpStatus ?? 200) as number;
 
-        Object.entries(httpHeadersChangeset).forEach(([name, value]) =>
-          // we're forcing string cause out type system should've made sure that this resolves to appropriate type
-          epCtx.response.set(name, value as string)
-        );
+        Object.entries(httpHeadersChangeset).forEach(([name, value]) => {
+          // we're forcing value to `any` cause our type system should've made sure that this resolves to appropriate type
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          epCtx.response.set(name, value as any);
+        });
         epCtx.response.status(httpResponseCode).json(body);
       } catch (err) {
         throw new HookError(err);

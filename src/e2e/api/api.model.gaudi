@@ -231,7 +231,8 @@ api {
           httpStatus statusCode
           httpHeaders {
             "header-1" header1,
-            "header-2" header2
+            "header-2" header2,
+            "header-12" [header1, header2] // multiple header values
           }
         }
       }

@@ -248,6 +248,7 @@ describe("API endpoints", () => {
       `);
       expect(postResp.get("header-1")).toBe(data.header1);
       expect(postResp.get("header-2")).toBe(data.header2);
+      expect(postResp.headers["header-12"]).toBe(`${data.header1}, ${data.header2}`); // multiple header values
     });
 
     // --- hook action with query
