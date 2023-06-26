@@ -1,8 +1,9 @@
 import fs from "fs";
 
 import { sync as glob } from "fast-glob";
+import _ from "lodash";
 
-import { ProjectASTs } from "./ast/ast";
+import { GlobalAtom, ProjectASTs } from "./ast/ast";
 import { checkForm } from "./checkForm";
 import {
   CompilerError,
@@ -26,7 +27,7 @@ export type CompileResult =
 
 // plugin compilation is the first step in resolving
 function compilePlugins(projectASTs: ProjectASTs) {
-  const authenticator = kindFind(projectASTs.document, "authenticator");
+  const authenticator = kindFind(_.concat(...projectASTs.documents.values()), "authenticator");
   if (authenticator) {
     const inputs = [{ source: AuthPlugin.code, filename: "plugin::auth.basic.gaudi" }];
     const { ast, errors } = compileToAST(inputs);
@@ -34,32 +35,50 @@ function compilePlugins(projectASTs: ProjectASTs) {
       const errorString = compilerErrorsToString(inputs, errors);
       throw new Error(`Failed to compile auth plugin:\n${errorString}`);
     }
-    projectASTs.plugins.push(ast.document);
+    projectASTs.plugins.push(...ast.documents.values());
   }
+}
+
+function parseFile(
+  filename: string,
+  source: string
+): {
+  document: GlobalAtom[] | undefined;
+  errors: CompilerError[];
+} {
+  const errors: CompilerError[] = [];
+  const lexerResult = L.lexer.tokenize(source);
+  parser.input = lexerResult.tokens;
+  parser.filename = filename;
+  const fileErrors = lexerResult.errors.map((e) => toCompilerError(e, parser.filename));
+  const document = parser.document();
+  fileErrors.push(...parser.errors.map((e) => toCompilerError(e, parser.filename)));
+  errors.push(...fileErrors);
+  if (errors.length === 0) {
+    errors.push(...checkForm(document));
+  }
+  return { document, errors };
 }
 
 export type Input = { source: string; filename?: string };
 export function compileToAST(inputs: Input[]): CompileResult {
   const ast: ProjectASTs = {
     plugins: [],
-    document: [],
+    documents: new Map(),
   };
   const allErrors: CompilerError[] = [];
-  for (const { source, filename } of inputs) {
-    const lexerResult = L.lexer.tokenize(source);
-    parser.input = lexerResult.tokens;
-    parser.filename = filename ?? ":unset:";
-    const fileErrors = lexerResult.errors.map((e) => toCompilerError(e, parser.filename));
-    const document = parser.document();
-    fileErrors.push(...parser.errors.map((e) => toCompilerError(e, parser.filename)));
-    allErrors.push(...fileErrors);
-    if (document && fileErrors.length === 0) {
-      ast.document.push(...document);
+  for (const input of inputs) {
+    const filename = input.filename ?? ":unset:";
+    const { document, errors } = parseFile(filename, input.source);
+    if (errors.length > 0) {
+      allErrors.push(...errors);
+    }
+    if (document) {
+      ast.documents.set(filename, document);
     }
   }
   if (allErrors.length === 0) {
     compilePlugins(ast);
-    allErrors.push(...checkForm(ast));
     allErrors.push(...resolve(ast));
   }
 

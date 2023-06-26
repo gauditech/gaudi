@@ -22,12 +22,10 @@ import {
   ModelAction,
   Populate,
   Populator,
-  ProjectASTs,
   Query,
   QueryAction,
   Reference,
   Relation,
-  Runtime,
   Select,
   TokenData,
   Validator,
@@ -35,64 +33,15 @@ import {
 import { CompilerError, ErrorCode } from "./compilerError";
 
 import { kindFilter, kindFind } from "@src/common/kindFilter";
-import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
 
-export function checkForm(projectASTs: ProjectASTs) {
-  const document = projectASTs.document;
+export function checkForm(document: GlobalAtom[]) {
   const errors: CompilerError[] = [];
-  let hasDefaultRuntime = false;
-
-  function getSumDocument(): GlobalAtom[] {
-    return _.concat(...projectASTs.plugins, projectASTs.document);
-  }
-
-  function getAllModels(): Model[] {
-    return kindFilter(getSumDocument(), "model");
-  }
-
-  function getAllRuntimes(): Runtime[] {
-    return kindFilter(getSumDocument(), "runtime");
-  }
 
   function checkDocument(document: GlobalAtom[]) {
-    noDuplicateNames(
-      getAllModels().map(({ name }) => name),
-      ErrorCode.DuplicateModel
-    );
-    noDuplicateNames(
-      getAllRuntimes().map(({ name }) => name),
-      ErrorCode.DuplicateRuntime
-    );
-
-    const runtimes = kindFilter(document, "runtime");
-    runtimes.forEach((runtime) => {
+    kindFilter(document, "runtime").forEach((runtime) => {
       containsAtoms(runtime, ["sourcePath"]);
       noDuplicateAtoms(runtime, ["default", "sourcePath"]);
     });
-
-    if (runtimes.length === 1) {
-      hasDefaultRuntime = true;
-    } else if (runtimes.length > 1) {
-      runtimes.forEach((runtime) => {
-        const default_ = kindFind(runtime.atoms, "default");
-        if (default_) {
-          if (hasDefaultRuntime) {
-            errors.push(new CompilerError(default_.keyword, ErrorCode.DuplicateDefaultRuntime));
-          } else {
-            hasDefaultRuntime = true;
-          }
-        }
-      });
-
-      if (!hasDefaultRuntime) {
-        errors.push(new CompilerError(runtimes[0].keyword, ErrorCode.MustHaveDefaultRuntime));
-      }
-    }
-
-    const authenticators = kindFilter(document, "authenticator");
-    if (authenticators.length > 1) {
-      errors.push(new CompilerError(authenticators[1].keyword, ErrorCode.DuplicateAuthBlock));
-    }
 
     document.forEach((a) =>
       match(a)
@@ -482,19 +431,12 @@ export function checkForm(projectASTs: ProjectASTs) {
   function checkHook(hook: Hook<"action" | "validation" | "model">) {
     noDuplicateAtoms(hook, ["default_arg", "runtime"]);
     const sourceOrInline = kindFilter(hook.atoms, "source", "inline");
-    const internalExecRuntimeName = getInternalExecutionRuntimeName();
     if (sourceOrInline.length === 0) {
       errors.push(new CompilerError(hook.keyword, ErrorCode.HookMustContainSourceOrInline));
     } else if (sourceOrInline.length > 1) {
       sourceOrInline.forEach(({ keyword }) =>
         errors.push(new CompilerError(keyword, ErrorCode.HookOnlyOneSourceOrInline))
       );
-    } else if (
-      sourceOrInline[0].kind === "source" &&
-      !hasDefaultRuntime &&
-      kindFind(hook.atoms, "runtime")?.identifier.text !== internalExecRuntimeName
-    ) {
-      errors.push(new CompilerError(sourceOrInline[0].keyword, ErrorCode.NoRuntimeDefinedForHook));
     }
 
     const argIdentifiers = kindFilter(hook.atoms, "arg_expr", "arg_query").map(({ name }) => name);

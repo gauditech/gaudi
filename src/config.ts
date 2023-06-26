@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 
 import { cosmiconfigSync } from "cosmiconfig";
@@ -5,12 +6,14 @@ import { cosmiconfigSync } from "cosmiconfig";
 import { GAUDI_FOLDER_NAME } from "@src/const";
 
 export type EngineConfig = {
-  /** Path to Gaudi blueprint file */
-  inputPath: string;
+  /** Path to Gaudi blueprint folder */
+  inputFolder: string;
   /** Folder where runtime should output generated files */
   outputFolder: string;
   /** Gaudi folder */
   gaudiFolder: string;
+  /** Location of the loaded config file */
+  configFile: string;
 };
 
 /** Read runtime config from environment or provide default values. */
@@ -19,10 +22,10 @@ export function readConfig(configPath?: string): EngineConfig {
     searchPlaces: ["gaudiconfig.json", "gaudiconfig.yaml"],
   });
   let result;
-  if (configPath) {
+  if (configPath && fs.statSync(configPath).isFile()) {
     result = explorer.load(configPath);
   } else {
-    result = explorer.search();
+    result = explorer.search(configPath);
   }
   if (!result) {
     throw new Error(
@@ -32,10 +35,10 @@ export function readConfig(configPath?: string): EngineConfig {
   const projectRoot = path.dirname(result.filepath);
   const config = result.config;
 
-  const inputPath = path.resolve(projectRoot, config?.rootDir ?? "");
+  const inputFolder = path.resolve(projectRoot, config?.rootDir ?? "");
   const outputFolder = path.resolve(projectRoot, config?.outDir ?? "");
   // gaudi folder's path should probably be determined by the position of (future) gaudi config file
   const gaudiFolder = path.resolve(projectRoot, GAUDI_FOLDER_NAME);
 
-  return { inputPath, outputFolder, gaudiFolder };
+  return { inputFolder, outputFolder, gaudiFolder, configFile: result.filepath };
 }

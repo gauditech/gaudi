@@ -284,7 +284,7 @@ function watchCompileCommand(
 
   const resources = _.compact([
     // watch compiler input path
-    path.join(config.inputPath),
+    path.join(config.inputFolder),
     // watch gaudi files (during Gaudi dev)
     args.gaudiDev ? resolveModulePath("@gaudi/engine/") : null,
   ]);

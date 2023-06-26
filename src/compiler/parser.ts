@@ -74,18 +74,30 @@ import {
   StringLiteral,
   TokenData,
   Validator,
+  zeroToken,
 } from "./ast/ast";
 import { Type } from "./ast/type";
 import * as L from "./lexer";
 
 export function getTokenData(filename: string, ...tokens: IToken[]): TokenData {
-  const positions = tokens.map((t) => ({
-    start: t.startOffset,
-    end: t.endOffset ?? t.startOffset,
-  }));
-  const start = Math.min(...positions.map(({ start }) => start));
-  const end = Math.max(...positions.map(({ end }) => end));
-  return { start, end, filename };
+  const positions = tokens.flatMap((t): TokenData[] => {
+    if (t.startLine && t.startColumn && t.endLine && t.endColumn) {
+      return [
+        {
+          filename,
+          start: { line: t.startLine, column: t.startColumn },
+          end: { line: t.endLine, column: t.endColumn },
+        },
+      ];
+    } else {
+      return [];
+    }
+  });
+  return {
+    filename,
+    start: positions.at(0)?.start ?? zeroToken.start,
+    end: positions.at(-1)?.end ?? zeroToken.end,
+  };
 }
 
 class GaudiParser extends EmbeddedActionsParser {

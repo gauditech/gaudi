@@ -20,6 +20,7 @@ import {
   FieldValidationHook,
   GlobalAtom,
   Hook,
+  Identifier,
   IdentifierRef,
   Model,
   ModelAction,
@@ -64,12 +65,16 @@ export function resolve(projectASTs: ProjectASTs) {
   const resolvingModelAtoms = new Set<string>();
   const resolvedModelAtoms = new Set<string>();
 
-  function getSumDocument(): GlobalAtom[] {
-    return _.concat(...projectASTs.plugins, projectASTs.document);
+  function getSumDocument(includePlugins = false): GlobalAtom[] {
+    if (includePlugins) {
+      return _.concat(...projectASTs.plugins, ...projectASTs.documents.values());
+    } else {
+      return _.concat(...projectASTs.documents.values());
+    }
   }
 
   function getAllModels(): Model[] {
-    return kindFilter(getSumDocument(), "model");
+    return kindFilter(getSumDocument(true), "model");
   }
 
   /**
@@ -77,12 +82,57 @@ export function resolve(projectASTs: ProjectASTs) {
    * Code can have one runtime and that would be a default runtime without
    * using default keyword.
    */
-  function getRuntimes(): Runtime[] {
-    return kindFilter(projectASTs.document, "runtime");
+  function getRuntimes(includePlugins = false): Runtime[] {
+    return kindFilter(getSumDocument(includePlugins), "runtime");
   }
 
-  function resolveDocument(document: GlobalAtom[]) {
-    document.forEach((a) =>
+  function resolveDocument(globalAtoms: GlobalAtom[]) {
+    function noDuplicateNames(identifiers: Identifier[], errorCode: ErrorCode) {
+      const takenNames: Set<string> = new Set();
+      identifiers.forEach(({ text, token }) => {
+        if (takenNames.has(text)) {
+          errors.push(new CompilerError(token, errorCode));
+        } else {
+          takenNames.add(text);
+        }
+      });
+    }
+
+    noDuplicateNames(
+      getAllModels().map(({ name }) => name),
+      ErrorCode.DuplicateModel
+    );
+
+    noDuplicateNames(
+      getRuntimes(true).map(({ name }) => name),
+      ErrorCode.DuplicateRuntime
+    );
+
+    const runtimes = getRuntimes();
+    if (runtimes.length > 1) {
+      let hasDefaultRuntime = false;
+      runtimes.forEach((runtime) => {
+        const default_ = kindFind(runtime.atoms, "default");
+        if (default_) {
+          if (hasDefaultRuntime) {
+            errors.push(new CompilerError(default_.keyword, ErrorCode.DuplicateDefaultRuntime));
+          } else {
+            hasDefaultRuntime = true;
+          }
+        }
+      });
+
+      if (!hasDefaultRuntime) {
+        errors.push(new CompilerError(runtimes[0].keyword, ErrorCode.MustHaveDefaultRuntime));
+      }
+    }
+
+    const authenticators = kindFilter(getSumDocument(true), "authenticator");
+    if (authenticators.length > 1) {
+      errors.push(new CompilerError(authenticators[1].keyword, ErrorCode.DuplicateAuthBlock));
+    }
+
+    globalAtoms.forEach((a) =>
       match(a)
         .with({ kind: "model" }, resolveModel)
         .with({ kind: "api" }, resolveApi)
@@ -150,7 +200,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
       field.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
+      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
     }
   }
 
@@ -571,7 +621,7 @@ export function resolve(projectASTs: ProjectASTs) {
       extraInput.name.ref = { kind: "extraInput", type, nullable };
       extraInput.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
+      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
     }
     addToScope(scope, extraInput.name);
   }
@@ -897,6 +947,8 @@ export function resolve(projectASTs: ProjectASTs) {
         source.runtime = runtime.name.text;
       } else if (runtimeAtom?.identifier.text === internalExecRuntimeName) {
         source.runtime = internalExecRuntimeName;
+      } else {
+        errors.push(new CompilerError(source.keyword, ErrorCode.NoRuntimeDefinedForHook));
       }
     }
   }
@@ -1386,7 +1438,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  resolveDocument(projectASTs.document);
+  resolveDocument(getSumDocument());
 
   return errors;
 }

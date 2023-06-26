@@ -1,7 +1,7 @@
 import { ILexingError, IRecognitionException } from "chevrotain";
 import _ from "lodash";
 
-import { TokenData } from "./ast/ast";
+import { TokenData, zeroToken } from "./ast/ast";
 import { getTokenData } from "./parser";
 
 import { Input } from ".";
@@ -257,19 +257,12 @@ export function compilerErrorsToString(baseInputs: Input[], errors: CompilerErro
     const lineIndecies = input?.lineIndecies ?? [0];
     const source = input?.source ?? "";
 
-    const start = error.errorPosition.start;
-    const end = error.errorPosition.end;
-    const filename = error.errorPosition.filename;
-    const lineStart = _.findLast(lineIndecies, (i) => i < start) ?? 0;
-    const lineEnd = _.find(lineIndecies, (i) => i > end) ?? source.length;
+    const { filename, start, end } = error.errorPosition;
+    const length = end.column - start.column;
 
-    const line = lineIndecies.indexOf(lineStart) + 1;
-    const column = start - lineStart + 1;
-    const length = end - start;
-
-    output += `${filename}:${line}:${column} - ${error.message}\n`;
-    output += source.substring(lineStart, lineEnd);
-    output += " ".repeat(column - 1) + "~".repeat(length + 1);
+    output += `${filename}:${start.line}:${start.column} - ${error.message}\n`;
+    output += source.substring(lineIndecies[start.line], lineIndecies[end.line]);
+    output += " ".repeat(start.column - 1) + "~".repeat(length + 1);
     output += "\n";
   });
 
@@ -284,13 +277,17 @@ export function toCompilerError(
   if ("token" in error) {
     tokenData = getTokenData(filename, error.token);
   } else {
-    tokenData = { start: error.offset, end: error.offset + 1, filename };
+    tokenData = {
+      start: { line: error.line ?? 0, column: error.column ?? 0 },
+      end: { line: error.line ?? 0, column: (error.column ?? 0) + error.length },
+      filename,
+    };
   }
   return new CompilerError(tokenData, ErrorCode.ParserError, { message: error.message });
 }
 
 export function unexpectedParserError(): CompilerError {
-  return new CompilerError({ start: 0, end: 0, filename: ":unset:" }, ErrorCode.ParserError, {
+  return new CompilerError(zeroToken, ErrorCode.ParserError, {
     message: "Unexpected parser error",
   });
 }

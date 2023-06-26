@@ -13,7 +13,7 @@ describe("compiler", () => {
   });
 
   test("multi-file project", () => {
-    const { inputPath } = readConfig(`${folder}/multi/gaudiconfig.yaml`);
-    expect(() => compileProject(inputPath)).not.toThrowError();
+    const { inputFolder } = readConfig(`${folder}/multi/gaudiconfig.yaml`);
+    expect(() => compileProject(inputFolder)).not.toThrowError();
   });
 });

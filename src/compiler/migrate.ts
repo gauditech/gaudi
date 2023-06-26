@@ -11,7 +11,10 @@ import { HookCode } from "@src/types/common";
 import * as Spec from "@src/types/specification";
 
 export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
-  const globals = _.concat(...Object.values(projectASTs.plugins), projectASTs.document);
+  const globals = _.concat(
+    ...Object.values(projectASTs.plugins),
+    ...projectASTs.documents.values()
+  );
   const globalModels = kindFilter(globals, "model");
 
   const authenticatorAst = kindFind(globals, "authenticator");
@@ -356,21 +359,20 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
-    const zeroToken = { start: 0, end: 0, filename: ":gaudi:" };
     switch (endpoint.type) {
       case "create":
       case "update": {
         return [
           {
             kind: endpoint.type,
-            keyword: zeroToken,
+            keyword: AST.zeroToken,
             atoms: [],
             isPrimary: true,
           },
         ];
       }
       case "delete":
-        return [{ kind: "delete", keyword: zeroToken, isPrimary: true }];
+        return [{ kind: "delete", keyword: AST.zeroToken, isPrimary: true }];
       default:
         return [];
     }

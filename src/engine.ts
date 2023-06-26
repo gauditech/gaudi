@@ -9,7 +9,7 @@ import { build } from "./index";
 
 import { readConfig } from "@src/config";
 
-const { inputPath, outputFolder, gaudiFolder } = readConfig();
+const { inputFolder, outputFolder, gaudiFolder } = readConfig();
 
-const definition = compileProject(inputPath);
+const definition = compileProject(inputFolder);
 build(definition, { outputFolder, gaudiFolder });
