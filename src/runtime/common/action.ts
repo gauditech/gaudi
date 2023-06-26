@@ -137,7 +137,7 @@ async function _internalExecuteActions(
         );
 
         const body = changeset.body;
-        // we're forcing number cause out type system should've made sure that this resolves to appropriate type
+        // we're forcing number cause our type system should've made sure that this resolves to appropriate type
         const httpResponseCode = (changeset.httpStatus ?? 200) as number;
 
         Object.entries(httpHeadersChangeset).forEach(([name, value]) => {
@@ -156,8 +156,11 @@ async function _internalExecuteActions(
           }
         });
         epCtx.response.status(httpResponseCode).json(body);
-      } catch (err) {
-        throw new HookError(err);
+
+        // "respond" action breaks further action execution
+        break;
+      } catch (err: any) {
+        throw new Error(err);
       }
     } else {
       assertUnreachable(actionKind);

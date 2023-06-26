@@ -524,6 +524,34 @@ describe("compiler errors", () => {
 
       expectError(bp, `Respond actions can only be used in "custom" endpoint`);
     });
+
+    it('fails when "respond" action is not the last action in endpoint', () => {
+      const bp = `
+        ${baseBp}
+
+        api {
+          entrypoint Item {
+            custom endpoint {
+              path "path"
+              method GET
+              cardinality one
+
+              action {
+                respond { body "foo" }
+                execute {
+                  hook {
+                    runtime MyRuntime
+                    source testFn from "t/h/p"
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      expectError(bp, `Action "respond" must be the last action`);
+    });
   });
 
   describe("authenticator", () => {

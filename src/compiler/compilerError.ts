@@ -36,6 +36,7 @@ export enum ErrorCode {
   MoreThanOneRespondsInEndpoint,
   MoreThanOneRespondsActionInEndpoint,
   MoreThanOneActionThatRespond,
+  RespondActionNotLast,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -141,6 +142,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Endpoint can have at most one "respond" action`;
     case ErrorCode.MoreThanOneActionThatRespond:
       return `Endpoint cannot have both "respond" action and "execute" action with "responds" attribute`;
+    case ErrorCode.RespondActionNotLast:
+      return `Action "respond" must be the last action`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain "source" or "inline" definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:

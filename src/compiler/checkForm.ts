@@ -341,6 +341,18 @@ export function checkForm(projectASTs: ProjectASTs) {
           new CompilerError(executeWithResponds[0].keyword, ErrorCode.MoreThanOneActionThatRespond)
         );
       }
+
+      // actions after "respond" actions are not allowed
+      const respondActionIdx = action.actions.findIndex((a) => a.kind === "respond");
+      if (respondActionIdx != -1 && respondActionIdx + 1 < action.actions.length) {
+        errors.push(
+          // target the next action after "respond"
+          new CompilerError(
+            action.actions[respondActionIdx + 1].keyword,
+            ErrorCode.RespondActionNotLast
+          )
+        );
+      }
     }
 
     if (endpoint.type !== "list") {
