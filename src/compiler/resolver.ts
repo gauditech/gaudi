@@ -765,9 +765,9 @@ export function resolve(projectASTs: ProjectASTs) {
       httpHeaders.headers.forEach((h) => {
         resolveExpression(h.value, scope);
         if (h.value.type.kind === "collection") {
-          checkExprType(h.value, Type.collection(Type.string));
+          checkExprType(h.value, Type.collection(Type.nullable(Type.string)));
         } else {
-          checkExprType(h.value, Type.string);
+          checkExprType(h.value, Type.nullable(Type.string));
         }
         // TODO: should we allow other primitives as well since they can easily be serialized to string?
       });

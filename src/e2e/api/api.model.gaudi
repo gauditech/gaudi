@@ -232,7 +232,9 @@ api {
           httpHeaders {
             "header-1" header1,
             "header-2" header2,
-            "header-12" [header1, header2] // multiple header values
+            "header-3" "deleted-header3",
+            "header-12" [header1, header2], // multiple header values
+            "header-3" null // removed header
           }
         }
       }

@@ -141,9 +141,19 @@ async function _internalExecuteActions(
         const httpResponseCode = (changeset.httpStatus ?? 200) as number;
 
         Object.entries(httpHeadersChangeset).forEach(([name, value]) => {
-          // we're forcing value to `any` cause our type system should've made sure that this resolves to appropriate type
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          epCtx.response.set(name, value as any);
+          // null - remove current header
+          if (value == null) {
+            epCtx.response.removeHeader(name);
+          }
+          // multiple header values
+          else if (_.isArray(value)) {
+            epCtx.response.set(name, value);
+          }
+          // single value
+          else {
+            // we're forcing value to `any` cause our type system should've made sure that this resolves to appropriate type
+            epCtx.response.set(name, value as any);
+          }
         });
         epCtx.response.status(httpResponseCode).json(body);
       } catch (err) {
