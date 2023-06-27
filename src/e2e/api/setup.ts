@@ -9,8 +9,8 @@ import _ from "lodash";
 
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { compileToOldSpec, compose } from "@src/index";
-import { RuntimeConfig } from "@src/runtime/config";
+import { compileFromString } from "@src/index";
+import { readConfig } from "@src/runtime/config";
 import { setupDefinitionApis } from "@src/runtime/server/api";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";
 import { DbConn, createDbConn } from "@src/runtime/server/dbConn";
@@ -55,11 +55,8 @@ export type ApiTestSetup = {
   destroy: () => Promise<void>;
 };
 
-export function createApiTestSetup(
-  config: RuntimeConfig,
-  blueprint: string,
-  data: PopulatorData[]
-): ApiTestSetup {
+export function createApiTestSetup(blueprint: string, data: PopulatorData[]): ApiTestSetup {
+  const config = readConfig();
   let server: Server | undefined;
 
   // test context
@@ -171,7 +168,7 @@ function removeOutputFolder(path: string) {
 // ----- gaudi definition
 
 async function buildDefinition(blueprint: string, outputFolder: string) {
-  const definition = compose(compileToOldSpec(blueprint));
+  const definition = compileFromString(blueprint);
   // use output folder for both regular output and gaudi for simpler testing
   await build(definition, { outputFolder, gaudiFolder: outputFolder });
 

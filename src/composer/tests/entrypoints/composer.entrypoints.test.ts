@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 import { CreateEndpointDef, CustomManyEndpointDef, ExecuteHookAction } from "@src/types/definition";
 
 describe("entrypoint", () => {
@@ -46,7 +46,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
     expect(def.apis[0].entrypoints).toMatchSnapshot();
   });
   it("adds validators into fieldsets", () => {
@@ -61,7 +61,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
     const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     expect(endpoint.fieldset).toMatchSnapshot();
   });
@@ -97,7 +97,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
 
     const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
@@ -135,7 +135,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
 
     const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CustomManyEndpointDef;
     const action = endpoint.actions[0] as ExecuteHookAction;
@@ -187,7 +187,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
     const endpoint = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
     const orgSelect = endpoint.parentContext[0].select.map((s) => s.alias);
     const repoSelect = endpoint.target.select.map((s) => s.alias);
@@ -249,7 +249,7 @@ describe("entrypoint", () => {
       }
     }
     `;
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
     expect(def.apis[0].entrypoints[0].entrypoints[0]).toMatchSnapshot();
     expect(def.apis[0].entrypoints[0].entrypoints[1]).toMatchSnapshot();
     expect(def.apis[0].entrypoints[1].entrypoints[0]).toMatchSnapshot();

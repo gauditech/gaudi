@@ -1,28 +1,19 @@
-import * as fs from "fs";
-import * as path from "path";
+import { sync } from "fast-glob";
 
-import _ from "lodash";
+import { compileFromFiles, compileProject } from "..";
 
-import { compileToAST } from "..";
-import { compilerErrorsToString } from "../compilerError";
-import { migrate } from "../migrate";
-
-const folder = "./src/compiler/tests/successful";
-const sources = fs.readdirSync(folder);
+import { readConfig } from "@src/config";
 
 describe("compiler", () => {
-  test.each(sources)("compile to AST and migrate: tests/%s", (sourceFilename) => {
-    const sourcePath = path.join(folder, sourceFilename);
-    const source = fs.readFileSync(sourcePath).toString();
+  const folder = "./src/compiler/tests/successful";
+  const filenames = sync(`${folder}/*.gaudi`);
 
-    const { ast, errors } = compileToAST(source);
+  test.each(filenames)("compile to AST and migrate: tests/%s", (sourceFilename) => {
+    expect(() => compileFromFiles([sourceFilename])).not.toThrowError();
+  });
 
-    if (ast && errors.length === 0) {
-      migrate(ast);
-      return;
-    }
-
-    console.log(compilerErrorsToString(sourcePath, source, errors));
-    expect(errors.length).toBe(0);
+  test("multi-file project", () => {
+    const { inputFolder } = readConfig(`${folder}/multi/gaudiconfig.yaml`);
+    expect(() => compileProject(inputFolder)).not.toThrowError();
   });
 });

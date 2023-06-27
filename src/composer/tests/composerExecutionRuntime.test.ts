@@ -1,4 +1,4 @@
-import { compileToOldSpec, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 
 describe("execution runtime composer", () => {
   it("composes single execution runtime", () => {
@@ -9,7 +9,7 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
     const runtimes = def.runtimes;
 
     expect(runtimes).toMatchSnapshot();
@@ -27,7 +27,7 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
     const runtimes = def.runtimes;
 
     expect(runtimes).toMatchSnapshot();
@@ -40,7 +40,7 @@ describe("execution runtime composer", () => {
       }
     `;
 
-    const def = compose(compileToOldSpec(bp));
+    const def = compileFromString(bp);
     const runtimes = def.runtimes;
 
     expect(runtimes).toMatchSnapshot();

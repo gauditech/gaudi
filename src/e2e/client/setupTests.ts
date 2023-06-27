@@ -4,9 +4,8 @@ import "../../common/setupAliases";
 import path from "path";
 
 import { buildApiClients } from "@src/builder/builder";
-import { compileToOldSpec } from "@src/compiler/";
-import { compose } from "@src/composer/composer";
 import { loadBlueprint } from "@src/e2e/api/setup";
+import { compileFromString } from "@src/index";
 import { Logger } from "@src/logger";
 
 const CLIENT_LIB_DIST_FOLDER = path.join(__dirname, "__snapshots__");
@@ -42,7 +41,7 @@ async function setupClient(name: string, bpPath: string, appendGenerators = fals
   if (appendGenerators) {
     bp = appendClientGenerator(bp);
   }
-  const definition = compose(compileToOldSpec(bp));
+  const definition = compileFromString(bp);
 
   // build and output client lib
   await buildApiClients(definition, clientDest);

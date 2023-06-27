@@ -1,7 +1,5 @@
 import fs from "fs";
 
-import dotenv from "dotenv";
-
 import { Definition } from "@src/types/definition";
 
 export type RuntimeConfig = {
@@ -20,9 +18,7 @@ export type RuntimeConfig = {
 };
 
 /** Read runtime config from environment or provide default values. */
-export function readConfig(configPath?: string): RuntimeConfig {
-  dotenv.config({ path: configPath });
-
+export function readConfig(): RuntimeConfig {
   const host = process.env.GAUDI_RUNTIME_SERVER_HOST ?? "127.0.0.1";
   const port =
     process.env.GAUDI_RUNTIME_SERVER_PORT != null

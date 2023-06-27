@@ -3,22 +3,13 @@
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
 import "./common/setupAliases";
 
-import fs from "fs";
+import { compileProject } from "./compiler";
 
-import { build, compileToOldSpec, compose } from "./index";
+import { build } from "./index";
 
 import { readConfig } from "@src/config";
 
-const { inputPath, outputFolder, gaudiFolder } = readConfig();
+const { inputFolder, outputFolder, gaudiFolder } = readConfig();
 
-// gaudi engine currently reads from 1 specified file
-if (!fs.existsSync(inputPath) || !fs.lstatSync(inputPath).isFile()) {
-  throw new Error(`Gaudi engine input file not found: "${inputPath}"`);
-}
-
-console.log(`Reading Gaudi source from: "${inputPath}"`);
-
-const input = fs.readFileSync(inputPath).toString("utf-8");
-const specification = compileToOldSpec(input);
-const definition = compose(specification);
+const definition = compileProject(inputFolder);
 build(definition, { outputFolder, gaudiFolder });
