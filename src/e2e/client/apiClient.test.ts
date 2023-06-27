@@ -395,7 +395,7 @@ describe("api client lib", () => {
     // --- hook action
 
     it("custom one action", async () => {
-      const data = { name: "Org Custom One", counter: 1 };
+      const data = { name: "Org Custom One", counter: 1, customProp: "custom prop value" };
       const postResp = await client.api.org.customOneAction("org1", data);
 
       expect(postResp.status).toBe(204);

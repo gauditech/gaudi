@@ -42,3 +42,17 @@ module.exports.customHttpErrorResponse = function ({ status, message }) {
     throw "some other error";
   }
 };
+
+/**
+ * Log hooks args object to console
+ */
+module.exports.logger = function (args) {
+  console.log("Hook args: ", JSON.stringify(args, undefined, 2));
+};
+
+/**
+ * Returns the same args object. Like an echo. :)
+ */
+module.exports.echo = function (args) {
+  return { ...args };
+};
