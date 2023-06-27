@@ -242,13 +242,13 @@ export function compilerErrorsToString(baseInputs: Input[], errors: CompilerErro
   const inputs = baseInputs.map(({ source, filename }) => ({
     source,
     filename: filename ?? ":unset:",
-    lineIndecies: [0],
+    lineIndices: [0],
   }));
 
   for (const input of inputs) {
     for (let i = 0; i < input.source.length; i++) {
       if (input.source.charAt(i) === "\n") {
-        input.lineIndecies.push(i + 1);
+        input.lineIndices.push(i + 1);
       }
     }
   }
@@ -257,14 +257,14 @@ export function compilerErrorsToString(baseInputs: Input[], errors: CompilerErro
 
   errors.forEach((error) => {
     const input = inputs.find(({ filename }) => filename === error.errorPosition.filename);
-    const lineIndecies = input?.lineIndecies ?? [0];
+    const lineIndices = input?.lineIndices ?? [0];
     const source = input?.source ?? "";
 
     const { filename, start, end } = error.errorPosition;
     const length = end.column - start.column;
 
     output += `${filename}:${start.line}:${start.column} - ${error.message}\n`;
-    output += source.substring(lineIndecies[start.line - 1], lineIndecies[end.line]);
+    output += source.substring(lineIndices[start.line - 1], lineIndices[end.line]);
     output += " ".repeat(start.column - 1) + "~".repeat(length + 1);
     output += "\n";
   });
