@@ -54,7 +54,7 @@ api {
           responds
           hook {
             arg name user.name
-            runtime MyRuntime
+            runtime DefaultRuntime
             source foo from "customHooks"
           }
         }

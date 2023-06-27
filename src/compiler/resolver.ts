@@ -932,23 +932,26 @@ export function resolve(projectASTs: ProjectASTs) {
       const runtimes = getRuntimes();
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
-      let runtime: Runtime | undefined = undefined;
-      if (runtimeAtom) {
-        runtime = runtimes.find((r) => r.name.text === runtimeAtom.identifier.text);
-      } else {
-        runtime = runtimes.find((r) => kindFind(r.atoms, "default"));
-        if (!runtime && runtimes.length === 1) {
-          runtime = runtimes[0];
+      if (!runtimeAtom) {
+        const defaultRuntime =
+          runtimes.find((r) => kindFind(r.atoms, "default")) ??
+          (runtimes.length === 1 ? runtimes[0] : undefined);
+        if (defaultRuntime) {
+          source.runtime = defaultRuntime.name.text;
+        } else {
+          errors.push(new CompilerError(source.keyword, ErrorCode.NoRuntimeDefinedForHook));
         }
+        return;
       }
 
-      const internalExecRuntimeName = getInternalExecutionRuntimeName();
-      if (runtime) {
-        source.runtime = runtime.name.text;
-      } else if (runtimeAtom?.identifier.text === internalExecRuntimeName) {
-        source.runtime = internalExecRuntimeName;
+      const runtime = runtimeAtom.identifier.text;
+      if (
+        runtimes.find((r) => r.name.text === runtime) ||
+        getInternalExecutionRuntimeName() === runtime
+      ) {
+        source.runtime = runtime;
       } else {
-        errors.push(new CompilerError(source.keyword, ErrorCode.NoRuntimeDefinedForHook));
+        errors.push(new CompilerError(runtimeAtom.identifier.token, ErrorCode.CantFindRuntime));
       }
     }
   }

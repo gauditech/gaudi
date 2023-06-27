@@ -22,7 +22,7 @@ describe("engine", () => {
         inputFolder: __dirname,
         outputFolder: __dirname,
         gaudiFolder: path.join(__dirname, "gaudi"),
-        configFile: path.join(__dirname, "config.test.yaml"),
+        configFile: path.join(__dirname, "config.test.empty.yaml"),
       });
     });
 

@@ -20,7 +20,6 @@ export enum ErrorCode {
   MustHaveDefaultRuntime,
   DuplicateAuthBlock,
   DuplicateEndpoint,
-  NoRuntimeDefinedForHook,
   DuplicateModelAtom,
   DuplicateCustomEndpointPath,
   CustomEndpointPathClashesWithEnrtrypoint,
@@ -52,6 +51,8 @@ export enum ErrorCode {
   ReferenceOnDeleteNotNullable,
   CircularModelMemberDetected,
   TypeHasNoMembers,
+  CantFindRuntime,
+  NoRuntimeDefinedForHook,
   CantFindNameInScope,
   CantResolveModelAtomWrongKind,
   CantResolveExpressionReference,
@@ -102,8 +103,6 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't have more than one auth block defined`;
     case ErrorCode.DuplicateEndpoint:
       return `Duplicate "${params?.type}" endpoint definition`;
-    case ErrorCode.NoRuntimeDefinedForHook:
-      return `Hook with source can't be used without a runtime`;
     case ErrorCode.DuplicateModelAtom:
       return `Duplicate model member definition`;
     case ErrorCode.DuplicateCustomEndpointPath:
@@ -170,6 +169,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Circular model definition detected in model member definition`;
     case ErrorCode.TypeHasNoMembers:
       return `This type has no members`;
+    case ErrorCode.CantFindRuntime:
+      return `Can't resolve runtime reference`;
+    case ErrorCode.NoRuntimeDefinedForHook:
+      return `Hook with source can't be used without a runtime`;
     case ErrorCode.CantFindNameInScope:
       return `Name "${params?.name}" does not exist in current scope`;
     case ErrorCode.CantResolveModelAtomWrongKind:
@@ -261,7 +264,7 @@ export function compilerErrorsToString(baseInputs: Input[], errors: CompilerErro
     const length = end.column - start.column;
 
     output += `${filename}:${start.line}:${start.column} - ${error.message}\n`;
-    output += source.substring(lineIndecies[start.line], lineIndecies[end.line]);
+    output += source.substring(lineIndecies[start.line - 1], lineIndecies[end.line]);
     output += " ".repeat(start.column - 1) + "~".repeat(length + 1);
     output += "\n";
   });
