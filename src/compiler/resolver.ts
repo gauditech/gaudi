@@ -17,7 +17,6 @@ import {
   Expr,
   ExtraInput,
   Field,
-  FieldValidationHook,
   GlobalAtom,
   Hook,
   Identifier,
@@ -31,6 +30,7 @@ import {
   ProjectASTs,
   Query,
   QueryAction,
+  RefExtraInput,
   RefModelAtom,
   RefModelField,
   RefModelReference,
@@ -39,7 +39,9 @@ import {
   Runtime,
   Select,
   UnaryOperator,
+  ValidateExpr,
   Validator,
+  ValidatorHook,
 } from "./ast/ast";
 import { builtinFunctions } from "./ast/functions";
 import { Scope, addTypeGuard } from "./ast/scope";
@@ -73,6 +75,10 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
+  function getAllValidators(): Validator[] {
+    return kindFilter(getSumDocument(true), "validator");
+  }
+
   function getAllModels(): Model[] {
     return kindFilter(getSumDocument(true), "model");
   }
@@ -97,6 +103,11 @@ export function resolve(projectASTs: ProjectASTs) {
         }
       });
     }
+
+    noDuplicateNames(
+      getAllValidators().map(({ name }) => name),
+      ErrorCode.DuplicateValidator
+    );
 
     noDuplicateNames(
       getAllModels().map(({ name }) => name),
@@ -134,6 +145,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
     globalAtoms.forEach((a) =>
       match(a)
+        .with({ kind: "validator" }, resolveValidator)
         .with({ kind: "model" }, resolveModel)
         .with({ kind: "api" }, resolveApi)
         .with({ kind: "populator" }, resolvePopulator)
@@ -142,6 +154,92 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "generator" }, () => undefined)
         .exhaustive()
     );
+  }
+
+  function resolveValidator(vlaidator: Validator) {
+    const scope: Scope = {
+      environment: "entrypoint",
+      model: undefined,
+      context: {},
+      typeGuard: {},
+    };
+    vlaidator.atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "arg" }, (arg) => {
+          const typeAtom = kindFind(arg.atoms, "type");
+          const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
+          if (type) {
+            arg.name.ref = { kind: "validatorArg", type };
+            arg.name.type = Type.primitive(type);
+            addToScope(scope, arg.name);
+          } else if (typeAtom) {
+            errors.push(
+              new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType)
+            );
+          }
+        })
+        .with({ kind: "assert" }, (assert) => {
+          resolveExpression(assert.expr, scope);
+          checkExprType(assert.expr, Type.boolean);
+        })
+        .with({ kind: "assertHook" }, ({ hook }) => resolveValidatorHook(hook, scope))
+        .with({ kind: "raise" }, () => undefined)
+        .exhaustive()
+    );
+  }
+
+  function resolveValidateExpr(
+    expr: ValidateExpr,
+    scope: Scope,
+    target?: IdentifierRef<RefModelField | RefExtraInput>
+  ) {
+    match(expr)
+      .with({ kind: "binary" }, ({ rhs, lhs }) => {
+        resolveValidateExpr(lhs, scope, target);
+        resolveValidateExpr(rhs, scope, target);
+      })
+      .with({ kind: "group" }, ({ expr }) => resolveValidateExpr(expr, scope, target))
+      .with({ kind: "validator" }, (call) => {
+        call.args.forEach((arg) => resolveExpression(arg, scope));
+        const validator = getAllValidators().find((v) => v.name.text === call.validator.text);
+        if (!validator) {
+          errors.push(new CompilerError(call.validator.token, ErrorCode.CantResolveValidator));
+          return;
+        }
+
+        const validatorArgs = kindFilter(validator.atoms, "arg");
+        if (target) {
+          const firstArg = validatorArgs.shift()!;
+          const targetType = removeNullable(target.type);
+          if (!isExpectedType(targetType, firstArg.name.type)) {
+            errors.push(
+              new CompilerError(call.validator.token, ErrorCode.UnexpectedValidatorTargetType, {
+                expected: firstArg.name.type,
+                got: targetType,
+              })
+            );
+          }
+        }
+        if (call.args.length !== validatorArgs.length) {
+          errors.push(
+            new CompilerError(call.validator.token, ErrorCode.UnexpectedValidatorArgumentCount, {
+              name: validator.name,
+              expected: validatorArgs.length,
+              got: call.args.length,
+            })
+          );
+          return;
+        }
+
+        for (let i = 0; i < call.args.length; i++) {
+          const expr = call.args[i];
+          // nullable is ignored in validator arguments, if arugment is null validator auto succeeds
+          expr.type = removeNullable(expr.type);
+          const expected = validatorArgs[i + (target ? 1 : 0)];
+          checkExprType(expr, expected.name.type);
+        }
+      })
+      .exhaustive();
   }
 
   function resolveModel(model: Model) {
@@ -178,8 +276,13 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveField(model: Model, field: Field) {
-    kindFilter(field.atoms, "validate").map((validate) =>
-      validate.validators.forEach(resolveValidator)
+    kindFilter(field.atoms, "validate").map(({ expr }) =>
+      resolveValidateExpr(expr, {
+        environment: "entrypoint",
+        model: undefined,
+        context: {},
+        typeGuard: {},
+      })
     );
 
     const nullable = !!kindFind(field.atoms, "nullable");
@@ -200,15 +303,8 @@ export function resolve(projectASTs: ProjectASTs) {
 
       field.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
+      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType));
     }
-  }
-
-  function resolveValidator(validator: Validator) {
-    match(validator)
-      .with({ kind: "hook" }, resolveFieldValidationHook)
-      .with({ kind: "builtin" }, () => undefined) // TODO: do nothing?
-      .exhaustive();
   }
 
   function resolveReference(model: Model, reference: Reference) {
@@ -621,7 +717,7 @@ export function resolve(projectASTs: ProjectASTs) {
       extraInput.name.ref = { kind: "extraInput", type, nullable };
       extraInput.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedFieldType));
+      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType));
     }
     addToScope(scope, extraInput.name);
   }
@@ -640,6 +736,7 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "delete" }, (action) => resolveDeleteAction(action, endpointType, scope))
       .with({ kind: "execute" }, (action) => resolveExecuteAction(action, scope))
       .with({ kind: "queryAction" }, (action) => resolveQueryAction(action, scope))
+      .with({ kind: "validate" }, (validate) => resolveValidateExpr(validate.expr, scope))
       .exhaustive();
   }
 
@@ -908,6 +1005,11 @@ export function resolve(projectASTs: ProjectASTs) {
     );
   }
 
+  function resolveValidatorHook(hook: ValidatorHook, scope: Scope) {
+    resolveHook(hook);
+    kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
+  }
+
   function resolveModelHook(hook: ModelHook, scope: Scope) {
     resolveHook(hook);
     kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(query, scope));
@@ -922,17 +1024,13 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveFieldValidationHook(hook: FieldValidationHook) {
-    resolveHook(hook);
-  }
-
   function resolveActionHook(hook: ActionHook, scope: Scope) {
     resolveHook(hook);
     kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(query, scope));
     kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
   }
 
-  function resolveHook(hook: Hook<"model" | "validation" | "action">) {
+  function resolveHook(hook: Hook<"model" | "validator" | "action">) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
       const runtimes = getRuntimes();

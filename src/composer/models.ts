@@ -72,10 +72,6 @@ export function composeValidators(
   if (vspecs === undefined) return [];
 
   return vspecs.map((vspec): ValidatorDef => {
-    if (vspec.kind === "hook") {
-      return { name: "hook", hook: vspec.hook.code, arg: vspec.hook.arg };
-    }
-
     const name = vspec.name;
     const args = vspec.args;
     const argt = args.map((a) => a.kind);

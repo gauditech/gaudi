@@ -30,6 +30,7 @@ export type IdentifierRef<R extends Ref = Ref> = {
 };
 
 export type Specification = {
+  validators: Validator[];
   models: Model[];
   apis: Api[];
   populators: Populator[];
@@ -37,6 +38,17 @@ export type Specification = {
   authenticator: Authenticator | undefined;
   generators: Generator[];
 };
+
+export type Validator = {
+  name: string;
+  args: { name: string; type: FieldType }[];
+  assert: { kind: "expr"; expr: Expr } | { kind: "hook"; hook: ValidatorHook };
+  raise: { code: string };
+};
+
+export type ValidateExpr =
+  | { kind: "and" | "or"; exprs: ValidateExpr[] }
+  | { kind: "call"; validator: string; args: Expr[] };
 
 export type Model = {
   name: string;
@@ -52,12 +64,8 @@ export type Field = {
   ref: RefModelField;
   primary: boolean;
   default?: Literal;
-  validators: Validator[];
+  validate?: ValidateExpr;
 };
-
-export type Validator =
-  | { kind: "hook"; hook: FieldValidatorHook }
-  | { kind: "builtin"; name: string; args: Literal[] };
 
 export type Reference = {
   name: string;
@@ -199,6 +207,11 @@ export type Action =
       alias: string;
       query: Query;
       operation: ActionQueryOperation;
+    }
+  | {
+      kind: "validate";
+      key: string;
+      validate: ValidateExpr;
     };
 
 export type ActionQueryOperation =
@@ -238,7 +251,7 @@ export type ExtraInput = {
   type: FieldType;
   nullable: boolean;
   optional: boolean;
-  validators: Validator[];
+  validate?: ValidateExpr;
 };
 
 export type Repeater =
@@ -259,8 +272,8 @@ export type Populate<c extends TypeCardinality = TypeCardinality> = {
   repeater?: Repeater;
 };
 
-export type FieldValidatorHook = {
-  arg?: string;
+export type ValidatorHook = {
+  args: { name: string; expr: Expr }[];
   code: HookCode;
 };
 

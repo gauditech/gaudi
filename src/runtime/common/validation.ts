@@ -11,8 +11,6 @@ import {
   string,
 } from "yup";
 
-import { executeHook } from "../hooks";
-
 import { assertUnreachable } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
 import {
@@ -20,7 +18,6 @@ import {
   FieldsetDef,
   FieldsetFieldDef,
   FieldsetRecordDef,
-  HookValidator,
 } from "@src/types/definition";
 
 // ----- validation&transformation
@@ -122,8 +119,6 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
       } else if (v.name === "isStringEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
         s = s.equals<string>([v.args[0].value]) as StringSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
       } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
@@ -150,8 +145,6 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
       } else if (v.name === "isIntEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
         s = s.equals([v.args[0].value]) as NumberSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
       } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
@@ -178,8 +171,6 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
       } else if (v.name === "isFloatEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
         s = s.equals([v.args[0].value]) as NumberSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
       } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
@@ -200,8 +191,6 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
       if (v.name === "isBoolEqual") {
         // TODO: s.equals returns BaseSchema which doesn't fit BooleanSchema
         s = s.equals([v.args[0].value]) as BooleanSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
       } else if (v.name === "reference-not-found") {
         s = buildNoReferenceSchema(s);
       }
@@ -211,18 +200,6 @@ function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): A
   } else {
     assertUnreachable(field.type);
   }
-}
-
-function buildHookSchema<S extends BaseSchema>(
-  def: Definition,
-  validator: HookValidator,
-  schema: S
-): S {
-  const arg = validator.arg;
-  const testFn = async (value: unknown) => {
-    return await executeHook<boolean>(def, validator.hook, arg ? { [arg]: value } : {});
-  };
-  return schema.test(testFn);
 }
 
 function buildNoReferenceSchema<S extends BaseSchema>(schema: S): S {

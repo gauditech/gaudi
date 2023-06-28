@@ -14,6 +14,7 @@ export enum ErrorCode {
   CannotContainAtom,
   EndpointCannotContainAtom,
   DuplicateAtom,
+  DuplicateValidator,
   DuplicateModel,
   DuplicateRuntime,
   DuplicateDefaultRuntime,
@@ -36,10 +37,14 @@ export enum ErrorCode {
   QueryActionOnlyOneDeleteOrSelect,
   ConfiguringNonCustomEndpoint,
   MoreThanOneRespondsInEndpoint,
+  ValidatorMustContainExprOrHook,
+  ValidatorOnlyOneExprOrHook,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
   // Resolver Errors
+  CantResolveValidator,
+  UnexpectedValidatorArgumentCount,
   UnexpectedModelAtom,
   UnknownFunction,
   UnexpectedFunctionArgumentCount,
@@ -70,8 +75,8 @@ export enum ErrorCode {
   PopulateIsMissingSetters,
   // Type Errors
   UnexpectedType,
-  UnexpectedFieldType,
-  ExtraInputType,
+  UnexpectedValidatorTargetType,
+  UnexpectedPrimitiveType,
   ComputedType,
   NameAlreadyInScope,
   CollectionInsideArray,
@@ -91,6 +96,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Endpoint of type "${params?.type}" cannot contain a "${params?.atom}"`;
     case ErrorCode.DuplicateAtom:
       return `Duplicate "${params?.atom}" in a "${params?.parent}"`;
+    case ErrorCode.DuplicateValidator:
+      return `Duplicate validator definition`;
     case ErrorCode.DuplicateModel:
       return `Duplicate model definition`;
     case ErrorCode.DuplicateRuntime:
@@ -135,12 +142,20 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Only custom endpoint can have method, cardinality and path configuration`;
     case ErrorCode.MoreThanOneRespondsInEndpoint:
       return `At most one action in endpoint can have "responds" attribute`;
+    case ErrorCode.ValidatorMustContainExprOrHook:
+      return `Validator must contain "action" or "action hook" definition`;
+    case ErrorCode.ValidatorOnlyOneExprOrHook:
+      return `Validator can't have more than one "action" or "action hook" definition`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain "source" or "inline" definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:
       return `Hook can't have more than one "source" or "inline" definition`;
     case ErrorCode.DuplicateSelectField:
       return `Duplicate field in select`;
+    case ErrorCode.CantResolveValidator:
+      return `Can't resolve validator with this name`;
+    case ErrorCode.UnexpectedValidatorArgumentCount:
+      return `Validator "${params?.name}" expects ${params?.expected} arguments, but got ${params?.got}`;
     case ErrorCode.UnexpectedModelAtom:
       return (
         `Unexpected model atom:\n` +
@@ -211,9 +226,16 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
         `got:\n` +
         `${JSON.stringify(params?.got)}`
       );
-    case ErrorCode.UnexpectedFieldType:
-    case ErrorCode.ExtraInputType:
-      return `Field type must be a non null primitive type`;
+    case ErrorCode.UnexpectedValidatorTargetType:
+      return (
+        `Unexpected validator target type\n` +
+        `expected:\n` +
+        `${JSON.stringify(params?.expected)}\n` +
+        `got:\n` +
+        `${JSON.stringify(params?.got)}`
+      );
+    case ErrorCode.UnexpectedPrimitiveType:
+      return `Type must be a non null primitive type`;
     case ErrorCode.ComputedType:
       return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:

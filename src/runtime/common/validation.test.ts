@@ -247,13 +247,7 @@ describe("runtime", () => {
             nullable: false,
             required: true,
             type: "string",
-            validators: [
-              {
-                name: "hook",
-                arg: "value",
-                hook: { kind: "inline", inline: "value === 'expected text'" },
-              },
-            ],
+            validators: [],
           },
           integerProp: {
             kind: "field",

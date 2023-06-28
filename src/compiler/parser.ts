@@ -31,7 +31,6 @@ import {
   ExtraInputAtom,
   Field,
   FieldAtom,
-  FieldValidationHook,
   FloatLiteral,
   Generator,
   GeneratorClientAtom,
@@ -73,7 +72,15 @@ import {
   Select,
   StringLiteral,
   TokenData,
+  ValidateAction,
+  ValidateExpr,
   Validator,
+  ValidatorArg,
+  ValidatorArgAtom,
+  ValidatorAtom,
+  ValidatorHook,
+  ValidatorRaise,
+  ValidatorRaiseAtom,
   zeroToken,
 } from "./ast/ast";
 import { Type } from "./ast/type";
@@ -116,6 +123,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
     this.MANY(() => {
       this.OR([
+        { ALT: () => atoms.push(this.SUBRULE(this.validator)) },
         { ALT: () => atoms.push(this.SUBRULE(this.model)) },
         { ALT: () => atoms.push(this.SUBRULE(this.api)) },
         { ALT: () => atoms.push(this.SUBRULE(this.populator)) },
@@ -126,6 +134,84 @@ class GaudiParser extends EmbeddedActionsParser {
     });
 
     return atoms;
+  });
+
+  validator = this.RULE("validator", (): Validator => {
+    const atoms: ValidatorAtom[] = [];
+
+    const keyword = this.createTokenData(this.CONSUME(L.Validator));
+    const name = this.SUBRULE(this.identifierRef);
+    this.CONSUME1(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        { ALT: () => atoms.push(this.SUBRULE(this.validatorArg)) },
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.Assert));
+            this.CONSUME2(L.LCurly);
+            const expr = this.SUBRULE(this.expr);
+            this.CONSUME2(L.RCurly);
+            atoms.push({ kind: "assert", keyword, expr });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.Assert));
+            const hook = this.SUBRULE(this.validatorHook);
+            atoms.push({ kind: "assertHook", keyword, hook });
+          },
+        },
+        { ALT: () => atoms.push(this.SUBRULE(this.validatorRaise)) },
+      ]);
+    });
+    this.CONSUME1(L.RCurly);
+
+    return { kind: "validator", name, atoms, keyword };
+  });
+
+  validatorArg = this.RULE("validatorArg", (): ValidatorArg => {
+    const atoms: ValidatorArgAtom[] = [];
+
+    const keyword = this.createTokenData(this.CONSUME(L.Arg));
+    const name = this.SUBRULE1(this.identifierRef);
+    this.CONSUME(L.LCurly);
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () =>
+        this.OR([
+          {
+            ALT: () => {
+              const keyword = this.createTokenData(this.CONSUME(L.Type));
+              const identifier = this.SUBRULE2(this.identifier);
+              atoms.push({ kind: "type", identifier, keyword });
+            },
+          },
+        ]),
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "arg", name, atoms, keyword };
+  });
+
+  validatorRaise = this.RULE("validatorRaise", (): ValidatorRaise => {
+    const atoms: ValidatorRaiseAtom[] = [];
+
+    const keyword = this.createTokenData(this.CONSUME(L.Raise));
+    this.CONSUME(L.LCurly);
+    this.MANY(() =>
+      this.OR([
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.Code));
+            const code = this.SUBRULE2(this.string);
+            atoms.push({ kind: "code", code, keyword });
+          },
+        },
+      ])
+    );
+    this.CONSUME(L.RCurly);
+
+    return { kind: "raise", atoms, keyword };
   });
 
   model = this.RULE("model", (): Model => {
@@ -159,7 +245,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
     const keyword = this.createTokenData(this.CONSUME(L.Field));
     const name = this.SUBRULE1(this.identifierRef);
-    this.CONSUME(L.LCurly);
+    this.CONSUME1(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
       DEF: () =>
@@ -193,45 +279,67 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = this.createTokenData(this.CONSUME(L.Validate));
-              atoms.push({
-                kind: "validate",
-                validators: this.SUBRULE(this.fieldValidators),
-                keyword,
-              });
+              this.CONSUME2(L.LCurly);
+              const expr = this.SUBRULE(this.validateExpr);
+              this.CONSUME2(L.RCurly);
+              atoms.push({ kind: "validate", expr: expr, keyword });
             },
           },
         ]),
     });
-    this.CONSUME(L.RCurly);
+    this.CONSUME1(L.RCurly);
 
     return { kind: "field", name, atoms, keyword };
   });
 
-  fieldValidators = this.RULE("fieldValidators", (): Validator[] => {
-    const validators: Validator[] = [];
+  validateExpr = this.RULE("validateExpr", (): ValidateExpr => {
+    return this.OR<ValidateExpr>([
+      { ALT: () => this.SUBRULE(this.validateCallExpr) },
+      { ALT: () => this.SUBRULE(this.validateGroupExpr) },
+    ]);
+  });
 
-    this.CONSUME(L.LCurly);
+  validateGroupExpr = this.RULE("validateGroupExpr", (): ValidateExpr => {
+    this.createTokenData(this.CONSUME(L.LRound));
+    const expr = this.SUBRULE(this.validateExpr);
+    this.createTokenData(this.CONSUME(L.RRound));
+    return { kind: "group", expr };
+  });
+
+  validateCallExpr = this.RULE("validateCallExpr", (): ValidateExpr => {
+    const args: Expr[] = [];
+
+    const validator = this.SUBRULE(this.identifier);
+    this.CONSUME(L.LRound);
     this.MANY_SEP({
       SEP: L.Comma,
-      DEF: () =>
-        this.OR([
-          {
-            ALT: () => validators.push(this.SUBRULE(this.fieldValidationHook)),
-          },
-          {
-            ALT: () => {
-              const identifier = this.SUBRULE(this.identifier);
-              const args: Literal[] = [];
-              this.MANY(() => args.push(this.SUBRULE(this.literal)));
-              validators.push({ kind: "builtin", name: identifier, args });
-            },
-          },
-        ]),
+      DEF: () => args.push(this.SUBRULE(this.expr)),
     });
-    this.CONSUME(L.RCurly);
-
-    return validators;
+    this.CONSUME(L.RRound);
+    return { kind: "validator", validator, args };
   });
+
+  andValidateExpr = this.GENERATE_VALIDATE_OPERATOR("andValidateExpr", this.validateExpr, L.And);
+  orValidateExpr = this.GENERATE_VALIDATE_OPERATOR("orValidateExpr", this.andValidateExpr, L.Or);
+
+  GENERATE_VALIDATE_OPERATOR(
+    name: string,
+    next: ParserMethod<[], ValidateExpr>,
+    operator: TokenType
+  ): ParserMethod<[], ValidateExpr> {
+    return this.RULE(name, (): ValidateExpr => {
+      let lhs = this.SUBRULE1(next);
+      this.MANY(() => {
+        const operatorToken = this.CONSUME(operator);
+        const keyword = this.createTokenData(operatorToken);
+
+        const rhs = this.SUBRULE2(next);
+
+        lhs = { kind: "binary", operator: operatorToken.image as "and" | "or", lhs, rhs, keyword };
+      });
+      return lhs;
+    });
+  }
 
   reference = this.RULE("reference", (): Reference => {
     const atoms: ReferenceAtom[] = [];
@@ -665,6 +773,7 @@ class GaudiParser extends EmbeddedActionsParser {
       { ALT: () => this.SUBRULE(this.deleteAction) },
       { ALT: () => this.SUBRULE(this.executeAction) },
       { ALT: () => this.SUBRULE(this.queryAction) },
+      { ALT: () => this.SUBRULE(this.validateAction) },
     ]);
   });
 
@@ -811,6 +920,21 @@ class GaudiParser extends EmbeddedActionsParser {
     };
   });
 
+  validateAction = this.RULE("validateAction", (): ValidateAction => {
+    const keyword = this.createTokenData(
+      this.CONSUME(L.Validate),
+      this.CONSUME(L.With),
+      this.CONSUME(L.Key)
+    );
+    const key = this.SUBRULE(this.string);
+
+    this.CONSUME(L.LCurly);
+    const expr = this.SUBRULE(this.validateExpr);
+    this.CONSUME(L.RCurly);
+
+    return { kind: "validate", key, expr, keyword };
+  });
+
   actionAtomSet = this.RULE("actionAtomSet", (): ActionAtomSet => {
     const keyword = this.createTokenData(this.CONSUME(L.Set));
     const target = this.SUBRULE(this.identifierRef);
@@ -908,11 +1032,10 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = this.createTokenData(this.CONSUME(L.Validate));
-              atoms.push({
-                kind: "validate",
-                validators: this.SUBRULE(this.fieldValidators),
-                keyword,
-              });
+              this.CONSUME2(L.LCurly);
+              const expr = this.SUBRULE(this.validateExpr);
+              this.CONSUME2(L.RCurly);
+              atoms.push({ kind: "validate", expr, keyword });
             },
           },
         ]),
@@ -1127,13 +1250,10 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", "model");
-  fieldValidationHook: ParserMethod<[], FieldValidationHook> = this.GENERATE_HOOK(
-    "fieldValidationHook",
-    "validation"
-  );
+  validatorHook: ParserMethod<[], ValidatorHook> = this.GENERATE_HOOK("validatorHook", "validator");
   actionHook: ParserMethod<[], ActionHook> = this.GENERATE_HOOK("actionHook", "action");
 
-  GENERATE_HOOK<k extends "model" | "validation" | "action", h extends Hook<k>>(
+  GENERATE_HOOK<k extends "model" | "validator" | "action", h extends Hook<k>>(
     ruleName: string,
     kind: k
   ): ParserMethod<[], h> {
@@ -1148,20 +1268,12 @@ class GaudiParser extends EmbeddedActionsParser {
       this.MANY(() => {
         this.OR1([
           {
-            GATE: () => kind === "validation",
-            ALT: () => {
-              const keyword = this.createTokenData(this.CONSUME(L.Default), this.CONSUME1(L.Arg));
-              const name = this.SUBRULE2(this.identifier);
-              atoms.push({ kind: "default_arg", name, keyword });
-            },
-          },
-          {
-            GATE: () => kind !== "validation",
             ALT: () => {
               const keyword = this.createTokenData(this.CONSUME2(L.Arg));
               const name = this.SUBRULE3(this.identifier);
               this.OR2([
                 {
+                  GATE: () => kind !== "validator",
                   ALT: () => {
                     const query = this.SUBRULE(this.anonymousQuery);
                     atoms.push({ kind: "arg_query", name, query, keyword });
@@ -1380,29 +1492,6 @@ class GaudiParser extends EmbeddedActionsParser {
   isExpr = this.GENERATE_BINARY_OPERATOR("isExpr", this.inExpr, this.isOperator);
   andExpr = this.GENERATE_BINARY_OPERATOR("andExpr", this.isExpr, [L.And]);
   orExpr = this.GENERATE_BINARY_OPERATOR("orExpr", this.andExpr, [L.Or]);
-
-  GENERATE_BINARY_OPERATOR_RULE(
-    name: string,
-    next: ParserMethod<[], Expr>,
-    operators: TokenType[]
-  ): ParserMethod<[], Expr> {
-    return this.RULE(name, (): Expr => {
-      let lhs = this.SUBRULE1(next);
-      this.MANY(() => {
-        const operatorToken = this.OR(operators.map((op) => ({ ALT: () => this.CONSUME(op) })));
-        const operator = operatorToken.image as BinaryOperator;
-        const keyword = this.createTokenData(operatorToken);
-        const rhs = this.SUBRULE2(next);
-        const sourcePos = this.ACTION(() => ({
-          start: lhs.sourcePos.start,
-          end: rhs.sourcePos.end,
-          filename: this.filename,
-        }));
-        lhs = { kind: "binary", operator, lhs, rhs, keyword, sourcePos, type: Type.any };
-      });
-      return lhs;
-    });
-  }
 
   GENERATE_BINARY_OPERATOR(
     name: string,

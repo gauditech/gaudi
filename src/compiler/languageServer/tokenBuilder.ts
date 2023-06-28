@@ -17,7 +17,6 @@ import {
   Expr,
   ExtraInput,
   Field,
-  FieldValidationHook,
   Generator,
   GlobalAtom,
   Identifier,
@@ -37,7 +36,10 @@ import {
   Runtime,
   Select,
   TokenData,
+  ValidateAction,
+  ValidateExpr,
   Validator,
+  ValidatorHook,
 } from "../ast/ast";
 
 export enum TokenTypes {
@@ -87,6 +89,7 @@ export function buildTokens(
   function buildDocument(document: GlobalAtom[]) {
     document.forEach((d) => {
       match(d)
+        .with({ kind: "validator" }, buildValidator)
         .with({ kind: "model" }, buildModel)
         .with({ kind: "api" }, buildApi)
         .with({ kind: "populator" }, buildPopulator)
@@ -95,6 +98,61 @@ export function buildTokens(
         .with({ kind: "generator" }, buildGenerator)
         .exhaustive();
     });
+  }
+
+  function buildValidator({ keyword, name, atoms }: Validator) {
+    buildKeyword(keyword);
+    push(name.token, TokenTypes.function);
+    atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "arg" }, ({ keyword, name, atoms }) => {
+          buildKeyword(keyword);
+          buildIdentifierRef(name);
+          atoms.forEach((a) => {
+            match(a)
+              .with({ kind: "type" }, ({ keyword, identifier }) => {
+                buildKeyword(keyword);
+                buildType(identifier);
+              })
+              .exhaustive();
+          });
+        })
+        .with({ kind: "assert" }, ({ keyword, expr }) => {
+          buildKeyword(keyword);
+          buildExpr(expr);
+        })
+        .with({ kind: "assertHook" }, ({ keyword, hook }) => {
+          buildKeyword(keyword);
+          buildValidatorHook(hook);
+        })
+        .with({ kind: "raise" }, ({ keyword, atoms }) => {
+          buildKeyword(keyword);
+          atoms.forEach((a) => {
+            match(a)
+              .with({ kind: "code" }, ({ keyword, code }) => {
+                buildKeyword(keyword);
+                buildLiteral(code);
+              })
+              .exhaustive();
+          });
+        })
+        .exhaustive()
+    );
+  }
+
+  function buildValidateExpr(expr: ValidateExpr) {
+    match(expr)
+      .with({ kind: "group" }, ({ expr }) => buildValidateExpr(expr))
+      .with({ kind: "binary" }, ({ lhs, keyword, rhs }) => {
+        buildValidateExpr(lhs);
+        buildKeyword(keyword);
+        buildValidateExpr(rhs);
+      })
+      .with({ kind: "validator" }, ({ validator, args }) => {
+        push(validator.token, TokenTypes.function);
+        args.forEach(buildExpr);
+      })
+      .exhaustive();
   }
 
   function buildModel({ keyword, name, atoms }: Model) {
@@ -127,9 +185,9 @@ export function buildTokens(
           buildKeyword(keyword);
           buildLiteral(literal);
         })
-        .with({ kind: "validate" }, ({ keyword, validators }) => {
+        .with({ kind: "validate" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
-          validators.forEach(buildValidator);
+          buildValidateExpr(expr);
         })
         .exhaustive()
     );
@@ -212,16 +270,6 @@ export function buildTokens(
     buildKeyword(keyword);
     push(name.token, TokenTypes.property);
     buildExpr(expr);
-  }
-
-  function buildValidator(validator: Validator) {
-    match(validator)
-      .with({ kind: "builtin" }, ({ name, args }) => {
-        push(name.token, TokenTypes.property);
-        args.forEach(buildLiteral);
-      })
-      .with({ kind: "hook" }, buildFieldValidationHook)
-      .exhaustive();
   }
 
   function buildApi({ keyword, name, atoms }: Api) {
@@ -321,9 +369,9 @@ export function buildTokens(
           buildType(identifier);
         })
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
-        .with({ kind: "validate" }, ({ keyword, validators }) => {
+        .with({ kind: "validate" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
-          validators.forEach(buildValidator);
+          buildValidateExpr(expr);
         })
         .exhaustive()
     );
@@ -338,6 +386,7 @@ export function buildTokens(
       })
       .with({ kind: "execute" }, buildExecuteAction)
       .with({ kind: "queryAction" }, buildQueryAction)
+      .with({ kind: "validate" }, buildValidateAction)
       .exhaustive();
   }
 
@@ -399,6 +448,12 @@ export function buildTokens(
         })
         .otherwise(buildQueryAtom);
     });
+  }
+
+  function buildValidateAction({ keyword, key, expr }: ValidateAction) {
+    buildKeyword(keyword);
+    buildLiteral(key);
+    buildValidateExpr(expr);
   }
 
   function buildActionAtomSet({ keyword, target, set }: ActionAtomSet) {
@@ -536,22 +591,23 @@ export function buildTokens(
       .exhaustive();
   }
 
+  function buildValidatorHook(hook: ValidatorHook) {
+    buildKeyword(hook.keyword);
+    hook.atoms.forEach(buildHookAtom);
+  }
+
   function buildModelHook(hook: ModelHook) {
     buildKeyword(hook.keyword);
     push(hook.name.token, TokenTypes.property);
     hook.atoms.forEach(buildHookAtom);
   }
 
-  function buildFieldValidationHook(hook: FieldValidationHook) {
-    buildKeyword(hook.keyword);
-    hook.atoms.forEach(buildHookAtom);
-  }
   function buildActionHook(hook: ActionHook) {
     buildKeyword(hook.keyword);
     hook.atoms.forEach(buildHookAtom);
   }
 
-  function buildHookAtom(atom: (ModelHook | FieldValidationHook | ActionHook)["atoms"][number]) {
+  function buildHookAtom(atom: (ModelHook | ValidatorHook | ActionHook)["atoms"][number]) {
     match(atom)
       .with({ kind: "arg_expr" }, ({ keyword, name, expr }) => {
         buildKeyword(keyword);
@@ -562,10 +618,6 @@ export function buildTokens(
         buildKeyword(keyword);
         push(name.token, TokenTypes.property);
         buildAnonymousQuery(query);
-      })
-      .with({ kind: "default_arg" }, ({ keyword, name }) => {
-        buildKeyword(keyword);
-        push(name.token, TokenTypes.property);
       })
       .with({ kind: "source" }, ({ keyword, name, keywordFrom, file }) => {
         buildKeyword(keyword);

@@ -397,7 +397,6 @@ export type ValidatorDef =
   | IsIntEqual
   | IsFloatEqual
   | IsStringEqual
-  | HookValidator
   | ReferenceNotFoundValidator;
 
 export const ValidatorDefinition = [
@@ -477,11 +476,6 @@ export interface IsStringEqual extends IValidatorDef {
   args: [StringLiteral];
 }
 
-export interface HookValidator {
-  name: "hook";
-  arg?: string;
-  hook: HookCode;
-}
 export interface ReferenceNotFoundValidator {
   name: "reference-not-found";
 }
