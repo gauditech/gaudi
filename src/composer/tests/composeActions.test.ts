@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
 
 describe("compose actions", () => {

@@ -1,5 +1,5 @@
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { executeHook } from "@src/runtime/hooks";
 import { CreateEndpointDef, Definition } from "@src/types/definition";
 

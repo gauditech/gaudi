@@ -5,8 +5,8 @@ import path from "path";
 
 import { buildApiClients } from "@src/builder/builder";
 import { loadBlueprint } from "@src/e2e/api/setup";
-import { compileFromString } from "@src/index";
 import { Logger } from "@src/logger";
+import { compileFromString } from "@src/runtime/common/testUtils";
 
 const CLIENT_LIB_DIST_FOLDER = path.join(__dirname, "__snapshots__");
 

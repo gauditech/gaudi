@@ -1,4 +1,4 @@
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { CreateEndpointDef, CustomManyEndpointDef, ExecuteHookAction } from "@src/types/definition";
 
 describe("entrypoint", () => {

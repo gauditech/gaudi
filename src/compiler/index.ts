@@ -19,8 +19,7 @@ import { PreludePlugin } from "./plugins/prelude";
 import { resolve } from "./resolver";
 
 import { kindFind } from "@src/common/kindFilter";
-import { compose } from "@src/composer/composer";
-import { Definition } from "@src/types/definition";
+import { Specification } from "@src/types/specification";
 
 export type CompileResult =
   | { ast: ProjectASTs; errors: undefined }
@@ -97,7 +96,7 @@ export function compileToAST(inputs: Input[], skipPlugins = false): CompileResul
   return { ast, errors: allErrors };
 }
 
-export function compileFromFiles(filenames: string[]): Definition {
+export function compileFromFiles(filenames: string[]): Specification {
   const inputs = filenames.map((filename) => ({
     filename,
     source: fs.readFileSync(filename).toString("utf-8"),
@@ -107,23 +106,10 @@ export function compileFromFiles(filenames: string[]): Definition {
     const errorString = compilerErrorsToString(inputs, errors);
     throw new Error(`Failed to compile gaudi project:\n${errorString}`);
   }
-  return compose(migrate(ast));
+  return migrate(ast);
 }
 
-export function compileProject(rootDir: string): Definition {
+export function compileProject(rootDir: string): Specification {
   const filenames = glob(`${rootDir}/**/*.gaudi`);
   return compileFromFiles(filenames);
-}
-
-/**
- * Helper function that compiles directly to definition. This is used in tests.
- */
-export function compileFromString(source: string): Definition {
-  const inputs = [{ source }];
-  const { ast, errors } = compileToAST([{ source }]);
-  if (errors) {
-    const errorString = compilerErrorsToString(inputs, errors);
-    throw new Error(`Failed to compile:\n${errorString}`);
-  }
-  return compose(migrate(ast));
 }

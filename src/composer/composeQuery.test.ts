@@ -1,4 +1,4 @@
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose model queries", () => {

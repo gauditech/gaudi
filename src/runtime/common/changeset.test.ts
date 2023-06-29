@@ -2,7 +2,6 @@ import crypto from "crypto";
 
 import bcrypt, { hash } from "bcrypt";
 
-import { compileFromString } from "@src/index";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
@@ -11,7 +10,7 @@ import {
   getFieldsetProperty,
   setFieldsetProperty,
 } from "@src/runtime/common/changeset";
-import { mockQueryExecutor } from "@src/runtime/common/testUtils";
+import { compileFromString, mockQueryExecutor } from "@src/runtime/common/testUtils";
 import { Vars } from "@src/runtime/server/vars";
 import {
   ChangesetDef,

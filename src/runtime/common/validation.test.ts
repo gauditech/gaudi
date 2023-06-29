@@ -1,4 +1,4 @@
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import {
   buildFieldsetValidationSchema,
   validateEndpointFieldset,

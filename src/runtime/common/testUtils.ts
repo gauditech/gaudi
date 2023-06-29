@@ -1,8 +1,24 @@
-import { compileFromString } from "@src/compiler";
+import { compileToAST } from "@src/compiler";
+import { compilerErrorsToString } from "@src/compiler/compilerError";
+import { migrate } from "@src/compiler/migrate";
+import { compose } from "@src/composer/composer";
 import { QueryTree } from "@src/runtime/query/build";
 import { NestedRow, QueryExecutor } from "@src/runtime/query/exec";
 import { Vars } from "@src/runtime/server/vars";
 import { CustomManyEndpointDef, Definition, QueryAction, QueryDef } from "@src/types/definition";
+
+/**
+ * Helper function that compiles directly to definition. This is used in tests.
+ */
+export function compileFromString(source: string): Definition {
+  const inputs = [{ source }];
+  const { ast, errors } = compileToAST([{ source }]);
+  if (errors) {
+    const errorString = compilerErrorsToString(inputs, errors);
+    throw new Error(`Failed to compile:\n${errorString}`);
+  }
+  return compose(migrate(ast));
+}
 
 /**
  * Creates dummy query executor wich always return empty row.
