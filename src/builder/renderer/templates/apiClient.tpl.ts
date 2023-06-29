@@ -427,17 +427,25 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
         case "PATCH": {
           const errorTypeName = `${typeName}Error`;
 
+          const inputTypeName = `${typeName}Data`;
+          const inputType = renderSchema(
+            endpoint.fieldset ? fieldsetToSchema(def, endpoint.fieldset) : undefined
+          );
+
           let builder;
           if (identifierType) {
-            builder = `buildCustomOneSubmitManyFn<${identifierType}, any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
+            builder = `buildCustomOneSubmitManyFn<${identifierType}, ${inputTypeName}, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
           } else {
-            builder = `buildCustomOneSubmitOneFn<any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
+            builder = `buildCustomOneSubmitOneFn<${inputTypeName}, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`;
           }
 
           return {
             name: name,
             builder,
-            types: [{ name: errorTypeName, body: errorType }],
+            types: [
+              { name: errorTypeName, body: errorType },
+              { name: inputTypeName, body: inputType },
+            ],
           };
         }
         default: {
@@ -471,10 +479,18 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
         case "PATCH": {
           const errorTypeName = `${typeName}Error`;
 
+          const inputTypeName = `${typeName}Data`;
+          const inputType = renderSchema(
+            endpoint.fieldset ? fieldsetToSchema(def, endpoint.fieldset) : undefined
+          );
+
           return {
             name: name,
-            builder: `buildCustomManySubmitFn<any, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
-            types: [{ name: errorTypeName, body: errorType }],
+            builder: `buildCustomManySubmitFn<${inputTypeName}, any, ${errorTypeName}>(options, parentPath, "${path}", "${method}")`,
+            types: [
+              { name: errorTypeName, body: errorType },
+              { name: inputTypeName, body: inputType },
+            ],
           };
         }
         default: {
@@ -1109,7 +1125,9 @@ function selectToSchema(def: Definition, select: SelectItem[]): SchemaObject {
   };
 }
 
-function renderSchema(schema: SchemaObject): string {
+function renderSchema(schema: SchemaObject | undefined): string {
+  if (schema == null) return "undefined";
+
   return renderSchemaObject(schema);
 }
 
@@ -1128,10 +1146,10 @@ function renderSchemaItem(name: string, item: SchemaItem): string {
   switch (itemType) {
     case "boolean":
     case "number":
-    case "string":
-    case "unknown": {
+    case "string": {
       return `${name}${item.optional ? "?" : ""}: ${itemType}${item.nullable ? "|null" : ""}`;
     }
+    case "unknown":
     case "null": {
       return `${name}${item.optional ? "?" : ""}: ${itemType}`;
     }

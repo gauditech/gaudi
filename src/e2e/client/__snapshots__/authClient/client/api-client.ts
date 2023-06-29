@@ -36,8 +36,20 @@ function buildAuthApi(options: ApiClientOptions) {
   function buildAuthuserEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type LoginError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION";
+    type LoginData = {
+      username: string,
+      password: string
+    };
     type LogoutError = LoginError;
+    type LogoutData = {};
     type RegisterError = LoginError;
+    type RegisterData = {
+      authUser: {
+        name: string,
+        username: string
+      },
+      password: string
+    };
 
     // entrypoint function
     function api(id: number) {
@@ -50,9 +62,9 @@ function buildAuthApi(options: ApiClientOptions) {
     // endpoint functions
     return Object.assign(api,
       {
-        login: buildCustomManySubmitFn<any, any, LoginError>(options, parentPath, "login", "POST"),
-        logout: buildCustomManySubmitFn<any, any, LogoutError>(options, parentPath, "logout", "POST"),
-        register: buildCustomManySubmitFn<any, any, RegisterError>(options, parentPath, "register", "POST")
+        login: buildCustomManySubmitFn<LoginData, any, LoginError>(options, parentPath, "login", "POST"),
+        logout: buildCustomManySubmitFn<LogoutData, any, LogoutError>(options, parentPath, "logout", "POST"),
+        register: buildCustomManySubmitFn<RegisterData, any, RegisterError>(options, parentPath, "register", "POST")
       }
     )
   }
@@ -83,6 +95,7 @@ function buildApi(options: ApiClientOptions) {
     type CreateResp = ListResp;
     type CreateError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_UNAUTHENTICATED" | "ERROR_CODE_VALIDATION";
     type FetchAuthTokenError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION";
+    type FetchAuthTokenData = {};
 
     // entrypoint function
     function api(id: string) {
@@ -98,7 +111,7 @@ function buildApi(options: ApiClientOptions) {
         list: buildListFn<ListResp, ListError>(options, parentPath),
         get: buildGetManyFn<string, GetResp, GetError>(options, parentPath),
         create: buildCreateFn<CreateData, CreateResp, CreateError>(options, parentPath),
-        fetchAuthToken: buildCustomManySubmitFn<any, any, FetchAuthTokenError>(options, parentPath, "fetchAuthToken", "POST")
+        fetchAuthToken: buildCustomManySubmitFn<FetchAuthTokenData, any, FetchAuthTokenError>(options, parentPath, "fetchAuthToken", "POST")
       }
     )
   }

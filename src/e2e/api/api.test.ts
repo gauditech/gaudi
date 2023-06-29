@@ -211,7 +211,7 @@ describe("API endpoints", () => {
         .patch("/api/org/customManyRespondActionStatic")
         .send();
 
-      expect(postResp.statusCode).toBe(202); // default response code
+      expect(postResp.statusCode).toBe(202);
       expect(postResp.body).toMatchInlineSnapshot(`"static response body"`);
     });
 

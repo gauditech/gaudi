@@ -267,7 +267,7 @@ describe("mock client lib", () => {
 
       // ----- custom endpoints
 
-      it("customOneFeth", async () => {
+      it("customOneFetch", async () => {
         const requestFn = jest.fn(async () => ({
           status: 200,
           headers: { "Gaudi-Test": "Response Foo Bar" },
@@ -313,9 +313,16 @@ describe("mock client lib", () => {
         }));
         const resp = await createTestEntrypointClient(requestFn, {
           "Gaudi-Test-Default": "Default Foo Bar",
-        }).api.org.customOneSubmit("slug1", testData, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
-        });
+        }).api.org.customOneSubmit(
+          "slug1",
+          // custom endpoint fieldset
+          {
+            extraProp: "prop value",
+          },
+          {
+            headers: { "Gaudi-Test": "Request Foo Bar" },
+          }
+        );
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -328,7 +335,9 @@ describe("mock client lib", () => {
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/customOneSubmit`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: {
+            extraProp: "prop value",
+          },
         });
 
         // test response
@@ -394,11 +403,15 @@ describe("mock client lib", () => {
         }));
         const resp = await createTestEntrypointClient(requestFn, {
           "Gaudi-Test-Default": "Default Foo Bar",
-        }).api.org.customManySubmit(testData, {
-          headers: {
-            "Gaudi-Test": "Request Foo Bar",
-          },
-        });
+        }).api.org.customManySubmit(
+          // custom endpoint fieldset
+          { extraProp: "prop value" },
+          {
+            headers: {
+              "Gaudi-Test": "Request Foo Bar",
+            },
+          }
+        );
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -411,7 +424,7 @@ describe("mock client lib", () => {
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/customManySubmit`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: { extraProp: "prop value" },
         });
 
         // test response

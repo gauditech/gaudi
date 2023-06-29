@@ -50,13 +50,22 @@ export declare function createClient(options: ApiClientOptions): {
                 is_public: boolean;
                 owner_id: number;
             }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION" | "ERROR_CODE_UNAUTHENTICATED">;
-            fetchAuthToken: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            fetchAuthToken: CustomManySubmitApiClientFn<{}, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
         };
         auth: {
             authUser: ((id: number) => {}) & {
-                login: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-                logout: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-                register: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                login: CustomManySubmitApiClientFn<{
+                    username: string;
+                    password: string;
+                }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                logout: CustomManySubmitApiClientFn<{}, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                register: CustomManySubmitApiClientFn<{
+                    authUser: {
+                        name: string;
+                        username: string;
+                    };
+                    password: string;
+                }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             };
         };
     };

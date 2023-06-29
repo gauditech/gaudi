@@ -53,6 +53,10 @@ api {
         path "customOneSubmit"
         method PATCH
         cardinality one
+        extra inputs {
+          // test action fieldset data type
+          field extraProp { type string }
+        }
     }
     custom endpoint {
         path "customManyFetch"
@@ -63,6 +67,10 @@ api {
         path "customManySubmit"
         method POST
         cardinality many
+        extra inputs {
+          // test action fieldset data type
+          field extraProp { type string }
+        }
     }
 
     // repo entrypoints
