@@ -125,7 +125,7 @@ export function buildTokens(
           buildKeyword(keyword);
           buildValidatorHook(hook);
         })
-        .with({ kind: "raise" }, ({ keyword, atoms }) => {
+        .with({ kind: "error" }, ({ keyword, atoms }) => {
           buildKeyword(keyword);
           atoms.forEach((a) => {
             match(a)

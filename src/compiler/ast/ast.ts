@@ -18,7 +18,7 @@ export type ValidatorAtom =
   | ValidatorArg
   | { kind: "assert"; keyword: TokenData; expr: Expr<Code> }
   | { kind: "assertHook"; keyword: TokenData; hook: ValidatorHook }
-  | ValidatorRaise;
+  | ValidatorError;
 
 export type ValidatorArg = {
   kind: "arg";
@@ -28,8 +28,8 @@ export type ValidatorArg = {
 };
 export type ValidatorArgAtom = { kind: "type"; keyword: TokenData; identifier: Identifier };
 
-export type ValidatorRaise = { kind: "raise"; keyword: TokenData; atoms: ValidatorRaiseAtom[] };
-export type ValidatorRaiseAtom = { kind: "code"; keyword: TokenData; code: StringLiteral };
+export type ValidatorError = { kind: "error"; keyword: TokenData; atoms: ValidatorErrorAtom[] };
+export type ValidatorErrorAtom = { kind: "code"; keyword: TokenData; code: StringLiteral };
 
 export type Model = {
   kind: "model";

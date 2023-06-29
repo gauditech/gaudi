@@ -65,8 +65,8 @@ export function checkForm(document: GlobalAtom[]) {
       args.map(({ name }) => name),
       ErrorCode.DuplicateModelAtom
     );
-    containsAtoms(validator, ["arg", "raise"]);
-    noDuplicateAtoms(validator, ["raise"]);
+    containsAtoms(validator, ["arg", "error"]);
+    noDuplicateAtoms(validator, ["error"]);
     const exprOrHook = kindFilter(validator.atoms, "assert", "assertHook");
     if (exprOrHook.length === 0) {
       errors.push(new CompilerError(validator.keyword, ErrorCode.ValidatorMustContainExprOrHook));

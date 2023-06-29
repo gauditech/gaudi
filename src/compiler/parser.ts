@@ -78,9 +78,9 @@ import {
   ValidatorArg,
   ValidatorArgAtom,
   ValidatorAtom,
+  ValidatorError,
+  ValidatorErrorAtom,
   ValidatorHook,
-  ValidatorRaise,
-  ValidatorRaiseAtom,
   zeroToken,
 } from "./ast/ast";
 import { Type } from "./ast/type";
@@ -161,7 +161,7 @@ class GaudiParser extends EmbeddedActionsParser {
             atoms.push({ kind: "assertHook", keyword, hook });
           },
         },
-        { ALT: () => atoms.push(this.SUBRULE(this.validatorRaise)) },
+        { ALT: () => atoms.push(this.SUBRULE(this.validatorError)) },
       ]);
     });
     this.CONSUME1(L.RCurly);
@@ -193,10 +193,10 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "arg", name, atoms, keyword };
   });
 
-  validatorRaise = this.RULE("validatorRaise", (): ValidatorRaise => {
-    const atoms: ValidatorRaiseAtom[] = [];
+  validatorError = this.RULE("validatorError", (): ValidatorError => {
+    const atoms: ValidatorErrorAtom[] = [];
 
-    const keyword = this.createTokenData(this.CONSUME(L.Raise));
+    const keyword = this.createTokenData(this.CONSUME(L.Error));
     this.CONSUME(L.LCurly);
     this.MANY(() =>
       this.OR([
@@ -211,7 +211,7 @@ class GaudiParser extends EmbeddedActionsParser {
     );
     this.CONSUME(L.RCurly);
 
-    return { kind: "raise", atoms, keyword };
+    return { kind: "error", atoms, keyword };
   });
 
   model = this.RULE("model", (): Model => {

@@ -31,9 +31,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       assert = { kind: "hook", hook: migrateValidatorHook(assertHook) };
     }
 
-    const raiseAst = kindFind(validator.atoms, "raise");
-    ensureExists(raiseAst);
-    const code = kindFind(raiseAst.atoms, "code")?.code.value;
+    const errorAst = kindFind(validator.atoms, "error");
+    ensureExists(errorAst);
+    const code = kindFind(errorAst.atoms, "code")?.code.value;
     ensureExists(code);
 
     return {
@@ -43,7 +43,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         type: arg.name.ref!.type,
       })),
       assert,
-      raise: { code },
+      error: { code },
     };
   }
 

@@ -43,7 +43,7 @@ export type Validator = {
   name: string;
   args: { name: string; type: FieldType }[];
   assert: { kind: "expr"; expr: Expr } | { kind: "hook"; hook: ValidatorHook };
-  raise: { code: string };
+  error: { code: string };
 };
 
 export type ValidateExpr =

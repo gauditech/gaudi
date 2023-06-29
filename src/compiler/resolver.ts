@@ -183,7 +183,7 @@ export function resolve(projectASTs: ProjectASTs) {
           checkExprType(assert.expr, Type.boolean);
         })
         .with({ kind: "assertHook" }, ({ hook }) => resolveValidatorHook(hook, scope))
-        .with({ kind: "raise" }, () => undefined)
+        .with({ kind: "error" }, () => undefined)
         .exhaustive()
     );
   }

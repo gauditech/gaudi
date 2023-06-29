@@ -67,7 +67,6 @@ export const Responds = createWeakKeyword("responds");
 export const Repeat = createWeakKeyword("repeat");
 export const Relation = createWeakKeyword("relation");
 export const Reference = createWeakKeyword("reference");
-export const Raise = createWeakKeyword("raise");
 export const Query = createWeakKeyword("query");
 export const POST = createWeakKeyword("POST");
 export const Populator = createWeakKeyword("populator");
@@ -104,6 +103,7 @@ export const Field = createWeakKeyword("field");
 export const Fetch = createWeakKeyword("fetch");
 export const Extra = createWeakKeyword("extra");
 export const Execute = createWeakKeyword("execute");
+export const Error = createWeakKeyword("error");
 export const Entrypoint = createWeakKeyword("entrypoint");
 export const Endpoint = createWeakKeyword("endpoint");
 export const End = createWeakKeyword("end");
@@ -206,7 +206,6 @@ export const GaudiTokens = [
   Repeat,
   Relation,
   Reference,
-  Raise,
   Query,
   POST,
   Populator,
@@ -243,6 +242,7 @@ export const GaudiTokens = [
   Fetch,
   Extra,
   Execute,
+  Error,
   Entrypoint,
   Endpoint,
   End,
