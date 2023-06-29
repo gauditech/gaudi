@@ -611,11 +611,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         ],
         "authSelect": [],
         "authorize": undefined,
-        "fieldset": {
-          "kind": "record",
-          "nullable": false,
-          "record": {},
-        },
+        "fieldset": undefined,
         "kind": "custom-many",
         "method": "POST",
         "parentContext": [],

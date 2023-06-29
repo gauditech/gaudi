@@ -136,16 +136,7 @@ function processEndpoints(
     );
     const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
 
-    const fieldset = fieldsetFromActions(def, actions);
-    endSpec.input.forEach((atom) => {
-      fieldset.record[atom.name] = {
-        kind: "field",
-        type: atom.type,
-        required: !atom.optional,
-        nullable: atom.nullable,
-        validators: composeValidators(atom.type, atom.validators),
-      };
-    });
+    const fieldset = composeFieldset(def, endSpec, actions);
 
     switch (endSpec.kind) {
       case "get": {
@@ -209,8 +200,6 @@ function processEndpoints(
         };
       }
       case "custom": {
-        const maybeFieldset = isMethodWithFieldset(endSpec.method) ? fieldset : undefined;
-
         if (endSpec.cardinality === "one") {
           return {
             kind: "custom-one",
@@ -221,7 +210,7 @@ function processEndpoints(
             target,
             authSelect,
             authorize,
-            fieldset: maybeFieldset,
+            fieldset,
             response: undefined,
             responds,
           };
@@ -235,7 +224,7 @@ function processEndpoints(
             target: _.omit(target, "identifyWith"),
             authSelect,
             authorize,
-            fieldset: maybeFieldset,
+            fieldset,
             response: undefined,
             responds,
           };
@@ -248,19 +237,6 @@ function processEndpoints(
   });
 }
 
-function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
-  switch (method) {
-    case "GET":
-    case "DELETE":
-      return false;
-    case "POST":
-    case "PATCH":
-      return true;
-    default:
-      assertUnreachable(method);
-  }
-}
-
 export function composeFilter(
   fromPath: string[],
   filter: Spec.Expr | undefined
@@ -268,61 +244,98 @@ export function composeFilter(
   return filter && composeExpression(filter, fromPath);
 }
 
-export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetRecordDef {
-  const fieldsetWithPaths = actions
-    // filter out actions without fieldset
-    .filter(
-      (a): a is CreateOneAction | UpdateOneAction =>
-        a.kind === "create-one" || a.kind === "update-one"
-    )
-    .flatMap((action) => {
-      return _.chain(action.changeset)
-        .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
-          switch (setter.kind) {
-            case "fieldset-input": {
-              const field = getRef.field(def, `${action.model}.${name}`);
-              return [
-                setter.fieldsetAccess,
-                {
-                  kind: "field",
-                  required: setter.required,
-                  type: setter.type,
-                  nullable: field.nullable,
-                  validators: _.cloneDeep(field.validators),
-                },
-              ];
-            }
-            case "fieldset-reference-input": {
-              ensureOneOf(action.kind, ["create-one", "update-one"]);
-              const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
-              const reference = getRef.reference(def, action.model, name);
-              const field = getRef.field(def, tpath.leaf.refKey);
-              return [
-                setter.fieldsetAccess,
-                {
-                  kind: "field",
-                  required: true, // FIXME
-                  nullable: reference.nullable,
-                  type: field.type,
-                  validators: _.cloneDeep(field.validators),
-                },
-              ];
-            }
-            default:
-              return null;
-          }
-        })
-        .compact()
-        .value();
-    });
+function composeFieldset(
+  def: Definition,
+  endSpec: Spec.Endpoint,
+  actions: ActionDef[]
+): FieldsetRecordDef | undefined {
+  const actionFieldset = fieldsetFromActions(def, actions);
+  const extraInputFieldset = fieldsetFromExtranInput(def, endSpec);
 
-  return collectFieldsetPaths(fieldsetWithPaths);
+  // return fieldset only if it's not empty, otherwise return "undefined"
+  if (actionFieldset.length > 0 || extraInputFieldset.length > 0) {
+    return collectFieldsetPaths([...actionFieldset, ...extraInputFieldset]);
+  }
+}
+
+export function fieldsetFromActions(
+  def: Definition,
+  actions: ActionDef[]
+): [string[], FieldsetFieldDef][] {
+  return (
+    actions
+      // filter out actions without fieldset
+      .filter(
+        (a): a is CreateOneAction | UpdateOneAction =>
+          a.kind === "create-one" || a.kind === "update-one"
+      )
+      .flatMap((action) => {
+        return _.chain(action.changeset)
+          .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
+            switch (setter.kind) {
+              case "fieldset-input": {
+                const field = getRef.field(def, `${action.model}.${name}`);
+                return [
+                  setter.fieldsetAccess,
+                  {
+                    kind: "field",
+                    required: setter.required,
+                    type: setter.type,
+                    nullable: field.nullable,
+                    validators: _.cloneDeep(field.validators),
+                  },
+                ];
+              }
+              case "fieldset-reference-input": {
+                ensureOneOf(action.kind, ["create-one", "update-one"]);
+                const tpath = getTypedPathWithLeaf(
+                  def,
+                  [action.model, name, ...setter.through],
+                  {}
+                );
+                const reference = getRef.reference(def, action.model, name);
+                const field = getRef.field(def, tpath.leaf.refKey);
+                return [
+                  setter.fieldsetAccess,
+                  {
+                    kind: "field",
+                    required: true, // FIXME
+                    nullable: reference.nullable,
+                    type: field.type,
+                    validators: _.cloneDeep(field.validators),
+                  },
+                ];
+              }
+              default:
+                return null;
+            }
+          })
+          .compact()
+          .value();
+      })
+  );
+}
+
+function fieldsetFromExtranInput(
+  def: Definition,
+  endSpec: Spec.Endpoint
+): [string[], FieldsetFieldDef][] {
+  return endSpec.input.map((atom) => [
+    [atom.name],
+    {
+      kind: "field",
+      type: atom.type,
+      required: !atom.optional,
+      nullable: atom.nullable,
+      validators: composeValidators(atom.type, atom.validators),
+    },
+  ]);
 }
 
 /**
  * Converts a list of single `FieldsetFieldDef`s with their desired paths
  * into a `FieldsetDef` that nests `FieldsetRecordDef`s in order to respect
- * desired access path for each `FieldsetFieldDef`.ß
+ * desired access path for each `FieldsetFieldDef`.
  */
 function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetRecordDef {
   const uniqueFieldsetPaths = _.uniqWith(paths, _.isEqual);

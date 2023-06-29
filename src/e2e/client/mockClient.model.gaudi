@@ -33,6 +33,9 @@ generate client {
 //  // test custom output folder
 //  output "src/e2e/client/__snapshots__/mockClient/client"
 //}
+runtime MyRuntime {
+  source path "./src/e2e/api/hooks"
+}
 
 api {
   entrypoint Org {
@@ -118,6 +121,20 @@ api {
           path "customManySubmit"
           method POST
           cardinality many
+
+          extra inputs {
+            field name { type string }
+            field counter { type integer }
+          }
+          action {
+            execute {
+              hook {
+                arg name name
+                arg counter counter
+                source customAction from "hooks.js"
+              }
+            }
+          }
       }
       entrypoint owner {
         get endpoint {}

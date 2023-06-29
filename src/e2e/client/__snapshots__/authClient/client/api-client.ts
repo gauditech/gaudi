@@ -40,8 +40,8 @@ function buildAuthApi(options: ApiClientOptions) {
       username: string,
       password: string
     };
-    type LogoutError = LoginError;
-    type LogoutData = {};
+    type LogoutError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
+    type LogoutData = undefined;
     type RegisterError = LoginError;
     type RegisterData = {
       authUser: {
@@ -94,8 +94,8 @@ function buildApi(options: ApiClientOptions) {
     };
     type CreateResp = ListResp;
     type CreateError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_UNAUTHENTICATED" | "ERROR_CODE_VALIDATION";
-    type FetchAuthTokenError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION";
-    type FetchAuthTokenData = {};
+    type FetchAuthTokenError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
+    type FetchAuthTokenData = undefined;
 
     // entrypoint function
     function api(id: string) {

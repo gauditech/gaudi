@@ -52,8 +52,8 @@ function buildApi(options: ApiClientOptions) {
     };
     type CustomManyActionRespondsError = CustomManyActionError;
     type CustomManyActionRespondsData = CustomManyActionData;
-    type CustomManyRespondActionStaticError = CustomManyActionError;
-    type CustomManyRespondActionStaticData = {};
+    type CustomManyRespondActionStaticError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
+    type CustomManyRespondActionStaticData = undefined;
     type CustomManyRespondActionSimpleError = CustomManyActionError;
     type CustomManyRespondActionSimpleData = { body: string };
     type CustomManyRespondActionComplexError = CustomManyActionError;
@@ -86,7 +86,7 @@ function buildApi(options: ApiClientOptions) {
       }
     };
     type CustomDeleteError = CustomGetError;
-    type CustomListError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
+    type CustomListError = CustomManyRespondActionStaticError;
     type CustomCreateError = CustomManyActionError;
     type CustomCreateData = {
       newOrg: {
@@ -109,7 +109,7 @@ function buildApi(options: ApiClientOptions) {
     };
     type GetError = CustomGetError;
     type ListResp = GetResp;
-    type ListError = CustomListError;
+    type ListError = CustomManyRespondActionStaticError;
     type CreateData = {
       name: string,
       slug: string,

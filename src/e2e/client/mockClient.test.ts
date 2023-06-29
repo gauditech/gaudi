@@ -678,7 +678,7 @@ describe("mock client lib", () => {
         const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
-          .repos.customOneSubmit(1, testData);
+          .repos.customOneSubmit(1);
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -691,7 +691,7 @@ describe("mock client lib", () => {
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/customOneSubmit`, {
           headers: {},
           method: "PATCH",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: undefined,
         });
 
         // test response
@@ -743,7 +743,7 @@ describe("mock client lib", () => {
         const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
-          .repos.customManySubmit(testData);
+          .repos.customManySubmit();
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -756,7 +756,7 @@ describe("mock client lib", () => {
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/customManySubmit`, {
           headers: {},
           method: "POST",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: undefined,
         });
 
         // test response
@@ -981,7 +981,7 @@ describe("mock client lib", () => {
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
           .repos(1)
-          .owner.customOneSubmit(testData);
+          .owner.customOneSubmit();
 
         // type narrowing for simpler later code
         ensureEqual(
@@ -996,7 +996,7 @@ describe("mock client lib", () => {
           {
             headers: {},
             method: "PATCH",
-            body: { slug: "slug1", name: "test name", description: "test description" },
+            body: undefined,
           }
         );
 

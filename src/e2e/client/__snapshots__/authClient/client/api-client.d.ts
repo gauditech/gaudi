@@ -50,7 +50,7 @@ export declare function createClient(options: ApiClientOptions): {
                 is_public: boolean;
                 owner_id: number;
             }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION" | "ERROR_CODE_UNAUTHENTICATED">;
-            fetchAuthToken: CustomManySubmitApiClientFn<{}, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            fetchAuthToken: CustomManySubmitApiClientFn<undefined, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
         };
         auth: {
             authUser: ((id: number) => {}) & {
@@ -58,7 +58,7 @@ export declare function createClient(options: ApiClientOptions): {
                     username: string;
                     password: string;
                 }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-                logout: CustomManySubmitApiClientFn<{}, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+                logout: CustomManySubmitApiClientFn<undefined, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
                 register: CustomManySubmitApiClientFn<{
                     authUser: {
                         name: string;

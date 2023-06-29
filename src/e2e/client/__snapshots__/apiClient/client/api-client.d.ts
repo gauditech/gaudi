@@ -123,7 +123,7 @@ export declare function createClient(options: ApiClientOptions): {
                 name: string;
                 counter: number;
             }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customManyRespondActionStatic: CustomManySubmitApiClientFn<{}, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customManyRespondActionStatic: CustomManySubmitApiClientFn<undefined, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
             customManyRespondActionSimple: CustomManySubmitApiClientFn<{
                 body: string;
             }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;

@@ -1049,7 +1049,9 @@ function convertFieldToSchemaType(type: FieldType | "null"): SchemaField["type"]
   }
 }
 
-function fieldsetToSchema(def: Definition, fieldset: FieldsetDef): SchemaObject {
+function fieldsetToSchema(def: Definition, fieldset?: FieldsetDef): SchemaObject | undefined {
+  if (fieldset == null) return undefined;
+
   if (fieldset.kind !== "record") throw new Error('Root fieldset must be of kind "record".');
 
   return buildFieldsetObjectSchema(def, fieldset);
