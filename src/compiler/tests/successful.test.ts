@@ -8,7 +8,7 @@ describe("compiler", () => {
   const folder = "./src/compiler/tests/successful";
   const filenames = sync(`${folder}/*.gaudi`);
 
-  test.each(filenames)("compile to AST and migrate: tests/%s", (sourceFilename) => {
+  test.each(filenames)("compile to AST and migrate: %s", (sourceFilename) => {
     expect(() => compileFromFiles([sourceFilename])).not.toThrowError();
   });
 

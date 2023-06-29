@@ -1,0 +1,69 @@
+function getCode(): string {
+  return `
+  validator maxInt {
+    arg value { type integer }
+    arg max { type integer }
+    assert { value <= max }
+    error { code "max-int" }
+  }
+  validator minInt {
+    arg value { type integer }
+    arg min { type integer }
+    assert { value >= min }
+    error { code "min-int" }
+  }
+
+  validator maxFloat {
+    arg value { type float }
+    arg max { type float }
+    assert { value <= max }
+    error { code "max-float" }
+  }
+  validator minFloat {
+    arg value { type float }
+    arg min { type float }
+    assert { value >= min }
+    error { code "min-float" }
+  }
+
+  validator maxLength {
+    arg value { type string }
+    arg min { type integer }
+    assert { length(value) <= min }
+    error { code "max-length" }
+  }
+  validator minLength {
+    arg value { type string }
+    arg max { type integer }
+    assert { length(value) >= max }
+    error { code "min-length" }
+  }
+
+  validator isEqualBool {
+    arg value { type boolean }
+    arg target { type boolean }
+    assert { value is target }
+    error { code "is-equal-bool" }
+  }
+  validator isEqualInt {
+    arg value { type integer }
+    arg target { type integer }
+    assert { value is target }
+    error { code "is-equal-int" }
+  }
+  validator isEqualFloat {
+    arg value { type float }
+    arg target { type float }
+    assert { value is target }
+    error { code "is-equal-float" }
+  }
+  validator isEqualString {
+    arg value { type string }
+    arg target { type string }
+    assert { value is target }
+    error { code "is-equal-string" }
+  }
+  `;
+}
+
+export const PreludePlugin = { code: getCode() };

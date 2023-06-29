@@ -15,6 +15,7 @@ import * as L from "./lexer";
 import { migrate } from "./migrate";
 import { parser } from "./parser";
 import { AuthPlugin } from "./plugins/authenticator";
+import { PreludePlugin } from "./plugins/prelude";
 import { resolve } from "./resolver";
 
 import { kindFind } from "@src/common/kindFilter";
@@ -27,16 +28,18 @@ export type CompileResult =
 
 // plugin compilation is the first step in resolving
 function compilePlugins(projectASTs: ProjectASTs) {
+  const plugins: Input[] = [{ source: PreludePlugin.code, filename: "plugin::prelude.gaudi" }];
   const authenticator = kindFind(_.concat(...projectASTs.documents.values()), "authenticator");
   if (authenticator) {
-    const inputs = [{ source: AuthPlugin.code, filename: "plugin::auth.basic.gaudi" }];
-    const { ast, errors } = compileToAST(inputs);
-    if (errors) {
-      const errorString = compilerErrorsToString(inputs, errors);
-      throw new Error(`Failed to compile auth plugin:\n${errorString}`);
-    }
-    projectASTs.plugins.push(...ast.documents.values());
+    plugins.push({ source: AuthPlugin.code, filename: "plugin::auth.basic.gaudi" });
   }
+
+  const { ast, errors } = compileToAST(plugins, true);
+  if (errors) {
+    const errorString = compilerErrorsToString(plugins, errors);
+    throw new Error(`Failed to compile plugins:\n${errorString}`);
+  }
+  projectASTs.plugins.push(...ast.documents.values());
 }
 
 function parseFile(
@@ -61,7 +64,7 @@ function parseFile(
 }
 
 export type Input = { source: string; filename?: string };
-export function compileToAST(inputs: Input[]): CompileResult {
+export function compileToAST(inputs: Input[], skipPlugins = false): CompileResult {
   const ast: ProjectASTs = {
     plugins: [],
     documents: new Map(),
@@ -78,7 +81,9 @@ export function compileToAST(inputs: Input[]): CompileResult {
     }
   }
   if (allErrors.length === 0) {
-    compilePlugins(ast);
+    if (!skipPlugins) {
+      compilePlugins(ast);
+    }
     allErrors.push(...resolve(ast));
   }
 

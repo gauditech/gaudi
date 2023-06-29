@@ -7,28 +7,29 @@ runtime OtherRuntime {
   source path "path/to/runtime"
 }
 
+validator customValidator {
+  arg value { type string }
+  assert hook {
+    arg fieldOne value
+    runtime OtherRuntime
+    source foo from "customValidateHook"
+  }
+  error { code "custom-validator" }
+}
+
+validator customValidatorInline {
+  arg value { type string }
+  assert hook {
+    arg fieldTwo value
+    inline "fieldTwo.toLowerCase() === 'something';"
+  }
+  error { code "custom-validator-inline" }
+}
 
 model User {
   field name { type string }
-  field fieldOne {
-    type string,
-    validate {
-      hook {
-        default arg fieldOne
-        runtime OtherRuntime
-        source foo from "customValidateHook"
-      }
-    }
-  }
-  field fieldTwo {
-    type string,
-    validate {
-      hook {
-        default arg fieldTwo
-        inline "fieldTwo.toLowerCase() === 'something';"
-      }
-    }
-  }
+  field fieldOne { type string, validate { customValidator() } }
+  field fieldTwo { type string, validate { customValidatorInline() } }
 }
 
 api {

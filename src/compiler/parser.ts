@@ -147,7 +147,7 @@ class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => atoms.push(this.SUBRULE(this.validatorArg)) },
         {
           ALT: () => {
-            const keyword = this.createTokenData(this.CONSUME(L.Assert));
+            const keyword = this.createTokenData(this.CONSUME1(L.Assert));
             this.CONSUME2(L.LCurly);
             const expr = this.SUBRULE(this.expr);
             this.CONSUME2(L.RCurly);
@@ -156,7 +156,7 @@ class GaudiParser extends EmbeddedActionsParser {
         },
         {
           ALT: () => {
-            const keyword = this.createTokenData(this.CONSUME(L.Assert));
+            const keyword = this.createTokenData(this.CONSUME2(L.Assert));
             const hook = this.SUBRULE(this.validatorHook);
             atoms.push({ kind: "assertHook", keyword, hook });
           },
@@ -293,6 +293,10 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   validateExpr = this.RULE("validateExpr", (): ValidateExpr => {
+    return this.SUBRULE(this.validateOrExpr);
+  });
+
+  validatePrimaryExpr = this.RULE("validatePrimaryExpr", (): ValidateExpr => {
     return this.OR<ValidateExpr>([
       { ALT: () => this.SUBRULE(this.validateCallExpr) },
       { ALT: () => this.SUBRULE(this.validateGroupExpr) },
@@ -301,7 +305,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
   validateGroupExpr = this.RULE("validateGroupExpr", (): ValidateExpr => {
     this.createTokenData(this.CONSUME(L.LRound));
-    const expr = this.SUBRULE(this.validateExpr);
+    const expr = this.SUBRULE(this.validatePrimaryExpr);
     this.createTokenData(this.CONSUME(L.RRound));
     return { kind: "group", expr };
   });
@@ -319,8 +323,12 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "validator", validator, args };
   });
 
-  andValidateExpr = this.GENERATE_VALIDATE_OPERATOR("andValidateExpr", this.validateExpr, L.And);
-  orValidateExpr = this.GENERATE_VALIDATE_OPERATOR("orValidateExpr", this.andValidateExpr, L.Or);
+  validateAndExpr = this.GENERATE_VALIDATE_OPERATOR(
+    "validateAndExpr",
+    this.validatePrimaryExpr,
+    L.And
+  );
+  validateOrExpr = this.GENERATE_VALIDATE_OPERATOR("validateOrExpr", this.validateAndExpr, L.Or);
 
   GENERATE_VALIDATE_OPERATOR(
     name: string,

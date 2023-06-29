@@ -223,7 +223,7 @@ export function resolve(projectASTs: ProjectASTs) {
         if (call.args.length !== validatorArgs.length) {
           errors.push(
             new CompilerError(call.validator.token, ErrorCode.UnexpectedValidatorArgumentCount, {
-              name: validator.name,
+              name: validator.name.text,
               expected: validatorArgs.length,
               got: call.args.length,
             })
@@ -235,7 +235,7 @@ export function resolve(projectASTs: ProjectASTs) {
           const expr = call.args[i];
           // nullable is ignored in validator arguments, if arugment is null validator auto succeeds
           expr.type = removeNullable(expr.type);
-          const expected = validatorArgs[i + (target ? 1 : 0)];
+          const expected = validatorArgs[i];
           checkExprType(expr, expected.name.type);
         }
       })
@@ -276,15 +276,7 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveField(model: Model, field: Field) {
-    kindFilter(field.atoms, "validate").map(({ expr }) =>
-      resolveValidateExpr(expr, {
-        environment: "entrypoint",
-        model: undefined,
-        context: {},
-        typeGuard: {},
-      })
-    );
-
+    const validate = kindFind(field.atoms, "validate")?.expr;
     const nullable = !!kindFind(field.atoms, "nullable");
     const typeAtom = kindFind(field.atoms, "type");
 
@@ -302,6 +294,19 @@ export function resolve(projectASTs: ProjectASTs) {
       };
 
       field.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
+
+      if (validate) {
+        resolveValidateExpr(
+          validate,
+          {
+            environment: "entrypoint",
+            model: undefined,
+            context: {},
+            typeGuard: {},
+          },
+          field.name
+        );
+      }
     } else if (typeAtom) {
       errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType));
     }
@@ -708,6 +713,7 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveExtraInput(extraInput: ExtraInput, scope: Scope) {
+    const validate = kindFind(extraInput.atoms, "validate")?.expr;
     const nullable = !!kindFind(extraInput.atoms, "nullable");
     const typeAtom = kindFind(extraInput.atoms, "type");
 
@@ -716,6 +722,19 @@ export function resolve(projectASTs: ProjectASTs) {
     if (type) {
       extraInput.name.ref = { kind: "extraInput", type, nullable };
       extraInput.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
+
+      if (validate) {
+        resolveValidateExpr(
+          validate,
+          {
+            environment: "entrypoint",
+            model: undefined,
+            context: {},
+            typeGuard: {},
+          },
+          extraInput.name
+        );
+      }
     } else if (typeAtom) {
       errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType));
     }
