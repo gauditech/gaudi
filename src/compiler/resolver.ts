@@ -153,7 +153,12 @@ export function resolve(projectASTs: ProjectASTs) {
 
       field.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
+      errors.push(
+        new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType, {
+          name: field.name.text,
+          type: typeAtom?.identifier.text,
+        })
+      );
     }
   }
 
@@ -574,7 +579,12 @@ export function resolve(projectASTs: ProjectASTs) {
       extraInput.name.ref = { kind: "extraInput", type, nullable };
       extraInput.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType));
+      errors.push(
+        new CompilerError(typeAtom.keyword, ErrorCode.UnexpectedFieldType, {
+          name: extraInput.name.text,
+          type: typeAtom?.identifier.text,
+        })
+      );
     }
     addToScope(scope, extraInput.name);
   }

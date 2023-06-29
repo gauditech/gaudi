@@ -218,7 +218,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       );
     case ErrorCode.UnexpectedFieldType:
     case ErrorCode.ExtraInputType:
-      return `Field type must be a non null primitive type`;
+      return `Field type "${params?.name}" must be a non null primitive type, got "${params?.type}"`;
     case ErrorCode.ComputedType:
       return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:
