@@ -156,9 +156,6 @@ async function _internalExecuteActions(
           }
         });
         epCtx.response.status(httpResponseCode).json(body);
-
-        // "respond" action breaks further action execution
-        break;
       } catch (err: any) {
         throw new Error(err);
       }
