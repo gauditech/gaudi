@@ -10,28 +10,37 @@ exports[`entrypoint adds validators into fieldsets 1`] = `
       "nullable": false,
       "required": true,
       "type": "string",
-      "validators": [
-        {
-          "args": [
-            {
-              "kind": "integer",
-              "value": 4,
-            },
-          ],
-          "inputType": "string",
-          "name": "minLength",
-        },
-        {
-          "args": [
-            {
-              "kind": "integer",
-              "value": 100,
-            },
-          ],
-          "inputType": "string",
-          "name": "maxLength",
-        },
-      ],
+      "validate": {
+        "exprs": [
+          {
+            "args": [
+              {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 4,
+                },
+              },
+            ],
+            "kind": "call",
+            "validator": "minLength",
+          },
+          {
+            "args": [
+              {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 100,
+                },
+              },
+            ],
+            "kind": "call",
+            "validator": "maxLength",
+          },
+        ],
+        "kind": "and",
+      },
     },
   },
 }
@@ -622,7 +631,7 @@ exports[`entrypoint composes basic example 1`] = `
                   "nullable": false,
                   "required": true,
                   "type": "string",
-                  "validators": [],
+                  "validate": undefined,
                 },
               },
             },
@@ -843,14 +852,14 @@ exports[`entrypoint composes basic example 1`] = `
                       "nullable": false,
                       "required": false,
                       "type": "string",
-                      "validators": [],
+                      "validate": undefined,
                     },
                     "slug": {
                       "kind": "field",
                       "nullable": false,
                       "required": false,
                       "type": "string",
-                      "validators": [],
+                      "validate": undefined,
                     },
                   },
                 },
@@ -1135,7 +1144,7 @@ exports[`entrypoint composes single cardinality 1`] = `
             "nullable": false,
             "required": false,
             "type": "string",
-            "validators": [],
+            "validate": undefined,
           },
         },
       },
@@ -1428,7 +1437,7 @@ exports[`entrypoint composes single cardinality 2`] = `
             "nullable": false,
             "required": true,
             "type": "string",
-            "validators": [],
+            "validate": undefined,
           },
         },
       },
@@ -1706,14 +1715,14 @@ exports[`entrypoint composes single cardinality 3`] = `
             "nullable": true,
             "required": false,
             "type": "integer",
-            "validators": [],
+            "validate": undefined,
           },
           "name": {
             "kind": "field",
             "nullable": false,
             "required": true,
             "type": "string",
-            "validators": [],
+            "validate": undefined,
           },
         },
       },
@@ -2059,21 +2068,21 @@ exports[`entrypoint composes single cardinality 3`] = `
             "nullable": false,
             "required": false,
             "type": "integer",
-            "validators": [],
+            "validate": undefined,
           },
           "details_id": {
             "kind": "field",
             "nullable": true,
             "required": false,
             "type": "integer",
-            "validators": [],
+            "validate": undefined,
           },
           "name": {
             "kind": "field",
             "nullable": false,
             "required": false,
             "type": "string",
-            "validators": [],
+            "validate": undefined,
           },
         },
       },

@@ -183,13 +183,6 @@ function buildApi(options: ApiClientOptions) {
     type GetError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND";
     type CreateData = {
       title: string,
-      repo2: {
-        name?: string,
-        slug?: string,
-        description?: string,
-        is_public?: boolean,
-        org_id?: number
-      },
       c: { body: string }
     };
     type CreateResp = GetResp;

@@ -79,7 +79,7 @@ function findTargetIdAlias(query: QueryDef): string | undefined {
 }
 
 export function selectToHooks(select: SelectDef): SelectHook[] {
-  return select.filter((s): s is SelectHook => s.kind === "model-hook");
+  return kindFilter(select, "model-hook");
 }
 
 export function applyFilterIdInContext(namePath: NamePath, filter?: TypedExprDef): TypedExprDef {

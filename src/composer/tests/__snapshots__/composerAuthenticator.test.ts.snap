@@ -48,7 +48,7 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUser.id",
         "type": "integer",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "name",
@@ -60,18 +60,19 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUser.name",
         "type": "string",
         "unique": false,
-        "validators": [
-          {
-            "args": [
-              {
+        "validate": {
+          "args": [
+            {
+              "kind": "literal",
+              "literal": {
                 "kind": "integer",
                 "value": 1,
               },
-            ],
-            "inputType": "string",
-            "name": "minLength",
-          },
-        ],
+            },
+          ],
+          "kind": "call",
+          "validator": "minLength",
+        },
       },
       {
         "dbname": "username",
@@ -83,18 +84,19 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUser.username",
         "type": "string",
         "unique": true,
-        "validators": [
-          {
-            "args": [
-              {
+        "validate": {
+          "args": [
+            {
+              "kind": "literal",
+              "literal": {
                 "kind": "integer",
                 "value": 8,
               },
-            ],
-            "inputType": "string",
-            "name": "minLength",
-          },
-        ],
+            },
+          ],
+          "kind": "call",
+          "validator": "minLength",
+        },
       },
       {
         "dbname": "passwordhash",
@@ -106,18 +108,19 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUser.passwordHash",
         "type": "string",
         "unique": false,
-        "validators": [
-          {
-            "args": [
-              {
+        "validate": {
+          "args": [
+            {
+              "kind": "literal",
+              "literal": {
                 "kind": "integer",
                 "value": 8,
               },
-            ],
-            "inputType": "string",
-            "name": "minLength",
-          },
-        ],
+            },
+          ],
+          "kind": "call",
+          "validator": "minLength",
+        },
       },
     ],
     "hooks": [],
@@ -155,7 +158,7 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUserAccessToken.id",
         "type": "integer",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "token",
@@ -167,7 +170,7 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUserAccessToken.token",
         "type": "string",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "expirydate",
@@ -179,7 +182,7 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUserAccessToken.expiryDate",
         "type": "string",
         "unique": false,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "authuser_id",
@@ -191,7 +194,7 @@ exports[`authenticator composer succeeds for simple authenticator 2`] = `
         "refKey": "AuthUserAccessToken.authUser_id",
         "type": "integer",
         "unique": false,
-        "validators": [],
+        "validate": undefined,
       },
     ],
     "hooks": [],
@@ -477,14 +480,14 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "nullable": false,
               "required": true,
               "type": "string",
-              "validators": [],
+              "validate": undefined,
             },
             "username": {
               "kind": "field",
               "nullable": false,
               "required": true,
               "type": "string",
-              "validators": [],
+              "validate": undefined,
             },
           },
         },
@@ -834,36 +837,38 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   "nullable": false,
                   "required": true,
                   "type": "string",
-                  "validators": [
-                    {
-                      "args": [
-                        {
+                  "validate": {
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "literal": {
                           "kind": "integer",
                           "value": 1,
                         },
-                      ],
-                      "inputType": "string",
-                      "name": "minLength",
-                    },
-                  ],
+                      },
+                    ],
+                    "kind": "call",
+                    "validator": "minLength",
+                  },
                 },
                 "username": {
                   "kind": "field",
                   "nullable": false,
                   "required": true,
                   "type": "string",
-                  "validators": [
-                    {
-                      "args": [
-                        {
+                  "validate": {
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "literal": {
                           "kind": "integer",
                           "value": 8,
                         },
-                      ],
-                      "inputType": "string",
-                      "name": "minLength",
-                    },
-                  ],
+                      },
+                    ],
+                    "kind": "call",
+                    "validator": "minLength",
+                  },
                 },
               },
             },
@@ -872,18 +877,19 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "nullable": false,
               "required": true,
               "type": "string",
-              "validators": [
-                {
-                  "args": [
-                    {
+              "validate": {
+                "args": [
+                  {
+                    "kind": "literal",
+                    "literal": {
                       "kind": "integer",
                       "value": 8,
                     },
-                  ],
-                  "inputType": "string",
-                  "name": "minLength",
-                },
-              ],
+                  },
+                ],
+                "kind": "call",
+                "validator": "minLength",
+              },
             },
           },
         },

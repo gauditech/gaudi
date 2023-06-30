@@ -218,7 +218,7 @@ describe("compose actions", () => {
       entrypoint Org as org {
         create endpoint {
           extra inputs {
-            field iname { type string, validate { min 4 } }
+            field iname { type string, validate { minLength(4) } }
           }
           action {
             create as org {

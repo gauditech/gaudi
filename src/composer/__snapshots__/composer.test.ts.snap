@@ -17,7 +17,7 @@ exports[`compose models parses model references 1`] = `
         "refKey": "ParentItem.id",
         "type": "integer",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "itemnoaction_id",
@@ -29,7 +29,7 @@ exports[`compose models parses model references 1`] = `
         "refKey": "ParentItem.itemNoAction_id",
         "type": "integer",
         "unique": false,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "itemcascade_id",
@@ -41,7 +41,7 @@ exports[`compose models parses model references 1`] = `
         "refKey": "ParentItem.itemCascade_id",
         "type": "integer",
         "unique": false,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "itemsetnull_id",
@@ -53,7 +53,7 @@ exports[`compose models parses model references 1`] = `
         "refKey": "ParentItem.itemSetNull_id",
         "type": "integer",
         "unique": false,
-        "validators": [],
+        "validate": undefined,
       },
     ],
     "hooks": [],
@@ -116,7 +116,7 @@ exports[`compose models parses model references 1`] = `
         "refKey": "ReferencedItem1.id",
         "type": "integer",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
     ],
     "hooks": [],
@@ -154,7 +154,7 @@ exports[`compose models parses model references 1`] = `
         "refKey": "ReferencedItem2.id",
         "type": "integer",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
     ],
     "hooks": [],
@@ -192,7 +192,7 @@ exports[`compose models parses model references 1`] = `
         "refKey": "ReferencedItem3.id",
         "type": "integer",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
     ],
     "hooks": [],
@@ -235,7 +235,7 @@ exports[`compose models parses validators 1`] = `
         "refKey": "Org.id",
         "type": "integer",
         "unique": true,
-        "validators": [],
+        "validate": undefined,
       },
       {
         "dbname": "adminemail",
@@ -247,33 +247,42 @@ exports[`compose models parses validators 1`] = `
         "refKey": "Org.adminEmail",
         "type": "string",
         "unique": false,
-        "validators": [
-          {
-            "args": [
-              {
-                "kind": "integer",
-                "value": 4,
-              },
-            ],
-            "inputType": "string",
-            "name": "minLength",
-          },
-          {
-            "args": [
-              {
-                "kind": "integer",
-                "value": 100,
-              },
-            ],
-            "inputType": "string",
-            "name": "maxLength",
-          },
-          {
-            "args": [],
-            "inputType": "string",
-            "name": "isEmail",
-          },
-        ],
+        "validate": {
+          "exprs": [
+            {
+              "args": [
+                {
+                  "kind": "literal",
+                  "literal": {
+                    "kind": "integer",
+                    "value": 4,
+                  },
+                },
+              ],
+              "kind": "call",
+              "validator": "minLength",
+            },
+            {
+              "args": [
+                {
+                  "kind": "literal",
+                  "literal": {
+                    "kind": "integer",
+                    "value": 100,
+                  },
+                },
+              ],
+              "kind": "call",
+              "validator": "minLength",
+            },
+            {
+              "args": [],
+              "kind": "call",
+              "validator": "isEmail",
+            },
+          ],
+          "kind": "and",
+        },
       },
       {
         "dbname": "num_employees",
@@ -285,28 +294,37 @@ exports[`compose models parses validators 1`] = `
         "refKey": "Org.num_employees",
         "type": "integer",
         "unique": false,
-        "validators": [
-          {
-            "args": [
-              {
-                "kind": "integer",
-                "value": 0,
-              },
-            ],
-            "inputType": "integer",
-            "name": "minInt",
-          },
-          {
-            "args": [
-              {
-                "kind": "integer",
-                "value": 9999,
-              },
-            ],
-            "inputType": "integer",
-            "name": "maxInt",
-          },
-        ],
+        "validate": {
+          "exprs": [
+            {
+              "args": [
+                {
+                  "kind": "literal",
+                  "literal": {
+                    "kind": "integer",
+                    "value": 0,
+                  },
+                },
+              ],
+              "kind": "call",
+              "validator": "minInt",
+            },
+            {
+              "args": [
+                {
+                  "kind": "literal",
+                  "literal": {
+                    "kind": "integer",
+                    "value": 9999,
+                  },
+                },
+              ],
+              "kind": "call",
+              "validator": "maxInt",
+            },
+          ],
+          "kind": "and",
+        },
       },
     ],
     "hooks": [],

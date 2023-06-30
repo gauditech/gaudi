@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+import { composeValidate } from "./validators";
+
 import { FilteredByKind } from "@src/common/kindFilter";
 import {
   assertUnreachable,
@@ -23,6 +25,7 @@ import {
   QueryAction,
   QueryDef,
   UpdateOneAction,
+  ValidateAction,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
@@ -48,6 +51,9 @@ export function composeActionBlock(specs: Spec.Action[]): ActionDef[] {
       case "query": {
         return composeQueryAction(atom);
       }
+      case "validate": {
+        return composeValidateAction(atom);
+      }
     }
   });
 }
@@ -67,6 +73,14 @@ function composeQueryAction(spec: FilteredByKind<Spec.Action, "query">): QueryAc
     alias: spec.alias,
     model: query.retType,
     query: query,
+  };
+}
+
+function composeValidateAction(spec: FilteredByKind<Spec.Action, "validate">): ValidateAction {
+  return {
+    kind: "action",
+    key: spec.key,
+    validate: composeValidate(spec.validate),
   };
 }
 
@@ -174,6 +188,8 @@ function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): Field
             throw new Error(`Circular reference: ${head.text}`);
           }
         }
+        case "validatorArg":
+          throw new Error("Unexpected validator arg ref in action");
         default:
           return assertUnreachable(head.ref);
       }

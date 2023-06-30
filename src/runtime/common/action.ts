@@ -105,6 +105,8 @@ async function _internalExecuteActions(
       } catch (err) {
         throw new HookError(err);
       }
+    } else if (actionKind === "action") {
+      throw new Error("unimplemented");
     } else {
       assertUnreachable(actionKind);
     }

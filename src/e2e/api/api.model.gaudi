@@ -2,26 +2,27 @@ runtime MyRuntime {
   source path "./src/e2e/api/hooks"
 }
 
+validator noUnicode {
+  arg value { type string }
+  assert hook {
+    arg name value
+    source noUnicode from "hooks.js"
+  }
+  error { code "no-unicode" }
+}
+
+validator noSpaces {
+  arg value { type string }
+  assert hook {
+    arg slug value
+    inline "!/\\s/.test(slug)"
+  }
+  error { code "no-spaces" }
+}
+
 model Org {
-  field name {
-    type string,
-    validate {
-      hook {
-        default arg name
-        source noUnicode from "hooks.js"
-      }
-    }
-  }
-  field slug {
-    type string,
-    unique,
-    validate {
-      hook {
-        default arg slug
-        inline "!/\\s/.test(slug)"
-      }
-    }
-  }
+  field name { type string, validate { noUnicode() } }
+  field slug { type string, unique, validate { noSpaces() } }
   field description { type string }
 
   relation repos { from Repo, through org }
@@ -344,6 +345,7 @@ api {
             }
 
             update repo as repo2 {
+              deny *
               set latest_num repo.latest_num + 1
             }
 

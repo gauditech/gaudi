@@ -54,7 +54,7 @@ exports[`compose hooks action hook 1`] = `
           "nullable": false,
           "required": true,
           "type": "boolean",
-          "validators": [],
+          "validate": undefined,
         },
       },
     },
@@ -208,227 +208,53 @@ exports[`compose hooks composes action hook 1`] = `
 
 exports[`compose hooks composes source hooks 1`] = `
 {
-  "apis": [
-    {
-      "entrypoints": [
+  "actionHook": {
+    "name": "name",
+    "setter": {
+      "args": [],
+      "hook": {
+        "file": "hooks.js",
+        "kind": "source",
+        "runtimeName": "MyRuntime",
+        "target": "someHook",
+      },
+      "kind": "fieldset-hook",
+    },
+  },
+  "modelHook": {
+    "args": [],
+    "hook": {
+      "file": "githubc.js",
+      "kind": "source",
+      "runtimeName": "MyRuntime",
+      "target": "someHook",
+    },
+    "kind": "model-hook",
+    "name": "description",
+    "refKey": "Org.description",
+  },
+  "validatorHook": {
+    "hook": {
+      "args": [
         {
-          "endpoints": [
-            {
-              "actions": [
-                {
-                  "alias": "$action_0",
-                  "changeset": [
-                    {
-                      "name": "name",
-                      "setter": {
-                        "args": [],
-                        "hook": {
-                          "file": "hooks.js",
-                          "kind": "source",
-                          "runtimeName": "MyRuntime",
-                          "target": "someHook",
-                        },
-                        "kind": "fieldset-hook",
-                      },
-                    },
-                  ],
-                  "isPrimary": true,
-                  "kind": "create-one",
-                  "model": "Org",
-                  "select": [
-                    {
-                      "alias": "id",
-                      "expr": {
-                        "kind": "alias",
-                        "namePath": [
-                          "$action_0",
-                          "id",
-                        ],
-                      },
-                      "kind": "expression",
-                      "type": {
-                        "kind": "integer",
-                        "nullable": false,
-                      },
-                    },
-                  ],
-                  "targetPath": [
-                    "Org",
-                  ],
-                },
-              ],
-              "authSelect": [],
-              "authorize": undefined,
-              "fieldset": {
-                "kind": "record",
-                "nullable": false,
-                "record": {},
-              },
-              "kind": "create",
-              "parentContext": [],
-              "response": [
-                {
-                  "alias": "id",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "Org",
-                      "id",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "integer",
-                    "nullable": false,
-                  },
-                },
-                {
-                  "alias": "name",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "Org",
-                      "name",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "string",
-                    "nullable": false,
-                  },
-                },
-              ],
-              "target": {
-                "alias": "$target_0",
-                "kind": "model",
-                "name": "Org",
-                "namePath": [
-                  "Org",
-                ],
-                "retType": "Org",
-                "select": [
-                  {
-                    "alias": "id",
-                    "expr": {
-                      "kind": "alias",
-                      "namePath": [
-                        "Org",
-                        "id",
-                      ],
-                    },
-                    "kind": "expression",
-                    "type": {
-                      "kind": "integer",
-                      "nullable": false,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-          "entrypoints": [],
-          "name": "",
-          "target": {
-            "alias": "$target_0",
-            "identifyWith": {
-              "paramName": "org_id",
-              "path": [
-                "id",
-              ],
-              "type": "integer",
-            },
-            "kind": "model",
-            "name": "Org",
+          "expr": {
+            "kind": "alias",
             "namePath": [
-              "Org",
+              "name",
             ],
-            "retType": "Org",
           },
-        },
-      ],
-      "name": undefined,
-      "path": "/api",
-    },
-  ],
-  "authenticator": undefined,
-  "generators": [],
-  "models": [
-    {
-      "aggregates": [],
-      "computeds": [],
-      "dbname": "org",
-      "fields": [
-        {
-          "dbname": "id",
-          "kind": "field",
-          "modelRefKey": "Org",
-          "name": "id",
-          "nullable": false,
-          "primary": true,
-          "refKey": "Org.id",
-          "type": "integer",
-          "unique": true,
-          "validators": [],
-        },
-        {
-          "dbname": "name",
-          "kind": "field",
-          "modelRefKey": "Org",
           "name": "name",
-          "nullable": false,
-          "primary": false,
-          "refKey": "Org.name",
-          "type": "string",
-          "unique": false,
-          "validators": [
-            {
-              "arg": "name",
-              "hook": {
-                "file": "githubc.js",
-                "kind": "source",
-                "runtimeName": "MyRuntime",
-                "target": "someHook",
-              },
-              "name": "hook",
-            },
-          ],
         },
       ],
-      "hooks": [
-        {
-          "args": [],
-          "hook": {
-            "file": "githubc.js",
-            "kind": "source",
-            "runtimeName": "MyRuntime",
-            "target": "someHook",
-          },
-          "kind": "model-hook",
-          "name": "description",
-          "refKey": "Org.description",
-        },
-      ],
-      "kind": "model",
-      "name": "Org",
-      "queries": [],
-      "refKey": "Org",
-      "references": [],
-      "relations": [],
+      "hook": {
+        "file": "githubc.js",
+        "kind": "source",
+        "runtimeName": "MyRuntime",
+        "target": "someHook",
+      },
     },
-  ],
-  "populators": [],
-  "runtimes": [
-    {
-      "name": "MyRuntime",
-      "sourcePath": "some/path/to/file",
-      "type": "node",
-    },
-    {
-      "name": "@GAUDI_INTERNAL",
-      "sourcePath": "./internalExecutionRuntime",
-      "type": "node",
-    },
-  ],
+    "kind": "hook",
+  },
 }
 `;
 
@@ -549,220 +375,46 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
 
 exports[`compose hooks inline hooks 1`] = `
 {
-  "apis": [
-    {
-      "entrypoints": [
+  "actionHook": {
+    "name": "name",
+    "setter": {
+      "args": [],
+      "hook": {
+        "inline": "'test name'",
+        "kind": "inline",
+      },
+      "kind": "fieldset-hook",
+    },
+  },
+  "modelHook": {
+    "args": [],
+    "hook": {
+      "inline": "'some description'",
+      "kind": "inline",
+    },
+    "kind": "model-hook",
+    "name": "description",
+    "refKey": "Org.description",
+  },
+  "validatorHook": {
+    "hook": {
+      "args": [
         {
-          "endpoints": [
-            {
-              "actions": [
-                {
-                  "alias": "$action_0",
-                  "changeset": [
-                    {
-                      "name": "name",
-                      "setter": {
-                        "args": [],
-                        "hook": {
-                          "inline": "'test name'",
-                          "kind": "inline",
-                        },
-                        "kind": "fieldset-hook",
-                      },
-                    },
-                  ],
-                  "isPrimary": true,
-                  "kind": "create-one",
-                  "model": "Org",
-                  "select": [
-                    {
-                      "alias": "id",
-                      "expr": {
-                        "kind": "alias",
-                        "namePath": [
-                          "$action_0",
-                          "id",
-                        ],
-                      },
-                      "kind": "expression",
-                      "type": {
-                        "kind": "integer",
-                        "nullable": false,
-                      },
-                    },
-                  ],
-                  "targetPath": [
-                    "Org",
-                  ],
-                },
-              ],
-              "authSelect": [],
-              "authorize": undefined,
-              "fieldset": {
-                "kind": "record",
-                "nullable": false,
-                "record": {},
-              },
-              "kind": "create",
-              "parentContext": [],
-              "response": [
-                {
-                  "alias": "id",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "Org",
-                      "id",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "integer",
-                    "nullable": false,
-                  },
-                },
-                {
-                  "alias": "name",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "Org",
-                      "name",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "string",
-                    "nullable": false,
-                  },
-                },
-              ],
-              "target": {
-                "alias": "$target_0",
-                "kind": "model",
-                "name": "Org",
-                "namePath": [
-                  "Org",
-                ],
-                "retType": "Org",
-                "select": [
-                  {
-                    "alias": "id",
-                    "expr": {
-                      "kind": "alias",
-                      "namePath": [
-                        "Org",
-                        "id",
-                      ],
-                    },
-                    "kind": "expression",
-                    "type": {
-                      "kind": "integer",
-                      "nullable": false,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-          "entrypoints": [],
-          "name": "",
-          "target": {
-            "alias": "$target_0",
-            "identifyWith": {
-              "paramName": "org_id",
-              "path": [
-                "id",
-              ],
-              "type": "integer",
-            },
-            "kind": "model",
-            "name": "Org",
+          "expr": {
+            "kind": "alias",
             "namePath": [
-              "Org",
+              "name",
             ],
-            "retType": "Org",
           },
-        },
-      ],
-      "name": undefined,
-      "path": "/api",
-    },
-  ],
-  "authenticator": undefined,
-  "generators": [],
-  "models": [
-    {
-      "aggregates": [],
-      "computeds": [],
-      "dbname": "org",
-      "fields": [
-        {
-          "dbname": "id",
-          "kind": "field",
-          "modelRefKey": "Org",
-          "name": "id",
-          "nullable": false,
-          "primary": true,
-          "refKey": "Org.id",
-          "type": "integer",
-          "unique": true,
-          "validators": [],
-        },
-        {
-          "dbname": "name",
-          "kind": "field",
-          "modelRefKey": "Org",
           "name": "name",
-          "nullable": false,
-          "primary": false,
-          "refKey": "Org.name",
-          "type": "string",
-          "unique": false,
-          "validators": [
-            {
-              "arg": "name",
-              "hook": {
-                "inline": "'test name'",
-                "kind": "inline",
-              },
-              "name": "hook",
-            },
-          ],
         },
       ],
-      "hooks": [
-        {
-          "args": [],
-          "hook": {
-            "inline": "'some description'",
-            "kind": "inline",
-          },
-          "kind": "model-hook",
-          "name": "description",
-          "refKey": "Org.description",
-        },
-      ],
-      "kind": "model",
-      "name": "Org",
-      "queries": [],
-      "refKey": "Org",
-      "references": [],
-      "relations": [],
+      "hook": {
+        "inline": "name === 'name'",
+        "kind": "inline",
+      },
     },
-  ],
-  "populators": [],
-  "runtimes": [
-    {
-      "name": "MyRuntime",
-      "sourcePath": "some/path/to/file",
-      "type": "node",
-    },
-    {
-      "name": "@GAUDI_INTERNAL",
-      "sourcePath": "./internalExecutionRuntime",
-      "type": "node",
-    },
-  ],
+    "kind": "hook",
+  },
 }
 `;

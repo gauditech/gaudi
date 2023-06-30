@@ -106,7 +106,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
               "nullable": false,
               "required": false,
               "type": "string",
-              "validators": [],
+              "validate": undefined,
             },
           },
         },
@@ -301,7 +301,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
               "nullable": false,
               "required": true,
               "type": "string",
-              "validators": [],
+              "validate": undefined,
             },
           },
         },
@@ -923,18 +923,19 @@ exports[`compose actions native actions succeeds when extra input is defined and
       "nullable": false,
       "required": true,
       "type": "string",
-      "validators": [
-        {
-          "args": [
-            {
+      "validate": {
+        "args": [
+          {
+            "kind": "literal",
+            "literal": {
               "kind": "integer",
               "value": 4,
             },
-          ],
-          "inputType": "string",
-          "name": "minLength",
-        },
-      ],
+          },
+        ],
+        "kind": "call",
+        "validator": "minLength",
+      },
     },
   },
 }
@@ -1175,7 +1176,7 @@ exports[`compose actions native actions succeeds with nested sibling reference 2
       "nullable": false,
       "required": true,
       "type": "string",
-      "validators": [],
+      "validate": undefined,
     },
   },
 }

@@ -1,5 +1,5 @@
 import { compileFromString } from "@src/runtime/common/testUtils";
-import { CustomOneEndpointDef } from "@src/types/definition";
+import { CreateEndpointDef, CreateOneAction, CustomOneEndpointDef } from "@src/types/definition";
 
 describe("compose hooks", () => {
   it("composes source hooks", () => {
@@ -8,17 +8,18 @@ describe("compose hooks", () => {
         source path "some/path/to/file"
       }
 
-      model Org {
-        field name {
-          type string,
-          validate {
-            hook {
-              default arg name
-              runtime MyRuntime
-              source someHook from "githubc.js"
-            }
-          }
+      validator Test {
+        arg name { type string }
+        assert hook {
+          arg name name
+          runtime MyRuntime
+          source someHook from "githubc.js"
         }
+        error { code "test" }
+      }
+
+      model Org {
+        field name { type string, validate { Test() } }
         hook description {
           runtime MyRuntime
           source someHook from "githubc.js"
@@ -41,9 +42,14 @@ describe("compose hooks", () => {
       }
 
     `;
-    const result = compileFromString(bp);
+    const def = compileFromString(bp);
+    const validatorHook = def.validators.at(-1)?.assert;
+    const modelHook = def.models[0].hooks[0];
+    const actionHook = (
+      (def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef).actions[0] as CreateOneAction
+    ).changeset.find(({ name }) => name === "name");
 
-    expect(result).toMatchSnapshot();
+    expect({ validatorHook, modelHook, actionHook }).toMatchSnapshot();
   });
 
   it("inline hooks", () => {
@@ -52,16 +58,17 @@ describe("compose hooks", () => {
         source path "some/path/to/file"
       }
 
-      model Org {
-        field name {
-          type string,
-          validate {
-            hook {
-              default arg name
-              inline "'test name'"
-            }
-          }
+      validator Test {
+        arg name { type string }
+        assert hook {
+          arg name name
+          inline "name === 'name'"
         }
+        error { code "test" }
+      }
+
+      model Org {
+        field name { type string, validate { Test() } }
         hook description {
           runtime MyRuntime
           inline "'some description'"
@@ -83,9 +90,14 @@ describe("compose hooks", () => {
       }
 
     `;
-    const result = compileFromString(bp);
+    const def = compileFromString(bp);
+    const validatorHook = def.validators.at(-1)?.assert;
+    const modelHook = def.models[0].hooks[0];
+    const actionHook = (
+      (def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef).actions[0] as CreateOneAction
+    ).changeset.find(({ name }) => name === "name");
 
-    expect(result).toMatchSnapshot();
+    expect({ validatorHook, modelHook, actionHook }).toMatchSnapshot();
   });
 
   it("defaults to the default execution runtime when hook runtime is empty", () => {

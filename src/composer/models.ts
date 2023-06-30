@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { composeValidate } from "./validators";
 
 import { Type } from "@src/compiler/ast/type";
 import { composeExpression, composeQuery } from "@src/composer/query";
@@ -7,14 +7,11 @@ import {
   ComputedDef,
   Definition,
   FieldDef,
-  IValidatorDef,
   ModelDef,
   ModelHookDef,
   QueryDef,
   ReferenceDef,
   RelationDef,
-  ValidatorDef,
-  ValidatorDefinition,
   VariablePrimitiveType,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
@@ -50,7 +47,7 @@ function defineField(fspec: Spec.Field): FieldDef {
     primary: fspec.primary,
     unique: fspec.ref.unique,
     nullable: fspec.ref.nullable,
-    validators: composeValidators(fspec.ref.type, fspec.validators),
+    validate: fspec.validate && composeValidate(fspec.validate),
   };
 }
 
@@ -63,33 +60,6 @@ function defineComputed(cspec: Spec.Computed): ComputedDef {
     exp: composeExpression(cspec.expr, [cspec.ref.parentModel]),
     type: defineType(cspec.expr.type),
   };
-}
-
-export function composeValidators(
-  fieldType: FieldDef["type"],
-  vspecs: Spec.Field["validators"]
-): ValidatorDef[] {
-  if (vspecs === undefined) return [];
-
-  return vspecs.map((vspec): ValidatorDef => {
-    const name = vspec.name;
-    const args = vspec.args;
-    const argt = args.map((a) => a.kind);
-
-    for (const v of ValidatorDefinition) {
-      const [vType, vBpName, vName, vArgs] = v;
-      if (_.isEqual(vType, fieldType) && vBpName === name && _.isEqual(vArgs, argt)) {
-        const d: IValidatorDef = {
-          name: vName,
-          inputType: fieldType,
-          args: args,
-        };
-        return d as ValidatorDef;
-      }
-    }
-
-    throw new Error(`Unknown validator!`);
-  });
 }
 
 function defineReference(rspec: Spec.Reference): ReferenceDef {

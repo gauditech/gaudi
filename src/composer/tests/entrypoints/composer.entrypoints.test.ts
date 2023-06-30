@@ -52,7 +52,7 @@ describe("entrypoint", () => {
   it("adds validators into fieldsets", () => {
     const bp = `
     model Org {
-      field name { type string, validate { min 4, max 100 } }
+      field name { type string, validate { minLength(4) and maxLength(100) } }
     }
 
     api {

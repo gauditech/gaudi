@@ -8,8 +8,8 @@ describe("compose models", () => {
   it("parses validators", () => {
     const bp = `
     model Org {
-      field adminEmail { type string, validate { min 4, max 100, isEmail } }
-      field num_employees { type integer, validate { min 0, max 9999 } }
+      field adminEmail { type string, validate { minLength(4) and minLength(100) and isEmail() } }
+      field num_employees { type integer, validate { minInt(0) and maxInt(9999) } }
     }`;
     const def = compileFromString(bp);
     expect(def.models).toMatchSnapshot();

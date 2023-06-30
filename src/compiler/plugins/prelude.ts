@@ -1,3 +1,5 @@
+`/[a-z0-9!#$%&'*+/=?^_\`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/`;
+
 function getCode(): string {
   return `
   validator maxInt {
@@ -62,6 +64,16 @@ function getCode(): string {
     arg target { type string }
     assert { value is target }
     error { code "is-equal-string" }
+  }
+
+  validator isEmail {
+    arg value { type string }
+    assert hook {
+      arg value value
+      // https://www.regular-expressions.info/email.html
+      inline "value.match(/[a-z0-9!#$%&'*+/=?^_\`{|}~-]+(?:\\\\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/)"
+    }
+    error { code "is-email" }
   }
   `;
 }

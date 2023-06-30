@@ -1,8 +1,8 @@
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
-import { composeValidators } from "./models";
 import { getTypedPathWithLeaf } from "./utils";
+import { composeValidate } from "./validators";
 
 import { buildEndpointPath } from "@src/builder/query";
 import { kindFilter } from "@src/common/kindFilter";
@@ -13,12 +13,10 @@ import { composeExpression, composeOrderBy, composeSelect } from "@src/composer/
 import { transformSelectPath } from "@src/runtime/query/build";
 import {
   ActionDef,
-  CreateOneAction,
   Definition,
   EndpointDef,
   EndpointHttpMethod,
   EntrypointDef,
-  ExecuteHookAction,
   FieldSetter,
   FieldSetterReferenceValue,
   FieldsetDef,
@@ -30,7 +28,6 @@ import {
   TargetDef,
   TargetWithSelectDef,
   TypedExprDef,
-  UpdateOneAction,
 } from "@src/types/definition";
 import * as Spec from "@src/types/specification";
 
@@ -149,7 +146,7 @@ function processEndpoints(
         type: atom.type,
         required: !atom.optional,
         nullable: atom.nullable,
-        validators: composeValidators(atom.type, atom.validators),
+        validate: atom.validate && composeValidate(atom.validate),
       };
     });
 
@@ -275,52 +272,45 @@ export function composeFilter(
 }
 
 export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetRecordDef {
-  const fieldsetWithPaths = actions
-    // filter out actions without fieldset
-    .filter(
-      (a): a is CreateOneAction | UpdateOneAction =>
-        a.kind === "create-one" || a.kind === "update-one"
-    )
-    .flatMap((action) => {
-      return _.chain(action.changeset)
-        .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
-          switch (setter.kind) {
-            case "fieldset-input": {
-              const field = getRef.field(def, `${action.model}.${name}`);
-              return [
-                setter.fieldsetAccess,
-                {
-                  kind: "field",
-                  required: setter.required,
-                  type: setter.type,
-                  nullable: field.nullable,
-                  validators: _.cloneDeep(field.validators),
-                },
-              ];
-            }
-            case "fieldset-reference-input": {
-              ensureOneOf(action.kind, ["create-one", "update-one"]);
-              const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
-              const reference = getRef.reference(def, action.model, name);
-              const field = getRef.field(def, tpath.leaf.refKey);
-              return [
-                setter.fieldsetAccess,
-                {
-                  kind: "field",
-                  required: true, // FIXME
-                  nullable: reference.nullable,
-                  type: field.type,
-                  validators: _.cloneDeep(field.validators),
-                },
-              ];
-            }
-            default:
-              return null;
+  const fieldsetWithPaths = kindFilter(actions, "create-one", "update-one").flatMap((action) => {
+    return _.chain(action.changeset)
+      .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
+        switch (setter.kind) {
+          case "fieldset-input": {
+            const field = getRef.field(def, `${action.model}.${name}`);
+            return [
+              setter.fieldsetAccess,
+              {
+                kind: "field",
+                required: setter.required,
+                type: setter.type,
+                nullable: field.nullable,
+                validate: _.cloneDeep(field.validate),
+              },
+            ];
           }
-        })
-        .compact()
-        .value();
-    });
+          case "fieldset-reference-input": {
+            const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
+            const reference = getRef.reference(def, action.model, name);
+            const field = getRef.field(def, tpath.leaf.refKey);
+            return [
+              setter.fieldsetAccess,
+              {
+                kind: "field",
+                required: true, // FIXME
+                nullable: reference.nullable,
+                type: field.type,
+                validate: _.cloneDeep(field.validate),
+              },
+            ];
+          }
+          default:
+            return null;
+        }
+      })
+      .compact()
+      .value();
+  });
 
   return collectFieldsetPaths(fieldsetWithPaths);
 }
@@ -328,7 +318,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
 /**
  * Converts a list of single `FieldsetFieldDef`s with their desired paths
  * into a `FieldsetDef` that nests `FieldsetRecordDef`s in order to respect
- * desired access path for each `FieldsetFieldDef`.ß
+ * desired access path for each `FieldsetFieldDef`.
  */
 function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetRecordDef {
   const uniqueFieldsetPaths = _.uniqWith(paths, _.isEqual);
@@ -366,10 +356,7 @@ type SelectDep = FieldSetterReferenceValue["target"];
  */
 export function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
-  const nonDeleteActions = actions.filter(
-    (a): a is CreateOneAction | UpdateOneAction =>
-      a.kind === "create-one" || a.kind === "update-one"
-  );
+  const nonDeleteActions = kindFilter(actions, "create-one", "update-one");
 
   const targetPaths = _.chain(nonDeleteActions)
     .flatMap((a) => {
@@ -416,10 +403,7 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
   // action changeset
   const actionChangesets = nonDeleteActions.flatMap((a) => a.changeset);
   // hooks changeset
-  const actionHookChangesets = _.chain(actions)
-    .filter((a): a is ExecuteHookAction => a.kind === "execute-hook")
-    .flatMap((a) => a.hook.args)
-    .value();
+  const actionHookChangesets = kindFilter(actions, "execute-hook").flatMap((a) => a.hook.args);
 
   const changesets = [...actionChangesets, ...actionHookChangesets];
   const referenceValues = changesets.flatMap(({ setter }) => collectReferenceValues(setter));

@@ -204,13 +204,13 @@ export function composeRefPath(
         kind: "variable",
         name: `___changeset___${path.map((i) => i.text).join("___")}`,
       };
+    case "validatorArg":
     case "target":
     case "action":
+    case "auth":
       return { kind: "alias", namePath: path.map((i) => i.text) };
     case "authToken":
       return { kind: "variable", name: `___requestAuthToken` };
-    case "auth":
-      return { kind: "alias", namePath: path.map((i) => i.text) };
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "repeat":
