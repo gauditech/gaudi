@@ -250,7 +250,7 @@ function composeFieldset(
   actions: ActionDef[]
 ): FieldsetRecordDef | undefined {
   const actionFieldset = fieldsetFromActions(def, actions);
-  const extraInputFieldset = fieldsetFromExtranInput(def, endSpec);
+  const extraInputFieldset = fieldsetFromExtraInputs(def, endSpec);
 
   // return fieldset only if it's not empty, otherwise return "undefined"
   if (actionFieldset.length > 0 || extraInputFieldset.length > 0) {
@@ -316,7 +316,7 @@ export function fieldsetFromActions(
   );
 }
 
-function fieldsetFromExtranInput(
+function fieldsetFromExtraInputs(
   def: Definition,
   endSpec: Spec.Endpoint
 ): [string[], FieldsetFieldDef][] {
