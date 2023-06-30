@@ -1,7 +1,6 @@
 import { renderDbSchema } from "@src/builder/builder";
-import { compileToOldSpec } from "@src/compiler";
-import { compose } from "@src/composer/composer";
 import definition from "@src/composer/tests/data/definition.json";
+import { compileFromString } from "@src/index";
 import { Definition } from "@src/types/definition";
 
 describe("builder", () => {
@@ -35,7 +34,7 @@ describe("builder", () => {
       }
       `;
 
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
 
       const data = {
         // undefined values cannot be defined in JSON so we need to define atuhenticator here to satisfy interface

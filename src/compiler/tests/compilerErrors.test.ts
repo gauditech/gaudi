@@ -1,14 +1,13 @@
 import _ from "lodash";
 
-import { compilerErrorsToString } from "../compilerError";
 import { compileToAST } from "../index";
 import { authUserModelName } from "../plugins/authenticator";
 
 function expectError(source: string, ...errorMessages: string[]) {
-  const { errors } = compileToAST(source);
+  const { errors } = compileToAST([{ source }]);
   // expect(errors).toHaveLength(errorMessages.length);
   errorMessages.forEach((errorMessage, i) => {
-    expect(errors.at(i)?.message).toBe(errorMessage);
+    expect(errors?.at(i)?.message).toBe(errorMessage);
   });
 }
 
@@ -930,10 +929,8 @@ describe("compiler errors", () => {
         }
       }
       `;
-
-      const { errors } = compileToAST(bp);
-      errors.length && console.log(compilerErrorsToString("", bp, errors));
-      expect(errors).toHaveLength(0);
+      const { errors } = compileToAST([{ source: bp }]);
+      expect(errors).toBeUndefined();
     });
 
     it("fails when computed is used", () => {

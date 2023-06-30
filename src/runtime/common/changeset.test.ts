@@ -2,7 +2,7 @@ import crypto from "crypto";
 
 import bcrypt, { hash } from "bcrypt";
 
-import { compileToOldSpec, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 import { ActionContext } from "@src/runtime/common/action";
 import {
   buildChangeset,
@@ -388,5 +388,5 @@ describe("runtime", () => {
  * Creates dummy definition struct
  */
 function createTestDefinition(): Definition {
-  return compose(compileToOldSpec(""));
+  return compileFromString("");
 }

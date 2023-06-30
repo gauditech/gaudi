@@ -1,8 +1,8 @@
 import { FieldType, PrimitiveType, Type } from "./type";
 
 export type ProjectASTs = {
-  plugins: Record<string, GlobalAtom[]>;
-  document: GlobalAtom[];
+  plugins: GlobalAtom[][];
+  documents: Map<string, GlobalAtom[]>;
 };
 
 export type GlobalAtom = Model | Api | Populator | Runtime | Authenticator | Generator;
@@ -513,4 +513,13 @@ export type IdentifierRef<R extends Ref = Ref> = {
   type: Type;
 };
 
-export type TokenData = { start: number; end: number };
+export type TokenData = {
+  filename: string;
+  start: { line: number; column: number };
+  end: { line: number; column: number };
+};
+export const zeroToken: TokenData = {
+  filename: ":unset:",
+  start: { line: 0, column: 0 },
+  end: { line: 0, column: 0 },
+};

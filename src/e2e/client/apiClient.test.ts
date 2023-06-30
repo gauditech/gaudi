@@ -1,5 +1,6 @@
 import path from "path";
 
+import * as dotenv from "dotenv";
 import request from "supertest";
 
 import { assertUnreachable, ensureEqual } from "@src/common/utils";
@@ -8,16 +9,14 @@ import {
   ApiRequestInit,
   createClient,
 } from "@src/e2e/client/__snapshots__/apiClient/client/api-client";
-import { readConfig } from "@src/runtime/config";
 
 // test are slow
 jest.setTimeout(10000);
 
 describe("api client lib", () => {
-  const config = readConfig(path.join(__dirname, "../api/api.test.env"));
+  dotenv.config({ path: path.join(__dirname, "../api/api.test.env") });
 
   const { getServer, setup, destroy } = createApiTestSetup(
-    config,
     loadBlueprint(path.join(__dirname, "../api/api.model.gaudi")),
     loadPopulatorData(path.join(__dirname, "../api/api.data.json"))
   );

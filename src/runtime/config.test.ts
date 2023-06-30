@@ -1,5 +1,7 @@
 import path from "path";
 
+import * as dotenv from "dotenv";
+
 import { RuntimeConfig, readConfig } from "@src/runtime/config";
 
 describe("runtime", () => {
@@ -53,7 +55,8 @@ describe("runtime", () => {
     });
 
     it("should read values from config file", () => {
-      const config = readConfig(path.join(__dirname, "config.test.env"));
+      dotenv.config({ path: path.join(__dirname, "config.test.env") });
+      const config = readConfig();
 
       const expected: Required<RuntimeConfig> = {
         dbConnUrl: "file-my://connection@string/",
@@ -75,7 +78,8 @@ describe("runtime", () => {
       process.env.GAUDI_RUNTIME_DEFINITION_PATH = "test/definition/path";
       process.env.GAUDI_RUNTIME_OUTPUT_PATH = "test/output/path";
 
-      const config = readConfig(path.join(__dirname, "config.test.env"));
+      dotenv.config({ path: path.join(__dirname, "config.test.env") });
+      const config = readConfig();
 
       const expected: Required<RuntimeConfig> = {
         dbConnUrl: "my://connection@string/",

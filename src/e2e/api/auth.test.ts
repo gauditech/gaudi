@@ -1,20 +1,18 @@
 import path from "path";
 
-import _ from "lodash";
+import * as dotenv from "dotenv";
 import request from "supertest";
 
 import { DATA } from "@src/e2e/api/auth.data";
 import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup";
-import { readConfig } from "@src/runtime/config";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(60000);
 
 describe("Auth", () => {
-  const config = readConfig(path.join(__dirname, "api.test.env"));
+  dotenv.config({ path: path.join(__dirname, "api.test.env") });
 
   const { getServer, setup, destroy } = createApiTestSetup(
-    config,
     loadBlueprint(path.join(__dirname, "auth.model.gaudi")),
     DATA
   );

@@ -16,48 +16,24 @@ describe("engine", () => {
     });
 
     it("should return default configuration", () => {
-      const config = readConfig();
+      const config = readConfig(path.join(__dirname, "config.test.empty.yaml"));
 
-      expect(config).toEqual({ inputPath: "", outputFolder: ".", gaudiFolder: "./gaudi" });
-    });
-
-    it("should read custom values from environment", () => {
-      process.env.GAUDI_ENGINE_INPUT_PATH = "INPUT";
-      process.env.GAUDI_ENGINE_OUTPUT_PATH = "OUTPUT";
-
-      const config = readConfig();
-
-      const expected: Required<EngineConfig> = {
-        inputPath: "INPUT",
-        outputFolder: "OUTPUT",
-        gaudiFolder: "./gaudi",
-      };
-
-      expect(config).toEqual(expected);
+      expect(config).toEqual({
+        inputFolder: __dirname,
+        outputFolder: __dirname,
+        gaudiFolder: path.join(__dirname, "gaudi"),
+        configFile: path.join(__dirname, "config.test.empty.yaml"),
+      });
     });
 
     it("should reads values from config file", () => {
-      const config = readConfig(path.join(__dirname, "config.test.env"));
+      const config = readConfig(path.join(__dirname, "config.test.yaml"));
 
       const expected: Required<EngineConfig> = {
-        inputPath: "INPUT_FROM_FILE",
-        outputFolder: "OUTPUT_FROM_FILE",
-        gaudiFolder: "./gaudi",
-      };
-
-      expect(config).toEqual(expected);
-    });
-
-    it("should allow overriding config file values with custom values from environment", () => {
-      process.env.GAUDI_ENGINE_INPUT_PATH = "INPUT";
-      process.env.GAUDI_ENGINE_OUTPUT_PATH = "OUTPUT";
-
-      const config = readConfig(path.join(__dirname, "config.test.env"));
-
-      const expected: Required<EngineConfig> = {
-        inputPath: "INPUT",
-        outputFolder: "OUTPUT",
-        gaudiFolder: "./gaudi",
+        inputFolder: path.join(__dirname, "rootDir"),
+        outputFolder: path.join(__dirname, "outDir"),
+        gaudiFolder: path.join(__dirname, "gaudi"),
+        configFile: path.join(__dirname, "config.test.yaml"),
       };
 
       expect(config).toEqual(expected);

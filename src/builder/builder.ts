@@ -13,7 +13,7 @@ import {
   render as renderDbSchemaTpl,
 } from "@src/builder/renderer/templates/schema.prisma.tpl";
 import { kindFilter } from "@src/common/kindFilter";
-import { assertUnreachable, saveOutputFile } from "@src/common/utils";
+import { assertUnreachable } from "@src/common/utils";
 import { Definition } from "@src/types/definition";
 
 const DB_PROVIDER = "postgresql";

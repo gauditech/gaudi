@@ -1,0 +1,13 @@
+// database {
+//     engine pg
+//     uri 'postgresql://postgres@localhost:5342'
+// }
+
+runtime HooksRuntime {
+  source path "hooks"
+}
+
+generate client {
+  target js
+  output "src/web/js"
+}

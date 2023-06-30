@@ -1,3 +1,2 @@
-export { compileToOldSpec } from "./compiler";
-export { compose } from "./composer/composer";
+export { compileFromString } from "./compiler";
 export { build } from "./builder/builder";

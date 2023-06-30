@@ -1,6 +1,10 @@
+import { ILexingError, IRecognitionException } from "chevrotain";
 import _ from "lodash";
 
-import { TokenData } from "./ast/ast";
+import { TokenData, zeroToken } from "./ast/ast";
+import { getTokenData } from "./parser";
+
+import { Input } from ".";
 
 export enum ErrorCode {
   ParserError,
@@ -16,7 +20,6 @@ export enum ErrorCode {
   MustHaveDefaultRuntime,
   DuplicateAuthBlock,
   DuplicateEndpoint,
-  NoRuntimeDefinedForHook,
   DuplicateModelAtom,
   DuplicateCustomEndpointPath,
   CustomEndpointPathClashesWithEnrtrypoint,
@@ -52,6 +55,8 @@ export enum ErrorCode {
   ReferenceOnDeleteNotNullable,
   CircularModelMemberDetected,
   TypeHasNoMembers,
+  CantFindRuntime,
+  NoRuntimeDefinedForHook,
   CantFindNameInScope,
   CantResolveModelAtomWrongKind,
   CantResolveExpressionReference,
@@ -102,8 +107,6 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Can't have more than one auth block defined`;
     case ErrorCode.DuplicateEndpoint:
       return `Duplicate "${params?.type}" endpoint definition`;
-    case ErrorCode.NoRuntimeDefinedForHook:
-      return `Hook with source can't be used without a runtime`;
     case ErrorCode.DuplicateModelAtom:
       return `Duplicate model member definition`;
     case ErrorCode.DuplicateCustomEndpointPath:
@@ -178,6 +181,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Circular model definition detected in model member definition`;
     case ErrorCode.TypeHasNoMembers:
       return `This type has no members`;
+    case ErrorCode.CantFindRuntime:
+      return `Can't resolve runtime reference`;
+    case ErrorCode.NoRuntimeDefinedForHook:
+      return `Hook with source can't be used without a runtime`;
     case ErrorCode.CantFindNameInScope:
       return `Name "${params?.name}" does not exist in current scope`;
     case ErrorCode.CantResolveModelAtomWrongKind:
@@ -241,38 +248,61 @@ export class CompilerError extends Error {
   }
 }
 
-export function compilerErrorsToString(
-  filename: string,
-  source: string,
-  errors: CompilerError[]
-): string {
+export function compilerErrorsToString(baseInputs: Input[], errors: CompilerError[]): string {
   if (errors.length === 0) return "";
 
-  const lineIndecies = [0];
+  const inputs = baseInputs.map(({ source, filename }) => ({
+    source,
+    filename: filename ?? ":unset:",
+    lineIndices: [0],
+  }));
 
-  for (let i = 0; i < source.length; i++) {
-    if (source.charAt(i) === "\n") {
-      lineIndecies.push(i + 1);
+  for (const input of inputs) {
+    for (let i = 0; i < input.source.length; i++) {
+      if (input.source.charAt(i) === "\n") {
+        input.lineIndices.push(i + 1);
+      }
     }
   }
 
   let output = "";
 
   errors.forEach((error) => {
-    const start = error.errorPosition.start;
-    const end = error.errorPosition.end;
-    const lineStart = _.findLast(lineIndecies, (i) => i < start) ?? 0;
-    const lineEnd = _.find(lineIndecies, (i) => i > end) ?? source.length;
+    const input = inputs.find(({ filename }) => filename === error.errorPosition.filename);
+    const lineIndices = input?.lineIndices ?? [0];
+    const source = input?.source ?? "";
 
-    const line = lineIndecies.indexOf(lineStart) + 1;
-    const column = start - lineStart + 1;
-    const length = end - start;
+    const { filename, start, end } = error.errorPosition;
+    const length = end.column - start.column;
 
-    output += `${filename}:${line}:${column} - ${error.message}\n`;
-    output += source.substring(lineStart, lineEnd);
-    output += " ".repeat(column - 1) + "~".repeat(length + 1);
+    output += `${filename}:${start.line}:${start.column} - ${error.message}\n`;
+    output += source.substring(lineIndices[start.line - 1], lineIndices[end.line]);
+    output += " ".repeat(start.column - 1) + "~".repeat(length + 1);
     output += "\n";
   });
 
   return output;
+}
+
+export function toCompilerError(
+  error: ILexingError | IRecognitionException,
+  filename: string
+): CompilerError {
+  let tokenData: TokenData;
+  if ("token" in error) {
+    tokenData = getTokenData(filename, error.token);
+  } else {
+    tokenData = {
+      start: { line: error.line ?? 0, column: error.column ?? 0 },
+      end: { line: error.line ?? 0, column: (error.column ?? 0) + error.length },
+      filename,
+    };
+  }
+  return new CompilerError(tokenData, ErrorCode.ParserError, { message: error.message });
+}
+
+export function unexpectedParserError(): CompilerError {
+  return new CompilerError(zeroToken, ErrorCode.ParserError, {
+    message: "Unexpected parser error",
+  });
 }

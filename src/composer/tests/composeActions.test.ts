@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { compileToOldSpec, compose } from "@src/index";
+import { compileFromString } from "@src/index";
 import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
 
 describe("compose actions", () => {
@@ -34,7 +34,7 @@ describe("compose actions", () => {
       }
     }
     `;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -61,7 +61,7 @@ describe("compose actions", () => {
         }
       }
     }`;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -85,7 +85,7 @@ describe("compose actions", () => {
       }
     }
     `;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
       expect(endpoint.fieldset).toMatchSnapshot();
@@ -107,7 +107,7 @@ describe("compose actions", () => {
       }
     }
     `;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -129,7 +129,7 @@ describe("compose actions", () => {
       }
     }
     `;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -153,7 +153,7 @@ describe("compose actions", () => {
       }
     }
     `;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -182,7 +182,7 @@ describe("compose actions", () => {
         }
       }
     }`;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -206,7 +206,7 @@ describe("compose actions", () => {
         }
       }
     }`;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -230,7 +230,7 @@ describe("compose actions", () => {
     }
     `;
 
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
       expect(endpoint.fieldset).toMatchSnapshot();
@@ -247,7 +247,7 @@ describe("compose actions", () => {
       }
     }
     `;
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
@@ -308,7 +308,7 @@ describe("compose actions", () => {
     }
     `;
 
-      const def = compose(compileToOldSpec(bp));
+      const def = compileFromString(bp);
       const endpoints = def.apis[0].entrypoints[0].endpoints;
 
       expect(endpoints).toMatchSnapshot();

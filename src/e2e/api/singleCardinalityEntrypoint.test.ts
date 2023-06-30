@@ -1,19 +1,17 @@
 import path from "path";
 
-import _ from "lodash";
+import * as dotenv from "dotenv";
 import request from "supertest";
 
 import { createApiTestSetup, loadBlueprint } from "@src/e2e/api/setup";
-import { readConfig } from "@src/runtime/config";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(10000);
 
 describe("Single Cardinality Entrypoint", () => {
-  const config = readConfig(path.join(__dirname, "api.test.env"));
+  dotenv.config({ path: path.join(__dirname, "api.test.env") });
 
   const { getServer, setup, destroy } = createApiTestSetup(
-    config,
     loadBlueprint(path.join(__dirname, "singleCardinalityEntrypoint.gaudi")),
     [
       { model: "Address", data: [{ name: "Address 1" }] },
