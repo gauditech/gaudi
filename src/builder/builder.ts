@@ -106,7 +106,16 @@ export async function buildApiClients(
               .then((content) => {
                 // use TS compiler to check if content is valid
                 const project = new Project({
-                  // not sure if we need any specific compiler options here cause we're only verifying TS content
+                  compilerOptions: {
+                    // let's support max 3 years old syntax level
+                    target: ScriptTarget.ES2020,
+                    module: ModuleKind.CommonJS,
+                    declaration: true,
+                    strict: true,
+                    // these settings make emitting much faster (https://github.com/dsherret/ts-morph/issues/149)
+                    isolatedModules: true,
+                    noResolve: true,
+                  },
                 });
                 // create virtual source file
                 const sourceFile = project.createSourceFile(outPath, content, {
