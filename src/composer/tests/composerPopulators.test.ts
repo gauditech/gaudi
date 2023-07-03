@@ -1,4 +1,4 @@
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 
 describe("populator composer", () => {
   it("succeeds for simple populator", () => {

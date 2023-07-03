@@ -1,5 +1,5 @@
 import { getRef } from "@src/common/refs";
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 
 describe("authenticator composer", () => {
   it("succeeds for simple authenticator", () => {

@@ -1,11 +1,35 @@
-import { FieldType, PrimitiveType, Type } from "./type";
+import { FieldType, Type } from "./type";
 
 export type ProjectASTs = {
   plugins: GlobalAtom[][];
   documents: Map<string, GlobalAtom[]>;
 };
 
-export type GlobalAtom = Model | Api | Populator | Runtime | Authenticator | Generator;
+export type GlobalAtom = Validator | Model | Api | Populator | Runtime | Authenticator | Generator;
+
+export type Validator = {
+  kind: "validator";
+  keyword: TokenData;
+  name: Identifier;
+  atoms: ValidatorAtom[];
+};
+
+export type ValidatorAtom =
+  | ValidatorArg
+  | { kind: "assert"; keyword: TokenData; expr: Expr<Code> }
+  | { kind: "assertHook"; keyword: TokenData; hook: ValidatorHook }
+  | ValidatorError;
+
+export type ValidatorArg = {
+  kind: "arg";
+  keyword: TokenData;
+  name: IdentifierRef<RefValidatorArg>;
+  atoms: ValidatorArgAtom[];
+};
+export type ValidatorArgAtom = { kind: "type"; keyword: TokenData; identifier: Identifier };
+
+export type ValidatorError = { kind: "error"; keyword: TokenData; atoms: ValidatorErrorAtom[] };
+export type ValidatorErrorAtom = { kind: "code"; keyword: TokenData; code: StringLiteral };
 
 export type Model = {
   kind: "model";
@@ -26,11 +50,8 @@ export type FieldAtom = { keyword: TokenData } & (
   | { kind: "unique" }
   | { kind: "nullable" }
   | { kind: "default"; literal: Literal }
-  | { kind: "validate"; validators: Validator[] }
+  | { kind: "validate"; expr: ValidateExpr }
 );
-export type Validator =
-  | FieldValidationHook
-  | { kind: "builtin"; name: Identifier; args: Literal[] };
 
 export type Reference = {
   kind: "reference";
@@ -155,7 +176,13 @@ export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "filter"; expr: Expr<Db> }
 );
 
-export type Action = ModelAction | DeleteAction | ExecuteAction | QueryAction | RespondAction;
+export type Action =
+  | ModelAction
+  | DeleteAction
+  | ExecuteAction
+  | QueryAction
+  | RespondAction
+  | ValidateAction;
 
 export type ModelAction = {
   kind: "create" | "update";
@@ -228,6 +255,23 @@ export type RespondActionAtomHttpHeader = {
   keyword: TokenData;
 };
 
+export type ValidateAction = {
+  kind: "validate";
+  keyword: TokenData;
+  key: StringLiteral;
+  expr: ValidateExpr;
+};
+export type ValidateExpr =
+  | {
+      kind: "binary";
+      keyword: TokenData;
+      operator: "and" | "or";
+      lhs: ValidateExpr;
+      rhs: ValidateExpr;
+    }
+  | { kind: "validator"; validator: Identifier; args: Expr<Code>[] }
+  | { kind: "group"; expr: ValidateExpr };
+
 export type ActionAtomSet = {
   kind: "set";
   keyword: TokenData;
@@ -273,7 +317,7 @@ export type ExtraInput = {
 export type ExtraInputAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
   | { kind: "nullable" }
-  | { kind: "validate"; validators: Validator[] }
+  | { kind: "validate"; expr: ValidateExpr }
 );
 
 export type Populator = {
@@ -345,16 +389,15 @@ export type Authenticator = {
 export type AuthenticatorAtom = { kind: "method"; keyword: TokenData; method: AuthenticatorMethod };
 export type AuthenticatorMethod = { kind: "basic"; keyword: TokenData };
 
-export type Hook<kind extends "model" | "validation" | "action"> = {
+export type Hook<kind extends "model" | "validator" | "action"> = {
   kind: "hook";
   keyword: TokenData;
   name: kind extends "model" ? IdentifierRef<RefModelHook> : undefined;
   atoms: (
-    | (kind extends "validation"
-        ? { kind: "default_arg"; keyword: TokenData; name: Identifier }
-        :
-            | { kind: "arg_expr"; keyword: TokenData; name: Identifier; expr: Expr<Code> }
-            | { kind: "arg_query"; keyword: TokenData; name: Identifier; query: AnonymousQuery })
+    | { kind: "arg_expr"; keyword: TokenData; name: Identifier; expr: Expr<Code> }
+    | (kind extends "validator"
+        ? never
+        : { kind: "arg_query"; keyword: TokenData; name: Identifier; query: AnonymousQuery })
     | {
         kind: "source";
         keyword: TokenData;
@@ -368,7 +411,7 @@ export type Hook<kind extends "model" | "validation" | "action"> = {
   )[];
 };
 export type ModelHook = Hook<"model">;
-export type FieldValidationHook = Hook<"validation">;
+export type ValidatorHook = Hook<"validator">;
 export type ActionHook = Hook<"action">;
 
 export type AnonymousQuery = {
@@ -489,6 +532,7 @@ export type RefQueryTarget = {
 export type RefTarget = { kind: "target"; targetKind: "entrypoint" | "populate" };
 export type RefAction = { kind: "action" };
 export type RefRepeat = { kind: "repeat" };
+export type RefValidatorArg = { kind: "validatorArg"; type: FieldType };
 export type RefExtraInput = { kind: "extraInput"; type: FieldType; nullable: boolean };
 export type RefAuth = { kind: "auth"; model: string };
 export type RefAuthToken = { kind: "authToken" };
@@ -500,6 +544,7 @@ export type Ref =
   | RefTarget
   | RefAction
   | RefRepeat
+  | RefValidatorArg
   | RefExtraInput
   | RefAuth
   | RefAuthToken

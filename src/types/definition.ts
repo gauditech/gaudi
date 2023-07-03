@@ -1,14 +1,9 @@
 import { FieldType, TypeCardinality } from "@src/compiler/ast/type";
 import { HookCode } from "@src/types/common";
-import {
-  BooleanLiteral,
-  FloatLiteral,
-  IntegerLiteral,
-  Literal,
-  StringLiteral,
-} from "@src/types/specification";
+import { Literal } from "@src/types/specification";
 
 export type Definition = {
+  validators: ValidatorDef[];
   models: ModelDef[];
   apis: ApiDef[];
   populators: PopulatorDef[];
@@ -16,6 +11,23 @@ export type Definition = {
   authenticator: AuthenticatorDef | undefined;
   generators: GeneratorDef[];
 };
+
+export type ValidatorDef = {
+  name: string;
+  args: { name: string; type: FieldType }[];
+  assert: { kind: "expr"; expr: TypedExprDef } | { kind: "hook"; hook: ValidatorHookDef };
+  error: { code: string };
+};
+
+export type ValidatorHookDef = {
+  hook: HookCode;
+  args: { name: string; expr: TypedExprDef }[];
+};
+
+export type ValidateExprDef =
+  | { kind: "and" | "or"; exprs: ValidateExprDef[] }
+  | ValidateExprCallDef;
+export type ValidateExprCallDef = { kind: "call"; validator: string; args: TypedExprDef[] };
 
 export type ModelDef = {
   kind: "model";
@@ -41,7 +53,7 @@ export type FieldDef = {
   primary: boolean;
   unique: boolean;
   nullable: boolean;
-  validators: ValidatorDef[];
+  validate?: ValidateExprDef;
 };
 
 export type ReferenceDef = {
@@ -385,106 +397,10 @@ export type FieldsetFieldDef = {
   type: FieldType;
   nullable: boolean;
   required: boolean;
-  validators: ValidatorDef[];
+  validate?: ValidateExprDef;
+  referenceNotFound?: true;
 };
 
-export type ValidatorDef =
-  | MinLengthStringValidator
-  | MaxLengthStringValidator
-  | EmailStringValidator
-  | MinIntValidator
-  | MaxIntValidator
-  | MinFloatValidator
-  | MaxFloatValidator
-  | IsBooleanEqual
-  | IsIntEqual
-  | IsFloatEqual
-  | IsStringEqual
-  | HookValidator
-  | ReferenceNotFoundValidator;
-
-export const ValidatorDefinition = [
-  ["string", "max", "maxLength", ["integer"]],
-  ["string", "min", "minLength", ["integer"]],
-  ["string", "isEmail", "isEmail", []],
-  ["integer", "min", "minInt", ["integer"]],
-  ["integer", "max", "maxInt", ["integer"]],
-  ["float", "min", "minFloat", ["float"]],
-  ["float", "max", "maxFloat", ["float"]],
-  ["boolean", "isEqual", "isBoolEqual", ["boolean"]],
-  ["integer", "isEqual", "isIntEqual", ["integer"]],
-  ["float", "isEqual", "isFloatEqual", ["float"]],
-  ["string", "isEqual", "isStringEqual", ["string"]],
-] as const;
-
-export interface MinLengthStringValidator extends IValidatorDef {
-  name: "minLength";
-  inputType: "string";
-  args: [IntegerLiteral];
-}
-
-export interface MaxLengthStringValidator extends IValidatorDef {
-  name: "maxLength";
-  inputType: "string";
-  args: [IntegerLiteral];
-}
-
-export interface EmailStringValidator extends IValidatorDef {
-  name: "isEmail";
-  inputType: "string";
-  args: [];
-}
-
-export interface MinIntValidator extends IValidatorDef {
-  name: "minInt";
-  inputType: "integer";
-  args: [IntegerLiteral];
-}
-
-export interface MaxIntValidator extends IValidatorDef {
-  name: "maxInt";
-  inputType: "integer";
-  args: [IntegerLiteral];
-}
-
-export interface MinFloatValidator extends IValidatorDef {
-  name: "minFloat";
-  inputType: "float";
-  args: [FloatLiteral];
-}
-
-export interface MaxFloatValidator extends IValidatorDef {
-  name: "maxFloat";
-  inputType: "float";
-  args: [FloatLiteral];
-}
-
-export interface IsBooleanEqual extends IValidatorDef {
-  name: "isBoolEqual";
-  inputType: "boolean";
-  args: [BooleanLiteral];
-}
-export interface IsIntEqual extends IValidatorDef {
-  name: "isIntEqual";
-  inputType: "integer";
-  args: [IntegerLiteral];
-}
-export interface IsFloatEqual extends IValidatorDef {
-  name: "isFloatEqual";
-  inputType: "float";
-  args: [FloatLiteral];
-}
-export interface IsStringEqual extends IValidatorDef {
-  name: "isStringEqual";
-  inputType: "string";
-  args: [StringLiteral];
-}
-
-export interface HookValidator {
-  name: "hook";
-  arg?: string;
-  hook: HookCode;
-}
 export interface ReferenceNotFoundValidator {
   name: "reference-not-found";
 }
@@ -494,8 +410,9 @@ export type ActionDef =
   | UpdateOneAction
   | DeleteOneAction
   | ExecuteHookAction
+  | QueryAction
   | RespondAction
-  | QueryAction;
+  | ValidateAction;
 
 export type CreateOneAction = {
   kind: "create-one";
@@ -543,6 +460,12 @@ export type QueryAction = {
   alias: string;
   model: string;
   query: QueryDef;
+};
+
+export type ValidateAction = {
+  kind: "validate";
+  key: string;
+  validate: ValidateExprDef;
 };
 
 export type ActionHookDef = {

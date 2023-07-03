@@ -20,6 +20,56 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   const authenticatorAst = kindFind(globals, "authenticator");
   const authenticator = authenticatorAst && migrateAuthenticator(authenticatorAst);
 
+  function migrateValidator(validator: AST.Validator): Spec.Validator {
+    let assert: Spec.Validator["assert"];
+    const assertExpr = kindFind(validator.atoms, "assert")?.expr;
+    if (assertExpr) {
+      assert = { kind: "expr", expr: migrateExpr(assertExpr) };
+    } else {
+      const assertHook = kindFind(validator.atoms, "assertHook")?.hook;
+      ensureExists(assertHook);
+      assert = { kind: "hook", hook: migrateValidatorHook(assertHook) };
+    }
+
+    const errorAst = kindFind(validator.atoms, "error");
+    ensureExists(errorAst);
+    const code = kindFind(errorAst.atoms, "code")?.code.value;
+    ensureExists(code);
+
+    return {
+      name: validator.name.text,
+      args: kindFilter(validator.atoms, "arg").map((arg) => ({
+        name: arg.name.text,
+        type: arg.name.ref!.type,
+      })),
+      assert,
+      error: { code },
+    };
+  }
+
+  /**
+   * Groups consecutive 'and' / 'or' operators together
+   */
+  function migrateValidateExpr(validate: AST.ValidateExpr): Spec.ValidateExpr {
+    if (validate.kind === "group") {
+      return migrateValidateExpr(validate.expr);
+    }
+    if (validate.kind === "validator") {
+      return {
+        kind: "call",
+        validator: validate.validator.text,
+        args: validate.args.map(migrateExpr),
+      };
+    }
+
+    const lhs = migrateValidateExpr(validate.lhs);
+    const exprs = lhs.kind === validate.operator ? lhs.exprs : [lhs];
+    const rhs = migrateValidateExpr(validate.rhs);
+    exprs.push(...(rhs.kind === validate.operator ? rhs.exprs : [rhs]));
+
+    return { kind: validate.operator, exprs };
+  }
+
   function migrateModel(model: AST.Model): Spec.Model {
     const fields = migrateFields(model);
     const references = kindFilter(model.atoms, "reference").map(migrateReference);
@@ -80,7 +130,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const idField: Spec.Field = {
       ref: generateModelIdIdentifier(model.name.text).ref,
       primary: true,
-      validators: [],
     };
     const fields = kindFilter(model.atoms, "field").map(migrateField);
 
@@ -89,7 +138,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       return {
         ref: referenceToIdRef(reference.name.ref),
         primary: false,
-        validators: [],
       };
     });
 
@@ -98,29 +146,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateField(field: AST.Field): Spec.Field {
     const default_ = kindFind(field.atoms, "default");
-    const validators = kindFilter(field.atoms, "validate").flatMap((v) =>
-      v.validators.map(migrateValidator)
-    );
+    const validateAst = kindFind(field.atoms, "validate")?.expr;
+    const validate = validateAst && migrateValidateExpr(validateAst);
     ensureExists(field.name.ref);
 
     return {
       ref: field.name.ref,
       default: default_ && migrateLiteral(default_.literal),
       primary: false,
-      validators: validators,
+      validate,
     };
-  }
-
-  function migrateValidator(validator: AST.Validator): Spec.Validator {
-    if (validator.kind === "builtin") {
-      return {
-        kind: "builtin",
-        name: validator.name.text,
-        args: validator.args.map(migrateLiteral),
-      };
-    } else {
-      return { kind: "hook", hook: migrateFieldValidationHook(validator) };
-    }
   }
 
   function migrateReference(reference: AST.Reference): Spec.Reference {
@@ -344,9 +379,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function migrateExtraInput({ name, atoms }: AST.ExtraInput): Spec.ExtraInput {
-    const validators = kindFilter(atoms, "validate").flatMap((v) =>
-      v.validators.map(migrateValidator)
-    );
+    const validateAst = kindFind(atoms, "validate")?.expr;
+    const validate = validateAst && migrateValidateExpr(validateAst);
     const { ref } = migrateIdentifierRef(name);
     return {
       kind: "extra-input",
@@ -354,7 +388,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       type: ref.type,
       nullable: !!kindFind(atoms, "nullable"),
       optional: false,
-      validators,
+      validate,
     };
   }
 
@@ -407,6 +441,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       .with({ kind: "execute" }, (a) => [migrateExecuteAction(a, index)])
       .with({ kind: "respond" }, (a) => [migrateRespondAction(a)])
       .with({ kind: "queryAction" }, (a) => [migrateQueryAction(a, index)])
+      .with({ kind: "validate" }, (a) => [migrateValidateAction(a)])
       .exhaustive();
   }
 
@@ -600,6 +635,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     };
   }
 
+  function migrateValidateAction(action: AST.ValidateAction): Spec.Action {
+    return {
+      kind: "validate",
+      key: action.key.value,
+      validate: migrateValidateExpr(action.expr),
+    };
+  }
+
   function migrateActionAtomSet(set: AST.ActionAtomSet): Spec.ActionAtomSet {
     const target = migrateIdentifierRef(set.target);
 
@@ -772,6 +815,15 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       .exhaustive();
   }
 
+  function migrateValidatorHook(hook: AST.ValidatorHook): Spec.ValidatorHook {
+    const code = getHookCode(hook);
+    const args = kindFilter(hook.atoms, "arg_expr").map((a) => ({
+      name: a.name.text,
+      expr: migrateExpr(a.expr),
+    }));
+    return { code, args };
+  }
+
   function migrateModelHook(hook: AST.ModelHook): Spec.ModelHook {
     const code = getHookCode(hook);
     ensureExists(hook.name.ref);
@@ -785,12 +837,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       };
     });
     return { name: hook.name.text, ref, code, args };
-  }
-
-  function migrateFieldValidationHook(hook: AST.FieldValidationHook): Spec.FieldValidatorHook {
-    const code = getHookCode(hook);
-    const arg = kindFind(hook.atoms, "default_arg");
-    return { code, arg: arg?.name.text };
   }
 
   function migrateActionHook(hook: AST.ActionHook): Spec.ActionHook {
@@ -812,7 +858,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return { code, args: [...exprArgs, ...queryArgs] };
   }
 
-  function getHookCode(hook: AST.Hook<"model" | "validation" | "action">): HookCode {
+  function getHookCode(hook: AST.Hook<"model" | "validator" | "action">): HookCode {
     const inline = kindFind(hook.atoms, "inline");
     if (inline) {
       return { kind: "inline", inline: inline.code.value };
@@ -966,6 +1012,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   migrateImplicitRelations(models);
 
   return {
+    validators: kindFilter(globals, "validator").flatMap(migrateValidator),
     models,
     apis: kindFilter(globals, "api").flatMap(migrateApi),
     populators: kindFilter(globals, "populator").map(migratePopulator),

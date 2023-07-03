@@ -1,7 +1,8 @@
+import { kindFilter } from "@src/common/kindFilter";
 import { getInternalExecutionRuntimeName } from "@src/composer/executionRuntimes";
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { executeHook } from "@src/runtime/hooks";
-import { CreateEndpointDef, Definition } from "@src/types/definition";
+import { Definition } from "@src/types/definition";
 
 describe("hooks", () => {
   const def = createTestDefinition();
@@ -95,8 +96,7 @@ describe("hooks", () => {
     `;
 
       const result = compileFromString(bp);
-      const action = result.apis[0].entrypoints[0].endpoints
-        .filter((ep): ep is CreateEndpointDef => ep.kind === "create")
+      const action = kindFilter(result.apis[0].entrypoints[0].endpoints, "create")
         .shift()
         ?.actions.at(0);
 

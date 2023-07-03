@@ -1,234 +1,179 @@
-import {
-  AnySchema,
-  BaseSchema,
-  BooleanSchema,
-  NumberSchema,
-  StringSchema,
-  ValidationError,
-  boolean,
-  number,
-  object,
-  string,
-} from "yup";
+import _ from "lodash";
+import { match } from "ts-pattern";
 
 import { executeHook } from "../hooks";
+import { executeTypedExpr } from "../server/endpoints";
+import { Vars } from "../server/vars";
 
-import { assertUnreachable } from "@src/common/utils";
+import { ensureExists } from "@src/common/utils";
 import { BusinessError } from "@src/runtime/server/error";
 import {
   Definition,
   FieldsetDef,
   FieldsetFieldDef,
   FieldsetRecordDef,
-  HookValidator,
+  ValidateExprCallDef,
+  ValidateExprDef,
 } from "@src/types/definition";
 
 // ----- validation&transformation
 
-export async function validateEndpointFieldset<R = Record<string, unknown>>(
+export async function validateEndpointFieldset(
   def: Definition,
   fieldset: FieldsetDef,
   data: Record<string, unknown>
-): Promise<R> {
-  try {
-    const validationSchema = buildFieldsetValidationSchema(def, fieldset);
-    return await validateRecord(data, validationSchema);
-  } catch (err: unknown) {
-    if (err instanceof ValidationError) {
-      // error should be an instance of Yup's ValidationError
-      // https://github.com/jquense/yup#validationerrorerrors-string--arraystring-value-any-path-string
-
-      throw new BusinessError(
-        "ERROR_CODE_VALIDATION",
-        "Validation error",
-        createRecordValidationError(err)
-      );
-    } else {
-      throw err;
-    }
+): Promise<Record<string, unknown>> {
+  const error = await validate(def, fieldset, data);
+  if (error) {
+    throw new BusinessError("ERROR_CODE_VALIDATION", "Validation error", error);
   }
+  return data;
 }
 
-export type RecordValidationError = Pick<
-  ValidationError,
-  "value" | "path" | "type" | "errors" | "params" | "inner"
->;
+export type ValidateError = ValidateRecordError | ValidateFieldError;
+export type ValidateRecordError = {
+  [P in string]: ValidateRecordError | ValidateFieldError;
+};
 
-export function createRecordValidationError(error: ValidationError): RecordValidationError {
-  return {
-    value: error.value,
-    path: error.path,
-    type: error.type,
-    errors: error.errors,
-    params: error.params,
-    inner: error.inner,
-  };
-}
+export type ValidateFieldError = { code: string; params: Record<string, unknown> }[];
 
-export async function validateRecord(record: unknown, schema: AnySchema) {
-  return schema.validate(record, {
-    abortEarly: false, // report ALL errors, not just the first one
-    context: {},
-  });
-}
-
-// ---------- fieldset validation builder
-
-export function buildFieldsetValidationSchema(def: Definition, fieldset: FieldsetDef): AnySchema {
-  if (fieldset.kind !== "record") throw new Error('Root fieldset must be of kind "record".');
-
-  return buildObjectValidationSchema(def, fieldset);
-}
-
-function processFields(def: Definition, field: FieldsetDef): AnySchema {
-  if (field.kind === "field") {
-    return buildFieldValidationSchema(def, field);
-  } else {
-    return buildObjectValidationSchema(def, field);
-  }
-}
-
-function buildObjectValidationSchema(def: Definition, field: FieldsetRecordDef): AnySchema {
-  const fieldSchemas = Object.fromEntries(
-    Object.entries(field.record).map(([name, value]) => [name, processFields(def, value)])
-  );
-
-  if (!field.nullable) object(fieldSchemas).required();
-
-  return object(fieldSchemas).optional();
-}
-
-function buildFieldValidationSchema(def: Definition, field: FieldsetFieldDef): AnySchema {
-  if (field.type === "string") {
-    // start with nullable because it's the only way to
-    let s = string();
-
-    if (field.nullable) {
-      // TODO: yup's types don't allow expanding return type to `string | undefined | null`
-      s = s.nullable() as StringSchema;
-    }
-    if (field.required) {
-      // everything except `undefined`
-      s = s.defined();
-    }
-
-    field.validators.forEach((v) => {
-      if (v.name === "minLength") {
-        s = s.min(v.args[0].value);
-      } else if (v.name === "maxLength") {
-        s = s.max(v.args[0].value);
-      } else if (v.name === "isEmail") {
-        s = s.email();
-      } else if (v.name === "isStringEqual") {
-        // TODO: s.equals returns BaseSchema which doesn't fit StringSchema
-        s = s.equals<string>([v.args[0].value]) as StringSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
-      } else if (v.name === "reference-not-found") {
-        s = buildNoReferenceSchema(s);
-      }
-    });
-
-    return s;
-  } else if (field.type === "integer") {
-    let s = number().integer();
-
-    if (field.nullable) {
-      // TODO: yup's types don't allow expanding return type to `number | undefined | null`
-      s = s.nullable() as NumberSchema;
-    }
-    if (field.required) {
-      // everything except `undefined`
-      s = s.defined();
-    }
-
-    field.validators.forEach((v) => {
-      if (v.name === "minInt") {
-        s = s.min(v.args[0].value);
-      } else if (v.name === "maxInt") {
-        s = s.max(v.args[0].value);
-      } else if (v.name === "isIntEqual") {
-        // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
-        s = s.equals([v.args[0].value]) as NumberSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
-      } else if (v.name === "reference-not-found") {
-        s = buildNoReferenceSchema(s);
-      }
-    });
-
-    return s;
-  } else if (field.type === "float") {
-    let s = number();
-
-    if (field.nullable) {
-      // TODO: yup's types don't allow expanding return type to `number | undefined | null`
-      s = s.nullable() as NumberSchema;
-    }
-    if (field.required) {
-      // everything except `undefined`
-      s = s.defined();
-    }
-
-    field.validators.forEach((v) => {
-      if (v.name === "minFloat") {
-        s = s.min(v.args[0].value);
-      } else if (v.name === "maxFloat") {
-        s = s.max(v.args[0].value);
-      } else if (v.name === "isFloatEqual") {
-        // TODO: s.equals returns BaseSchema which doesn't fit NumberSchema
-        s = s.equals([v.args[0].value]) as NumberSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
-      } else if (v.name === "reference-not-found") {
-        s = buildNoReferenceSchema(s);
-      }
-    });
-
-    return s;
-  } else if (field.type === "boolean") {
-    let s = boolean();
-
-    // NOTE: boolean schema cannot be "nullable"
-
-    if (field.required) {
-      // everything except `undefined`
-      s = s.defined();
-    }
-
-    field.validators.forEach((v) => {
-      if (v.name === "isBoolEqual") {
-        // TODO: s.equals returns BaseSchema which doesn't fit BooleanSchema
-        s = s.equals([v.args[0].value]) as BooleanSchema;
-      } else if (v.name === "hook") {
-        s = buildHookSchema(def, v, s);
-      } else if (v.name === "reference-not-found") {
-        s = buildNoReferenceSchema(s);
-      }
-    });
-
-    return s;
-  } else {
-    assertUnreachable(field.type);
-  }
-}
-
-function buildHookSchema<S extends BaseSchema>(
+async function validate(
   def: Definition,
-  validator: HookValidator,
-  schema: S
-): S {
-  const arg = validator.arg;
-  const testFn = async (value: unknown) => {
-    return await executeHook<boolean>(def, validator.hook, arg ? { [arg]: value } : {});
-  };
-  return schema.test(testFn);
+  fieldset: FieldsetDef,
+  value: unknown
+): Promise<ValidateError | undefined> {
+  switch (fieldset.kind) {
+    case "record":
+      return await validateRecord(def, fieldset, value);
+    case "field":
+      return await validateField(def, fieldset, value);
+  }
 }
 
-function buildNoReferenceSchema<S extends BaseSchema>(schema: S): S {
-  return schema.test(
-    "reference-not-found",
-    (params) => `Can't find ${params.path} with value: ${params.value}`,
-    () => false
+async function validateRecord(
+  def: Definition,
+  fieldsetRecord: FieldsetRecordDef,
+  record: unknown
+): Promise<ValidateError | undefined> {
+  if (record == undefined) {
+    if (fieldsetRecord.nullable) {
+      return undefined;
+    }
+    return [{ code: "required", params: {} }];
+  }
+  if (!isRecord(record)) {
+    return [{ code: "unexpected-type", params: { value: record, expected: "object" } }];
+  }
+
+  const result: ValidateRecordError = {};
+  for (const [name, fieldset] of Object.entries(fieldsetRecord.record)) {
+    const recordResult = await validate(def, fieldset, record[name]);
+    if (recordResult) {
+      result[name] = recordResult;
+    }
+  }
+
+  return _.isEmpty(result) ? undefined : result;
+}
+
+function isRecord(record: unknown): record is Record<string, unknown> {
+  return typeof record === "object" && record != undefined && !Array.isArray(record);
+}
+
+async function validateField(
+  def: Definition,
+  fieldset: FieldsetFieldDef,
+  field: unknown
+): Promise<ValidateFieldError | undefined> {
+  if (field === undefined) {
+    return fieldset.required ? [{ code: "required", params: {} }] : undefined;
+  }
+  if (field === null) {
+    return fieldset.nullable ? undefined : [{ code: "is-not-nullable", params: {} }];
+  }
+
+  const isCorrectType = match(fieldset.type)
+    // FIXME: this doesn't mean it is a SAFE integer
+    .with("integer", () => typeof field === "number" && Number.isInteger(field))
+    .with("float", () => typeof field === "number")
+    .with("boolean", () => typeof field === "boolean")
+    .with("string", () => typeof field === "string")
+    .exhaustive();
+  if (!isCorrectType) {
+    return [{ code: "unexpected-type", params: { value: field, expected: fieldset.type } }];
+  }
+
+  return fieldset.validate
+    ? await executeValidateExpr(def, fieldset.validate, field, new Vars())
+    : fieldset.referenceNotFound
+    ? [{ code: "reference-not-found", params: { value: field } }]
+    : undefined;
+}
+
+export async function executeValidateExpr(
+  def: Definition,
+  validate: ValidateExprDef,
+  field: unknown | undefined,
+  ctx: Vars
+): Promise<ValidateFieldError | undefined> {
+  if (validate.kind === "call") {
+    return executeValidateExprCall(def, validate, field, ctx);
+  }
+
+  const errors = _.compact(
+    _.concat(
+      ...(await Promise.all(
+        validate.exprs.map((expr) => executeValidateExpr(def, expr, field, ctx))
+      ))
+    )
   );
+
+  if (errors.length === 0) {
+    return undefined;
+  }
+
+  if (validate.kind === "and") {
+    return errors;
+  } else {
+    return [{ code: "or", params: { errors } }];
+  }
+}
+
+async function executeValidateExprCall(
+  def: Definition,
+  validate: ValidateExprCallDef,
+  field: unknown | undefined,
+  ctx: Vars
+): Promise<ValidateFieldError | undefined> {
+  const validator = def.validators.find((v) => v.name === validate.validator);
+  ensureExists(validator);
+  const tailArgs = await Promise.all(validate.args.map((arg) => executeTypedExpr(arg, ctx)));
+  const args = field === undefined ? tailArgs : [field, ...tailArgs];
+
+  const params: Record<string, unknown> = {};
+  for (let i = 0; i < validator.args.length; i++) {
+    const name = validator.args[i].name;
+    const value = args[i];
+    params[name] = value;
+  }
+
+  const contextVars = new Vars(params);
+
+  const assertResult = await match(validator.assert)
+    .with({ kind: "expr" }, ({ expr }) => executeTypedExpr(expr, contextVars))
+    .with({ kind: "hook" }, async ({ hook }) => {
+      const argEntries = await Promise.all(
+        hook.args.map(
+          async ({ name, expr }) => [name, await executeTypedExpr(expr, contextVars)] as const
+        )
+      );
+      const args = Object.fromEntries(argEntries);
+      return executeHook(def, hook.hook, args);
+    })
+    .exhaustive();
+
+  if (assertResult) {
+    return undefined;
+  }
+  return [{ code: validator.error.code, params }];
 }

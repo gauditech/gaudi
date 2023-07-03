@@ -46,6 +46,7 @@ export const Lte = createOperator("Lte", "<=");
 export const Lt = createOperator("Lt", "<");
 
 export const With = createWeakKeyword("with");
+export const Validator = createWeakKeyword("validator");
 export const Validate = createWeakKeyword("validate");
 export const Update = createWeakKeyword("update");
 export const Unique = createWeakKeyword("unique");
@@ -86,6 +87,7 @@ export const Method = createWeakKeyword("method");
 export const Many = createWeakKeyword("many");
 export const List = createWeakKeyword("list");
 export const Limit = createWeakKeyword("limit");
+export const Key = createWeakKeyword("key");
 export const Js = createWeakKeyword("js");
 export const Inputs = createWeakKeyword("inputs");
 export const Input = createWeakKeyword("input");
@@ -104,6 +106,7 @@ export const Field = createWeakKeyword("field");
 export const Fetch = createWeakKeyword("fetch");
 export const Extra = createWeakKeyword("extra");
 export const Execute = createWeakKeyword("execute");
+export const Error = createWeakKeyword("error");
 export const Entrypoint = createWeakKeyword("entrypoint");
 export const Endpoint = createWeakKeyword("endpoint");
 export const End = createWeakKeyword("end");
@@ -116,6 +119,7 @@ export const Custom = createWeakKeyword("custom");
 export const Create = createWeakKeyword("create");
 export const Count = createWeakKeyword("count");
 export const Computed = createWeakKeyword("computed");
+export const Code = createWeakKeyword("code");
 export const Client = createWeakKeyword("client");
 export const Cascade = createWeakKeyword("cascade");
 export const Cardinality = createWeakKeyword("cardinality");
@@ -124,6 +128,7 @@ export const Body = createWeakKeyword("body");
 export const Basic = createWeakKeyword("basic");
 export const Authorize = createWeakKeyword("authorize");
 export const Auth = createWeakKeyword("auth");
+export const Assert = createWeakKeyword("assert");
 export const Asc = createWeakKeyword("asc");
 export const As = createWeakKeyword("as");
 export const Arg = createWeakKeyword("arg");
@@ -184,6 +189,7 @@ export const GaudiTokens = [
   Float,
   String,
   With,
+  Validator,
   Validate,
   Update,
   Unique,
@@ -224,6 +230,7 @@ export const GaudiTokens = [
   Many,
   List,
   Limit,
+  Key,
   Js,
   Inputs,
   Input,
@@ -242,6 +249,7 @@ export const GaudiTokens = [
   Fetch,
   Extra,
   Execute,
+  Error,
   Entrypoint,
   Endpoint,
   End,
@@ -254,6 +262,7 @@ export const GaudiTokens = [
   Create,
   Count,
   Computed,
+  Code,
   Client,
   Cascade,
   Cardinality,
@@ -262,6 +271,7 @@ export const GaudiTokens = [
   Basic,
   Authorize,
   Auth,
+  Assert,
   Asc,
   As,
   Arg,

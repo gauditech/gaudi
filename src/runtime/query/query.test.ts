@@ -9,7 +9,7 @@ import {
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { EndpointDef, ListEndpointDef, QueryDef } from "@src/types/definition";
 
 describe("Endpoint queries", () => {

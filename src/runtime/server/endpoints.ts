@@ -744,11 +744,7 @@ export function extractPathParams(
   path: EndpointPath,
   sourceMap: Record<string, string>
 ): Record<string, string | number> {
-  return _.chain(path.fragments)
-    .filter(
-      (frag): frag is PathFragmentIdentifier | PathQueryParameter =>
-        frag.kind === "identifier" || frag.kind === "query"
-    )
+  return _.chain(kindFilter(path.fragments, "identifier", "query"))
     .map((frag): [string, string | number] | undefined => {
       const val = validatePathIdentifier(frag, sourceMap[frag.name]);
       if (val == null) return;
@@ -861,7 +857,7 @@ async function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
   }
 }
 
-async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<unknown> {
+export async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<unknown> {
   if (!expr) return null;
 
   switch (expr.kind) {

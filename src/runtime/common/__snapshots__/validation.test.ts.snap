@@ -1,368 +1,185 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`runtime validation build fieldset validation schema 1`] = `
-ObjectSchema {
-  "_blacklist": ReferenceSet {
-    "list": Set {},
-    "refs": Map {},
-  },
-  "_blacklistError": undefined,
-  "_excludedEdges": [],
-  "_nodes": [
-    "booleanProp",
-    "textProp",
-    "integerProp",
-    "subrecord",
-    "something",
-    "required",
-    "nullable",
-    "optional",
-  ],
-  "_sortErrors": [Function],
-  "_typeError": [Function],
-  "_whitelist": ReferenceSet {
-    "list": Set {},
-    "refs": Map {},
-  },
-  "_whitelistError": undefined,
-  "conditions": [],
-  "deps": [],
-  "exclusiveTests": {},
-  "fields": {
-    "booleanProp": BooleanSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_blacklistError": undefined,
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {
-          true,
-        },
-        "refs": Map {},
-      },
-      "_whitelistError": [Function],
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {
-        "defined": true,
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": false,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [
-        [Function],
-      ],
-      "transforms": [
-        [Function],
-      ],
+exports[`runtime validation build fieldset with validation 1`] = `
+{
+  "kind": "record",
+  "nullable": false,
+  "record": {
+    "booleanProp": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
       "type": "boolean",
+      "validate": {
+        "args": [
+          {
+            "kind": "literal",
+            "literal": {
+              "kind": "boolean",
+              "value": true,
+            },
+          },
+        ],
+        "kind": "call",
+        "validator": "isEqualBool",
+      },
     },
-    "integerProp": NumberSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
+    "integerProp": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
+      "type": "integer",
+      "validate": {
+        "exprs": [
+          {
+            "args": [
+              {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 0,
+                },
+              },
+            ],
+            "kind": "call",
+            "validator": "minInt",
+          },
+          {
+            "args": [
+              {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 9999,
+                },
+              },
+            ],
+            "kind": "call",
+            "validator": "maxInt",
+          },
+          {
+            "args": [
+              {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 123,
+                },
+              },
+            ],
+            "kind": "call",
+            "validator": "isEqualInt",
+          },
+        ],
+        "kind": "and",
       },
-      "_blacklistError": undefined,
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {
-          123,
-        },
-        "refs": Map {},
-      },
-      "_whitelistError": [Function],
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {
-        "defined": true,
-        "integer": false,
-        "max": true,
-        "min": true,
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": false,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [
-        [Function],
-        [Function],
-        [Function],
-        [Function],
-      ],
-      "transforms": [
-        [Function],
-      ],
-      "type": "number",
     },
-    "nullable": StringSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_blacklistError": undefined,
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_whitelistError": undefined,
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {
-        "defined": true,
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": true,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [
-        [Function],
-      ],
-      "transforms": [
-        [Function],
-      ],
+    "nullable": {
+      "kind": "field",
+      "nullable": true,
+      "required": false,
       "type": "string",
+      "validate": undefined,
     },
-    "optional": NumberSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_blacklistError": undefined,
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_whitelistError": undefined,
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {
-        "integer": false,
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": false,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [
-        [Function],
-      ],
-      "transforms": [
-        [Function],
-      ],
-      "type": "number",
+    "optional": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
+      "type": "integer",
+      "validate": undefined,
     },
-    "required": StringSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_blacklistError": undefined,
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_whitelistError": undefined,
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {
-        "defined": true,
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": false,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [
-        [Function],
-      ],
-      "transforms": [
-        [Function],
-      ],
-      "type": "string",
+    "required": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
+      "type": "float",
+      "validate": undefined,
     },
-    "something": BooleanSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_blacklistError": undefined,
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_whitelistError": undefined,
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {
-        "defined": true,
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": false,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [
-        [Function],
-      ],
-      "transforms": [
-        [Function],
-      ],
+    "something": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
       "type": "boolean",
+      "validate": undefined,
     },
-    "subrecord": ObjectSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_blacklistError": undefined,
-      "_excludedEdges": [],
-      "_nodes": [
-        "prop",
-      ],
-      "_sortErrors": [Function],
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_whitelistError": undefined,
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {},
-      "fields": {
-        "prop": StringSchema {
-          "_blacklist": ReferenceSet {
-            "list": Set {},
-            "refs": Map {},
-          },
-          "_blacklistError": undefined,
-          "_typeError": [Function],
-          "_whitelist": ReferenceSet {
-            "list": Set {},
-            "refs": Map {},
-          },
-          "_whitelistError": undefined,
-          "conditions": [],
-          "deps": [],
-          "exclusiveTests": {
-            "defined": true,
-          },
-          "spec": {
-            "abortEarly": true,
-            "nullable": false,
-            "presence": "optional",
-            "recursive": true,
-            "strict": false,
-            "strip": false,
-          },
-          "tests": [
-            [Function],
-          ],
-          "transforms": [
-            [Function],
-          ],
-          "type": "string",
-        },
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": false,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [],
-      "transforms": [
-        [Function],
-      ],
-      "type": "object",
+    "subrecord_id": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
+      "type": "integer",
+      "validate": undefined,
     },
-    "textProp": StringSchema {
-      "_blacklist": ReferenceSet {
-        "list": Set {},
-        "refs": Map {},
-      },
-      "_blacklistError": undefined,
-      "_typeError": [Function],
-      "_whitelist": ReferenceSet {
-        "list": Set {
-          "asdf",
-        },
-        "refs": Map {},
-      },
-      "_whitelistError": [Function],
-      "conditions": [],
-      "deps": [],
-      "exclusiveTests": {
-        "defined": true,
-        "email": false,
-        "max": true,
-        "min": true,
-      },
-      "spec": {
-        "abortEarly": true,
-        "nullable": false,
-        "presence": "optional",
-        "recursive": true,
-        "strict": false,
-        "strip": false,
-      },
-      "tests": [
-        [Function],
-        [Function],
-        [Function],
-        [Function],
-        [Function],
-      ],
-      "transforms": [
-        [Function],
-      ],
+    "textProp": {
+      "kind": "field",
+      "nullable": false,
+      "required": true,
       "type": "string",
+      "validate": {
+        "exprs": [
+          {
+            "args": [
+              {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 4,
+                },
+              },
+            ],
+            "kind": "call",
+            "validator": "minLength",
+          },
+          {
+            "args": [
+              {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 100,
+                },
+              },
+            ],
+            "kind": "call",
+            "validator": "maxLength",
+          },
+          {
+            "args": [],
+            "kind": "call",
+            "validator": "isEmail",
+          },
+        ],
+        "kind": "and",
+      },
     },
   },
-  "spec": {
-    "abortEarly": true,
-    "nullable": false,
-    "presence": "optional",
-    "recursive": true,
-    "strict": false,
-    "strip": false,
-  },
-  "tests": [],
-  "transforms": [
-    [Function],
-  ],
-  "type": "object",
 }
 `;
 
-exports[`runtime validation throws validation exception with validation error messages 1`] = `"{"code":"ERROR_CODE_VALIDATION","message":"Validation error","data":{"value":{"noReferenceProp":"noReference","booleanProp":false,"integerProp":10001,"hookTextProp":"invalid hook field text","textProp":"too long string","nonNullable":null,"nullable":null,"subrecord":{},"prop2":null},"errors":["prop1 must be defined","prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`).","subrecord.subprop1 must be defined","nonNullable must be a \`string\` type, but the final value was: \`null\`.\\n If \\"null\\" is intended as an empty value be sure to mark the schema as \`.nullable()\`","textProp must be at most 4 characters","hookTextProp is invalid","integerProp must be less than or equal to 100","booleanProp must be one of the following values: true","Can't find noReferenceProp with value: noReference"],"inner":[{"path":"prop1","type":"defined","errors":["prop1 must be defined"],"params":{"path":"prop1"},"inner":[],"name":"ValidationError","message":"prop1 must be defined"},{"value":null,"path":"prop2","type":"typeError","errors":["prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."],"params":{"value":null,"originalValue":"a","path":"prop2","type":"number"},"inner":[],"name":"ValidationError","message":"prop2 must be a \`number\` type, but the final value was: \`NaN\` (cast from the value \`\\"a\\"\`)."},{"path":"subrecord.subprop1","type":"defined","errors":["subrecord.subprop1 must be defined"],"params":{"path":"subrecord.subprop1"},"inner":[],"name":"ValidationError","message":"subrecord.subprop1 must be defined"},{"value":null,"path":"nonNullable","type":"typeError","errors":["nonNullable must be a \`string\` type, but the final value was: \`null\`.\\n If \\"null\\" is intended as an empty value be sure to mark the schema as \`.nullable()\`"],"params":{"value":null,"originalValue":null,"path":"nonNullable","type":"string"},"inner":[],"name":"ValidationError","message":"nonNullable must be a \`string\` type, but the final value was: \`null\`.\\n If \\"null\\" is intended as an empty value be sure to mark the schema as \`.nullable()\`"},{"value":"too long string","path":"textProp","type":"max","errors":["textProp must be at most 4 characters"],"params":{"value":"too long string","originalValue":"too long string","path":"textProp","max":4},"inner":[],"name":"ValidationError","message":"textProp must be at most 4 characters"},{"value":"invalid hook field text","path":"hookTextProp","errors":["hookTextProp is invalid"],"params":{"value":"invalid hook field text","originalValue":"invalid hook field text","path":"hookTextProp"},"inner":[],"name":"ValidationError","message":"hookTextProp is invalid"},{"value":10001,"path":"integerProp","type":"max","errors":["integerProp must be less than or equal to 100"],"params":{"value":10001,"originalValue":10001,"path":"integerProp","max":100},"inner":[],"name":"ValidationError","message":"integerProp must be less than or equal to 100"},{"value":false,"path":"booleanProp","type":"oneOf","errors":["booleanProp must be one of the following values: true"],"params":{"value":false,"originalValue":false,"path":"booleanProp","values":"true","resolved":[true]},"inner":[],"name":"ValidationError","message":"booleanProp must be one of the following values: true"},{"value":"noReference","path":"noReferenceProp","type":"reference-not-found","errors":["Can't find noReferenceProp with value: noReference"],"params":{"value":"noReference","originalValue":"noReference","path":"noReferenceProp"},"inner":[],"name":"ValidationError","message":"Can't find noReferenceProp with value: noReference"}]}}"`;
+exports[`runtime validation build validation action 1`] = `
+{
+  "key": "key",
+  "kind": "validate",
+  "validate": {
+    "args": [
+      {
+        "kind": "alias",
+        "namePath": [
+          "newFoo",
+          "from",
+        ],
+      },
+      {
+        "kind": "alias",
+        "namePath": [
+          "newFoo",
+          "to",
+        ],
+      },
+    ],
+    "kind": "call",
+    "validator": "maxInt",
+  },
+}
+`;
+
+exports[`runtime validation throws validation exception with validation error messages 1`] = `"{"code":"ERROR_CODE_VALIDATION","message":"Validation error","data":{"subrecord":[{"code":"required","params":{}}],"prop1":[{"code":"required","params":{}}],"prop2":[{"code":"unexpected-type","params":{"value":"a","expected":"integer"}}],"nonNullable":[{"code":"is-not-nullable","params":{}}],"textProp":[{"code":"too-long","params":{"value":"too long string","min":4}}],"integerProp":[{"code":"too-large","params":{"value":10001,"max":100}}],"booleanProp":[{"code":"not-equal","params":{"value":false,"target":true}}]}}"`;

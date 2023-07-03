@@ -37,13 +37,6 @@ export declare function createClient(options: ApiClientOptions): {
                     }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
                     create: CreateApiClientFn<{
                         title: string;
-                        repo2: {
-                            name?: string | undefined;
-                            slug?: string | undefined;
-                            description?: string | undefined;
-                            is_public?: boolean | undefined;
-                            org_id?: number | undefined;
-                        };
                         c: {
                             body: string;
                         };

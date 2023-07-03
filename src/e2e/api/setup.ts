@@ -9,7 +9,7 @@ import _ from "lodash";
 
 import { build } from "@src/builder/builder";
 import { dataToFieldDbnames, getRef } from "@src/common/refs";
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { readConfig } from "@src/runtime/config";
 import { setupDefinitionApis } from "@src/runtime/server/api";
 import { AppContext, bindAppContext } from "@src/runtime/server/context";

@@ -17,13 +17,7 @@ import { HookActionContext, executeActionHook } from "@src/runtime/hooks";
 import { DbConn } from "@src/runtime/server/dbConn";
 import { HookError } from "@src/runtime/server/error";
 import { Vars } from "@src/runtime/server/vars";
-import {
-  ActionDef,
-  CreateOneAction,
-  Definition,
-  RespondAction,
-  UpdateOneAction,
-} from "@src/types/definition";
+import { ActionDef, CreateOneAction, Definition, UpdateOneAction } from "@src/types/definition";
 
 export type ActionContext = {
   input: Record<string, unknown>;
@@ -159,6 +153,8 @@ async function _internalExecuteActions(
       } catch (err: any) {
         throw new Error(err);
       }
+    } else if (actionKind === "validate") {
+      throw new Error("Not implemented");
     } else {
       assertUnreachable(actionKind);
     }

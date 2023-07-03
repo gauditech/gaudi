@@ -1,6 +1,6 @@
 import { buildOpenAPI } from "./openAPI";
 
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 
 describe("openAPI", () => {
   it("build spec", () => {

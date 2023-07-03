@@ -5,6 +5,7 @@ import { composeAuthenticator } from "@src/composer/authenticator";
 import { composeExecutionRuntimes } from "@src/composer/executionRuntimes";
 import { composeGenerators } from "@src/composer/generators";
 import { composePopulators } from "@src/composer/populators";
+import { composeValidators } from "@src/composer/validators";
 import { Definition } from "@src/types/definition";
 import { Specification } from "@src/types/specification";
 
@@ -12,6 +13,7 @@ export function compose(input: Specification): Definition {
   // let's start with empty definition
   // sub-composers are expected to mutate it
   const def: Definition = {
+    validators: [],
     models: [],
     apis: [],
     populators: [],
@@ -22,6 +24,7 @@ export function compose(input: Specification): Definition {
 
   // runtimes can be composed first because they don't have external deps
   composeExecutionRuntimes(def, input.runtimes);
+  composeValidators(def, input.validators);
   composeModels(def, input.models);
   composeAuthenticator(def, input.authenticator);
   composeApis(def, input.apis);

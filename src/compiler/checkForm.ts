@@ -46,6 +46,7 @@ export function checkForm(document: GlobalAtom[]) {
 
     document.forEach((a) =>
       match(a)
+        .with({ kind: "validator" }, checkValidator)
         .with({ kind: "model" }, checkModel)
         .with({ kind: "api" }, checkApi)
         .with({ kind: "populator" }, checkPopulator)
@@ -57,6 +58,24 @@ export function checkForm(document: GlobalAtom[]) {
 
     const generators = kindFilter(document, "generator");
     checkNoDuplicateGenerators(generators);
+  }
+
+  function checkValidator(validator: Validator) {
+    const args = kindFilter(validator.atoms, "arg");
+    noDuplicateNames(
+      args.map(({ name }) => name),
+      ErrorCode.DuplicateModelAtom
+    );
+    containsAtoms(validator, ["arg", "error"]);
+    noDuplicateAtoms(validator, ["error"]);
+    const exprOrHook = kindFilter(validator.atoms, "assert", "assertHook");
+    if (exprOrHook.length === 0) {
+      errors.push(new CompilerError(validator.keyword, ErrorCode.ValidatorMustContainExprOrHook));
+    } else if (exprOrHook.length > 1) {
+      exprOrHook.forEach(({ keyword }) =>
+        errors.push(new CompilerError(keyword, ErrorCode.ValidatorOnlyOneExprOrHook))
+      );
+    }
   }
 
   function checkModel(model: Model) {
@@ -79,16 +98,6 @@ export function checkForm(document: GlobalAtom[]) {
   function checkField(field: Field) {
     containsAtoms(field, ["type"]);
     noDuplicateAtoms(field, ["type", "default", "nullable", "unique", "validate"]);
-
-    kindFilter(field.atoms, "validate").map(({ validators }) => validators.forEach(checkValidator));
-  }
-
-  function checkValidator(validator: Validator) {
-    match(validator)
-      .with({ kind: "hook" }, checkHook)
-      .otherwise(() => {
-        // TODO: do nothing?
-      });
   }
 
   function checkReference(reference: Reference) {
@@ -318,7 +327,6 @@ export function checkForm(document: GlobalAtom[]) {
   function checkExtraInput(field: ExtraInput) {
     containsAtoms(field, ["type"]);
     noDuplicateAtoms(field, ["type", "nullable", "validate"]);
-    kindFilter(field.atoms, "validate").map(({ validators }) => validators.forEach(checkValidator));
   }
 
   function checkAction(action: Action, endpointType: EndpointType) {
@@ -328,6 +336,7 @@ export function checkForm(document: GlobalAtom[]) {
       .with({ kind: "execute" }, (a) => checkExecuteAction(a, endpointType))
       .with({ kind: "respond" }, (a) => checkRespondAction(a, endpointType))
       .with({ kind: "queryAction" }, checkQueryAction)
+      .with({ kind: "validate" }, () => undefined) // no check needed
       .exhaustive();
   }
 
@@ -470,8 +479,8 @@ export function checkForm(document: GlobalAtom[]) {
     });
   }
 
-  function checkHook(hook: Hook<"action" | "validation" | "model">) {
-    noDuplicateAtoms(hook, ["default_arg", "runtime"]);
+  function checkHook(hook: Hook<"action" | "validator" | "model">) {
+    noDuplicateAtoms(hook, ["runtime"]);
     const sourceOrInline = kindFilter(hook.atoms, "source", "inline");
     if (sourceOrInline.length === 0) {
       errors.push(new CompilerError(hook.keyword, ErrorCode.HookMustContainSourceOrInline));

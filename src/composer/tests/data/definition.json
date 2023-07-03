@@ -1,4 +1,5 @@
 {
+  "validators": [],
   "models": [
     {
       "kind": "model",
@@ -16,8 +17,7 @@
           "dbtype": "serial",
           "primary": true,
           "unique": true,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -29,8 +29,7 @@
           "dbtype": "string",
           "primary": false,
           "unique": false,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -42,8 +41,7 @@
           "dbtype": "string",
           "primary": false,
           "unique": true,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -55,8 +53,7 @@
           "dbtype": "string",
           "primary": false,
           "unique": false,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -68,8 +65,7 @@
           "dbtype": "string",
           "primary": false,
           "unique": false,
-          "nullable": true,
-          "validators": []
+          "nullable": true
         }
       ],
       "references": [],
@@ -107,8 +103,7 @@
           "dbtype": "serial",
           "primary": true,
           "unique": true,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -120,8 +115,7 @@
           "dbtype": "string",
           "primary": false,
           "unique": false,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -133,8 +127,7 @@
           "dbtype": "string",
           "primary": false,
           "unique": true,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -146,8 +139,7 @@
           "dbtype": "string",
           "primary": false,
           "unique": false,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         },
         {
           "kind": "field",
@@ -159,8 +151,7 @@
           "dbtype": "integer",
           "primary": false,
           "unique": false,
-          "nullable": false,
-          "validators": []
+          "nullable": false
         }
       ],
       "references": [

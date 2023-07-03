@@ -8,9 +8,9 @@ function getCode(): string {
 
   return `
     model ${authUserModelName} {
-      field name { type string, validate { min 1 } }
-      field username { type string, unique, validate { min 8 } }
-      field passwordHash { type string, validate { min 8 } }
+      field name { type string, validate { minLength(1) } }
+      field username { type string, unique, validate { minLength(8) } }
+      field passwordHash { type string, validate { minLength(8) } }
       relation tokens { from ${accessTokenModelName}, through authUser }
     }
     model ${accessTokenModelName} {
@@ -109,7 +109,7 @@ function getCode(): string {
           cardinality many
 
           extra inputs {
-            field password { type string, validate { min 8 } }
+            field password { type string, validate { minLength(8) } }
           }
 
           action {

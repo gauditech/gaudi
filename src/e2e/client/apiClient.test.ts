@@ -82,7 +82,6 @@ describe("api client lib", () => {
     it("get", async () => {
       const response = await client.api.org.get("org1");
 
-      console.log(response.status, response.kind === "error" ? response.error : response.data);
       ensureEqual(response.kind, "success"); // type narrowing for simpler later code
 
       expect(response.status).toBe(200);

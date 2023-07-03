@@ -124,7 +124,7 @@ export function assignNoReferenceValidators(
     match(referenceIdResult)
       .with({ kind: "reference-not-found" }, ({ fieldsetAccess }) => {
         const currentFieldset = getNestedFieldset(fieldset, fieldsetAccess);
-        currentFieldset.validators.push({ name: "reference-not-found" });
+        currentFieldset.referenceNotFound = true;
       })
       .otherwise(_.noop);
   });

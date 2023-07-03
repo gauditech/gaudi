@@ -72,6 +72,90 @@ describe("compiler errors", () => {
     });
   });
 
+  describe("validator", () => {
+    it("fails when duplicate validators", () => {
+      const bp = `
+        validator CheckFoo {
+          arg value { type integer }
+          assert { integer is 5 }
+          error { code "check-foo" }
+        }
+        validator CheckFoo {
+          arg value { type string }
+          assert { string is "foo" }
+          error { code "check-foo" }
+        }
+        `;
+      expectError(bp, `Duplicate validator definition`);
+    });
+    it("fails when validator wrong assert", () => {
+      const bp = `
+        validator NoAssert {
+          arg value { type integer }
+          error { code "check-foo" }
+        }
+        validator HookAndExpression {
+          arg value { type string }
+          assert { string is "foo" }
+          assert hook { inline "0 == '0'" }
+          error { code "check-foo" }
+        }
+        `;
+      expectError(
+        bp,
+        `Validator must contain "action" or "action hook" definition`,
+        `Validator can't have more than one "action" or "action hook" definition`
+      );
+    });
+    it("fails when can't find validator", () => {
+      const bp = `
+        model Foo {
+          field bar { type integer, validate { doesNotExist() } }
+        }
+        `;
+      expectError(bp, `Can't resolve validator with this name`);
+    });
+    it("fails when called with wrong arg count in field validate", () => {
+      const bp = `
+        model Foo {
+          field bar { type float, validate { maxFloat(3, 4) } }
+        }
+        `;
+      expectError(bp, `Validator "maxFloat" expects 1 arguments, but got 2`);
+    });
+    it("fails when called with wrong arg count in action validate", () => {
+      const bp = `
+        model Foo {
+          field bar { type string }
+        }
+        api {
+          entrypoint Foo {
+            create endpoint {
+              action {
+                create as foo {}
+                validate with key "key" {
+                  maxLength(foo.bar)
+                }
+              }
+            }
+          }
+        }
+        `;
+      expectError(bp, `Validator "maxLength" expects 2 arguments, but got 1`);
+    });
+    it("fails when wrong validator type", () => {
+      const bp = `
+      model Foo {
+        field bar { type boolean, validate { maxInt(2) } }
+      }
+        `;
+      expectError(
+        bp,
+        `Unexpected validator target type\nexpected:\n{"kind":"primitive","primitiveKind":"integer"}\ngot:\n{"kind":"primitive","primitiveKind":"boolean"}`
+      );
+    });
+  });
+
   describe("query", () => {
     it("fails when using first with limit or offset", () => {
       const bp = `
@@ -768,7 +852,7 @@ describe("compiler errors", () => {
           }
         }
         `;
-      expectError(bp, `Endpoint can have at most one "execute" action with "responds" attribute`);
+      expectError(bp, `At most one action in endpoint can have "responds" attribute`);
     });
     it("fails if responds action is used in implicit endpoints", () => {
       const bp = `

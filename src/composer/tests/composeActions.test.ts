@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { compileFromString } from "@src/index";
+import { compileFromString } from "@src/runtime/common/testUtils";
 import { CreateEndpointDef, UpdateEndpointDef } from "@src/types/definition";
 
 describe("compose actions", () => {
@@ -218,7 +218,7 @@ describe("compose actions", () => {
       entrypoint Org as org {
         create endpoint {
           extra inputs {
-            field iname { type string, validate { min 4 } }
+            field iname { type string, validate { minLength(4) } }
           }
           action {
             create as org {

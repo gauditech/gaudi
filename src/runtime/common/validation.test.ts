@@ -1,309 +1,77 @@
-import { compileFromString } from "@src/index";
-import {
-  buildFieldsetValidationSchema,
-  validateEndpointFieldset,
-} from "@src/runtime/common/validation";
+import { compileFromString } from "@src/runtime/common/testUtils";
+import { validateEndpointFieldset } from "@src/runtime/common/validation";
 import { BusinessError } from "@src/runtime/server/error";
-import { Definition, FieldsetDef } from "@src/types/definition";
+import { CreateEndpointDef } from "@src/types/definition";
 
 describe("runtime", () => {
   describe("validation", () => {
-    it("build fieldset validation schema", () => {
-      const fieldset: FieldsetDef = {
-        kind: "record",
-        nullable: false, // required record
-        record: {
-          optional: {
-            kind: "field",
-            nullable: false,
-            required: false, // optional field
-            type: "integer", // integer field
-            validators: [],
-          },
-          nullable: {
-            kind: "field",
-            nullable: true, // nullable field
-            required: true,
-            type: "string",
-            validators: [],
-          },
-          required: {
-            kind: "field",
-            nullable: false, // required field
-            required: true,
-            type: "string", // text field
-            validators: [],
-          },
-          something: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "boolean", // boolean field
-            validators: [],
-          },
-          subrecord: {
-            // subrecord
-            kind: "record",
-            nullable: false, // optional record
-            record: {
-              prop: {
-                kind: "field",
-                nullable: false,
-                required: true,
-                type: "string",
-                validators: [],
-              },
-            },
-          },
-
-          // validators
-
-          integerProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "integer",
-            validators: [
-              {
-                args: [
-                  {
-                    kind: "integer",
-                    value: 0,
-                  },
-                ],
-                inputType: "integer",
-                name: "minInt",
-              },
-              {
-                args: [
-                  {
-                    kind: "integer",
-                    value: 9999,
-                  },
-                ],
-                inputType: "integer",
-                name: "maxInt",
-              },
-              {
-                args: [
-                  {
-                    kind: "integer",
-                    value: 123,
-                  },
-                ],
-                inputType: "integer",
-                name: "isIntEqual",
-              },
-            ],
-          },
-          textProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "string",
-            validators: [
-              {
-                args: [
-                  {
-                    kind: "integer",
-                    value: 4,
-                  },
-                ],
-                inputType: "string",
-                name: "minLength",
-              },
-              {
-                args: [
-                  {
-                    kind: "integer",
-                    value: 100,
-                  },
-                ],
-                inputType: "string",
-                name: "maxLength",
-              },
-              {
-                args: [],
-                inputType: "string",
-                name: "isEmail",
-              },
-              {
-                args: [
-                  {
-                    kind: "string",
-                    value: "asdf",
-                  },
-                ],
-                inputType: "string",
-                name: "isStringEqual",
-              },
-              {
-                args: [],
-                inputType: "string",
-                name: "isEmail",
-              },
-            ],
-          },
-          booleanProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "boolean",
-            validators: [
-              {
-                args: [
-                  {
-                    kind: "boolean",
-                    value: true,
-                  },
-                ],
-                inputType: "boolean",
-                name: "isBoolEqual",
-              },
-            ],
-          },
-        },
-      };
-
-      expect(buildFieldsetValidationSchema(createTestDefinition(), fieldset)).toMatchSnapshot();
+    it("build fieldset with validation", () => {
+      const bp = `
+      model Foo {
+        field optional { type integer }
+        field nullable { type string, nullable }
+        field required { type float }
+        field something { type boolean }
+        reference subrecord { to Bar }
+        field integerProp { type integer, validate { minInt(0) and maxInt(9999) and isEqualInt(123) } }
+      }
+      model Bar {
+        field prop { type string }
+        relation foo { from Foo, through subrecord }
+      }
+      api {
+        entrypoint Foo {
+          create endpoint {
+            extra inputs {
+              field textProp { type string, validate { minLength(4) and maxLength(100) and isEmail() } }
+              field booleanProp { type boolean, validate { isEqualBool(true) } }
+            }
+          }
+        }
+      }
+      `;
+      const fieldset = (
+        compileFromString(bp).apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef
+      ).fieldset;
+      expect(fieldset).toMatchSnapshot();
     });
 
     // TODO: test validation exceptions (flat, nested?), (input params)
 
     it("throws validation exception with validation error messages", async () => {
-      const fieldset: FieldsetDef = {
-        kind: "record",
-        nullable: false,
-        record: {
-          // required field - missing
-          prop1: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "string",
-            validators: [],
-          },
-          // integer field - invalid
-          prop2: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "integer",
-            validators: [],
-          },
-          // subrecord
-          subrecord: {
-            kind: "record",
-            nullable: false,
-            record: {
-              // nested required field - missing
-              subprop1: {
-                kind: "field",
-                nullable: false,
-                required: true,
-                type: "string",
-                validators: [],
-              },
-            },
-          },
-
-          nullable: {
-            kind: "field",
-            nullable: true, // nullable field
-            required: true,
-            type: "string",
-            validators: [],
-          },
-
-          nonNullable: {
-            kind: "field",
-            nullable: false, // non-nullable field
-            required: true,
-            type: "string",
-            validators: [],
-          },
-
-          // validators - only test that at least one validator triggers error
-          textProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "string",
-            validators: [
-              {
-                args: [
-                  {
-                    kind: "integer",
-                    value: 4,
-                  },
-                ],
-                inputType: "string",
-                name: "maxLength",
-              },
-            ],
-          },
-          hookTextProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "string",
-            validators: [
-              {
-                name: "hook",
-                arg: "value",
-                hook: { kind: "inline", inline: "value === 'expected text'" },
-              },
-            ],
-          },
-          integerProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "integer",
-            validators: [
-              {
-                args: [
-                  {
-                    kind: "integer",
-                    value: 100,
-                  },
-                ],
-                inputType: "integer",
-                name: "maxInt",
-              },
-            ],
-          },
-          booleanProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "boolean",
-            validators: [
-              {
-                args: [
-                  {
-                    kind: "boolean",
-                    value: true,
-                  },
-                ],
-                inputType: "boolean",
-                name: "isBoolEqual",
-              },
-            ],
-          },
-          noReferenceProp: {
-            kind: "field",
-            nullable: false,
-            required: true,
-            type: "string",
-            validators: [
-              {
-                name: "reference-not-found",
-              },
-            ],
-          },
-        },
-      };
+      const bp = `
+      model Foo {
+        field prop1 { type string }
+        field prop2 { type integer }
+        reference subrecord { to Bar }
+        field nullable { type string, nullable }
+        field nonNullable { type string }
+        field textProp { type string, validate { maxLength(4) } }
+      }
+      model Bar {
+        field prop { type string }
+        relation foo { from Foo, through subrecord }
+      }
+      api {
+        entrypoint Foo {
+          create endpoint {
+            extra inputs {
+              field integerProp { type integer, validate { maxInt(100) } }
+              field booleanProp { type boolean, validate { isEqualBool(true) } }
+            }
+            action {
+              create Bar as subrecord {}
+              create {
+                set subrecord subrecord
+              }
+            }
+          }
+        }
+      }
+      `;
+      const definition = compileFromString(bp);
+      const fieldset = (definition.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef)
+        .fieldset!;
 
       const data: Record<string, unknown> = {
         // missing required field
@@ -322,15 +90,13 @@ describe("runtime", () => {
 
         // failing validators
         textProp: "too long string",
-        hookTextProp: "invalid hook field text",
         integerProp: 10001,
         booleanProp: false,
-        noReferenceProp: "noReference",
       };
 
       let thrownError;
       try {
-        await validateEndpointFieldset(createTestDefinition(), fieldset, data);
+        await validateEndpointFieldset(definition, fieldset, data);
       } catch (err) {
         const endpointError = err as BusinessError;
         thrownError = JSON.stringify({
@@ -341,12 +107,28 @@ describe("runtime", () => {
       }
       expect(thrownError).toMatchSnapshot();
     });
+
+    it("build validation action", async () => {
+      const bp = `
+      model Foo {
+        field from { type integer }
+        field to { type integer }
+      }
+      api {
+        entrypoint Foo {
+          create endpoint {
+            action {
+              create as newFoo {}
+              validate with key "key" { maxInt(newFoo.from, newFoo.to) }
+            }
+          }
+        }
+      }
+      `;
+      const definition = compileFromString(bp);
+      const action = (definition.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef)
+        .actions[1];
+      expect(action).toMatchSnapshot();
+    });
   });
 });
-
-/**
- * Creates dummy definition struct
- */
-function createTestDefinition(): Definition {
-  return compileFromString("");
-}

@@ -97,7 +97,6 @@
     "vscode-languageserver-textdocument": "^1.0.8",
     "vscode-uri": "^3.0.7",
     "winston": "^3.8.2",
-    "yargs": "^17.7.1",
-    "yup": "^0.32.11"
+    "yargs": "^17.7.1"
   }
 }
