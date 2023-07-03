@@ -35,17 +35,66 @@ function buildApi(options: ApiClientOptions) {
   function buildOrgEntrypoint(options: ApiClientOptions, parentPath: string) {
     // endpoint types
     type CustomOneActionError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION";
+    type CustomOneActionData = {
+      name: string,
+      counter: number,
+      customProp: string
+    };
     type CustomManyActionError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION";
+    type CustomManyActionData = {
+      name: string,
+      counter: number
+    };
     type CustomOneActionRespondsError = CustomOneActionError;
+    type CustomOneActionRespondsData = {
+      counter: number,
+      name: string
+    };
     type CustomManyActionRespondsError = CustomManyActionError;
+    type CustomManyActionRespondsData = CustomManyActionData;
+    type CustomManyRespondActionStaticError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
+    type CustomManyRespondActionStaticData = undefined;
+    type CustomManyRespondActionSimpleError = CustomManyActionError;
+    type CustomManyRespondActionSimpleData = { body: string };
+    type CustomManyRespondActionComplexError = CustomManyActionError;
+    type CustomManyRespondActionComplexData = {
+      prop1: string,
+      prop2: number,
+      statusCode: number,
+      header1: string,
+      header2: string
+    };
     type CustomOneQueryActionError = CustomOneActionError;
+    type CustomOneQueryActionData = {
+      name: string,
+      orgId: number
+    };
     type CustomFetchActionError = CustomOneActionError;
+    type CustomFetchActionData = { name: string };
     type HookErrorResponseError = CustomManyActionError;
+    type HookErrorResponseData = {
+      status: number,
+      message: string
+    };
     type CustomGetError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND";
     type CustomUpdateError = CustomOneActionError;
+    type CustomUpdateData = {
+      newOrg: {
+        name?: string,
+        slug?: string,
+        description?: string
+      }
+    };
     type CustomDeleteError = CustomGetError;
-    type CustomListError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
+    type CustomListError = CustomManyRespondActionStaticError;
     type CustomCreateError = CustomManyActionError;
+    type CustomCreateData = {
+      newOrg: {
+        name: string,
+        slug: string,
+        description: string
+      }
+    };
     type GetResp = {
       name: string,
       slug: string,
@@ -60,7 +109,7 @@ function buildApi(options: ApiClientOptions) {
     };
     type GetError = CustomGetError;
     type ListResp = GetResp;
-    type ListError = CustomListError;
+    type ListError = CustomManyRespondActionStaticError;
     type CreateData = {
       name: string,
       slug: string,
@@ -88,18 +137,21 @@ function buildApi(options: ApiClientOptions) {
     // endpoint functions
     return Object.assign(api,
       {
-        customOneAction: buildCustomOneSubmitManyFn<string, any, any, CustomOneActionError>(options, parentPath, "customOneAction", "POST"),
-        customManyAction: buildCustomManySubmitFn<any, any, CustomManyActionError>(options, parentPath, "customManyAction", "PATCH"),
-        customOneActionResponds: buildCustomOneSubmitManyFn<string, any, any, CustomOneActionRespondsError>(options, parentPath, "customOneActionResponds", "POST"),
-        customManyActionResponds: buildCustomManySubmitFn<any, any, CustomManyActionRespondsError>(options, parentPath, "customManyActionResponds", "PATCH"),
-        customOneQueryAction: buildCustomOneSubmitManyFn<string, any, any, CustomOneQueryActionError>(options, parentPath, "customOneQueryAction", "POST"),
-        customFetchAction: buildCustomOneSubmitManyFn<string, any, any, CustomFetchActionError>(options, parentPath, "customFetchAction", "POST"),
-        hookErrorResponse: buildCustomManySubmitFn<any, any, HookErrorResponseError>(options, parentPath, "hookErrorResponse", "POST"),
+        customOneAction: buildCustomOneSubmitManyFn<string, CustomOneActionData, any, CustomOneActionError>(options, parentPath, "customOneAction", "POST"),
+        customManyAction: buildCustomManySubmitFn<CustomManyActionData, any, CustomManyActionError>(options, parentPath, "customManyAction", "PATCH"),
+        customOneActionResponds: buildCustomOneSubmitManyFn<string, CustomOneActionRespondsData, any, CustomOneActionRespondsError>(options, parentPath, "customOneActionResponds", "POST"),
+        customManyActionResponds: buildCustomManySubmitFn<CustomManyActionRespondsData, any, CustomManyActionRespondsError>(options, parentPath, "customManyActionResponds", "PATCH"),
+        customManyRespondActionStatic: buildCustomManySubmitFn<CustomManyRespondActionStaticData, any, CustomManyRespondActionStaticError>(options, parentPath, "customManyRespondActionStatic", "PATCH"),
+        customManyRespondActionSimple: buildCustomManySubmitFn<CustomManyRespondActionSimpleData, any, CustomManyRespondActionSimpleError>(options, parentPath, "customManyRespondActionSimple", "PATCH"),
+        customManyRespondActionComplex: buildCustomManySubmitFn<CustomManyRespondActionComplexData, any, CustomManyRespondActionComplexError>(options, parentPath, "customManyRespondActionComplex", "PATCH"),
+        customOneQueryAction: buildCustomOneSubmitManyFn<string, CustomOneQueryActionData, any, CustomOneQueryActionError>(options, parentPath, "customOneQueryAction", "POST"),
+        customFetchAction: buildCustomOneSubmitManyFn<string, CustomFetchActionData, any, CustomFetchActionError>(options, parentPath, "customFetchAction", "POST"),
+        hookErrorResponse: buildCustomManySubmitFn<HookErrorResponseData, any, HookErrorResponseError>(options, parentPath, "hookErrorResponse", "POST"),
         customGet: buildCustomOneFetchManyFn<string, any, CustomGetError>(options, parentPath, "customGet", "GET"),
-        customUpdate: buildCustomOneSubmitManyFn<string, any, any, CustomUpdateError>(options, parentPath, "customUpdate", "PATCH"),
+        customUpdate: buildCustomOneSubmitManyFn<string, CustomUpdateData, any, CustomUpdateError>(options, parentPath, "customUpdate", "PATCH"),
         customDelete: buildCustomOneFetchManyFn<string, any, CustomDeleteError>(options, parentPath, "customDelete", "DELETE"),
         customList: buildCustomManyFetchFn<any, CustomListError>(options, parentPath, "customList", "GET"),
-        customCreate: buildCustomManySubmitFn<any, any, CustomCreateError>(options, parentPath, "customCreate", "POST"),
+        customCreate: buildCustomManySubmitFn<CustomCreateData, any, CustomCreateError>(options, parentPath, "customCreate", "POST"),
         get: buildGetManyFn<string, GetResp, GetError>(options, parentPath),
         list: buildPaginatedListFn<ListResp, ListError>(options, parentPath),
         create: buildCreateFn<CreateData, CreateResp, CreateError>(options, parentPath),

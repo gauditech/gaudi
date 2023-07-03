@@ -89,16 +89,6 @@ exports[`openAPI build spec 1`] = `
     "/api/auth/auth_user/logout": {
       "post": {
         "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {},
-                "type": "object",
-              },
-            },
-          },
-        },
         "responses": {
           "200": {
             "content": {
@@ -111,33 +101,6 @@ exports[`openAPI build spec 1`] = `
               },
             },
             "description": "Successful response",
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "code": {
-                      "enum": [
-                        "ERROR_CODE_VALIDATION",
-                      ],
-                      "type": "string",
-                    },
-                    "data": {
-                      "type": "object",
-                    },
-                    "message": {
-                      "enum": [
-                        "Validation error",
-                      ],
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
-                },
-              },
-            },
-            "description": "Validation error",
           },
         },
         "tags": [

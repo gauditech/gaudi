@@ -405,6 +405,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       )
       .with({ kind: "delete" }, (a) => [migrateDeleteAction(a, alias)])
       .with({ kind: "execute" }, (a) => [migrateExecuteAction(a, index)])
+      .with({ kind: "respond" }, (a) => [migrateRespondAction(a)])
       .with({ kind: "queryAction" }, (a) => [migrateQueryAction(a, index)])
       .exhaustive();
   }
@@ -552,6 +553,23 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       alias: action.name?.text ?? `$action_${index}`,
       hook: migrateActionHook(kindFind(action.atoms, "hook")!),
       responds: !!kindFind(action.atoms, "responds"),
+    };
+  }
+
+  function migrateRespondAction(action: AST.RespondAction): Spec.Action {
+    const body = kindFind(action.atoms, "body");
+    if (body == null) throw "Respond action body must be defined";
+    const httpStatus = kindFind(action.atoms, "httpStatus");
+    const httpHeaders = kindFind(action.atoms, "httpHeaders")?.headers ?? [];
+
+    return {
+      kind: "respond",
+      body: migrateExpr(body.body),
+      httpStatus: httpStatus != null ? migrateExpr(httpStatus.code) : undefined,
+      httpHeaders: httpHeaders.map(({ name, value }) => ({
+        name: name.value,
+        value: migrateExpr(value),
+      })),
     };
   }
 

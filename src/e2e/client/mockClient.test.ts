@@ -40,11 +40,7 @@ describe("mock client lib", () => {
         });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1`, {
@@ -87,11 +83,7 @@ describe("mock client lib", () => {
         });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1`, {
@@ -137,11 +129,7 @@ describe("mock client lib", () => {
         });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org`, {
@@ -187,11 +175,7 @@ describe("mock client lib", () => {
         });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org`, {
@@ -235,11 +219,7 @@ describe("mock client lib", () => {
         });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1`, {
@@ -267,7 +247,7 @@ describe("mock client lib", () => {
 
       // ----- custom endpoints
 
-      it("customOneFeth", async () => {
+      it("customOneFetch", async () => {
         const requestFn = jest.fn(async () => ({
           status: 200,
           headers: { "Gaudi-Test": "Response Foo Bar" },
@@ -279,11 +259,7 @@ describe("mock client lib", () => {
         });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/customOneFetch`, {
@@ -313,22 +289,27 @@ describe("mock client lib", () => {
         }));
         const resp = await createTestEntrypointClient(requestFn, {
           "Gaudi-Test-Default": "Default Foo Bar",
-        }).api.org.customOneSubmit("slug1", testData, {
-          headers: { "Gaudi-Test": "Request Foo Bar" },
-        });
+        }).api.org.customOneSubmit(
+          "slug1",
+          // custom endpoint fieldset
+          {
+            extraProp: "prop value",
+          },
+          {
+            headers: { "Gaudi-Test": "Request Foo Bar" },
+          }
+        );
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/customOneSubmit`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "PATCH",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: {
+            extraProp: "prop value",
+          },
         });
 
         // test response
@@ -360,11 +341,7 @@ describe("mock client lib", () => {
         });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/customManyFetch`, {
@@ -394,24 +371,24 @@ describe("mock client lib", () => {
         }));
         const resp = await createTestEntrypointClient(requestFn, {
           "Gaudi-Test-Default": "Default Foo Bar",
-        }).api.org.customManySubmit(testData, {
-          headers: {
-            "Gaudi-Test": "Request Foo Bar",
-          },
-        });
+        }).api.org.customManySubmit(
+          // custom endpoint fieldset
+          { extraProp: "prop value" },
+          {
+            headers: {
+              "Gaudi-Test": "Request Foo Bar",
+            },
+          }
+        );
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/customManySubmit`, {
           headers: { "Gaudi-Test-Default": "Default Foo Bar", "Gaudi-Test": "Request Foo Bar" },
           method: "POST",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: { extraProp: "prop value" },
         });
 
         // test response
@@ -438,11 +415,7 @@ describe("mock client lib", () => {
         const resp = await createTestEntrypointClient(requestFn).api.org("slug1").repos.get(1);
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
@@ -477,11 +450,7 @@ describe("mock client lib", () => {
           .repos.update(1, testData);
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
@@ -517,11 +486,7 @@ describe("mock client lib", () => {
           .repos.create({ ...testData, virtProp: "smthng" });
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos`, {
@@ -560,11 +525,7 @@ describe("mock client lib", () => {
         const resp = await createTestEntrypointClient(requestFn).api.org("slug1").repos.list();
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos`, {
@@ -599,11 +560,7 @@ describe("mock client lib", () => {
         const resp = await createTestEntrypointClient(requestFn).api.org("slug1").repos.delete(1);
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
@@ -636,11 +593,7 @@ describe("mock client lib", () => {
           .repos.customOneFetch(1);
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/customOneFetch`, {
@@ -665,20 +618,16 @@ describe("mock client lib", () => {
         const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
-          .repos.customOneSubmit(1, testData);
+          .repos.customOneSubmit(1);
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/customOneSubmit`, {
           headers: {},
           method: "PATCH",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: undefined,
         });
 
         // test response
@@ -701,11 +650,7 @@ describe("mock client lib", () => {
           .repos.customManyFetch();
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/customManyFetch`, {
@@ -730,20 +675,16 @@ describe("mock client lib", () => {
         const requestFn = jest.fn(async () => ({ status: 200, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
-          .repos.customManySubmit(testData);
+          .repos.customManySubmit();
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/customManySubmit`, {
           headers: {},
           method: "POST",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: undefined,
         });
 
         // test response
@@ -771,11 +712,7 @@ describe("mock client lib", () => {
           .owner.get();
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
@@ -811,11 +748,7 @@ describe("mock client lib", () => {
           .owner.update(testData);
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
@@ -852,11 +785,7 @@ describe("mock client lib", () => {
           .owner.create(testData);
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // rest request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
@@ -897,11 +826,7 @@ describe("mock client lib", () => {
           .owner.delete();
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1/owner`, {
@@ -935,11 +860,7 @@ describe("mock client lib", () => {
           .owner.customOneFetch();
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(
@@ -968,14 +889,10 @@ describe("mock client lib", () => {
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
           .repos(1)
-          .owner.customOneSubmit(testData);
+          .owner.customOneSubmit();
 
         // type narrowing for simpler later code
-        ensureEqual(
-          resp.kind,
-          "success" as const,
-          `API response is not "success" but "${resp.kind}`
-        );
+        ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(
@@ -983,7 +900,7 @@ describe("mock client lib", () => {
           {
             headers: {},
             method: "PATCH",
-            body: { slug: "slug1", name: "test name", description: "test description" },
+            body: undefined,
           }
         );
 
@@ -1012,7 +929,7 @@ describe("mock client lib", () => {
         const resp = await createTestEntrypointClient(requestFn).api.org("slug1").repos.get(1);
 
         // type narrowing for simpler later code
-        ensureEqual(resp.kind, "error" as const, `API response is not "error" but "${resp.kind}`);
+        ensureEqual(resp.kind, "error", `API response is not "error" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
@@ -1057,7 +974,7 @@ describe("mock client lib", () => {
           .repos.create({ ...testData, virtProp: "smthng" });
 
         // type narrowing for simpler later code
-        ensureEqual(resp.kind, "error" as const, `API response is not "error" but "${resp.kind}`);
+        ensureEqual(resp.kind, "error", `API response is not "error" but "${resp.kind}`);
 
         // test request
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos`, {

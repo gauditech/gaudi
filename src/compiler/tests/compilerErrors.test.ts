@@ -438,6 +438,121 @@ describe("compiler errors", () => {
     });
   });
 
+  describe("respond", () => {
+    const baseBp = `
+      runtime MyRuntime {
+        source path "some/path/to/file"
+      }
+
+      model Item {
+        field name { type string}
+        field code { type integer }
+        field message { type string }
+      }
+    `;
+
+    it('fails on multiple "respond" actions', () => {
+      const bp = `
+        ${baseBp}
+
+        api {
+          entrypoint Item {
+            custom endpoint {
+              path "path"
+              method GET
+              cardinality one
+
+              action {
+                respond { body "foo" }
+                respond { body "foo" }
+              }
+            }
+          }
+        }
+      `;
+
+      expectError(bp, `Endpoint can have at most one "respond" action`);
+    });
+
+    it('fails on having both "respond" action and "execute" with "responds" attr', () => {
+      const bp = `
+        ${baseBp}
+
+        api {
+          entrypoint Item {
+            custom endpoint {
+              path "path"
+              method GET
+              cardinality one
+
+              action {
+                execute {
+                  responds
+                  hook {
+                    runtime MyRuntime
+                    source foo from "customHooks"
+                  }
+                }
+                respond { body "foo" }
+              }
+            }
+          }
+        }
+      `;
+
+      expectError(
+        bp,
+        `Endpoint cannot have both "respond" action and "execute" action with "responds" attribute`
+      );
+    });
+
+    it('fails when "respond" action is not in "custom" endpoint', () => {
+      const bp = `
+        ${baseBp}
+
+        api {
+          entrypoint Item {
+            get endpoint {
+              action {
+                respond { body "foo" }
+              }
+            }
+          }
+        }
+      `;
+
+      expectError(bp, `Respond actions can only be used in "custom" endpoint`);
+    });
+
+    it('fails when "respond" action is not the last action in endpoint', () => {
+      const bp = `
+        ${baseBp}
+
+        api {
+          entrypoint Item {
+            custom endpoint {
+              path "path"
+              method GET
+              cardinality one
+
+              action {
+                respond { body "foo" }
+                execute {
+                  hook {
+                    runtime MyRuntime
+                    source testFn from "t/h/p"
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      expectError(bp, `Action "respond" must be the last action`);
+    });
+  });
+
   describe("authenticator", () => {
     it("fails if authenticator model names are already taken", () => {
       const bp1 = `
@@ -653,7 +768,7 @@ describe("compiler errors", () => {
           }
         }
         `;
-      expectError(bp, `At most one action in endpoint can have "responds" attribute`);
+      expectError(bp, `Endpoint can have at most one "execute" action with "responds" attribute`);
     });
     it("fails if responds action is used in implicit endpoints", () => {
       const bp = `
@@ -680,7 +795,7 @@ describe("compiler errors", () => {
           }
         }
         `;
-      expectError(bp, `Actions with "responds" can only be used in "custom" endpoints`);
+      expectError(bp, `Actions with "responds" attribute can only be used in "custom" endpoints`);
     });
     it("fails if responds action is used in implicit actions", () => {
       const bp = `
