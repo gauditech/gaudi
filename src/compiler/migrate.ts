@@ -47,6 +47,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     };
   }
 
+  /**
+   * Groups consecutive 'and' / 'or' operators together
+   */
   function migrateValidateExpr(validate: AST.ValidateExpr): Spec.ValidateExpr {
     if (validate.kind === "group") {
       return migrateValidateExpr(validate.expr);

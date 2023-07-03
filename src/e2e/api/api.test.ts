@@ -322,7 +322,6 @@ describe("API endpoints", () => {
         },
       };
       const postResp = await request(getServer()).post("/api/org/org1/repos/1/issues").send(data);
-      console.dir(postResp.body.data);
       expect(postResp.statusCode).toBe(200);
 
       const getResp = await request(getServer()).get("/api/org/org1/repos/1/issues/1");
