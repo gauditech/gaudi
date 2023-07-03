@@ -93,6 +93,7 @@ async function validateField(
   }
 
   const isCorrectType = match(fieldset.type)
+    // FIXME: this doesn't mean it is a SAFE integer
     .with("integer", () => typeof field === "number" && Number.isInteger(field))
     .with("float", () => typeof field === "number")
     .with("boolean", () => typeof field === "boolean")
@@ -103,24 +104,27 @@ async function validateField(
   }
 
   return fieldset.validate
-    ? await executeValidateExpr(def, fieldset.validate, field)
+    ? await executeValidateExpr(def, fieldset.validate, field, new Vars())
     : fieldset.referenceNotFound
     ? [{ code: "reference-not-found", params: { value: field } }]
     : undefined;
 }
 
-async function executeValidateExpr(
+export async function executeValidateExpr(
   def: Definition,
   validate: ValidateExprDef,
-  field: unknown
+  field: unknown | undefined,
+  ctx: Vars
 ): Promise<ValidateFieldError | undefined> {
   if (validate.kind === "call") {
-    return executeValidateExprCall(def, validate, field);
+    return executeValidateExprCall(def, validate, field, ctx);
   }
 
   const errors = _.compact(
     _.concat(
-      ...(await Promise.all(validate.exprs.map((expr) => executeValidateExpr(def, expr, field))))
+      ...(await Promise.all(
+        validate.exprs.map((expr) => executeValidateExpr(def, expr, field, ctx))
+      ))
     )
   );
 
@@ -138,12 +142,13 @@ async function executeValidateExpr(
 async function executeValidateExprCall(
   def: Definition,
   validate: ValidateExprCallDef,
-  field: unknown
+  field: unknown | undefined,
+  ctx: Vars
 ): Promise<ValidateFieldError | undefined> {
   const validator = def.validators.find((v) => v.name === validate.validator);
   ensureExists(validator);
-  const tailArgs = await Promise.all(validate.args.map((arg) => executeTypedExpr(arg, new Vars())));
-  const args = [field, ...tailArgs];
+  const tailArgs = await Promise.all(validate.args.map((arg) => executeTypedExpr(arg, ctx)));
+  const args = field === undefined ? tailArgs : [field, ...tailArgs];
 
   const params: Record<string, unknown> = {};
   for (let i = 0; i < validator.args.length; i++) {

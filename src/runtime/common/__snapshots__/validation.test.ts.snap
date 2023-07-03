@@ -155,4 +155,31 @@ exports[`runtime validation build fieldset with validation 1`] = `
 }
 `;
 
+exports[`runtime validation build validation action 1`] = `
+{
+  "key": "key",
+  "kind": "validate",
+  "validate": {
+    "args": [
+      {
+        "kind": "alias",
+        "namePath": [
+          "newFoo",
+          "from",
+        ],
+      },
+      {
+        "kind": "alias",
+        "namePath": [
+          "newFoo",
+          "to",
+        ],
+      },
+    ],
+    "kind": "call",
+    "validator": "maxInt",
+  },
+}
+`;
+
 exports[`runtime validation throws validation exception with validation error messages 1`] = `"{"code":"ERROR_CODE_VALIDATION","message":"Validation error","data":{"subrecord":[{"code":"required","params":{}}],"prop1":[{"code":"required","params":{}}],"prop2":[{"code":"unexpected-type","params":{"value":"a","expected":"integer"}}],"nonNullable":[{"code":"is-not-nullable","params":{}}],"textProp":[{"code":"too-long","params":{"value":"too long string","min":4}}],"integerProp":[{"code":"too-large","params":{"value":10001,"max":100}}],"booleanProp":[{"code":"not-equal","params":{"value":false,"target":true}}]}}"`;

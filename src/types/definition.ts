@@ -452,7 +452,7 @@ export type QueryAction = {
 };
 
 export type ValidateAction = {
-  kind: "action";
+  kind: "validate";
   key: string;
   validate: ValidateExprDef;
 };

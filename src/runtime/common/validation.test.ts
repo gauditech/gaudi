@@ -107,5 +107,28 @@ describe("runtime", () => {
       }
       expect(thrownError).toMatchSnapshot();
     });
+
+    it("build validation action", async () => {
+      const bp = `
+      model Foo {
+        field from { type integer }
+        field to { type integer }
+      }
+      api {
+        entrypoint Foo {
+          create endpoint {
+            action {
+              create as newFoo {}
+              validate with key "key" { maxInt(newFoo.from, newFoo.to) }
+            }
+          }
+        }
+      }
+      `;
+      const definition = compileFromString(bp);
+      const action = (definition.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef)
+        .actions[1];
+      expect(action).toMatchSnapshot();
+    });
   });
 });

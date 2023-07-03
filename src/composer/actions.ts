@@ -78,7 +78,7 @@ function composeQueryAction(spec: FilteredByKind<Spec.Action, "query">): QueryAc
 
 function composeValidateAction(spec: FilteredByKind<Spec.Action, "validate">): ValidateAction {
   return {
-    kind: "action",
+    kind: "validate",
     key: spec.key,
     validate: composeValidate(spec.validate),
   };
