@@ -118,20 +118,20 @@ async function executeValidateExpr(
     return executeValidateExprCall(def, validate, field);
   }
 
-  const codes = _.compact(
+  const errors = _.compact(
     _.concat(
       ...(await Promise.all(validate.exprs.map((expr) => executeValidateExpr(def, expr, field))))
     )
   );
 
-  if (codes.length === 0) {
+  if (errors.length === 0) {
     return undefined;
   }
 
   if (validate.kind === "and") {
-    return codes;
+    return errors;
   } else {
-    return [{ code: "or", params: { codes } }];
+    return [{ code: "or", params: { errors } }];
   }
 }
 
