@@ -30,7 +30,7 @@ describe("auth client lib", () => {
     const resp = await client.api.auth.authUser.login({ username: "first", password: "1234" });
 
     // type narrowing for simpler later code
-    ensureEqual(resp.kind, "success" as const, `API response is not "success" but "${resp.kind}`);
+    ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
 
     // TODO: login returns any[] type and not any/unknown
     return (resp.data as any).token;
@@ -103,7 +103,7 @@ describe("auth client lib", () => {
       // UNauthorized request
       const response1 = await publicClient.api.box.list();
       expect(response1.status).toBe(401);
-      ensureEqual(response1.kind, "error" as const); // type narrowing
+      ensureEqual(response1.kind, "error"); // type narrowing
       expect(response1.error.code).toEqual("ERROR_CODE_UNAUTHENTICATED");
 
       // login
@@ -124,7 +124,7 @@ describe("auth client lib", () => {
       // UNauthorized request again
       const response4 = await authClient.api.box.list();
       expect(response4.status).toBe(401);
-      ensureEqual(response4.kind, "error" as const); // type narrowing
+      ensureEqual(response4.kind, "error"); // type narrowing
       expect(response4.error.code).toEqual("ERROR_CODE_UNAUTHENTICATED");
     });
   });
