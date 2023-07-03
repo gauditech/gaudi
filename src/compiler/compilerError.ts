@@ -29,6 +29,7 @@ export enum ErrorCode {
   DuplicateHookArg,
   DuplicateGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
+  RespondActionNotInCustomEndpoint,
   QueryFromAliasWrongLength,
   LimitOrOffsetWithCardinalityModifier,
   OrderByWithOne,
@@ -39,6 +40,9 @@ export enum ErrorCode {
   MoreThanOneRespondsInEndpoint,
   ValidatorMustContainExprOrHook,
   ValidatorOnlyOneExprOrHook,
+  MoreThanOneRespondsActionInEndpoint,
+  MoreThanOneActionThatRespond,
+  RespondActionNotLast,
   HookMustContainSourceOrInline,
   HookOnlyOneSourceOrInline,
   DuplicateSelectField,
@@ -125,7 +129,9 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.DuplicateGenerator:
       return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}"`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
-      return `Actions with "responds" can only be used in "custom" endpoints`;
+      return `Actions with "responds" attribute can only be used in "custom" endpoints`;
+    case ErrorCode.RespondActionNotInCustomEndpoint:
+      return `Respond actions can only be used in "custom" endpoint`;
     case ErrorCode.QueryFromAliasWrongLength:
       return `Query from alias must have same length as definition`;
     case ErrorCode.LimitOrOffsetWithCardinalityModifier:
@@ -146,6 +152,12 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Validator must contain "action" or "action hook" definition`;
     case ErrorCode.ValidatorOnlyOneExprOrHook:
       return `Validator can't have more than one "action" or "action hook" definition`;
+    case ErrorCode.MoreThanOneRespondsActionInEndpoint:
+      return `Endpoint can have at most one "respond" action`;
+    case ErrorCode.MoreThanOneActionThatRespond:
+      return `Endpoint cannot have both "respond" action and "execute" action with "responds" attribute`;
+    case ErrorCode.RespondActionNotLast:
+      return `Action "respond" must be the last action`;
     case ErrorCode.HookMustContainSourceOrInline:
       return `Hook must contain "source" or "inline" definition`;
     case ErrorCode.HookOnlyOneSourceOrInline:
@@ -235,7 +247,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
         `${JSON.stringify(params?.got)}`
       );
     case ErrorCode.UnexpectedPrimitiveType:
-      return `Type must be a non null primitive type`;
+      return `Type of "${params?.name}" must be a non null primitive type, got "${params?.type}"`;
     case ErrorCode.ComputedType:
       return `Computed field expression type must resolve to primitive, null or unknown. Current expression resolves to: "${params?.exprType}"`;
     case ErrorCode.NameAlreadyInScope:

@@ -205,6 +205,52 @@ describe("API endpoints", () => {
       `);
     });
 
+    it("custom many endpoint - respond action with static response", async () => {
+      const postResp = await request(getServer())
+        .patch("/api/org/customManyRespondActionStatic")
+        .send();
+
+      expect(postResp.statusCode).toBe(202);
+      expect(postResp.body).toMatchInlineSnapshot(`"static response body"`);
+    });
+
+    it("custom many endpoint - respond action with simple response", async () => {
+      const data = {
+        body: "Org Custom Many Respond Simple",
+      };
+      const postResp = await request(getServer())
+        .patch("/api/org/customManyRespondActionSimple")
+        .send(data);
+
+      expect(postResp.statusCode).toBe(200); // default response code
+      expect(postResp.body).toMatchInlineSnapshot(`"Org Custom Many Respond Simple"`);
+    });
+
+    it("custom many endpoint - respond action with complex response", async () => {
+      const data = {
+        prop1: "Org Custom Many Respond prop1",
+        prop2: 2,
+        statusCode: 201,
+        header1: "header 1",
+        header2: "header 2",
+      };
+      const postResp = await request(getServer())
+        .patch("/api/org/customManyRespondActionComplex")
+        .send(data);
+
+      expect(postResp.statusCode).toBe(201);
+      expect(postResp.body).toMatchInlineSnapshot(`
+        {
+          "prop1": "Org Custom Many Respond prop1",
+          "prop2": 2,
+        }
+      `);
+      expect(postResp.get("header-1")).toBe(data.header1);
+      expect(postResp.get("header-2")).toBe(data.header2);
+      expect(postResp.headers["header-12"]).toBe(`${data.header1}, ${data.header2}`); // multiple header values
+      expect(postResp.headers["header-3"]).toBe(undefined); // removed header
+    });
+
     // --- hook action with query
 
     it("custom one endpoint - action with query", async () => {

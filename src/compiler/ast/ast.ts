@@ -176,7 +176,13 @@ export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "filter"; expr: Expr<Db> }
 );
 
-export type Action = ModelAction | DeleteAction | ExecuteAction | QueryAction | ValidateAction;
+export type Action =
+  | ModelAction
+  | DeleteAction
+  | ExecuteAction
+  | QueryAction
+  | RespondAction
+  | ValidateAction;
 
 export type ModelAction = {
   kind: "create" | "update";
@@ -221,6 +227,33 @@ export type QueryActionAtom =
   | { kind: "update"; keyword: TokenData; atoms: ActionAtomSet[] }
   | { kind: "delete"; keyword: TokenData }
   | { kind: "select"; keyword: TokenData; select: Select };
+
+export type RespondAction = {
+  kind: "respond";
+  keyword: TokenData;
+  atoms: RespondActionAtom[];
+};
+export type RespondActionAtom =
+  | RespondActionAtomBody
+  | RespondActionAtomHttpStatus
+  | RespondActionAtomHttpHeaderMap;
+export type RespondActionAtomBody = { kind: "body"; body: Expr<Code>; keyword: TokenData };
+export type RespondActionAtomHttpStatus = {
+  kind: "httpStatus";
+  code: Expr<Code>;
+  keyword: TokenData;
+};
+export type RespondActionAtomHttpHeaderMap = {
+  kind: "httpHeaders";
+  headers: RespondActionAtomHttpHeader[];
+  keyword: TokenData;
+};
+export type RespondActionAtomHttpHeader = {
+  kind: "header";
+  name: StringLiteral;
+  value: Expr<Code>;
+  keyword: TokenData;
+};
 
 export type ValidateAction = {
   kind: "validate";

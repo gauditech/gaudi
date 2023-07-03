@@ -15,7 +15,6 @@ import {
   ActionDef,
   Definition,
   EndpointDef,
-  EndpointHttpMethod,
   EntrypointDef,
   FieldSetter,
   FieldSetterReferenceValue,
@@ -128,27 +127,12 @@ function processEndpoints(
     const authSelect = getAuthSelect(def, selectDeps);
 
     // should endpoint respond - only if something else (eg. action) does not send response before
-    const respondingActions = actions.filter((a) => a.kind === "execute-hook" && a.responds);
-    if (respondingActions.length > 0) {
-      // only one
-      ensureEqual(
-        respondingActions.length,
-        1,
-        'At most one action in entrypoint can have "responds" attribute'
-      );
-    }
+    const respondingActions = actions.filter(
+      (a) => (a.kind === "execute-hook" && a.responds) || a.kind === "respond"
+    );
     const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
 
-    const fieldset = fieldsetFromActions(def, actions);
-    endSpec.input.forEach((atom) => {
-      fieldset.record[atom.name] = {
-        kind: "field",
-        type: atom.type,
-        required: !atom.optional,
-        nullable: atom.nullable,
-        validate: atom.validate && composeValidate(atom.validate),
-      };
-    });
+    const fieldset = composeFieldset(def, endSpec, actions);
 
     switch (endSpec.kind) {
       case "get": {
@@ -212,8 +196,6 @@ function processEndpoints(
         };
       }
       case "custom": {
-        const maybeFieldset = isMethodWithFieldset(endSpec.method) ? fieldset : undefined;
-
         if (endSpec.cardinality === "one") {
           return {
             kind: "custom-one",
@@ -224,7 +206,7 @@ function processEndpoints(
             target,
             authSelect,
             authorize,
-            fieldset: maybeFieldset,
+            fieldset,
             response: undefined,
             responds,
           };
@@ -238,7 +220,7 @@ function processEndpoints(
             target: _.omit(target, "identifyWith"),
             authSelect,
             authorize,
-            fieldset: maybeFieldset,
+            fieldset,
             response: undefined,
             responds,
           };
@@ -251,19 +233,6 @@ function processEndpoints(
   });
 }
 
-function isMethodWithFieldset(method: EndpointHttpMethod): boolean {
-  switch (method) {
-    case "GET":
-    case "DELETE":
-      return false;
-    case "POST":
-    case "PATCH":
-      return true;
-    default:
-      assertUnreachable(method);
-  }
-}
-
 export function composeFilter(
   fromPath: string[],
   filter: Spec.Expr | undefined
@@ -271,8 +240,25 @@ export function composeFilter(
   return filter && composeExpression(filter, fromPath);
 }
 
-export function fieldsetFromActions(def: Definition, actions: ActionDef[]): FieldsetRecordDef {
-  const fieldsetWithPaths = kindFilter(actions, "create-one", "update-one").flatMap((action) => {
+function composeFieldset(
+  def: Definition,
+  endSpec: Spec.Endpoint,
+  actions: ActionDef[]
+): FieldsetRecordDef | undefined {
+  const actionFieldset = fieldsetFromActions(def, actions);
+  const extraInputFieldset = fieldsetFromExtraInputs(def, endSpec);
+
+  // return fieldset only if it's not empty, otherwise return "undefined"
+  if (actionFieldset.length > 0 || extraInputFieldset.length > 0) {
+    return collectFieldsetPaths([...actionFieldset, ...extraInputFieldset]);
+  }
+}
+
+export function fieldsetFromActions(
+  def: Definition,
+  actions: ActionDef[]
+): [string[], FieldsetFieldDef][] {
+  return kindFilter(actions, "create-one", "update-one").flatMap((action) => {
     return _.chain(action.changeset)
       .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
         switch (setter.kind) {
@@ -285,11 +271,12 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                 required: setter.required,
                 type: setter.type,
                 nullable: field.nullable,
-                validate: _.cloneDeep(field.validate),
+                validate: field.validate && _.cloneDeep(field.validate),
               },
             ];
           }
           case "fieldset-reference-input": {
+            ensureOneOf(action.kind, ["create-one", "update-one"]);
             const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
             const reference = getRef.reference(def, action.model, name);
             const field = getRef.field(def, tpath.leaf.refKey);
@@ -300,7 +287,7 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
                 required: true, // FIXME
                 nullable: reference.nullable,
                 type: field.type,
-                validate: _.cloneDeep(field.validate),
+                validate: field.validate && _.cloneDeep(field.validate),
               },
             ];
           }
@@ -311,8 +298,22 @@ export function fieldsetFromActions(def: Definition, actions: ActionDef[]): Fiel
       .compact()
       .value();
   });
+}
 
-  return collectFieldsetPaths(fieldsetWithPaths);
+function fieldsetFromExtraInputs(
+  def: Definition,
+  endSpec: Spec.Endpoint
+): [string[], FieldsetFieldDef][] {
+  return endSpec.input.map((atom) => [
+    [atom.name],
+    {
+      kind: "field",
+      type: atom.type,
+      required: !atom.optional,
+      nullable: atom.nullable,
+      validate: atom.validate && composeValidate(atom.validate),
+    },
+  ]);
 }
 
 /**
@@ -356,9 +357,9 @@ type SelectDep = FieldSetterReferenceValue["target"];
  */
 export function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
-  const nonDeleteActions = kindFilter(actions, "create-one", "update-one");
+  const changesetActions = kindFilter(actions, "create-one", "update-one");
 
-  const targetPaths = _.chain(nonDeleteActions)
+  const targetPaths = _.chain(changesetActions)
     .flatMap((a) => {
       switch (a.kind) {
         case "create-one": {
@@ -382,7 +383,6 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     .value();
 
   // collect all targets
-
   function collectReferenceValues(setter: FieldSetter): FieldSetterReferenceValue[] {
     switch (setter.kind) {
       case "reference-value": {
@@ -399,14 +399,25 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
       }
     }
   }
-  // --- collect changeset targets
-  // action changeset
-  const actionChangesets = nonDeleteActions.flatMap((a) => a.changeset);
-  // hooks changeset
-  const actionHookChangesets = kindFilter(actions, "execute-hook").flatMap((a) => a.hook.args);
 
-  const changesets = [...actionChangesets, ...actionHookChangesets];
-  const referenceValues = changesets.flatMap(({ setter }) => collectReferenceValues(setter));
+  // --- collect changeset targets
+  // action changeset setters
+  const actionSetters = changesetActions.flatMap((a) => a.changeset).map((c) => c.setter);
+  // hooks changeset setters
+  const actionHookSetters = kindFilter(actions, "execute-hook")
+    .flatMap((a) => a.hook.args)
+    .map((c) => c.setter);
+  // respond property setters
+  const respondSetters = kindFilter(actions, "respond").flatMap((a) => {
+    return (
+      _.compact([a.body, a.httpStatus, a.httpHeaders?.map((h) => h.value)])
+        // need another flatten due to httpHeaders
+        .flatMap((s) => s)
+    );
+  });
+
+  const setters = [...actionSetters, ...actionHookSetters, ...respondSetters];
+  const referenceValues = setters.flatMap(collectReferenceValues);
   const setterTargets = referenceValues.map((rv) => rv.target);
 
   return [...setterTargets, ...targetPaths];

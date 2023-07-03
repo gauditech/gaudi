@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import {
   applyFilterIdInContext,
   buildQueryTree,
@@ -95,7 +97,7 @@ async function _internalExecuteActions(
       );
       ctx.vars.set(action.alias, result);
     } else if (actionKind === "execute-hook") {
-      ensureExists(epCtx, 'Endpoint context is required for "execute" actions');
+      ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
 
       const argsChangeset = await buildChangeset(def, qx, epCtx, action.hook.args, ctx);
 
@@ -104,6 +106,52 @@ async function _internalExecuteActions(
         ctx.vars.set(action.alias, result);
       } catch (err) {
         throw new HookError(err);
+      }
+    } else if (actionKind == "respond") {
+      ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
+
+      try {
+        // construct changeset and resolve action parts
+        const actionChangesetDef = _.compact([
+          { name: "body", setter: action.body },
+          action.httpStatus != null ? { name: "httpStatus", setter: action.httpStatus } : undefined,
+        ]);
+        const changeset = await buildChangeset(def, qx, epCtx, actionChangesetDef, ctx);
+        // http headers are a separate changeset
+        const httpHeadersChangesetDef = (action.httpHeaders ?? []).map((h) => ({
+          name: h.name,
+          setter: h.value,
+        }));
+        const httpHeadersChangeset = await buildChangeset(
+          def,
+          qx,
+          epCtx,
+          httpHeadersChangesetDef,
+          ctx
+        );
+
+        const body = changeset.body;
+        // we're forcing number cause our type system should've made sure that this resolves to appropriate type
+        const httpResponseCode = (changeset.httpStatus ?? 200) as number;
+
+        Object.entries(httpHeadersChangeset).forEach(([name, value]) => {
+          // null - remove current header
+          if (value == null) {
+            epCtx.response.removeHeader(name);
+          }
+          // multiple header values
+          else if (_.isArray(value)) {
+            epCtx.response.set(name, value);
+          }
+          // single value
+          else {
+            // we're forcing value to `any` cause our type system should've made sure that this resolves to appropriate type
+            epCtx.response.set(name, value as any);
+          }
+        });
+        epCtx.response.status(httpResponseCode).json(body);
+      } catch (err: any) {
+        throw new Error(err);
       }
     } else if (actionKind === "validate") {
       throw new Error("Not implemented");

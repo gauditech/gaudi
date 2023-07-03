@@ -67,6 +67,9 @@ import {
   RelationAtom,
   RepeatAtom,
   RepeatValue,
+  RespondAction,
+  RespondActionAtom,
+  RespondActionAtomHttpHeader,
   Runtime,
   RuntimeAtom,
   Select,
@@ -780,6 +783,7 @@ class GaudiParser extends EmbeddedActionsParser {
       { ALT: () => this.SUBRULE(this.modelAction) },
       { ALT: () => this.SUBRULE(this.deleteAction) },
       { ALT: () => this.SUBRULE(this.executeAction) },
+      { ALT: () => this.SUBRULE(this.respondAction) },
       { ALT: () => this.SUBRULE(this.queryAction) },
       { ALT: () => this.SUBRULE(this.validateAction) },
     ]);
@@ -872,6 +876,59 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return { kind: "execute", keywordAs: alias?.keywordAs, name: alias?.name, atoms, keyword };
+  });
+
+  respondAction = this.RULE("respond", (): RespondAction => {
+    const atoms: RespondActionAtom[] = [];
+
+    const keyword = getTokenData(this.filename, this.CONSUME(L.Respond));
+
+    this.CONSUME1(L.LCurly);
+    this.MANY(() => {
+      this.OR([
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.filename, this.CONSUME(L.Body));
+            const body = this.SUBRULE1(this.expr);
+            atoms.push({ kind: "body", keyword, body });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.filename, this.CONSUME(L.HttpStatus));
+            const code = this.SUBRULE2(this.expr);
+            atoms.push({ kind: "httpStatus", keyword, code });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = getTokenData(this.filename, this.CONSUME(L.HttpHeaders));
+            const headers: RespondActionAtomHttpHeader[] = [];
+
+            this.CONSUME2(L.LCurly);
+            this.MANY_SEP({
+              SEP: L.Comma,
+              DEF: () => {
+                const name = this.SUBRULE3(this.string);
+                const value = this.SUBRULE4(this.expr);
+
+                headers.push({ kind: "header", keyword: name.token, name, value });
+              },
+            });
+            this.CONSUME2(L.RCurly);
+
+            atoms.push({ kind: "httpHeaders", keyword, headers });
+          },
+        },
+      ]);
+    });
+    this.CONSUME1(L.RCurly);
+
+    return {
+      kind: "respond",
+      atoms,
+      keyword,
+    };
   });
 
   queryAction = this.RULE("queryAction", (): QueryAction => {

@@ -71,7 +71,7 @@ describe("runtime", () => {
       `;
       const definition = compileFromString(bp);
       const fieldset = (definition.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef)
-        .fieldset;
+        .fieldset!;
 
       const data: Record<string, unknown> = {
         // missing required field

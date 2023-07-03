@@ -99,18 +99,62 @@ export declare function createClient(options: ApiClientOptions): {
                 delete: DeleteApiClientManyFn<number, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
             };
         }) & {
-            customOneAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
-            customManyAction: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customOneActionResponds: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
-            customManyActionResponds: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
-            customOneQueryAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
-            customFetchAction: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
-            hookErrorResponse: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customOneAction: CustomOneSubmitApiClientManyFn<string, {
+                name: string;
+                counter: number;
+                customProp: string;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customManyAction: CustomManySubmitApiClientFn<{
+                name: string;
+                counter: number;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customOneActionResponds: CustomOneSubmitApiClientManyFn<string, {
+                counter: number;
+                name: string;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customManyActionResponds: CustomManySubmitApiClientFn<{
+                name: string;
+                counter: number;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customManyRespondActionStatic: CustomManySubmitApiClientFn<undefined, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
+            customManyRespondActionSimple: CustomManySubmitApiClientFn<{
+                body: string;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customManyRespondActionComplex: CustomManySubmitApiClientFn<{
+                prop1: string;
+                prop2: number;
+                statusCode: number;
+                header1: string;
+                header2: string;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customOneQueryAction: CustomOneSubmitApiClientManyFn<string, {
+                name: string;
+                orgId: number;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customFetchAction: CustomOneSubmitApiClientManyFn<string, {
+                name: string;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            hookErrorResponse: CustomManySubmitApiClientFn<{
+                status: number;
+                message: string;
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             customGet: CustomOneFetchApiClientManyFn<string, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
-            customUpdate: CustomOneSubmitApiClientManyFn<string, any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
+            customUpdate: CustomOneSubmitApiClientManyFn<string, {
+                newOrg: {
+                    name?: string | undefined;
+                    slug?: string | undefined;
+                    description?: string | undefined;
+                };
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
             customDelete: CustomOneFetchApiClientManyFn<string, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
             customList: CustomManyFetchApiClientFn<any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER">;
-            customCreate: CustomManySubmitApiClientFn<any, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
+            customCreate: CustomManySubmitApiClientFn<{
+                newOrg: {
+                    name: string;
+                    slug: string;
+                    description: string;
+                };
+            }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             get: GetApiClientManyFn<string, {
                 name: string;
                 slug: string;

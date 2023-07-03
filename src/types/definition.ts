@@ -269,6 +269,7 @@ export type ListEndpointDef = {
   authorize: TypedExprDef;
   pageable: boolean;
   response: SelectDef;
+  fieldset?: undefined;
   orderBy: QueryOrderByAtomDef[] | undefined;
   filter: TypedExprDef | undefined;
   // actions: ActionDef[];
@@ -281,6 +282,7 @@ export type GetEndpointDef = {
   authSelect: SelectDef;
   authorize: TypedExprDef;
   response: SelectDef;
+  fieldset?: undefined;
   // actions: ActionDef[];
 };
 
@@ -291,7 +293,7 @@ export type CreateEndpointDef = {
   authSelect: SelectDef;
   authorize: TypedExprDef;
   response: SelectDef;
-  fieldset: FieldsetDef;
+  fieldset?: FieldsetDef;
   actions: ActionDef[];
 };
 
@@ -302,7 +304,7 @@ export type UpdateEndpointDef = {
   authSelect: SelectDef;
   authorize: TypedExprDef;
   response: SelectDef;
-  fieldset: FieldsetDef;
+  fieldset?: FieldsetDef;
   actions: ActionDef[];
 };
 
@@ -314,6 +316,7 @@ export type DeleteEndpointDef = {
   authSelect: SelectDef;
   authorize: TypedExprDef;
   response: undefined;
+  fieldset?: undefined;
 };
 
 export type CustomOneEndpointDef = {
@@ -408,6 +411,7 @@ export type ActionDef =
   | DeleteOneAction
   | ExecuteHookAction
   | QueryAction
+  | RespondAction
   | ValidateAction;
 
 export type CreateOneAction = {
@@ -442,6 +446,13 @@ export type ExecuteHookAction = {
   alias: string;
   hook: ActionHookDef;
   responds: boolean;
+};
+
+export type RespondAction = {
+  kind: "respond";
+  body: FieldSetter;
+  httpStatus?: FieldSetter;
+  httpHeaders?: { name: string; value: FieldSetter }[];
 };
 
 export type QueryAction = {

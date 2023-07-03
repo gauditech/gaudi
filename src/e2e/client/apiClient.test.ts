@@ -82,7 +82,7 @@ describe("api client lib", () => {
     it("get", async () => {
       const response = await client.api.org.get("org1");
 
-      ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(response.kind, "success"); // type narrowing for simpler later code
 
       expect(response.status).toBe(200);
       expect(response.data).toMatchInlineSnapshot(`
@@ -111,7 +111,7 @@ describe("api client lib", () => {
     it("list with paging", async () => {
       const response = await client.api.org.list();
 
-      ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(response.kind, "success"); // type narrowing for simpler later code
 
       expect(response.status).toBe(200);
       expect(response.data).toMatchInlineSnapshot(`
@@ -178,7 +178,7 @@ describe("api client lib", () => {
     it("list with non default paging", async () => {
       const response = await client.api.org.list({ page: 2, pageSize: 2 });
 
-      ensureEqual(response.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(response.kind, "success"); // type narrowing for simpler later code
 
       expect(response.status).toBe(200);
       expect(response.data).toMatchInlineSnapshot(`
@@ -234,13 +234,13 @@ describe("api client lib", () => {
       };
       const postResp = await client.api.org.create(data);
 
-      ensureEqual(postResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(postResp.kind, "success"); // type narrowing for simpler later code
 
       expect(postResp.status).toBe(200);
 
       const getResp = await client.api.org.get("orgNEW");
 
-      ensureEqual(getResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(getResp.kind, "success"); // type narrowing for simpler later code
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
@@ -262,12 +262,12 @@ describe("api client lib", () => {
 
       const patchResp = await client.api.org.update("org2", data);
 
-      ensureEqual(patchResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(patchResp.kind, "success"); // type narrowing for simpler later code
       expect(patchResp.status).toBe(200);
 
       const getResp = await client.api.org.get("org2");
 
-      ensureEqual(getResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(getResp.kind, "success"); // type narrowing for simpler later code
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
@@ -293,7 +293,7 @@ describe("api client lib", () => {
     it("delete", async () => {
       const deleteResp = await client.api.org.delete("org3");
 
-      ensureEqual(deleteResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(deleteResp.kind, "success"); // type narrowing for simpler later code
       expect(deleteResp.status).toBe(204);
 
       // test that it's not there anymore
@@ -325,7 +325,7 @@ describe("api client lib", () => {
       // check via standard endpoint
       const getResp = await client.api.org.get("orgCustomNEW");
 
-      ensureEqual(getResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(getResp.kind, "success"); // type narrowing for simpler later code
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
@@ -353,7 +353,7 @@ describe("api client lib", () => {
 
       const getResp = await client.api.org.get("org2");
 
-      ensureEqual(getResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(getResp.kind, "success"); // type narrowing for simpler later code
       expect(getResp.status).toBe(200);
       expect(getResp.data).toMatchInlineSnapshot(`
         {
@@ -386,7 +386,7 @@ describe("api client lib", () => {
     it("custom list", async () => {
       const postResp = await client.api.org.customList();
 
-      ensureEqual(postResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(postResp.kind, "success"); // type narrowing for simpler later code
       // custom endpoint return empty body so we can check only status
       expect(postResp.status).toBe(204);
     });
@@ -417,7 +417,7 @@ describe("api client lib", () => {
       const data = { name: "Org Custom One", counter: 1 };
       const postResp = await client.api.org.customOneActionResponds("org1", data);
 
-      ensureEqual(postResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(postResp.kind, "success"); // type narrowing for simpler later code
       expect(postResp.status).toBe(200);
       expect(postResp.data).toMatchInlineSnapshot(`
         {
@@ -431,7 +431,7 @@ describe("api client lib", () => {
       const data = { name: "Org Custom Many", counter: 1 };
       const postResp = await client.api.org.customManyActionResponds(data);
 
-      ensureEqual(postResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(postResp.kind, "success"); // type narrowing for simpler later code
       expect(postResp.status).toBe(200);
       expect(postResp.data).toMatchInlineSnapshot(`
         {
@@ -441,13 +441,38 @@ describe("api client lib", () => {
       `);
     });
 
+    it("custom many endpoint - respond action with complex response", async () => {
+      const data = {
+        prop1: "Org Custom Many Respond prop1",
+        prop2: 2,
+        statusCode: 201,
+        header1: "header 1",
+        header2: "header 2",
+      };
+      const postResp = await client.api.org.customManyRespondActionComplex(data);
+
+      ensureEqual(postResp.kind, "success"); // type narrowing for simpler later code
+      expect(postResp.status).toBe(201);
+      expect(postResp.data).toMatchInlineSnapshot(`
+        {
+          "prop1": "Org Custom Many Respond prop1",
+          "prop2": 2,
+        }
+      `);
+
+      expect(postResp.headers["header-1"]).toBe(data.header1);
+      expect(postResp.headers["header-2"]).toBe(data.header2);
+      expect(postResp.headers["header-12"]).toBe(`${data.header1}, ${data.header2}`); // multiple header values
+      expect(postResp.headers["header-3"]).toBe(undefined); // removed header
+    });
+
     // --- hook action with query
 
     it("custom one endpoint - action with query", async () => {
       const data = { name: "Org 1", orgId: 1 };
       const postResp = await client.api.org.customOneQueryAction("org1", data);
 
-      ensureEqual(postResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(postResp.kind, "success"); // type narrowing for simpler later code
       expect(postResp.status).toBe(200);
       expect(postResp.data).toMatchInlineSnapshot(`
         {
@@ -471,7 +496,7 @@ describe("api client lib", () => {
       const data = { name: "Fetch me org 1" };
       const postResp = await client.api.org.customFetchAction("org1", data);
 
-      ensureEqual(postResp.kind, "success" as const); // type narrowing for simpler later code
+      ensureEqual(postResp.kind, "success"); // type narrowing for simpler later code
       expect(postResp.status).toBe(200);
       expect(postResp.data).toMatchInlineSnapshot(`
         {
@@ -490,7 +515,7 @@ describe("api client lib", () => {
 
       const response = await client.api.org.hookErrorResponse(data);
 
-      ensureEqual(response.kind, "error" as const); // type narrowing for simpler later code
+      ensureEqual(response.kind, "error"); // type narrowing for simpler later code
       expect(response.status).toBe(data.status);
       expect(response.error).toMatchInlineSnapshot(`
         {
@@ -508,7 +533,7 @@ describe("api client lib", () => {
 
       const response = await client.api.org.hookErrorResponse(data);
 
-      ensureEqual(response.kind, "error" as const); // type narrowing for simpler later code
+      ensureEqual(response.kind, "error"); // type narrowing for simpler later code
       expect(response.status).toBe(505);
       expect(response.error).toMatchInlineSnapshot(`
         {

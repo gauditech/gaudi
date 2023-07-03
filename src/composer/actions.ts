@@ -24,6 +24,7 @@ import {
   FunctionName,
   QueryAction,
   QueryDef,
+  RespondAction,
   UpdateOneAction,
   ValidateAction,
 } from "@src/types/definition";
@@ -47,6 +48,9 @@ export function composeActionBlock(specs: Spec.Action[]): ActionDef[] {
       }
       case "execute": {
         return composeExecuteAction(atom);
+      }
+      case "respond": {
+        return componseRespondAction(atom);
       }
       case "query": {
         return composeQueryAction(atom);
@@ -101,6 +105,23 @@ function composeExecuteAction(spec: FilteredByKind<Spec.Action, "execute">): Exe
   };
 }
 
+function componseRespondAction(spec: FilteredByKind<Spec.Action, "respond">): RespondAction {
+  const body = expandSetterExpression(spec.body, () => true);
+  const httpStatus =
+    spec.httpStatus != null ? expandSetterExpression(spec.httpStatus, () => true) : undefined;
+  const httpHeaders = (spec.httpHeaders ?? []).map(({ name, value }) => ({
+    name,
+    value: expandSetterExpression(value, () => true),
+  }));
+
+  return {
+    kind: "respond",
+    body,
+    httpStatus,
+    httpHeaders,
+  };
+}
+
 /**
  * Composes a single `ActionDef` based on current variable context, entrypoint, endpoint and action specs.
  */
@@ -139,7 +160,10 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
   return modelActionFromParts(spec, model, changeset);
 }
 
-function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): FieldSetter {
+function expandSetterExpression(
+  expr: Spec.Expr,
+  verifySibling: (name: string) => void
+): FieldSetter {
   switch (expr.kind) {
     case "literal": {
       return { kind: "literal", literal: expr.literal };
@@ -180,13 +204,11 @@ function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): Field
         case "modelAtom": {
           // if path has more than 1 element, it can't be a sibling call
           ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
-          // check if sibling name is defined in the changeset
-          const siblingOp = _.find(changeset, { name: head.text });
-          if (siblingOp) {
-            return { kind: "changeset-reference", referenceName: head.text };
-          } else {
-            throw new Error(`Circular reference: ${head.text}`);
-          }
+
+          // verify siblings in eg. action changeset
+          verifySibling(head.text);
+
+          return { kind: "changeset-reference", referenceName: head.text };
         }
         case "validatorArg":
           throw new Error("Unexpected validator arg ref in action");
@@ -197,14 +219,14 @@ function expandSetterExpression(expr: Spec.Expr, changeset: ChangesetDef): Field
     case "array": {
       return {
         kind: "array",
-        elements: expr.elements.map((a) => expandSetterExpression(a, changeset)),
+        elements: expr.elements.map((a) => expandSetterExpression(a, verifySibling)),
       };
     }
     case "function": {
       return {
         kind: "function",
         name: expr.name as FunctionName, // FIXME proper validation
-        args: expr.args.map((a) => expandSetterExpression(a, changeset)),
+        args: expr.args.map((a) => expandSetterExpression(a, verifySibling)),
       };
     }
   }
@@ -231,7 +253,12 @@ function setterToFieldSetter(
     }
     case "expression": {
       const exp = set.expr;
-      return expandSetterExpression(exp, changeset);
+      return expandSetterExpression(exp, (name) => {
+        const siblingOp = _.find(changeset, { name });
+        if (!siblingOp) {
+          throw new Error(`Circular reference: ${name}`);
+        }
+      });
     }
     case "query": {
       return { kind: "query", query: queryFromSpec(set.query) };

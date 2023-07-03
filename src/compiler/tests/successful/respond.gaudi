@@ -1,0 +1,55 @@
+
+model Item {
+  field name { type string}
+  field code { type integer }
+  field message { type string }
+}
+
+api {
+  entrypoint Item {
+    custom endpoint {
+      method GET
+      path "pathPrimitive"
+      cardinality one
+
+      action {
+        query as resp {
+          from Item, filter { id is 1}, one
+        }
+
+        respond {
+          // body "asdf"
+          body "foo"
+          httpStatus 123
+          httpHeaders {
+            "prop1" "qux",
+            "prop2" "fred"
+          }
+        }
+      }
+    }
+
+    custom endpoint {
+      method GET
+      path "pathReference"
+      cardinality one
+
+      action {
+        query as resp {
+          from Item, filter { id is 1}, one
+        }
+
+        respond {
+          body resp.name
+          httpStatus resp.code
+          httpHeaders {
+            "prop1" resp.name + "1",
+            "prop2" resp.name + "2",
+            "prop12" [resp.name + "1", resp.name + "2"], // multiple header values
+            "prop2" null // remove header
+          }
+        }
+      }
+    }
+  }
+}

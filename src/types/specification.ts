@@ -203,6 +203,12 @@ export type Action =
       responds: boolean;
     }
   | {
+      kind: "respond";
+      body: Expr;
+      httpStatus?: Expr;
+      httpHeaders?: { name: string; value: Expr }[];
+    }
+  | {
       kind: "query";
       alias: string;
       query: Query;

@@ -306,17 +306,23 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           }
 
           await authorizeEndpoint(endpoint, contextVars);
-
-          const body = req.body;
           logger.debug("CTX PARAMS", pathParamVars);
-          logger.debug("BODY", body);
 
-          const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-          logger.debug("Reference IDs", referenceIds);
-          const fieldset = _.cloneDeep(endpoint.fieldset);
-          assignNoReferenceValidators(fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(def, fieldset, body);
-          logger.debug("Validation result", validationResult);
+          let validationResult: Record<string, unknown> = {};
+          let referenceIds: ReferenceIdResult[] = [];
+          logger.debug("FIELDSET", endpoint.fieldset);
+          if (endpoint.fieldset) {
+            const body = req.body;
+            logger.debug("BODY", body);
+
+            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
+            logger.debug("Reference IDs", referenceIds);
+
+            const fieldset = _.cloneDeep(endpoint.fieldset);
+            assignNoReferenceValidators(fieldset, referenceIds);
+            validationResult = await validateEndpointFieldset(def, fieldset, body);
+            logger.debug("Validation result", validationResult);
+          }
 
           await executeEndpointActions(
             def,
@@ -324,7 +330,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             {
               input: validationResult,
               vars: contextVars,
-              referenceIds,
+              referenceIds: referenceIds as ValidReferenceIdResult[],
             },
             { request: req, response: resp },
             endpoint.actions
@@ -410,17 +416,22 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           await authorizeEndpoint(endpoint, contextVars);
 
-          const body = req.body;
           logger.debug("CTX PARAMS", pathParamVars);
-          logger.debug("BODY", body);
 
-          logger.debug("FIELDSET", endpoint.fieldset);
-          const referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-          logger.debug("Reference IDs", referenceIds);
-          const fieldset = _.cloneDeep(endpoint.fieldset);
-          assignNoReferenceValidators(fieldset, referenceIds);
-          const validationResult = await validateEndpointFieldset(def, fieldset, body);
-          logger.debug("Validation result", validationResult);
+          let validationResult: Record<string, unknown> = {};
+          let referenceIds: ReferenceIdResult[] = [];
+          if (endpoint.fieldset) {
+            const body = req.body;
+            logger.debug("BODY", body);
+            logger.debug("FIELDSET", endpoint.fieldset);
+            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
+            logger.debug("Reference IDs", referenceIds);
+
+            const fieldset = _.cloneDeep(endpoint.fieldset);
+            assignNoReferenceValidators(fieldset, referenceIds);
+            validationResult = await validateEndpointFieldset(def, fieldset, body);
+            logger.debug("Validation result", validationResult);
+          }
 
           await executeEndpointActions(
             def,
@@ -428,7 +439,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             {
               input: validationResult,
               vars: contextVars,
-              referenceIds,
+              referenceIds: referenceIds as ValidReferenceIdResult[],
             },
             { request: req, response: resp },
             endpoint.actions
@@ -593,6 +604,7 @@ export function buildCustomOneEndpoint(
 
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             logger.debug("Reference IDs", referenceIds);
+
             const fieldset = _.cloneDeep(endpoint.fieldset);
             assignNoReferenceValidators(fieldset, referenceIds);
             validationResult = await validateEndpointFieldset(def, fieldset, body);

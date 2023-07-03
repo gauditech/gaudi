@@ -36,6 +36,7 @@ import {
   RefModelReference,
   Reference,
   Relation,
+  RespondAction,
   Runtime,
   Select,
   UnaryOperator,
@@ -308,7 +309,12 @@ export function resolve(projectASTs: ProjectASTs) {
         );
       }
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType));
+      errors.push(
+        new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType, {
+          name: field.name.text,
+          type: typeAtom?.identifier.text,
+        })
+      );
     }
   }
 
@@ -736,7 +742,12 @@ export function resolve(projectASTs: ProjectASTs) {
         );
       }
     } else if (typeAtom) {
-      errors.push(new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType));
+      errors.push(
+        new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType, {
+          name: extraInput.name.text,
+          type: typeAtom?.identifier.text,
+        })
+      );
     }
     addToScope(scope, extraInput.name);
   }
@@ -754,6 +765,7 @@ export function resolve(projectASTs: ProjectASTs) {
       )
       .with({ kind: "delete" }, (action) => resolveDeleteAction(action, endpointType, scope))
       .with({ kind: "execute" }, (action) => resolveExecuteAction(action, scope))
+      .with({ kind: "respond" }, (action) => resolveRespondAction(action, scope))
       .with({ kind: "queryAction" }, (action) => resolveQueryAction(action, scope))
       .with({ kind: "validate" }, (validate) => resolveValidateExpr(validate.expr, scope))
       .exhaustive();
@@ -906,6 +918,33 @@ export function resolve(projectASTs: ProjectASTs) {
       action.name.ref = { kind: "action" };
       action.name.type = Type.any;
       addToScope(scope, action.name);
+    }
+  }
+
+  function resolveRespondAction(action: RespondAction, scope: Scope) {
+    const body = kindFind(action.atoms, "body");
+    if (body) {
+      resolveExpression(body.body, scope);
+      checkExprType(body.body, Type.any); // TODO: should we limit to serializable types? serializable to what?
+    }
+
+    const httpStatus = kindFind(action.atoms, "httpStatus");
+    if (httpStatus) {
+      resolveExpression(httpStatus.code, scope);
+      checkExprType(httpStatus.code, Type.integer);
+    }
+
+    const httpHeaders = kindFind(action.atoms, "httpHeaders");
+    if (httpHeaders) {
+      httpHeaders.headers.forEach((h) => {
+        resolveExpression(h.value, scope);
+        if (h.value.type.kind === "collection") {
+          checkExprType(h.value, Type.collection(Type.nullable(Type.string)));
+        } else {
+          checkExprType(h.value, Type.nullable(Type.string));
+        }
+        // TODO: should we allow other primitives as well since they can easily be serialized to string?
+      });
     }
   }
 
