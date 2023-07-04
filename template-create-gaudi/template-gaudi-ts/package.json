@@ -1,0 +1,26 @@
+{
+  "name": "gaudi-demo",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "// --- build": "",
+    "build": "npm run build:hooks && npx gaudi-cli build",
+    "build:hooks": "tsc --preserveWatchOutput",
+    "// --- dev": "",
+    "dev": "concurrently --names hooks,gaudi --prefix-colors magenta,blue \"npm run dev:hooks\" \"npx gaudi-cli dev --gaudi-dev\"",
+    "dev:hooks": "npm run build:hooks -- --watch --incremental",
+    "// --- start": "",
+    "start": "npx gaudi-cli start",
+    "// --- other": "",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "concurrently": "^7.6.0",
+    "rimraf": "^3.0.2",
+    "typescript": "^5.0.3",
+    "eslint": "^8.37.0",
+    "eslint-plugin-import": "^2.27.5"
+  }
+}
