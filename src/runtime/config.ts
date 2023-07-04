@@ -30,7 +30,11 @@ export function readConfig(): RuntimeConfig {
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
   const dbSchema = process.env.GAUDI_DATABASE_SCHEMA || "public";
 
-  return { host, port, definitionPath, outputFolder, dbConnUrl, dbSchema };
+  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl, dbSchema };
+
+  console.log("Gaudi runtime config", finalConfig);
+
+  return finalConfig;
 }
 
 /** Load definition file and return it's content */

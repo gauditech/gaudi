@@ -38,7 +38,11 @@ export function readConfig(configPath?: string): EngineConfig {
   const inputFolder = path.resolve(projectRoot, config?.rootDir ?? "");
   const outputFolder = path.resolve(projectRoot, config?.outDir ?? "");
   // gaudi folder's path should probably be determined by the position of (future) gaudi config file
-  const gaudiFolder = path.resolve(projectRoot, GAUDI_FOLDER_NAME);
+  const gaudiFolder = path.resolve(inputFolder, GAUDI_FOLDER_NAME);
 
-  return { inputFolder, outputFolder, gaudiFolder, configFile: result.filepath };
+  const finalConfig = { inputFolder, outputFolder, gaudiFolder, configFile: result.filepath };
+
+  console.log("Gaudi engine config", finalConfig);
+
+  return finalConfig;
 }
