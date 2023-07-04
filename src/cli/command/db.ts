@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { ArgumentsCamelCase } from "yargs";
 
 import { GAUDI_SCRIPTS, getDbSchemaPath, getDefaultNodeOptions } from "@src/cli/config";
 import { createCommandRunner } from "@src/cli/runner";
@@ -42,8 +41,8 @@ export type DbPopulateOptions = {
   populator?: string;
 };
 
-export function dbPopulate(args: ArgumentsCamelCase<DbPopulateOptions>, _config: EngineConfig) {
-  const populatorName = args.populator!;
+export function dbPopulate(options: DbPopulateOptions, _config: EngineConfig) {
+  const populatorName = options.populator!;
 
   if (_.isEmpty(populatorName)) throw "Populator name cannot be empty";
 
@@ -63,8 +62,8 @@ export type DbMigrateOptions = {
   name?: string;
 };
 
-export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
-  const migrationName = args.name;
+export function dbMigrate(options: DbMigrateOptions, config: EngineConfig) {
+  const migrationName = options.name;
 
   if (_.isEmpty(migrationName)) throw "Migration name cannot be empty";
 
@@ -81,7 +80,7 @@ export function dbMigrate(args: ArgumentsCamelCase<DbMigrateOptions>, config: En
 
 // --- DB deploy
 
-export function dbDeploy(_args: ArgumentsCamelCase<DbMigrateOptions>, config: EngineConfig) {
+export function dbDeploy(config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
   return createCommandRunner("npx", [
