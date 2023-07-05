@@ -1,0 +1,65 @@
+{
+  "name": "gaudi",
+  "version": "0.0.1",
+  "description": "Gaudi CLI",
+  "main": "index.js",
+  "scripts": {
+    "// --- build": "",
+    "build": "npm run build:ts; npm run build:copy-static;",
+    "build:ts": "tsc --build --preserveWatchOutput",
+    "build:copy-static": "copyfiles -f -V ./package.json dist",
+    "// --- dev": "",
+    "dev": "concurrently --names TS,COPY --prefix-colors magenta,blue \"npm run dev:ts\" \"npm run dev:copy-static\"",
+    "dev:ts": "npm run build:ts -- --watch --incremental",
+    "dev:copy-static": "chokidar ./package.json --debounce 100 --initial --command \"npm run build:copy-static\"",
+    "// --- other": "",
+    "clean": "rimraf ./dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/gaudiorg/gaudi.git"
+  },
+  "author": "@gaudi.tech",
+  "license": "UNLICENCED",
+  "bugs": {
+    "url": "https://gitlab.com/gaudiorg/gaudi/issues"
+  },
+  "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/lodash": "^4.14.192",
+    "@types/module-alias": "^2.0.1",
+    "@types/node": ">=18.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^7.4.0",
+    "copyfiles": "^2.4.1",
+    "eslint": "^8.37.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-import-resolver-typescript": "^3.5.4",
+    "eslint-plugin-import": "^2.27.5",
+    "jest": "^29.5.0",
+    "prettier": "^2.8.7",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@gaudi/compiler": "^0.0.1",
+    "chalk": "^4.1.2",
+    "chokidar": "^3.5.3",
+    "copyfiles": "^2.4.1",
+    "dotenv": "^16.0.3",
+    "lodash": "^4.17.21",
+    "pkg-dir": "^5.0.0",
+    "ts-pattern": "^4.2.2",
+    "yargs": "^17.7.1"
+  }
+}

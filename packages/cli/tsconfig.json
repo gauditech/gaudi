@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "references": [{ "path": "../compiler" }],
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      // don't like this manual mapping but couldn't get it to work without it
+      "@gaudi/compiler/*": ["../compiler/dist/*"],
+      "@cli/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
