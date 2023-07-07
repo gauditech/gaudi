@@ -2,12 +2,16 @@ import { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-http-bearer";
 
-import { dataToFieldDbnames, dataToFieldModelNames, getRef } from "@gaudi/compiler/common/refs";
-import { assertUnreachable, ensureNot } from "@gaudi/compiler/common/utils";
+import {
+  dataToFieldDbnames,
+  dataToFieldModelNames,
+  getRef,
+} from "@gaudi/compiler/dist/common/refs";
+import { assertUnreachable, ensureNot } from "@gaudi/compiler/dist/common/utils";
 import { getAppContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { errorResponse } from "@runtime/server/error";
-import { Definition } from "@gaudi/compiler/types/definition";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
 
 export function buildAuthenticationHandler(def: Definition) {
   if (!def.authenticator) return;

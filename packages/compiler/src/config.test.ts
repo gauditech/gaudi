@@ -32,7 +32,7 @@ describe("engine", () => {
       const expected: Required<EngineConfig> = {
         inputFolder: path.join(__dirname, "rootDir"),
         outputFolder: path.join(__dirname, "outDir"),
-        gaudiFolder: path.join(__dirname, "gaudi"),
+        gaudiFolder: path.join(__dirname, "rootDir", "gaudi"),
         configFile: path.join(__dirname, "config.test.yaml"),
       };
 

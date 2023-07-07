@@ -5,7 +5,7 @@ import { match } from "ts-pattern";
 import { NamePath } from "./build";
 import { QueryPlan, QueryPlanExpression, QueryPlanJoin } from "./queryPlan";
 
-import { assertUnreachable } from "@gaudi/compiler/common/utils";
+import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 
 function namepathToQuotedPair(npath: NamePath): string {
   return `"${_.initial(npath).join(".")}"."${_.last(npath)}"`;

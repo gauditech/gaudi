@@ -6,6 +6,8 @@
     "build": "npm run build --workspace ",
     "dev": "npm run dev --workspace ",
     "test": "npm run test --workspace ",
+    "test:api": "npm run test:api --workspace ",
+    "test:client": "npm run test:api --workspace ",
     "clean:all": "npm run clean --workspaces",
     "clean": "npm run clean --workspace "
   },

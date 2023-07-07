@@ -6,15 +6,15 @@ import { executeQuery } from "../query/exec";
 import { DbConn } from "../server/dbConn";
 import { Vars } from "../server/vars";
 
-import { getRef } from "@gaudi/compiler/common/refs";
-import { getTypedPathWithLeaf } from "@gaudi/compiler/composer/utils";
+import { getRef } from "@gaudi/compiler/dist/common/refs";
+import { getTypedPathWithLeaf } from "@gaudi/compiler/dist/composer/utils";
 import {
   ActionDef,
   Definition,
   FieldsetDef,
   FieldsetFieldDef,
   TypedExprDef,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 
 export type ReferenceIdResult =
   | ValidReferenceIdResult

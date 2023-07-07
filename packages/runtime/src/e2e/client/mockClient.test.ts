@@ -1,10 +1,11 @@
-import { ensureEqual } from "@compiler/common/utils";
+import { ensureEqual } from "@gaudi/compiler";
+
 import {
   ApiRequestFn as EntrypointApiRequestFn,
   ApiRequestInit as EntrypointApiRequestInit,
   PaginatedListResponse,
   createClient as createClientEntrypoint,
-} from "@compiler/e2e/client/__snapshots__/mockClient/client/api-client";
+} from "@runtime/e2e/client/__snapshots__/mockClient/client/api-client";
 
 // test are slow
 jest.setTimeout(20000);

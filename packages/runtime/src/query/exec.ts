@@ -1,6 +1,6 @@
-import { ensureEqual, ensureNot } from "@gaudi/compiler/common/utils";
-import { TypeCardinality } from "@gaudi/compiler/compiler/ast/type";
-import { Definition, QueryDef, SelectItem } from "@gaudi/compiler/types/definition";
+import { ensureEqual, ensureNot } from "@gaudi/compiler/dist/common/utils";
+import { TypeCardinality } from "@gaudi/compiler/dist/compiler/ast/type";
+import { Definition, QueryDef, SelectItem } from "@gaudi/compiler/dist/types/definition";
 import { DbConn } from "@runtime/server/dbConn";
 import _ from "lodash";
 

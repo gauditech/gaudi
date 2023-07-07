@@ -1,5 +1,5 @@
-import { transformSelectPath } from "@gaudi/compiler/common/query";
-import { getRef } from "@gaudi/compiler/common/refs";
+import { transformSelectPath } from "@gaudi/compiler/dist/common/query";
+import { getRef } from "@gaudi/compiler/dist/common/refs";
 import {
   Definition,
   EndpointDef,
@@ -7,7 +7,7 @@ import {
   QueryOrderByAtomDef,
   TargetDef,
   TypedExprDef,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 import { pagingToQueryLimit } from "@runtime/common/utils";
 import {
   QueryTree,

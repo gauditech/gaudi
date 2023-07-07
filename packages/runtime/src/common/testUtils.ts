@@ -1,13 +1,13 @@
-import { compileToAST } from "@gaudi/compiler/compiler";
-import { compilerErrorsToString } from "@gaudi/compiler/compiler/compilerError";
-import { migrate } from "@gaudi/compiler/compiler/migrate";
-import { compose } from "@gaudi/compiler/composer/composer";
+import { compileToAST } from "@gaudi/compiler/dist/compiler";
+import { compilerErrorsToString } from "@gaudi/compiler/dist/compiler/compilerError";
+import { migrate } from "@gaudi/compiler/dist/compiler/migrate";
+import { compose } from "@gaudi/compiler/dist/composer/composer";
 import {
   CustomManyEndpointDef,
   Definition,
   QueryAction,
   QueryDef,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 import { QueryTree } from "@runtime/query/build";
 import { NestedRow, QueryExecutor } from "@runtime/query/exec";
 import { Vars } from "@runtime/server/vars";

@@ -1,8 +1,9 @@
-import { kindFilter } from "@gaudi/compiler/common/kindFilter";
-import { getInternalExecutionRuntimeName } from "@gaudi/compiler/composer/executionRuntimes";
+import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
+import { getInternalExecutionRuntimeName } from "@gaudi/compiler/dist/composer/executionRuntimes";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
+
 import { compileFromString } from "@runtime/common/testUtils";
 import { executeHook } from "@runtime/hooks";
-import { Definition } from "@gaudi/compiler/types/definition";
 
 describe("hooks", () => {
   const def = createTestDefinition();
@@ -58,11 +59,11 @@ describe("hooks", () => {
       const bp = `
       runtime MathRuntime {
         default
-        source path "./src/runtime/test/hooks"
+        source path "./src/test/hooks"
       }
 
       runtime TextRuntime {
-        source path "./src/runtime/test/hooks2"
+        source path "./src/test/hooks2"
       }
 
       model Result {
@@ -129,7 +130,7 @@ function createTestDefinition(): Definition {
   const bp = `
     runtime TestRuntime {
       default
-      source path "./src/runtime/test/hooks"
+      source path "./src/test/hooks"
     }
   `;
   return compileFromString(bp);

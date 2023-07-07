@@ -2,8 +2,8 @@
   "name": "@gaudi/compiler",
   "version": "0.0.1",
   "description": "Gaudi compiler",
-  "main": "index.js",
-  "types": ".",
+  "main": "./dist/index.js",
+  "types": "./dist",
   "scripts": {
     "// --- build": "",
     "build": "npm run build:ts; npm run build:copy-static;",
@@ -16,12 +16,8 @@
     "// --- test": "",
     "test": "jest --selectProjects unit",
     "test:watch": "npm test -- --watch",
-    "test:api": "jest --selectProjects api",
-    "test:api:watch": "npm run test:api -- --watch",
-    "test:client": "jest --selectProjects client",
-    "test:client:watch": "npm run test:client -- --watch",
     "// --- other": "",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
   },
   "repository": {
     "type": "git",

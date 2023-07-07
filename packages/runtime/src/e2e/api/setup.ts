@@ -4,18 +4,18 @@ import { Server } from "http";
 import os from "os";
 import path from "path";
 
+import { build } from "@gaudi/compiler/dist/builder/builder";
+import { dataToFieldDbnames, getRef } from "@gaudi/compiler/dist/common/refs";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
 import express, { Express, json } from "express";
 import _ from "lodash";
 
-import { build } from "@compiler/builder/builder";
-import { dataToFieldDbnames, getRef } from "@compiler/common/refs";
 import { compileFromString } from "@runtime/common/testUtils";
 import { readConfig } from "@runtime/config";
 import { setupDefinitionApis } from "@runtime/server/api";
 import { AppContext, bindAppContext } from "@runtime/server/context";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
 import { bindAppContextHandler, errorHandler, requestLogger } from "@runtime/server/middleware";
-import { Definition } from "@compiler/types/definition";
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
 

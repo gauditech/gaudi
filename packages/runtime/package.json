@@ -13,8 +13,15 @@
     "dev": "concurrently --names TS,COPY --prefix-colors magenta,blue \"npm run dev:ts\" \"npm run dev:copy-static\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "dev:copy-static": "chokidar ./package.json --debounce 100 --initial --command \"npm run build:copy-static\"",
+    "// --- test": "",
+    "test": "jest --selectProjects unit",
+    "test:watch": "npm test -- --watch",
+    "test:api": "jest --selectProjects api",
+    "test:api:watch": "npm run test:api -- --watch",
+    "test:client": "jest --selectProjects client",
+    "test:client:watch": "npm run test:client -- --watch",
     "// --- other": "",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
   },
   "repository": {
     "type": "git",
@@ -48,6 +55,7 @@
     "eslint-plugin-import": "^2.27.5",
     "openapi-types": "^12.1.0",
     "rimraf": "^3.0.2",
+    "ts-jest": "^29.1.0",
     "typescript": "^5.0.3"
   },
   "engines": {

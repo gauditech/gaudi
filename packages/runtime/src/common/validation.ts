@@ -5,7 +5,7 @@ import { executeHook } from "../hooks";
 import { executeTypedExpr } from "../server/endpoints";
 import { Vars } from "../server/vars";
 
-import { ensureExists } from "@gaudi/compiler/common/utils";
+import { ensureExists } from "@gaudi/compiler/dist/common/utils";
 import { BusinessError } from "@runtime/server/error";
 import {
   Definition,
@@ -14,7 +14,7 @@ import {
   FieldsetRecordDef,
   ValidateExprCallDef,
   ValidateExprDef,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 
 // ----- validation&transformation
 

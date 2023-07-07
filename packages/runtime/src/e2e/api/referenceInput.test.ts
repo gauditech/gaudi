@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 import _ from "lodash";
 import request from "supertest";
 
-import { createApiTestSetup, loadBlueprint } from "@compiler/e2e/api/setup";
+import { createApiTestSetup, loadBlueprint } from "@runtime/e2e/api/setup";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(10000);

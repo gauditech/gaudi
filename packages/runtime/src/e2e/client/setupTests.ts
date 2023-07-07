@@ -3,10 +3,11 @@ import "../../../src/common/setupAliases";
 
 import path from "path";
 
-import { buildApiClients } from "@compiler/builder/builder";
-import { loadBlueprint } from "@compiler/e2e/api/setup";
-import { Logger } from "@compiler/common/logger";
+import { buildApiClients } from "@gaudi/compiler/dist/builder/builder";
+import { Logger } from "@gaudi/compiler/dist/common/logger";
+
 import { compileFromString } from "@runtime/common/testUtils";
+import { loadBlueprint } from "@runtime/e2e/api/setup";
 
 const CLIENT_LIB_DIST_FOLDER = path.join(__dirname, "__snapshots__");
 

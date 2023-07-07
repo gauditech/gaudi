@@ -13,7 +13,7 @@
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "dev:copy-static": "chokidar ./package.json --debounce 100 --initial --command \"npm run build:copy-static\"",
     "// --- other": "",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@types/jest": "^29.5.0",
     "@types/lodash": "^4.14.192",
     "@types/module-alias": "^2.0.1",
     "@types/node": ">=18.0.0",
@@ -42,10 +41,8 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-import-resolver-typescript": "^3.5.4",
     "eslint-plugin-import": "^2.27.5",
-    "jest": "^29.5.0",
     "prettier": "^2.8.7",
     "rimraf": "^3.0.2",
-    "ts-jest": "^29.1.0",
     "typescript": "^5.0.3"
   },
   "engines": {

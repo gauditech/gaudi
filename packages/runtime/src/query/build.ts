@@ -1,7 +1,7 @@
-import { kindFilter } from "@gaudi/compiler/common/kindFilter";
-import { transformSelectPath } from "@gaudi/compiler/common/query";
-import { getRef, getTargetModel } from "@gaudi/compiler/common/refs";
-import { HookCode } from "@gaudi/compiler/types/common";
+import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
+import { transformSelectPath } from "@gaudi/compiler/dist/common/query";
+import { getRef, getTargetModel } from "@gaudi/compiler/dist/common/refs";
+import { HookCode } from "@gaudi/compiler/dist/types/common";
 import {
   Definition,
   ModelDef,
@@ -12,7 +12,7 @@ import {
   SelectHook,
   SelectableExpression,
   TypedExprDef,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 import _ from "lodash";
 import { match } from "ts-pattern";
 

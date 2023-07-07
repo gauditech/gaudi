@@ -9,11 +9,16 @@ import {
   ensureEqual,
   ensureExists,
   ensureNot,
-} from "@gaudi/compiler/common/utils";
+} from "@gaudi/compiler/dist/common/utils";
 import { ActionContext } from "@runtime/common/action";
 import { HookActionContext, executeHook } from "@runtime/hooks";
 import { QueryExecutor, castToCardinality } from "@runtime/query/exec";
-import { ChangesetDef, Definition, FieldDef, FieldSetter } from "@gaudi/compiler/types/definition";
+import {
+  ChangesetDef,
+  Definition,
+  FieldDef,
+  FieldSetter,
+} from "@gaudi/compiler/dist/types/definition";
 
 type Changeset = Record<string, unknown>;
 

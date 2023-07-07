@@ -10,7 +10,7 @@ import { createIterator } from "@runtime/common/iterator";
 import { RuntimeConfig, loadDefinition, readConfig } from "@runtime/config";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
 import { Vars } from "@runtime/server/vars";
-import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/types/definition";
+import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/compiler";
 
 // read environment
 const config = readConfig();

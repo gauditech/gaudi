@@ -1,14 +1,14 @@
 import path from "path";
 
+import { assertUnreachable, ensureEqual } from "@gaudi/compiler";
 import * as dotenv from "dotenv";
 import request from "supertest";
 
-import { assertUnreachable, ensureEqual } from "@compiler/common/utils";
-import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@compiler/e2e/api/setup";
+import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@runtime/e2e/api/setup";
 import {
   ApiRequestInit,
   createClient,
-} from "@compiler/e2e/client/__snapshots__/apiClient/client/api-client";
+} from "@runtime/e2e/client/__snapshots__/apiClient/client/api-client";
 
 // test are slow
 jest.setTimeout(10000);

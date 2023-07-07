@@ -1,14 +1,14 @@
-import { kindFilter } from "@gaudi/compiler/common/kindFilter";
-import { transformExpressionPaths } from "@gaudi/compiler/common/query";
-import { getRef, getSourceRef, getTargetModel } from "@gaudi/compiler/common/refs";
+import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
+import { transformExpressionPaths } from "@gaudi/compiler/dist/common/query";
+import { getRef, getSourceRef, getTargetModel } from "@gaudi/compiler/dist/common/refs";
 import {
   UnreachableError,
   assertUnreachable,
   ensureEqual,
   ensureNot,
   shouldBeUnreachableCb,
-} from "@gaudi/compiler/common/utils";
-import { getTypedPath } from "@gaudi/compiler/composer/utils";
+} from "@gaudi/compiler/dist/common/utils";
+import { getTypedPath } from "@gaudi/compiler/dist/composer/utils";
 import {
   AggregateFunctionName,
   Definition,
@@ -17,8 +17,8 @@ import {
   QueryDef,
   SelectItem,
   TypedExprDef,
-} from "@gaudi/compiler/types/definition";
-import { Literal } from "@gaudi/compiler/types/specification";
+} from "@gaudi/compiler/dist/types/definition";
+import { Literal } from "@gaudi/compiler/dist/types/specification";
 import { NamePath } from "@runtime/query/build";
 import _ from "lodash";
 import { match } from "ts-pattern";

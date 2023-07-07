@@ -4,11 +4,11 @@ import { Express, NextFunction, Request, Response, static as staticHandler } fro
 import { OpenAPIV3 } from "openapi-types";
 import { serve, setup } from "swagger-ui-express";
 
-import { buildOpenAPI } from "@gaudi/compiler/builder/openAPI";
-import { saveOutputFile } from "@gaudi/compiler/common/utils";
+import { buildOpenAPI } from "@gaudi/compiler/dist/builder/openAPI";
+import { saveOutputFile } from "@gaudi/compiler/dist/common/utils";
 import { getAppContext } from "@runtime/server/context";
 import { buildEndpointConfig, registerServerEndpoint } from "@runtime/server/endpoints";
-import { Definition } from "@gaudi/compiler/types/definition";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {

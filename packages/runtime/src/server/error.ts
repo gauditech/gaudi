@@ -2,7 +2,7 @@
 
 import _ from "lodash";
 
-import { assertUnreachable } from "@gaudi/compiler/common/utils";
+import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 
 //** Error reponse codes  */
 export type HTTPErrorCode =

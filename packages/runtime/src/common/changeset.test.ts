@@ -19,7 +19,7 @@ import {
   FieldSetterChangesetReference,
   FieldSetterFunction,
   FunctionName,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 
 describe("runtime", () => {
   describe("changeset", () => {

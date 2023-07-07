@@ -4,7 +4,7 @@ import { RuntimeConfig } from "@runtime/config";
 import { setupServerApis } from "@runtime/server/api";
 import { createDbConn } from "@runtime/server/dbConn";
 import { bindAppContextHandler, errorHandler, requestLogger } from "@runtime/server/middleware";
-import { Definition } from "@gaudi/compiler/types/definition";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
 
 export type CreateServerConfig = {
   port: number;

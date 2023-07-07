@@ -1,6 +1,6 @@
 import fs from "fs";
 
-import { Definition } from "@gaudi/compiler/types/definition";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
 
 export type RuntimeConfig = {
   /** Runtime server host name */

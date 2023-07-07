@@ -3,8 +3,8 @@ import path from "path";
 import * as dotenv from "dotenv";
 import request from "supertest";
 
-import { DATA } from "@compiler/e2e/api/auth.data";
-import { createApiTestSetup, loadBlueprint } from "@compiler/e2e/api/setup";
+import { DATA } from "@runtime/e2e/api/auth.data";
+import { createApiTestSetup, loadBlueprint } from "@runtime/e2e/api/setup";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(60000);

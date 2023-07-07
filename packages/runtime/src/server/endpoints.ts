@@ -9,12 +9,12 @@ import {
   PathFragmentIdentifier,
   PathQueryParameter,
   buildEndpointPath,
-} from "@gaudi/compiler/builder/query";
-import { kindFilter } from "@gaudi/compiler/common/kindFilter";
-import { getRef } from "@gaudi/compiler/common/refs";
-import { assertUnreachable } from "@gaudi/compiler/common/utils";
-import { endpointUsesAuthentication } from "@gaudi/compiler/composer/entrypoints";
-import { Logger } from "@gaudi/compiler/common/logger";
+} from "@gaudi/compiler/dist/builder/query";
+import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
+import { getRef } from "@gaudi/compiler/dist/common/refs";
+import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
+import { endpointUsesAuthentication } from "@gaudi/compiler/dist/composer/entrypoints";
+import { Logger } from "@gaudi/compiler/dist/common/logger";
 import { executeArithmetics } from "@runtime//common/arithmetics";
 import { executeEndpointActions } from "@runtime/common/action";
 import {
@@ -53,7 +53,7 @@ import {
   TypedExprDef,
   TypedFunction,
   UpdateEndpointDef,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 
 const logger = Logger.specific("http");
 

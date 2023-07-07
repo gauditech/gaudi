@@ -3,10 +3,10 @@ import path from "path";
 
 import { Request, Response } from "express";
 
-import { getExecutionRuntime } from "@gaudi/compiler/common/refs";
-import { getInternalExecutionRuntimeName } from "@gaudi/compiler/composer/executionRuntimes";
-import { HookCode, HookInline, HookSource } from "@gaudi/compiler/types/common";
-import { Definition, ExecutionRuntimeDef } from "@gaudi/compiler/types/definition";
+import { getExecutionRuntime } from "@gaudi/compiler/dist/common/refs";
+import { getInternalExecutionRuntimeName } from "@gaudi/compiler/dist/composer/executionRuntimes";
+import { HookCode, HookInline, HookSource } from "@gaudi/compiler/dist/types/common";
+import { Definition, ExecutionRuntimeDef } from "@gaudi/compiler/dist/types/definition";
 
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 

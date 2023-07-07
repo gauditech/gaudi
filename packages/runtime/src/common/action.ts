@@ -1,12 +1,12 @@
-import { transformSelectPath } from "@gaudi/compiler/common/query";
-import { dataToFieldDbnames, getRef } from "@gaudi/compiler/common/refs";
-import { assertUnreachable, ensureExists } from "@gaudi/compiler/common/utils";
+import { transformSelectPath } from "@gaudi/compiler/dist/common/query";
+import { dataToFieldDbnames, getRef } from "@gaudi/compiler/dist/common/refs";
+import { assertUnreachable, ensureExists } from "@gaudi/compiler/dist/common/utils";
 import {
   ActionDef,
   CreateOneAction,
   Definition,
   UpdateOneAction,
-} from "@gaudi/compiler/types/definition";
+} from "@gaudi/compiler/dist/types/definition";
 import { buildChangeset } from "@runtime/common/changeset";
 import { HookActionContext, executeActionHook } from "@runtime/hooks";
 import { DbConn } from "@runtime/server/dbConn";
