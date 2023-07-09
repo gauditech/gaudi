@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
-import "../../common/setupAliases";
+import "../common/setupAliases";
 
+import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/types/definition";
 import _ from "lodash";
 
 import { ActionContext, executeActions } from "@runtime/common/action";
@@ -10,7 +11,6 @@ import { createIterator } from "@runtime/common/iterator";
 import { RuntimeConfig, loadDefinition, readConfig } from "@runtime/config";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
 import { Vars } from "@runtime/server/vars";
-import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/compiler";
 
 // read environment
 const config = readConfig();

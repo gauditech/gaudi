@@ -1,6 +1,6 @@
 import path from "path";
 
-import { assertUnreachable, ensureEqual } from "@gaudi/compiler";
+import { assertUnreachable, ensureEqual } from "@gaudi/compiler/dist/common/utils";
 import * as dotenv from "dotenv";
 import request from "supertest";
 

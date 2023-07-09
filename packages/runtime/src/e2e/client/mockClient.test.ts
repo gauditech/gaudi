@@ -1,4 +1,4 @@
-import { ensureEqual } from "@gaudi/compiler";
+import { ensureEqual } from "@gaudi/compiler/dist/common/utils";
 
 import {
   ApiRequestFn as EntrypointApiRequestFn,
