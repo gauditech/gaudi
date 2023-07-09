@@ -1,7 +1,8 @@
+import { EngineConfig } from "@gaudi/compiler/dist/config";
+import _ from "lodash";
+
 import { GAUDI_SCRIPTS, getDbSchemaPath, getDefaultNodeOptions } from "@cli/config";
 import { createCommandRunner } from "@cli/runner";
-import { EngineConfig } from "@gaudi/compiler/config";
-import _ from "lodash";
 
 // ---------- DB commands
 // --- DB push

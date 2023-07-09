@@ -1,6 +1,6 @@
 import path from "path";
 
-import { EngineConfig } from "@gaudi/compiler/config";
+import { EngineConfig } from "@gaudi/compiler/dist/config";
 import copyfiles from "copyfiles";
 import _ from "lodash";
 

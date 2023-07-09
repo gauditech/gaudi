@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { saveOutputFile } from "@gaudi/compiler/common/utils";
+import { saveOutputFile } from "@gaudi/compiler/dist/common/utils";
 import pkgDir from "pkg-dir";
 
 export function sanitizeProjectName(name: string): string {

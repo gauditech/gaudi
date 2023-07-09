@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 // import this file only with relative path because this file actually configures path aliases (eg @src, ...)
-import "./setupAliases";
+import "./common/setupAliases";
 
 import path from "path";
 
-import { createAsyncQueueContext } from "@gaudi/compiler/common/async/queueAsync";
-import { EngineConfig, readConfig } from "@gaudi/compiler/config";
+import { createAsyncQueueContext } from "@gaudi/compiler/dist/common/async/queueAsync";
+import { EngineConfig, readConfig } from "@gaudi/compiler/dist/config";
 import _ from "lodash";
 import yargs, { ArgumentsCamelCase } from "yargs";
 import { hideBin } from "yargs/helpers";

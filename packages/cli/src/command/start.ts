@@ -1,4 +1,4 @@
-import { EngineConfig } from "@gaudi/compiler/config";
+import { EngineConfig } from "@gaudi/compiler/dist/config";
 import * as dotenv from "dotenv";
 import _ from "lodash";
 

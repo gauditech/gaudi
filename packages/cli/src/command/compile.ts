@@ -1,4 +1,4 @@
-import { EngineConfig } from "@gaudi/compiler/config";
+import { EngineConfig } from "@gaudi/compiler/dist/config";
 import _ from "lodash";
 
 import { GAUDI_SCRIPTS, getDefaultNodeOptions } from "@cli/config";
