@@ -9,5 +9,5 @@ import { createCommandRunner } from "@cli/runner";
 export function compile(_config: EngineConfig) {
   console.log("Compiling Gaudi blueprint ...");
 
-  return createCommandRunner("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.ENGINE]);
+  return createCommandRunner("node", [...getDefaultNodeOptions(), GAUDI_SCRIPTS.COMPILER]);
 }

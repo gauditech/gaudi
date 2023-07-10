@@ -2,16 +2,15 @@
   "name": "gaudi",
   "version": "0.0.1",
   "description": "Gaudi CLI",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist",
   "scripts": {
     "// --- build": "",
-    "build": "npm run build:ts; npm run build:copy-static;",
-    "build:ts": "tsc --build --preserveWatchOutput",
-    "build:copy-static": "copyfiles -f -V ./package.json dist",
+    "build": "npm run build:ts",
+    "build:ts": "tspc --build --preserveWatchOutput",
     "// --- dev": "",
-    "dev": "concurrently --names TS,COPY --prefix-colors magenta,blue \"npm run dev:ts\" \"npm run dev:copy-static\"",
+    "dev": "concurrently --names TS --prefix-colors blue \"npm run dev:ts\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
-    "dev:copy-static": "chokidar ./package.json --debounce 100 --initial --command \"npm run build:copy-static\"",
     "// --- other": "",
     "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
   },
@@ -30,7 +29,6 @@
   ],
   "devDependencies": {
     "@types/lodash": "^4.14.192",
-    "@types/module-alias": "^2.0.1",
     "@types/node": ">=18.0.0",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
@@ -41,6 +39,7 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-import-resolver-typescript": "^3.5.4",
     "eslint-plugin-import": "^2.27.5",
+    "nodemon": "^3.0.1",
     "prettier": "^2.8.7",
     "rimraf": "^3.0.2",
     "typescript": "^5.0.3"
@@ -50,6 +49,7 @@
   },
   "dependencies": {
     "@gaudi/compiler": "^0.0.1",
+    "@gaudi/runtime": "^0.0.1",
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",
     "copyfiles": "^2.4.1",

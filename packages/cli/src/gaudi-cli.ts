@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-// import this file only with relative path because this file actually configures path aliases (eg @src, ...)
-import "./common/setupAliases";
-
 import path from "path";
 
 import { createAsyncQueueContext } from "@gaudi/compiler/dist/common/async/queueAsync";

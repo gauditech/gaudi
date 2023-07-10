@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-// import this file only with relative path because this file actually configures path aliases (eg @src, ...)
-import "../common/setupAliases";
-
 import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/types/definition";
 import _ from "lodash";
 
@@ -18,6 +15,8 @@ const args = readArgs();
 
 // run main function
 run(args, config);
+
+console.log(" --- ENV", process.execArgv);
 
 // ------------------------
 

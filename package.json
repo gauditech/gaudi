@@ -2,12 +2,18 @@
   "name": "@gaudi/common",
   "private": true,
   "scripts": {
+    "// --- build": "",
     "build:all": "npm run build --workspaces",
     "build": "npm run build --workspace ",
+    "// --- dev": "",
     "dev": "npm run dev --workspace ",
+    "// --- test": "",
     "test": "npm run test --workspace ",
     "test:api": "npm run test:api --workspace ",
     "test:client": "npm run test:api --workspace ",
+    "// --- publish": "",
+    "pack": "npm run pack --workspace ",
+    "// --- util": "",
     "clean:all": "npm run clean --workspaces",
     "clean": "npm run clean --workspace "
   },
@@ -27,5 +33,9 @@
       "packages/runtime",
       "packages/cli"
     ]
+  },
+  "devDependencies": {
+    "ts-patch": "^3.0.1",
+    "typescript-transform-paths": "^3.4.6"
   }
 }

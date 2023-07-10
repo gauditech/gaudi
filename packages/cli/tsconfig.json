@@ -3,10 +3,7 @@
   "references": [{ "path": "../compiler" }],
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "paths": {
-      "@cli/*": ["./src/*"]
-    }
+    "rootDir": "src"
   },
   "include": ["src"]
 }

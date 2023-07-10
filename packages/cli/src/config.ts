@@ -37,10 +37,11 @@ export function getDefaultNodeOptions(): string[] {
  * Paths to Gaudi scripts
  *
  * Target Gaudi scripts directly instead of via NPX because we cannot pass some node options through NPX (via --node-options")
- * See a list of allowed options here: https://nodejs.org/docs/latest-v16.x/api/cli.html#node_optionsoptions
+ *
+ * See a list of options allowed in --node-options here: https://nodejs.org/docs/latest-v16.x/api/cli.html#node_optionsoptions
  */
 export const GAUDI_SCRIPTS = {
-  ENGINE: path.join(__dirname, "../engine.js"),
-  RUNTIME: path.join(__dirname, "../runtime/runtime.js"),
-  POPULATOR: path.join(__dirname, "../runtime/populator/populator.js"),
+  COMPILER: path.join(__dirname, "../../compiler"),
+  RUNTIME: path.join(__dirname, "../../runtime"),
+  POPULATOR: path.join(__dirname, "../../runtime/dist/populator/populator.js"),
 };

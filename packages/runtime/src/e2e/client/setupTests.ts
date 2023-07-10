@@ -1,6 +1,3 @@
-// import this file only with relative path because this file actually configures path aliases (eg @src, ...)
-import "../../../src/common/setupAliases";
-
 import path from "path";
 
 import { buildApiClients } from "@gaudi/compiler/dist/builder/builder";
