@@ -12,7 +12,7 @@
     "dev": "concurrently --names TS --prefix-colors blue \"npm run dev:ts\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "// --- other": "",
-    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo"
+    "clean": "rimraf ./dist"
   },
   "repository": {
     "type": "git",

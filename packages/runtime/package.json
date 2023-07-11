@@ -23,7 +23,7 @@
     "test:client": "jest --selectProjects client",
     "test:client:watch": "npm run test:client -- --watch",
     "// --- other": "",
-    "clean": "rimraf ./dist ./tsconfig.tsbuildinfo",
+    "clean": "rimraf ./dist",
     "gaudi-populator": "gaudi-populator"
   },
   "repository": {
