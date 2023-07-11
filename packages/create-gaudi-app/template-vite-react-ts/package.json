@@ -36,6 +36,7 @@
     "@typescript-eslint/parser": "^5.57.0",
     "@vitejs/plugin-react": "^4.0.0",
     "concurrently": "^7.6.0",
+    "@gaudi/cli": "^0.0.1",
     "eslint": "^8.37.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-import-resolver-typescript": "^3.5.4",
@@ -50,6 +51,7 @@
     "vite": "^4.3.9"
   },
   "dependencies": {
+    "@gaudi/runtime": "^0.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }

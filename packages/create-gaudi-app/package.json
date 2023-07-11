@@ -2,7 +2,10 @@
   "name": "create-gaudi-app",
   "version": "0.0.1",
   "description": "Project contains templates for creating Gaudi project from scratch.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "bin": {
+    "create-gaudi-app": "./dist/index.js"
+  },
   "scripts": {
     "// --- build": "",
     "build": "npm run build:ts",
@@ -13,7 +16,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/gaudiorg/gaudi.git"
+    "url": "git+https://gitlab.com/gaudiorg/gaudi.git",
+    "directory": "packages/create-gaudi-app"
   },
   "author": "@gaudi.tech",
   "license": "UNLICENCED",
@@ -21,17 +25,21 @@
     "url": "https://gitlab.com/gaudiorg/gaudi/issues"
   },
   "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
+  "files": [
+    "dist",
+    "template-*/**"
+  ],
   "devDependencies": {
     "@types/minimist": "^1.2.2",
     "@types/prompts": "^2.4.4",
-    "chalk": "^4.1.2",
-    "cross-spawn": "^7.0.3",
-    "kolorist": "^1.8.0",
-    "minimist": "^1.2.8",
-    "prompts": "^2.4.2",
     "typescript": "^5.0.3"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "minimist": "^1.2.8",
+    "prompts": "^2.4.2"
   }
 }

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import path from "path";
 import fs from "fs";
 import prompts from "prompts";
@@ -89,7 +91,7 @@ async function init() {
     ensurePathExists(templateDir, `Template dir does not exist: "${templateDir}"`);
 
     console.log();
-    console.log("Initializing project in ", projectDir, " ...");
+    console.log(`Initializing project in "${projectDir}" ...`);
 
     // copy tpl files
     copyDir(templateDir, projectDir);
@@ -99,7 +101,7 @@ async function init() {
     // write next steps msg
     console.log();
     console.log("Done. Now run:");
-    console.log(`  cd ${targetDir}`);
+    console.log(`  cd "${targetDir}"`);
     console.log("  npm install");
     console.log("  npm run dev");
     console.log("");
