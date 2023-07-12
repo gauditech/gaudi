@@ -4,6 +4,7 @@ import _ from "lodash";
 
 import { GAUDI_SCRIPTS, getDefaultNodeOptions } from "@cli/config";
 import { createCommandRunner } from "@cli/runner";
+import { makeCliSafePath } from "@cli/utils";
 
 export function start(_config: EngineConfig) {
   console.log("Starting Gaudi project ... ", process.cwd());
@@ -16,6 +17,6 @@ export function start(_config: EngineConfig) {
     ...getDefaultNodeOptions(),
     "--watch",
     "false",
-    GAUDI_SCRIPTS.RUNTIME,
+    makeCliSafePath(GAUDI_SCRIPTS.RUNTIME),
   ]);
 }

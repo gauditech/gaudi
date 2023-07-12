@@ -33,15 +33,21 @@ export function readConfig(configPath?: string): EngineConfig {
       `Failed to find a gaudiconfig.json or gaudiconfig.yaml in ${process.cwd()} or any of it's parents.`
     );
   }
-  const projectRoot = path.dirname(result.filepath);
+  console.log(`Found Gaudi config: ${result.filepath}`);
+
+  // Make paths relative to CWD to get shorter paths
+  const projectRoot = path.relative(process.cwd(), path.dirname(result.filepath));
+  const configFile = path.join(projectRoot, path.basename(result.filepath));
+
+  // read config
   const config = result.config;
 
-  const inputFolder = path.resolve(projectRoot, config?.rootDir ?? "");
-  const outputFolder = path.resolve(projectRoot, config?.outDir ?? "");
-  // gaudi folder's path should probably be determined by the position of (future) gaudi config file
-  const gaudiFolder = path.resolve(inputFolder, GAUDI_FOLDER_NAME);
+  const inputFolder = path.join(projectRoot, config?.rootDir ?? "");
+  const outputFolder = path.join(projectRoot, config?.outDir ?? "");
+  // TODO: gaudi folder's path should probably be determined by the position of gaudi config file
+  const gaudiFolder = path.join(inputFolder, GAUDI_FOLDER_NAME);
 
-  const finalConfig = { inputFolder, outputFolder, gaudiFolder, configFile: result.filepath };
+  const finalConfig = { inputFolder, outputFolder, gaudiFolder, configFile };
 
   console.log("Gaudi engine config", finalConfig);
 

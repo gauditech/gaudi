@@ -3,6 +3,7 @@ import _ from "lodash";
 
 import { GAUDI_SCRIPTS, getDbSchemaPath, getDefaultNodeOptions } from "@cli/config";
 import { createCommandRunner } from "@cli/runner";
+import { makeCliSafePath } from "@cli/utils";
 
 // ---------- DB commands
 // --- DB push
@@ -50,7 +51,7 @@ export function dbPopulate(options: DbPopulateOptions, _config: EngineConfig) {
 
   return createCommandRunner("node", [
     ...getDefaultNodeOptions(),
-    GAUDI_SCRIPTS.POPULATOR,
+    makeCliSafePath(GAUDI_SCRIPTS.POPULATOR),
     "-p",
     populatorName,
   ]);

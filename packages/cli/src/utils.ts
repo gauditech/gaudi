@@ -23,7 +23,7 @@ export function resolveProjectPath() {
 
 /** Find path to nodejs project module. */
 export function resolveModulePath(module: string) {
-  return path.resolve(resolveProjectPath() ?? "", "node_modules", module);
+  return path.join(resolveProjectPath() ?? "", "node_modules", module);
 }
 
 /** Create dir recursively if it doesn't exist already */
@@ -68,4 +68,9 @@ export function readFile(path: string) {
 
 export function writeFile(path: string, content: string) {
   fs.writeFileSync(path, content);
+}
+
+/** Escape spaces in path to make it safe for CLI usage */
+export function makeCliSafePath(path: string): string {
+  return path.replaceAll(" ", "\\ ");
 }
