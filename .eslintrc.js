@@ -11,8 +11,9 @@ module.exports = {
   ],
   settings: {
     "import/resolver": {
-      typescript: true,
-      node: true,
+      typescript: {
+        project: ["packages/**/tsconfig.json"],
+      },
     },
   },
   rules: {
@@ -40,7 +41,7 @@ module.exports = {
       },
     ],
   },
-  ignorePatterns: [".eslintrc.js", "dist", "template-create-gaudi/*"],
+  ignorePatterns: [".eslintrc.js", "dist", "create-gaudi-app"],
   env: {
     es6: true,
     node: true,

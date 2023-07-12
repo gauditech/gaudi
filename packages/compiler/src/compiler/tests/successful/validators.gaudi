@@ -1,0 +1,7 @@
+model User {
+  field fullName {
+    type string,
+    validate { minLength(4) and maxLength(20) }
+  }
+  field size { type integer, validate { minInt(0) } }
+}

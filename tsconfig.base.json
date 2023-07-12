@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "target": "es6",
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "incremental": true,
+    // "sourceMap": true,
+    // "outDir": "dist",
+    // "baseUrl": ".",
+    "strict": true,
+    "lib": ["es2021"],
+    "paths": {
+      "@compiler/*": ["./packages/compiler/src/*"],
+      "@runtime/*": ["./packages/runtime/src/*"],
+      "@cli/*": ["./packages/cli/src/*"]
+    },
+    "plugins": [
+      /*
+       * plugin that transforms aliased paths back to relative ones using "paths" alias map
+       * https://github.com/LeDDGroup/typescript-transform-paths
+       *
+       * because tsc doesn't allow plugins in tsconfig we use ts-patch as a `tsc` drop in replacement -> `tspc`
+       * https://github.com/nonara/ts-patch
+       */
+      { "transform": "typescript-transform-paths" },
+      // transform paths in declarations as well
+      { "transform": "typescript-transform-paths", "afterDeclarations": true }
+    ]
+  }
+}

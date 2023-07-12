@@ -1,0 +1,9 @@
+
+runtime GaudiDemo {
+  source path "hooks"
+}
+  
+
+//
+// Place your Gaudi source code here ...
+//
