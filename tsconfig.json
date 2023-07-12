@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "references": [
+    { "path": "./packages/compiler" },
+    { "path": "./packages/runtime" },
+    { "path": "./packages/cli" }
+  ],
+  "include": []
+}
