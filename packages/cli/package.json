@@ -4,6 +4,9 @@
   "description": "Gaudi CLI",
   "main": "./dist/index.js",
   "types": "./dist",
+  "bin": {
+    "gaudi": "./dist/index.js"
+  },
   "scripts": {
     "// --- build": "",
     "build": "npm run build:ts",
@@ -12,7 +15,9 @@
     "dev": "concurrently --names TS --prefix-colors blue \"npm run dev:ts\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "// --- other": "",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist",
+    "// --- lifecycle": "",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",

@@ -18,7 +18,9 @@
     "test": "jest --selectProjects unit",
     "test:watch": "npm test -- --watch",
     "// --- other": "",
-    "clean": "rimraf ./dist"
+    "clean": "rimraf ./dist",
+    "// --- lifecycle": "",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",

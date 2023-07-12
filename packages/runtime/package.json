@@ -6,7 +6,9 @@
   "types": "./dist",
   "bin": {
     "gaudi-runtime": "./dist/index.js",
-    "gaudi-populator": "./dist/populator/populator.js"
+    "gaudi-populator": "./dist/populator/populator.js",
+    "// --- lifecycle": "",
+    "prepack": "npm run build"
   },
   "scripts": {
     "// --- build": "",
@@ -55,7 +57,6 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-import-resolver-typescript": "^3.5.4",
     "eslint-plugin-import": "^2.27.5",
-    "openapi-types": "^12.1.0",
     "rimraf": "^3.0.2",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.3"
@@ -72,6 +73,7 @@
     "express": "^4.18.2",
     "knex": "^2.3.0",
     "lodash": "^4.17.21",
+    "openapi-types": "^12.1.0",
     "passport": "^0.6.0",
     "passport-http-bearer": "^1.0.1",
     "pg": "^8.8.0",
