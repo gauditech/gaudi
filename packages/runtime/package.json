@@ -2,6 +2,8 @@
   "name": "@gaudi/runtime",
   "version": "0.0.1",
   "description": "Gaudi runtime",
+  "author": "@gaudi.tech",
+  "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist",
   "bin": {
@@ -32,8 +34,6 @@
     "type": "git",
     "url": "git+ssh://git@gitlab.com/gaudiorg/gaudi.git"
   },
-  "author": "@gaudi.tech",
-  "license": "UNLICENCED",
   "bugs": {
     "url": "https://gitlab.com/gaudiorg/gaudi/issues"
   },

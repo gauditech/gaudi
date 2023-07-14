@@ -2,6 +2,8 @@
   "name": "create-gaudi-app",
   "version": "0.0.1",
   "description": "Project contains templates for creating Gaudi project from scratch.",
+  "author": "@gaudi.tech",
+  "license": "MIT",
   "main": "dist/index.js",
   "bin": {
     "create-gaudi-app": "./dist/index.js"
@@ -19,8 +21,6 @@
     "url": "git+https://gitlab.com/gaudiorg/gaudi.git",
     "directory": "packages/create-gaudi-app"
   },
-  "author": "@gaudi.tech",
-  "license": "UNLICENCED",
   "bugs": {
     "url": "https://gitlab.com/gaudiorg/gaudi/issues"
   },

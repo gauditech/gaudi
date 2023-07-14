@@ -1,6 +1,9 @@
 {
   "name": "@gaudi/common",
   "private": true,
+  "description": "Gaudi project root",
+  "author": "@gaudi.tech",
+  "license": "MIT",
   "scripts": {
     "// --- build": "",
     "build:all": "npm run build --workspaces",
@@ -21,8 +24,6 @@
     "type": "git",
     "url": "git+ssh://git@gitlab.com/gaudiorg/gaudi.git"
   },
-  "author": "@gaudi.tech",
-  "license": "UNLICENCED",
   "bugs": {
     "url": "https://gitlab.com/gaudiorg/gaudi/issues"
   },
