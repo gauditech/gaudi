@@ -12,6 +12,7 @@
     "test:api": "npm run test:api --workspace ",
     "test:client": "npm run test:api --workspace ",
     "// --- publish": "",
+    "pack:all": "npm run pack --workspaces",
     "pack": "npm run pack --workspace ",
     "// --- util": "",
     "clean:all": "npm run clean --workspaces",
