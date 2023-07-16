@@ -1,9 +1,3 @@
-import { Express, Request, Response } from "express";
-import _ from "lodash";
-import { match } from "ts-pattern";
-
-import { Vars } from "./vars";
-
 import {
   EndpointPath,
   PathFragmentIdentifier,
@@ -11,10 +5,32 @@ import {
   buildEndpointPath,
 } from "@gaudi/compiler/dist/builder/query";
 import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
+import { Logger } from "@gaudi/compiler/dist/common/logger";
 import { getRef } from "@gaudi/compiler/dist/common/refs";
 import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import { endpointUsesAuthentication } from "@gaudi/compiler/dist/composer/entrypoints";
-import { Logger } from "@gaudi/compiler/dist/common/logger";
+import {
+  CreateEndpointDef,
+  CustomManyEndpointDef,
+  CustomOneEndpointDef,
+  Definition,
+  DeleteEndpointDef,
+  EndpointDef,
+  EndpointHttpMethod,
+  EntrypointDef,
+  GetEndpointDef,
+  ListEndpointDef,
+  QueryDef,
+  TypedExprDef,
+  TypedFunction,
+  UpdateEndpointDef,
+} from "@gaudi/compiler/dist/types/definition";
+import { Request, Response, Router } from "express";
+import _ from "lodash";
+import { match } from "ts-pattern";
+
+import { Vars } from "./vars";
+
 import { executeArithmetics } from "@runtime//common/arithmetics";
 import { executeEndpointActions } from "@runtime/common/action";
 import {
@@ -38,22 +54,6 @@ import { DbConn } from "@runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@runtime/server/error";
 import { endpointGuardHandler } from "@runtime/server/middleware";
 import { EndpointConfig } from "@runtime/server/types";
-import {
-  CreateEndpointDef,
-  CustomManyEndpointDef,
-  CustomOneEndpointDef,
-  Definition,
-  DeleteEndpointDef,
-  EndpointDef,
-  EndpointHttpMethod,
-  EntrypointDef,
-  GetEndpointDef,
-  ListEndpointDef,
-  QueryDef,
-  TypedExprDef,
-  TypedFunction,
-  UpdateEndpointDef,
-} from "@gaudi/compiler/dist/types/definition";
 
 const logger = Logger.specific("http");
 
@@ -73,7 +73,7 @@ export function flattenEndpoints(entrypoints: EntrypointDef[]): EndpointDef[] {
 }
 
 /** Register endpoint on server instance */
-export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
+export function registerServerEndpoint(app: Router, epConfig: EndpointConfig, pathPrefix: string) {
   const epPath = pathPrefix + epConfig.path;
   logger.info(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
 

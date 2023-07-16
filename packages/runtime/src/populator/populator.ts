@@ -16,8 +16,6 @@ const args = readArgs();
 // run main function
 run(args, config);
 
-console.log(" --- ENV", process.execArgv);
-
 // ------------------------
 
 /** Main runner. */
