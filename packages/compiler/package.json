@@ -1,6 +1,6 @@
 {
   "name": "@gaudi/compiler",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Gaudi compiler",
   "author": "@gaudi.tech",
   "license": "MIT",
