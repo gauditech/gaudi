@@ -15,7 +15,7 @@
   "scripts": {
     "// --- build": "",
     "build": "npm run build:ts",
-    "build:ts": "tspc --build --preserveWatchOutput",
+    "build:ts": "tspc --build --preserveWatchOutput tsconfig.build.json ",
     "// --- dev": "",
     "dev": "concurrently --names TS --prefix-colors blue \"npm run dev:ts\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
@@ -39,7 +39,8 @@
   },
   "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
   "files": [
-    "dist"
+    "dist",
+    "!dist/.tsbuildinfo"
   ],
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

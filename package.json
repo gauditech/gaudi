@@ -13,7 +13,7 @@
     "// --- test": "",
     "test": "npm run test --workspace ",
     "test:api": "npm run test:api --workspace ",
-    "test:client": "npm run test:api --workspace ",
+    "test:client": "npm run test:client --workspace ",
     "// --- publish": "",
     "pack": "npm pack --workspace ",
     "// --- util": "",
@@ -35,6 +35,7 @@
       "packages/cli"
     ]
   },
+  "files": [],
   "devDependencies": {
     "ts-patch": "^3.0.1",
     "typescript-transform-paths": "^3.4.6"

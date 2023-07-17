@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "references": [{ "path": "../compiler" }],
-  "include": ["src/**/*.test.ts"]
+  "extends": "./tsconfig.json",
+  "include": ["src"]
 }
