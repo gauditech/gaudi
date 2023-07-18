@@ -16,7 +16,7 @@
     "dev": "npm run dev:ts",
     "dev:ts": "npm run build:ts -- --watch --incremental",
     "// --- lifecycle": "",
-    "prepack": "npm run build"
+    "prepack": "npm run clean && npm run build"
   },
   "repository": {
     "type": "git",
