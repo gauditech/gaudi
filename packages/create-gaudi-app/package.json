@@ -14,7 +14,9 @@
     "build:ts": "tsc --project ./tsconfig.json --preserveWatchOutput",
     "// --- dev": "",
     "dev": "npm run dev:ts",
-    "dev:ts": "npm run build:ts -- --watch --incremental"
+    "dev:ts": "npm run build:ts -- --watch --incremental",
+    "// --- lifecycle": "",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
