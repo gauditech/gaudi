@@ -33,7 +33,7 @@ function parseArguments() {
     .command({
       command: "build [root]",
       describe:
-        "Build entire project. Compiles Gaudi blueprint, pushes changes to DB and copies files to output folder",
+        "Build entire project. Compiles Gaudi code, pushes changes to DB and copies files to output folder",
       handler: (args) => {
         buildCommandHandler(args);
       },
@@ -45,7 +45,7 @@ function parseArguments() {
     })
     .command({
       command: "dev [root]",
-      describe: "Start project dev builder which rebuilds project on detected blueprint changes.",
+      describe: "Start project dev builder which rebuilds project on detected code changes.",
       handler: (args) => {
         devCommandHandler(args);
       },

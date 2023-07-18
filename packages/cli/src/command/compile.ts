@@ -8,7 +8,7 @@ import { makeCliSafePath } from "@cli/utils";
 // --- compile
 
 export function compile(_config: EngineConfig) {
-  console.log("Compiling Gaudi blueprint ...");
+  console.log("Compiling Gaudi code ...");
 
   return createCommandRunner("node", [
     ...getDefaultNodeOptions(),
