@@ -15,6 +15,8 @@
     "// --- dev": "",
     "dev": "npm run dev:ts",
     "dev:ts": "npm run build:ts -- --watch --incremental",
+    "// --- other": "",
+    "clean": "rimraf ./dist",
     "// --- lifecycle": "",
     "prepack": "npm run clean && npm run build"
   },
