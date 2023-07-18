@@ -1,31 +1,31 @@
-import express, { Router } from "express";
+import { Router } from "express";
 
 import { AppConfig, loadDefinition } from "@runtime/config";
 import { gaudiMiddleware } from "@runtime/server/middleware";
 
-// router singleton
-let router: express.Router;
-
 /**
- * Gaudi express middleware. Initializes Gaudi API and error handlers.
+ * Gaudi express middleware.
+ * Loads definition file, initializes Gaudi APIs and error handlers.
  *
- * Usage:
+ * Example usage:
+ *
  * Gaudi in root path:
  * ```
  * app.use(useGaudi())
  * ```
  *
- * Gaudi in subpath path:
+ * Gaudi in subpath:
  * ```
  * app.use("/subpath", useGaudi())
  * ```
  *
- * @param customConfig {AppConfig} - manual config; if not provided, Gaudi reads config from ENV
- * @returns - express router
+ * @param config {AppConfig} - Gaudi runtime config
+ * @returns Express router
+ *
  */
 export function useGaudi(config: AppConfig) {
   // initialize new router
-  router = Router();
+  const router = Router();
 
   const definition = loadDefinition(config.definitionPath);
 
