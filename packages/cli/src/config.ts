@@ -43,8 +43,14 @@ export function getDefaultNodeOptions(): string[] {
  * Make paths relative to CWD to get shorter paths
  */
 export const GAUDI_SCRIPTS = {
-  COMPILER: path.relative(process.cwd(), path.resolve(__dirname, "../../@gaudi/compiler")),
-  RUNTIME: path.relative(process.cwd(), path.resolve(__dirname, "../../@gaudi/runtime")),
+  COMPILER: path.relative(
+    process.cwd(),
+    path.resolve(__dirname, "../../@gaudi/compiler/dist/compiler-cli.js")
+  ),
+  RUNTIME: path.relative(
+    process.cwd(),
+    path.resolve(__dirname, "../../@gaudi/runtime/dist/runtime-cli.js")
+  ),
   POPULATOR: path.relative(
     process.cwd(),
     path.resolve(__dirname, "../../@gaudi/runtime/dist/populator/populator.js")
