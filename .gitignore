@@ -1,3 +1,10 @@
 node_modules
 dist
 .tsbuildinfo
+
+# gaudi artefacts
+gaudi-*.tgz
+gaudi-compiler*.tgz
+gaudi-runtime*.tgz
+create-gaudi-app-*.tgz
+
