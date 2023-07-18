@@ -49,7 +49,7 @@ export function readConfig(configPath?: string): EngineConfig {
 
   const finalConfig = { inputFolder, outputFolder, gaudiFolder, configFile };
 
-  console.log("Gaudi engine config", finalConfig);
+  console.log("Gaudi compiler config", finalConfig);
 
   return finalConfig;
 }
