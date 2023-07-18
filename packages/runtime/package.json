@@ -5,10 +5,8 @@
   "main": "./dist/index.js",
   "types": "./dist",
   "bin": {
-    "gaudi-runtime": "./dist/index.js",
-    "gaudi-populator": "./dist/populator/populator.js",
-    "// --- lifecycle": "",
-    "prepack": "npm run build"
+    "gaudi-runtime": "./dist/runtime-cli.js",
+    "gaudi-populator": "./dist/populator/populator-cli.js"
   },
   "scripts": {
     "// --- build": "",
@@ -26,7 +24,9 @@
     "test:client:watch": "npm run test:client -- --watch",
     "// --- other": "",
     "clean": "rimraf ./dist",
-    "gaudi-populator": "gaudi-populator"
+    "gaudi-populator": "gaudi-populator",
+    "// --- lifecycle": "",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",

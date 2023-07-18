@@ -1,6 +1,6 @@
-import { Express, Request } from "express";
+import { Express, Request, Router } from "express";
 
-import { RuntimeConfig } from "@runtime/config";
+import { AppConfig } from "@runtime/config";
 import { DbConn } from "@runtime/server/dbConn";
 
 // ----- app specific context
@@ -8,10 +8,10 @@ import { DbConn } from "@runtime/server/dbConn";
 /** Construct describing app server context. */
 export type AppContext = {
   dbConn: DbConn;
-  config: Readonly<RuntimeConfig>;
+  config: Readonly<AppConfig>;
 };
 
-export type AppContextKey = Request | Express;
+export type AppContextKey = Request | Express | Router;
 
 /** Bind app context instance to key object. */
 export function bindAppContext(key: AppContextKey, ctx: AppContext): void {

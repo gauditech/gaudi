@@ -1,7 +1,4 @@
-#!/usr/bin/env node
-
 import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/types/definition";
-import _ from "lodash";
 
 import { ActionContext, executeActions } from "@runtime/common/action";
 import { createIterator } from "@runtime/common/iterator";
@@ -9,26 +6,15 @@ import { RuntimeConfig, loadDefinition, readConfig } from "@runtime/config";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
 import { Vars } from "@runtime/server/vars";
 
-// read environment
-const config = readConfig();
-const args = readArgs();
-
-// run main function
-run(args, config);
-
-console.log(" --- ENV", process.execArgv);
-
-// ------------------------
-
 /** Main runner. */
-async function run(args: ProcessArgs, config: RuntimeConfig) {
+export async function populate(options: PopulateOptions, config: RuntimeConfig) {
   let dbConn: DbConn | undefined;
   try {
     const definition = loadDefinition(config.definitionPath);
 
     dbConn = createDbConn(config.dbConnUrl, { schema: config.dbSchema });
 
-    const targetPopulatorName = args.populator;
+    const targetPopulatorName = options.populator;
 
     if (targetPopulatorName == null) {
       throw new Error(`Populator name is missing. Try adding "-p <name>"`);
@@ -56,32 +42,10 @@ async function run(args: ProcessArgs, config: RuntimeConfig) {
   }
 }
 
-type ProcessArgs = {
+export type PopulateOptions = {
   /** Name of the populator to execute */
   populator?: string;
 };
-
-/**
- * Simple process argument parser.
- *
- * This avoids using positional parameters.
- * For CLI we sohuld think about introducing some better arg parser.
- */
-function readArgs(): ProcessArgs {
-  const rawArgs = process.argv.slice(2); // skip node and this script
-
-  const args: ProcessArgs = {};
-  while (rawArgs.length) {
-    const a = rawArgs.shift();
-    if (a === "-p") {
-      args.populator = rawArgs.shift();
-    } else {
-      console.log(`Unknown argument ${a}`);
-    }
-  }
-
-  return args;
-}
 
 async function processPopulator(
   def: Definition,
