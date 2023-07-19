@@ -1,9 +1,10 @@
 {
+  // this file includes common configs and references
+  // many tools (eg. vscode) rely on the existence of root "tsconfig.json" to establish TS context
+  // don't add specific options here but to "test" and "build" versions of this file
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "tsBuildInfoFile": "dist/.tsbuildinfo"
+    "outDir": "dist" // this will tell TS that we won't overwrite JS files in "src" which we would if this was missing
   },
-  "include": ["src", "src/**/*.json"]
+  "include": ["src"]
 }

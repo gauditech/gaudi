@@ -7,7 +7,7 @@ Project contains templates for creating Gaudi project from scratch.
 To initialize a new starter project use Gaudi CLI
 
 ```
-npx gaudi-cli init <project-name> --template <template-name>
+npm create gaudi-app
 ```
 
 ### Supported templates

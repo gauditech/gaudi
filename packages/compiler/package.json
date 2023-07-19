@@ -1,7 +1,9 @@
 {
   "name": "@gaudi/compiler",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Gaudi compiler",
+  "author": "@gaudi.tech",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist",
   "bin": {
@@ -10,7 +12,7 @@
   "scripts": {
     "// --- build": "",
     "build": "npm run build:ts",
-    "build:ts": "tspc --build --preserveWatchOutput",
+    "build:ts": "tspc --build --preserveWatchOutput tsconfig.build.json",
     "// --- dev": "",
     "dev": "concurrently --names TS --prefix-colors blue \"npm run dev:ts\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
@@ -20,20 +22,19 @@
     "// --- other": "",
     "clean": "rimraf ./dist",
     "// --- lifecycle": "",
-    "prepack": "npm run build"
+    "prepack": "npm run clean && npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@gitlab.com/gaudiorg/gaudi.git"
   },
-  "author": "@gaudi.tech",
-  "license": "UNLICENCED",
   "bugs": {
     "url": "https://gitlab.com/gaudiorg/gaudi/issues"
   },
   "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
   "files": [
-    "dist"
+    "dist",
+    "!dist/.tsbuildinfo"
   ],
   "devDependencies": {
     "@types/common-tags": "^1.8.1",

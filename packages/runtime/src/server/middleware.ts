@@ -1,4 +1,4 @@
-import { Definition } from "@compiler/types/definition";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
 import { NextFunction, Request, Response, Router, json } from "express";
 
 import { AppConfig } from "@runtime/config";

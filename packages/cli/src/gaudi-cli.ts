@@ -75,7 +75,7 @@ function parseArguments() {
     })
     .command({
       command: "db",
-      describe: "Executes a database command. Run 'gaudi-cli db' for more info.",
+      describe: "Executes a database command. Run 'gaudi db' for more info.",
       handler: () => {
         // handler is required but this a noop
       },
@@ -169,7 +169,7 @@ function parseArguments() {
 type CommonCommandArgs = {
   /** Project root folder */
   root?: string;
-  /** Gaudi dev mode. Adds `node_modules/@gaudi/engine` to file watch list. Option convenient when developing Gaudi itself */
+  /** Gaudi dev mode. Adds `node_modules/@gaudi/*` to file watch list. Option convenient when developing Gaudi itself */
   gaudiDev?: boolean;
 };
 
