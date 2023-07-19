@@ -3,7 +3,7 @@
   "private": true,
   "description": "Gaudi project root",
   "author": "@gaudi.tech",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "// --- build": "",
     "build:all": "npm run build --workspaces",

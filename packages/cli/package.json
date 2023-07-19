@@ -3,7 +3,7 @@
   "version": "0.0.3",
   "description": "Gaudi CLI",
   "author": "@gaudi.tech",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist",
   "bin": {
