@@ -1,6 +1,10 @@
-import { Express, NextFunction, Request, Response } from "express";
+import { Definition } from "@gaudi/compiler/dist/types/definition";
+import { NextFunction, Request, Response, Router, json } from "express";
 
-import { AppContext, bindAppContext, getAppContext } from "@runtime/server/context";
+import { AppConfig } from "@runtime/config";
+import { setupServerApis } from "@runtime/server/api";
+import { AppContext, bindAppContext } from "@runtime/server/context";
+import { createDbConn } from "@runtime/server/dbConn";
 import { HttpResponseError } from "@runtime/server/error";
 import { ServerRequestHandler } from "@runtime/server/types";
 
@@ -10,7 +14,7 @@ import { ServerRequestHandler } from "@runtime/server/types";
  * Binds AppContext instance to express and request instances so it's
  * accessible to server's internals (eg. req handlers).
  */
-export function bindAppContextHandler(app: Express, ctx: AppContext) {
+export function bindAppContextHandler(app: Router, ctx: AppContext) {
   bindAppContext(app, ctx);
 
   return (req: Request, _resp: Response, next: NextFunction) => {
@@ -59,4 +63,25 @@ export function requestLogger(req: Request, resp: Response, next: NextFunction) 
   });
 
   next();
+}
+
+export function createAppContext(config: AppConfig) {
+  return {
+    dbConn: createDbConn(config.dbConnUrl, {
+      schema: config.dbSchema,
+    }),
+    config: config,
+  };
+}
+
+export function gaudiMiddleware(router: Router, def: Definition, config: AppConfig) {
+  const ctx = createAppContext(config);
+  router.use(bindAppContextHandler(router, ctx));
+
+  router.use(json()); // middleware for parsing application/json body
+  router.use(requestLogger);
+
+  setupServerApis(def, router);
+
+  router.use(errorHandler);
 }

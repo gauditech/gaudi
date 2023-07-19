@@ -7,8 +7,8 @@
   "main": "./dist/index.js",
   "types": "./dist",
   "bin": {
-    "gaudi-runtime": "./dist/index.js",
-    "gaudi-populator": "./dist/populator/populator.js"
+    "gaudi-runtime": "./dist/runtime-cli.js",
+    "gaudi-populator": "./dist/populator/populator-cli.js"
   },
   "scripts": {
     "// --- build": "",

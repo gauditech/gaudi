@@ -2,11 +2,14 @@ import fs from "fs";
 
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 
-export type RuntimeConfig = {
+export type RuntimeConfig = AppConfig & {
   /** Runtime server host name */
   host: string;
   /** Runtime server port number */
   port: number;
+};
+
+export type AppConfig = {
   /** Path to "definition.json" file. */
   definitionPath: string;
   /** Directory where runtime should output generated files */
