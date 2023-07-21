@@ -10,12 +10,8 @@
     "sourceMap": true,
     "outDir": "../../dist/server",
     "rootDir": "src",
-    "baseUrl": "src",
     "strict": true,
-    "paths": {
-      "*": ["node_modules/*"]
-    },
     "lib": ["es2020"]
   },
-  "include": ["src/hooks"]
+  "include": ["src"]
 }

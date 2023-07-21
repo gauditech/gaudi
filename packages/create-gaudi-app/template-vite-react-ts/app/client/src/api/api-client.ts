@@ -39,22 +39,22 @@ function buildApi(options: ApiClientOptions) {
       name: string,
       description: string | null
     };
-    type GetError = "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
+    type GetError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND";
     type UpdateData = {
       name?: string,
       description?: string | null
     };
     type UpdateResp = GetResp;
-    type UpdateError = "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION";
+    type UpdateError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION";
     type DeleteError = GetError;
     type CreateData = {
       name: string,
       description?: string | null
     };
     type CreateResp = GetResp;
-    type CreateError = UpdateError;
+    type CreateError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION";
     type ListResp = GetResp;
-    type ListError = GetError;
+    type ListError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER";
 
     // entrypoint function
     function api(id: number) {
