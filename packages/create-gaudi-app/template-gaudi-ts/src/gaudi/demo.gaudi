@@ -1,6 +1,6 @@
 
 runtime GaudiDemo {
-  source path "hooks"
+  source path "dist/hooks"
 }
   
 

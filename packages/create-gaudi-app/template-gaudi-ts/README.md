@@ -1,28 +1,24 @@
 # Welcome to **gaudi-demo** project
 
-This is a Gaudi starter project.
+This is a Gaudi demo project.
 
 ## Initializing project
 
-To initialize a new starter project use Gaudi CLI anywhere where CLI is available.
+In your shell run NPM initializer
 
 ```
-npm create gaudi
+npm create gaudi-app
 ```
 
-Project name will be used as a name for project folder, NPM package name, Gaudi source file and DB name. As such it will be sanitized and all (regex) "non-word" characters will be replaced with "-".
-Eg.
-
-- `"new project 1` -> `"new-project-1"`
-- `"@myorg/acme_util"` -> `"myorg-acme_util"`
+Select "Gaudi backend project" in template selector.
 
 ## Building project
 
-Gaudi CLI is used to build Gaudi source code but since this project also contains Typescript hooks which are built independently from Gaudi source code, both are conveniently wrapped in NPM scripts:
+Gaudi CLI is used to build Gaudi source code but since this project also contains typescript which are built independently from Gaudi source code, both are conveniently wrapped in NPM scripts:
 
 ##### **Build**
 
-Builds hooks sources and run Gaudi build
+Builds typescript sources and run Gaudi build
 
 ```
 $ npm run build
@@ -30,7 +26,7 @@ $ npm run build
 
 ##### **Dev**
 
-Starts project dev mode which will build hooks sources and Gaudi build but will also start watching resources and rebuild when needed.
+Starts project dev mode which will build typescript and Gaudi sources but will also start watching resources and rebuild when needed.
 
 ```
 $ npm run dev
@@ -41,69 +37,51 @@ $ npm run dev
 Start successfully built app. See [Runtime configuration](#runtime-configuration) for app defaults.
 
 ```
-$ npm run start
-```
-
-### Building Gaudi engine
-
-If building Gaudi engine in parallel, Gaudi engine's output (`dist`) needs to be connected/linked to this project's dependencies.
-
-In Gaudi output folder run following
-
-```
-npm install # creates node_modules folder
-npm link # compensate for not being on NPM repository
-```
-
-In this project's folder run
-
-```
-npm link gaudi
-```
-
-This is executed when starter project is initialized but symlink is lost after each `npm i` and it must be repeated.
-
-Alternatively, you can install Gaudi engine as a local file but since this is very machine specific, it need s to be installed manually.
-
-```
-npm i file://path/to/gaudi/dist
+$ npm start
 ```
 
 ## Configure project
 
 Project can be configured through `.env` file. Available configuration options:
 
-#### **Database**
+### Gaudi compiler
 
-- `GAUDI_DATABASE_URL` [_"postgresql://gaudi:gaudip@localhost:5432/gaudi-demo"_] - DB connection string
+Gaudi compiler is configured via `gaudiconfig.json`
 
-#### **Gaudi engine**
+- `rootDir` [_"src/gaudi"_] - path to folder containing Gaudi files
+- `outDir` [_"dist"_] - path to folder where Gaudi engine will output it's files
 
-- `GAUDI_ENGINE_INPUT_PATH` [_"src/gaudi-demo.gaudi"_] - path to Gaudi source code files
-- GAUDI*ENGINE_OUTPUT_PATH` [*"dist"\_] - path to folder where Gaudi engine will output it's files
+##### **Server configuration**
 
-#### **Runtime configuration**
+- `SERVER_HOST` [_"localhost"_] - Gaudi runtime app host name
+- `SERVER_PORT` [_3001_] - Gaudi runtime app port
+
+##### **Runtime configuration**
 
 - `GAUDI_RUNTIME_DEFINITION_PATH` [_"dist/definition.json"_] - path to Gaudi definition file
 - `GAUDI_RUNTIME_OUTPUT_PATH` [_"dist"_] - path to folder where Gaudi runtime will output it's files
-- `GAUDI_RUNTIME_SERVER_HOST` [_"localhost"_] - Gaudi runtime app host name
-- `GAUDI_RUNTIME_SERVER_PORT` [_3001_] - Gaudi runtime app port
 
-## Hooks
+##### **Database**
 
-Hooks allow extending Gaudi with custom code. Currently, Gaudi allows only JS hooks. This project is prepared with Typescript hooks which are compiled to JS. Typescript is completely configured through `<root>/tsconfig.json` file.
-
-Hooks code must be located in `<root>/hooks` folder in one or multiple files and/or subfolders.
+- `GAUDI_DATABASE_URL` [_"postgresql://gaudi:gaudip@localhost:5432/gaudi-demo"_] - DB connection string. Make sure you use change this to match your database settings. Building Gaudi app automatically pushes changes to configured database so make sure you use your development database settings.
 
 ## Gaudi source code
 
-Gaudi source code files are located in `<root>/src/gaudi-demo.gaudi` file. It is compiled by Gaudi engine and output to `dist` folder.
+Gaudi source code files are located in `<root>/src/gaudi/demo.gaudi` file. It is compiled by Gaudi compiler and output to `dist` folder.
 
-Gaudi engine also produces DB schema and migration files. Since those files need to be source controlled they are output to `<root>/gaudi` folder and then copied to output folder so they are available to app.
+Gaudi compiler also produces DB schema and migration files. Since those files need to be source controlled they are output to `<root>/gaudi` folder and then copied to output folder so they are available to app.
 
-### API
+## Hooks
 
-Gaudi engine produces following API resources:
+Hooks allow extending Gaudi with custom JS code. This project is prepared with Typescript hooks which are compiled to JS. Typescript is completely configured through `<root>/tsconfig.json` file.
+
+## Server
+
+Server is a small TS script in `src/server.ts` which starts `express` server instance and configures Gaudi using Gaudi middleware. You can add other middleware and/or request handlers as required by your application.
+
+## API
+
+Gaudi compiler produces following API resources:
 
 - API - http://localhost:3001/api
 - API docs - http://localhost:3001/api-docs

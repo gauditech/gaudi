@@ -4,26 +4,35 @@
   "description": "",
   "scripts": {
     "// --- build": "",
-    "build": "npm run build:hooks && npx gaudi build",
-    "build:hooks": "tsc --preserveWatchOutput",
+    "build": "npm run build:ts && npm run build:gaudi",
+    "build:ts": "tsc --build --preserveWatchOutput --force",
+    "build:gaudi": "npx gaudi build",
     "// --- dev": "",
-    "dev": "concurrently --names hooks,gaudi --prefix-colors magenta,blue \"npm run dev:hooks\" \"npx gaudi dev\"",
-    "dev:hooks": "npm run build:hooks -- --watch --incremental",
+    "dev": "concurrently --names ts,gaudi --prefix-colors magenta,blue \"npm run dev:ts\" \"npm run dev:gaudi\"",
+    "dev:ts": "npm run build:ts -- --watch --incremental",
+    "dev:gaudi": "npx gaudi dev",
     "// --- start": "",
-    "start": "npx gaudi start",
+    "start": "dotenv -e .env nodemon --watch dist dist/server.js",
     "// --- other": "",
     "clean": "rimraf dist"
   },
   "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.4.2",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
     "concurrently": "^7.6.0",
-    "rimraf": "^3.0.2",
-    "typescript": "^5.0.3",
+    "dotenv-cli": "^7.2.1",
     "eslint": "^8.37.0",
-    "eslint-plugin-import": "^2.27.5"
+    "eslint-plugin-import": "^2.27.5",
+    "rimraf": "^3.0.2",
+    "typescript": "^5.0.3"
   },
   "dependencies": {
-    "gaudi": "0.0.3"
+    "@gaudi/compiler": "file:../../../home/hkasabasic/work/workspaces/gaudi/gaudi/gaudi-compiler-0.0.3.tgz",
+    "@gaudi/runtime": "file:../../../home/hkasabasic/work/workspaces/gaudi/gaudi/gaudi-runtime-0.0.3.tgz",
+    "express": "^4.18.2",
+    "gaudi": "file:../../../home/hkasabasic/work/workspaces/gaudi/gaudi/gaudi-0.0.3.tgz",
+    "nodemon": "^3.0.1"
   }
 }
