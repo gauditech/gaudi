@@ -25,7 +25,7 @@ import {
   TypedFunction,
   UpdateEndpointDef,
 } from "@gaudi/compiler/dist/types/definition";
-import { Request, Response, Router } from "express";
+import { Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
@@ -52,7 +52,6 @@ import { buildAuthenticationHandler } from "@runtime/server/authentication";
 import { getAppContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@runtime/server/error";
-import { endpointGuardHandler } from "@runtime/server/middleware";
 import { EndpointConfig } from "@runtime/server/types";
 
 const logger = Logger.specific("http");
@@ -70,22 +69,6 @@ export function flattenEndpoints(entrypoints: EntrypointDef[]): EndpointDef[] {
     }, [] as EndpointDef[]);
     return [...accum, ...entrypoint.endpoints, ...nestedEndpoints];
   }, [] as EndpointDef[]);
-}
-
-/** Register endpoint on server instance */
-export function registerServerEndpoint(app: Router, epConfig: EndpointConfig, pathPrefix: string) {
-  const epPath = pathPrefix + epConfig.path;
-  logger.info(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
-
-  app[epConfig.method](
-    epPath,
-    endpointGuardHandler(async (req, resp, next) => {
-      // we have to manually chain (await) our handlers since express' `next` can't do it for us (it's sync)
-      for (const h of epConfig.handlers) {
-        await h(req, resp, next);
-      }
-    })
-  );
 }
 
 function processEndpoint(def: Definition, endpoint: EndpointDef): EndpointConfig {

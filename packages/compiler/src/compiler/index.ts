@@ -111,7 +111,7 @@ export function compileFromFiles(filenames: string[]): Specification {
 
 export function compileProject(rootDir: string): Specification {
   const filenames = glob(`${rootDir}/**/*.gaudi`);
-  console.log(`Found ${filenames.length} Gaudi source files`);
+  console.log(`Compiling ${filenames.length} Gaudi source files`);
 
   return compileFromFiles(filenames);
 }

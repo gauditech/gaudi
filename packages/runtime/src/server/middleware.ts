@@ -1,5 +1,5 @@
 import { Definition } from "@gaudi/compiler/dist/types/definition";
-import { NextFunction, Request, Response, Router, json } from "express";
+import { Express, NextFunction, Request, Response, json } from "express";
 
 import { AppConfig } from "@runtime/config";
 import { setupServerApis } from "@runtime/server/api";
@@ -14,7 +14,7 @@ import { ServerRequestHandler } from "@runtime/server/types";
  * Binds AppContext instance to express and request instances so it's
  * accessible to server's internals (eg. req handlers).
  */
-export function bindAppContextHandler(app: Router, ctx: AppContext) {
+export function bindAppContextHandler(app: Express, ctx: AppContext) {
   bindAppContext(app, ctx);
 
   return (req: Request, _resp: Response, next: NextFunction) => {
@@ -74,14 +74,14 @@ export function createAppContext(config: AppConfig) {
   };
 }
 
-export function gaudiMiddleware(router: Router, def: Definition, config: AppConfig) {
+export function gaudiMiddleware(app: Express, def: Definition, config: AppConfig) {
   const ctx = createAppContext(config);
-  router.use(bindAppContextHandler(router, ctx));
+  app.use(bindAppContextHandler(app, ctx));
 
-  router.use(json()); // middleware for parsing application/json body
-  router.use(requestLogger);
+  app.use(json()); // middleware for parsing application/json body
+  app.use(requestLogger);
 
-  setupServerApis(def, router);
+  setupServerApis(def, app);
 
-  router.use(errorHandler);
+  app.use(errorHandler);
 }
