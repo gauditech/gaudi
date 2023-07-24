@@ -40,19 +40,9 @@ export function getDefaultNodeOptions(): string[] {
  *
  * See a list of options allowed in --node-options here: https://nodejs.org/docs/latest-v16.x/api/cli.html#node_optionsoptions
  *
- * Make paths relative to CWD to get shorter paths
  */
 export const GAUDI_SCRIPTS = {
-  COMPILER: path.relative(
-    process.cwd(),
-    path.resolve(__dirname, "../../@gaudi/compiler/dist/compiler-cli.js")
-  ),
-  RUNTIME: path.relative(
-    process.cwd(),
-    path.resolve(__dirname, "../../@gaudi/runtime/dist/runtime-cli.js")
-  ),
-  POPULATOR: path.relative(
-    process.cwd(),
-    path.resolve(__dirname, "../../@gaudi/runtime/dist/populator/populator.js")
-  ),
+  COMPILER: path.resolve(__dirname, "../../@gaudi/compiler/dist/compiler-cli.js"),
+  RUNTIME: path.resolve(__dirname, "../../@gaudi/runtime/dist/runtime-cli.js"),
+  POPULATOR: path.resolve(__dirname, "../../@gaudi/runtime/dist/populator/populator.js"),
 };

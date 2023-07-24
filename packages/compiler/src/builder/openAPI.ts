@@ -19,7 +19,7 @@ import {
   SelectItem,
 } from "@compiler/types/definition";
 
-export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
+export function buildOpenAPI(definition: Definition, basePath?: string): OpenAPIV3.Document {
   /**
    * Builds a list of required prop names that is attached to the object schema.
    *
@@ -213,7 +213,8 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
         const endpointPath = buildEndpointPath(endpoint);
         const method = buildEndpointHttpMethod(endpoint);
 
-        const path = [
+        const path = _.compact([
+          basePath ?? undefined,
           api.path,
           ..._.chain(endpointPath.fragments)
             .map((frag) => {
@@ -225,7 +226,10 @@ export function buildOpenAPI(definition: Definition): OpenAPIV3.Document {
             })
             .compact() // remove nulls
             .value(),
-        ].join("/");
+        ])
+          .join("/")
+          // reduce duplicate "/" to a single
+          .replaceAll(/\//g, "/");
 
         const parameters = _.chain(endpointPath.fragments)
           .map((fragment): OpenAPIV3.ParameterObject | null => {

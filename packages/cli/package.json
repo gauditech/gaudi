@@ -31,7 +31,8 @@
   "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
   "files": [
     "dist",
-    "!dist/.tsbuildinfo"
+    "!*.tsbuildinfo",
+    "!*.d.ts.map"
   ],
   "devDependencies": {
     "@types/lodash": "^4.14.192",
@@ -45,7 +46,6 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-import-resolver-typescript": "^3.5.4",
     "eslint-plugin-import": "^2.27.5",
-    "nodemon": "^3.0.1",
     "prettier": "^2.8.7",
     "rimraf": "^3.0.2",
     "typescript": "^5.0.3"
@@ -61,6 +61,7 @@
     "copyfiles": "^2.4.1",
     "dotenv": "^16.0.3",
     "lodash": "^4.17.21",
+    "nodemon": "^3.0.1",
     "pkg-dir": "^5.0.0",
     "ts-pattern": "^4.2.2",
     "yargs": "^17.7.1"

@@ -7,21 +7,12 @@
     "target": "es6",
     "noImplicitAny": true,
     "moduleResolution": "node",
-    "sourceMap": true,
     "outDir": "dist",
-    "rootDir": ".",
-    "baseUrl": ".",
+    "rootDir": "src",
     "strict": true,
-    "paths": {
-      "*": [
-        "node_modules/*"
-      ]
-    },
-    "lib": [
-      "es2020"
-    ]
+    "incremental": true,
+    "tsBuildInfoFile": "dist/.tsbuildinfo",
+    "lib": ["es2020"]
   },
-  "include": [
-    "hooks"
-  ]
+  "include": ["src"]
 }

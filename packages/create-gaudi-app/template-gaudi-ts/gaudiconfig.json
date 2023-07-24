@@ -1,4 +1,4 @@
 {
-  "rootDir": ".",
+  "rootDir": "src",
   "outDir": "dist"
 }

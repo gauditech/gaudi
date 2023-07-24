@@ -1,4 +1,5 @@
-import { Router } from "express";
+import express from "express";
+import _ from "lodash";
 
 import { AppConfig, loadDefinition } from "@runtime/config";
 import { gaudiMiddleware } from "@runtime/server/middleware";
@@ -20,16 +21,16 @@ import { gaudiMiddleware } from "@runtime/server/middleware";
  * ```
  *
  * @param config {AppConfig} - Gaudi runtime config
- * @returns Express router
+ * @returns Express instance
  *
  */
 export function useGaudi(config: AppConfig) {
-  // initialize new router
-  const router = Router();
+  // initialize new subapp for gaudi
+  const app = express();
 
   const definition = loadDefinition(config.definitionPath);
 
-  gaudiMiddleware(router, definition, config);
+  gaudiMiddleware(app, definition, config);
 
-  return router;
+  return app;
 }
