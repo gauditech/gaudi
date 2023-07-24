@@ -15,8 +15,16 @@ export function start(_config: EngineConfig) {
   return createCommandRunner("npx", [
     "nodemon",
     ...getDefaultNodeOptions(),
-    "--watch",
-    "false",
+    // ignoring everything we disable nodemon's watch mechanism but still can use "restart" command
+    // make sure "*" is wrapped in quotes to prevent it being replaced by shell
+    "--ignore",
+    '"*"',
+    // allow everything to settle down before restarting
+    "--delay",
+    "0.1",
+    // command to exec
+    "--exec",
+    "npx",
     makeCliSafePath(GAUDI_SCRIPTS.RUNTIME),
   ]);
 }

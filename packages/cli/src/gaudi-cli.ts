@@ -376,7 +376,6 @@ function watchStartCommand(
         console.error("Error running start command:", err);
       });
     } else {
-      // FIXME: this might not be working iow. nodemon is ignoring "restart" command
       // ask `nodemon` to restart monitored process
       // https://github.com/remy/nodemon/wiki/Events
       command.sendMessage("restart");
@@ -396,12 +395,12 @@ function watchStartCommand(
 
   return {
     start: async () => {
-      await run();
+      run(); // long running process, dont await - see `run()` for more info
       await watcher.start();
     },
     stop: async () => {
       await watcher.stop();
-      command.stop(); // manually stop command - see `run()` for details
+      command.stop(); // manually stop command - see `run()` for more info
     },
   };
 }

@@ -29,28 +29,34 @@ export function createCommandRunner(
       console.log(`Starting command: ${command} ${argv.join(" ")}`);
 
       return new Promise<number | null>((resolve, reject) => {
-        childProcess = spawn(command, argv, {
-          env: {
-            ...process.env,
-          },
-          shell: true, // let shell interpret arguments as if they would be when called directly from shell
-          stdio: ["inherit", "inherit", "inherit", "ipc"], // allow child processes to use std streams and allow IPC communication
-          ...(options ?? {}),
-        });
+        try {
+          childProcess = spawn(command, argv, {
+            env: {
+              ...process.env,
+            },
+            shell: true, // let shell interpret arguments as if they would be when called directly from shell
+            stdio: ["inherit", "inherit", "inherit", "ipc"], // allow child processes to use std streams and allow IPC communication
+            ...(options ?? {}),
+          });
 
-        // should we control child process the same way we control "dev" parent process?
-        childProcess.on("error", (err) => {
+          // should we control child process the same way we control "dev" parent process?
+          childProcess.on("error", (err) => {
+            reject(err);
+          });
+          childProcess.on("exit", (code) => {
+            isRunning = false;
+
+            if (code === 0 || code == null) {
+              resolve(code);
+            } else {
+              reject(`Process exited with error code: ${code}`);
+            }
+          });
+
+          isRunning = true;
+        } catch (err) {
           reject(err);
-        });
-        childProcess.on("exit", (code) => {
-          if (code === 0 || code == null) {
-            resolve(code);
-          } else {
-            reject(`Process exited with error code: ${code}`);
-          }
-        });
-
-        isRunning = true;
+        }
       });
     },
     stop: () => {
