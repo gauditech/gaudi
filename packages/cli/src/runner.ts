@@ -3,7 +3,7 @@ import { ChildProcess, SpawnOptions, spawn } from "child_process";
 // -------------------- Command runner
 
 /** Structure that exposes some control over child process while hiding details. */
-type CommandRunner = {
+export type CommandRunner = {
   /** Execute command and return promise that will resolve if process exits nicely and reject if it errs. */
   start: () => Promise<number | null>;
   /** Stop command process. */

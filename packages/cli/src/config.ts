@@ -16,9 +16,15 @@ export function getDbSchemaPath(config: EngineConfig): string {
   return `${config.gaudiFolder}/db/schema.prisma`;
 }
 
-// defaul Node options
+/**
+ * Default Node options. Mostly development related
+ *
+ * If used with NPX, it has some constraints regarding allowed node options.
+ * See a list of options allowed in `--node-options` here: https://nodejs.org/docs/latest-v16.x/api/cli.html#node_optionsoptions
+ *
+ * TODO: maybe we should allow disabling them in production?
+ */
 const DEFAULT_NODE_OPTIONS = [
-  // development node options - maybe we should allow disabling them in production?
   "--enable-source-maps",
   "--stack-trace-limit=30",
   "--stack-size=2048",
@@ -34,12 +40,13 @@ export function getDefaultNodeOptions(): string[] {
 }
 
 /**
- * Paths to Gaudi scripts
+ * Gaudi scripts
  *
- * Target Gaudi scripts directly instead of via NPX because we cannot pass some node options through NPX (via --node-options")
+ * If invoked via `node` use fs paths or binary names if invoked via `NPX`.
  *
- * See a list of options allowed in --node-options here: https://nodejs.org/docs/latest-v16.x/api/cli.html#node_optionsoptions
- *
+ * NPX is better because it uses it's own resolution mechanism to find these scripts
+ * regardless of project structure, symlinking, ... But NPX has some restraints regarding node options.
+ * See `DEFAULT_NODE_OPTIONS` for more info.
  */
 export const GAUDI_SCRIPTS = {
   COMPILER: path.resolve(__dirname, "../../@gaudi/compiler/dist/compiler-cli.js"),
