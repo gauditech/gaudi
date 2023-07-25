@@ -1,4 +1,0 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("GAUDI_DATABASE_URL")
-}
