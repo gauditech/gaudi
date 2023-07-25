@@ -3,6 +3,6 @@
   // many tools (eg. vscode) rely on the existence of root "tsconfig.json" to establish TS context
   // don't add specific options here but to "test" and "build" versions of this file
   "extends": "../../tsconfig.base.json",
-  "references": [{ "path": "../compiler" }],
+  "references": [{ "path": "../compiler" }, { "path": "../runtime" }],
   "include": ["src"]
 }
