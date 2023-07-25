@@ -1,5 +1,3 @@
-import "../../common/setupAliases";
-
 import fs from "fs";
 import path from "path";
 
