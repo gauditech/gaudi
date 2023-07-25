@@ -27,45 +27,29 @@ export function watchResources(
 
   const instance = {
     start: () => {
-      let initialized = false;
-      let promiseResolve: ((_: void) => void) | undefined;
-      let promiseReject: ((err: unknown) => void) | undefined;
-
-      watcher = chokidar
-        .watch(target, { ...watcherOptions /* add default options */ })
-        // file listeners
-        .on("add", debouncedCallback)
-        .on("change", debouncedCallback)
-        .on("unlink", debouncedCallback)
-        // folder listeners
-        .on("addDir", debouncedCallback)
-        .on("unlinkDir", debouncedCallback)
-        // attached all listeners
-        .on("ready", () => {
-          initialized = true;
-          // resolve promise
-          if (promiseResolve) {
-            promiseResolve();
-          } else {
-            console.warn("Resource watcher: promise resolve not ready");
-          }
-        })
-        .on("error", (err) => {
-          // reject promise
-          console.error("Resource watcher error", err);
-          if (!initialized) {
-            if (promiseReject) {
-              promiseReject(err);
-            } else {
-              console.warn("Resource watcher: promise reject not ready");
-            }
-          }
-        });
-
       return new Promise<void>((resolve, reject) => {
-        // expose promise's internals so it can be controlled by chokidar's events
-        promiseResolve = resolve;
-        promiseReject = reject;
+        try {
+          watcher = chokidar
+            .watch(target, { ...watcherOptions /* add default options */ })
+            // file listeners
+            .on("add", debouncedCallback)
+            .on("change", debouncedCallback)
+            .on("unlink", debouncedCallback)
+            // folder listeners
+            .on("addDir", debouncedCallback)
+            .on("unlinkDir", debouncedCallback)
+            // attached all listeners
+            .on("ready", () => {
+              resolve();
+            })
+            .on("error", (err) => {
+              // reject promise
+              console.error("Resource watcher error", err);
+              reject(err);
+            });
+        } catch (err) {
+          reject(err);
+        }
       });
     },
     stop: () => {
