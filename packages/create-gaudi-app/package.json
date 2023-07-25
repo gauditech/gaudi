@@ -1,6 +1,6 @@
 {
   "name": "create-gaudi-app",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Project contains templates for creating Gaudi project from scratch.",
   "author": "@gaudi.tech",
   "license": "MIT",
