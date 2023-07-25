@@ -44,5 +44,5 @@ export function getDefaultNodeOptions(): string[] {
 export const GAUDI_SCRIPTS = {
   COMPILER: path.resolve(__dirname, "../../@gaudi/compiler/dist/compiler-cli.js"),
   RUNTIME: path.resolve(__dirname, "../../@gaudi/runtime/dist/runtime-cli.js"),
-  POPULATOR: path.resolve(__dirname, "../../@gaudi/runtime/dist/populator/populator.js"),
+  POPULATOR: path.resolve(__dirname, "../../@gaudi/runtime/dist/populator/populator-cli.js"),
 };
