@@ -2,7 +2,7 @@ import chokidar, { WatchOptions } from "chokidar";
 import _ from "lodash";
 
 import { RESOURCE_WATCH_DELAY } from "@cli/config";
-import { Stoppable } from "@cli/types";
+import { Controllable } from "@cli/types";
 
 // -------------------- Resource file watcher
 
@@ -12,7 +12,7 @@ export function watchResources(
   target: string | string[],
   callback: () => Promise<void>,
   options?: ResourceWatcherOptions
-): Stoppable {
+): Controllable {
   const {
     /* custom options */
     debounce,
@@ -23,21 +23,45 @@ export function watchResources(
   // prevent event flood
   const debouncedCallback = _.debounce(callback, debounce ?? RESOURCE_WATCH_DELAY);
 
-  const watcher = chokidar
-    .watch(target, { ...watcherOptions /* add default options */ })
-    // file listeners
-    .on("add", debouncedCallback)
-    .on("change", debouncedCallback)
-    .on("unlink", debouncedCallback)
-    // folder listeners
-    .on("addDir", debouncedCallback)
-    .on("unlinkDir", debouncedCallback)
-    // attached all listeners
-    .on("ready", debouncedCallback);
+  let watcher: chokidar.FSWatcher | undefined;
 
-  return {
+  const instance = {
+    start: () => {
+      return new Promise<void>((resolve, reject) => {
+        try {
+          watcher = chokidar
+            .watch(target, { ...watcherOptions /* add default options */ })
+            // file listeners
+            .on("add", debouncedCallback)
+            .on("change", debouncedCallback)
+            .on("unlink", debouncedCallback)
+            // folder listeners
+            .on("addDir", debouncedCallback)
+            .on("unlinkDir", debouncedCallback)
+            // attached all listeners
+            .on("ready", () => {
+              resolve();
+            })
+            .on("error", (err) => {
+              // reject promise
+              console.error("Resource watcher error", err);
+              reject(err);
+            });
+        } catch (err) {
+          reject(err);
+        }
+      });
+    },
     stop: () => {
-      return watcher.close();
+      if (watcher != null) {
+        return watcher.close();
+      } else {
+        console.warn("Resource watcher: cannot stop empty watcher");
+
+        return Promise.resolve();
+      }
     },
   };
+
+  return instance;
 }

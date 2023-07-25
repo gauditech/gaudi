@@ -1,5 +1,6 @@
 import path from "path";
 
+import { RequiredOptional } from "@gaudi/compiler/dist/common/utils";
 import * as dotenv from "dotenv";
 
 import { RuntimeConfig, readConfig } from "@runtime/config";
@@ -20,13 +21,14 @@ describe("runtime", () => {
     it("provide default configuration", () => {
       const config: RuntimeConfig = readConfig();
 
-      const expected: Required<RuntimeConfig> = {
+      const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "",
         dbSchema: "public",
         host: "127.0.0.1",
         port: 3001,
         definitionPath: "definition.json",
         outputFolder: ".",
+        basePath: undefined,
       };
 
       expect(config).toEqual(expected);
@@ -42,13 +44,14 @@ describe("runtime", () => {
 
       const config: RuntimeConfig = readConfig();
 
-      const expected: Required<RuntimeConfig> = {
+      const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "my://connection@string/",
         dbSchema: "test-schema",
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
         outputFolder: "test/output/path",
+        basePath: undefined,
       };
 
       expect(config).toEqual(expected);
@@ -58,13 +61,14 @@ describe("runtime", () => {
       dotenv.config({ path: path.join(__dirname, "config.test.env") });
       const config = readConfig();
 
-      const expected: Required<RuntimeConfig> = {
+      const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "file-my://connection@string/",
         dbSchema: "file-test-schema",
         host: "file-test-host",
         port: 31337000,
         definitionPath: "file-test/definition/path",
         outputFolder: "file-test/output/path",
+        basePath: undefined,
       };
 
       expect(config).toEqual(expected);
@@ -81,13 +85,14 @@ describe("runtime", () => {
       dotenv.config({ path: path.join(__dirname, "config.test.env") });
       const config = readConfig();
 
-      const expected: Required<RuntimeConfig> = {
+      const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "my://connection@string/",
         dbSchema: "test-schema",
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
         outputFolder: "test/output/path",
+        basePath: undefined,
       };
 
       expect(config).toEqual(expected);
