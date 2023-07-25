@@ -71,6 +71,42 @@ export function safeInvoke<T>(
   }
 }
 
+/**
+ * Convert optional props to required with possible undefined value.
+ *
+ * Eg.
+ * ```
+ * type A {
+ *   reqProp: string;
+ *   optProp?: number;
+ * }
+ *
+ *
+ * const a: A = {
+ *   reqProp: "asdf"
+ * }
+ * // OK
+ *
+ *
+ * type B = RequiredOptional<A>;
+ *
+ * const b1: B = {
+ *   reqProp: "asdf"
+ * }
+ * // Error: missing required property "optProp"
+ *
+ * const b2: B = {
+ *   reqProp: "asdf",
+ *   optProp: undefined
+ * }
+ * // OK
+ *
+ * ```
+ */
+export type RequiredOptional<T> = {
+  [P in keyof Required<T>]: T[P] extends undefined ? T[P] | undefined : T[P];
+};
+
 export type ItemResolverErrorItem = { name: string; error: any };
 export type ItemResolverResolvedItem<R> = { name: string; result: R };
 export type ItemResolverResult<R> =
