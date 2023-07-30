@@ -32,8 +32,7 @@ function parseArguments() {
     .usage("$0 <command> [arguments]")
     .command({
       command: "build [root]",
-      describe:
-        "Build entire project. Compiles Gaudi code, pushes changes to DB and copies files to output folder",
+      describe: "Build entire project. Compiles Gaudi code, and copies files to output folder",
       handler: (args) => {
         buildCommandHandler(args);
       },
@@ -196,7 +195,6 @@ async function buildCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) 
   const config = readConfig();
 
   await compile(config).start();
-  await dbPush(config).start();
   await copyStatic(config);
 }
 
