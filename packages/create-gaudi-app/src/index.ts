@@ -20,8 +20,8 @@ type PromptResult = {
 
 const DefaultTemplateName: TemplateName = "template-gaudi-ts";
 const TEMPLATES: Template[] = [
-  { name: "template-vite-react-ts", displayName: "Gaudi backend with React+TS+Vite frontend" },
   { name: "template-gaudi-ts", displayName: "Gaudi backend project" },
+  { name: "template-vite-react-ts", displayName: "Gaudi backend with React+TS+Vite frontend" },
 ];
 // list of files that are ignored when checking empty dir
 const IGNORED_PATHS = [".git"];
