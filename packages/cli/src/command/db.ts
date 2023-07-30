@@ -1,9 +1,8 @@
 import { EngineConfig } from "@gaudi/compiler/dist/config";
 import _ from "lodash";
 
-import { GAUDI_SCRIPTS, getDbSchemaPath, getDefaultNodeOptions } from "@cli/config";
+import { getDbSchemaPath } from "@cli/config";
 import { createCommandRunner } from "@cli/runner";
-import { makeCliSafePath } from "@cli/utils";
 
 // ---------- DB commands
 // --- DB push
@@ -49,12 +48,7 @@ export function dbPopulate(options: DbPopulateOptions, _config: EngineConfig) {
 
   console.log(`Populating DB using populator "${populatorName} ..."`);
 
-  return createCommandRunner("node", [
-    ...getDefaultNodeOptions(),
-    makeCliSafePath(GAUDI_SCRIPTS.POPULATOR),
-    "-p",
-    populatorName,
-  ]);
+  return createCommandRunner("npx", ["gaudi-populator", "-p", populatorName]);
 }
 
 // --- DB migrate
