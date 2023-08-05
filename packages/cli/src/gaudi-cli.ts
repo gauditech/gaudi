@@ -32,8 +32,7 @@ function parseArguments() {
     .usage("$0 <command> [arguments]")
     .command({
       command: "build [root]",
-      describe:
-        "Build entire project. Compiles Gaudi code, pushes changes to DB and copies files to output folder",
+      describe: "Build entire project. Compiles Gaudi code and copies files to output folder",
       handler: (args) => {
         buildCommandHandler(args);
       },
@@ -63,7 +62,7 @@ function parseArguments() {
     })
     .command({
       command: "start [root]",
-      describe: "Start Gaudi projects",
+      describe: "Start application server",
       handler: (args) => {
         startCommandHandler(args);
       },
@@ -87,48 +86,73 @@ function parseArguments() {
             handler: (args) => {
               dbPushCommandHandler(args);
             },
+            builder: (yargs) =>
+              yargs.positional("root", {
+                type: "string",
+                describe: "project root folder",
+              }),
           })
           .command({
             command: "reset [root]",
-            describe: "Reset DB",
+            describe: "Reset database",
             handler: (args) => {
               dbResetCommandHandler(args);
             },
+            builder: (yargs) =>
+              yargs.positional("root", {
+                type: "string",
+                describe: "project root folder",
+              }),
           })
           .command({
-            command: "populate [root]",
-            describe: "Reset DB and populate it using populator",
+            command: "populate [root] --populator=<populator name>",
+            describe: "Reset database and populate it using given populator",
             handler: (args) => {
               dbPopulateCommandHandler(args);
             },
             builder: (yargs) =>
-              yargs.option("populator", {
-                alias: "p",
-                type: "string",
-                description: "Name of populator to use in population",
-                demandOption: '  try adding: "--populator=<populator name>"',
-              }),
+              yargs
+                .positional("root", {
+                  type: "string",
+                  describe: "project root folder",
+                })
+                .option("populator", {
+                  alias: "p",
+                  type: "string",
+                  description: "Name of populator to use in population",
+                  demandOption: '  try adding: "--populator=<populator name>"',
+                }),
           })
           .command({
-            command: "migrate [root]",
-            builder: (yargs) =>
-              yargs.option("name", {
-                alias: "n",
-                type: "string",
-                description: "Name of migration to be created",
-                demandOption: '  try adding "--name=<migration name>"',
-              }),
+            command: "migrate [root] --name=<migration name>",
             describe: "Create DB migration file",
+            builder: (yargs) =>
+              yargs
+                .positional("root", {
+                  type: "string",
+                  describe: "project root folder",
+                })
+                .option("name", {
+                  alias: "n",
+                  type: "string",
+                  description: "Name of a migration to be created",
+                  demandOption: '  try adding "--name=<migration name>"',
+                }),
             handler: (args) => {
               dbMigrateCommandHandler(args);
             },
           })
           .command({
             command: "deploy [root]",
-            describe: "Deploy migrations to production database",
+            describe: "Deploy yet undeployed migrations to target database",
             handler: (args) => {
               dbDeployCommandHandler(args);
             },
+            builder: (yargs) =>
+              yargs.positional("root", {
+                type: "string",
+                describe: "project root folder",
+              }),
           })
           // fallback to help message
           .command({
