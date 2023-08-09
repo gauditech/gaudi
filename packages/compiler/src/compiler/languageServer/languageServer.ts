@@ -78,7 +78,9 @@ connection.onDidChangeWatchedFiles(({ changes }) => {
       continue;
     }
 
-    const { inputFolder } = readConfig(configFile);
+    const config = readConfig(configFile);
+    // paths from readConfig must be converted to absolute paths
+    const inputFolder = path.resolve(process.cwd(), config.inputFolder);
     const project = projects.get(uri);
 
     if (project && inputFolder === project.inputFolder) {
@@ -178,6 +180,7 @@ function findProjectFromFile(uri: string): Project | undefined {
       return project;
     }
   }
+  return undefined;
 }
 
 documents.onDidChangeContent((change) => {
@@ -192,8 +195,10 @@ documents.onDidChangeContent((change) => {
     } catch {
       config = undefined;
     }
-    configUri = config && URI.file(config.configFile).toString();
-    inputFolder = config?.inputFolder;
+    // paths from readConfig must be converted to absolute paths
+    const cwd = process.cwd();
+    configUri = config && URI.file(path.resolve(cwd, config.configFile)).toString();
+    inputFolder = config && path.resolve(cwd, config.inputFolder);
     if (!configUri || !inputFolder || !filename?.startsWith(inputFolder)) {
       return compileNonProjectFile(change.document);
     }
