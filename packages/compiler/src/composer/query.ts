@@ -213,6 +213,8 @@ export function composeRefPath(
       return { kind: "variable", name: `___requestAuthToken` };
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
+    case "validator":
+      throw new UnreachableError("Unexpected validator reference in expression");
     case "repeat":
       throw new Error("TODO");
   }

@@ -10,7 +10,7 @@ export type GlobalAtom = Validator | Model | Api | Populator | Runtime | Authent
 export type Validator = {
   kind: "validator";
   keyword: TokenData;
-  name: Identifier;
+  name: IdentifierRef<RefValidator>;
   atoms: ValidatorAtom[];
 };
 
@@ -270,7 +270,7 @@ export type ValidateExpr =
       lhs: ValidateExpr;
       rhs: ValidateExpr;
     }
-  | { kind: "validator"; validator: Identifier; args: Expr<Code>[] }
+  | { kind: "validator"; validator: IdentifierRef<RefValidator>; args: Expr<Code>[] }
   | { kind: "group"; expr: ValidateExpr };
 
 export type ActionAtomSet = {
@@ -580,9 +580,13 @@ export type RefRepeat = {
   parent: RefPopulate;
   name: string;
 };
+export type RefValidator = {
+  kind: "validator";
+  name: string;
+};
 export type RefValidatorArg = {
   kind: "validatorArg";
-  parent: string;
+  parent: RefValidator;
   name: string;
   type: FieldType;
 };
@@ -597,6 +601,7 @@ export type Ref =
   | RefPopulate
   | RefAction
   | RefRepeat
+  | RefValidator
   | RefValidatorArg
   | RefExtraInput
   | RefAuth

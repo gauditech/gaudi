@@ -252,7 +252,10 @@ connection.languages.semanticTokens.on((params): SemanticTokens => {
   return builder.build();
 });
 
-function gaudiTokenToLSPLocation({ filename, start, end }: TokenData): Location {
+function gaudiTokenToLSPLocation({ filename, start, end }: TokenData): Location | undefined {
+  if (filename.startsWith("plugin::")) {
+    return undefined;
+  }
   return {
     uri: filename,
     range: {
@@ -307,9 +310,11 @@ connection.onReferences((params): Location[] | undefined => {
   if (!clickedId) {
     return undefined;
   }
-  return ids
-    .filter(({ isDefinition, ref }) => !isDefinition && _.isEqual(ref, clickedId.ref))
-    .map(({ token }) => gaudiTokenToLSPLocation(token));
+  return _.compact(
+    ids
+      .filter(({ isDefinition, ref }) => !isDefinition && _.isEqual(ref, clickedId.ref))
+      .map(({ token }) => gaudiTokenToLSPLocation(token))
+  );
 });
 
 connection.listen();

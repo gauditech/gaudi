@@ -83,7 +83,7 @@ function getIdentifiersValidator({ name, atoms }: Validator): FuzzySourceRef[] {
       .with({ kind: "error" }, () => [])
       .exhaustive()
   );
-  return [...atomIdentifiers];
+  return [name, ...atomIdentifiers];
 }
 
 function getIdentifiersValidateExpr(expr: ValidateExpr): FuzzySourceRef[] {
@@ -93,7 +93,10 @@ function getIdentifiersValidateExpr(expr: ValidateExpr): FuzzySourceRef[] {
       ...getIdentifiersValidateExpr(lhs),
       ...getIdentifiersValidateExpr(rhs),
     ])
-    .with({ kind: "validator" }, ({ validator, args }) => args.flatMap(getIdentifiersExpr))
+    .with({ kind: "validator" }, ({ validator, args }) => [
+      validator,
+      ...args.flatMap(getIdentifiersExpr),
+    ])
     .exhaustive();
 }
 

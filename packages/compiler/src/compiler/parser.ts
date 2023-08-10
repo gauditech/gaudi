@@ -316,7 +316,7 @@ class GaudiParser extends EmbeddedActionsParser {
   validateCallExpr = this.RULE("validateCallExpr", (): ValidateExpr => {
     const args: Expr[] = [];
 
-    const validator = this.SUBRULE(this.identifier);
+    const validator = this.SUBRULE(this.identifierRef);
     this.CONSUME(L.LRound);
     this.MANY_SEP({
       SEP: L.Comma,

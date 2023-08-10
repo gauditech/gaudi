@@ -169,20 +169,23 @@ export function resolve(projectASTs: ProjectASTs) {
       context: {},
       typeGuard: {},
     };
+    validator.name.ref = { kind: "validator", name: validator.name.text };
     validator.atoms.forEach((a) =>
       match(a)
         .with({ kind: "arg" }, (arg) => {
           const typeAtom = kindFind(arg.atoms, "type");
           const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
           if (type) {
-            arg.name.ref = {
-              kind: "validatorArg",
-              parent: validator.name.text,
-              name: arg.name.text,
-              type,
-            };
             arg.name.type = Type.primitive(type);
-            addToScope(scope, arg.name);
+            if (validator.name.ref) {
+              arg.name.ref = {
+                kind: "validatorArg",
+                parent: validator.name.ref,
+                name: arg.name.text,
+                type,
+              };
+              addToScope(scope, arg.name);
+            }
           } else if (typeAtom) {
             errors.push(
               new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType)
@@ -217,6 +220,7 @@ export function resolve(projectASTs: ProjectASTs) {
           errors.push(new CompilerError(call.validator.token, ErrorCode.CantResolveValidator));
           return;
         }
+        call.validator.ref = validator.name.ref;
 
         const validatorArgs = kindFilter(validator.atoms, "arg");
         if (target) {
