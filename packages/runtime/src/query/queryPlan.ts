@@ -19,9 +19,10 @@ import {
   TypedExprDef,
 } from "@gaudi/compiler/dist/types/definition";
 import { Literal } from "@gaudi/compiler/dist/types/specification";
-import { NamePath } from "@runtime/query/build";
 import _ from "lodash";
 import { match } from "ts-pattern";
+
+import { NamePath } from "@runtime/query/build";
 
 // FIXME support dbname and real table names
 export type QueryPlan = {
@@ -118,7 +119,7 @@ export function buildQueryPlan(def: Definition, q: QueryDef): QueryPlan {
     orderBy:
       q.orderBy?.map((ord) => [toQueryExpr(def, expandExpression(def, ord.exp)), ord.direction]) ??
       undefined,
-    joins: buildJoins(def, atoms, "inner"),
+    joins: buildJoins(def, q.fromPath, atoms, "inner"),
     limit: q.limit,
     offset: q.offset,
   };
@@ -210,6 +211,7 @@ function getUniqueAggregates(atoms: QueryAtom[]): QueryAtomAggregate[] {
 
 function buildJoins(
   def: Definition,
+  fromPath: NamePath,
   atoms: QueryAtom[],
   joinType: "inner" | "left"
 ): QueryPlanJoin[] {
@@ -217,7 +219,18 @@ function buildJoins(
     (atom): QueryPlanJoin =>
       match<typeof atom, QueryPlanJoin>(atom)
         .with({ kind: "table-namespace" }, (atom) => {
-          // we need to figure out if this is an inline or subquery
+          // if atom namepath is not part of query's `fromPath`,
+          // we force the left join. This is a must for `select` atoms,
+          // but not required for `filter` atoms unless NULL is a valid filter --
+          // so this is something to be optimized later
+          const finalJoinType = (() => {
+            if (_.isEqual(_.take(fromPath, atom.namePath.length), atom.namePath)) {
+              return joinType;
+            } else {
+              return "left";
+            }
+          })();
+          // figures out if this is an inline or subquery
           const tpath = getTypedPath(def, atom.namePath, {});
           ensureEqual(tpath.leaf, null, tpath.leaf?.name);
           const ref = getRef(def, _.last(tpath.nodes)!.refKey);
@@ -225,7 +238,7 @@ function buildJoins(
             .with({ kind: "reference" }, { kind: "relation" }, (ref) => {
               return {
                 kind: "inline",
-                joinType,
+                joinType: finalJoinType,
                 target: ref.name, // FIXME we don't need this
                 modelName: getTargetModel(def, ref.refKey).name,
                 namePath: atom.namePath,
@@ -236,7 +249,7 @@ function buildJoins(
               const plan = buildQueryPlan(def, ref);
               return {
                 kind: "subquery",
-                joinType,
+                joinType: finalJoinType,
                 namePath: atom.namePath,
                 joinOn: calculateJoinOn(def, atom.namePath),
                 plan,
@@ -268,6 +281,7 @@ function buildJoins(
               groupBy: [[entryModel.name, "id"]],
               joins: buildJoins(
                 def,
+                [entryModel.name, ..._.initial(atom.targetPath)],
                 getFinalQueryAtoms(
                   pathsFromExpr(
                     expandExpression(def, {
@@ -369,6 +383,7 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
         groupBy: [],
         joins: buildJoins(
           def,
+          [entryModel.name, ..._.initial(sub.targetPath)],
           getFinalQueryAtoms(
             pathsFromExpr(
               expandExpression(def, {

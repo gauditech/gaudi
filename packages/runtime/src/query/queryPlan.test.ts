@@ -256,7 +256,7 @@ const QP: QueryPlan = {
      */
     {
       kind: "inline",
-      joinType: "inner",
+      joinType: "left",
       joinOn: [
         ["Org", "owner_id"],
         ["Org", "owner", "id"],
@@ -284,7 +284,7 @@ const QP: QueryPlan = {
      */
     {
       kind: "inline",
-      joinType: "inner",
+      joinType: "left",
       joinOn: [
         ["Org", "repos", "org_id"],
         ["Org", "repos", "org", "id"],
