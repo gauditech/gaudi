@@ -1,7 +1,6 @@
 import { ensureEqual, ensureNot } from "@gaudi/compiler/dist/common/utils";
 import { TypeCardinality } from "@gaudi/compiler/dist/compiler/ast/type";
 import { Definition, QueryDef, SelectItem } from "@gaudi/compiler/dist/types/definition";
-import { DbConn } from "@runtime/server/dbConn";
 import _ from "lodash";
 
 import { executeHook } from "../hooks";
@@ -10,6 +9,8 @@ import { Vars } from "../server/vars";
 import { GAUDI_INTERNAL_TARGET_ID_ALIAS, QueryTree } from "./build";
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
+
+import { DbConn } from "@runtime/server/dbConn";
 
 export type Result = {
   rowCount: number;
