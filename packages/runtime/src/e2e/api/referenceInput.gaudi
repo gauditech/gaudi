@@ -1,5 +1,5 @@
 model Element {
-  field name { type string }
+  field name { type string, unique }
   reference extra { to Extra, unique }
   reference nullableExtra { to Extra, nullable }
 }

@@ -59,6 +59,14 @@ exports[`Reference Input Element and Extra validation error with unique constrai
         },
       },
     ],
+    "name": [
+      {
+        "code": "already-exists",
+        "params": {
+          "value": "element",
+        },
+      },
+    ],
   },
   "message": "Validation error",
 }
