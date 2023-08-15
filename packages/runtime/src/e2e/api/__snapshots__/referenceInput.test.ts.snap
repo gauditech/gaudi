@@ -46,3 +46,20 @@ exports[`Reference Input Element and Extra validation error with non-nullable re
   "message": "Validation error",
 }
 `;
+
+exports[`Reference Input Element and Extra validation error with unique constraint 1`] = `
+{
+  "code": "ERROR_CODE_VALIDATION",
+  "data": {
+    "extra_extraData_slug": [
+      {
+        "code": "already-exists",
+        "params": {
+          "value": "extra",
+        },
+      },
+    ],
+  },
+  "message": "Validation error",
+}
+`;

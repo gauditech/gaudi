@@ -1,8 +1,7 @@
 // ---------- Endpoint responses
 
-import _ from "lodash";
-
 import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
+import _ from "lodash";
 
 //** Error reponse codes  */
 export type HTTPErrorCode =
@@ -74,7 +73,7 @@ export function errorResponse(cause: unknown) {
     };
 
     // log business error - currently all logged as "log/info"
-    console.info(`${body.code}: ${body.message}`, cause.data ?? "");
+    console.info(`${body.code}: ${body.message}`, JSON.stringify(cause.data) ?? "");
 
     if (cause.code === "ERROR_CODE_VALIDATION") {
       throw new HttpResponseError(400, body);

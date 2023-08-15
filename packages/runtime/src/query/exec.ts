@@ -1,12 +1,23 @@
 import { ensureEqual, ensureNot } from "@gaudi/compiler/dist/common/utils";
 import { TypeCardinality } from "@gaudi/compiler/dist/compiler/ast/type";
-import { Definition, QueryDef, SelectItem } from "@gaudi/compiler/dist/types/definition";
+import {
+  Definition,
+  QueryDef,
+  SelectItem,
+  TypedExprDef,
+} from "@gaudi/compiler/dist/types/definition";
 import _ from "lodash";
 
 import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
-import { GAUDI_INTERNAL_TARGET_ID_ALIAS, QueryTree } from "./build";
+import {
+  GAUDI_INTERNAL_TARGET_ID_ALIAS,
+  NamePath,
+  QueryTree,
+  queryFromParts,
+  selectableId,
+} from "./build";
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
@@ -131,6 +142,28 @@ export async function executeQueryTree(
     return results.map((r) => _.omit(r, GAUDI_INTERNAL_TARGET_ID_ALIAS));
   }
   return results;
+}
+
+export async function findIdBy(
+  def: Definition,
+  conn: DbConn,
+  fromPath: NamePath,
+  targetPath: NamePath,
+  value: unknown
+): Promise<number | null> {
+  const filter: TypedExprDef = {
+    kind: "function",
+    name: "is",
+    args: [
+      { kind: "alias", namePath: targetPath },
+      { kind: "variable", name: "findBy_input" },
+    ],
+  };
+  const query = queryFromParts(def, "findBy", fromPath, filter, [selectableId(fromPath)]);
+  const [result] = await executeQuery(conn, def, query, new Vars({ findBy_input: value }), []);
+
+  if (!result) return null;
+  return (result[GAUDI_INTERNAL_TARGET_ID_ALIAS] as number) ?? null;
 }
 
 // ----- QueryExecutor
