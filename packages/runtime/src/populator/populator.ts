@@ -1,10 +1,13 @@
+import { initLogger } from "@gaudi/compiler";
 import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/types/definition";
 
 import { ActionContext, executeActions } from "@runtime/common/action";
 import { createIterator } from "@runtime/common/iterator";
-import { RuntimeConfig, loadDefinition, readConfig } from "@runtime/config";
+import { RuntimeConfig, loadDefinition } from "@runtime/config";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
 import { Vars } from "@runtime/server/vars";
+
+const logger = initLogger("gaudi:populator");
 
 /** Main runner. */
 export async function populate(options: PopulateOptions, config: RuntimeConfig) {
@@ -28,7 +31,7 @@ export async function populate(options: PopulateOptions, config: RuntimeConfig) 
       throw new Error(`Populator "${targetPopulatorName}" not found`);
     }
 
-    console.log(`Running populator ${populator.name}`);
+    logger.debug(`Running populator ${populator.name}`);
 
     const targetCtx: ActionContext = { input: {}, vars: new Vars(), referenceIds: [] };
 

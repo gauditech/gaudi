@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 import { Express, NextFunction, Request, Response, json } from "express";
 
@@ -7,6 +8,8 @@ import { AppContext, bindAppContext } from "@runtime/server/context";
 import { createDbConn } from "@runtime/server/dbConn";
 import { HttpResponseError } from "@runtime/server/error";
 import { ServerRequestHandler } from "@runtime/server/types";
+
+const logger = initLogger("gaudi:runtime:server");
 
 // ----- middleware
 
@@ -47,7 +50,7 @@ export function errorHandler(error: unknown, _req: Request, resp: Response, _nex
   if (error instanceof HttpResponseError) {
     resp.status(error.status).send(error.body);
   } else {
-    console.error("[ERROR]", error);
+    logger.error("[ERROR]", error);
 
     resp.status(500).send("Unknown error");
   }
@@ -56,10 +59,10 @@ export function errorHandler(error: unknown, _req: Request, resp: Response, _nex
 /** Simple request logger */
 export function requestLogger(req: Request, resp: Response, next: NextFunction) {
   req.on("data", () => {
-    console.log(`[ENTRY] ${req.method} ${req.originalUrl}`);
+    logger.debug(`[ENTRY] ${req.method} ${req.originalUrl}`);
   });
   resp.on("finish", () => {
-    console.log(`[REQ] ${req.method} ${req.originalUrl} ${resp.statusCode}`);
+    logger.debug(`[REQ] ${req.method} ${req.originalUrl} ${resp.statusCode}`);
   });
 
   next();

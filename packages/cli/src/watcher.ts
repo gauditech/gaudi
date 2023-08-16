@@ -1,8 +1,11 @@
+import { initLogger } from "@gaudi/compiler";
 import chokidar, { WatchOptions } from "chokidar";
 import _ from "lodash";
 
 import { RESOURCE_WATCH_DELAY } from "@cli/config";
 import { Controllable } from "@cli/types";
+
+const logger = initLogger("gaudi:cli");
 
 // -------------------- Resource file watcher
 
@@ -44,7 +47,7 @@ export function watchResources(
             })
             .on("error", (err) => {
               // reject promise
-              console.error("Resource watcher error", err);
+              logger.error("Resource watcher error", err);
               reject(err);
             });
         } catch (err) {
@@ -56,7 +59,7 @@ export function watchResources(
       if (watcher != null) {
         return watcher.close();
       } else {
-        console.warn("Resource watcher: cannot stop empty watcher");
+        logger.error("Resource watcher: cannot stop empty watcher");
 
         return Promise.resolve();
       }

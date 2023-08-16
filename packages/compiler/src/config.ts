@@ -3,6 +3,10 @@ import path from "path";
 
 import { cosmiconfigSync } from "cosmiconfig";
 
+import { initLogger } from "./common/logger";
+
+const logger = initLogger("gaudi:compiler");
+
 export type EngineConfig = {
   /** Path to Gaudi blueprint folder */
   inputFolder: string;
@@ -33,7 +37,7 @@ export function readConfig(configPath?: string): EngineConfig {
       `Failed to find a gaudiconfig.json or gaudiconfig.yaml in ${process.cwd()} or any of it's parents.`
     );
   }
-  console.log(`Found Gaudi config: ${result.filepath}`);
+  logger.debug(`Found Gaudi config: ${result.filepath}`);
 
   // Make paths relative to CWD to get shorter paths
   const projectRoot = path.relative(process.cwd(), path.dirname(result.filepath));
@@ -49,7 +53,7 @@ export function readConfig(configPath?: string): EngineConfig {
 
   const finalConfig = { inputFolder, outputFolder, gaudiFolder, configFile };
 
-  console.log("Gaudi compiler config", finalConfig);
+  logger.debug("Gaudi compiler config", finalConfig);
 
   return finalConfig;
 }

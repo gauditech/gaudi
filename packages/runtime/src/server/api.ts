@@ -1,7 +1,7 @@
 import path from "path";
 
+import { initLogger } from "@gaudi/compiler";
 import { buildOpenAPI } from "@gaudi/compiler/dist/builder/openAPI";
-import { Logger } from "@gaudi/compiler/dist/common/logger";
 import { saveOutputFile } from "@gaudi/compiler/dist/common/utils";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
@@ -13,7 +13,7 @@ import { buildEndpointConfig } from "@runtime/server/endpoints";
 import { endpointGuardHandler } from "@runtime/server/middleware";
 import { EndpointConfig } from "@runtime/server/types";
 
-const logger = Logger.specific("api");
+const logger = initLogger("gaudi:runtime:api");
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {
@@ -24,7 +24,7 @@ export function setupServerApis(definition: Definition, app: Express) {
   const specFileName = "api.openapi.json";
   const specOutputFolder = path.join(config.outputFolder, specPath);
   app.use(specPath, staticHandler(specOutputFolder));
-  logger.info(
+  logger.debug(
     `registered OpenAPI specification on: ${getAbsoluteUrlPath(app, specPath, specFileName)}`
   );
 
@@ -58,12 +58,12 @@ function setupEntrypointApiSwagger(openApiDocument: OpenAPIV3.Document, app: Exp
   app.use(swaggerPath, serve, (_req: Request, _resp: Response, _next: NextFunction) =>
     setup(openApiDocument)(_req, _resp, _next)
   );
-  logger.info(`registered OpenAPI Swagger on: ${getAbsoluteUrlPath(app, swaggerPath)}`);
+  logger.debug(`registered OpenAPI Swagger on: ${getAbsoluteUrlPath(app, swaggerPath)}`);
 }
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
   const epPath = pathPrefix + epConfig.path;
-  logger.info(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
+  logger.debug(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
 
   app[epConfig.method](
     epPath,
