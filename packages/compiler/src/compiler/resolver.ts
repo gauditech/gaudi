@@ -38,6 +38,7 @@ import {
   Relation,
   RespondAction,
   Runtime,
+  RuntimeAtom,
   Select,
   UnaryOperator,
   ValidateExpr,
@@ -1091,6 +1092,11 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveHook(hook: Hook<"model" | "validator" | "action">) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
+      // validate source path
+      if (source.file.value.indexOf("/../") >= 0 || source.file.value.startsWith("../")) {
+        errors.push(new CompilerError(source.file.token, ErrorCode.InvalidPath));
+      }
+
       const runtimes = getRuntimes();
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
@@ -1105,7 +1111,6 @@ export function resolve(projectASTs: ProjectASTs) {
         }
         return;
       }
-
       const runtime = runtimeAtom.identifier.text;
       if (
         runtimes.find((r) => r.name.text === runtime) ||

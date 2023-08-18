@@ -665,11 +665,11 @@ describe("compiler errors", () => {
       const bp = `
         runtime DuplicateRuntime {
           default
-          source path "./some/path/to/file1.js"
+          source path "./some/path/to/directory1"
         }
 
         runtime DuplicateRuntime {
-          source path "./some/path/to/file2.js"
+          source path "./some/path/to/directory2"
         }
         `;
       expectError(bp, `Duplicate runtime definition`);
@@ -677,11 +677,11 @@ describe("compiler errors", () => {
     it("fails on no default runtime", () => {
       const bp = `
         runtime MyRuntime1 {
-          source path "./some/path/to/file1.js"
+          source path "./some/path/to/directory1"
         }
 
         runtime MyRuntime2 {
-          source path "./some/path/to/file2.js"
+          source path "./some/path/to/directory2"
         }
         `;
       expectError(bp, `When using multiple runtimes one runtime must be set as default`);
@@ -690,15 +690,30 @@ describe("compiler errors", () => {
       const bp = `
         runtime MyRuntime1 {
           default
-          source path "./some/path/to/file1.js"
+          source path "./some/path/to/directory1"
         }
 
         runtime MyRuntime2 {
           default
-          source path "./some/path/to/file2.js"
+          source path "./some/path/to/directory2"
         }
         `;
       expectError(bp, `Duplicate default runtime definition`);
+    });
+    it("fails on invalid paths", () => {
+      const bp = `
+        runtime MyRuntime {
+          default
+          source path "./some/path/to/directory1"
+        }
+
+        model Post {
+          hook myHook {
+            source run from "../hooks.js"
+          }
+        }
+        `;
+      expectError(bp, `Path must not contain '../' fragments`);
     });
   });
 
