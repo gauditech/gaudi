@@ -220,7 +220,7 @@ export function getTargetModel(def: Definition, refKey: string): ModelDef {
   }
 }
 
-export function getExecutionRuntime(def: Definition, name: string): ExecutionRuntimeDef {
+export function getExecutionRuntimeDefinition(def: Definition, name: string): ExecutionRuntimeDef {
   const runtime = def.runtimes.find((r) => r.name === name);
   if (runtime == null) throw new Error(`Execution runtime not found ${name}`);
 
