@@ -1,22 +1,22 @@
-model Org {
-  field name {
-    type string,
-    validate {
-      hook {
-        default arg name
-        source noUnicode from "githubc.js"
-      }
-    }
+validator noUnicode {
+  arg name { type string }
+  assert hook {
+    source noUnicode from "githubc.js"
   }
-  field slug {
-    type string,
-    unique,
-    validate {
-      hook {
-        default arg slug
-        inline "!/\\s/.test(slug)"
-      }
-    }
+  error { code "invalid-characters" }
+}
+
+validator noSpaces {
+  arg text { type string }
+  assert hook {
+    inline "!/\\s/.test(slug)"
+  }
+  error { code "forbidden-whitespace" }
+}
+
+model Org {
+  field name { type string, validate { noUnicode() } }
+  field slug { type string, unique, validate { noSpaces() }
   }
   field description { type string }
   field optOut { type string, nullable }
