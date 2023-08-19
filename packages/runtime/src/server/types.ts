@@ -13,3 +13,10 @@ export type EndpointConfig = {
 };
 
 export type ServerMiddlewareNextFn = (err?: unknown) => void;
+
+export type ExecuteHookContext = {
+  request: Request;
+  response: Response;
+};
+
+export type PromiseOrSync<T> = Promise<T> | T;
