@@ -38,7 +38,6 @@ import {
   Relation,
   RespondAction,
   Runtime,
-  RuntimeAtom,
   Select,
   UnaryOperator,
   ValidateExpr,
@@ -121,7 +120,8 @@ export function resolve(projectASTs: ProjectASTs) {
       ErrorCode.DuplicateRuntime
     );
 
-    const runtimes = getRuntimes();
+    const userRuntimes = getRuntimes();
+    const runtimes = userRuntimes.length > 0 ? userRuntimes : getRuntimes(true);
     if (runtimes.length > 1) {
       let hasDefaultRuntime = false;
       runtimes.forEach((runtime) => {
@@ -1097,7 +1097,8 @@ export function resolve(projectASTs: ProjectASTs) {
         errors.push(new CompilerError(source.file.token, ErrorCode.InvalidPath));
       }
 
-      const runtimes = getRuntimes();
+      const userRuntimes = getRuntimes();
+      const runtimes = userRuntimes.length > 0 ? userRuntimes : getRuntimes(true);
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
       if (!runtimeAtom) {
