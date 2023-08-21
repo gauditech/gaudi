@@ -4,7 +4,12 @@ import * as dotenv from "dotenv";
 import _ from "lodash";
 import request from "supertest";
 
-import { createApiTestSetup, loadBlueprint, loadPopulatorData } from "@runtime/e2e/api/setup";
+import {
+  createApiTestSetup,
+  createTestInstance,
+  loadBlueprint,
+  loadPopulatorData,
+} from "@runtime/e2e/api/setup";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(10000);
@@ -17,18 +22,26 @@ describe("API endpoints", () => {
     loadPopulatorData(path.join(__dirname, "api.data.json"))
   );
 
+  const runner = createTestInstance(
+    loadBlueprint(path.join(__dirname, "api.model.gaudi")),
+    loadPopulatorData(path.join(__dirname, "api.data.json"))
+  );
+
   describe("Org", () => {
     beforeAll(async () => {
       await setup();
     });
     afterAll(async () => {
       await destroy();
+      await runner.clean();
     });
 
     // --- regular endpoints
 
-    it("get", async () => {
-      const response = await request(getServer()).get("/api/org/org1");
+    it.only("get", async () => {
+      const server = await runner.setup();
+      const response = await request(server).get("/api/org/org1");
+      // const response = await request(getServer()).get("/api/org/org1");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();

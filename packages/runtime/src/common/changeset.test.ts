@@ -1,5 +1,13 @@
 import crypto from "crypto";
 
+import {
+  ChangesetDef,
+  Definition,
+  FieldSetter,
+  FieldSetterChangesetReference,
+  FieldSetterFunction,
+  FunctionName,
+} from "@gaudi/compiler/dist/types/definition";
 import bcrypt, { hash } from "bcrypt";
 
 import { ActionContext } from "@runtime/common/action";
@@ -12,14 +20,6 @@ import {
 } from "@runtime/common/changeset";
 import { compileFromString, mockQueryExecutor } from "@runtime/common/testUtils";
 import { Vars } from "@runtime/server/vars";
-import {
-  ChangesetDef,
-  Definition,
-  FieldSetter,
-  FieldSetterChangesetReference,
-  FieldSetterFunction,
-  FunctionName,
-} from "@gaudi/compiler/dist/types/definition";
 
 describe("runtime", () => {
   describe("changeset", () => {

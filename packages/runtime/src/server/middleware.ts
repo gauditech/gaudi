@@ -87,4 +87,6 @@ export function gaudiMiddleware(app: Express, def: Definition, config: AppConfig
   setupServerApis(def, app);
 
   app.use(errorHandler);
+
+  app.on("gaudi:cleanup", () => ctx.dbConn.destroy());
 }
