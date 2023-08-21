@@ -12,11 +12,6 @@ import { queryPlanToString } from "./stringify";
 
 import { DbConn } from "@runtime/server/dbConn";
 
-export type Result = {
-  rowCount: number;
-  rows: Row[];
-};
-
 export interface NestedRow {
   [key: string]: string | number | NestedRow | NestedRow[];
 }
@@ -37,8 +32,11 @@ export async function executeQuery(
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  const result: Result = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
-  return result.rows.map((row: Row): Row => {
+  let results = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
+  if ("rows" in results) {
+    results = results.rows;
+  }
+  return results.map((row: Row): Row => {
     const cast = query.select.map((item: SelectItem): [string, string | number] => {
       const value = row[item.alias];
       // FIXME this casts strings that are expected to be integers
