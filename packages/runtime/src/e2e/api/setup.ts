@@ -65,8 +65,8 @@ type InstanceCommands = {
   clean: () => Promise<void>;
 };
 
+let iterator = 1;
 export function createTestInstance(blueprint: string, data: PopulatorData[]): InstanceCommands {
-  let iterator = 1;
   const runner = new SQLiteTestRunner(Date.now().toString());
   const templatePromise = runner.prepareTemplate(blueprint, data);
   const setup = async () => {
@@ -305,7 +305,6 @@ export class SQLiteTestRunner {
   constructor(id: string) {
     this.rootPath = path.join(os.tmpdir(), `gaudi-e2e-${id}`);
     this.instances = [];
-    this.rootPath = "/tmp/gaudi-1";
   }
 
   async prepareTemplate(blueprint: string, data: PopulatorData[]): Promise<void> {
