@@ -20,6 +20,11 @@ export function createSqlite(urlString: string) {
     connection: {
       filename: urlString.substring(9),
     },
+    pool: {
+      afterCreate: (conn: any, cb: any) => {
+        conn.run("PRAGMA foreign_keys = ON", cb);
+      },
+    },
     useNullAsDefault: true,
   });
 }
