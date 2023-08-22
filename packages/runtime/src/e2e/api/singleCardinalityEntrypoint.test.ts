@@ -21,7 +21,7 @@ describe("Single Cardinality Entrypoint", () => {
 
   describe("cardinality one reference", () => {
     it("get", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const getResponse = await request(server).get("/api/user/1/address");
       expect(getResponse.statusCode).toBe(200);
       expect(getResponse.body).toMatchSnapshot();
@@ -29,14 +29,14 @@ describe("Single Cardinality Entrypoint", () => {
 
     it("update", async () => {
       const data = { name: "Foo 2" };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const patchResponse = await request(server).patch("/api/user/1/address").send(data);
       expect(patchResponse.statusCode).toBe(200);
       expect(patchResponse.body).toMatchSnapshot();
     });
 
     it("custom", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const getResponse = await request(server).get("/api/user/1/address/custom");
       expect(getResponse.statusCode).toBe(204);
     });
@@ -44,13 +44,13 @@ describe("Single Cardinality Entrypoint", () => {
 
   describe("cardinality nullable reference", () => {
     it("fail to delete when not existing", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const deleteResponse = await request(server).delete("/api/user/1/details");
       expect(deleteResponse.statusCode).toBe(404);
     });
 
     it("create and delete", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const data = { text: "some text" };
       const postResponse = await request(server).post("/api/user/1/details").send(data);
@@ -74,7 +74,7 @@ describe("Single Cardinality Entrypoint", () => {
 
   describe("cardinality nullable relation", () => {
     it("get", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const getResponse = await request(server).get("/api/address/1/user");
       expect(getResponse.statusCode).toBe(200);
@@ -82,7 +82,7 @@ describe("Single Cardinality Entrypoint", () => {
     });
 
     it("update", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const data = { name: "Second" };
       const patchResponse = await request(server).patch("/api/address/1/user").send(data);
@@ -91,14 +91,14 @@ describe("Single Cardinality Entrypoint", () => {
     });
 
     it("custom", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const getResponse = await request(server).get("/api/address/1/user/custom");
       expect(getResponse.statusCode).toBe(204);
     });
 
     it("delete and create", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const deleteResponse = await request(server).delete("/api/address/1/user");
       expect(deleteResponse.statusCode).toBe(204);
@@ -111,13 +111,13 @@ describe("Single Cardinality Entrypoint", () => {
 
     it("fail to create when already existing", async () => {
       const data = { name: "Third" };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResponse = await request(server).post("/api/address/1/user").send(data);
       expect(postResponse.statusCode).toBe(500); // FIXME response with better data
     });
 
     it("fail to delete when not existing", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const delete1Response = await request(server).delete("/api/address/1/user");
       expect(delete1Response.statusCode).toBe(204);
 

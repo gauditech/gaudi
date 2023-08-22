@@ -30,7 +30,7 @@ describe("Auth", () => {
 
   describe("Login and Logout", () => {
     it("Login and Logout successfully", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const listResponse1 = await request(server).get("/api/box");
       expect(listResponse1.statusCode).toBe(401);
@@ -60,7 +60,7 @@ describe("Auth", () => {
     });
 
     it("Wrong Login password", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const loginResponse = await request(server)
         .post("/api/auth/auth_user/login")
@@ -69,7 +69,7 @@ describe("Auth", () => {
     });
 
     it("Wrong Login username", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const loginResponse = await request(server)
         .post("/api/auth/auth_user/login")
@@ -79,7 +79,7 @@ describe("Auth", () => {
     });
 
     it("Return auth token in response", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const authToken = "FwExbO7sVwf95pI3F3qWSpkANE4aeoNiI0pogqiMcfQ";
       const listResponse2 = await request(server)
@@ -95,7 +95,7 @@ describe("Auth", () => {
 
   describe("Authorize rules in endpoints", () => {
     it("Success public", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginOwner(server);
 
       const getResponse = await request(server)
@@ -105,7 +105,7 @@ describe("Auth", () => {
     });
 
     it("Success private owned", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginOwner(server);
 
       const getResponse = await request(server)
@@ -115,7 +115,7 @@ describe("Auth", () => {
     });
 
     it("Fail private", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginAnotherUser(server);
 
       const getResponse = await request(server)
@@ -125,14 +125,14 @@ describe("Auth", () => {
     });
 
     it("Fail private no auth", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const getResponse = await request(server).get("/api/box/private");
       expect(getResponse.statusCode).toBe(401);
     });
 
     it("Success create box", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginAnotherUser(server);
 
       const getResponse = await request(server)
@@ -143,7 +143,7 @@ describe("Auth", () => {
     });
 
     it("Fail create box not logged in", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const getResponse = await request(server)
         .post("/api/box")
@@ -159,7 +159,7 @@ describe("Auth", () => {
      */
 
     it("Fail private box > get public owned", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginOwner(server);
 
       const getResponse = await request(server)
@@ -169,7 +169,7 @@ describe("Auth", () => {
     });
 
     it("Success public box > get private", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginAnotherUser(server);
 
       const getResponse = await request(server)
@@ -179,7 +179,7 @@ describe("Auth", () => {
     });
 
     it("Success public box > list owned", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginOwner(server);
 
       const getResponse = await request(server)
@@ -189,7 +189,7 @@ describe("Auth", () => {
     });
 
     it("Fail public box > list", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const token = await loginAnotherUser(server);
 
       const getResponse = await request(server)
@@ -199,7 +199,7 @@ describe("Auth", () => {
     });
 
     it("Fail public box > list not logged in returns 401", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const getResponse = await request(server).get("/api/box/public/items/");
       expect(getResponse.statusCode).toBe(401);
@@ -208,7 +208,7 @@ describe("Auth", () => {
 
   describe("user registration", () => {
     it("should register and login new user", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const registerResponse = await request(server)
         .post("/api/auth/auth_user/register")
@@ -232,7 +232,7 @@ describe("Auth", () => {
     });
 
     it("should fail when creating user with invalid parameters", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const registerResponse = await request(server)
         .post("/api/auth/auth_user/register")
@@ -243,7 +243,7 @@ describe("Auth", () => {
     });
 
     it("should fail when creating user with existing username", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const data = {
         password: "some password",

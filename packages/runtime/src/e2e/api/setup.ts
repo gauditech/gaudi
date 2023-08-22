@@ -61,30 +61,22 @@ export type ApiTestSetup = {
 };
 
 type InstanceCommands = {
-  setup: () => Promise<Server>;
-  clean: () => () => Promise<void>;
+  createServerInstance: () => Promise<Server>;
 };
 
 export function createTestInstance(blueprint: string, data: PopulatorData[]): InstanceCommands {
+  const runner = process.env.JEST_DATABASE_URL
+    ? new PostgresTestRunner(process.env.JEST_DATABASE_URL)
+    : new SQLiteTestRunner();
   afterAll(() => runner.cleanup());
-  const runner = new PostgresTestRunner();
-  let clones = 0;
+
   const templatePromise = runner.prepareTemplate(blueprint, data);
   const setup = async () => {
     await templatePromise;
     return runner.createServerInstance();
   };
-  const clean = () => {
-    clones++;
-    return function () {
-      clones--;
-      if (clones > 0) {
-        return Promise.resolve();
-      }
-      return runner.cleanup();
-    };
-  };
-  return { setup, clean };
+
+  return { createServerInstance: setup };
 }
 
 export function createApiTestSetup(blueprint: string, data: PopulatorData[]): ApiTestSetup {
@@ -320,8 +312,7 @@ abstract class TestRunner {
     this.rootPath = path.join(os.tmpdir(), `gaudi-e2e-${id}`);
     this.instances = [];
     this.definition = null;
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    console.log = function () {};
+    logger.debug(`Using TestRunner implementation: ${this.constructor.name}`);
   }
   get schemaPath() {
     return path.join(this.rootPath, "schema.prisma");
@@ -405,9 +396,10 @@ export class SQLiteTestRunner extends TestRunner {
 
 export class PostgresTestRunner extends TestRunner {
   private dbConnUrl: string;
-  constructor() {
+  constructor(dbConnUrl: string) {
     super();
-    this.dbConnUrl = "postgresql://gaudi:gaudip@localhost:5432";
+    // this.dbConnUrl = "postgresql://gaudi:gaudip@localhost:5432";
+    this.dbConnUrl = dbConnUrl;
   }
   get templateConnUrl() {
     return `${this.dbConnUrl}/gaudi-e2e-template-${this.templateId}`;

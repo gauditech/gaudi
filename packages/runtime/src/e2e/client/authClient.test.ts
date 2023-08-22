@@ -24,7 +24,7 @@ describe("auth client lib", async () => {
     DATA
   );
 
-  const server = await runner.setup();
+  const server = await runner.createServerInstance();
 
   async function loginOwner(server: Server): Promise<string> {
     const client = createClient({

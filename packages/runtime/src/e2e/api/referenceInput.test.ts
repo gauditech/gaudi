@@ -18,7 +18,7 @@ describe("Reference Input", () => {
 
   describe("Element and Extra", () => {
     it("create with a valid reference", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const extraData = { extraData: { slug: "extra" } };
       const extraPostResponse = await request(server).post("/api/extra").send(extraData);
@@ -35,7 +35,7 @@ describe("Reference Input", () => {
     });
 
     it("create with an invalid references", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const data = {
         name: "element",
@@ -48,7 +48,7 @@ describe("Reference Input", () => {
     });
 
     it("validation error with non-nullable reference", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const data = {
         name: "element",
@@ -62,7 +62,7 @@ describe("Reference Input", () => {
     });
 
     it("identifies through nested path", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const extraData = { extraData: { slug: "extraslug" } };
       const extraPostResponse = await request(server).post("/api/extra").send(extraData);

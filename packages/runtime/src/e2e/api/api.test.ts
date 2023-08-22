@@ -20,7 +20,7 @@ describe("API endpoints", () => {
     // --- regular endpoints
 
     it("get", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const response = await request(server).get("/api/org/org1");
       // const response = await request(getServer()).get("/api/org/org1");
 
@@ -29,7 +29,7 @@ describe("API endpoints", () => {
     });
 
     it("list with paging", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const response = await request(server).get("/api/org");
 
       expect(response.statusCode).toBe(200);
@@ -37,7 +37,7 @@ describe("API endpoints", () => {
     });
 
     it("list with non default paging", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const response = await request(server).get("/api/org?page=2&pageSize=2");
 
       expect(response.statusCode).toBe(200);
@@ -50,7 +50,7 @@ describe("API endpoints", () => {
         slug: "orgNEW",
         description: "Org NEW description",
       };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).post("/api/org").send(data);
 
       expect(postResp.statusCode).toBe(200);
@@ -66,7 +66,7 @@ describe("API endpoints", () => {
     it("update", async () => {
       const data = { slug: "org2", name: "Org 2A", description: "Org 2A description" };
 
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const patchResp = await request(server).patch("/api/org/org2").send(data);
       expect(patchResp.statusCode).toBe(200);
 
@@ -79,7 +79,7 @@ describe("API endpoints", () => {
     });
 
     it("delete", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const patchResp = await request(server).delete("/api/org/org3");
       expect(patchResp.statusCode).toBe(204);
 
@@ -90,7 +90,7 @@ describe("API endpoints", () => {
     // --- custom endpoints
 
     it("custom get", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).get("/api/org/org2/customGet").send();
 
       // custom endpoint return empty body so we can check only status
@@ -105,7 +105,7 @@ describe("API endpoints", () => {
           description: "Org custom NEW description",
         },
       };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).post("/api/org/customCreate").send(data);
 
       expect(postResp.statusCode).toBe(204);
@@ -126,7 +126,7 @@ describe("API endpoints", () => {
         },
       };
 
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const patchResp = await request(server).patch("/api/org/org2/customUpdate").send(data);
       expect(patchResp.statusCode).toBe(204);
 
@@ -137,7 +137,7 @@ describe("API endpoints", () => {
 
     // TODO: fix delete actions
     it("custom delete", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const patchResp = await request(server).delete("/api/org/org4/customDelete");
       expect(patchResp.statusCode).toBe(204);
 
@@ -146,7 +146,7 @@ describe("API endpoints", () => {
     });
 
     it("custom list", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).get("/api/org/customList").send();
 
       // custom endpoint return empty body so we can check only status
@@ -161,7 +161,7 @@ describe("API endpoints", () => {
         counter: 1,
         customProp: "custom prop value",
       };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).post("/api/org/org1/customOneAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
@@ -171,7 +171,7 @@ describe("API endpoints", () => {
 
     it("custom many action", async () => {
       const data = { name: "Org Custom Many", counter: 1 };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).patch("/api/org/customManyAction").send(data);
 
       expect(postResp.statusCode).toBe(204);
@@ -183,7 +183,7 @@ describe("API endpoints", () => {
 
     it("custom one endpoint - action responds", async () => {
       const data = { name: "Org Custom One", counter: 1 };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server)
         .post("/api/org/org1/customOneActionResponds")
         .send(data);
@@ -199,7 +199,7 @@ describe("API endpoints", () => {
 
     it("custom many endpoint - action responds", async () => {
       const data = { name: "Org Custom Many", counter: 1 };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).patch("/api/org/customManyActionResponds").send(data);
 
       expect(postResp.statusCode).toBe(200);
@@ -212,7 +212,7 @@ describe("API endpoints", () => {
     });
 
     it("custom many endpoint - respond action with static response", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).patch("/api/org/customManyRespondActionStatic").send();
 
       expect(postResp.statusCode).toBe(202);
@@ -223,7 +223,7 @@ describe("API endpoints", () => {
       const data = {
         body: "Org Custom Many Respond Simple",
       };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server)
         .patch("/api/org/customManyRespondActionSimple")
         .send(data);
@@ -240,7 +240,7 @@ describe("API endpoints", () => {
         header1: "header 1",
         header2: "header 2",
       };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server)
         .patch("/api/org/customManyRespondActionComplex")
         .send(data);
@@ -262,7 +262,7 @@ describe("API endpoints", () => {
 
     it("custom one endpoint - action with query", async () => {
       const data = { name: "Org 1", orgId: 1 };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).post("/api/org/org1/customOneQueryAction").send(data);
 
       expect(postResp.statusCode).toBe(200);
@@ -271,7 +271,7 @@ describe("API endpoints", () => {
 
     it("custom endpoint - fetch action", async () => {
       const data = { name: "Fetch me org 1" };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).post("/api/org/org1/customFetchAction").send(data);
 
       expect(postResp.statusCode).toBe(200);
@@ -283,7 +283,7 @@ describe("API endpoints", () => {
     it("Hook throws specific HTTP error response", async () => {
       const data = { status: 451, code: "UNAVAILABLE", message: "Unavailable For Legal Reasons" };
 
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const response = await request(server).post("/api/org/hookErrorResponse").send(data);
       expect(response.statusCode).toBe(data.status);
       expect(response.text).toEqual(data.message);
@@ -295,7 +295,7 @@ describe("API endpoints", () => {
         status: 505,
       };
 
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const response = await request(server).post("/api/org/hookErrorResponse").send(data);
       expect(response.statusCode).toBe(505);
       expect(response.text).toBe("Custom error");
@@ -304,7 +304,7 @@ describe("API endpoints", () => {
 
   describe("Repo", () => {
     it("get", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const response = await request(server).get("/api/org/org1/repos/1");
 
       expect(response.statusCode).toBe(200);
@@ -312,7 +312,7 @@ describe("API endpoints", () => {
     });
 
     it("list", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const response = await request(server).get("/api/org/org1/repos");
 
       expect(response.statusCode).toBe(200);
@@ -326,7 +326,7 @@ describe("API endpoints", () => {
         raw_description: "Repo 6 description",
         is_public: true,
       };
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const postResp = await request(server).post("/api/org/org1/repos").send(data);
       expect(postResp.statusCode).toBe(200);
 
@@ -338,7 +338,7 @@ describe("API endpoints", () => {
     it("update", async () => {
       const data = { slug: "repo2", name: "Repo 2A", description: "Repo 2A description" };
 
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const patchResp = await request(server).patch("/api/org/org1/repos/2").send(data);
       expect(patchResp.statusCode).toBe(200);
 
@@ -348,7 +348,7 @@ describe("API endpoints", () => {
     });
 
     it("delete", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const patchResp = await request(server).delete("/api/org/org1/repos/1");
       expect(patchResp.statusCode).toBe(204);
 
@@ -359,7 +359,7 @@ describe("API endpoints", () => {
 
   describe("Issue", () => {
     it("create", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
       const data = {
         title: "Issue 1",
         c: {
@@ -377,7 +377,7 @@ describe("API endpoints", () => {
 
   describe("PublicRepo", () => {
     it("list", async () => {
-      const server = await runner.setup();
+      const server = await runner.createServerInstance();
 
       const response = await request(server).get("/api/repo");
 

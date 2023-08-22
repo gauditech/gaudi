@@ -68,7 +68,7 @@ describe("api client lib", () => {
   }
 
   describe("Org", async () => {
-    const server = await runner.setup();
+    const server = await runner.createServerInstance();
     const client = createClient({
       requestFn: makeTestRequestFn(server),
     });
