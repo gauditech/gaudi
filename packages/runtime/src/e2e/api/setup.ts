@@ -65,16 +65,14 @@ type InstanceCommands = {
   clean: () => () => Promise<void>;
 };
 
-let iterator = 1;
 export function createTestInstance(blueprint: string, data: PopulatorData[]): InstanceCommands {
   afterAll(() => runner.cleanup());
-  const runner = new SQLiteTestRunner();
+  const runner = new PostgresTestRunner();
   let clones = 0;
-  const x = iterator++;
   const templatePromise = runner.prepareTemplate(blueprint, data);
   const setup = async () => {
     await templatePromise;
-    return runner.createServerInstance(x.toString());
+    return runner.createServerInstance();
   };
   const clean = () => {
     clones++;
@@ -313,7 +311,7 @@ async function closeAppServer(server: Server) {
 
 abstract class TestRunner {
   protected templateId: string;
-  protected instances: Server[];
+  protected instances: [string, Server][];
   protected rootPath: string;
   protected definition: Definition | null;
   constructor() {
@@ -322,6 +320,8 @@ abstract class TestRunner {
     this.rootPath = path.join(os.tmpdir(), `gaudi-e2e-${id}`);
     this.instances = [];
     this.definition = null;
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    console.log = function () {};
   }
   get schemaPath() {
     return path.join(this.rootPath, "schema.prisma");
@@ -344,9 +344,10 @@ abstract class TestRunner {
   }
 
   abstract prepareTemplate(_blueprint: string, _data: PopulatorData[]): Promise<void>;
-  abstract createNewEnvironment(_id: string): Promise<string>;
+  abstract createNewEnvironment(id: string): Promise<string>;
 
-  async createServerInstance(id: string): Promise<Server> {
+  async createServerInstance(): Promise<Server> {
+    const id = _.random(Number.MAX_SAFE_INTEGER).toString();
     const dbConnUrl = await this.createNewEnvironment(id);
     const app = express();
     const definitionPath = path.join(this.rootPath, "definition.json");
@@ -355,14 +356,14 @@ abstract class TestRunner {
     app.use(gaudi);
     const server = app.listen();
     server.on("close", () => gaudi.emit("gaudi:cleanup"));
-    this.instances.push(server);
+    this.instances.push([id, server]);
     return server;
   }
 
   async cleanup() {
     await Promise.all(
       this.instances.map(
-        (server) =>
+        ([_id, server]) =>
           new Promise((resolve, reject) =>
             server.close((err) => (err ? reject(err) : resolve(undefined)))
           )
@@ -426,5 +427,16 @@ export class PostgresTestRunner extends TestRunner {
     );
     await dbConn.destroy();
     return `postgresql://gaudi:gaudip@localhost:5432/gaudi-e2e-${this.templateId}-${id}`;
+  }
+
+  async cleanup(): Promise<void> {
+    await super.cleanup();
+    const dbConn = createDbConn(this.templateConnUrl);
+    await Promise.all(
+      this.instances.map(async ([id, _server]) => {
+        await dbConn.raw(`DROP DATABASE "gaudi-e2e-${this.templateId}-${id}"`);
+      })
+    );
+    await dbConn.destroy();
   }
 }
