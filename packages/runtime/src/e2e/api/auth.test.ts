@@ -7,14 +7,12 @@ import request from "supertest";
 import { DATA } from "@runtime/e2e/api/auth.data";
 import { createTestInstance, loadBlueprint } from "@runtime/e2e/api/setup";
 
-dotenv.config({ path: path.join(__dirname, "api.test.env") });
-const runner = createTestInstance(loadBlueprint(path.join(__dirname, "auth.model.gaudi")), DATA);
-
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(60000);
 
 describe("Auth", () => {
-  afterAll(runner.clean());
+  dotenv.config({ path: path.join(__dirname, "api.test.env") });
+  const runner = createTestInstance(loadBlueprint(path.join(__dirname, "auth.model.gaudi")), DATA);
 
   async function loginOwner(server: Server) {
     const loginResponse = await request(server)
@@ -31,8 +29,6 @@ describe("Auth", () => {
   }
 
   describe("Login and Logout", () => {
-    afterAll(runner.clean());
-
     it("Login and Logout successfully", async () => {
       const server = await runner.setup();
 
@@ -98,8 +94,6 @@ describe("Auth", () => {
   });
 
   describe("Authorize rules in endpoints", () => {
-    afterAll(runner.clean());
-
     it("Success public", async () => {
       const server = await runner.setup();
       const token = await loginOwner(server);
@@ -159,8 +153,6 @@ describe("Auth", () => {
   });
 
   describe("Authorize rules inheritance from entrypoints", () => {
-    afterAll(runner.clean());
-
     /**
      * Only items from public boxes (regardless of ownership) can be requested.
      * `list` additionally expects ownership.
@@ -215,8 +207,6 @@ describe("Auth", () => {
   });
 
   describe("user registration", () => {
-    afterAll(runner.clean());
-
     it("should register and login new user", async () => {
       const server = await runner.setup();
 

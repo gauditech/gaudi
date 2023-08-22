@@ -8,19 +8,18 @@ import { createTestInstance, loadBlueprint } from "@runtime/e2e/api/setup";
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(10000);
 
-dotenv.config({ path: path.join(__dirname, "api.test.env") });
-
-const runner = createTestInstance(
-  loadBlueprint(path.join(__dirname, "singleCardinalityEntrypoint.gaudi")),
-  [
-    { model: "Address", data: [{ name: "Address 1" }] },
-    { model: "User", data: [{ name: "First", address_id: 1 }] },
-  ]
-);
 describe("Single Cardinality Entrypoint", () => {
-  describe("cardinality one reference", () => {
-    afterAll(runner.clean());
+  dotenv.config({ path: path.join(__dirname, "api.test.env") });
 
+  const runner = createTestInstance(
+    loadBlueprint(path.join(__dirname, "singleCardinalityEntrypoint.gaudi")),
+    [
+      { model: "Address", data: [{ name: "Address 1" }] },
+      { model: "User", data: [{ name: "First", address_id: 1 }] },
+    ]
+  );
+
+  describe("cardinality one reference", () => {
     it("get", async () => {
       const server = await runner.setup();
       const getResponse = await request(server).get("/api/user/1/address");
@@ -44,8 +43,6 @@ describe("Single Cardinality Entrypoint", () => {
   });
 
   describe("cardinality nullable reference", () => {
-    afterAll(runner.clean());
-
     it("fail to delete when not existing", async () => {
       const server = await runner.setup();
       const deleteResponse = await request(server).delete("/api/user/1/details");
@@ -76,8 +73,6 @@ describe("Single Cardinality Entrypoint", () => {
   });
 
   describe("cardinality nullable relation", () => {
-    afterAll(runner.clean());
-
     it("get", async () => {
       const server = await runner.setup();
 

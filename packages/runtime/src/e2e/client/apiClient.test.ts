@@ -18,7 +18,7 @@ describe("api client lib", () => {
   dotenv.config({ path: path.join(__dirname, "../api/api.test.env") });
   const runner = createTestInstance(
     loadBlueprint(path.join(__dirname, "../api/api.model.gaudi")),
-    loadPopulatorData(path.join(__dirname, "../api/api.data.json"))
+    loadPopulatorData(path.join(__dirname, "api.data.json"))
   );
 
   function makeTestRequestFn(server: Server) {
@@ -72,8 +72,6 @@ describe("api client lib", () => {
     const client = createClient({
       requestFn: makeTestRequestFn(server),
     });
-
-    afterAll(runner.clean());
 
     // --- regular endpoints
 

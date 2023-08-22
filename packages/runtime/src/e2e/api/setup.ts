@@ -67,6 +67,7 @@ type InstanceCommands = {
 
 let iterator = 1;
 export function createTestInstance(blueprint: string, data: PopulatorData[]): InstanceCommands {
+  afterAll(() => runner.cleanup());
   const runner = new SQLiteTestRunner();
   let clones = 0;
   const x = iterator++;
@@ -76,11 +77,9 @@ export function createTestInstance(blueprint: string, data: PopulatorData[]): In
     return runner.createServerInstance(x.toString());
   };
   const clean = () => {
-    logger.error(`Queueing ${x} -> ${clones}`);
     clones++;
     return function () {
       clones--;
-      logger.error(`Finished ${x} -> ${clones}`);
       if (clones > 0) {
         return Promise.resolve();
       }
@@ -361,7 +360,6 @@ abstract class TestRunner {
   }
 
   async cleanup() {
-    logger.error("Cleaning!");
     await Promise.all(
       this.instances.map(
         (server) =>

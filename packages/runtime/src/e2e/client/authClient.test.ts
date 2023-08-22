@@ -16,13 +16,15 @@ import {
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(20000);
 
-describe("auth client lib", () => {
+describe("auth client lib", async () => {
   dotenv.config({ path: path.join(__dirname, "../api/api.test.env") });
 
   const runner = createTestInstance(
     loadBlueprint(path.join(__dirname, "../api/auth.model.gaudi")),
     DATA
   );
+
+  const server = await runner.setup();
 
   async function loginOwner(server: Server): Promise<string> {
     const client = createClient({
@@ -84,10 +86,6 @@ describe("auth client lib", () => {
   }
 
   describe("authentication", async () => {
-    const server = await runner.setup();
-
-    afterAll(runner.clean());
-
     function createNewClient(token?: string) {
       return createClient({
         requestFn: makeTestRequestFn(server),

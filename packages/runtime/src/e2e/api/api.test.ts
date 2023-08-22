@@ -9,17 +9,14 @@ import { createTestInstance, loadBlueprint, loadPopulatorData } from "@runtime/e
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(10000);
 
-const runner = createTestInstance(
-  loadBlueprint(path.join(__dirname, "api.model.gaudi")),
-  loadPopulatorData(path.join(__dirname, "api.data.json"))
-);
-
 describe("API endpoints", () => {
   dotenv.config({ path: path.join(__dirname, "api.test.env") });
+  const runner = createTestInstance(
+    loadBlueprint(path.join(__dirname, "api.model.gaudi")),
+    loadPopulatorData(path.join(__dirname, "api.data.json"))
+  );
 
   describe("Org", () => {
-    afterAll(runner.clean());
-
     // --- regular endpoints
 
     it("get", async () => {
@@ -306,8 +303,6 @@ describe("API endpoints", () => {
   });
 
   describe("Repo", () => {
-    afterAll(runner.clean());
-
     it("get", async () => {
       const server = await runner.setup();
       const response = await request(server).get("/api/org/org1/repos/1");
@@ -363,8 +358,6 @@ describe("API endpoints", () => {
   });
 
   describe("Issue", () => {
-    afterAll(runner.clean());
-
     it("create", async () => {
       const server = await runner.setup();
       const data = {
@@ -383,8 +376,6 @@ describe("API endpoints", () => {
   });
 
   describe("PublicRepo", () => {
-    afterAll(runner.clean());
-
     it("list", async () => {
       const server = await runner.setup();
 
