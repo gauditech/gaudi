@@ -9,14 +9,11 @@ import { createTestInstance, loadBlueprint } from "@runtime/e2e/api/setup";
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(10000);
 
-describe("Reference Input", () => {
-  dotenv.config({ path: path.join(__dirname, "api.test.env") });
+dotenv.config({ path: path.join(__dirname, "api.test.env") });
+const runner = createTestInstance(loadBlueprint(path.join(__dirname, "referenceInput.gaudi")), []);
 
-  const runner = createTestInstance(
-    loadBlueprint(path.join(__dirname, "referenceInput.gaudi")),
-    []
-  );
-  afterAll(() => runner.clean());
+describe("Reference Input", () => {
+  afterAll(runner.clean());
 
   describe("Element and Extra", () => {
     it("create with a valid reference", async () => {

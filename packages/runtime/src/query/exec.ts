@@ -13,11 +13,11 @@ import { queryPlanToString } from "./stringify";
 import { DbConn } from "@runtime/server/dbConn";
 
 export interface NestedRow {
-  [key: string]: string | number | NestedRow | NestedRow[];
+  [key: string]: string | number | boolean | NestedRow | NestedRow[];
 }
 
 export interface Row {
-  [key: string]: string | number;
+  [key: string]: string | number | boolean;
 }
 
 export async function executeQuery(
@@ -37,15 +37,19 @@ export async function executeQuery(
     results = results.rows;
   }
   return results.map((row: Row): Row => {
-    const cast = query.select.map((item: SelectItem): [string, string | number] => {
+    const cast = query.select.map((item: SelectItem): [string, string | number | boolean] => {
       const value = row[item.alias];
       // FIXME this casts strings that are expected to be integers
       // but it should be some kind of bigint instead
-      if (item.kind === "expression" && item.type.kind === "integer" && typeof value === "string") {
-        return [item.alias, parseInt(value, 10)];
-      } else {
-        return [item.alias, value];
+      if (item.kind === "expression") {
+        if (item.type.kind === "integer" && typeof value === "string") {
+          return [item.alias, parseInt(value, 10)];
+        }
+        if (item.type.kind === "boolean" && typeof value === "number") {
+          return [item.alias, !!value];
+        }
       }
+      return [item.alias, value];
     });
     return Object.fromEntries(cast) as Row;
   });

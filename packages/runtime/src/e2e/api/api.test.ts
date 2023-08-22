@@ -4,38 +4,21 @@ import * as dotenv from "dotenv";
 import _ from "lodash";
 import request from "supertest";
 
-import {
-  createApiTestSetup,
-  createTestInstance,
-  loadBlueprint,
-  loadPopulatorData,
-} from "@runtime/e2e/api/setup";
+import { createTestInstance, loadBlueprint, loadPopulatorData } from "@runtime/e2e/api/setup";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(10000);
 
+const runner = createTestInstance(
+  loadBlueprint(path.join(__dirname, "api.model.gaudi")),
+  loadPopulatorData(path.join(__dirname, "api.data.json"))
+);
+
 describe("API endpoints", () => {
   dotenv.config({ path: path.join(__dirname, "api.test.env") });
 
-  const { getServer, setup, destroy } = createApiTestSetup(
-    loadBlueprint(path.join(__dirname, "api.model.gaudi")),
-    loadPopulatorData(path.join(__dirname, "api.data.json"))
-  );
-
-  const runner = createTestInstance(
-    loadBlueprint(path.join(__dirname, "api.model.gaudi")),
-    loadPopulatorData(path.join(__dirname, "api.data.json"))
-  );
-
-  afterAll(() => runner.clean());
-
   describe("Org", () => {
-    beforeAll(async () => {
-      // await setup();
-    });
-    afterAll(async () => {
-      // await destroy();
-    });
+    afterAll(runner.clean());
 
     // --- regular endpoints
 
@@ -323,12 +306,7 @@ describe("API endpoints", () => {
   });
 
   describe("Repo", () => {
-    beforeAll(async () => {
-      await setup();
-    });
-    afterAll(async () => {
-      await destroy();
-    });
+    afterAll(runner.clean());
 
     it("get", async () => {
       const server = await runner.setup();
@@ -385,39 +363,32 @@ describe("API endpoints", () => {
   });
 
   describe("Issue", () => {
-    beforeAll(async () => {
-      await setup();
-    });
-    afterAll(async () => {
-      await destroy();
-    });
+    afterAll(runner.clean());
 
     it("create", async () => {
+      const server = await runner.setup();
       const data = {
         title: "Issue 1",
         c: {
           body: "Comment body",
         },
       };
-      const postResp = await request(getServer()).post("/api/org/org1/repos/1/issues").send(data);
+      const postResp = await request(server).post("/api/org/org1/repos/1/issues").send(data);
       expect(postResp.statusCode).toBe(200);
 
-      const getResp = await request(getServer()).get("/api/org/org1/repos/1/issues/1");
+      const getResp = await request(server).get("/api/org/org1/repos/1/issues/1");
       expect(getResp.statusCode).toBe(200);
       expect(getResp.body).toMatchSnapshot();
     });
   });
 
   describe("PublicRepo", () => {
-    beforeAll(async () => {
-      await setup();
-    });
-    afterAll(async () => {
-      await destroy();
-    });
+    afterAll(runner.clean());
 
     it("list", async () => {
-      const response = await request(getServer()).get("/api/repo");
+      const server = await runner.setup();
+
+      const response = await request(server).get("/api/repo");
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchSnapshot();
