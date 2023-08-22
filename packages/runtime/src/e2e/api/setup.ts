@@ -404,10 +404,13 @@ export class SQLiteTestRunner extends TestRunner {
 }
 
 export class PostgresTestRunner extends TestRunner {
-  private templateConnUrl: string;
+  private dbConnUrl: string;
   constructor() {
     super();
-    this.templateConnUrl = `postgresql://gaudi:gaudip@localhost:5432/gaudi-e2e-template-${this.templateId}`;
+    this.dbConnUrl = "postgresql://gaudi:gaudip@localhost:5432";
+  }
+  get templateConnUrl() {
+    return `${this.dbConnUrl}/gaudi-e2e-template-${this.templateId}`;
   }
   get dbProvider() {
     return "postgres";
@@ -431,12 +434,13 @@ export class PostgresTestRunner extends TestRunner {
 
   async cleanup(): Promise<void> {
     await super.cleanup();
-    const dbConn = createDbConn(this.templateConnUrl);
+    const dbConn = createDbConn(`${this.dbConnUrl}/template1`);
     await Promise.all(
       this.instances.map(async ([id, _server]) => {
         await dbConn.raw(`DROP DATABASE "gaudi-e2e-${this.templateId}-${id}"`);
       })
     );
+    await dbConn.raw(`DROP DATABASE "gaudi-e2e-template-${this.templateId}"`);
     await dbConn.destroy();
   }
 }
