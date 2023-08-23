@@ -3,18 +3,22 @@ import { Knex, knex } from "knex";
 export type DbConn = Knex | Knex.Transaction;
 export type DbQueryBuilder = Knex.QueryBuilder;
 
-export function createDbConn(urlString: string, options?: { schema?: string }): DbConn {
+export function createDbConn(urlString: string): DbConn {
   if (urlString.startsWith("sqlite")) {
     return createSqlite(urlString);
+  } else {
+    return createPostgres(urlString);
   }
+}
+
+function createPostgres(urlString: string): DbConn {
   return knex({
     client: "pg",
     connection: urlString,
-    searchPath: options?.schema ? [options.schema] : undefined,
   });
 }
 
-export function createSqlite(urlString: string) {
+function createSqlite(urlString: string) {
   return knex({
     client: "sqlite",
     connection: {

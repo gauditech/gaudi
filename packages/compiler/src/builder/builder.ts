@@ -18,11 +18,11 @@ import { assertUnreachable } from "@compiler/common/utils";
 import { Definition } from "@compiler/types/definition";
 
 const logger = initLogger("gaudi:compiler");
-const DB_PROVIDER = "postgresql";
 
 export type BuilderConfig = {
   outputFolder: string;
   gaudiFolder: string;
+  dbProvider: "postgresql" | "sqlite";
 };
 
 export async function build(definition: Definition, config: BuilderConfig): Promise<void> {
@@ -30,7 +30,7 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
   setupFolder(config.gaudiFolder);
 
   await buildDefinition({ definition }, config.outputFolder);
-  await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
+  await buildDb({ definition, dbProvider: config.dbProvider }, config.gaudiFolder);
   await buildApiClients(definition, config.outputFolder);
 }
 
