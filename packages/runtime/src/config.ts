@@ -18,8 +18,6 @@ export type AppConfig = {
   outputFolder: string;
   /** DB connection URL */
   dbConnUrl: string;
-  /** DB default schema */
-  dbSchema?: string;
   /** Base URL path on which an app is mounted on. */
   basePath?: string;
 };
@@ -35,9 +33,8 @@ export function readConfig(): RuntimeConfig {
   const outputFolder = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
 
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
-  const dbSchema = process.env.GAUDI_DATABASE_SCHEMA || "public";
 
-  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl, dbSchema };
+  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl };
 
   logger.debug("Gaudi runtime config", finalConfig);
 

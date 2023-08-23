@@ -15,7 +15,7 @@ export async function populate(options: PopulateOptions, config: RuntimeConfig) 
   try {
     const definition = loadDefinition(config.definitionPath);
 
-    dbConn = createDbConn(config.dbConnUrl, { schema: config.dbSchema });
+    dbConn = createDbConn(config.dbConnUrl);
 
     const targetPopulatorName = options.populator;
 

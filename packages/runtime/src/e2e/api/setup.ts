@@ -12,7 +12,7 @@ import express from "express";
 import _ from "lodash";
 
 import { compileFromString } from "@runtime/common/testUtils";
-import { DbConn, createDbConn, createSqlite } from "@runtime/server/dbConn";
+import { DbConn, createDbConn } from "@runtime/server/dbConn";
 import { useGaudi } from "@runtime/server/express";
 
 const logger = initLogger("gaudi:test:e2e:setup");
@@ -119,7 +119,7 @@ abstract class TestRunner {
     logger.debug(`Using TestRunner implementation: ${this.constructor.name}`);
   }
   get schemaPath() {
-    return path.join(this.rootPath, "schema.prisma");
+    return path.join(this.rootPath, "db", "schema.prisma");
   }
   abstract get dbProvider(): "postgresql" | "sqlite";
   async compileApp(blueprint: string) {
@@ -180,7 +180,7 @@ export class SQLiteTestRunner extends TestRunner {
       },
     });
     // populate
-    const dbConn = createSqlite(`sqlite://${dbPath}`);
+    const dbConn = createDbConn(`sqlite://${dbPath}`);
     await populateDb(this.definition!, dbConn, data);
     await dbConn.destroy();
   }
