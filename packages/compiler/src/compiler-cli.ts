@@ -9,5 +9,5 @@ const { inputFolder, outputFolder, gaudiFolder } = readConfig();
 
 const definition = compose(compileProject(inputFolder));
 
-// FIXME support sqlite as well
-build(definition, { outputFolder, gaudiFolder, dbProvider: "postgresql" });
+const provider = process.env.USE_SQLITE ? "sqlite" : "postgresql";
+build(definition, { outputFolder, gaudiFolder, dbProvider: provider });

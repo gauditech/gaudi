@@ -3,27 +3,54 @@ import { Knex, knex } from "knex";
 export type DbConn = Knex | Knex.Transaction;
 
 export function createDbConn(urlString: string): DbConn {
-  if (urlString.startsWith("sqlite")) {
-    return createSqlite(urlString);
+  const config = parseConnectionString(urlString);
+  if (config.provider === "postgresql") {
+    return createPostgres(config);
   } else {
-    return createPostgres(urlString);
+    return createSqlite(config);
   }
 }
 
-function createPostgres(urlString: string): DbConn {
-  // TODO: parse the string and check for 'schema'
+type Config = PostgresqlConfig | SqliteConfig;
+type PostgresqlConfig = {
+  provider: "postgresql";
+  // TODO: support `schema`
+  connection: string;
+};
+type SqliteConfig = {
+  provider: "sqlite";
+  filename: string;
+};
+
+export function parseConnectionString(conn: string): Config {
+  if (conn.startsWith("sqlite")) {
+    return {
+      provider: "sqlite",
+      // remove `sqlite://` part
+      filename: conn.substring(9),
+    };
+  }
+  if (conn.startsWith("postgres")) {
+    return {
+      provider: "postgresql",
+      connection: conn,
+    };
+  }
+  throw new Error(`Invalid connection string ${conn}`);
+}
+
+function createPostgres(config: PostgresqlConfig): DbConn {
   return knex({
     client: "pg",
-    connection: urlString,
+    connection: config.connection,
   });
 }
 
-function createSqlite(urlString: string) {
+function createSqlite(config: SqliteConfig) {
   return knex({
     client: "sqlite",
     connection: {
-      // remove `sqlite://` part
-      filename: urlString.substring(9),
+      filename: config.filename,
     },
     pool: {
       // this is required in order to support ON DELETE
@@ -32,6 +59,7 @@ function createSqlite(urlString: string) {
         conn.run("PRAGMA foreign_keys = ON", cb);
       },
     },
+    // suppress knex warnings
     useNullAsDefault: true,
   });
 }
