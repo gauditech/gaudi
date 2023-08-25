@@ -210,6 +210,8 @@ function expandSetterExpression(
 
           return { kind: "changeset-reference", referenceName: head.text };
         }
+        case "validator":
+          throw new Error("Unexpected validator ref in action");
         case "validatorArg":
           throw new Error("Unexpected validator arg ref in action");
         default:

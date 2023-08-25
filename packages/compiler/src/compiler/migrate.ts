@@ -274,7 +274,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateEntrypoint(
     entrypoint: AST.Entrypoint,
-    parentAlias: Spec.IdentifierRef<AST.RefTarget> | undefined,
+    parentAlias: Spec.IdentifierRef<AST.RefEntrypoint> | undefined,
     parentAuthorize: Spec.Expr | undefined,
     depth: number
   ): Spec.Entrypoint {
@@ -291,13 +291,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         : [generateModelIdIdentifier(model)];
     }
 
-    const alias: Spec.IdentifierRef<AST.RefTarget> = entrypoint.as
+    ensureExists(entrypoint.ref);
+    const alias: Spec.IdentifierRef<AST.RefEntrypoint> = entrypoint.as
       ? migrateIdentifierRef(entrypoint.as.identifier)
-      : {
-          text: `$target_${depth}`,
-          ref: { kind: "target", targetKind: "entrypoint" },
-          type: Type.model(model),
-        };
+      : { text: `$target_${depth}`, ref: entrypoint.ref, type: Type.model(model) };
 
     const astAuthorize = kindFind(entrypoint.atoms, "authorize")?.expr;
     const authorize = combineExprWithAnd(
@@ -719,18 +716,15 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migratePopulate(
     populate: AST.Populate,
-    parentAlias: Spec.IdentifierRef<AST.RefTarget> | undefined,
+    parentAlias: Spec.IdentifierRef<AST.RefPopulate> | undefined,
     depth: number
   ): Spec.Populate {
     const target = migrateIdentifierRef(populate.target);
 
-    const alias: Spec.IdentifierRef<AST.RefTarget> = populate.as?.identifier
+    ensureExists(populate.ref);
+    const alias: Spec.IdentifierRef<AST.RefPopulate> = populate.as?.identifier
       ? migrateIdentifierRef(populate.as.identifier)
-      : {
-          text: `$target_${depth}`,
-          ref: { kind: "target", targetKind: "populate" },
-          type: target.type,
-        };
+      : { text: `$target_${depth}`, ref: populate.ref, type: target.type };
 
     let setters = kindFilter(populate.atoms, "set").map(migrateActionAtomSet);
     if (target.ref.kind === "modelAtom" && target.ref.atomKind === "relation" && parentAlias) {
