@@ -1,6 +1,16 @@
 import crypto from "crypto";
 
+import {
+  ChangesetDef,
+  ChangesetOperationDef,
+  Definition,
+  FieldSetter,
+  FieldSetterChangesetReference,
+  FieldSetterFunction,
+  FunctionName,
+} from "@gaudi/compiler/dist/types/definition";
 import bcrypt, { hash } from "bcrypt";
+import _ from "lodash";
 
 import { ActionContext } from "@runtime/common/action";
 import {
@@ -12,14 +22,6 @@ import {
 } from "@runtime/common/changeset";
 import { compileFromString, mockQueryExecutor } from "@runtime/common/testUtils";
 import { Vars } from "@runtime/server/vars";
-import {
-  ChangesetDef,
-  Definition,
-  FieldSetter,
-  FieldSetterChangesetReference,
-  FieldSetterFunction,
-  FunctionName,
-} from "@gaudi/compiler/dist/types/definition";
 
 describe("runtime", () => {
   describe("changeset", () => {
@@ -48,7 +50,7 @@ describe("runtime", () => {
     });
 
     it("build action changeset object", async () => {
-      const data: ChangesetDef = [
+      const changeset: ChangesetDef = [
         {
           name: "value_prop",
           setter: { kind: "literal", literal: { kind: "string", value: "just value" } },
@@ -120,10 +122,17 @@ describe("runtime", () => {
       };
 
       expect(
-        await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
+        await buildChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          changeset,
+          context
+        )
       ).toMatchSnapshot();
     });
 
+    // FIXME no longer needed?
     it("build strict action changeset object", async () => {
       const data: ChangesetDef = [
         // lept field
@@ -144,6 +153,49 @@ describe("runtime", () => {
 
       expect(
         await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
+      ).toMatchSnapshot();
+    });
+
+    it("passes default values correctly", async () => {
+      function makeOp(name: string, required: boolean): ChangesetOperationDef {
+        return {
+          name,
+          setter: {
+            kind: "fieldset-input",
+            fieldsetAccess: [name],
+            required,
+            type: "string",
+            default: {
+              kind: "literal",
+              literal: { kind: "string", value: "this is default value" },
+            },
+          },
+        };
+      }
+
+      const changeset: ChangesetDef = [
+        makeOp("input_provided", true),
+        makeOp("input_missing", true),
+        makeOp("optional_missing", false),
+        _.set(makeOp("optional_no_default", false), ["setter", "default"], undefined),
+      ];
+
+      const context: ActionContext = {
+        input: {
+          input_provided: "this is user value",
+        },
+        referenceIds: [],
+        vars: new Vars(),
+      };
+
+      expect(
+        await buildChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          changeset,
+          context
+        )
       ).toMatchSnapshot();
     });
 

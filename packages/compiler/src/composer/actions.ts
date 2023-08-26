@@ -196,6 +196,7 @@ function expandSetterExpression(
           };
         }
         case "extraInput": {
+          // fixme fieldset-reference ??
           return {
             kind: "fieldset-input",
             fieldsetAccess: [head.text],
