@@ -237,9 +237,7 @@ export type ActionAtomInput = {
   kind: "input";
   target: RefModelField;
   optional: boolean;
-  default?:
-    | { kind: "literal"; literal: Literal }
-    | { kind: "reference"; reference: IdentifierRef[] };
+  default?: Expr;
 };
 export type ActionAtomSet = {
   kind: "set";

@@ -511,6 +511,32 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       if (refThrough) return [refThrough];
       const input = inputs.find((i) => i.target.name === field.ref.name);
       if (input) return [input];
+      if (action.kind === "create") {
+        // create action can have implicit inputs
+        if (field.default) {
+          const type: Type =
+            field.default.kind === "null"
+              ? { kind: "null" }
+              : { kind: "primitive", primitiveKind: field.ref.type };
+          return [
+            {
+              kind: "set",
+              target: field.ref,
+              set: { kind: "expression", expr: { kind: "literal", literal: field.default, type } },
+            },
+          ];
+        } else {
+          return [
+            {
+              kind: "input",
+              // FIXME at the moment, `nullable` makes the input optional - should it?
+              optional: field.ref.nullable,
+              target: field.ref,
+            },
+          ];
+        }
+      }
+      // FIXME "update" action implicit inputs should be removed in favor of explicit ones
       if (allDenied) return [];
       const denied = deniedFields.find((i) => i.text === field.ref.name);
       if (denied) return [];
@@ -519,10 +545,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         {
           kind: "input",
           target: field.ref,
-          optional: field.ref.nullable || action.kind === "update",
-          default: field.ref.nullable
-            ? { kind: "literal", literal: { kind: "null", value: null } }
-            : undefined,
+          optional: true, // update is always optional unless explicitly set to required
+          default:
+            field.default ?? field.ref.nullable
+              ? { kind: "literal", literal: { kind: "null", value: null }, type: { kind: "null" } }
+              : undefined,
         },
       ];
     });
@@ -684,11 +711,16 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       let migratedDefault: Spec.ActionAtomInput["default"];
       if (default_) {
         if (default_.kind === "literal") {
-          migratedDefault = { kind: "literal", literal: migrateLiteral(default_.literal) };
+          migratedDefault = {
+            kind: "literal",
+            literal: migrateLiteral(default_.literal),
+            type: default_.type,
+          };
         } else if (default_.kind === "path") {
           migratedDefault = {
-            kind: "reference",
-            reference: default_.path.map((i) => migrateIdentifierRef(i)),
+            kind: "identifier",
+            identifier: default_.path.map((i) => migrateIdentifierRef(i)),
+            type: default_.type,
           };
         } else {
           throw Error("Default input as expression is not supported in spec");
