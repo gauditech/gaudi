@@ -1674,7 +1674,7 @@ exports[`entrypoint composes single cardinality 3`] = `
                   "details_id",
                 ],
                 "kind": "fieldset-input",
-                "required": false,
+                "required": true,
                 "type": "integer",
               },
             },
@@ -1713,7 +1713,7 @@ exports[`entrypoint composes single cardinality 3`] = `
           "details_id": {
             "kind": "field",
             "nullable": true,
-            "required": false,
+            "required": true,
             "type": "integer",
             "validate": undefined,
           },

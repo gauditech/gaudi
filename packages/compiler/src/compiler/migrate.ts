@@ -529,8 +529,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           return [
             {
               kind: "input",
-              // FIXME at the moment, `nullable` makes the input optional - should it?
-              optional: field.ref.nullable,
+              optional: false,
               target: field.ref,
             },
           ];
@@ -546,10 +545,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           kind: "input",
           target: field.ref,
           optional: true, // update is always optional unless explicitly set to required
-          default:
-            field.default ?? field.ref.nullable
-              ? { kind: "literal", literal: { kind: "null", value: null }, type: { kind: "null" } }
-              : undefined,
         },
       ];
     });

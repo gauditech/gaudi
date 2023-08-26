@@ -612,6 +612,22 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
 ]
 `;
 
+exports[`compose actions native actions create action doesn't produce inputs for fields with default 1`] = `
+{
+  "kind": "record",
+  "nullable": false,
+  "record": {
+    "description": {
+      "kind": "field",
+      "nullable": true,
+      "required": true,
+      "type": "string",
+      "validate": undefined,
+    },
+  },
+}
+`;
+
 exports[`compose actions native actions sets default action if not given 1`] = `
 [
   {

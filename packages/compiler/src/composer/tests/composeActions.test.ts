@@ -38,6 +38,23 @@ describe("compose actions", () => {
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
+
+    it("create action doesn't produce inputs for fields with default", () => {
+      const bp = `
+      model Org {
+        field name { type string, default "my name" }
+        field description { type string, nullable }
+      }
+      api {
+        entrypoint Org {
+          create endpoint {}
+        }
+      }
+      `;
+      const def = compileFromString(bp);
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
+      expect(endpoint.fieldset).toMatchSnapshot();
+    });
     it("succeeds for basic update with a deny rule", () => {
       const bp = `
     model Org {
@@ -235,7 +252,6 @@ describe("compose actions", () => {
       expect(endpoint.actions).toMatchSnapshot();
       expect(endpoint.fieldset).toMatchSnapshot();
     });
-    it.todo("succeeds to update through unique relation");
     it("sets default action if not given", () => {
       const bp = `
     model Org {
