@@ -77,7 +77,7 @@ export const PATCH = createWeakKeyword("PATCH");
 export const Pageable = createWeakKeyword("pageable");
 export const Output = createWeakKeyword("output");
 export const Order = createWeakKeyword("order");
-export const Optional = createWeakKeyword("optional");
+export const Required = createWeakKeyword("required");
 export const One = createWeakKeyword("one");
 export const On = createWeakKeyword("on");
 export const Offset = createWeakKeyword("offset");
@@ -211,6 +211,7 @@ export const GaudiTokens = [
   Repeat,
   Relation,
   Reference,
+  Required,
   Query,
   POST,
   Populator,
@@ -220,7 +221,6 @@ export const GaudiTokens = [
   Pageable,
   Output,
   Order,
-  Optional,
   One,
   On,
   Offset,

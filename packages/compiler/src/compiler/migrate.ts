@@ -460,8 +460,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const contextRelation =
       last.ref.kind === "modelAtom" && last.ref.atomKind === "relation" ? last.ref : undefined;
     const model = globalModels.find((m) => m.name.text === getTypeModel(last.type)!)!;
-
-    const inputs = kindFilter(action.atoms, "input").flatMap(migrateActionAtomInput);
+    const defaultOptional = action.kind === "update";
+    const inputs = kindFilter(action.atoms, "input").flatMap((input) =>
+      migrateActionAtomInput(input, defaultOptional)
+    );
     const denyAtoms = kindFilter(action.atoms, "deny");
     const allDenied = !!denyAtoms.find(({ fields }) => fields.kind === "all");
     const deniedFields = denyAtoms.flatMap(({ fields }) =>
@@ -699,10 +701,13 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     };
   }
 
-  function migrateActionAtomInput({ fields }: AST.ActionAtomInput): Spec.ActionAtomInput[] {
+  function migrateActionAtomInput(
+    { fields }: AST.ActionAtomInput,
+    defaultOptional: boolean
+  ): Spec.ActionAtomInput[] {
     return fields.map(({ field, atoms }): Spec.ActionAtomInput => {
-      const optional = !!kindFind(atoms, "optional");
       const default_ = kindFind(atoms, "default")?.value;
+      const optional = (!kindFind(atoms, "required") && defaultOptional) || !!default_;
       let migratedDefault: Spec.ActionAtomInput["default"];
       if (default_) {
         if (default_.kind === "literal") {

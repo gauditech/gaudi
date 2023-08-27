@@ -191,8 +191,8 @@ describe("compose actions", () => {
         update endpoint {
           action {
             update org as ox {
-              set name "new name"
-              input { description { optional } }
+              set uuid "new uuid"
+              input { description { required }, name }
               reference extras through name
             }
           }

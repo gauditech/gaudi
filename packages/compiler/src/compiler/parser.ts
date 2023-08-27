@@ -1121,8 +1121,8 @@ class GaudiParser extends EmbeddedActionsParser {
           this.OR([
             {
               ALT: () => {
-                const keyword = this.createTokenData(this.CONSUME(L.Optional));
-                atoms.push({ kind: "optional", keyword });
+                const keyword = this.createTokenData(this.CONSUME(L.Required));
+                atoms.push({ kind: "required", keyword });
               },
             },
             {

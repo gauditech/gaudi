@@ -504,7 +504,7 @@ export function buildTokens(
       buildIdentifierRef(field);
       atoms.forEach((a) =>
         match(a)
-          .with({ kind: "optional" }, ({ keyword }) => {
+          .with({ kind: "required" }, ({ keyword }) => {
             buildKeyword(keyword);
           })
           .with({ kind: "default" }, ({ keyword, value }) => {

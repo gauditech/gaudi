@@ -304,7 +304,7 @@ export type ActionAtomInput = {
   }[];
 };
 export type InputAtom = { keyword: TokenData } & (
-  | { kind: "optional" }
+  | { kind: "required" }
   | { kind: "default"; value: Expr<Code> }
 );
 export type ExtraInput = {
