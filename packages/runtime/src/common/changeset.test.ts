@@ -157,7 +157,7 @@ describe("runtime", () => {
     });
 
     it("passes default values correctly", async () => {
-      function makeOp(name: string, required: boolean): ChangesetOperationDef {
+      function makeOp(name: string, required: boolean, hasDefault: boolean): ChangesetOperationDef {
         return {
           name,
           setter: {
@@ -165,24 +165,34 @@ describe("runtime", () => {
             fieldsetAccess: [name],
             required,
             type: "string",
-            default: {
-              kind: "literal",
-              literal: { kind: "string", value: "this is default value" },
-            },
+            default: hasDefault
+              ? {
+                  kind: "literal",
+                  literal: { kind: "string", value: "this is default value" },
+                }
+              : undefined,
           },
         };
       }
 
+      /**
+       * NOTE: while this test checks the current implementation,
+       * it doesn't make sense that 'required' fields have a 'default'
+       */
+
       const changeset: ChangesetDef = [
-        makeOp("input_provided", true),
-        makeOp("input_missing", true),
-        makeOp("optional_missing", false),
-        _.set(makeOp("optional_no_default", false), ["setter", "default"], undefined),
+        makeOp("required_default_provided", true, true),
+        makeOp("required_default_missing", true, true),
+        makeOp("optional_default_provided", false, true),
+        makeOp("optional_default_missing", false, true),
+        makeOp("required_no_default", true, false),
+        makeOp("optional_no_default", false, false),
       ];
 
       const context: ActionContext = {
         input: {
-          input_provided: "this is user value",
+          required_default_provided: "this is user value",
+          optional_default_provided: "this is another user value",
         },
         referenceIds: [],
         vars: new Vars(),

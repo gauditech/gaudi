@@ -53,9 +53,11 @@ exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
 
 exports[`runtime changeset passes default values correctly 1`] = `
 {
-  "input_missing": "this is default value",
-  "input_provided": "this is user value",
-  "optional_missing": "this is default value",
+  "optional_default_missing": "this is default value",
+  "optional_default_provided": "this is another user value",
   "optional_no_default": undefined,
+  "required_default_missing": "this is default value",
+  "required_default_provided": "this is user value",
+  "required_no_default": undefined,
 }
 `;
