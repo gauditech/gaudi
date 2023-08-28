@@ -10,7 +10,7 @@ api {
     create endpoint {
       action {
         create as vehicle {
-          input { notes { default "Note not provided" } }
+          input { notes { default "Created on " + stringify(now()) } }
         }
       }
     }

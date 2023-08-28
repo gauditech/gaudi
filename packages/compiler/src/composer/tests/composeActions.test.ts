@@ -197,6 +197,13 @@ describe("compose actions", () => {
             }
           }
         }
+        create endpoint {
+          action {
+            create Org as ox {
+              input { uuid { default "uuid-" + stringify(now()) } }
+            }
+          }
+        }
       }
     }`;
       const def = compileFromString(bp);

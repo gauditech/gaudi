@@ -708,24 +708,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     return fields.map(({ field, atoms }): Spec.ActionAtomInput => {
       const default_ = kindFind(atoms, "default")?.value;
       const optional = (!kindFind(atoms, "required") && defaultOptional) || !!default_;
-      let migratedDefault: Spec.ActionAtomInput["default"];
-      if (default_) {
-        if (default_.kind === "literal") {
-          migratedDefault = {
-            kind: "literal",
-            literal: migrateLiteral(default_.literal),
-            type: default_.type,
-          };
-        } else if (default_.kind === "path") {
-          migratedDefault = {
-            kind: "identifier",
-            identifier: default_.path.map((i) => migrateIdentifierRef(i)),
-            type: default_.type,
-          };
-        } else {
-          throw Error("Default input as expression is not supported in spec");
-        }
-      }
 
       const migratedField = migrateIdentifierRef(field);
       const target =
@@ -737,7 +719,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         kind: "input",
         target,
         optional,
-        default: migratedDefault,
+        default: default_ ? migrateExpr(default_) : undefined,
       };
     });
   }
