@@ -447,11 +447,25 @@ export function checkForm(document: GlobalAtom[]) {
   }
 
   function checkGenerator(generator: Generator) {
-    match(generator).with({ type: "client" }, checkClientGenerator).exhaustive();
+    match(generator)
+      .with({ type: "client" }, checkClientGenerator)
+      .with({ type: "apidocs" }, checkApidocsGenerator)
+      .exhaustive();
   }
   function checkClientGenerator(generator: Generator) {
     containsAtoms(generator, ["target"]);
     noDuplicateAtoms(generator, ["target"]);
+  }
+  function checkApidocsGenerator(generator: Generator) {
+    // check that there are no atoms
+    generator.atoms.forEach((a) => {
+      errors.push(
+        new CompilerError(generator.keyword, ErrorCode.CannotContainAtom, {
+          parent: generator.kind,
+          atom: a.kind,
+        })
+      );
+    });
   }
 
   function checkNoDuplicateGenerators(generators: Generator[]) {
@@ -466,7 +480,7 @@ export function checkForm(document: GlobalAtom[]) {
           const tag = `${type}-${target}`;
           if (generatorTag.includes(tag)) {
             errors.push(
-              new CompilerError(g.keyword, ErrorCode.DuplicateGenerator, {
+              new CompilerError(g.keyword, ErrorCode.DuplicateClientGenerator, {
                 type,
                 target,
               })
@@ -474,6 +488,19 @@ export function checkForm(document: GlobalAtom[]) {
           }
 
           generatorTag.push(tag);
+        })
+        .with({ type: "apidocs" }, (g) => {
+          const type = g.type;
+
+          if (generatorTag.includes(type)) {
+            errors.push(
+              new CompilerError(g.keyword, ErrorCode.DuplicateApidocsGenerator, {
+                type,
+              })
+            );
+          }
+
+          generatorTag.push(type);
         })
         .exhaustive();
     });

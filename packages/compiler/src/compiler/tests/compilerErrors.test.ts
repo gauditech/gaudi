@@ -703,7 +703,7 @@ describe("compiler errors", () => {
   });
 
   describe("generator", () => {
-    it("fails for multiple generators with the same target/api", () => {
+    it("fails for multiple client generators with the same target/api", () => {
       const bp = `
         generate client {
           target js
@@ -715,7 +715,25 @@ describe("compiler errors", () => {
           output "a/b/c"
         }
         `;
-      expectError(bp, `Found duplicate generator "client", targeting the same target "js"`);
+      expectError(bp, `Found duplicate "client" generators with the same target "js"`);
+    });
+    it("fails for multiple apidocs generators", () => {
+      const bp = `
+        generate apidocs {
+        }
+
+        generate apidocs {
+        }
+      `;
+      expectError(bp, `Multiple "apidocs" generators are not allowed`);
+    });
+    it("fails if apidocs body is not empty", () => {
+      const bp = `
+        generate apidocs {
+          target js
+        }
+      `;
+      expectError(bp);
     });
   });
 

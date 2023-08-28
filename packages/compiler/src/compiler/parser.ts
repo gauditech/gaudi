@@ -1279,12 +1279,20 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   generator = this.RULE("generator", (): Generator => {
+    return this.OR<Generator>([
+      { ALT: () => this.SUBRULE(this.generatorClient) },
+      { ALT: () => this.SUBRULE(this.generatorApidocs) },
+    ]);
+  });
+
+  generatorClient = this.RULE("generatorClient", (): Generator => {
     const atoms: GeneratorClientAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Generate));
-    const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Client) }]);
+    const typeToken = this.CONSUME(L.Client);
     const keywordType = this.createTokenData(typeToken);
-    const type = typeToken.image as GeneratorType;
+    const type = typeToken.image as Extract<GeneratorType, "client">;
+
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR2([
@@ -1312,6 +1320,19 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return { kind: "generator", type, atoms, keyword, keywordType };
+  });
+
+  generatorApidocs = this.RULE("generatorApidocs", (): Generator => {
+    const keyword = this.createTokenData(this.CONSUME(L.Generate));
+    const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Apidocs) }]);
+    const keywordType = this.createTokenData(typeToken);
+    const type = typeToken.image as Extract<GeneratorType, "apidocs">;
+
+    this.CONSUME(L.LCurly);
+    // empty body
+    this.CONSUME(L.RCurly);
+
+    return { kind: "generator", type, atoms: [], keyword, keywordType };
   });
 
   modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", "model");

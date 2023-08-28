@@ -25,6 +25,9 @@ function composeGenerator(def: Definition, generator: Generator): GeneratorDef {
         output,
       };
     }
+    case "generator-apidocs": {
+      return { kind: "generator-apidocs" };
+    }
     default:
       assertUnreachable(kind);
   }

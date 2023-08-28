@@ -8,3 +8,5 @@ generate client {
   target ts
   output "test/path/something"
 }
+
+generate apidocs {}

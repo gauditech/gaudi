@@ -5,6 +5,7 @@ import {
   BUILDER_OPENAPI_SPEC_FILE_NAME,
   BUILDER_OPENAPI_SPEC_FOLDER,
 } from "@gaudi/compiler/dist/builder/builder";
+import { kindFind } from "@gaudi/compiler/dist/common/kindFilter";
 import { Logger } from "@gaudi/compiler/dist/common/logger";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
@@ -20,6 +21,25 @@ const logger = Logger.specific("api");
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {
+  setupDefinitionApis(definition, app);
+
+  // setup apispec only if generator exists
+  const apidocsGenerator = kindFind(definition.generators, "generator-apidocs");
+  if (apidocsGenerator) {
+    setupDefinitionApisSpec(definition, app);
+  }
+}
+
+export function setupDefinitionApis(def: Definition, app: Express) {
+  def.apis.forEach((api) => {
+    buildEndpointConfig(def, api.entrypoints).forEach((epc) =>
+      registerServerEndpoint(app, epc, api.path)
+    );
+  });
+}
+
+/** Create API OpenAPI spec from definition */
+function setupDefinitionApisSpec(definition: Definition, app: Express) {
   const config = getAppContext(app).config;
 
   const specFolderOutputPath = path.join(config.outputFolder, BUILDER_OPENAPI_SPEC_FOLDER);
@@ -35,22 +55,7 @@ export function setupServerApis(definition: Definition, app: Express) {
     )}`
   );
 
-  setupDefinitionApis(definition, app);
-
-  setupDefinitionApisSpec(definition, app, specFileOutputPath);
-}
-
-export function setupDefinitionApis(def: Definition, app: Express) {
-  def.apis.forEach((api) => {
-    buildEndpointConfig(def, api.entrypoints).forEach((epc) =>
-      registerServerEndpoint(app, epc, api.path)
-    );
-  });
-}
-
-/** Create API OpenAPI spec from definition */
-function setupDefinitionApisSpec(definition: Definition, app: Express, outputFile: string) {
-  const openApiSpecContent = loadFile(outputFile);
+  const openApiSpecContent = loadFile(specFileOutputPath);
 
   const openApiSpec = JSON.parse(openApiSpecContent);
 

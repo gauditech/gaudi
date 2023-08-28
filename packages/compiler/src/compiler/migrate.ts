@@ -812,6 +812,11 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           output,
         };
       })
+      .with({ type: "apidocs" }, (g) => {
+        return {
+          kind: "generator-apidocs" as const,
+        };
+      })
       .exhaustive();
   }
 

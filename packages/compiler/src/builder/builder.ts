@@ -13,7 +13,7 @@ import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
 } from "@compiler/builder/renderer/templates/schema.prisma.tpl";
-import { kindFilter } from "@compiler/common/kindFilter";
+import { kindFilter, kindFind } from "@compiler/common/kindFilter";
 import { assertUnreachable } from "@compiler/common/utils";
 import { Definition } from "@compiler/types/definition";
 
@@ -87,16 +87,21 @@ export async function renderOpenApi(definition: Definition): Promise<string> {
 }
 
 async function buildOpenApi(definition: Definition, outputFolder: string): Promise<unknown> {
-  const outFile = path.join(
-    outputFolder,
-    BUILDER_OPENAPI_SPEC_FOLDER,
-    BUILDER_OPENAPI_SPEC_FILE_NAME
-  );
+  const apidocsGenerator = kindFind(definition.generators, "generator-apidocs");
 
-  return (
-    // render DB schema
-    renderOpenApi(definition).then((content) => storeTemplateOutput(outFile, content))
-  );
+  if (apidocsGenerator) {
+    const outFile = path.join(
+      outputFolder,
+      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_FILE_NAME
+    );
+
+    return (
+      // render DB schema
+      renderOpenApi(definition).then((content) => storeTemplateOutput(outFile, content))
+    );
+  }
+  // no generator
 }
 
 // ---------- API client

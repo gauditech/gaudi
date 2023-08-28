@@ -601,6 +601,9 @@ export function buildTokens(
             .exhaustive();
         });
       })
+      .with({ type: "apidocs" }, (g) => {
+        buildKeyword(g.keywordType);
+      })
       .exhaustive();
   }
 

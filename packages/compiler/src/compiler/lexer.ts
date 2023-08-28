@@ -132,6 +132,7 @@ export const Assert = createWeakKeyword("assert");
 export const Asc = createWeakKeyword("asc");
 export const As = createWeakKeyword("as");
 export const Arg = createWeakKeyword("arg");
+export const Apidocs = createWeakKeyword("apidocs");
 export const Api = createWeakKeyword("api");
 export const Action = createWeakKeyword("action");
 
@@ -275,6 +276,7 @@ export const GaudiTokens = [
   Asc,
   As,
   Arg,
+  Apidocs,
   Api,
   Action,
   Null,
