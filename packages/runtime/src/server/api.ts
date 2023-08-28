@@ -1,8 +1,11 @@
+import fs from "fs";
 import path from "path";
 
-import { buildOpenAPI } from "@gaudi/compiler/dist/builder/openAPI";
+import {
+  BUILDER_OPENAPI_SPEC_FILE_NAME,
+  BUILDER_OPENAPI_SPEC_FOLDER,
+} from "@gaudi/compiler/dist/builder/builder";
 import { Logger } from "@gaudi/compiler/dist/common/logger";
-import { saveOutputFile } from "@gaudi/compiler/dist/common/utils";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
 import { OpenAPIV3 } from "openapi-types";
@@ -19,18 +22,22 @@ const logger = Logger.specific("api");
 export function setupServerApis(definition: Definition, app: Express) {
   const config = getAppContext(app).config;
 
-  // --- static folder (eg. for API specs)
-  const specPath = "/api-spec";
-  const specFileName = "api.openapi.json";
-  const specOutputFolder = path.join(config.outputFolder, specPath);
-  app.use(specPath, staticHandler(specOutputFolder));
+  const specFolderOutputPath = path.join(config.outputFolder, BUILDER_OPENAPI_SPEC_FOLDER);
+  const specFileOutputPath = path.join(specFolderOutputPath, BUILDER_OPENAPI_SPEC_FILE_NAME);
+
+  // --- static folder for serving API specs
+  app.use(`/${BUILDER_OPENAPI_SPEC_FOLDER}`, staticHandler(specFolderOutputPath));
   logger.info(
-    `registered OpenAPI specification on: ${getAbsoluteUrlPath(app, specPath, specFileName)}`
+    `registered OpenAPI specification on: ${getAbsoluteUrlPath(
+      app,
+      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_FILE_NAME
+    )}`
   );
 
   setupDefinitionApis(definition, app);
 
-  setupDefinitionApisSpec(definition, app, path.join(specOutputFolder, specFileName));
+  setupDefinitionApisSpec(definition, app, specFileOutputPath);
 }
 
 export function setupDefinitionApis(def: Definition, app: Express) {
@@ -43,20 +50,18 @@ export function setupDefinitionApis(def: Definition, app: Express) {
 
 /** Create API OpenAPI spec from definition */
 function setupDefinitionApisSpec(definition: Definition, app: Express, outputFile: string) {
-  const config = getAppContext(app).config;
+  const openApiSpecContent = loadFile(outputFile);
 
-  const openApi = buildOpenAPI(definition, config.basePath);
+  const openApiSpec = JSON.parse(openApiSpecContent);
 
-  saveOutputFile(outputFile, JSON.stringify(openApi, undefined, 2));
-
-  setupEntrypointApiSwagger(openApi, app);
+  setupEntrypointApiSwagger(openApiSpec, app);
 }
 
 function setupEntrypointApiSwagger(openApiDocument: OpenAPIV3.Document, app: Express) {
   const swaggerPath = `/api-docs`;
 
-  app.use(swaggerPath, serve, (_req: Request, _resp: Response, _next: NextFunction) =>
-    setup(openApiDocument)(_req, _resp, _next)
+  app.use(swaggerPath, serve, (req: Request, resp: Response, next: NextFunction) =>
+    setup(openApiDocument)(req, resp, next)
   );
   logger.info(`registered OpenAPI Swagger on: ${getAbsoluteUrlPath(app, swaggerPath)}`);
 }
@@ -80,4 +85,12 @@ function getAbsoluteUrlPath(app: Express, ...paths: string[]): string {
   const config = getAppContext(app).config;
 
   return [config.basePath ?? "", ...paths].join("");
+}
+
+/** Load file content */
+export function loadFile(filePath: string): string {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`File not found: "${filePath}"`);
+  }
+  return fs.readFileSync(filePath).toString("utf-8");
 }

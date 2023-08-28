@@ -8,6 +8,7 @@ import {
   BuildApiClientData,
   render as renderApiClientTpl,
 } from "@compiler/builder/renderer/templates/apiClient.tpl";
+import { render as renderOpenApiTpl } from "@compiler/builder/renderer/templates/openapi.tpl";
 import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
@@ -17,6 +18,8 @@ import { assertUnreachable } from "@compiler/common/utils";
 import { Definition } from "@compiler/types/definition";
 
 const DB_PROVIDER = "postgresql";
+export const BUILDER_OPENAPI_SPEC_FOLDER = "api-spec";
+export const BUILDER_OPENAPI_SPEC_FILE_NAME = "api.openapi.json";
 
 export type BuilderConfig = {
   outputFolder: string;
@@ -30,6 +33,7 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
   await buildDefinition({ definition }, config.outputFolder);
   await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
   await buildApiClients(definition, config.outputFolder);
+  await buildOpenApi(definition, config.outputFolder);
 }
 
 // -------------------- part builders
@@ -73,6 +77,25 @@ async function buildDb(data: BuildDbSchemaData, outputFolder: string): Promise<u
   return (
     // render DB schema
     renderDbSchema(data).then((content) => storeTemplateOutput(outFile, content))
+  );
+}
+
+// ---------- OpenAPI
+
+export async function renderOpenApi(definition: Definition): Promise<string> {
+  return renderOpenApiTpl(definition);
+}
+
+async function buildOpenApi(definition: Definition, outputFolder: string): Promise<unknown> {
+  const outFile = path.join(
+    outputFolder,
+    BUILDER_OPENAPI_SPEC_FOLDER,
+    BUILDER_OPENAPI_SPEC_FILE_NAME
+  );
+
+  return (
+    // render DB schema
+    renderOpenApi(definition).then((content) => storeTemplateOutput(outFile, content))
   );
 }
 
