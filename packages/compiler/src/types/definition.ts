@@ -15,7 +15,7 @@ export type Definition = {
 export type ValidatorDef = {
   name: string;
   args: { name: string; type: FieldType }[];
-  assert: { kind: "expr"; expr: TypedExprDef } | { kind: "hook"; hook: ValidatorHookDef };
+  assert: TypedExprDef;
   error: { code: string };
 };
 

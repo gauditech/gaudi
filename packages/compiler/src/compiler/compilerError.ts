@@ -38,8 +38,6 @@ export enum ErrorCode {
   QueryActionOnlyOneDeleteOrSelect,
   ConfiguringNonCustomEndpoint,
   MoreThanOneRespondsInEndpoint,
-  ValidatorMustContainExprOrHook,
-  ValidatorOnlyOneExprOrHook,
   MoreThanOneRespondsActionInEndpoint,
   MoreThanOneActionThatRespond,
   RespondActionNotLast,
@@ -148,10 +146,6 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Only custom endpoint can have method, cardinality and path configuration`;
     case ErrorCode.MoreThanOneRespondsInEndpoint:
       return `At most one action in endpoint can have "responds" attribute`;
-    case ErrorCode.ValidatorMustContainExprOrHook:
-      return `Validator must contain "assert" or "assert hook" definition`;
-    case ErrorCode.ValidatorOnlyOneExprOrHook:
-      return `Validator can't have more than one "assert" or "assert hook" definition`;
     case ErrorCode.MoreThanOneRespondsActionInEndpoint:
       return `Endpoint can have at most one "respond" action`;
     case ErrorCode.MoreThanOneActionThatRespond:

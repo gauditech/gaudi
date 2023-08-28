@@ -20,13 +20,13 @@ type TypeGuard = { [P in string]?: TypeGuardOperation };
  * types which assume that expression is `true`. This function only works if the `expr`
  * returns a boolean value.
  */
-export function addTypeGuard(expr: Expr, scope: Scope, isInverse: boolean): Scope {
+export function addTypeGuard(expr: Expr<"db" | "code">, scope: Scope, isInverse: boolean): Scope {
   const typeGuard = createTypeGuard(expr, isInverse);
   // when adding a new type guard we use union
   return { ...scope, typeGuard: { ...scope.typeGuard, ...typeGuard } };
 }
 
-function createTypeGuard(expr: Expr, isInverse: boolean): TypeGuard {
+function createTypeGuard(expr: Expr<"db" | "code">, isInverse: boolean): TypeGuard {
   switch (expr.kind) {
     case "binary": {
       switch (expr.operator) {
@@ -108,6 +108,7 @@ function createTypeGuard(expr: Expr, isInverse: boolean): TypeGuard {
       }
     case "array":
     case "function":
+    case "hook":
     case "path":
     case "literal":
       // we are not smart enough to get a guard for a function
@@ -120,7 +121,10 @@ function modifyGuardOperation(operation: TypeGuardOperation, isInverse: boolean)
   return isInverse ? (operation === "null" ? "notNull" : "null") : operation;
 }
 
-function createTypeGuardFromPath(expr: Expr, guardOperation: TypeGuardOperation): TypeGuard {
+function createTypeGuardFromPath(
+  expr: Expr<"db" | "code">,
+  guardOperation: TypeGuardOperation
+): TypeGuard {
   switch (expr.kind) {
     case "group":
       return createTypeGuardFromPath(expr.expr, guardOperation);

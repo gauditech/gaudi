@@ -47,7 +47,6 @@ import {
   UnaryOperator,
   ValidateExpr,
   Validator,
-  ValidatorHook,
 } from "./ast/ast";
 import { builtinFunctions } from "./ast/functions";
 import { Scope, addTypeGuard } from "./ast/scope";
@@ -196,7 +195,6 @@ export function resolve(projectASTs: ProjectASTs) {
           resolveExpression(assert.expr, scope);
           checkExprType(assert.expr, Type.boolean);
         })
-        .with({ kind: "assertHook" }, ({ hook }) => resolveValidatorHook(hook, scope))
         .with({ kind: "error" }, () => undefined)
         .exhaustive()
     );
@@ -1019,13 +1017,8 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveActionAtomSet(set: ActionAtomSet, model: string | undefined, scope: Scope) {
     resolveModelAtomRef(set.target, model, "field", "reference");
-    match(set.set)
-      .with({ kind: "hook" }, (hook) => resolveActionHook(hook, scope))
-      .with({ kind: "expr" }, ({ expr }) => {
-        resolveExpression(expr, scope);
-        checkExprType(expr, set.target.type);
-      })
-      .exhaustive();
+    resolveExpression(set.expr, scope);
+    checkExprType(set.expr, set.target.type);
   }
 
   function resolvePopulator(populator: Populator) {
@@ -1145,11 +1138,6 @@ export function resolve(projectASTs: ProjectASTs) {
     );
   }
 
-  function resolveValidatorHook(hook: ValidatorHook, scope: Scope) {
-    resolveHook(hook);
-    kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
-  }
-
   function resolveHookQueryArg(query: AnonymousQuery, scope: Scope, fallbackModel?: string) {
     const { type } = resolveQueryAtoms(query.atoms, scope, undefined, fallbackModel);
     query.type = type;
@@ -1173,11 +1161,10 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveActionHook(hook: ActionHook, scope: Scope) {
     resolveHook(hook);
-    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveHookQueryArg(query, scope));
     kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
   }
 
-  function resolveHook(hook: Hook<"model" | "validator" | "action">) {
+  function resolveHook(hook: Hook<"model" | "action">) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
       const runtimes = getRuntimes();
@@ -1229,7 +1216,7 @@ export function resolve(projectASTs: ProjectASTs) {
     });
   }
 
-  function resolveExpression(expr: Expr, scope: Scope) {
+  function resolveExpression(expr: Expr<"db" | "code">, scope: Scope) {
     match(expr)
       .with({ kind: "binary" }, (binary) => {
         resolveExpression(binary.lhs, scope);
@@ -1272,6 +1259,11 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "unary" }, (unary) => {
         resolveExpression(unary.expr, scope);
         unary.type = getUnaryOperatorType(unary.operator, unary.expr);
+      })
+      .with({ kind: "hook" }, (hook) => {
+        resolveActionHook(hook.hook, scope);
+        // TODO: calculate type of hook
+        hook.type = Type.any;
       })
       .with({ kind: "path" }, (path) => {
         const resolveOptions: ResolveOptions = {
@@ -1575,7 +1567,11 @@ export function resolve(projectASTs: ProjectASTs) {
     return getAllModels().find((m) => m.name.text === name);
   }
 
-  function getBinaryOperatorType(op: BinaryOperator, lhs: Expr, rhs: Expr): Type {
+  function getBinaryOperatorType(
+    op: BinaryOperator,
+    lhs: Expr<"db" | "code">,
+    rhs: Expr<"db" | "code">
+  ): Type {
     switch (op) {
       case "or":
       case "and": {
@@ -1662,7 +1658,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function getUnaryOperatorType(op: UnaryOperator, expr: Expr): Type {
+  function getUnaryOperatorType(op: UnaryOperator, expr: Expr<"db" | "code">): Type {
     switch (op) {
       case "not": {
         checkExprType(expr, Type.boolean);
@@ -1671,7 +1667,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function checkExprType(expr: Expr, expected: Type | TypeCategory): boolean {
+  function checkExprType(expr: Expr<"db" | "code">, expected: Type | TypeCategory): boolean {
     if (!isExpectedType(expr.type, expected)) {
       errors.push(
         new CompilerError(expr.sourcePos, ErrorCode.UnexpectedType, {

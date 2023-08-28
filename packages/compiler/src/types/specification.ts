@@ -19,7 +19,7 @@ export type NullLiteral = { kind: "null"; value: null };
 export type StringLiteral = { kind: "string"; value: string };
 
 export type Select = SingleSelect[];
-export type SingleSelect = { name: string; expr: Expr } & (
+export type SingleSelect = { name: string; expr: Expr_<"db"> } & (
   | { kind: "final" }
   | { kind: "nested"; select: Select }
 );
@@ -43,13 +43,13 @@ export type Specification = {
 export type Validator = {
   name: string;
   args: { name: string; type: FieldType }[];
-  assert: { kind: "expr"; expr: Expr } | { kind: "hook"; hook: ValidatorHook };
+  assert: Expr_<"code">;
   error: { code: string };
 };
 
 export type ValidateExpr =
   | { kind: "and" | "or"; exprs: ValidateExpr[] }
-  | { kind: "call"; validator: string; args: Expr[] };
+  | { kind: "call"; validator: string; args: Expr_<"code">[] };
 
 export type Model = {
   name: string;
@@ -92,7 +92,7 @@ export type Query = {
   cardinality: TypeCardinality;
   from: IdentifierRef[];
   fromAlias?: IdentifierRef[];
-  filter?: Expr;
+  filter?: Expr_<"db">;
   orderBy?: QueryOrderBy[];
   limit?: number;
   offset?: number;
@@ -100,20 +100,22 @@ export type Query = {
   select?: Select;
 };
 
-export type QueryOrderBy = { expr: Expr; order?: "asc" | "desc" };
+export type QueryOrderBy = { expr: Expr_<"db">; order?: "asc" | "desc" };
 
 export type Computed = {
   name: string;
   ref: RefModelAtom;
-  expr: Expr;
+  expr: Expr_<"db">;
 };
 
-export type Expr = { type: Type } & (
-  | { kind: "identifier"; identifier: IdentifierRef[] }
-  | { kind: "literal"; literal: Literal }
-  | { kind: "array"; elements: Expr[] }
-  | { kind: "function"; name: string; args: Expr[] }
-);
+export type Expr_<kind extends "db" | "code"> =
+  | ({ type: Type } & (
+      | { kind: "identifier"; identifier: IdentifierRef[] }
+      | { kind: "literal"; literal: Literal }
+      | { kind: "array"; elements: Expr_<kind>[] }
+      | { kind: "function"; name: string; args: Expr_<kind>[] }
+    ))
+  | (kind extends "code" ? { kind: "hook"; hook: ActionHook; type: Type } : never);
 
 export type Api = {
   name?: string;
@@ -142,18 +144,18 @@ export type EndpointList = {
   kind: "list";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr;
+  authorize?: Expr_<"code">;
   response: Select;
   pageable: boolean;
   orderBy?: QueryOrderBy[];
-  filter?: Expr;
+  filter?: Expr_<"db">;
 };
 
 export type EndpointGet = {
   kind: "get";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr;
+  authorize?: Expr_<"code">;
   response: Select;
 };
 
@@ -161,7 +163,7 @@ export type EndpointCreateUpdate = {
   kind: "create" | "update";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr;
+  authorize?: Expr_<"code">;
   response: Select;
 };
 
@@ -169,7 +171,7 @@ export type EndpointDelete = {
   kind: "delete";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr;
+  authorize?: Expr_<"code">;
 };
 
 export type EndpointCardinality = "one" | "many";
@@ -179,7 +181,7 @@ export type EndpointCustom = {
   kind: "custom";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr;
+  authorize?: Expr_<"code">;
   cardinality: EndpointCardinality;
   method: EndpointMethod;
   path: string;
@@ -205,9 +207,9 @@ export type Action =
     }
   | {
       kind: "respond";
-      body: Expr;
-      httpStatus?: Expr;
-      httpHeaders?: { name: string; value: Expr }[];
+      body: Expr_<"code">;
+      httpStatus?: Expr_<"code">;
+      httpHeaders?: { name: string; value: Expr_<"code"> }[];
     }
   | {
       kind: "query";
@@ -230,8 +232,6 @@ export type ModelAction = Extract<Action, { kind: "create" | "update" }>;
 
 export type ModelActionAtom = ActionAtomInput | ActionAtomSet | ActionAtomRefThrough;
 
-export type ActionAtomSetHook = { kind: "hook"; hook: ActionHook };
-export type ActionAtomSetExp = { kind: "expression"; expr: Expr };
 export type ActionAtomSetQuery = { kind: "query"; query: Query };
 
 export type ActionAtomInput = {
@@ -245,7 +245,7 @@ export type ActionAtomInput = {
 export type ActionAtomSet = {
   kind: "set";
   target: RefModelField;
-  set: ActionAtomSetHook | ActionAtomSetExp;
+  expr: Expr_<"code">;
 };
 export type ActionAtomRefThrough = {
   kind: "reference";
@@ -280,7 +280,7 @@ export type Populate<c extends TypeCardinality = TypeCardinality> = {
 };
 
 export type ValidatorHook = {
-  args: { name: string; expr: Expr }[];
+  args: { name: string; expr: Expr_<"code"> }[];
   code: HookCode;
 };
 
@@ -292,10 +292,7 @@ export type ModelHook = {
 };
 
 export type ActionHook = {
-  args: (
-    | { kind: "expression"; name: string; expr: Expr }
-    | { kind: "query"; name: string; query: Query }
-  )[];
+  args: { name: string; expr: Expr_<"code"> }[];
   code: HookCode;
 };
 

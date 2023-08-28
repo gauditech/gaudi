@@ -16,8 +16,7 @@ export type Validator = {
 
 export type ValidatorAtom =
   | ValidatorArg
-  | { kind: "assert"; keyword: TokenData; expr: Expr<Code> }
-  | { kind: "assertHook"; keyword: TokenData; hook: ValidatorHook }
+  | { kind: "assert"; keyword: TokenData; expr: Expr<"code"> }
   | ValidatorError;
 
 export type ValidatorArg = {
@@ -93,7 +92,7 @@ export type QueryAtom = { keyword: TokenData } & (
       identifierPath: IdentifierRef[];
       as?: { keyword: TokenData; identifierPath: IdentifierRef<RefQueryTarget>[] };
     }
-  | { kind: "filter"; expr: Expr<Db> }
+  | { kind: "filter"; expr: Expr<"db"> }
   | { kind: "orderBy"; orderBy: OrderBy }
   | { kind: "limit"; value: IntegerLiteral }
   | { kind: "offset"; value: IntegerLiteral }
@@ -118,7 +117,7 @@ export type Computed = {
   kind: "computed";
   keyword: TokenData;
   name: IdentifierRef<RefModelComputed>;
-  expr: Expr<Db>;
+  expr: Expr<"db">;
 };
 
 export type Api = {
@@ -139,7 +138,7 @@ export type Entrypoint = {
 
 export type EntrypointAtom =
   | { kind: "response"; select: Select; keyword: TokenData }
-  | { kind: "authorize"; expr: Expr<Code>; keyword: TokenData }
+  | { kind: "authorize"; expr: Expr<"code">; keyword: TokenData }
   | Endpoint
   | Entrypoint
   | Identify;
@@ -168,13 +167,13 @@ export type EndpointCardinality = "one" | "many";
 export type EndpointAtom = { keyword: TokenData } & (
   | { kind: "extraInputs"; extraInputs: ExtraInput[] }
   | { kind: "action"; actions: Action[] }
-  | { kind: "authorize"; expr: Expr<Code> }
+  | { kind: "authorize"; expr: Expr<"code"> }
   | { kind: "method"; method: EndpointMethod; methodKeyword: TokenData }
   | { kind: "cardinality"; cardinality: EndpointCardinality; cardinalityKeyword: TokenData }
   | { kind: "path"; path: StringLiteral }
   | { kind: "pageable" }
   | { kind: "orderBy"; orderBy: OrderBy }
-  | { kind: "filter"; expr: Expr<Db> }
+  | { kind: "filter"; expr: Expr<"db"> }
 );
 
 export type Action =
@@ -238,10 +237,10 @@ export type RespondActionAtom =
   | RespondActionAtomBody
   | RespondActionAtomHttpStatus
   | RespondActionAtomHttpHeaderMap;
-export type RespondActionAtomBody = { kind: "body"; body: Expr<Code>; keyword: TokenData };
+export type RespondActionAtomBody = { kind: "body"; body: Expr<"code">; keyword: TokenData };
 export type RespondActionAtomHttpStatus = {
   kind: "httpStatus";
-  code: Expr<Code>;
+  code: Expr<"code">;
   keyword: TokenData;
 };
 export type RespondActionAtomHttpHeaderMap = {
@@ -252,7 +251,7 @@ export type RespondActionAtomHttpHeaderMap = {
 export type RespondActionAtomHttpHeader = {
   kind: "header";
   name: StringLiteral;
-  value: Expr<Code>;
+  value: Expr<"code">;
   keyword: TokenData;
 };
 
@@ -270,14 +269,14 @@ export type ValidateExpr =
       lhs: ValidateExpr;
       rhs: ValidateExpr;
     }
-  | { kind: "validator"; validator: IdentifierRef<RefValidator>; args: Expr<Code>[] }
+  | { kind: "validator"; validator: IdentifierRef<RefValidator>; args: Expr<"code">[] }
   | { kind: "group"; expr: ValidateExpr };
 
 export type ActionAtomSet = {
   kind: "set";
   keyword: TokenData;
   target: IdentifierRef<RefModelField | RefModelReference>;
-  set: ActionHook | { kind: "expr"; expr: Expr<Code> };
+  expr: Expr<"code">;
 };
 export type ActionAtomReferenceThrough = {
   kind: "referenceThrough";
@@ -306,7 +305,7 @@ export type ActionAtomInput = {
 };
 export type InputAtom = { keyword: TokenData } & (
   | { kind: "optional" }
-  | { kind: "default"; value: Expr<Code> }
+  | { kind: "default"; value: Expr<"code"> }
 );
 export type ExtraInput = {
   kind: "field";
@@ -391,15 +390,15 @@ export type Authenticator = {
 export type AuthenticatorAtom = { kind: "method"; keyword: TokenData; method: AuthenticatorMethod };
 export type AuthenticatorMethod = { kind: "basic"; keyword: TokenData };
 
-export type Hook<kind extends "model" | "validator" | "action"> = {
+export type Hook<kind extends "model" | "action"> = {
   kind: "hook";
   keyword: TokenData;
   name: kind extends "model" ? IdentifierRef<RefModelHook> : undefined;
   atoms: (
-    | { kind: "arg_expr"; keyword: TokenData; name: Identifier; expr: Expr<Code> }
-    | (kind extends "validator"
-        ? never
-        : { kind: "arg_query"; keyword: TokenData; name: Identifier; query: AnonymousQuery })
+    | { kind: "arg_expr"; keyword: TokenData; name: Identifier; expr: Expr<"code"> }
+    | (kind extends "model"
+        ? { kind: "arg_query"; keyword: TokenData; name: Identifier; query: AnonymousQuery }
+        : never)
     | {
         kind: "source";
         keyword: TokenData;
@@ -413,7 +412,6 @@ export type Hook<kind extends "model" | "validator" | "action"> = {
   )[];
 };
 export type ModelHook = Hook<"model">;
-export type ValidatorHook = Hook<"validator">;
 export type ActionHook = Hook<"action">;
 
 export type AnonymousQuery = {
@@ -426,28 +424,29 @@ export type AnonymousQuery = {
 export type Select = {
   target:
     | { kind: "short"; name: IdentifierRef<RefModelAtom> }
-    | { kind: "long"; name: Identifier; expr: Expr<Code> };
+    | { kind: "long"; name: Identifier; expr: Expr<"db"> };
   select?: Select;
 }[];
 
-export type Db = "db";
-export type Code = "code";
-export type ExprKind = Db | Code;
-export type Expr<kind extends ExprKind = ExprKind> = (
-  | {
-      kind: "binary";
-      keyword: TokenData;
-      operator: BinaryOperator;
-      lhs: Expr<kind>;
-      rhs: Expr<kind>;
-    }
-  | { kind: "group"; expr: Expr<kind> }
-  | { kind: "array"; elements: Expr<kind>[] }
-  | { kind: "unary"; keyword: TokenData; operator: UnaryOperator; expr: Expr<kind> }
-  | { kind: "path"; path: IdentifierRef[] }
-  | { kind: "literal"; literal: Literal }
-  | { kind: "function"; name: Identifier; args: Expr<kind>[] }
-) & { type: Type; sourcePos: TokenData };
+export type Expr<kind extends "db" | "code"> =
+  | ((
+      | {
+          kind: "binary";
+          keyword: TokenData;
+          operator: BinaryOperator;
+          lhs: Expr<kind>;
+          rhs: Expr<kind>;
+        }
+      | { kind: "group"; expr: Expr<kind> }
+      | { kind: "array"; elements: Expr<kind>[] }
+      | { kind: "unary"; keyword: TokenData; operator: UnaryOperator; expr: Expr<kind> }
+      | { kind: "path"; path: IdentifierRef[] }
+      | { kind: "literal"; literal: Literal }
+      | { kind: "function"; name: Identifier; args: Expr<kind>[] }
+    ) & { type: Type; sourcePos: TokenData })
+  | (kind extends "code"
+      ? { type: Type; sourcePos: TokenData; kind: "hook"; hook: ActionHook }
+      : never);
 export type BinaryOperator =
   | "or"
   | "and"
