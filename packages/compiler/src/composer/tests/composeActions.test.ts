@@ -174,7 +174,7 @@ describe("compose actions", () => {
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
-    it("succeeds with custom inputs", () => {
+    it("correctly implements default values", () => {
       const bp = `
     model Org {
       field name { type string }
@@ -207,8 +207,9 @@ describe("compose actions", () => {
       }
     }`;
       const def = compileFromString(bp);
-      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
-      expect(endpoint.actions).toMatchSnapshot();
+      const endpoints = def.apis[0].entrypoints[0].endpoints;
+      expect(endpoints[0]).toMatchSnapshot("update");
+      expect(endpoints[1]).toMatchSnapshot("create");
     });
     it("succeeds with arithmetic expressions in setters", () => {
       const bp = `

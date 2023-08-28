@@ -12,7 +12,7 @@ import {
   resolveItems,
 } from "@compiler/common/utils";
 import { getTypeModel } from "@compiler/compiler/ast/type";
-import { composeQuery } from "@compiler/composer/query";
+import { composeExpression, composeQuery } from "@compiler/composer/query";
 import {
   ActionDef,
   ActionHookDef,
@@ -283,6 +283,14 @@ function atomToChangesetOperation(
           type: atom.target.type,
           required: !atom.optional,
           fieldsetAccess: [...fieldsetNamespace, atom.target.name],
+          default: atom.default
+            ? expandSetterExpression(atom.default, (name) => {
+                const siblingOp = _.find(changeset, { name });
+                if (!siblingOp) {
+                  throw new Error(`Circular reference: ${name}`);
+                }
+              })
+            : undefined,
         },
       };
     }

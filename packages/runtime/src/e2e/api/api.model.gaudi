@@ -390,7 +390,7 @@ api {
         action {
           create as repo {
             set latest_num 0
-            set description "Description: " + raw_description
+            input { description { default "Description: " + raw_description } }
             set slug hook {
               arg org org.name
               arg sequence [1,2,3]
