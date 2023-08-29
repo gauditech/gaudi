@@ -3,6 +3,7 @@ model Vehicle {
   field active { type boolean, default true }
   field make { type string, nullable, default null }
   field notes { type string }
+  field timestamp { type integer, default now() }
 }
 
 api {

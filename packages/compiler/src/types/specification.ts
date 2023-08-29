@@ -63,7 +63,7 @@ export type Model = {
 export type Field = {
   ref: RefModelField;
   primary: boolean;
-  default?: Literal;
+  default?: Expr;
   validate?: ValidateExpr;
 };
 

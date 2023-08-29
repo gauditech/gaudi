@@ -152,7 +152,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
     return {
       ref: field.name.ref,
-      default: default_ && migrateLiteral(default_.literal),
+      default: default_ && migrateExpr(default_.expr),
       primary: false,
       validate,
     };
@@ -514,17 +514,15 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       const input = inputs.find((i) => i.target.name === field.ref.name);
       if (input) return [input];
       if (action.kind === "create") {
-        // create action can have implicit inputs
+        // In create action, fields that are not found in `input` or `set` are
+        // implicitly defined as those, depending if there's a `default` defined
+        // on a field
         if (field.default) {
-          const type: Type =
-            field.default.kind === "null"
-              ? { kind: "null" }
-              : { kind: "primitive", primitiveKind: field.ref.type };
           return [
             {
               kind: "set",
               target: field.ref,
-              set: { kind: "expression", expr: { kind: "literal", literal: field.default, type } },
+              set: { kind: "expression", expr: field.default },
             },
           ];
         } else {

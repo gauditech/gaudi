@@ -182,9 +182,9 @@ export function buildTokens(
         })
         .with({ kind: "unique" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
-        .with({ kind: "default" }, ({ keyword, literal }) => {
+        .with({ kind: "default" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
-          buildLiteral(literal);
+          buildExpr(expr);
         })
         .with({ kind: "validate" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
