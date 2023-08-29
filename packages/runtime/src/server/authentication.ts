@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import {
   dataToFieldDbnames,
   dataToFieldModelNames,
@@ -12,6 +13,8 @@ import { Strategy as BearerStrategy, VerifyFunctionWithRequest } from "passport-
 import { getAppContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { errorResponse } from "@runtime/server/error";
+
+const logger = initLogger("gaudi:runtime:authentication");
 
 export function buildAuthenticationHandler(def: Definition) {
   if (!def.authenticator) return;
@@ -94,7 +97,7 @@ function configurePassport(def: Definition): passport.Authenticator {
             }
           }
 
-          console.log(`User access token not verified`);
+          logger.debug(`User access token not verified`);
 
           done(null, false);
         } catch (err: unknown) {
@@ -129,14 +132,14 @@ async function resolveAccessToken(
 
     // we've converted record's DB names to model names so we can use them directly
     if (verifyTokenValidity(record.token, record.expiryDate)) {
-      console.log("Token resolved", record);
+      logger.debug("Token resolved", record);
 
       return { userId: record.authUser_id, token };
     } else {
-      console.log("Token has expired");
+      logger.debug("Token has expired");
     }
   } else {
-    console.log("Unknown token");
+    logger.debug("Unknown token");
   }
 
   return;

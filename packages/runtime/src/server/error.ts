@@ -1,7 +1,10 @@
 // ---------- Endpoint responses
 
+import { initLogger } from "@gaudi/compiler";
 import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import _ from "lodash";
+
+const logger = initLogger("gaudi:runtime");
 
 //** Error reponse codes  */
 export type HTTPErrorCode =
@@ -73,6 +76,7 @@ export function errorResponse(cause: unknown) {
     };
 
     // log business error - currently all logged as "log/info"
+    logger.debug(`${body.code}: ${body.message}`, cause.data ?? "");
     console.info(`${body.code}: ${body.message}`, JSON.stringify(cause.data) ?? "");
 
     if (cause.code === "ERROR_CODE_VALIDATION") {
@@ -105,14 +109,14 @@ export function errorResponse(cause: unknown) {
     // otherwise, just throw server error
 
     // log just in case
-    console.error(`[ERROR]`, cause);
+    logger.error(`[ERROR]`, cause);
 
     throw new HttpResponseError(500, "Server error");
   }
   // --- something unexpected
   else {
     // log just in case
-    console.error(`[ERROR]`, cause);
+    logger.error(`[ERROR]`, cause);
 
     throw new HttpResponseError(500, "Server error");
   }

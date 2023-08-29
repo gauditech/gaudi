@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import {
   EndpointPath,
   PathFragmentIdentifier,
@@ -5,7 +6,6 @@ import {
   buildEndpointPath,
 } from "@gaudi/compiler/dist/builder/query";
 import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
-import { Logger } from "@gaudi/compiler/dist/common/logger";
 import { getRef } from "@gaudi/compiler/dist/common/refs";
 import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import { endpointUsesAuthentication } from "@gaudi/compiler/dist/composer/entrypoints";
@@ -56,7 +56,7 @@ import { DbConn } from "@runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@runtime/server/error";
 import { EndpointConfig } from "@runtime/server/types";
 
-const logger = Logger.specific("http");
+const logger = initLogger("gaudi:runtime");
 
 /** Create endpoint configs from entrypoints */
 export function buildEndpointConfig(definition: Definition, entrypoints: EntrypointDef[]) {

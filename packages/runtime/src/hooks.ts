@@ -1,13 +1,14 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-import { Request, Response } from "express";
-
+import { initLogger } from "@gaudi/compiler";
 import { getExecutionRuntime } from "@gaudi/compiler/dist/common/refs";
 import { getInternalExecutionRuntimeName } from "@gaudi/compiler/dist/composer/executionRuntimes";
 import { HookCode, HookInline, HookSource } from "@gaudi/compiler/dist/types/common";
 import { Definition, ExecutionRuntimeDef } from "@gaudi/compiler/dist/types/definition";
+import { Request, Response } from "express";
 
+const logger = initLogger("gaudi:runtime:hooks");
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 
 /**
@@ -156,7 +157,7 @@ function resolveSourcePath(name: string, sourcePath: string): string {
 }
 
 async function importHooks(sourcePath: string, modules: HookModules) {
-  console.log("Loading hooks sources from:", path.resolve(sourcePath));
+  logger.debug("Loading hooks sources from:", path.resolve(sourcePath));
 
   async function loadHooksFromDir(dir: string) {
     const entities = await fs.readdir(path.join(sourcePath, dir));

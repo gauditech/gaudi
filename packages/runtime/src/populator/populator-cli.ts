@@ -27,7 +27,7 @@ function readArgs(): PopulateOptions {
     if (a === "-p") {
       args.populator = rawArgs.shift();
     } else {
-      console.log(`Unknown argument ${a}`);
+      console.error(`Unknown argument ${a}`);
     }
   }
 

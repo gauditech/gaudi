@@ -13,9 +13,11 @@ import {
   render as renderDbSchemaTpl,
 } from "@compiler/builder/renderer/templates/schema.prisma.tpl";
 import { kindFilter } from "@compiler/common/kindFilter";
+import { initLogger } from "@compiler/common/logger";
 import { assertUnreachable } from "@compiler/common/utils";
 import { Definition } from "@compiler/types/definition";
 
+const logger = initLogger("gaudi:compiler");
 const DB_PROVIDER = "postgresql";
 
 export type BuilderConfig = {
@@ -128,7 +130,7 @@ export async function buildApiClients(
                   sourceFile.formatText({ indentSize: 2 });
                   sourceFile.save();
 
-                  console.log(`Source file created [${Date.now() - t0} ms]: ${outPath}`);
+                  logger.debug(`Source file created [${Date.now() - t0} ms]: ${outPath}`);
                 }
                 // has errors, no emit
                 else {
@@ -174,7 +176,7 @@ export async function buildApiClients(
 
                   return project.emit().then(() => {
                     // TODO: do we need to check after-emit diagnostics? this is truly an isolated module so maybe not?
-                    console.log(`Source file compiled [${Date.now() - t0} ms]: ${outPath}`);
+                    logger.debug(`Source file compiled [${Date.now() - t0} ms]: ${outPath}`);
                   });
                 }
                 // has errors, no emit
@@ -200,7 +202,7 @@ export async function buildApiClients(
 
   function printTsError(diagnostics: Diagnostic<ts.Diagnostic>[]) {
     for (const diagnostic of diagnostics) {
-      console.log(
+      logger.debug(
         `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
         `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
         diagnostic.getMessageText()

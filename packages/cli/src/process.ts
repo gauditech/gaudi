@@ -1,3 +1,7 @@
+import { initLogger } from "@gaudi/compiler";
+
+const logger = initLogger("gaudi:cli");
+
 // -------------------- Process control
 
 export function attachProcessCleanup(process: NodeJS.Process, cleanup: () => Promise<void> | void) {
@@ -29,17 +33,17 @@ export function attachProcessCleanup(process: NodeJS.Process, cleanup: () => Pro
   // --- handlers
 
   function beforeExitHandler(code: number): void {
-    // console.log(`Exiting with code ${code}`);
+    // logger.debug(`Exiting with code ${code}`);
     void cleanupAndExit(code);
   }
 
   function uncaughtExceptionHandler(error: Error): void {
-    console.error("Uncaught exception", error);
+    logger.error("Uncaught exception", error);
     void cleanupAndExit(1);
   }
 
   function signalHandler(signal: string): void {
-    // console.log(`Exiting due to signal ${signal}`);
+    // logger.debug(`Exiting due to signal ${signal}`);
     void cleanupAndKill(signal);
   }
 
