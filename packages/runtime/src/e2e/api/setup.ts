@@ -51,8 +51,8 @@ type InstanceCommands = {
 
 export function createTestInstance(blueprint: string, data: PopulatorData[]): InstanceCommands {
   // decide which database backend to run
-  const runner = process.env.JEST_DATABASE_URL
-    ? new PostgresTestRunner(process.env.JEST_DATABASE_URL)
+  const runner = process.env.GAUDI_DATABASE_URL
+    ? new PostgresTestRunner(process.env.GAUDI_DATABASE_URL)
     : new SQLiteTestRunner();
 
   // this will automatically clean up tests in a scope which invokes a `setup`
