@@ -105,7 +105,8 @@ function buildApi(options: ApiClientOptions) {
         id: number,
         total_issues: number,
         nameAndDesc: string
-      }[]
+      }[],
+      newest_repo_name: string | null
     };
     type GetError = CustomGetError;
     type ListResp = GetResp;

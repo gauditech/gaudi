@@ -16,15 +16,13 @@ import {
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(20000);
 
-describe("auth client lib", async () => {
+describe("auth client lib", () => {
   dotenv.config({ path: path.join(__dirname, "../api/api.test.env") });
 
   const runner = createTestInstance(
     loadBlueprint(path.join(__dirname, "../api/auth.model.gaudi")),
     DATA
   );
-
-  const server = await runner.createServerInstance();
 
   async function loginOwner(server: Server): Promise<string> {
     const client = createClient({
@@ -85,8 +83,8 @@ describe("auth client lib", async () => {
     };
   }
 
-  describe("authentication", async () => {
-    function createNewClient(token?: string) {
+  describe("authentication", () => {
+    function createNewClient(server: Server, token?: string) {
       return createClient({
         requestFn: makeTestRequestFn(server),
         headers: {
@@ -96,7 +94,9 @@ describe("auth client lib", async () => {
     }
 
     it("authenticate user", async () => {
-      const publicClient = createNewClient();
+      const server = await runner.createServerInstance();
+
+      const publicClient = createNewClient(server);
 
       // UNauthorized request
       const response1 = await publicClient.api.box.list();
@@ -109,7 +109,7 @@ describe("auth client lib", async () => {
       expect(token?.length).toBeGreaterThan(0);
 
       // new authorized client
-      const authClient = createNewClient(token);
+      const authClient = createNewClient(server, token);
 
       // authorized request
       const response2 = await authClient.api.box.list();
