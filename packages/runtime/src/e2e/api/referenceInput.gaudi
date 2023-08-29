@@ -1,6 +1,6 @@
 model Element {
-  field name { type string }
-  reference extra { to Extra } // TODO: unique?
+  field name { type string, unique }
+  reference extra { to Extra, unique }
   reference nullableExtra { to Extra, nullable }
 }
 
