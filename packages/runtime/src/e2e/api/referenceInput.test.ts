@@ -61,6 +61,28 @@ describe("Reference Input", () => {
       expect(postResponse.body).toMatchSnapshot();
     });
 
+    it("validation error with unique constraint", async () => {
+      const server = await runner.createServerInstance();
+      const extraData = { extraData: { slug: "extra" } };
+
+      const extraPostResponse = await request(server).post("/api/extra").send(extraData);
+      expect(extraPostResponse.statusCode).toBe(200);
+
+      const data = {
+        name: "element",
+        extra_extraData_slug: "extra",
+        nullableExtra_extraData_slug: null,
+      };
+
+      const postResponse = await request(server).post("/api/element").send(data);
+      expect(postResponse.statusCode).toBe(200);
+
+      const postResponse2 = await request(server).post("/api/element").send(data);
+      expect(postResponse2.statusCode).toBe(400);
+
+      expect(postResponse2.body).toMatchSnapshot();
+    });
+
     it("identifies through nested path", async () => {
       const server = await runner.createServerInstance();
 

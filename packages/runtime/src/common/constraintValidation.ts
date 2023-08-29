@@ -1,20 +1,19 @@
-import _ from "lodash";
-import { match } from "ts-pattern";
-
-import { GAUDI_INTERNAL_TARGET_ID_ALIAS, queryFromParts, selectableId } from "../query/build";
-import { executeQuery } from "../query/exec";
-import { DbConn } from "../server/dbConn";
-import { Vars } from "../server/vars";
-
 import { getRef } from "@gaudi/compiler/dist/common/refs";
-import { getTypedPathWithLeaf } from "@gaudi/compiler/dist/composer/utils";
 import {
   ActionDef,
   Definition,
+  FieldDef,
+  FieldSetterInput,
+  FieldSetterReferenceInput,
   FieldsetDef,
   FieldsetFieldDef,
-  TypedExprDef,
+  ReferenceDef,
 } from "@gaudi/compiler/dist/types/definition";
+import _ from "lodash";
+import { match } from "ts-pattern";
+
+import { findIdBy } from "../query/exec";
+import { DbConn } from "../server/dbConn";
 
 export type ReferenceIdResult =
   | ValidReferenceIdResult
@@ -46,12 +45,13 @@ export async function fetchReferenceIds(
     if (action.kind !== "create-one" && action.kind !== "update-one") return [];
     return action.changeset.flatMap(({ name, setter }) => {
       if (setter.kind !== "fieldset-reference-input") return [];
-      return [[action.model, name, setter] as const];
+      const reference = getRef.reference(def, action.model, name);
+      return [[reference, setter] as [ReferenceDef, FieldSetterReferenceInput]];
     });
   });
 
   const promiseEntries = referenceInputs.map(
-    async ([model, name, setter]): Promise<ReferenceIdResult> => {
+    async ([reference, setter]): Promise<ReferenceIdResult> => {
       const inputValue = _.get(input, setter.fieldsetAccess);
       const { fieldsetAccess } = setter;
       if (_.isNil(inputValue)) {
@@ -61,60 +61,129 @@ export async function fetchReferenceIds(
           inputValue,
         };
       }
-      const reference = getRef.reference(def, model, name);
-      const tpath = getTypedPathWithLeaf(def, [reference.toModelRefKey, ...setter.through], {});
-      const field = getRef.field(def, tpath.leaf.refKey);
 
-      const varName = [...tpath.fullPath, "_input"].join("_");
-      const filter: TypedExprDef = {
-        kind: "function",
-        name: "is",
-        args: [
-          {
-            kind: "alias",
-            namePath: tpath.fullPath,
-          },
-          {
-            kind: "variable",
-            name: varName,
-            type: { kind: field.type, nullable: field.nullable },
-          },
-        ],
-      };
-      const queryName = tpath.fullPath.join(".");
-      const query = queryFromParts(def, queryName, _.initial(tpath.fullPath), filter, [
-        selectableId(_.dropRight(tpath.fullPath, 2)),
-      ]);
-      const result = await executeQuery(
-        dbConn,
+      const resultId = await findIdBy(
         def,
-        query,
-        new Vars({ [varName]: inputValue }),
-        []
+        dbConn,
+        reference.toModelRefKey,
+        setter.through,
+        inputValue
       );
+      console.dir({ resultId });
 
-      if (result.length === 0) {
+      if (resultId === null) {
         return { kind: "reference-not-found", fieldsetAccess };
-      }
-      if (result.length > 1) {
-        throw Error(
-          `Failed to find reference: There are multiple (${result.length}) '${field.modelRefKey}' where field '${field.name}' is '${inputValue}'`
-        );
       }
 
       return {
         kind: "reference-found",
         fieldsetAccess: setter.fieldsetAccess,
-        value: result[0][GAUDI_INTERNAL_TARGET_ID_ALIAS] as number,
+        value: resultId,
       };
     }
   );
   return Promise.all(promiseEntries);
 }
 
+export async function fetchExistingUniqueValues(
+  def: Definition,
+  dbConn: DbConn,
+  actions: ActionDef[],
+  input: Record<string, unknown>,
+  referenceIds: ReferenceIdResult[]
+): Promise<ReferenceIdResult[]> {
+  const uniqueInputs = actions.flatMap((action) => {
+    if (action.kind !== "create-one" && action.kind !== "update-one") return [];
+    return action.changeset.flatMap(({ name, setter }) => {
+      if (setter.kind === "fieldset-input") {
+        const field = getRef.field(def, action.model, name);
+        if (field.unique) {
+          return [[field, setter] as [FieldDef, FieldSetterInput]];
+        }
+      }
+      return [];
+    });
+  });
+
+  const inputPromiseEntries = uniqueInputs.map(
+    async ([field, setter]: [FieldDef, FieldSetterInput]): Promise<ReferenceIdResult> => {
+      const { fieldsetAccess } = setter;
+      const inputValue = _.get(input, fieldsetAccess);
+      if (_.isNil(inputValue)) {
+        return {
+          kind: "reference-input-missing",
+          fieldsetAccess,
+          inputValue,
+        };
+      }
+
+      const resultId = await findIdBy(def, dbConn, field.modelRefKey, [field.name], inputValue);
+      if (resultId === null) {
+        return { kind: "reference-not-found", fieldsetAccess };
+      } else {
+        return { kind: "reference-found", fieldsetAccess, value: inputValue };
+      }
+    }
+  );
+
+  const referenceInputs = actions.flatMap((action) => {
+    if (action.kind !== "create-one" && action.kind !== "update-one") return [];
+    return action.changeset.flatMap(({ name, setter }) => {
+      if (setter.kind !== "fieldset-reference-input") return [];
+      const reference = getRef.reference(def, action.model, name);
+      if (!reference.unique) {
+        return [];
+      }
+      // find a value in inputs, if any
+      const result = referenceIds.find((result) => {
+        if (result.fieldsetAccess === setter.fieldsetAccess && result.kind === "reference-found") {
+          return true;
+        }
+      });
+      if (result) {
+        return [
+          [reference, setter, result] as [
+            ReferenceDef,
+            FieldSetterReferenceInput,
+            ReferenceIdResult
+          ],
+        ];
+      }
+      return [];
+    });
+  });
+
+  const refUniqPromises = referenceInputs.map(
+    async ([reference, setter, result]): Promise<ReferenceIdResult> => {
+      const { fieldsetAccess } = setter;
+
+      if (result.kind !== "reference-found") {
+        return result;
+      }
+
+      const refField = getRef.field(def, reference.fieldRefKey);
+
+      const relId = await findIdBy(
+        def,
+        dbConn,
+        reference.modelRefKey,
+        [refField.name],
+        result.value
+      );
+      if (relId === null) {
+        return { kind: "reference-not-found", fieldsetAccess };
+      } else {
+        return { kind: "reference-found", fieldsetAccess, value: relId };
+      }
+    }
+  );
+
+  return Promise.all([...inputPromiseEntries, ...refUniqPromises]);
+}
+
 /**
  * This mutates endpoint fieldset.
- * If reference has no id it will add "noReference" validator to fieldset field.
+ * If reference has no id it will add "reference-not-found" validator to fieldset field.
  */
 export function assignNoReferenceValidators(
   fieldset: FieldsetDef,
@@ -125,6 +194,24 @@ export function assignNoReferenceValidators(
       .with({ kind: "reference-not-found" }, ({ fieldsetAccess }) => {
         const currentFieldset = getNestedFieldset(fieldset, fieldsetAccess);
         currentFieldset.referenceNotFound = true;
+      })
+      .otherwise(_.noop);
+  });
+}
+
+/**
+ * This mutates endpoint fieldset.
+ * If value already exists it will add "already-exists" validator to fieldset field.
+ */
+export function assignUniqueExistsValidators(
+  fieldset: FieldsetDef,
+  referenceIds: ReferenceIdResult[]
+): asserts referenceIds is (InvalidReferenceIdResult | InputMissingReferenceIdResult)[] {
+  referenceIds.forEach((referenceIdResult) => {
+    match(referenceIdResult)
+      .with({ kind: "reference-found" }, ({ fieldsetAccess }) => {
+        const currentFieldset = getNestedFieldset(fieldset, fieldsetAccess);
+        currentFieldset.uniqueExists = true;
       })
       .otherwise(_.noop);
   });

@@ -399,6 +399,7 @@ export type FieldsetFieldDef = {
   required: boolean;
   validate?: ValidateExprDef;
   referenceNotFound?: true;
+  uniqueExists?: true;
 };
 
 export interface ReferenceNotFoundValidator {
