@@ -147,7 +147,6 @@ export async function createLocalExecutionRuntime(
         try {
           const result = await hookFn(args, ctx);
           logger.debug(`Hook ${hook.file}::${hook.target} finished successfully: %O`, result);
-          logger.debug(`Modules: %O`, modules);
           return result;
         } catch (e: any) {
           logger.error(`Hook ${hook.file}::${hook.target} failed: %O`, {
