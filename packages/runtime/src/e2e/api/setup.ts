@@ -198,7 +198,6 @@ export class PostgresTestRunner extends TestRunner {
   private dbConnUrl: string;
   constructor(dbConnUrl: string) {
     super();
-    // this.dbConnUrl = "postgresql://gaudi:gaudip@localhost:5432";
     this.dbConnUrl = dbConnUrl;
   }
   get templateConnUrl() {
@@ -221,7 +220,7 @@ export class PostgresTestRunner extends TestRunner {
       `CREATE DATABASE "gaudi-e2e-${this.templateId}-${id}" WITH TEMPLATE "gaudi-e2e-template-${this.templateId}"`
     );
     await dbConn.destroy();
-    return `postgresql://gaudi:gaudip@localhost:5432/gaudi-e2e-${this.templateId}-${id}`;
+    return `${this.dbConnUrl}/gaudi-e2e-${this.templateId}-${id}`;
   }
 
   async cleanup(): Promise<void> {
