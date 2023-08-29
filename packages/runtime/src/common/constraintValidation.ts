@@ -65,8 +65,8 @@ export async function fetchReferenceIds(
       const resultId = await findIdBy(
         def,
         dbConn,
-        [reference.toModelRefKey],
-        [reference.toModelRefKey, ...setter.through],
+        reference.toModelRefKey,
+        setter.through,
         inputValue
       );
       console.dir({ resultId });
@@ -117,13 +117,7 @@ export async function fetchExistingUniqueValues(
         };
       }
 
-      const resultId = await findIdBy(
-        def,
-        dbConn,
-        [field.modelRefKey],
-        [field.modelRefKey, field.name],
-        inputValue
-      );
+      const resultId = await findIdBy(def, dbConn, field.modelRefKey, [field.name], inputValue);
       if (resultId === null) {
         return { kind: "reference-not-found", fieldsetAccess };
       } else {
@@ -172,8 +166,8 @@ export async function fetchExistingUniqueValues(
       const relId = await findIdBy(
         def,
         dbConn,
-        [reference.modelRefKey],
-        [reference.modelRefKey, refField.name],
+        reference.modelRefKey,
+        [refField.name],
         result.value
       );
       if (relId === null) {

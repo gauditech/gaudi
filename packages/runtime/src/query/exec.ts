@@ -147,7 +147,7 @@ export async function executeQueryTree(
 export async function findIdBy(
   def: Definition,
   conn: DbConn,
-  fromPath: NamePath,
+  modelName: string,
   targetPath: NamePath,
   value: unknown
 ): Promise<number | null> {
@@ -155,11 +155,11 @@ export async function findIdBy(
     kind: "function",
     name: "is",
     args: [
-      { kind: "alias", namePath: targetPath },
+      { kind: "alias", namePath: [modelName, ...targetPath] },
       { kind: "variable", name: "findBy_input" },
     ],
   };
-  const query = queryFromParts(def, "findBy", fromPath, filter, [selectableId(fromPath)]);
+  const query = queryFromParts(def, "findBy", [modelName], filter, [selectableId([modelName])]);
   const [result] = await executeQuery(conn, def, query, new Vars({ findBy_input: value }), []);
 
   if (!result) return null;
