@@ -37,6 +37,8 @@ import {
   ReferenceIdResult,
   ValidReferenceIdResult,
   assignNoReferenceValidators,
+  assignUniqueExistsValidators,
+  fetchExistingUniqueValues,
   fetchReferenceIds,
 } from "@runtime/common/constraintValidation";
 import { validateEndpointFieldset } from "@runtime/common/validation";
@@ -293,6 +295,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
+          let uniqueIds: ReferenceIdResult[] = [];
           logger.debug("FIELDSET", endpoint.fieldset);
           if (endpoint.fieldset) {
             const body = req.body;
@@ -301,8 +304,18 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             logger.debug("Reference IDs", referenceIds);
 
+            uniqueIds = await fetchExistingUniqueValues(
+              def,
+              tx,
+              endpoint.actions,
+              body,
+              referenceIds
+            );
+            logger.debug("Unique IDs", uniqueIds);
+
             const fieldset = _.cloneDeep(endpoint.fieldset);
             assignNoReferenceValidators(fieldset, referenceIds);
+            assignUniqueExistsValidators(fieldset, uniqueIds);
             validationResult = await validateEndpointFieldset(def, fieldset, body);
             logger.debug("Validation result", validationResult);
           }

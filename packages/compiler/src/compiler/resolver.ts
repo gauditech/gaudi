@@ -11,6 +11,7 @@ import {
   Computed,
   DeleteAction,
   Endpoint,
+  EndpointId,
   EndpointType,
   Entrypoint,
   ExecuteAction,
@@ -30,10 +31,14 @@ import {
   ProjectASTs,
   Query,
   QueryAction,
+  QueryActionAtom,
+  RefEntrypoint,
   RefExtraInput,
   RefModelAtom,
   RefModelField,
+  RefModelQuery,
   RefModelReference,
+  RefPopulate,
   Reference,
   Relation,
   RespondAction,
@@ -157,22 +162,30 @@ export function resolve(projectASTs: ProjectASTs) {
     );
   }
 
-  function resolveValidator(vlaidator: Validator) {
+  function resolveValidator(validator: Validator) {
     const scope: Scope = {
       environment: "entrypoint",
       model: undefined,
       context: {},
       typeGuard: {},
     };
-    vlaidator.atoms.forEach((a) =>
+    validator.name.ref = { kind: "validator", name: validator.name.text };
+    validator.atoms.forEach((a) =>
       match(a)
         .with({ kind: "arg" }, (arg) => {
           const typeAtom = kindFind(arg.atoms, "type");
           const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
           if (type) {
-            arg.name.ref = { kind: "validatorArg", type };
             arg.name.type = Type.primitive(type);
-            addToScope(scope, arg.name);
+            if (validator.name.ref) {
+              arg.name.ref = {
+                kind: "validatorArg",
+                parent: validator.name.ref,
+                name: arg.name.text,
+                type,
+              };
+              addToScope(scope, arg.name);
+            }
           } else if (typeAtom) {
             errors.push(
               new CompilerError(typeAtom.identifier.token, ErrorCode.UnexpectedPrimitiveType)
@@ -207,6 +220,7 @@ export function resolve(projectASTs: ProjectASTs) {
           errors.push(new CompilerError(call.validator.token, ErrorCode.CantResolveValidator));
           return;
         }
+        call.validator.ref = validator.name.ref;
 
         const validatorArgs = kindFilter(validator.atoms, "arg");
         if (target) {
@@ -244,6 +258,7 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveModel(model: Model) {
+    model.name.ref = { kind: "model", model: model.name.text };
     model.atoms.forEach((a) => resolveModelAtom(model, a));
   }
 
@@ -267,7 +282,7 @@ export function resolve(projectASTs: ProjectASTs) {
       .with({ kind: "field" }, (field) => resolveField(model, field))
       .with({ kind: "reference" }, (reference) => resolveReference(model, reference))
       .with({ kind: "relation" }, (relation) => resolveRelation(model, relation))
-      .with({ kind: "query" }, (query) => resolveQuery(query, scope))
+      .with({ kind: "query" }, (query) => resolveModelQuery(query, scope))
       .with({ kind: "computed" }, (computed) => resolveComputed(model, computed))
       .with({ kind: "hook" }, (hook) => resolveModelHook(hook, scope))
       .exhaustive();
@@ -371,12 +386,40 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveQuery(query: Query | QueryAction | AnonymousQuery, parentScope: Scope) {
+  function resolveModelQuery(query: Query, scope: Scope) {
+    const { parentModel, model, type } = resolveQueryAtoms(
+      query.atoms,
+      scope,
+      query.name.ref,
+      undefined
+    );
+    if (parentModel && model) {
+      query.name.ref = {
+        kind: "modelAtom",
+        atomKind: "query",
+        parentModel,
+        name: query.name.text,
+        model,
+      };
+    }
+    query.name.type = type;
+  }
+
+  function resolveQueryAtoms(
+    atoms: QueryActionAtom[],
+    parentScope: Scope,
+    parentRef: RefModelQuery | undefined,
+    fallbackModel: string | undefined
+  ): {
+    parentModel: string | undefined;
+    model: string | undefined;
+    type: Type;
+  } {
     let currentModel: string | undefined;
     const scope: Scope = _.cloneDeep({ ...parentScope, environment: "model" });
     let cardinality = "one" as TypeCardinality;
 
-    const from = kindFind(query.atoms, "from");
+    const from = kindFind(atoms, "from");
     if (from) {
       resolveIdentifierRefPath(from.identifierPath, parentScope, { allowGlobal: true });
       from.identifierPath.forEach((identifier) => {
@@ -392,7 +435,7 @@ export function resolve(projectASTs: ProjectASTs) {
         from.as.identifierPath.forEach((as, i) => {
           const target = from.identifierPath[i];
           const path = [...initialPath, ...from.identifierPath.slice(0, i + 1).map((i) => i.text)];
-          as.ref = { kind: "queryTarget", path };
+          as.ref = { kind: "queryTarget", parent: parentRef, path };
           as.type = target.type;
           addToScope(scope, as);
         });
@@ -400,12 +443,12 @@ export function resolve(projectASTs: ProjectASTs) {
       } else {
         scope.model = currentModel;
       }
-    } else if (query.kind === "anonymousQuery") {
-      currentModel = parentScope.model;
+    } else if (fallbackModel) {
+      currentModel = fallbackModel;
       scope.model = currentModel;
     }
 
-    const filter = kindFind(query.atoms, "filter");
+    const filter = kindFind(atoms, "filter");
     if (filter) {
       resolveExpression(filter.expr, scope);
       // if filter is present on cardinality 'one', cardinality changes to 'nullable'
@@ -414,16 +457,17 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
 
-    const orderBy = kindFind(query.atoms, "orderBy");
+    const orderBy = kindFind(atoms, "orderBy");
     if (orderBy) {
       orderBy.orderBy.forEach((orderBy) => resolveExpression(orderBy.expr, scope));
     }
 
-    const select = kindFind(query.atoms, "select");
+    const select = kindFind(atoms, "select");
     if (select) {
       resolveSelect(select.select, currentModel, scope);
     }
 
+    let type: Type = Type.any;
     if (currentModel) {
       let baseType: Type;
       if (select) {
@@ -432,8 +476,7 @@ export function resolve(projectASTs: ProjectASTs) {
         baseType = Type.model(currentModel);
       }
 
-      const aggregate = kindFind(query.atoms, "aggregate");
-      let type: Type;
+      const aggregate = kindFind(atoms, "aggregate");
       switch (aggregate?.aggregate) {
         case "one":
           type = baseType;
@@ -454,35 +497,9 @@ export function resolve(projectASTs: ProjectASTs) {
               : Type.collection(baseType);
           break;
       }
-
-      switch (query.kind) {
-        case "query": {
-          if (parentScope.model) {
-            query.name.ref = {
-              kind: "modelAtom",
-              atomKind: "query",
-              parentModel: parentScope.model,
-              name: query.name.text,
-              model: currentModel,
-            };
-          }
-          query.name.type = type;
-          break;
-        }
-        case "queryAction": {
-          if (query.name) {
-            query.name.ref = { kind: "action" };
-            query.name.type = type;
-          }
-          query.type = type;
-          break;
-        }
-        case "anonymousQuery": {
-          query.type = type;
-          break;
-        }
-      }
     }
+
+    return { parentModel: parentScope.model, model: currentModel, type };
   }
 
   function selectToStruct(select: Select): Type {
@@ -540,16 +557,16 @@ export function resolve(projectASTs: ProjectASTs) {
   }
 
   function resolveApi(api: Api) {
+    const ref = { kind: "api" as const, group: api.name?.text || "" };
+    const scope: Scope = {
+      environment: "entrypoint",
+      model: undefined,
+      context: {},
+      typeGuard: {},
+    };
     api.atoms.forEach((a) =>
       match(a)
-        .with({ kind: "entrypoint" }, (entrypoint) =>
-          resolveEntrypoint(entrypoint, null, {
-            environment: "entrypoint",
-            model: undefined,
-            context: {},
-            typeGuard: {},
-          })
-        )
+        .with({ kind: "entrypoint" }, (entrypoint) => resolveEntrypoint(entrypoint, ref, scope))
         .exhaustive()
     );
   }
@@ -557,20 +574,30 @@ export function resolve(projectASTs: ProjectASTs) {
   // passing null as a parent model means this is root model, while undefined means it is unresolved
   function resolveEntrypoint(
     entrypoint: Entrypoint,
-    parentModel: string | undefined | null,
+    parent: { kind: "api"; api?: string } | RefEntrypoint | undefined,
     scope: Scope
   ) {
     let alias: IdentifierRef | undefined;
 
-    if (parentModel === null) {
+    if (parent?.kind === "api") {
       resolveModelRef(entrypoint.target);
     } else {
-      resolveModelAtomRef(entrypoint.target, parentModel, "reference", "relation");
+      resolveModelAtomRef(entrypoint.target, parent?.model, "reference", "relation");
     }
     const cardinality = getTypeCardinality(entrypoint.target.type);
     const currentModel = entrypoint.target.ref?.model;
+    if (parent && currentModel) {
+      const parentPath = parent.kind === "api" ? [] : parent.path;
+      entrypoint.ref = {
+        kind: "target",
+        targetKind: "entrypoint",
+        api: parent.api,
+        path: [...parentPath, entrypoint.target.text],
+        model: currentModel,
+      };
+    }
     if (entrypoint.as) {
-      entrypoint.as.identifier.ref = { kind: "target", targetKind: "entrypoint" };
+      entrypoint.as.identifier.ref = entrypoint.ref;
       entrypoint.as.identifier.type = baseType(entrypoint.target.type);
       alias = entrypoint.as.identifier;
     }
@@ -602,19 +629,19 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     kindFilter(entrypoint.atoms, "endpoint").forEach((endpoint) =>
-      resolveEndpoint(endpoint, currentModel, cardinality, alias, _.cloneDeep(scope))
+      resolveEndpoint(endpoint, entrypoint.ref, cardinality, alias, _.cloneDeep(scope))
     );
 
     const childEntrypointScope = _.cloneDeep(scope);
     if (alias) addToScope(childEntrypointScope, alias);
-    kindFilter(entrypoint.atoms, "entrypoint").forEach((entrypoint) =>
-      resolveEntrypoint(entrypoint, currentModel, childEntrypointScope)
+    kindFilter(entrypoint.atoms, "entrypoint").forEach((child) =>
+      resolveEntrypoint(child, entrypoint.ref, childEntrypointScope)
     );
   }
 
   function resolveEndpoint(
     endpoint: Endpoint,
-    model: string | undefined,
+    parent: RefEntrypoint | undefined,
     parentCardinality: TypeCardinality,
     alias: IdentifierRef | undefined,
     scope: Scope
@@ -669,15 +696,29 @@ export function resolve(projectASTs: ProjectASTs) {
       scope = addTypeGuard(authorize.expr, scope, false);
     }
 
+    let endpointId: EndpointId | undefined;
+    if (parent) {
+      if (endpoint.type === "custom") {
+        const path = kindFind(endpoint.atoms, "path")?.path.value;
+        const method = kindFind(endpoint.atoms, "method")?.method;
+        const cardinality = kindFind(endpoint.atoms, "cardinality")?.cardinality;
+        if (path && method && cardinality) {
+          endpointId = { parent, type: "custom", method, cardinality, path };
+        }
+      } else {
+        endpointId = { parent, type: endpoint.type };
+      }
+    }
+
     const extraInputs = kindFind(endpoint.atoms, "extraInputs");
     if (extraInputs) {
-      extraInputs.extraInputs.map((i) => resolveExtraInput(i, scope));
+      extraInputs.extraInputs.map((i) => resolveExtraInput(i, endpointId, scope));
     }
 
     const action = kindFind(endpoint.atoms, "action");
     if (action) {
       action.actions.forEach((action) => {
-        resolveAction(action, endpoint.type, model, alias, scope);
+        resolveAction(action, endpoint.type, endpointId, alias, scope);
       });
 
       // check for primary action
@@ -705,7 +746,7 @@ export function resolve(projectASTs: ProjectASTs) {
     if (orderBy) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
-      const modelScope: Scope = { ...scope, model, environment: "model" };
+      const modelScope: Scope = { ...scope, model: parent?.model, environment: "model" };
       orderBy.orderBy.forEach((orderBy) => resolveExpression(orderBy.expr, modelScope));
     }
 
@@ -713,20 +754,26 @@ export function resolve(projectASTs: ProjectASTs) {
     if (filter) {
       // this will be executed in query which means it will be used in "model" scope
       // TODO: should model be in entire endpoint scope?
-      const modelScope: Scope = { ...scope, model, environment: "model" };
+      const modelScope: Scope = { ...scope, model: parent?.model, environment: "model" };
       resolveExpression(filter.expr, modelScope);
     }
   }
 
-  function resolveExtraInput(extraInput: ExtraInput, scope: Scope) {
+  function resolveExtraInput(extraInput: ExtraInput, parent: EndpointId | undefined, scope: Scope) {
     const validate = kindFind(extraInput.atoms, "validate")?.expr;
     const nullable = !!kindFind(extraInput.atoms, "nullable");
     const typeAtom = kindFind(extraInput.atoms, "type");
 
     const type = fieldTypes.find((f) => f === typeAtom?.identifier.text);
 
-    if (type) {
-      extraInput.name.ref = { kind: "extraInput", type, nullable };
+    if (type && parent) {
+      extraInput.name.ref = {
+        kind: "extraInput",
+        parent,
+        name: extraInput.name.text,
+        type,
+        nullable,
+      };
       extraInput.name.type = nullable ? Type.nullable(Type.primitive(type)) : Type.primitive(type);
 
       if (validate) {
@@ -755,18 +802,18 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveAction(
     action: Action,
     endpointType: EndpointType,
-    parentModel: string | undefined,
+    parent: EndpointId | undefined,
     targetAlias: IdentifierRef | undefined,
     scope: Scope
   ) {
     match(action)
       .with({ kind: "create" }, { kind: "update" }, (action) =>
-        resolveModelAction(action, endpointType, parentModel, targetAlias, scope)
+        resolveModelAction(action, endpointType, parent, targetAlias, scope)
       )
       .with({ kind: "delete" }, (action) => resolveDeleteAction(action, endpointType, scope))
-      .with({ kind: "execute" }, (action) => resolveExecuteAction(action, scope))
+      .with({ kind: "execute" }, (action) => resolveExecuteAction(action, parent, scope))
       .with({ kind: "respond" }, (action) => resolveRespondAction(action, scope))
-      .with({ kind: "queryAction" }, (action) => resolveQueryAction(action, scope))
+      .with({ kind: "queryAction" }, (action) => resolveQueryAction(action, parent, scope))
       .with({ kind: "validate" }, (validate) => resolveValidateExpr(validate.expr, scope))
       .exhaustive();
   }
@@ -774,11 +821,11 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveModelAction(
     action: ModelAction,
     endpointType: EndpointType,
-    parentModel: string | undefined,
+    parent: EndpointId | undefined,
     targetAlias: IdentifierRef | undefined,
     scope: Scope
   ) {
-    let currentModel: string | undefined = parentModel;
+    let currentModel: string | undefined = parent?.parent.model;
     if (action.target) {
       resolveIdentifierRefPath(action.target, scope, { allowGlobal: action.kind === "create" });
       const lastTarget = action.target.at(-1);
@@ -819,7 +866,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
       // check if target is primary action
       if (action.target.length === 1 && endpointType === action.kind) {
-        const primaryTarget = action.kind === "update" ? targetAlias?.text : parentModel;
+        const primaryTarget = action.kind === "update" ? targetAlias?.text : parent?.parent.model;
         if (action.target[0].text === primaryTarget) {
           action.isPrimary = true;
         }
@@ -838,8 +885,12 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
 
-    if (currentModel && action.as) {
-      action.as.identifier.ref = { kind: "action" };
+    if (currentModel && action.as && parent) {
+      action.as.identifier.ref = {
+        kind: "action",
+        parent,
+        name: action.as.identifier.text,
+      };
       action.as.identifier.type = Type.model(currentModel);
       addToScope(scope, action.as.identifier);
     }
@@ -910,12 +961,16 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveExecuteAction(action: ExecuteAction, scope: Scope) {
+  function resolveExecuteAction(
+    action: ExecuteAction,
+    parent: EndpointId | undefined,
+    scope: Scope
+  ) {
     const hook = kindFind(action.atoms, "hook");
     if (hook) resolveActionHook(hook, scope);
 
-    if (action.name) {
-      action.name.ref = { kind: "action" };
+    if (parent && action.name) {
+      action.name.ref = { kind: "action", parent, name: action.name.text };
       action.name.type = Type.any;
       addToScope(scope, action.name);
     }
@@ -948,9 +1003,16 @@ export function resolve(projectASTs: ProjectASTs) {
     }
   }
 
-  function resolveQueryAction(action: QueryAction, scope: Scope) {
-    resolveQuery(action, scope);
+  function resolveQueryAction(action: QueryAction, parent: EndpointId | undefined, scope: Scope) {
+    const { type } = resolveQueryAtoms(action.atoms, scope, undefined, undefined);
+    action.type = type;
+
     if (action.name) {
+      if (parent) {
+        action.name.ref = { kind: "action", parent, name: action.name.text };
+      }
+      action.name.type = type;
+
       addToScope(scope, action.name);
     }
   }
@@ -968,26 +1030,30 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolvePopulator(populator: Populator) {
     populator.atoms.forEach((populate) =>
-      resolvePopulate(populate, null, {
-        environment: "entrypoint",
-        model: undefined,
-        context: {},
-        typeGuard: {},
-      })
+      resolvePopulate(
+        populate,
+        { kind: "populator", populator: populator.name.text },
+        {
+          environment: "entrypoint",
+          model: undefined,
+          context: {},
+          typeGuard: {},
+        }
+      )
     );
   }
 
   function resolvePopulate(
     populate: Populate,
-    parentModel: string | undefined | null,
+    parent: { kind: "populator"; populator: string } | RefPopulate | undefined,
     scope: Scope
   ) {
     let through: string | undefined;
 
-    if (parentModel === null) {
+    if (parent?.kind === "populator") {
       resolveModelRef(populate.target);
     } else {
-      resolveModelAtomRef(populate.target, parentModel, "relation");
+      resolveModelAtomRef(populate.target, parent?.model, "relation");
       if (
         populate.target.ref?.kind === "modelAtom" &&
         populate.target.ref.atomKind === "relation"
@@ -997,15 +1063,31 @@ export function resolve(projectASTs: ProjectASTs) {
     }
     const currentModel = populate.target.ref?.model;
     scope.model = currentModel;
+
+    if (parent && currentModel) {
+      const parentPath = parent.kind === "populator" ? [] : parent.path;
+      populate.ref = {
+        kind: "target",
+        targetKind: "populate",
+        populator: parent.populator,
+        path: [...parentPath, populate.target.text],
+        model: currentModel,
+      };
+    }
+
     if (populate.as) {
-      populate.as.identifier.ref = { kind: "target", targetKind: "populate" };
+      populate.as.identifier.ref = populate.ref;
       populate.as.identifier.type = baseType(populate.target.type);
       addToScope(scope, populate.as.identifier);
     }
 
     kindFilter(populate.atoms, "repeat").forEach((repeat) => {
-      if (repeat.as) {
-        repeat.as.identifier.ref = { kind: "repeat" };
+      if (repeat.as && populate.ref) {
+        repeat.as.identifier.ref = {
+          kind: "repeat",
+          parent: populate.ref,
+          name: repeat.as.identifier.text,
+        };
         repeat.as.identifier.type = Type.struct({
           start: Type.integer,
           end: Type.integer,
@@ -1058,8 +1140,8 @@ export function resolve(projectASTs: ProjectASTs) {
       }
     }
 
-    kindFilter(populate.atoms, "populate").forEach((populate) =>
-      resolvePopulate(populate, currentModel, _.cloneDeep(scope))
+    kindFilter(populate.atoms, "populate").forEach((child) =>
+      resolvePopulate(child, populate.ref, _.cloneDeep(scope))
     );
   }
 
@@ -1068,9 +1150,16 @@ export function resolve(projectASTs: ProjectASTs) {
     kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
   }
 
+  function resolveHookQueryArg(query: AnonymousQuery, scope: Scope, fallbackModel?: string) {
+    const { type } = resolveQueryAtoms(query.atoms, scope, undefined, fallbackModel);
+    query.type = type;
+  }
+
   function resolveModelHook(hook: ModelHook, scope: Scope) {
     resolveHook(hook);
-    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(query, scope));
+    kindFilter(hook.atoms, "arg_query").forEach(({ query }) =>
+      resolveHookQueryArg(query, scope, scope.model)
+    );
     kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
     if (scope.model) {
       hook.name.ref = {
@@ -1084,7 +1173,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveActionHook(hook: ActionHook, scope: Scope) {
     resolveHook(hook);
-    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveQuery(query, scope));
+    kindFilter(hook.atoms, "arg_query").forEach(({ query }) => resolveHookQueryArg(query, scope));
     kindFilter(hook.atoms, "arg_expr").forEach(({ expr }) => resolveExpression(expr, scope));
   }
 
@@ -1255,7 +1344,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
     // try to resolve from context
     else if (context) {
-      head.ref = context.ref;
+      head.ref = { ...context.ref };
       head.type = context.type;
     }
     // try to resolve from global models, if global is allowed
@@ -1417,7 +1506,7 @@ export function resolve(projectASTs: ProjectASTs) {
     // Id of a reference in model can be targeted
     if (atom) {
       resolveModelAtom(model, atom);
-      identifier.ref = atom.name.ref;
+      identifier.ref = atom.name.ref && { ...atom.name.ref };
       identifier.type = atom.name.type;
       return true;
     }

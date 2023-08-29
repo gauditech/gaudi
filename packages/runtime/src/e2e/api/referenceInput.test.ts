@@ -18,10 +18,10 @@ describe("Reference Input", () => {
   );
 
   describe("Element and Extra", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
       await setup();
     });
-    afterAll(async () => {
+    afterEach(async () => {
       await destroy();
     });
 
@@ -65,6 +65,27 @@ describe("Reference Input", () => {
       expect(postResponse.statusCode).toBe(400);
 
       expect(postResponse.body).toMatchSnapshot();
+    });
+
+    it("validation error with unique constraint", async () => {
+      const extraData = { extraData: { slug: "extra" } };
+
+      const extraPostResponse = await request(getServer()).post("/api/extra").send(extraData);
+      expect(extraPostResponse.statusCode).toBe(200);
+
+      const data = {
+        name: "element",
+        extra_extraData_slug: "extra",
+        nullableExtra_extraData_slug: null,
+      };
+
+      const postResponse = await request(getServer()).post("/api/element").send(data);
+      expect(postResponse.statusCode).toBe(200);
+
+      const postResponse2 = await request(getServer()).post("/api/element").send(data);
+      expect(postResponse2.statusCode).toBe(400);
+
+      expect(postResponse2.body).toMatchSnapshot();
     });
 
     it("identifies through nested path", async () => {
