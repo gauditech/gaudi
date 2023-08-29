@@ -296,7 +296,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
           let uniqueIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET %O", endpoint.fieldset);
           if (endpoint.fieldset) {
             const body = req.body;
             logger.debug("BODY", body);
@@ -419,7 +419,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           if (endpoint.fieldset) {
             const body = req.body;
             logger.debug("BODY", body);
-            logger.debug("FIELDSET", endpoint.fieldset);
+            logger.debug("FIELDSET %O", endpoint.fieldset);
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             logger.debug("Reference IDs", referenceIds);
 
@@ -593,7 +593,7 @@ export function buildCustomOneEndpoint(
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET %O", endpoint.fieldset);
           if (endpoint.fieldset != null) {
             const body = req.body;
             logger.debug("BODY", body);
@@ -691,7 +691,7 @@ export function buildCustomManyEndpoint(
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET %O", endpoint.fieldset);
           if (endpoint.fieldset != null) {
             const body = req.body;
             logger.debug("BODY", body);
