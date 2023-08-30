@@ -2,8 +2,16 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import util from "util";
 
 import chalk from "chalk";
+import initDebug, { Debugger } from "debug";
 import _ from "lodash";
 import { createLogger, format, transports } from "winston";
+
+export function initLogger(namespace: string): Record<"debug" | "error", Debugger> {
+  return {
+    debug: initDebug(namespace),
+    error: initDebug([namespace, "error"].join(":")),
+  };
+}
 
 const als = new AsyncLocalStorage<string[]>();
 
@@ -136,7 +144,10 @@ export class Logger {
 }
 
 const logger = new Logger();
-export default logger;
+/**
+ * NOTE: ALS logger is currently not in use, `debug` is used instead
+ */
+// export default logger;
 
 /**
  * Helper functions.

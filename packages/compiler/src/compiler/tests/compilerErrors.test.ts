@@ -103,8 +103,8 @@ describe("compiler errors", () => {
         `;
       expectError(
         bp,
-        `Validator must contain "action" or "action hook" definition`,
-        `Validator can't have more than one "action" or "action hook" definition`
+        `Validator must contain "assert" or "assert hook" definition`,
+        `Validator can't have more than one "assert" or "assert hook" definition`
       );
     });
     it("fails when can't find validator", () => {

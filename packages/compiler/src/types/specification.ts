@@ -1,11 +1,12 @@
 import {
   Ref,
+  RefEntrypoint,
   RefModel,
   RefModelAtom,
   RefModelField,
   RefModelReference,
   RefModelRelation,
-  RefTarget,
+  RefPopulate,
 } from "@compiler/compiler/ast/ast";
 import { FieldType, Type, TypeCardinality } from "@compiler/compiler/ast/type";
 import { HookCode } from "@compiler/types/common";
@@ -124,7 +125,7 @@ export type Entrypoint<c extends TypeCardinality = TypeCardinality> = {
   model: string;
   cardinality: c;
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
-  alias: IdentifierRef<RefTarget>;
+  alias: IdentifierRef<RefEntrypoint>;
   identifyThrough: c extends "collection" ? IdentifierRef<RefModelAtom>[] : undefined;
   endpoints: Endpoint[];
   entrypoints: Entrypoint[];
@@ -272,7 +273,7 @@ export type Populator = {
 export type Populate<c extends TypeCardinality = TypeCardinality> = {
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   cardinality: c;
-  alias: IdentifierRef<RefTarget>;
+  alias: IdentifierRef<RefPopulate>;
   setters: ActionAtomSet[];
   populates: Populate[];
   repeater?: Repeater;

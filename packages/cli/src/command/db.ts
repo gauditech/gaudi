@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import { EngineConfig } from "@gaudi/compiler/dist/config";
 import _ from "lodash";
 
@@ -5,10 +6,12 @@ import { GAUDI_SCRIPTS, getDbSchemaPath, getDefaultNodeOptions } from "@cli/conf
 import { createCommandRunner } from "@cli/runner";
 import { makeCliSafePath } from "@cli/utils";
 
+const logger = initLogger("gaudi:cli");
+
 // ---------- DB commands
 // --- DB push
 export function dbPush(config: EngineConfig) {
-  console.log("Pushing DB change ...");
+  logger.debug("Pushing DB change ...");
 
   return createCommandRunner("npx", [
     "prisma",
@@ -23,7 +26,7 @@ export function dbPush(config: EngineConfig) {
 // --- DB reset
 
 export function dbReset(config: EngineConfig) {
-  console.log("Resetting DB ...");
+  logger.debug("Resetting DB ...");
 
   return createCommandRunner("npx", [
     "prisma",
@@ -47,7 +50,7 @@ export function dbPopulate(options: DbPopulateOptions, _config: EngineConfig) {
 
   if (_.isEmpty(populatorName)) throw "Populator name cannot be empty";
 
-  console.log(`Populating DB using populator "${populatorName} ..."`);
+  logger.debug(`Populating DB using populator "${populatorName} ..."`);
 
   return createCommandRunner("node", [
     ...getDefaultNodeOptions(),
@@ -68,7 +71,7 @@ export function dbMigrate(options: DbMigrateOptions, config: EngineConfig) {
 
   if (_.isEmpty(migrationName)) throw "Migration name cannot be empty";
 
-  console.log(`Creating DB migration "${migrationName}" ...`);
+  logger.debug(`Creating DB migration "${migrationName}" ...`);
 
   return createCommandRunner("npx", [
     "prisma",
@@ -82,7 +85,7 @@ export function dbMigrate(options: DbMigrateOptions, config: EngineConfig) {
 // --- DB deploy
 
 export function dbDeploy(config: EngineConfig) {
-  console.log(`Deploying DB migrations ...`);
+  logger.debug(`Deploying DB migrations ...`);
 
   return createCommandRunner("npx", [
     "prisma",

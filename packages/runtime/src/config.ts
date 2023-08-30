@@ -1,7 +1,9 @@
 import fs from "fs";
 
+import { initLogger } from "@gaudi/compiler";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 
+const logger = initLogger("gaudi:runtime:config");
 export type RuntimeConfig = AppConfig & {
   /** Runtime server host name */
   host: string;
@@ -35,7 +37,7 @@ export function readConfig(): RuntimeConfig {
 
   const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl, dbSchema };
 
-  console.log("Gaudi runtime config", finalConfig);
+  logger.debug("Gaudi runtime config", finalConfig);
 
   return finalConfig;
 }

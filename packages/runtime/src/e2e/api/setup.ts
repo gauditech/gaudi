@@ -4,6 +4,7 @@ import { Server } from "http";
 import os from "os";
 import path from "path";
 
+import { initLogger } from "@gaudi/compiler";
 import { build } from "@gaudi/compiler/dist/builder/builder";
 import { dataToFieldDbnames, getRef } from "@gaudi/compiler/dist/common/refs";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
@@ -16,6 +17,8 @@ import { setupDefinitionApis } from "@runtime/server/api";
 import { AppContext, bindAppContext } from "@runtime/server/context";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
 import { bindAppContextHandler, errorHandler, requestLogger } from "@runtime/server/middleware";
+
+const logger = initLogger("gaudi:test:e2e:setup");
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
 
@@ -73,25 +76,25 @@ export function createApiTestSetup(blueprint: string, data: PopulatorData[]): Ap
       dbConn: createDbConn(config.dbConnUrl, { schema: schemaName }),
     };
 
-    console.info(`Setup API tests ("${schemaName}")`);
+    logger.debug(`Setup API tests ("${schemaName}")`);
 
     // setup folders
     outputFolder = createOutputFolder(schemaName);
-    console.info(`  created output folder ${outputFolder}`);
+    logger.debug(`  created output folder ${outputFolder}`);
     const def = await buildDefinition(blueprint, outputFolder);
-    console.info(`  created definition`);
+    logger.debug(`  created definition`);
 
     // setup DB
     await createDbSchema(context.dbConn, schemaName);
-    console.info(`  created DB schema`);
+    logger.debug(`  created DB schema`);
     await initializeDb(
       context.config.dbConnUrl,
       schemaName,
       path.join(outputFolder, "db/schema.prisma")
     );
-    console.info(`  initialized DB`);
+    logger.debug(`  initialized DB`);
     await populateDb(def, context.dbConn, data);
-    console.info(`  populated DB`);
+    logger.debug(`  populated DB`);
 
     // setup server
     server = await createAppServer(context, (app) => {
@@ -99,9 +102,9 @@ export function createApiTestSetup(blueprint: string, data: PopulatorData[]): Ap
 
       setupDefinitionApis(def, app);
     });
-    console.info(`  created app server`);
+    logger.debug(`  created app server`);
 
-    console.info(`API tests setup finished`);
+    logger.debug(`API tests setup finished`);
 
     return {
       schemaName,
@@ -111,20 +114,20 @@ export function createApiTestSetup(blueprint: string, data: PopulatorData[]): Ap
 
   /** Cleanup test exec env. Call after running tests. */
   async function destroyApiTest() {
-    console.info(`Destroy API tests ("${schemaName}")`);
+    logger.debug(`Destroy API tests ("${schemaName}")`);
 
     if (server) {
       await closeAppServer(server);
-      console.info(`  closed app server`);
+      logger.debug(`  closed app server`);
     }
     await removeDbSchema(context.dbConn, schemaName);
-    console.info(`  removed DB schema`);
+    logger.debug(`  removed DB schema`);
     context.dbConn.destroy();
-    console.info(`  closed DB conn`);
+    logger.debug(`  closed DB conn`);
     removeOutputFolder(outputFolder);
-    console.info(`  removed output folder`);
+    logger.debug(`  removed output folder`);
 
-    console.info(`API tests destroy finished`);
+    logger.debug(`API tests destroy finished`);
   }
 
   return {
@@ -252,7 +255,7 @@ async function createAppServer(
     try {
       const server = app.listen(() => {
         const serverAddress = server.address();
-        console.log(
+        logger.debug(
           `  server started on ${
             serverAddress == null || _.isString(serverAddress)
               ? serverAddress

@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import {
   EndpointPath,
   PathFragmentIdentifier,
@@ -5,7 +6,6 @@ import {
   buildEndpointPath,
 } from "@gaudi/compiler/dist/builder/query";
 import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
-import { Logger } from "@gaudi/compiler/dist/common/logger";
 import { getRef } from "@gaudi/compiler/dist/common/refs";
 import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import { endpointUsesAuthentication } from "@gaudi/compiler/dist/composer/entrypoints";
@@ -37,6 +37,8 @@ import {
   ReferenceIdResult,
   ValidReferenceIdResult,
   assignNoReferenceValidators,
+  assignUniqueExistsValidators,
+  fetchExistingUniqueValues,
   fetchReferenceIds,
 } from "@runtime/common/constraintValidation";
 import { validateEndpointFieldset } from "@runtime/common/validation";
@@ -54,7 +56,7 @@ import { DbConn } from "@runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@runtime/server/error";
 import { EndpointConfig } from "@runtime/server/types";
 
-const logger = Logger.specific("http");
+const logger = initLogger("gaudi:runtime");
 
 /** Create endpoint configs from entrypoints */
 export function buildEndpointConfig(definition: Definition, entrypoints: EntrypointDef[]) {
@@ -293,7 +295,8 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET", endpoint.fieldset);
+          let uniqueIds: ReferenceIdResult[] = [];
+          logger.debug("FIELDSET %O", endpoint.fieldset);
           if (endpoint.fieldset) {
             const body = req.body;
             logger.debug("BODY", body);
@@ -301,8 +304,18 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             logger.debug("Reference IDs", referenceIds);
 
+            uniqueIds = await fetchExistingUniqueValues(
+              def,
+              tx,
+              endpoint.actions,
+              body,
+              referenceIds
+            );
+            logger.debug("Unique IDs", uniqueIds);
+
             const fieldset = _.cloneDeep(endpoint.fieldset);
             assignNoReferenceValidators(fieldset, referenceIds);
+            assignUniqueExistsValidators(fieldset, uniqueIds);
             validationResult = await validateEndpointFieldset(def, fieldset, body);
             logger.debug("Validation result", validationResult);
           }
@@ -406,7 +419,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           if (endpoint.fieldset) {
             const body = req.body;
             logger.debug("BODY", body);
-            logger.debug("FIELDSET", endpoint.fieldset);
+            logger.debug("FIELDSET %O", endpoint.fieldset);
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             logger.debug("Reference IDs", referenceIds);
 
@@ -580,7 +593,7 @@ export function buildCustomOneEndpoint(
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET %O", endpoint.fieldset);
           if (endpoint.fieldset != null) {
             const body = req.body;
             logger.debug("BODY", body);
@@ -678,7 +691,7 @@ export function buildCustomManyEndpoint(
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET", endpoint.fieldset);
+          logger.debug("FIELDSET %O", endpoint.fieldset);
           if (endpoint.fieldset != null) {
             const body = req.body;
             logger.debug("BODY", body);

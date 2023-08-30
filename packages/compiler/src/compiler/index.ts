@@ -19,8 +19,10 @@ import { PreludePlugin } from "./plugins/prelude";
 import { resolve } from "./resolver";
 
 import { kindFind } from "@compiler/common/kindFilter";
+import { initLogger } from "@compiler/common/logger";
 import { Specification } from "@compiler/types/specification";
 
+const logger = initLogger("gaudi:compiler");
 export type CompileResult =
   | { ast: ProjectASTs; errors: undefined }
   | { ast: ProjectASTs | undefined; errors: CompilerError[] };
@@ -111,7 +113,7 @@ export function compileFromFiles(filenames: string[]): Specification {
 
 export function compileProject(rootDir: string): Specification {
   const filenames = glob(`${rootDir}/**/*.gaudi`);
-  console.log(`Compiling ${filenames.length} Gaudi source files`);
+  logger.debug(`Compiling ${filenames.length} Gaudi source files`);
 
   return compileFromFiles(filenames);
 }

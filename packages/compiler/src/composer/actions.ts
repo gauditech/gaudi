@@ -3,6 +3,7 @@ import _ from "lodash";
 import { composeValidate } from "./validators";
 
 import { FilteredByKind } from "@compiler/common/kindFilter";
+import { initLogger } from "@compiler/common/logger";
 import {
   assertUnreachable,
   ensureEmpty,
@@ -30,6 +31,7 @@ import {
 } from "@compiler/types/definition";
 import * as Spec from "@compiler/types/specification";
 
+const logger = initLogger("gaudi:compiler");
 /**
  * Composes the custom actions block for an endpoint. Adds a default action
  * based on `endpoint.kind` if one is not defined in blueprint.
@@ -146,7 +148,7 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
   );
   // handle error
   if (resolveResult.kind === "error") {
-    console.log(
+    logger.error(
       "ERRORS",
       resolveResult.errors.map((e) => `${e.name} [${e.error.message ?? e.error}]`)
     );
@@ -210,6 +212,8 @@ function expandSetterExpression(
 
           return { kind: "changeset-reference", referenceName: head.text };
         }
+        case "validator":
+          throw new Error("Unexpected validator ref in action");
         case "validatorArg":
           throw new Error("Unexpected validator arg ref in action");
         default:

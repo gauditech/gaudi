@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
 
+import { initLogger } from "@gaudi/compiler";
 import {
   BUILDER_OPENAPI_SPEC_FILE_NAME,
   BUILDER_OPENAPI_SPEC_FOLDER,
 } from "@gaudi/compiler/dist/builder/builder";
 import { kindFind } from "@gaudi/compiler/dist/common/kindFilter";
-import { Logger } from "@gaudi/compiler/dist/common/logger";
 import { concatUrlFragments } from "@gaudi/compiler/dist/common/utils";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
@@ -18,7 +18,7 @@ import { buildEndpointConfig } from "@runtime/server/endpoints";
 import { endpointGuardHandler } from "@runtime/server/middleware";
 import { EndpointConfig } from "@runtime/server/types";
 
-const logger = Logger.specific("api");
+const logger = initLogger("gaudi:runtime:api");
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {
@@ -49,7 +49,7 @@ function setupDefinitionApisSpec(definition: Definition, app: Express) {
 
   // --- static folder for serving API specs
   app.use(`/${BUILDER_OPENAPI_SPEC_FOLDER}`, staticHandler(specFolderOutputPath));
-  logger.info(
+  logger.debug(
     `registered OpenAPI specification on: ${concatUrlFragments(
       BUILDER_OPENAPI_SPEC_FOLDER,
       BUILDER_OPENAPI_SPEC_FILE_NAME
@@ -69,12 +69,12 @@ function setupEntrypointApiSwagger(openApiDocument: OpenAPIV3.Document, app: Exp
   app.use(swaggerPath, serve, (req: Request, resp: Response, next: NextFunction) =>
     setup(openApiDocument)(req, resp, next)
   );
-  logger.info(`registered OpenAPI Swagger on: ${concatUrlFragments(swaggerPath)}`);
+  logger.debug(`registered OpenAPI Swagger on: ${concatUrlFragments(swaggerPath)}`);
 }
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
   const epPath = pathPrefix + epConfig.path;
-  logger.info(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
+  logger.debug(`registering endpoint: ${epConfig.method.toUpperCase()} ${epPath}`);
 
   app[epConfig.method](
     epPath,
