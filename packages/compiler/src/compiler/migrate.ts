@@ -390,6 +390,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
+    const atoms: AST.ModelActionAtom[] = [];
+    if (endpoint.type === "update") {
+      atoms.push({
+        kind: "input-all",
+        keyword: AST.zeroToken,
+        except: [],
+      });
+    }
     switch (endpoint.type) {
       case "create":
       case "update": {
@@ -397,7 +405,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           {
             kind: endpoint.type,
             keyword: AST.zeroToken,
-            atoms: [],
+            atoms,
             isPrimary: true,
           },
         ];
@@ -461,11 +469,8 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const inputs = kindFilter(action.atoms, "input").flatMap((input) =>
       migrateActionAtomInput(input, defaultOptional)
     );
-    const denyAtoms = kindFilter(action.atoms, "deny");
-    const allDenied = !!denyAtoms.find(({ fields }) => fields.kind === "all");
-    const deniedFields = denyAtoms.flatMap(({ fields }) =>
-      fields.kind === "list" ? fields.fields.map((i) => migrateIdentifierRef(i)) : []
-    );
+    const inputAll = kindFind(action.atoms, "input-all");
+
     const sets = kindFilter(action.atoms, "set").map(migrateActionAtomSet);
     const refThroughs = kindFilter(action.atoms, "referenceThrough").map(
       (referenceThrough): Spec.ActionAtomRefThrough => {
@@ -532,18 +537,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           ];
         }
       }
-      // FIXME "update" action implicit inputs should be removed in favor of explicit ones
-      if (allDenied) return [];
-      const denied = deniedFields.find((i) => i.text === field.ref.name);
-      if (denied) return [];
 
-      return [
-        {
-          kind: "input",
-          target: field.ref,
-          optional: true, // update is always optional unless explicitly set to required
-        },
-      ];
+      if (inputAll) {
+        if (!inputAll.except.find((i) => i.text === field.ref.name)) {
+          return [{ kind: "input", optional: true, target: field.ref }];
+        }
+      }
+
+      return [];
     });
 
     const actions: Spec.ModelAction[] = [

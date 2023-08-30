@@ -12,7 +12,7 @@ import {
   resolveItems,
 } from "@compiler/common/utils";
 import { getTypeModel } from "@compiler/compiler/ast/type";
-import { composeExpression, composeQuery } from "@compiler/composer/query";
+import { composeQuery } from "@compiler/composer/query";
 import {
   ActionDef,
   ActionHookDef,
@@ -33,9 +33,7 @@ import * as Spec from "@compiler/types/specification";
 
 const logger = initLogger("gaudi:compiler");
 /**
- * Composes the custom actions block for an endpoint. Adds a default action
- * based on `endpoint.kind` if one is not defined in blueprint.
- * Requires `targets` to construct an initial variable context.
+ * Composes the custom actions block for an endpoint.
  */
 export function composeActionBlock(specs: Spec.Action[]): ActionDef[] {
   // Collect actions from the spec, updating the context during the pass through.

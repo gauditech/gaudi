@@ -919,20 +919,18 @@ export function resolve(projectASTs: ProjectASTs) {
             resolveUniqueModelPath(through, target.ref.model);
           }
         })
-        .with({ kind: "deny" }, ({ fields }) => {
-          if (fields.kind === "list") {
-            fields.fields.forEach((field) =>
-              resolveModelAtomRef(field, currentModel, "field", "reference", "relation")
-            );
-          }
-        })
         .with({ kind: "input" }, ({ fields }) => {
           fields.forEach(({ field, atoms }) => {
-            resolveModelAtomRef(field, currentModel, "field", "reference", "relation");
+            resolveModelAtomRef(field, currentModel, "field", "reference");
             kindFilter(atoms, "default").map(({ value }) => {
               resolveExpression(value, scope);
               checkExprType(value, field.type);
             });
+          });
+        })
+        .with({ kind: "input-all" }, ({ except }) => {
+          except.forEach((field) => {
+            resolveModelAtomRef(field, currentModel, "field", "reference");
           });
         })
         .exhaustive()
@@ -943,8 +941,8 @@ export function resolve(projectASTs: ProjectASTs) {
         match(a)
           .with({ kind: "set" }, ({ target }) => [target])
           .with({ kind: "referenceThrough" }, ({ target }) => [target])
-          .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
           .with({ kind: "input" }, ({ fields }) => fields.map(({ field }) => field))
+          .with({ kind: "input-all" }, (a) => a.except)
           .exhaustive()
     );
     const references = allIdentifiers.filter(

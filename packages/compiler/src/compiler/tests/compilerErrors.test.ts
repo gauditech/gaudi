@@ -267,8 +267,7 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Field used multiple times in a single action`);
     });
-
-    it("fails when there's an input and deny for the same field", () => {
+    it("fails when trying to input excluded field", () => {
       const bp = `
         model Org {
           field name { type string }
@@ -278,8 +277,8 @@ describe("compiler errors", () => {
             update endpoint {
               action {
                 update org as ox {
+                  input * except { name }
                   input { name }
-                  deny { name }
                 }
               }
             }

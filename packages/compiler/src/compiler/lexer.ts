@@ -106,12 +106,12 @@ export const Field = createWeakKeyword("field");
 export const Fetch = createWeakKeyword("fetch");
 export const Extra = createWeakKeyword("extra");
 export const Execute = createWeakKeyword("execute");
+export const Except = createWeakKeyword("except");
 export const Error = createWeakKeyword("error");
 export const Entrypoint = createWeakKeyword("entrypoint");
 export const Endpoint = createWeakKeyword("endpoint");
 export const End = createWeakKeyword("end");
 export const Desc = createWeakKeyword("desc");
-export const Deny = createWeakKeyword("deny");
 export const DELETE = createWeakKeyword("DELETE");
 export const Delete = createWeakKeyword("delete");
 export const Default = createWeakKeyword("default");
@@ -249,12 +249,12 @@ export const GaudiTokens = [
   Fetch,
   Extra,
   Execute,
+  Except,
   Error,
   Entrypoint,
   Endpoint,
   End,
   Desc,
-  Deny,
   DELETE,
   Delete,
   Default,

@@ -2,8 +2,8 @@ import { match } from "ts-pattern";
 
 import {
   Action,
-  ActionAtomDeny,
   ActionAtomInput,
+  ActionAtomInputAll,
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionHook,
@@ -403,8 +403,8 @@ export function buildTokens(
       match(a)
         .with({ kind: "set" }, buildActionAtomSet)
         .with({ kind: "referenceThrough" }, buildActionAtomReferenceThrough)
-        .with({ kind: "deny" }, buildActionAtomDeny)
         .with({ kind: "input" }, buildActionAtomInput)
+        .with({ kind: "input-all" }, buildActionAtomInputAll)
         .exhaustive();
     });
   }
@@ -490,14 +490,6 @@ export function buildTokens(
     buildIdentifierPath(through);
   }
 
-  function buildActionAtomDeny({ keyword, fields }: ActionAtomDeny) {
-    buildKeyword(keyword);
-    match(fields)
-      .with({ kind: "all" }, ({ keyword }) => buildKeyword(keyword))
-      .with({ kind: "list" }, ({ fields }) => fields.forEach(buildIdentifierRef))
-      .exhaustive();
-  }
-
   function buildActionAtomInput({ keyword, fields }: ActionAtomInput) {
     buildKeyword(keyword);
     fields.forEach(({ field, atoms }) => {
@@ -514,6 +506,12 @@ export function buildTokens(
           .exhaustive()
       );
     });
+  }
+
+  function buildActionAtomInputAll({ keyword, keywordExcept, except }: ActionAtomInputAll) {
+    buildKeyword(keyword);
+    if (keywordExcept) buildKeyword(keywordExcept);
+    except.forEach(buildIdentifierRef);
   }
 
   function buildPopulator({ keyword, name, atoms }: Populator) {

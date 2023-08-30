@@ -196,8 +196,8 @@ export type ModelAction = {
 export type ModelActionAtom =
   | ActionAtomSet
   | ActionAtomReferenceThrough
-  | ActionAtomDeny
-  | ActionAtomInput;
+  | ActionAtomInput
+  | ActionAtomInputAll;
 
 export type DeleteAction = {
   kind: "delete";
@@ -286,16 +286,6 @@ export type ActionAtomReferenceThrough = {
   through: IdentifierRef<RefModelAtom>[];
   keywordThrough: TokenData;
 };
-export type ActionAtomDeny = {
-  kind: "deny";
-  keyword: TokenData;
-  fields:
-    | { kind: "all"; keyword: TokenData }
-    | {
-        kind: "list";
-        fields: IdentifierRef<RefModelField | RefModelReference>[];
-      };
-};
 export type ActionAtomInput = {
   kind: "input";
   keyword: TokenData;
@@ -303,6 +293,12 @@ export type ActionAtomInput = {
     field: IdentifierRef<RefModelField | RefModelReference>;
     atoms: InputAtom[];
   }[];
+};
+export type ActionAtomInputAll = {
+  kind: "input-all";
+  keyword: TokenData;
+  keywordExcept?: TokenData;
+  except: IdentifierRef<RefModelField | RefModelReference>[];
 };
 export type InputAtom = { keyword: TokenData } & (
   | { kind: "required" }
