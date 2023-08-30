@@ -727,14 +727,6 @@ describe("compiler errors", () => {
       `;
       expectError(bp, `Multiple "apidocs" generators are not allowed`);
     });
-    it("fails if apidocs body is not empty", () => {
-      const bp = `
-        generate apidocs {
-          target js
-        }
-      `;
-      expectError(bp);
-    });
   });
 
   describe("populator", () => {

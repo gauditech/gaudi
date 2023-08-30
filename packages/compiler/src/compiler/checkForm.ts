@@ -456,8 +456,8 @@ export function checkForm(document: GlobalAtom[]) {
     containsAtoms(generator, ["target"]);
     noDuplicateAtoms(generator, ["target"]);
   }
-  function checkApidocsGenerator(_generator: Generator) {
-    // nothing to check yet
+  function checkApidocsGenerator(generator: Generator) {
+    noDuplicateAtoms(generator, ["basePath"]);
   }
 
   function checkNoDuplicateGenerators(generators: Generator[]) {
