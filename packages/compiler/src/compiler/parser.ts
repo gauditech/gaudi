@@ -3,6 +3,7 @@ import { EmbeddedActionsParser, IToken, ParserMethod, TokenType } from "chevrota
 import {
   Action,
   ActionAtomInput,
+  ActionAtomInputAll,
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionHook,
@@ -38,7 +39,6 @@ import {
   GlobalAtom,
   Hook,
   Identifier,
-  IdentifierRef,
   Identify,
   InputAtom,
   IntegerLiteral,
@@ -58,8 +58,6 @@ import {
   QueryAction,
   QueryActionAtom,
   QueryAtom,
-  RefModelField,
-  RefModelReference,
   Reference,
   ReferenceAtom,
   Relation,
@@ -832,6 +830,7 @@ class GaudiParser extends EmbeddedActionsParser {
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomSet)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomReference)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInput)) },
+        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInputAll)) },
       ]);
     });
     this.CONSUME(L.RCurly);
@@ -1039,6 +1038,19 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return { kind: "input", fields, keyword };
+  });
+
+  actionAtomInputAll = this.RULE("actionAtomInputAll", (): ActionAtomInputAll => {
+    const except: ActionAtomInputAll["except"] = [];
+    const keyword = this.createTokenData(this.CONSUME(L.Input), this.CONSUME(L.Mul));
+    this.CONSUME(L.LCurly);
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () => except.push(this.SUBRULE(this.identifierRef)),
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "input-all", keyword, except };
   });
 
   extraInput = this.RULE("extraInput", (): ExtraInput => {

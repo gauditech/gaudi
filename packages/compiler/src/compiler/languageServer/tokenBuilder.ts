@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 import {
   Action,
   ActionAtomInput,
+  ActionAtomInputAll,
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionHook,
@@ -403,9 +404,7 @@ export function buildTokens(
         .with({ kind: "set" }, buildActionAtomSet)
         .with({ kind: "referenceThrough" }, buildActionAtomReferenceThrough)
         .with({ kind: "input" }, buildActionAtomInput)
-        .with({ kind: "input-all" }, (a) => {
-          buildKeyword(a.keyword);
-        })
+        .with({ kind: "input-all" }, buildActionAtomInputAll)
         .exhaustive();
     });
   }
@@ -507,6 +506,11 @@ export function buildTokens(
           .exhaustive()
       );
     });
+  }
+
+  function buildActionAtomInputAll({ keyword, except }: ActionAtomInputAll) {
+    buildKeyword(keyword);
+    except.forEach(buildIdentifierRef);
   }
 
   function buildPopulator({ keyword, name, atoms }: Populator) {

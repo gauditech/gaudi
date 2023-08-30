@@ -870,14 +870,18 @@ export function resolve(projectASTs: ProjectASTs) {
         })
         .with({ kind: "input" }, ({ fields }) => {
           fields.forEach(({ field, atoms }) => {
-            resolveModelAtomRef(field, currentModel, "field", "reference", "relation");
+            resolveModelAtomRef(field, currentModel, "field", "reference");
             kindFilter(atoms, "default").map(({ value }) => {
               resolveExpression(value, scope);
               checkExprType(value, field.type);
             });
           });
         })
-        .with({ kind: "input-all" }, _.noop)
+        .with({ kind: "input-all" }, ({ except }) => {
+          except.forEach((field) => {
+            resolveModelAtomRef(field, currentModel, "field", "reference");
+          });
+        })
         .exhaustive()
     );
 

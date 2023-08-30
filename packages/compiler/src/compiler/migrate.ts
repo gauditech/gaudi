@@ -542,7 +542,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       }
 
       if (inputAll) {
-        return [{ kind: "input", optional: true, target: field.ref }];
+        if (!inputAll.except.find((i) => i.text === field.ref.name)) {
+          return [{ kind: "input", optional: true, target: field.ref }];
+        }
       }
 
       return [];
