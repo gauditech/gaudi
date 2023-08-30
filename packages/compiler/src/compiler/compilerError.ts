@@ -27,7 +27,8 @@ export enum ErrorCode {
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
-  DuplicateGenerator,
+  DuplicateApidocsGenerator,
+  DuplicateClientGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
   RespondActionNotInCustomEndpoint,
   QueryFromAliasWrongLength,
@@ -126,8 +127,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate populate set field`;
     case ErrorCode.DuplicateHookArg:
       return `Duplicate hook argument`;
-    case ErrorCode.DuplicateGenerator:
-      return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}"`;
+    case ErrorCode.DuplicateClientGenerator:
+      return `Found duplicate "client" generators with the same target "${params?.target}"`;
+    case ErrorCode.DuplicateApidocsGenerator:
+      return `Multiple "apidocs" generators are not allowed`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
       return `Actions with "responds" attribute can only be used in "custom" endpoints`;
     case ErrorCode.RespondActionNotInCustomEndpoint:

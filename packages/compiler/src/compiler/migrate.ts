@@ -819,6 +819,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           output,
         };
       })
+      .with({ type: "apidocs" }, (g) => {
+        const basePath = kindFind(g.atoms, "basePath")?.path.value;
+
+        return {
+          kind: "generator-apidocs" as const,
+          basePath,
+        };
+      })
       .exhaustive();
   }
 

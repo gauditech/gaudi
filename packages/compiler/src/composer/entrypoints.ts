@@ -18,6 +18,7 @@ import { composeActionBlock } from "@compiler/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@compiler/composer/query";
 import {
   ActionDef,
+  ApiDef,
   Definition,
   EndpointDef,
   EntrypointDef,
@@ -36,7 +37,7 @@ import {
 import * as Spec from "@compiler/types/specification";
 
 export function composeApis(def: Definition, input: Spec.Api[]): void {
-  def.apis = input.map(({ name, entrypoints }) => ({
+  def.apis = input.map<ApiDef>(({ name, entrypoints }) => ({
     name,
     path: "/api" + (name ? "/" + name.toLocaleLowerCase() : ""),
     entrypoints: composeEntrypoints(def, entrypoints),

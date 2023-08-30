@@ -349,15 +349,22 @@ export type RepeatAtom = { keyword: TokenData } & (
   | { kind: "end"; value: IntegerLiteral }
 );
 
-export type GeneratorType = "client";
+export type GeneratorType = "client" | "apidocs";
 export type Generator = {
   kind: "generator";
   keyword: TokenData;
-} & {
-  type: Extract<GeneratorType, "client">;
-  keywordType: TokenData;
-  atoms: GeneratorClientAtom[];
-};
+} & (
+  | {
+      type: Extract<GeneratorType, "client">;
+      keywordType: TokenData;
+      atoms: GeneratorClientAtom[];
+    }
+  | {
+      type: Extract<GeneratorType, "apidocs">;
+      keywordType: TokenData;
+      atoms: GeneratorApidocsAtom[];
+    }
+);
 export type GeneratorClientAtom =
   | {
       kind: "target";
@@ -367,6 +374,10 @@ export type GeneratorClientAtom =
     }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
 export type GeneratorClientAtomTarget = "js" | "ts";
+export type GeneratorApidocsAtom = { keyword: TokenData } & {
+  kind: "basePath";
+  path: StringLiteral;
+};
 
 export type Runtime = {
   kind: "runtime";

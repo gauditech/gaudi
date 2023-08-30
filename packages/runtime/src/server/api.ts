@@ -1,8 +1,13 @@
+import fs from "fs";
 import path from "path";
 
 import { initLogger } from "@gaudi/compiler";
-import { buildOpenAPI } from "@gaudi/compiler/dist/builder/openAPI";
-import { saveOutputFile } from "@gaudi/compiler/dist/common/utils";
+import {
+  BUILDER_OPENAPI_SPEC_FILE_NAME,
+  BUILDER_OPENAPI_SPEC_FOLDER,
+} from "@gaudi/compiler/dist/builder/builder";
+import { kindFind } from "@gaudi/compiler/dist/common/kindFilter";
+import { concatUrlFragments } from "@gaudi/compiler/dist/common/utils";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
 import { OpenAPIV3 } from "openapi-types";
@@ -17,20 +22,9 @@ const logger = initLogger("gaudi:runtime:api");
 
 /** Create endpoint handlers, OpenAPI specs and attach them to server instance */
 export function setupServerApis(definition: Definition, app: Express) {
-  const config = getAppContext(app).config;
-
-  // --- static folder (eg. for API specs)
-  const specPath = "/api-spec";
-  const specFileName = "api.openapi.json";
-  const specOutputFolder = path.join(config.outputFolder, specPath);
-  app.use(specPath, staticHandler(specOutputFolder));
-  logger.debug(
-    `registered OpenAPI specification on: ${getAbsoluteUrlPath(app, specPath, specFileName)}`
-  );
-
   setupDefinitionApis(definition, app);
 
-  setupDefinitionApisSpec(definition, app, path.join(specOutputFolder, specFileName));
+  setupDefinitionApisSpec(definition, app);
 }
 
 export function setupDefinitionApis(def: Definition, app: Express) {
@@ -42,23 +36,40 @@ export function setupDefinitionApis(def: Definition, app: Express) {
 }
 
 /** Create API OpenAPI spec from definition */
-function setupDefinitionApisSpec(definition: Definition, app: Express, outputFile: string) {
+function setupDefinitionApisSpec(definition: Definition, app: Express) {
+  // setup apispec only if generator exists
+  const apidocsGenerator = kindFind(definition.generators, "generator-apidocs");
+  // setup only if generator exists
+  if (!apidocsGenerator) return;
+
   const config = getAppContext(app).config;
 
-  const openApi = buildOpenAPI(definition, config.basePath);
+  const specFolderOutputPath = path.join(config.outputFolder, BUILDER_OPENAPI_SPEC_FOLDER);
+  const specFileOutputPath = path.join(specFolderOutputPath, BUILDER_OPENAPI_SPEC_FILE_NAME);
 
-  saveOutputFile(outputFile, JSON.stringify(openApi, undefined, 2));
+  // --- static folder for serving API specs
+  app.use(`/${BUILDER_OPENAPI_SPEC_FOLDER}`, staticHandler(specFolderOutputPath));
+  logger.debug(
+    `registered OpenAPI specification on: ${concatUrlFragments(
+      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_FILE_NAME
+    )}`
+  );
 
-  setupEntrypointApiSwagger(openApi, app);
+  const openApiSpecContent = loadFile(specFileOutputPath);
+
+  const openApiSpec = JSON.parse(openApiSpecContent);
+
+  setupEntrypointApiSwagger(openApiSpec, app);
 }
 
 function setupEntrypointApiSwagger(openApiDocument: OpenAPIV3.Document, app: Express) {
   const swaggerPath = `/api-docs`;
 
-  app.use(swaggerPath, serve, (_req: Request, _resp: Response, _next: NextFunction) =>
-    setup(openApiDocument)(_req, _resp, _next)
+  app.use(swaggerPath, serve, (req: Request, resp: Response, next: NextFunction) =>
+    setup(openApiDocument)(req, resp, next)
   );
-  logger.debug(`registered OpenAPI Swagger on: ${getAbsoluteUrlPath(app, swaggerPath)}`);
+  logger.debug(`registered OpenAPI Swagger on: ${concatUrlFragments(swaggerPath)}`);
 }
 /** Register endpoint on server instance */
 export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, pathPrefix: string) {
@@ -76,8 +87,10 @@ export function registerServerEndpoint(app: Express, epConfig: EndpointConfig, p
   );
 }
 
-function getAbsoluteUrlPath(app: Express, ...paths: string[]): string {
-  const config = getAppContext(app).config;
-
-  return [config.basePath ?? "", ...paths].join("");
+/** Load file content */
+export function loadFile(filePath: string): string {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`File not found: "${filePath}"`);
+  }
+  return fs.readFileSync(filePath).toString("utf-8");
 }

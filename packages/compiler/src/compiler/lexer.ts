@@ -126,12 +126,14 @@ export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
 export const Body = createWeakKeyword("body");
 export const Basic = createWeakKeyword("basic");
+export const BasePath = createWeakKeyword("basePath");
 export const Authorize = createWeakKeyword("authorize");
 export const Auth = createWeakKeyword("auth");
 export const Assert = createWeakKeyword("assert");
 export const Asc = createWeakKeyword("asc");
 export const As = createWeakKeyword("as");
 export const Arg = createWeakKeyword("arg");
+export const Apidocs = createWeakKeyword("apidocs");
 export const Api = createWeakKeyword("api");
 export const Action = createWeakKeyword("action");
 
@@ -269,12 +271,14 @@ export const GaudiTokens = [
   By,
   Body,
   Basic,
+  BasePath,
   Authorize,
   Auth,
   Assert,
   Asc,
   As,
   Arg,
+  Apidocs,
   Api,
   Action,
   Null,

@@ -321,8 +321,13 @@ export type AuthenticatorBasicMethod = {
 
 // ----- Generators
 
-export type Generator = {
-  kind: "generator-client";
-  target: string;
-  output?: string;
-};
+export type Generator =
+  | {
+      kind: "generator-client";
+      target: string;
+      output?: string;
+    }
+  | {
+      kind: "generator-apidocs";
+      basePath?: string;
+    };

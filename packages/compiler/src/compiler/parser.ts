@@ -33,6 +33,7 @@ import {
   FieldAtom,
   FloatLiteral,
   Generator,
+  GeneratorApidocsAtom,
   GeneratorClientAtom,
   GeneratorClientAtomTarget,
   GeneratorType,
@@ -1266,12 +1267,20 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   generator = this.RULE("generator", (): Generator => {
+    return this.OR<Generator>([
+      { ALT: () => this.SUBRULE(this.generatorClient) },
+      { ALT: () => this.SUBRULE(this.generatorApidocs) },
+    ]);
+  });
+
+  generatorClient = this.RULE("generatorClient", (): Generator => {
     const atoms: GeneratorClientAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Generate));
-    const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Client) }]);
+    const typeToken = this.CONSUME(L.Client);
     const keywordType = this.createTokenData(typeToken);
-    const type = typeToken.image as GeneratorType;
+    const type = typeToken.image as Extract<GeneratorType, "client">;
+
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR2([
@@ -1292,6 +1301,31 @@ class GaudiParser extends EmbeddedActionsParser {
             const keyword = this.createTokenData(this.CONSUME(L.Output));
             const value = this.SUBRULE1(this.string);
             atoms.push({ kind: "output", keyword, value });
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "generator", type, atoms, keyword, keywordType };
+  });
+
+  generatorApidocs = this.RULE("generatorApidocs", (): Generator => {
+    const atoms: GeneratorApidocsAtom[] = [];
+
+    const keyword = this.createTokenData(this.CONSUME(L.Generate));
+    const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Apidocs) }]);
+    const keywordType = this.createTokenData(typeToken);
+    const type = typeToken.image as Extract<GeneratorType, "apidocs">;
+
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR2([
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.BasePath));
+            const path = this.SUBRULE(this.string);
+            atoms.push({ kind: "basePath", path, keyword });
           },
         },
       ]);
