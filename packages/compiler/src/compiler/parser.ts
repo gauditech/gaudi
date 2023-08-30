@@ -1043,14 +1043,19 @@ class GaudiParser extends EmbeddedActionsParser {
   actionAtomInputAll = this.RULE("actionAtomInputAll", (): ActionAtomInputAll => {
     const except: ActionAtomInputAll["except"] = [];
     const keyword = this.createTokenData(this.CONSUME(L.Input), this.CONSUME(L.Mul));
-    this.CONSUME(L.LCurly);
-    this.MANY_SEP({
-      SEP: L.Comma,
-      DEF: () => except.push(this.SUBRULE(this.identifierRef)),
-    });
-    this.CONSUME(L.RCurly);
 
-    return { kind: "input-all", keyword, except };
+    const keywordExcept = this.OPTION(() => {
+      const keyword = this.createTokenData(this.CONSUME(L.Except));
+      this.CONSUME(L.LCurly);
+      this.MANY_SEP({
+        SEP: L.Comma,
+        DEF: () => except.push(this.SUBRULE(this.identifierRef)),
+      });
+      this.CONSUME(L.RCurly);
+      return keyword;
+    });
+
+    return { kind: "input-all", keyword, keywordExcept, except };
   });
 
   extraInput = this.RULE("extraInput", (): ExtraInput => {

@@ -267,6 +267,26 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Field used multiple times in a single action`);
     });
+    it("fails when trying to input excluded field", () => {
+      const bp = `
+        model Org {
+          field name { type string }
+        }
+        api {
+          entrypoint Org as org {
+            update endpoint {
+              action {
+                update org as ox {
+                  input * except { name }
+                  input { name }
+                }
+              }
+            }
+          }
+        }
+        `;
+      expectError(bp, `Field used multiple times in a single action`);
+    });
 
     it("fails when custom action doesn't have an alias", () => {
       const bp = `

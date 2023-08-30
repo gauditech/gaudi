@@ -296,6 +296,7 @@ export type ActionAtomInput = {
 export type ActionAtomInputAll = {
   kind: "input-all";
   keyword: TokenData;
+  keywordExcept?: TokenData;
   except: IdentifierRef<RefModelField | RefModelReference>[];
 };
 export type InputAtom = { keyword: TokenData } & (

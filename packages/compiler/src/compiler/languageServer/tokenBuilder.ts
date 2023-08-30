@@ -508,8 +508,9 @@ export function buildTokens(
     });
   }
 
-  function buildActionAtomInputAll({ keyword, except }: ActionAtomInputAll) {
+  function buildActionAtomInputAll({ keyword, keywordExcept, except }: ActionAtomInputAll) {
     buildKeyword(keyword);
+    if (keywordExcept) buildKeyword(keywordExcept);
     except.forEach(buildIdentifierRef);
   }
 
