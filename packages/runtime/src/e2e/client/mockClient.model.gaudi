@@ -94,8 +94,7 @@ api {
       update endpoint {
         action {
           update {
-            // test denied input fields
-            deny { slug }
+            input { name, description }
           }
         }
       }

@@ -329,7 +329,9 @@ api {
       method PATCH
       path "customUpdate"
       action {
-        update org as newOrg {}
+        update org as newOrg {
+          input { name, description }
+        }
       }
     }
     custom endpoint {
@@ -371,7 +373,9 @@ api {
     }
     update endpoint {
       action {
-        update {}
+        update {
+          input { name, description }
+        }
       }
     }
     delete endpoint {}
@@ -401,7 +405,9 @@ api {
       }
       update endpoint {
         action {
-          update {}
+          update {
+            input { description }
+          }
         }
       }
       delete endpoint {}
