@@ -4,6 +4,7 @@ import { P, match } from "ts-pattern";
 
 import { buildEndpointPath } from "@compiler/builder/query";
 import { getRef } from "@compiler/common/refs";
+import { concatUrlFragments } from "@compiler/common/utils";
 import { FieldType } from "@compiler/compiler/ast/type";
 import {
   endpointHasContext,
@@ -213,7 +214,7 @@ export function buildOpenAPI(definition: Definition, basePath?: string): OpenAPI
         const endpointPath = buildEndpointPath(endpoint);
         const method = buildEndpointHttpMethod(endpoint);
 
-        const path = _.compact([
+        const path = concatUrlFragments(
           basePath ?? undefined,
           api.path,
           ..._.chain(endpointPath.fragments)
@@ -225,11 +226,8 @@ export function buildOpenAPI(definition: Definition, basePath?: string): OpenAPI
                 .exhaustive();
             })
             .compact() // remove nulls
-            .value(),
-        ])
-          .join("/")
-          // reduce duplicate "/" to a single
-          .replaceAll(/\//g, "/");
+            .value()
+        );
 
         const parameters = _.chain(endpointPath.fragments)
           .map((fragment): OpenAPIV3.ParameterObject | null => {

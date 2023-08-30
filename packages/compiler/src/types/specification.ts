@@ -330,4 +330,5 @@ export type Generator =
     }
   | {
       kind: "generator-apidocs";
+      basePath?: string;
     };

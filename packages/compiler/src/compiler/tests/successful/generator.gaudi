@@ -9,4 +9,7 @@ generate client {
   output "test/path/something"
 }
 
-generate apidocs {}
+generate apidocs {
+  basePath "/subpath"
+}
+

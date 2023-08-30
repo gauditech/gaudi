@@ -18,8 +18,6 @@ export type AppConfig = {
   dbConnUrl: string;
   /** DB default schema */
   dbSchema?: string;
-  /** Base URL path on which an app is mounted on. */
-  basePath?: string;
 };
 
 /** Read runtime config from environment or provide default values. */

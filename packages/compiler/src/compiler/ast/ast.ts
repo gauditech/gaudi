@@ -364,7 +364,7 @@ export type Generator = {
   | {
       type: Extract<GeneratorType, "apidocs">;
       keywordType: TokenData;
-      atoms: []; // no atoms for now
+      atoms: GeneratorApidocsAtom[];
     }
 );
 export type GeneratorClientAtom =
@@ -376,7 +376,10 @@ export type GeneratorClientAtom =
     }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
 export type GeneratorClientAtomTarget = "js" | "ts";
-// export type GeneratorApidocsAtom = never; // no atoms for now
+export type GeneratorApidocsAtom = { keyword: TokenData } & {
+  kind: "basePath";
+  path: StringLiteral;
+};
 
 export type Runtime = {
   kind: "runtime";

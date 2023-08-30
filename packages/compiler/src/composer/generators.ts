@@ -26,7 +26,9 @@ function composeGenerator(def: Definition, generator: Generator): GeneratorDef {
       };
     }
     case "generator-apidocs": {
-      return { kind: "generator-apidocs" };
+      const basePath = generator.basePath;
+
+      return { kind: "generator-apidocs", basePath };
     }
     default:
       assertUnreachable(kind);

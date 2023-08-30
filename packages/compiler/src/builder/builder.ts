@@ -8,7 +8,10 @@ import {
   BuildApiClientData,
   render as renderApiClientTpl,
 } from "@compiler/builder/renderer/templates/apiClient.tpl";
-import { render as renderOpenApiTpl } from "@compiler/builder/renderer/templates/openapi.tpl";
+import {
+  OpenApiBuilderData,
+  render as renderOpenApiTpl,
+} from "@compiler/builder/renderer/templates/openapi.tpl";
 import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
@@ -82,8 +85,8 @@ async function buildDb(data: BuildDbSchemaData, outputFolder: string): Promise<u
 
 // ---------- OpenAPI
 
-export async function renderOpenApi(definition: Definition): Promise<string> {
-  return renderOpenApiTpl(definition);
+export async function renderOpenApi(data: OpenApiBuilderData): Promise<string> {
+  return renderOpenApiTpl(data);
 }
 
 async function buildOpenApi(definition: Definition, outputFolder: string): Promise<unknown> {
@@ -98,7 +101,9 @@ async function buildOpenApi(definition: Definition, outputFolder: string): Promi
 
     return (
       // render DB schema
-      renderOpenApi(definition).then((content) => storeTemplateOutput(outFile, content))
+      renderOpenApi({ definition, basePath: apidocsGenerator.basePath }).then((content) =>
+        storeTemplateOutput(outFile, content)
+      )
     );
   }
   // no generator

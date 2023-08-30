@@ -33,6 +33,7 @@ import {
   FieldAtom,
   FloatLiteral,
   Generator,
+  GeneratorApidocsAtom,
   GeneratorClientAtom,
   GeneratorClientAtomTarget,
   GeneratorType,
@@ -1323,16 +1324,28 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   generatorApidocs = this.RULE("generatorApidocs", (): Generator => {
+    const atoms: GeneratorApidocsAtom[] = [];
+
     const keyword = this.createTokenData(this.CONSUME(L.Generate));
     const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Apidocs) }]);
     const keywordType = this.createTokenData(typeToken);
     const type = typeToken.image as Extract<GeneratorType, "apidocs">;
 
     this.CONSUME(L.LCurly);
-    // empty body
+    this.MANY(() => {
+      this.OR2([
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.BasePath));
+            const path = this.SUBRULE(this.string);
+            atoms.push({ kind: "basePath", path, keyword });
+          },
+        },
+      ]);
+    });
     this.CONSUME(L.RCurly);
 
-    return { kind: "generator", type, atoms: [], keyword, keywordType };
+    return { kind: "generator", type, atoms, keyword, keywordType };
   });
 
   modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", "model");

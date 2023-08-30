@@ -456,16 +456,8 @@ export function checkForm(document: GlobalAtom[]) {
     containsAtoms(generator, ["target"]);
     noDuplicateAtoms(generator, ["target"]);
   }
-  function checkApidocsGenerator(generator: Generator) {
-    // check that there are no atoms
-    generator.atoms.forEach((a) => {
-      errors.push(
-        new CompilerError(generator.keyword, ErrorCode.CannotContainAtom, {
-          parent: generator.kind,
-          atom: a.kind,
-        })
-      );
-    });
+  function checkApidocsGenerator(_generator: Generator) {
+    // nothing to check yet
   }
 
   function checkNoDuplicateGenerators(generators: Generator[]) {

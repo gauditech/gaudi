@@ -1,5 +1,6 @@
 import _ from "lodash";
 
+import { concatUrlFragments } from "@compiler/common/utils";
 import { EndpointDef } from "@compiler/types/definition";
 
 export type EndpointPath = {
@@ -23,13 +24,13 @@ export type PathFragment = PathFragmentNamespace | PathFragmentIdentifier | Path
 export function buildEndpointPath(endpoint: EndpointDef): EndpointPath {
   const fragments = buildFragments(endpoint);
   return {
-    fullPath: [
-      "",
+    fullPath: concatUrlFragments(
+      "/", // leading "/"
       ...fragments
         // filter out non-path fragments
         .filter((frag) => frag.kind === "namespace" || frag.kind === "identifier")
-        .map(fragmentToString),
-    ].join("/"),
+        .map(fragmentToString)
+    ),
     fragments,
   };
 }

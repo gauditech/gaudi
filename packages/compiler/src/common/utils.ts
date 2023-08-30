@@ -269,3 +269,30 @@ export function saveOutputFile(destination: string, content: string): boolean {
 
   return contentChanged;
 }
+
+/**
+ * Concat URL path fragments into a single string using `/` and doing some cleanup.
+ *
+ * Removes `null`/`undefined` values.
+ *
+ * Removes multiple `/`.
+ *
+ * Preserves (a single) leading/trailing `/`.
+ *
+ * Does no URL encoding since it deosn know anything about fragments.
+ *
+ * E.g.
+ *
+ * ```
+ * concatUrlFragments("a", null, "/b", undefined, "c//")
+ * // => "a/b/c/"
+ * ```
+ */
+export function concatUrlFragments(...paths: (string | undefined | null)[]): string {
+  return (
+    _.compact(paths)
+      .join("/")
+      // reduce duplicate "/" to a single
+      .replaceAll(/\/+/g, "/")
+  );
+}

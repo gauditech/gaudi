@@ -604,4 +604,5 @@ export type GeneratorClientDef = {
 
 export type GeneratorApidocsDef = {
   kind: "generator-apidocs";
+  basePath?: string;
 };
