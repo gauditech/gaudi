@@ -362,16 +362,17 @@ export function checkForm(document: GlobalAtom[]) {
           return [target];
         })
         .with({ kind: "referenceThrough" }, ({ target }) => [target])
-        .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
             noDuplicateAtoms({ ...field, kind: "input" }, ["required", "default"]);
             return field.field;
           })
         )
+        .with({ kind: "input-all" }, (a) => a.except)
         .exhaustive()
     );
     noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+    noDuplicateAtoms(action, ["input-all"]);
   }
 
   function checkDeleteAction(action: DeleteAction, endpointType: EndpointType) {

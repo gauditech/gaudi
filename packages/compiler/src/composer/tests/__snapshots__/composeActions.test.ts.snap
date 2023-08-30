@@ -476,20 +476,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
 [
   {
     "alias": "$action_0",
-    "changeset": [
-      {
-        "name": "repo_id",
-        "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
-            "repo_id",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "integer",
-        },
-      },
-    ],
+    "changeset": [],
     "filter": undefined,
     "isPrimary": true,
     "kind": "update-one",
@@ -1280,74 +1267,6 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     ],
     "targetPath": [
       "OrgOwner",
-    ],
-  },
-]
-`;
-
-exports[`compose actions native actions succeeds for basic update with a deny rule 1`] = `
-[
-  {
-    "alias": "ox",
-    "changeset": [
-      {
-        "name": "name",
-        "setter": {
-          "kind": "literal",
-          "literal": {
-            "kind": "string",
-            "value": "new name",
-          },
-        },
-      },
-      {
-        "name": "description",
-        "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
-            "description",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "string",
-        },
-      },
-      {
-        "name": "extras_id",
-        "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
-            "extras_id",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "integer",
-        },
-      },
-    ],
-    "filter": undefined,
-    "isPrimary": true,
-    "kind": "update-one",
-    "model": "Org",
-    "select": [
-      {
-        "alias": "id",
-        "expr": {
-          "kind": "alias",
-          "namePath": [
-            "ox",
-            "id",
-          ],
-        },
-        "kind": "expression",
-        "type": {
-          "kind": "integer",
-          "nullable": false,
-        },
-      },
-    ],
-    "targetPath": [
-      "org",
     ],
   },
 ]

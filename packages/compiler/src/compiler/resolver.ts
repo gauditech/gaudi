@@ -868,13 +868,6 @@ export function resolve(projectASTs: ProjectASTs) {
             resolveUniqueModelPath(through, target.ref.model);
           }
         })
-        .with({ kind: "deny" }, ({ fields }) => {
-          if (fields.kind === "list") {
-            fields.fields.forEach((field) =>
-              resolveModelAtomRef(field, currentModel, "field", "reference", "relation")
-            );
-          }
-        })
         .with({ kind: "input" }, ({ fields }) => {
           fields.forEach(({ field, atoms }) => {
             resolveModelAtomRef(field, currentModel, "field", "reference", "relation");
@@ -884,6 +877,7 @@ export function resolve(projectASTs: ProjectASTs) {
             });
           });
         })
+        .with({ kind: "input-all" }, _.noop)
         .exhaustive()
     );
 
@@ -892,8 +886,8 @@ export function resolve(projectASTs: ProjectASTs) {
         match(a)
           .with({ kind: "set" }, ({ target }) => [target])
           .with({ kind: "referenceThrough" }, ({ target }) => [target])
-          .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
           .with({ kind: "input" }, ({ fields }) => fields.map(({ field }) => field))
+          .with({ kind: "input-all" }, (a) => a.except)
           .exhaustive()
     );
     const references = allIdentifiers.filter(

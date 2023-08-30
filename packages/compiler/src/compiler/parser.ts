@@ -2,7 +2,6 @@ import { EmbeddedActionsParser, IToken, ParserMethod, TokenType } from "chevrota
 
 import {
   Action,
-  ActionAtomDeny,
   ActionAtomInput,
   ActionAtomReferenceThrough,
   ActionAtomSet,
@@ -832,7 +831,6 @@ class GaudiParser extends EmbeddedActionsParser {
       this.OR3([
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomSet)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomReference)) },
-        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomDeny)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInput)) },
       ]);
     });
@@ -1023,34 +1021,6 @@ class GaudiParser extends EmbeddedActionsParser {
       keyword,
       keywordThrough,
     };
-  });
-
-  actionAtomDeny = this.RULE("actionAtomDeny", (): ActionAtomDeny => {
-    const keyword = this.createTokenData(this.CONSUME(L.Deny));
-    const fields = this.OR<ActionAtomDeny["fields"]>([
-      {
-        ALT: () => {
-          const keyword = this.createTokenData(this.CONSUME(L.Mul));
-          return { kind: "all", keyword };
-        },
-      },
-      {
-        ALT: () => {
-          const fields: IdentifierRef<RefModelField | RefModelReference>[] = [];
-
-          this.CONSUME(L.LCurly);
-          this.MANY_SEP({
-            SEP: L.Comma,
-            DEF: () => fields.push(this.SUBRULE(this.identifierRef)),
-          });
-          this.CONSUME(L.RCurly);
-
-          return { kind: "list", fields };
-        },
-      },
-    ]);
-
-    return { kind: "deny", fields, keyword };
   });
 
   actionAtomInput = this.RULE("actionAtomInput", (): ActionAtomInput => {

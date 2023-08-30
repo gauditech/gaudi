@@ -111,7 +111,6 @@ export const Entrypoint = createWeakKeyword("entrypoint");
 export const Endpoint = createWeakKeyword("endpoint");
 export const End = createWeakKeyword("end");
 export const Desc = createWeakKeyword("desc");
-export const Deny = createWeakKeyword("deny");
 export const DELETE = createWeakKeyword("DELETE");
 export const Delete = createWeakKeyword("delete");
 export const Default = createWeakKeyword("default");
@@ -254,7 +253,6 @@ export const GaudiTokens = [
   Endpoint,
   End,
   Desc,
-  Deny,
   DELETE,
   Delete,
   Default,

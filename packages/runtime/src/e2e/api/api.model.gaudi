@@ -418,7 +418,6 @@ api {
             }
 
             update repo as repo2 {
-              deny *
               set latest_num repo.latest_num + 1
             }
 

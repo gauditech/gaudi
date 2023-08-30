@@ -55,33 +55,7 @@ describe("compose actions", () => {
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.fieldset).toMatchSnapshot();
     });
-    it("succeeds for basic update with a deny rule", () => {
-      const bp = `
-    model Org {
-      field name { type string }
-      field description { type string }
-      field uuid { type string }
-      reference extras { to OrgExtra, unique }
-    }
-    model OrgExtra {
-      relation org { from Org, through extras }
-    }
-    api {
-      entrypoint Org as org {
-        update endpoint {
-          action {
-            update org as ox {
-              set name "new name"
-              deny { uuid }
-            }
-          }
-        }
-      }
-    }`;
-      const def = compileFromString(bp);
-      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
-      expect(endpoint.actions).toMatchSnapshot();
-    });
+
     it("succeeds with nested sibling reference", () => {
       const bp = `
     model Org {
@@ -164,7 +138,9 @@ describe("compose actions", () => {
         update endpoint {
           action {
             update {}
-            update issue.repo.org as org {}
+            update issue.repo.org as org {
+              input { name }
+            }
           }
         }
       }
@@ -301,7 +277,7 @@ describe("compose actions", () => {
           path "customUpdate"
 
           action {
-            update org as newOrg {}
+            update org as newOrg { input { name } }
           }
         }
         custom endpoint {
