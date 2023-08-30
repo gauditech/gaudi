@@ -1,4 +1,4 @@
-import { nameInitials, resolveItems } from "./utils";
+import { concatUrlFragments, nameInitials, resolveItems } from "./utils";
 
 describe("nameInitials", () => {
   it("succeeds for camelCase examples", () => {
@@ -167,5 +167,41 @@ describe("item resolver", () => {
         },
       ]
     `);
+  });
+
+  describe("concatUrlPaths", () => {
+    test("concat simple paths", () => {
+      const path = concatUrlFragments("a", "b", "c");
+
+      expect(path).toBe("a/b/c");
+    });
+
+    test("concat combined paths", () => {
+      const path = concatUrlFragments("a", "b/c", "/", "d");
+
+      expect(path).toBe("a/b/c/d");
+    });
+
+    test("remove extra slashes", () => {
+      const path = concatUrlFragments(
+        "/", // leading the first element
+        "a",
+        "b/", // single trailing
+        "c////", // multiple trailing
+        "d", // without
+        "/e", // single leading
+        "//f", // multiple trailing
+        "g",
+        "//" // trailing the last element
+      );
+
+      expect(path).toBe("/a/b/c/d/e/f/g/");
+    });
+
+    test("remove empty values", () => {
+      const path = concatUrlFragments("a", null, "c", "", undefined, "e");
+
+      expect(path).toBe("a/c/e");
+    });
   });
 });

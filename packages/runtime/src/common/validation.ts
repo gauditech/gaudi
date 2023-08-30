@@ -1,12 +1,4 @@
-import _ from "lodash";
-import { match } from "ts-pattern";
-
-import { executeHook } from "../hooks";
-import { executeTypedExpr } from "../server/endpoints";
-import { Vars } from "../server/vars";
-
 import { ensureExists } from "@gaudi/compiler/dist/common/utils";
-import { BusinessError } from "@runtime/server/error";
 import {
   Definition,
   FieldsetDef,
@@ -15,6 +7,14 @@ import {
   ValidateExprCallDef,
   ValidateExprDef,
 } from "@gaudi/compiler/dist/types/definition";
+import _ from "lodash";
+import { match } from "ts-pattern";
+
+import { executeHook } from "../hooks";
+import { executeTypedExpr } from "../server/endpoints";
+import { Vars } from "../server/vars";
+
+import { BusinessError } from "@runtime/server/error";
 
 // ----- validation&transformation
 
@@ -107,6 +107,8 @@ async function validateField(
     ? await executeValidateExpr(def, fieldset.validate, field, new Vars())
     : fieldset.referenceNotFound
     ? [{ code: "reference-not-found", params: { value: field } }]
+    : fieldset.uniqueExists
+    ? [{ code: "already-exists", params: { value: field } }]
     : undefined;
 }
 

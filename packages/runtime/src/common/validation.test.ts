@@ -1,7 +1,8 @@
+import { CreateEndpointDef } from "@gaudi/compiler/dist/types/definition";
+
 import { compileFromString } from "@runtime/common/testUtils";
 import { validateEndpointFieldset } from "@runtime/common/validation";
 import { BusinessError } from "@runtime/server/error";
-import { CreateEndpointDef } from "@gaudi/compiler/dist/types/definition";
 
 describe("runtime", () => {
   describe("validation", () => {

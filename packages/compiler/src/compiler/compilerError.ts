@@ -27,7 +27,8 @@ export enum ErrorCode {
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
-  DuplicateGenerator,
+  DuplicateApidocsGenerator,
+  DuplicateClientGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
   RespondActionNotInCustomEndpoint,
   QueryFromAliasWrongLength,
@@ -127,8 +128,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate populate set field`;
     case ErrorCode.DuplicateHookArg:
       return `Duplicate hook argument`;
-    case ErrorCode.DuplicateGenerator:
-      return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}"`;
+    case ErrorCode.DuplicateClientGenerator:
+      return `Found duplicate "client" generators with the same target "${params?.target}"`;
+    case ErrorCode.DuplicateApidocsGenerator:
+      return `Multiple "apidocs" generators are not allowed`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
       return `Actions with "responds" attribute can only be used in "custom" endpoints`;
     case ErrorCode.RespondActionNotInCustomEndpoint:
@@ -150,9 +153,9 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.MoreThanOneRespondsInEndpoint:
       return `At most one action in endpoint can have "responds" attribute`;
     case ErrorCode.ValidatorMustContainExprOrHook:
-      return `Validator must contain "action" or "action hook" definition`;
+      return `Validator must contain "assert" or "assert hook" definition`;
     case ErrorCode.ValidatorOnlyOneExprOrHook:
-      return `Validator can't have more than one "action" or "action hook" definition`;
+      return `Validator can't have more than one "assert" or "assert hook" definition`;
     case ErrorCode.MoreThanOneRespondsActionInEndpoint:
       return `Endpoint can have at most one "respond" action`;
     case ErrorCode.MoreThanOneActionThatRespond:

@@ -457,7 +457,11 @@ describe("mock client lib", () => {
         expect(requestFn).toHaveBeenCalledWith(`/rootPath/api/org/slug1/repos/1`, {
           headers: {},
           method: "PATCH",
-          body: { slug: "slug1", name: "test name", description: "test description" },
+          body: {
+            slug: "slug1",
+            name: "test name",
+            description: "test description",
+          },
         });
 
         // test response
@@ -484,7 +488,7 @@ describe("mock client lib", () => {
         const requestFn = jest.fn(async () => ({ status: 200, data: testData, headers: {} }));
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
-          .repos.create({ ...testData, virtProp: "smthng" });
+          .repos.create({ ...testData, virtProp: "smthng", owner_id: null });
 
         // type narrowing for simpler later code
         ensureEqual(resp.kind, "success", `API response is not "success" but "${resp.kind}`);
@@ -498,6 +502,7 @@ describe("mock client lib", () => {
             name: "test name",
             description: "test description",
             virtProp: "smthng",
+            owner_id: null,
           },
         });
 
@@ -972,7 +977,7 @@ describe("mock client lib", () => {
         }));
         const resp = await createTestEntrypointClient(requestFn)
           .api.org("slug1")
-          .repos.create({ ...testData, virtProp: "smthng" });
+          .repos.create({ ...testData, virtProp: "smthng", owner_id: null });
 
         // type narrowing for simpler later code
         ensureEqual(resp.kind, "error", `API response is not "error" but "${resp.kind}`);
@@ -986,6 +991,7 @@ describe("mock client lib", () => {
             name: "test name",
             description: "test description",
             virtProp: "smthng",
+            owner_id: null,
           },
         });
 

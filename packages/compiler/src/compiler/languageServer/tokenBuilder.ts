@@ -2,8 +2,8 @@ import { match } from "ts-pattern";
 
 import {
   Action,
-  ActionAtomDeny,
   ActionAtomInput,
+  ActionAtomInputAll,
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionHook,
@@ -182,9 +182,9 @@ export function buildTokens(
         })
         .with({ kind: "unique" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
-        .with({ kind: "default" }, ({ keyword, literal }) => {
+        .with({ kind: "default" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
-          buildLiteral(literal);
+          buildExpr(expr);
         })
         .with({ kind: "validate" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
@@ -403,8 +403,8 @@ export function buildTokens(
       match(a)
         .with({ kind: "set" }, buildActionAtomSet)
         .with({ kind: "referenceThrough" }, buildActionAtomReferenceThrough)
-        .with({ kind: "deny" }, buildActionAtomDeny)
         .with({ kind: "input" }, buildActionAtomInput)
+        .with({ kind: "input-all" }, buildActionAtomInputAll)
         .exhaustive();
     });
   }
@@ -490,21 +490,13 @@ export function buildTokens(
     buildIdentifierPath(through);
   }
 
-  function buildActionAtomDeny({ keyword, fields }: ActionAtomDeny) {
-    buildKeyword(keyword);
-    match(fields)
-      .with({ kind: "all" }, ({ keyword }) => buildKeyword(keyword))
-      .with({ kind: "list" }, ({ fields }) => fields.forEach(buildIdentifierRef))
-      .exhaustive();
-  }
-
   function buildActionAtomInput({ keyword, fields }: ActionAtomInput) {
     buildKeyword(keyword);
     fields.forEach(({ field, atoms }) => {
       buildIdentifierRef(field);
       atoms.forEach((a) =>
         match(a)
-          .with({ kind: "optional" }, ({ keyword }) => {
+          .with({ kind: "required" }, ({ keyword }) => {
             buildKeyword(keyword);
           })
           .with({ kind: "default" }, ({ keyword, value }) => {
@@ -514,6 +506,12 @@ export function buildTokens(
           .exhaustive()
       );
     });
+  }
+
+  function buildActionAtomInputAll({ keyword, keywordExcept, except }: ActionAtomInputAll) {
+    buildKeyword(keyword);
+    if (keywordExcept) buildKeyword(keywordExcept);
+    except.forEach(buildIdentifierRef);
   }
 
   function buildPopulator({ keyword, name, atoms }: Populator) {
@@ -600,6 +598,9 @@ export function buildTokens(
             })
             .exhaustive();
         });
+      })
+      .with({ type: "apidocs" }, (g) => {
+        buildKeyword(g.keywordType);
       })
       .exhaustive();
   }

@@ -9,16 +9,22 @@ import {
   render as renderApiClientTpl,
 } from "@compiler/builder/renderer/templates/apiClient.tpl";
 import {
+  OpenApiBuilderData,
+  render as renderOpenApiTpl,
+} from "@compiler/builder/renderer/templates/openapi.tpl";
+import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
 } from "@compiler/builder/renderer/templates/schema.prisma.tpl";
-import { kindFilter } from "@compiler/common/kindFilter";
+import { kindFilter, kindFind } from "@compiler/common/kindFilter";
 import { initLogger } from "@compiler/common/logger";
 import { assertUnreachable } from "@compiler/common/utils";
 import { Definition } from "@compiler/types/definition";
 
 const logger = initLogger("gaudi:compiler");
 const DB_PROVIDER = "postgresql";
+export const BUILDER_OPENAPI_SPEC_FOLDER = "api-spec";
+export const BUILDER_OPENAPI_SPEC_FILE_NAME = "api.openapi.json";
 
 export type BuilderConfig = {
   outputFolder: string;
@@ -32,6 +38,7 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
   await buildDefinition({ definition }, config.outputFolder);
   await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
   await buildApiClients(definition, config.outputFolder);
+  await buildOpenApi(definition, config.outputFolder);
 }
 
 // -------------------- part builders
@@ -76,6 +83,32 @@ async function buildDb(data: BuildDbSchemaData, outputFolder: string): Promise<u
     // render DB schema
     renderDbSchema(data).then((content) => storeTemplateOutput(outFile, content))
   );
+}
+
+// ---------- OpenAPI
+
+export async function renderOpenApi(data: OpenApiBuilderData): Promise<string> {
+  return renderOpenApiTpl(data);
+}
+
+async function buildOpenApi(definition: Definition, outputFolder: string): Promise<unknown> {
+  const apidocsGenerator = kindFind(definition.generators, "generator-apidocs");
+
+  if (apidocsGenerator) {
+    const outFile = path.join(
+      outputFolder,
+      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_FILE_NAME
+    );
+
+    return (
+      // render DB schema
+      renderOpenApi({ definition, basePath: apidocsGenerator.basePath }).then((content) =>
+        storeTemplateOutput(outFile, content)
+      )
+    );
+  }
+  // no generator
 }
 
 // ---------- API client

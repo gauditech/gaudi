@@ -7,17 +7,18 @@ import {
   Definition,
   UpdateOneAction,
 } from "@gaudi/compiler/dist/types/definition";
-import { buildChangeset } from "@runtime/common/changeset";
-import { HookActionContext, executeActionHook } from "@runtime/hooks";
-import { DbConn } from "@runtime/server/dbConn";
-import { HookError } from "@runtime/server/error";
-import { Vars } from "@runtime/server/vars";
 import _ from "lodash";
 
 import { applyFilterIdInContext, buildQueryTree, queryTreeFromParts } from "../query/build";
 import { castToCardinality, createQueryExecutor, executeQueryTree } from "../query/exec";
 
 import { ValidReferenceIdResult } from "./constraintValidation";
+
+import { buildChangeset } from "@runtime/common/changeset";
+import { HookActionContext, executeActionHook } from "@runtime/hooks";
+import { DbConn } from "@runtime/server/dbConn";
+import { HookError } from "@runtime/server/error";
+import { Vars } from "@runtime/server/vars";
 
 export type ActionContext = {
   input: Record<string, unknown>;
@@ -168,11 +169,8 @@ async function fetchActionDeps(
   def: Definition,
   dbConn: DbConn,
   action: CreateOneAction | UpdateOneAction,
-  id: number | null
+  id: number
 ): Promise<Record<string, unknown>[] | undefined> {
-  if (!id) {
-    throw new Error(`Failed to insert into ${action.model}`);
-  }
   if (!action.alias) return;
   // no need to fetch if only ID is requested
   if (action.select.findIndex((item) => item.alias !== "id") < 0) {
@@ -204,33 +202,38 @@ async function updateData(
   model: string,
   data: Record<string, unknown>,
   targetId: number
-): Promise<number | null> {
-  // TODO: return action's `select` here
+): Promise<number> {
+  // avoid malformed query by skipping the update if no data is passed
+  if (Object.keys(data).length === 0) {
+    return targetId;
+  }
   const ret = await dbConn(model).update(data).where({ id: targetId }).returning("id");
-
-  // FIXME findOne? handle unexpected result
-  if (!ret.length) return null;
-  return ret[0].id;
+  return findOne(ret);
 }
 
 async function insertData(
   dbConn: DbConn,
   model: string,
   data: Record<string, unknown>
-): Promise<number | null> {
-  // TODO: return action's `select` here
+): Promise<number> {
   const ret = await dbConn.insert(data).into(model).returning("id");
 
-  // FIXME findOne? handle unexpected result
-  if (!ret.length) return null;
-  return ret[0].id;
+  return findOne(ret);
 }
 
-async function deleteData(dbConn: DbConn, model: string, targetId: number): Promise<number | null> {
-  // TODO: return action's `select` here
+async function deleteData(dbConn: DbConn, model: string, targetId: number): Promise<number> {
   const ret = await dbConn(model).delete().where({ id: targetId }).returning("id");
 
-  // FIXME findOne? handle unexpected result
-  if (!ret.length) return null;
-  return ret[0].id;
+  return findOne(ret);
+}
+
+function findOne(rows: any[], message?: string) {
+  if (rows.length === 0) {
+    throw new Error(message ?? `Record not found`);
+  }
+  if (rows.length > 1) {
+    throw new Error(`Unexpected error: multiple records found`);
+  }
+
+  return rows[0].id;
 }

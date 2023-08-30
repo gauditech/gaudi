@@ -10,7 +10,7 @@ export type GlobalAtom = Validator | Model | Api | Populator | Runtime | Authent
 export type Validator = {
   kind: "validator";
   keyword: TokenData;
-  name: Identifier;
+  name: IdentifierRef<RefValidator>;
   atoms: ValidatorAtom[];
 };
 
@@ -49,7 +49,7 @@ export type FieldAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
   | { kind: "unique" }
   | { kind: "nullable" }
-  | { kind: "default"; literal: Literal }
+  | { kind: "default"; expr: Expr }
   | { kind: "validate"; expr: ValidateExpr }
 );
 
@@ -132,7 +132,8 @@ export type Entrypoint = {
   kind: "entrypoint";
   keyword: TokenData;
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
-  as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
+  ref?: RefEntrypoint;
+  as?: { keyword: TokenData; identifier: IdentifierRef<RefEntrypoint> };
   atoms: EntrypointAtom[];
 };
 
@@ -195,8 +196,8 @@ export type ModelAction = {
 export type ModelActionAtom =
   | ActionAtomSet
   | ActionAtomReferenceThrough
-  | ActionAtomDeny
-  | ActionAtomInput;
+  | ActionAtomInput
+  | ActionAtomInputAll;
 
 export type DeleteAction = {
   kind: "delete";
@@ -269,7 +270,7 @@ export type ValidateExpr =
       lhs: ValidateExpr;
       rhs: ValidateExpr;
     }
-  | { kind: "validator"; validator: Identifier; args: Expr<Code>[] }
+  | { kind: "validator"; validator: IdentifierRef<RefValidator>; args: Expr<Code>[] }
   | { kind: "group"; expr: ValidateExpr };
 
 export type ActionAtomSet = {
@@ -285,16 +286,6 @@ export type ActionAtomReferenceThrough = {
   through: IdentifierRef<RefModelAtom>[];
   keywordThrough: TokenData;
 };
-export type ActionAtomDeny = {
-  kind: "deny";
-  keyword: TokenData;
-  fields:
-    | { kind: "all"; keyword: TokenData }
-    | {
-        kind: "list";
-        fields: IdentifierRef<RefModelField | RefModelReference>[];
-      };
-};
 export type ActionAtomInput = {
   kind: "input";
   keyword: TokenData;
@@ -303,8 +294,14 @@ export type ActionAtomInput = {
     atoms: InputAtom[];
   }[];
 };
+export type ActionAtomInputAll = {
+  kind: "input-all";
+  keyword: TokenData;
+  keywordExcept?: TokenData;
+  except: IdentifierRef<RefModelField | RefModelReference>[];
+};
 export type InputAtom = { keyword: TokenData } & (
-  | { kind: "optional" }
+  | { kind: "required" }
   | { kind: "default"; value: Expr<Code> }
 );
 export type ExtraInput = {
@@ -330,7 +327,8 @@ export type Populate = {
   kind: "populate";
   keyword: TokenData;
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
-  as?: { keyword: TokenData; identifier: IdentifierRef<RefTarget> };
+  ref?: RefPopulate;
+  as?: { keyword: TokenData; identifier: IdentifierRef<RefPopulate> };
   atoms: PopulateAtom[];
 };
 export type PopulateAtom =
@@ -351,15 +349,22 @@ export type RepeatAtom = { keyword: TokenData } & (
   | { kind: "end"; value: IntegerLiteral }
 );
 
-export type GeneratorType = "client";
+export type GeneratorType = "client" | "apidocs";
 export type Generator = {
   kind: "generator";
   keyword: TokenData;
-} & {
-  type: Extract<GeneratorType, "client">;
-  keywordType: TokenData;
-  atoms: GeneratorClientAtom[];
-};
+} & (
+  | {
+      type: Extract<GeneratorType, "client">;
+      keywordType: TokenData;
+      atoms: GeneratorClientAtom[];
+    }
+  | {
+      type: Extract<GeneratorType, "apidocs">;
+      keywordType: TokenData;
+      atoms: GeneratorApidocsAtom[];
+    }
+);
 export type GeneratorClientAtom =
   | {
       kind: "target";
@@ -369,6 +374,10 @@ export type GeneratorClientAtom =
     }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
 export type GeneratorClientAtomTarget = "js" | "ts";
+export type GeneratorApidocsAtom = { keyword: TokenData } & {
+  kind: "basePath";
+  path: StringLiteral;
+};
 
 export type Runtime = {
   kind: "runtime";
@@ -470,14 +479,10 @@ export type BooleanLiteral = { kind: "boolean"; value: boolean; token: TokenData
 export type NullLiteral = { kind: "null"; value: null; token: TokenData };
 export type StringLiteral = { kind: "string"; value: string; token: TokenData };
 
-export type RefModel = { kind: "model"; model: string };
-export type RefModelAtom =
-  | RefModelField
-  | RefModelReference
-  | RefModelRelation
-  | RefModelQuery
-  | RefModelComputed
-  | RefModelHook;
+export type RefModel = {
+  kind: "model";
+  model: string;
+};
 
 export type RefModelField = {
   kind: "modelAtom";
@@ -525,15 +530,73 @@ export type RefModelHook = {
   name: string;
 };
 
+export type RefModelAtom =
+  | RefModelField
+  | RefModelReference
+  | RefModelRelation
+  | RefModelQuery
+  | RefModelComputed
+  | RefModelHook;
+
 export type RefQueryTarget = {
   kind: "queryTarget";
+  // TODO: track non-model queries
+  parent: RefModelQuery | undefined;
   path: string[];
 };
-export type RefTarget = { kind: "target"; targetKind: "entrypoint" | "populate" };
-export type RefAction = { kind: "action" };
-export type RefRepeat = { kind: "repeat" };
-export type RefValidatorArg = { kind: "validatorArg"; type: FieldType };
-export type RefExtraInput = { kind: "extraInput"; type: FieldType; nullable: boolean };
+export type RefEntrypoint = {
+  kind: "target";
+  targetKind: "entrypoint";
+  // undefined value simbolizes default api
+  api?: string;
+  path: string[];
+  model: string;
+};
+export type RefPopulate = {
+  kind: "target";
+  targetKind: "populate";
+  // undefined value simbolizes default api
+  populator: string;
+  path: string[];
+  model: string;
+};
+// Endpoint is not a ref, but it can be parent to other refs
+export type EndpointId =
+  | { parent: RefEntrypoint; type: Exclude<EndpointType, "custom"> }
+  | {
+      parent: RefEntrypoint;
+      type: Extract<EndpointType, "custom">;
+      method: EndpointMethod;
+      cardinality: EndpointCardinality;
+      path: string;
+    };
+export type RefAction = {
+  kind: "action";
+  parent: EndpointId;
+  name: string;
+};
+export type RefExtraInput = {
+  kind: "extraInput";
+  parent: EndpointId;
+  name: string;
+  type: FieldType;
+  nullable: boolean;
+};
+export type RefRepeat = {
+  kind: "repeat";
+  parent: RefPopulate;
+  name: string;
+};
+export type RefValidator = {
+  kind: "validator";
+  name: string;
+};
+export type RefValidatorArg = {
+  kind: "validatorArg";
+  parent: RefValidator;
+  name: string;
+  type: FieldType;
+};
 export type RefAuth = { kind: "auth"; model: string };
 export type RefAuthToken = { kind: "authToken" };
 export type RefStruct = { kind: "struct" };
@@ -541,9 +604,11 @@ export type Ref =
   | RefModel
   | RefModelAtom
   | RefQueryTarget
-  | RefTarget
+  | RefEntrypoint
+  | RefPopulate
   | RefAction
   | RefRepeat
+  | RefValidator
   | RefValidatorArg
   | RefExtraInput
   | RefAuth
@@ -555,13 +620,15 @@ export type IdentifierRef<R extends Ref = Ref> = {
   text: string;
   token: TokenData;
   ref?: R;
+  isDefinition: boolean;
   type: Type;
 };
 
+export type Position = { line: number; column: number };
 export type TokenData = {
   filename: string;
-  start: { line: number; column: number };
-  end: { line: number; column: number };
+  start: Position;
+  end: Position;
 };
 export const zeroToken: TokenData = {
   filename: ":unset:",
