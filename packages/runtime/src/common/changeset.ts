@@ -1,24 +1,24 @@
-import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
-
-import { buildQueryTree } from "../query/build";
-
-import { executeArithmetics } from "./arithmetics";
-
 import {
   assertUnreachable,
   ensureEqual,
   ensureExists,
   ensureNot,
 } from "@gaudi/compiler/dist/common/utils";
-import { ActionContext } from "@runtime/common/action";
-import { HookActionContext, executeHook } from "@runtime/hooks";
-import { QueryExecutor, castToCardinality } from "@runtime/query/exec";
 import {
   ChangesetDef,
   Definition,
   FieldDef,
   FieldSetter,
 } from "@gaudi/compiler/dist/types/definition";
+import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
+
+import { buildQueryTree } from "../query/build";
+
+import { executeArithmetics } from "./arithmetics";
+
+import { ActionContext } from "@runtime/common/action";
+import { HookActionContext, executeHook } from "@runtime/hooks";
+import { QueryExecutor, castToCardinality } from "@runtime/query/exec";
 
 type Changeset = Record<string, unknown>;
 
@@ -36,16 +36,31 @@ export async function buildChangeset(
 ): Promise<Changeset> {
   const changeset: Changeset = {};
 
+  async function coalesce(getters: (() => Promise<unknown>)[]): Promise<unknown> {
+    for (const getter of getters) {
+      const value = await getter();
+      if (value !== undefined) {
+        return value;
+      }
+    }
+    return undefined;
+  }
+
   async function getValue(setter: FieldSetter): Promise<unknown> {
     switch (setter.kind) {
       case "literal": {
         return formatFieldValue(setter.literal.value, setter.literal.kind);
       }
       case "fieldset-input": {
-        return formatFieldValue(
-          getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
-          setter.type
-        );
+        return coalesce([
+          async () =>
+            formatFieldValue(
+              getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
+              setter.type
+            ),
+          async () => (setter.default ? getValue(setter.default) : Promise.resolve(undefined)),
+          async () => undefined,
+        ]);
       }
       case "reference-value": {
         return actionContext.vars.collect([setter.target.alias, ...setter.target.access]);
@@ -85,7 +100,9 @@ export async function buildChangeset(
         ensureNot(
           referenceIdResult,
           undefined,
-          `${JSON.stringify(actionContext.referenceIds)} -> ${setter.fieldsetAccess}`
+          `Reference ID result missing: ${JSON.stringify(actionContext.referenceIds)} -> ${
+            setter.fieldsetAccess
+          }`
         );
         return referenceIdResult.value;
       }
@@ -139,7 +156,7 @@ export async function buildChangeset(
 /**
  * Format unknown field value to one of mapping types.
  *
- * If `value` is `undefined`/`null`, an `undefined` is returned.
+ * If `value` is `undefined`/`null`, it is returned as is.
  *
  * This function uses `lodash` to convert "string" and "integer".
  * For details see: https://lodash.com/docs

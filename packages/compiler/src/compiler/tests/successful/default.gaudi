@@ -2,4 +2,18 @@ model Vehicle {
   field type { type string, default "car" }
   field active { type boolean, default true }
   field make { type string, nullable, default null }
+  field notes { type string }
+  field timestamp { type integer, default now() }
+}
+
+api {
+  entrypoint Vehicle {
+    create endpoint {
+      action {
+        create as vehicle {
+          input { notes { default "Created on " + stringify(now()) } }
+        }
+      }
+    }
+  }
 }

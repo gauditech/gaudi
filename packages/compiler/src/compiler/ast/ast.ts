@@ -49,7 +49,7 @@ export type FieldAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
   | { kind: "unique" }
   | { kind: "nullable" }
-  | { kind: "default"; literal: Literal }
+  | { kind: "default"; expr: Expr }
   | { kind: "validate"; expr: ValidateExpr }
 );
 
@@ -305,7 +305,7 @@ export type ActionAtomInput = {
   }[];
 };
 export type InputAtom = { keyword: TokenData } & (
-  | { kind: "optional" }
+  | { kind: "required" }
   | { kind: "default"; value: Expr<Code> }
 );
 export type ExtraInput = {

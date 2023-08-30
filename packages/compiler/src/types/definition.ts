@@ -487,8 +487,7 @@ export type FieldSetterInput = {
   type: FieldType;
   fieldsetAccess: string[];
   required: boolean;
-  // FIXME implement default
-  // default?: LiteralValueDef | FieldSetterReferenceValue;
+  default?: FieldSetter;
 };
 
 export type FieldSetterReferenceInput = {

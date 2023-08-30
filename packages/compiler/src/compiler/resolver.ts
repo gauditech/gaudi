@@ -293,6 +293,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveField(model: Model, field: Field) {
     const validate = kindFind(field.atoms, "validate")?.expr;
+    const default_ = kindFind(field.atoms, "default");
     const nullable = !!kindFind(field.atoms, "nullable");
     const typeAtom = kindFind(field.atoms, "type");
 
@@ -322,6 +323,17 @@ export function resolve(projectASTs: ProjectASTs) {
           },
           field.name
         );
+      }
+
+      if (default_) {
+        const scope: Scope = {
+          environment: "model",
+          model: model.name.text,
+          context: {},
+          typeGuard: {},
+        };
+        resolveExpression(default_.expr, scope);
+        checkExprType(default_.expr, field.name.type);
       }
     } else if (typeAtom) {
       errors.push(
@@ -917,7 +929,10 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "input" }, ({ fields }) => {
           fields.forEach(({ field, atoms }) => {
             resolveModelAtomRef(field, currentModel, "field", "reference", "relation");
-            kindFilter(atoms, "default").map(({ value }) => resolveExpression(value, scope));
+            kindFilter(atoms, "default").map(({ value }) => {
+              resolveExpression(value, scope);
+              checkExprType(value, field.type);
+            });
           });
         })
         .exhaustive()

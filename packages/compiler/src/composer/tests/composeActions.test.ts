@@ -38,6 +38,23 @@ describe("compose actions", () => {
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
+
+    it("create action doesn't produce inputs for fields with default", () => {
+      const bp = `
+      model Org {
+        field name { type string, default "my name" }
+        field description { type string, nullable }
+      }
+      api {
+        entrypoint Org {
+          create endpoint {}
+        }
+      }
+      `;
+      const def = compileFromString(bp);
+      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as CreateEndpointDef;
+      expect(endpoint.fieldset).toMatchSnapshot();
+    });
     it("succeeds for basic update with a deny rule", () => {
       const bp = `
     model Org {
@@ -157,7 +174,7 @@ describe("compose actions", () => {
       const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
       expect(endpoint.actions).toMatchSnapshot();
     });
-    it("succeeds with custom inputs", () => {
+    it("correctly implements default values", () => {
       const bp = `
     model Org {
       field name { type string }
@@ -174,17 +191,25 @@ describe("compose actions", () => {
         update endpoint {
           action {
             update org as ox {
-              set name "new name"
-              input { description { optional } }
+              set uuid "new uuid"
+              input { description { required }, name }
               reference extras through name
+            }
+          }
+        }
+        create endpoint {
+          action {
+            create Org as ox {
+              input { uuid { default "uuid-" + stringify(now()) } }
             }
           }
         }
       }
     }`;
       const def = compileFromString(bp);
-      const endpoint = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
-      expect(endpoint.actions).toMatchSnapshot();
+      const endpoints = def.apis[0].entrypoints[0].endpoints;
+      expect(endpoints[0]).toMatchSnapshot("update");
+      expect(endpoints[1]).toMatchSnapshot("create");
     });
     it("succeeds with arithmetic expressions in setters", () => {
       const bp = `
@@ -235,7 +260,6 @@ describe("compose actions", () => {
       expect(endpoint.actions).toMatchSnapshot();
       expect(endpoint.fieldset).toMatchSnapshot();
     });
-    it.todo("succeeds to update through unique relation");
     it("sets default action if not given", () => {
       const bp = `
     model Org {

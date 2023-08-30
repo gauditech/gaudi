@@ -70,6 +70,16 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Circular model definition detected in model member definition`);
     });
+    it("fails when default value doesn't match field type", () => {
+      const bp = `
+      model Org {
+       field name { type string, default 0 }
+      }`;
+      expectError(
+        bp,
+        `Unexpected type\nexpected:\n{"kind":"primitive","primitiveKind":"string"}\ngot:\n{"kind":"primitive","primitiveKind":"integer"}`
+      );
+    });
   });
 
   describe("validator", () => {

@@ -6,6 +6,7 @@ import { composeValidate } from "./validators";
 
 import { buildEndpointPath } from "@compiler/builder/query";
 import { kindFilter } from "@compiler/common/kindFilter";
+import { transformSelectPath } from "@compiler/common/query";
 import { getRef, getTargetModel } from "@compiler/common/refs";
 import {
   UnreachableError,
@@ -15,7 +16,6 @@ import {
 } from "@compiler/common/utils";
 import { composeActionBlock } from "@compiler/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@compiler/composer/query";
-import { transformSelectPath } from "@compiler/common/query";
 import {
   ActionDef,
   Definition,

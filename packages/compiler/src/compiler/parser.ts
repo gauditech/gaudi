@@ -263,8 +263,8 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = this.createTokenData(this.CONSUME(L.Default));
-              const literal = this.SUBRULE(this.literal);
-              atoms.push({ kind: "default", literal, keyword });
+              const expr = this.SUBRULE(this.expr);
+              atoms.push({ kind: "default", expr, keyword });
             },
           },
           {
@@ -1121,8 +1121,8 @@ class GaudiParser extends EmbeddedActionsParser {
           this.OR([
             {
               ALT: () => {
-                const keyword = this.createTokenData(this.CONSUME(L.Optional));
-                atoms.push({ kind: "optional", keyword });
+                const keyword = this.createTokenData(this.CONSUME(L.Required));
+                atoms.push({ kind: "required", keyword });
               },
             },
             {

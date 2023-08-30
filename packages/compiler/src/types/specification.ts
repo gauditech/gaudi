@@ -64,7 +64,7 @@ export type Model = {
 export type Field = {
   ref: RefModelField;
   primary: boolean;
-  default?: Literal;
+  default?: Expr;
   validate?: ValidateExpr;
 };
 
@@ -238,9 +238,7 @@ export type ActionAtomInput = {
   kind: "input";
   target: RefModelField;
   optional: boolean;
-  default?:
-    | { kind: "literal"; literal: Literal }
-    | { kind: "reference"; reference: IdentifierRef[] };
+  default?: Expr;
 };
 export type ActionAtomSet = {
   kind: "set";

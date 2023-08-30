@@ -182,9 +182,9 @@ export function buildTokens(
         })
         .with({ kind: "unique" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "nullable" }, ({ keyword }) => buildKeyword(keyword))
-        .with({ kind: "default" }, ({ keyword, literal }) => {
+        .with({ kind: "default" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
-          buildLiteral(literal);
+          buildExpr(expr);
         })
         .with({ kind: "validate" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
@@ -504,7 +504,7 @@ export function buildTokens(
       buildIdentifierRef(field);
       atoms.forEach((a) =>
         match(a)
-          .with({ kind: "optional" }, ({ keyword }) => {
+          .with({ kind: "required" }, ({ keyword }) => {
             buildKeyword(keyword);
           })
           .with({ kind: "default" }, ({ keyword, value }) => {

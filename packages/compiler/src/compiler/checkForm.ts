@@ -365,7 +365,7 @@ export function checkForm(document: GlobalAtom[]) {
         .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
-            noDuplicateAtoms({ ...field, kind: "input" }, ["optional", "default"]);
+            noDuplicateAtoms({ ...field, kind: "input" }, ["required", "default"]);
             return field.field;
           })
         )
