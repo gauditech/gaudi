@@ -1,3 +1,5 @@
+import path from "path";
+
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
@@ -65,6 +67,7 @@ import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@compiler/common/kindFilter";
+import { getExecutionRuntimeDefinition } from "@compiler/common/refs";
 import { getInternalExecutionRuntimeName } from "@compiler/composer/executionRuntimes";
 
 export function resolve(projectASTs: ProjectASTs) {
@@ -124,7 +127,8 @@ export function resolve(projectASTs: ProjectASTs) {
       ErrorCode.DuplicateRuntime
     );
 
-    const runtimes = getRuntimes();
+    const userRuntimes = getRuntimes();
+    const runtimes = userRuntimes.length > 0 ? userRuntimes : getRuntimes(true);
     if (runtimes.length > 1) {
       let hasDefaultRuntime = false;
       runtimes.forEach((runtime) => {
@@ -291,6 +295,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveField(model: Model, field: Field) {
     const validate = kindFind(field.atoms, "validate")?.expr;
+    const default_ = kindFind(field.atoms, "default");
     const nullable = !!kindFind(field.atoms, "nullable");
     const typeAtom = kindFind(field.atoms, "type");
 
@@ -320,6 +325,17 @@ export function resolve(projectASTs: ProjectASTs) {
           },
           field.name
         );
+      }
+
+      if (default_) {
+        const scope: Scope = {
+          environment: "model",
+          model: model.name.text,
+          context: {},
+          typeGuard: {},
+        };
+        resolveExpression(default_.expr, scope);
+        checkExprType(default_.expr, field.name.type);
       }
     } else if (typeAtom) {
       errors.push(
@@ -905,17 +921,18 @@ export function resolve(projectASTs: ProjectASTs) {
             resolveUniqueModelPath(through, target.ref.model);
           }
         })
-        .with({ kind: "deny" }, ({ fields }) => {
-          if (fields.kind === "list") {
-            fields.fields.forEach((field) =>
-              resolveModelAtomRef(field, currentModel, "field", "reference", "relation")
-            );
-          }
-        })
         .with({ kind: "input" }, ({ fields }) => {
           fields.forEach(({ field, atoms }) => {
-            resolveModelAtomRef(field, currentModel, "field", "reference", "relation");
-            kindFilter(atoms, "default").map(({ value }) => resolveExpression(value, scope));
+            resolveModelAtomRef(field, currentModel, "field", "reference");
+            kindFilter(atoms, "default").map(({ value }) => {
+              resolveExpression(value, scope);
+              checkExprType(value, field.type);
+            });
+          });
+        })
+        .with({ kind: "input-all" }, ({ except }) => {
+          except.forEach((field) => {
+            resolveModelAtomRef(field, currentModel, "field", "reference");
           });
         })
         .exhaustive()
@@ -926,8 +943,8 @@ export function resolve(projectASTs: ProjectASTs) {
         match(a)
           .with({ kind: "set" }, ({ target }) => [target])
           .with({ kind: "referenceThrough" }, ({ target }) => [target])
-          .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
           .with({ kind: "input" }, ({ fields }) => fields.map(({ field }) => field))
+          .with({ kind: "input-all" }, (a) => a.except)
           .exhaustive()
     );
     const references = allIdentifiers.filter(
@@ -1167,29 +1184,41 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveHook(hook: Hook<"model" | "action">) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
-      const runtimes = getRuntimes();
+      const userRuntimes = getRuntimes();
+      const runtimes = userRuntimes.length > 0 ? userRuntimes : getRuntimes(true);
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
-      if (!runtimeAtom) {
-        const defaultRuntime =
-          runtimes.find((r) => kindFind(r.atoms, "default")) ??
-          (runtimes.length === 1 ? runtimes[0] : undefined);
-        if (defaultRuntime) {
-          source.runtime = defaultRuntime.name.text;
-        } else {
-          errors.push(new CompilerError(source.keyword, ErrorCode.NoRuntimeDefinedForHook));
-        }
+      // FIXME this skips further checks if runtime is internal
+      if (runtimeAtom?.identifier.text === getInternalExecutionRuntimeName()) {
+        source.runtime = getInternalExecutionRuntimeName();
         return;
       }
 
-      const runtime = runtimeAtom.identifier.text;
-      if (
-        runtimes.find((r) => r.name.text === runtime) ||
-        getInternalExecutionRuntimeName() === runtime
-      ) {
-        source.runtime = runtime;
+      let selectedRuntime: Runtime | undefined;
+      if (runtimeAtom) {
+        const runtimeName = runtimeAtom.identifier.text;
+        selectedRuntime = runtimes.find((r) => r.name.text === runtimeName);
+        if (!selectedRuntime) {
+          errors.push(new CompilerError(runtimeAtom.identifier.token, ErrorCode.CantFindRuntime));
+        }
       } else {
-        errors.push(new CompilerError(runtimeAtom.identifier.token, ErrorCode.CantFindRuntime));
+        selectedRuntime =
+          runtimes.length === 1
+            ? runtimes[0]
+            : runtimes.find((r) => !!kindFind(r.atoms, "default"));
+        if (!selectedRuntime) {
+          errors.push(new CompilerError(source.keyword, ErrorCode.NoRuntimeDefinedForHook));
+        }
+      }
+
+      if (selectedRuntime) {
+        source.runtime = selectedRuntime.name.text;
+        // validate source path
+        const runtimePath = kindFind(selectedRuntime.atoms, "sourcePath")?.path.value ?? "";
+        const fullPath = path.join(runtimePath, source.file.value);
+        if (!fullPath.startsWith(runtimePath)) {
+          errors.push(new CompilerError(source.file.token, ErrorCode.InvalidPath));
+        }
       }
     }
   }

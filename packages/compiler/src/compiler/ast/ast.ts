@@ -48,7 +48,7 @@ export type FieldAtom = { keyword: TokenData } & (
   | { kind: "type"; identifier: Identifier }
   | { kind: "unique" }
   | { kind: "nullable" }
-  | { kind: "default"; literal: Literal }
+  | { kind: "default"; expr: Expr<"code"> }
   | { kind: "validate"; expr: ValidateExpr }
 );
 
@@ -195,8 +195,8 @@ export type ModelAction = {
 export type ModelActionAtom =
   | ActionAtomSet
   | ActionAtomReferenceThrough
-  | ActionAtomDeny
-  | ActionAtomInput;
+  | ActionAtomInput
+  | ActionAtomInputAll;
 
 export type DeleteAction = {
   kind: "delete";
@@ -285,16 +285,6 @@ export type ActionAtomReferenceThrough = {
   through: IdentifierRef<RefModelAtom>[];
   keywordThrough: TokenData;
 };
-export type ActionAtomDeny = {
-  kind: "deny";
-  keyword: TokenData;
-  fields:
-    | { kind: "all"; keyword: TokenData }
-    | {
-        kind: "list";
-        fields: IdentifierRef<RefModelField | RefModelReference>[];
-      };
-};
 export type ActionAtomInput = {
   kind: "input";
   keyword: TokenData;
@@ -303,8 +293,14 @@ export type ActionAtomInput = {
     atoms: InputAtom[];
   }[];
 };
+export type ActionAtomInputAll = {
+  kind: "input-all";
+  keyword: TokenData;
+  keywordExcept?: TokenData;
+  except: IdentifierRef<RefModelField | RefModelReference>[];
+};
 export type InputAtom = { keyword: TokenData } & (
-  | { kind: "optional" }
+  | { kind: "required" }
   | { kind: "default"; value: Expr<"code"> }
 );
 export type ExtraInput = {
@@ -352,15 +348,22 @@ export type RepeatAtom = { keyword: TokenData } & (
   | { kind: "end"; value: IntegerLiteral }
 );
 
-export type GeneratorType = "client";
+export type GeneratorType = "client" | "apidocs";
 export type Generator = {
   kind: "generator";
   keyword: TokenData;
-} & {
-  type: Extract<GeneratorType, "client">;
-  keywordType: TokenData;
-  atoms: GeneratorClientAtom[];
-};
+} & (
+  | {
+      type: Extract<GeneratorType, "client">;
+      keywordType: TokenData;
+      atoms: GeneratorClientAtom[];
+    }
+  | {
+      type: Extract<GeneratorType, "apidocs">;
+      keywordType: TokenData;
+      atoms: GeneratorApidocsAtom[];
+    }
+);
 export type GeneratorClientAtom =
   | {
       kind: "target";
@@ -370,6 +373,10 @@ export type GeneratorClientAtom =
     }
   | { kind: "output"; keyword: TokenData; value: StringLiteral };
 export type GeneratorClientAtomTarget = "js" | "ts";
+export type GeneratorApidocsAtom = { keyword: TokenData } & {
+  kind: "basePath";
+  path: StringLiteral;
+};
 
 export type Runtime = {
   kind: "runtime";

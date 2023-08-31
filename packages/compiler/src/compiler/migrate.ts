@@ -146,7 +146,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
     return {
       ref: field.name.ref,
-      default: default_ && migrateLiteral(default_.literal),
+      default: default_ && migrateExpr(default_.expr),
       primary: false,
       validate,
     };
@@ -269,7 +269,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   function migrateEntrypoint(
     entrypoint: AST.Entrypoint,
     parentAlias: Spec.IdentifierRef<AST.RefEntrypoint> | undefined,
-    parentAuthorize: Spec.Expr_<"code"> | undefined,
+    parentAuthorize: Spec.Expr<"code"> | undefined,
     depth: number
   ): Spec.Entrypoint {
     const target = migrateIdentifierRef(entrypoint.target);
@@ -323,7 +323,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     target: Spec.IdentifierRef,
     alias: Spec.IdentifierRef,
     parentAlias: Spec.IdentifierRef | undefined,
-    parentAuthorize: Spec.Expr_<"code"> | undefined,
+    parentAuthorize: Spec.Expr<"code"> | undefined,
     response: Spec.Select
   ): Spec.Endpoint {
     const input = kindFind(endpoint.atoms, "extraInputs")?.extraInputs.map(migrateExtraInput) ?? [];
@@ -384,6 +384,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function generatePrimaryAction(endpoint: AST.Endpoint): AST.Action[] {
+    const atoms: AST.ModelActionAtom[] = [];
+    if (endpoint.type === "update") {
+      atoms.push({
+        kind: "input-all",
+        keyword: AST.zeroToken,
+        except: [],
+      });
+    }
     switch (endpoint.type) {
       case "create":
       case "update": {
@@ -391,7 +399,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           {
             kind: endpoint.type,
             keyword: AST.zeroToken,
-            atoms: [],
+            atoms,
             isPrimary: true,
           },
         ];
@@ -404,9 +412,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function combineExprWithAnd(
-    a: Spec.Expr_<"code"> | undefined,
-    b: Spec.Expr_<"code"> | undefined
-  ): Spec.Expr_<"code"> | undefined {
+    a: Spec.Expr<"code"> | undefined,
+    b: Spec.Expr<"code"> | undefined
+  ): Spec.Expr<"code"> | undefined {
     if (!a) return b;
     if (!b) return a;
     return {
@@ -451,13 +459,12 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const contextRelation =
       last.ref.kind === "modelAtom" && last.ref.atomKind === "relation" ? last.ref : undefined;
     const model = globalModels.find((m) => m.name.text === getTypeModel(last.type)!)!;
-
-    const inputs = kindFilter(action.atoms, "input").flatMap(migrateActionAtomInput);
-    const denyAtoms = kindFilter(action.atoms, "deny");
-    const allDenied = !!denyAtoms.find(({ fields }) => fields.kind === "all");
-    const deniedFields = denyAtoms.flatMap(({ fields }) =>
-      fields.kind === "list" ? fields.fields.map((i) => migrateIdentifierRef(i)) : []
+    const defaultOptional = action.kind === "update";
+    const inputs = kindFilter(action.atoms, "input").flatMap((input) =>
+      migrateActionAtomInput(input, defaultOptional)
     );
+    const inputAll = kindFind(action.atoms, "input-all");
+
     const sets = kindFilter(action.atoms, "set").map(migrateActionAtomSet);
     const refThroughs = kindFilter(action.atoms, "referenceThrough").map(
       (referenceThrough): Spec.ActionAtomRefThrough => {
@@ -499,20 +506,36 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       if (refThrough) return [refThrough];
       const input = inputs.find((i) => i.target.name === field.ref.name);
       if (input) return [input];
-      if (allDenied) return [];
-      const denied = deniedFields.find((i) => i.text === field.ref.name);
-      if (denied) return [];
+      if (action.kind === "create") {
+        // In create action, fields that are not found in `input` or `set` are
+        // implicitly defined as those, depending if there's a `default` defined
+        // on a field
+        if (field.default) {
+          return [
+            {
+              kind: "set",
+              target: field.ref,
+              expr: field.default,
+            },
+          ];
+        } else {
+          return [
+            {
+              kind: "input",
+              optional: false,
+              target: field.ref,
+            },
+          ];
+        }
+      }
 
-      return [
-        {
-          kind: "input",
-          target: field.ref,
-          optional: field.ref.nullable || action.kind === "update",
-          default: field.ref.nullable
-            ? { kind: "literal", literal: { kind: "null", value: null } }
-            : undefined,
-        },
-      ];
+      if (inputAll) {
+        if (!inputAll.except.find((i) => i.text === field.ref.name)) {
+          return [{ kind: "input", optional: true, target: field.ref }];
+        }
+      }
+
+      return [];
     });
 
     const actions: Spec.ModelAction[] = [
@@ -658,23 +681,13 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     };
   }
 
-  function migrateActionAtomInput({ fields }: AST.ActionAtomInput): Spec.ActionAtomInput[] {
+  function migrateActionAtomInput(
+    { fields }: AST.ActionAtomInput,
+    defaultOptional: boolean
+  ): Spec.ActionAtomInput[] {
     return fields.map(({ field, atoms }): Spec.ActionAtomInput => {
-      const optional = !!kindFind(atoms, "optional");
       const default_ = kindFind(atoms, "default")?.value;
-      let migratedDefault: Spec.ActionAtomInput["default"];
-      if (default_) {
-        if (default_.kind === "literal") {
-          migratedDefault = { kind: "literal", literal: migrateLiteral(default_.literal) };
-        } else if (default_.kind === "path") {
-          migratedDefault = {
-            kind: "reference",
-            reference: default_.path.map((i) => migrateIdentifierRef(i)),
-          };
-        } else {
-          throw Error("Default input as expression is not supported in spec");
-        }
-      }
+      const optional = (!kindFind(atoms, "required") && defaultOptional) || !!default_;
 
       const migratedField = migrateIdentifierRef(field);
       const target =
@@ -686,7 +699,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
         kind: "input",
         target,
         optional,
-        default: migratedDefault,
+        default: default_ ? migrateExpr(default_) : undefined,
       };
     });
   }
@@ -787,6 +800,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           output,
         };
       })
+      .with({ type: "apidocs" }, (g) => {
+        const basePath = kindFind(g.atoms, "basePath")?.path.value;
+
+        return {
+          kind: "generator-apidocs" as const,
+          basePath,
+        };
+      })
       .exhaustive();
   }
 
@@ -830,7 +851,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateSelect(select: AST.Select): Spec.Select {
     return select.map((s): Spec.SingleSelect => {
-      let expr: Spec.Expr_<"db">;
+      let expr: Spec.Expr<"db">;
       if (s.target.kind === "long") {
         expr = migrateExpr(s.target.expr);
       } else {
@@ -865,7 +886,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     });
   }
 
-  function migrateExpr<kind extends "db" | "code">(expr: AST.Expr<kind>): Spec.Expr_<kind> {
+  function migrateExpr<kind extends "db" | "code">(expr: AST.Expr<kind>): Spec.Expr<kind> {
     switch (expr.kind) {
       case "binary": {
         // this is a quick fix to convert "+" to "concat" when strings are involved
@@ -907,7 +928,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           kind: "hook",
           hook: migrateActionHook(expr.hook),
           type: expr.type,
-        } as Spec.Expr_<kind>;
+        } as Spec.Expr<kind>;
       case "path":
         return {
           kind: "identifier",

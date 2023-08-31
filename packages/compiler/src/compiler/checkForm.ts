@@ -351,16 +351,17 @@ export function checkForm(document: GlobalAtom[]) {
       match(a)
         .with({ kind: "set" }, ({ target }) => [target])
         .with({ kind: "referenceThrough" }, ({ target }) => [target])
-        .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
-            noDuplicateAtoms({ ...field, kind: "input" }, ["optional", "default"]);
+            noDuplicateAtoms({ ...field, kind: "input" }, ["required", "default"]);
             return field.field;
           })
         )
+        .with({ kind: "input-all" }, (a) => a.except)
         .exhaustive()
     );
     noDuplicateNames(allIdentifiers, ErrorCode.DuplicateActionAtom);
+    noDuplicateAtoms(action, ["input-all"]);
   }
 
   function checkDeleteAction(action: DeleteAction, endpointType: EndpointType) {
@@ -433,11 +434,17 @@ export function checkForm(document: GlobalAtom[]) {
   }
 
   function checkGenerator(generator: Generator) {
-    match(generator).with({ type: "client" }, checkClientGenerator).exhaustive();
+    match(generator)
+      .with({ type: "client" }, checkClientGenerator)
+      .with({ type: "apidocs" }, checkApidocsGenerator)
+      .exhaustive();
   }
   function checkClientGenerator(generator: Generator) {
     containsAtoms(generator, ["target"]);
     noDuplicateAtoms(generator, ["target"]);
+  }
+  function checkApidocsGenerator(generator: Generator) {
+    noDuplicateAtoms(generator, ["basePath"]);
   }
 
   function checkNoDuplicateGenerators(generators: Generator[]) {
@@ -452,7 +459,7 @@ export function checkForm(document: GlobalAtom[]) {
           const tag = `${type}-${target}`;
           if (generatorTag.includes(tag)) {
             errors.push(
-              new CompilerError(g.keyword, ErrorCode.DuplicateGenerator, {
+              new CompilerError(g.keyword, ErrorCode.DuplicateClientGenerator, {
                 type,
                 target,
               })
@@ -460,6 +467,19 @@ export function checkForm(document: GlobalAtom[]) {
           }
 
           generatorTag.push(tag);
+        })
+        .with({ type: "apidocs" }, (g) => {
+          const type = g.type;
+
+          if (generatorTag.includes(type)) {
+            errors.push(
+              new CompilerError(g.keyword, ErrorCode.DuplicateApidocsGenerator, {
+                type,
+              })
+            );
+          }
+
+          generatorTag.push(type);
         })
         .exhaustive();
     });

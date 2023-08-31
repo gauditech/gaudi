@@ -27,7 +27,8 @@ export enum ErrorCode {
   DuplicateActionAtom,
   DuplicatePopulateSet,
   DuplicateHookArg,
-  DuplicateGenerator,
+  DuplicateApidocsGenerator,
+  DuplicateClientGenerator,
   RespondsCanOnlyBeUsedInCustomEndpoint,
   RespondActionNotInCustomEndpoint,
   QueryFromAliasWrongLength,
@@ -67,6 +68,7 @@ export enum ErrorCode {
   SingleCardinalityEntrypointHasIdentify,
   UnsupportedEndpointByEntrypointCardinality,
   InvalidDefaultAction,
+  InvalidPath,
   NonDefaultModelActionRequiresAlias,
   NonUniquePathItem,
   UnsuportedTargetInCreateAction,
@@ -124,8 +126,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate populate set field`;
     case ErrorCode.DuplicateHookArg:
       return `Duplicate hook argument`;
-    case ErrorCode.DuplicateGenerator:
-      return `Found duplicate generator "${params?.type}", targeting the same target "${params?.target}"`;
+    case ErrorCode.DuplicateClientGenerator:
+      return `Found duplicate "client" generators with the same target "${params?.target}"`;
+    case ErrorCode.DuplicateApidocsGenerator:
+      return `Multiple "apidocs" generators are not allowed`;
     case ErrorCode.RespondsCanOnlyBeUsedInCustomEndpoint:
       return `Actions with "responds" attribute can only be used in "custom" endpoints`;
     case ErrorCode.RespondActionNotInCustomEndpoint:
@@ -208,6 +212,8 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `"${params?.endpoint}" endpoint is not supported in ${params?.cardinality} cardinality entrypoint`;
     case ErrorCode.InvalidDefaultAction:
       return `When overriding default action, its kind must match with current endpoint kind. "${params?.action}" is not a valid default action override in "${params?.endpoint}" endpoint`;
+    case ErrorCode.InvalidPath:
+      return `Path must not contain '../' fragments`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
     case ErrorCode.NonUniquePathItem:

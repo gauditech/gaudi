@@ -4,6 +4,8 @@ import path from "path";
 import fs from "fs";
 import prompts from "prompts";
 import chalk from "chalk";
+import { initLogger } from "@gaudi/compiler";
+const logger = initLogger("gaudi:create-gaudi-app");
 
 // --- templates
 type TemplateName = "template-vite-react-ts" | "template-gaudi-ts";
@@ -90,8 +92,8 @@ async function init() {
     ensurePathExists(projectDir, `Project dir does not exist: "${projectDir}"`);
     ensurePathExists(templateDir, `Template dir does not exist: "${templateDir}"`);
 
-    console.log();
-    console.log(`Initializing project in "${projectDir}" ...`);
+    logger.debug("");
+    logger.debug(`Initializing project in "${projectDir}" ...`);
 
     // copy tpl files
     copyDir(templateDir, projectDir);
@@ -99,14 +101,14 @@ async function init() {
     // TODO: adjust p.json (package name, project name)
 
     // write next steps msg
-    console.log();
-    console.log("Done. Now run:");
-    console.log(`  cd "${targetDir}"`);
-    console.log("  npm install");
-    console.log("  npm run dev");
-    console.log("");
+    logger.debug("");
+    logger.debug("Done. Now run:");
+    logger.debug(`  cd "${targetDir}"`);
+    logger.debug("  npm install");
+    logger.debug("  npm run dev");
+    logger.debug("");
   } catch (err: any) {
-    console.log(err.message);
+    logger.error(err.message);
     return;
   }
 }

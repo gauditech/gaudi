@@ -65,6 +65,7 @@ export const Returns = createWeakKeyword("returns");
 export const Response = createWeakKeyword("response");
 export const Responds = createWeakKeyword("responds");
 export const Respond = createWeakKeyword("respond");
+export const Required = createWeakKeyword("required");
 export const Repeat = createWeakKeyword("repeat");
 export const Relation = createWeakKeyword("relation");
 export const Reference = createWeakKeyword("reference");
@@ -77,7 +78,6 @@ export const PATCH = createWeakKeyword("PATCH");
 export const Pageable = createWeakKeyword("pageable");
 export const Output = createWeakKeyword("output");
 export const Order = createWeakKeyword("order");
-export const Optional = createWeakKeyword("optional");
 export const One = createWeakKeyword("one");
 export const On = createWeakKeyword("on");
 export const Offset = createWeakKeyword("offset");
@@ -106,12 +106,12 @@ export const Field = createWeakKeyword("field");
 export const Fetch = createWeakKeyword("fetch");
 export const Extra = createWeakKeyword("extra");
 export const Execute = createWeakKeyword("execute");
+export const Except = createWeakKeyword("except");
 export const Error = createWeakKeyword("error");
 export const Entrypoint = createWeakKeyword("entrypoint");
 export const Endpoint = createWeakKeyword("endpoint");
 export const End = createWeakKeyword("end");
 export const Desc = createWeakKeyword("desc");
-export const Deny = createWeakKeyword("deny");
 export const DELETE = createWeakKeyword("DELETE");
 export const Delete = createWeakKeyword("delete");
 export const Default = createWeakKeyword("default");
@@ -126,12 +126,14 @@ export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
 export const Body = createWeakKeyword("body");
 export const Basic = createWeakKeyword("basic");
+export const BasePath = createWeakKeyword("basePath");
 export const Authorize = createWeakKeyword("authorize");
 export const Auth = createWeakKeyword("auth");
 export const Assert = createWeakKeyword("assert");
 export const Asc = createWeakKeyword("asc");
 export const As = createWeakKeyword("as");
 export const Arg = createWeakKeyword("arg");
+export const Apidocs = createWeakKeyword("apidocs");
 export const Api = createWeakKeyword("api");
 export const Action = createWeakKeyword("action");
 
@@ -211,6 +213,7 @@ export const GaudiTokens = [
   Repeat,
   Relation,
   Reference,
+  Required,
   Query,
   POST,
   Populator,
@@ -220,7 +223,6 @@ export const GaudiTokens = [
   Pageable,
   Output,
   Order,
-  Optional,
   One,
   On,
   Offset,
@@ -249,12 +251,12 @@ export const GaudiTokens = [
   Fetch,
   Extra,
   Execute,
+  Except,
   Error,
   Entrypoint,
   Endpoint,
   End,
   Desc,
-  Deny,
   DELETE,
   Delete,
   Default,
@@ -269,12 +271,14 @@ export const GaudiTokens = [
   By,
   Body,
   Basic,
+  BasePath,
   Authorize,
   Auth,
   Assert,
   Asc,
   As,
   Arg,
+  Apidocs,
   Api,
   Action,
   Null,

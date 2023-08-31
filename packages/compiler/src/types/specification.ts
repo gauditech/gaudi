@@ -19,7 +19,7 @@ export type NullLiteral = { kind: "null"; value: null };
 export type StringLiteral = { kind: "string"; value: string };
 
 export type Select = SingleSelect[];
-export type SingleSelect = { name: string; expr: Expr_<"db"> } & (
+export type SingleSelect = { name: string; expr: Expr<"db"> } & (
   | { kind: "final" }
   | { kind: "nested"; select: Select }
 );
@@ -43,13 +43,13 @@ export type Specification = {
 export type Validator = {
   name: string;
   args: { name: string; type: FieldType }[];
-  assert: Expr_<"code">;
+  assert: Expr<"code">;
   error: { code: string };
 };
 
 export type ValidateExpr =
   | { kind: "and" | "or"; exprs: ValidateExpr[] }
-  | { kind: "call"; validator: string; args: Expr_<"code">[] };
+  | { kind: "call"; validator: string; args: Expr<"code">[] };
 
 export type Model = {
   name: string;
@@ -64,7 +64,7 @@ export type Model = {
 export type Field = {
   ref: RefModelField;
   primary: boolean;
-  default?: Literal;
+  default?: Expr<"code">;
   validate?: ValidateExpr;
 };
 
@@ -92,7 +92,7 @@ export type Query = {
   cardinality: TypeCardinality;
   from: IdentifierRef[];
   fromAlias?: IdentifierRef[];
-  filter?: Expr_<"db">;
+  filter?: Expr<"db">;
   orderBy?: QueryOrderBy[];
   limit?: number;
   offset?: number;
@@ -100,20 +100,20 @@ export type Query = {
   select?: Select;
 };
 
-export type QueryOrderBy = { expr: Expr_<"db">; order?: "asc" | "desc" };
+export type QueryOrderBy = { expr: Expr<"db">; order?: "asc" | "desc" };
 
 export type Computed = {
   name: string;
   ref: RefModelAtom;
-  expr: Expr_<"db">;
+  expr: Expr<"db">;
 };
 
-export type Expr_<kind extends "db" | "code"> =
+export type Expr<kind extends "db" | "code"> =
   | ({ type: Type } & (
       | { kind: "identifier"; identifier: IdentifierRef[] }
       | { kind: "literal"; literal: Literal }
-      | { kind: "array"; elements: Expr_<kind>[] }
-      | { kind: "function"; name: string; args: Expr_<kind>[] }
+      | { kind: "array"; elements: Expr<kind>[] }
+      | { kind: "function"; name: string; args: Expr<kind>[] }
     ))
   | (kind extends "code" ? { kind: "hook"; hook: ActionHook; type: Type } : never);
 
@@ -144,18 +144,18 @@ export type EndpointList = {
   kind: "list";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr_<"code">;
+  authorize?: Expr<"code">;
   response: Select;
   pageable: boolean;
   orderBy?: QueryOrderBy[];
-  filter?: Expr_<"db">;
+  filter?: Expr<"db">;
 };
 
 export type EndpointGet = {
   kind: "get";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr_<"code">;
+  authorize?: Expr<"code">;
   response: Select;
 };
 
@@ -163,7 +163,7 @@ export type EndpointCreateUpdate = {
   kind: "create" | "update";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr_<"code">;
+  authorize?: Expr<"code">;
   response: Select;
 };
 
@@ -171,7 +171,7 @@ export type EndpointDelete = {
   kind: "delete";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr_<"code">;
+  authorize?: Expr<"code">;
 };
 
 export type EndpointCardinality = "one" | "many";
@@ -181,7 +181,7 @@ export type EndpointCustom = {
   kind: "custom";
   input: ExtraInput[];
   actions: Action[];
-  authorize?: Expr_<"code">;
+  authorize?: Expr<"code">;
   cardinality: EndpointCardinality;
   method: EndpointMethod;
   path: string;
@@ -207,9 +207,9 @@ export type Action =
     }
   | {
       kind: "respond";
-      body: Expr_<"code">;
-      httpStatus?: Expr_<"code">;
-      httpHeaders?: { name: string; value: Expr_<"code"> }[];
+      body: Expr<"code">;
+      httpStatus?: Expr<"code">;
+      httpHeaders?: { name: string; value: Expr<"code"> }[];
     }
   | {
       kind: "query";
@@ -238,14 +238,12 @@ export type ActionAtomInput = {
   kind: "input";
   target: RefModelField;
   optional: boolean;
-  default?:
-    | { kind: "literal"; literal: Literal }
-    | { kind: "reference"; reference: IdentifierRef[] };
+  default?: Expr;
 };
 export type ActionAtomSet = {
   kind: "set";
   target: RefModelField;
-  expr: Expr_<"code">;
+  expr: Expr<"code">;
 };
 export type ActionAtomRefThrough = {
   kind: "reference";
@@ -280,7 +278,7 @@ export type Populate<c extends TypeCardinality = TypeCardinality> = {
 };
 
 export type ValidatorHook = {
-  args: { name: string; expr: Expr_<"code"> }[];
+  args: { name: string; expr: Expr<"code"> }[];
   code: HookCode;
 };
 
@@ -292,7 +290,7 @@ export type ModelHook = {
 };
 
 export type ActionHook = {
-  args: { name: string; expr: Expr_<"code"> }[];
+  args: { name: string; expr: Expr<"code"> }[];
   code: HookCode;
 };
 
@@ -320,8 +318,13 @@ export type AuthenticatorBasicMethod = {
 
 // ----- Generators
 
-export type Generator = {
-  kind: "generator-client";
-  target: string;
-  output?: string;
-};
+export type Generator =
+  | {
+      kind: "generator-client";
+      target: string;
+      output?: string;
+    }
+  | {
+      kind: "generator-apidocs";
+      basePath?: string;
+    };

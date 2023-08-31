@@ -23,12 +23,10 @@ describe("runtime", () => {
 
       const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "",
-        dbSchema: "public",
         host: "127.0.0.1",
         port: 3001,
         definitionPath: "definition.json",
         outputFolder: ".",
-        basePath: undefined,
       };
 
       expect(config).toEqual(expected);
@@ -46,12 +44,10 @@ describe("runtime", () => {
 
       const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "my://connection@string/",
-        dbSchema: "test-schema",
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
         outputFolder: "test/output/path",
-        basePath: undefined,
       };
 
       expect(config).toEqual(expected);
@@ -63,12 +59,10 @@ describe("runtime", () => {
 
       const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "file-my://connection@string/",
-        dbSchema: "file-test-schema",
         host: "file-test-host",
         port: 31337000,
         definitionPath: "file-test/definition/path",
         outputFolder: "file-test/output/path",
-        basePath: undefined,
       };
 
       expect(config).toEqual(expected);
@@ -87,12 +81,10 @@ describe("runtime", () => {
 
       const expected: RequiredOptional<RuntimeConfig> = {
         dbConnUrl: "my://connection@string/",
-        dbSchema: "test-schema",
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
         outputFolder: "test/output/path",
-        basePath: undefined,
       };
 
       expect(config).toEqual(expected);

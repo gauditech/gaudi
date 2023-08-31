@@ -1,7 +1,9 @@
 import fs from "fs";
 
+import { initLogger } from "@gaudi/compiler";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
 
+const logger = initLogger("gaudi:runtime:config");
 export type RuntimeConfig = AppConfig & {
   /** Runtime server host name */
   host: string;
@@ -16,10 +18,6 @@ export type AppConfig = {
   outputFolder: string;
   /** DB connection URL */
   dbConnUrl: string;
-  /** DB default schema */
-  dbSchema?: string;
-  /** Base URL path on which an app is mounted on. */
-  basePath?: string;
 };
 
 /** Read runtime config from environment or provide default values. */
@@ -33,11 +31,10 @@ export function readConfig(): RuntimeConfig {
   const outputFolder = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
 
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
-  const dbSchema = process.env.GAUDI_DATABASE_SCHEMA || "public";
 
-  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl, dbSchema };
+  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl };
 
-  console.log("Gaudi runtime config", finalConfig);
+  logger.debug("Gaudi runtime config", finalConfig);
 
   return finalConfig;
 }

@@ -43,7 +43,9 @@ describe("entrypoint", () => {
             path "somePath"
 
             action {
-              update org as newOrg {}
+              update org as newOrg {
+                input { name, slug }
+              }
             }
           }
         }

@@ -1,5 +1,9 @@
 import { ChildProcess, SpawnOptions, spawn } from "child_process";
 
+import { initLogger } from "@gaudi/compiler";
+
+const logger = initLogger("gaudi:cli");
+
 // -------------------- Command runner
 
 /** Structure that exposes some control over child process while hiding details. */
@@ -26,7 +30,7 @@ export function createCommandRunner(
   let childProcess: ChildProcess;
   return {
     start: () => {
-      console.log(`Starting command: ${command} ${argv.join(" ")}`);
+      logger.debug(`Starting command: ${command} ${argv.join(" ")}`);
 
       return new Promise<number | null>((resolve, reject) => {
         try {
@@ -60,10 +64,10 @@ export function createCommandRunner(
       });
     },
     stop: () => {
-      // console.log(`Stopping command: ${command}`);
+      // logger.debug(`Stopping command: ${command}`);
 
       if (childProcess == null) {
-        console.warn(`Cannot stop command "${command}", process not started yet`);
+        logger.error(`Cannot stop command "${command}", process not started yet`);
         return false;
       }
 
@@ -75,12 +79,12 @@ export function createCommandRunner(
       return successful;
     },
     sendMessage: (message: string) => {
-      console.log("Sending message to child process: ", message);
+      logger.debug("Sending message to child process: ", message);
 
       childProcess.send(message);
     },
     sendSignal: (signal: NodeJS.Signals) => {
-      // console.log(`KILL child process ${childProcess.pid} using ${signal}`);
+      // logger.debug(`KILL child process ${childProcess.pid} using ${signal}`);
 
       childProcess.kill(signal);
     },

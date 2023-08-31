@@ -1,11 +1,10 @@
+import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import _ from "lodash";
 import { format } from "sql-formatter";
 import { match } from "ts-pattern";
 
 import { NamePath } from "./build";
 import { QueryPlan, QueryPlanExpression, QueryPlanJoin } from "./queryPlan";
-
-import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 
 function namepathToQuotedPair(npath: NamePath): string {
   return `"${_.initial(npath).join(".")}"."${_.last(npath)}"`;
@@ -73,9 +72,11 @@ function exprToString(expr: QueryPlanExpression): string {
         case "sum":
         case "lower":
         case "upper":
-        case "now":
-        case "concat": {
+        case "now": {
           return stringifyFn(expr.fnName, expr.args);
+        }
+        case "concat": {
+          return stringifyOp(expr.args[0], expr.args[1], "||");
         }
         case "stringify":
         case "cryptoCompare":

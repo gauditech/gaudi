@@ -1,21 +1,21 @@
-import { exec } from "child_process";
+import { exec, execSync } from "child_process";
 import fs from "fs";
 import { Server } from "http";
 import os from "os";
 import path from "path";
 
+import { initLogger } from "@gaudi/compiler";
 import { build } from "@gaudi/compiler/dist/builder/builder";
 import { dataToFieldDbnames, getRef } from "@gaudi/compiler/dist/common/refs";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
-import express, { Express, json } from "express";
+import express from "express";
 import _ from "lodash";
 
 import { compileFromString } from "@runtime/common/testUtils";
-import { readConfig } from "@runtime/config";
-import { setupDefinitionApis } from "@runtime/server/api";
-import { AppContext, bindAppContext } from "@runtime/server/context";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
-import { bindAppContextHandler, errorHandler, requestLogger } from "@runtime/server/middleware";
+import { useGaudi } from "@runtime/server/express";
+
+const logger = initLogger("gaudi:test:e2e:setup");
 
 export type PopulatorData = { model: string; data: Record<string, string | number | boolean>[] };
 
@@ -45,161 +45,36 @@ export function loadPopulatorData(filePath: string): PopulatorData[] {
   }
 }
 
-export type ApiTestSetupConfig = {
-  schemaName: string;
-  outputFolder: string;
-};
-export type ApiTestSetup = {
-  getServer: () => Server | undefined;
-  setup: () => Promise<ApiTestSetupConfig>;
-  destroy: () => Promise<void>;
+type InstanceCommands = {
+  createServerInstance: () => Promise<Server>;
 };
 
-export function createApiTestSetup(blueprint: string, data: PopulatorData[]): ApiTestSetup {
-  const config = readConfig();
-  let server: Server | undefined;
+export function createTestInstance(blueprint: string, data: PopulatorData[]): InstanceCommands {
+  // decide which database backend to run
+  const runner = process.env.GAUDI_DATABASE_URL
+    ? new PostgresTestRunner(process.env.GAUDI_DATABASE_URL)
+    : new SQLiteTestRunner();
 
-  // test context
-  let schemaName: string;
-  let outputFolder: string;
-  let context: AppContext;
+  // this will automatically clean up tests in a scope which invokes a `setup`
+  afterAll(() => runner.cleanup());
 
-  /** Setup test env for execution. Call before running tests. */
-  async function setupApiTest(): Promise<ApiTestSetupConfig> {
-    // setup app context
-    schemaName = generateSchemaName();
-    context = {
-      config,
-      dbConn: createDbConn(config.dbConnUrl, { schema: schemaName }),
-    };
-
-    console.info(`Setup API tests ("${schemaName}")`);
-
-    // setup folders
-    outputFolder = createOutputFolder(schemaName);
-    console.info(`  created output folder ${outputFolder}`);
-    const def = await buildDefinition(blueprint, outputFolder);
-    console.info(`  created definition`);
-
-    // setup DB
-    await createDbSchema(context.dbConn, schemaName);
-    console.info(`  created DB schema`);
-    await initializeDb(
-      context.config.dbConnUrl,
-      schemaName,
-      path.join(outputFolder, "db/schema.prisma")
-    );
-    console.info(`  initialized DB`);
-    await populateDb(def, context.dbConn, data);
-    console.info(`  populated DB`);
-
-    // setup server
-    server = await createAppServer(context, (app) => {
-      bindAppContext(app, context);
-
-      setupDefinitionApis(def, app);
-    });
-    console.info(`  created app server`);
-
-    console.info(`API tests setup finished`);
-
-    return {
-      schemaName,
-      outputFolder,
-    };
-  }
-
-  /** Cleanup test exec env. Call after running tests. */
-  async function destroyApiTest() {
-    console.info(`Destroy API tests ("${schemaName}")`);
-
-    if (server) {
-      await closeAppServer(server);
-      console.info(`  closed app server`);
-    }
-    await removeDbSchema(context.dbConn, schemaName);
-    console.info(`  removed DB schema`);
-    context.dbConn.destroy();
-    console.info(`  closed DB conn`);
-    removeOutputFolder(outputFolder);
-    console.info(`  removed output folder`);
-
-    console.info(`API tests destroy finished`);
-  }
-
-  return {
-    getServer: () => {
-      if (server == null) throw new Error("Test HTTP server not yet started");
-      return server;
-    },
-    setup: setupApiTest,
-    destroy: destroyApiTest,
+  const templatePromise = runner.prepareTemplate(blueprint, data);
+  const setup = async () => {
+    await templatePromise;
+    return runner.createServerInstance();
   };
+
+  return { createServerInstance: setup };
 }
 
-// ----- schema name
-
-let schemeCounter = 0; // simple schema sequence
-function generateSchemaName() {
-  return `test-${process.pid}-${schemeCounter++}`;
-}
-
-// ----- folders
-
-function createOutputFolder(name: string) {
-  const folderPath = path.join(os.tmpdir(), `gaudi-${name}`); // TODO: get system tmp path and create subfolder
-
-  // clear output folder
-  if (!fs.existsSync(folderPath)) {
-    // (re)create output folder
-    fs.mkdirSync(folderPath, { recursive: true });
-  }
-
-  return folderPath;
-}
-
-function removeOutputFolder(path: string) {
-  if (fs.existsSync(path)) {
-    // (re)create output folder
-    fs.rmSync(path, { recursive: true });
-  }
-}
-
-// ----- gaudi definition
-
-async function buildDefinition(blueprint: string, outputFolder: string) {
-  const definition = compileFromString(blueprint);
-  // use output folder for both regular output and gaudi for simpler testing
-  await build(definition, { outputFolder, gaudiFolder: outputFolder });
-
-  return definition;
-}
-
-// ----- DB
-
-async function createDbSchema(dbConn: DbConn, schema: string) {
-  await removeDbSchema(dbConn, schema);
-  await dbConn.schema.createSchema(schema);
-}
-
-async function removeDbSchema(dbConn: DbConn, schema: string) {
-  await dbConn.schema.dropSchemaIfExists(schema, true);
-}
-
-async function initializeDb(dbConnUrl: string, schema: string, definitionPath: string) {
-  const url = new URL(dbConnUrl);
-  // append DB schema param
-  url.searchParams.set("schema", schema);
-
-  const prismaDbUrl = url.toString();
-
+async function initializeDb(dbConnUrl: string, schemaPath: string) {
   await new Promise((resolve, reject) => {
     exec(
-      `npx prisma db push --schema ${definitionPath}`,
+      `npx prisma db push --schema ${schemaPath}`,
       {
         env: {
           ...process.env,
-          GAUDI_DATABASE_URL: prismaDbUrl,
+          GAUDI_DATABASE_URL: dbConnUrl,
         },
       },
       (err) => {
@@ -230,51 +105,133 @@ async function insertBatchQuery(
   return dbConn.batchInsert(model.dbname, dbData).returning("id");
 }
 
-// ----- app server
+abstract class TestRunner {
+  protected templateId: string;
+  protected instances: [string, Server][];
+  protected rootPath: string;
+  protected definition: Definition | null;
+  constructor() {
+    const id = `${Date.now()}-${_.random(Number.MAX_SAFE_INTEGER)}`;
+    this.templateId = id;
+    this.rootPath = path.join(os.tmpdir(), `gaudi-e2e-${id}`);
+    this.instances = [];
+    this.definition = null;
+    logger.debug(`Using TestRunner implementation: ${this.constructor.name}`);
+  }
+  get schemaPath() {
+    return path.join(this.rootPath, "db", "schema.prisma");
+  }
+  abstract get dbProvider(): "postgresql" | "sqlite";
+  async compileApp(blueprint: string) {
+    this.definition = compileFromString(blueprint);
+    await build(this.definition, {
+      gaudiFolder: this.rootPath,
+      outputFolder: this.rootPath,
+      dbProvider: this.dbProvider,
+    });
+  }
 
-async function createAppServer(
-  ctx: AppContext,
-  configure: (express: Express) => void
-): Promise<Server> {
-  // setup server
-  const app = express();
+  abstract prepareTemplate(_blueprint: string, _data: PopulatorData[]): Promise<void>;
+  abstract createNewEnvironment(id: string): Promise<string>;
 
-  app.use(bindAppContextHandler(app, ctx));
+  async createServerInstance(): Promise<Server> {
+    const id = _.random(Number.MAX_SAFE_INTEGER).toString();
+    const dbConnUrl = await this.createNewEnvironment(id);
+    // setup the server
+    const app = express();
+    const definitionPath = path.join(this.rootPath, "definition.json");
+    const outputFolder = this.rootPath;
+    const gaudi = useGaudi({ definitionPath, outputFolder, dbConnUrl });
+    app.use(gaudi);
+    const server = app.listen();
+    // tell Gaudi to close the DB connections so process can gracefully exit
+    server.on("close", () => gaudi.emit("gaudi:cleanup"));
 
-  app.use(json());
-  app.use(requestLogger);
+    this.instances.push([id, server]);
+    return server;
+  }
 
-  configure(app);
+  async cleanup() {
+    await Promise.all(
+      this.instances.map(
+        ([_id, server]) =>
+          new Promise((resolve, reject) =>
+            server.close((err) => (err ? reject(err) : resolve(undefined)))
+          )
+      )
+    );
 
-  app.use(errorHandler);
-
-  return new Promise((resolve, reject) => {
-    try {
-      const server = app.listen(() => {
-        const serverAddress = server.address();
-        console.log(
-          `  server started on ${
-            serverAddress == null || _.isString(serverAddress)
-              ? serverAddress
-              : `${serverAddress.address}:${serverAddress.port}`
-          }`
-        );
-
-        resolve(server);
-      });
-    } catch (err) {
-      reject(err);
-    }
-  });
+    fs.rmSync(this.rootPath, { recursive: true, force: true });
+  }
 }
 
-async function closeAppServer(server: Server) {
-  await new Promise((resolve, reject) => {
-    server.close((err) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(undefined);
+export class SQLiteTestRunner extends TestRunner {
+  get dbProvider() {
+    return "sqlite" as const;
+  }
+  async prepareTemplate(blueprint: string, data: PopulatorData[]): Promise<void> {
+    await this.compileApp(blueprint);
+    // use prisma to create the structure
+    const dbPath = path.join(this.rootPath, "db-template.sqlite");
+    execSync(`npx prisma db push --schema ${this.schemaPath}`, {
+      env: {
+        ...process.env,
+        GAUDI_DATABASE_URL: `file:${dbPath}`,
+      },
     });
-  });
+    // populate
+    const dbConn = createDbConn(`sqlite://${dbPath}`);
+    await populateDb(this.definition!, dbConn, data);
+    await dbConn.destroy();
+  }
+
+  async createNewEnvironment(id: string): Promise<string> {
+    // copy from template
+    const templatePath = path.join(this.rootPath, `db-template.sqlite`);
+    const instancePath = path.join(this.rootPath, `db-${id}.sqlite`);
+    fs.copyFileSync(templatePath, instancePath);
+    return `sqlite://${instancePath}`;
+  }
+}
+
+export class PostgresTestRunner extends TestRunner {
+  private dbConnUrl: string;
+  constructor(dbConnUrl: string) {
+    super();
+    this.dbConnUrl = dbConnUrl;
+  }
+  get templateConnUrl() {
+    return `${this.dbConnUrl}/gaudi-e2e-template-${this.templateId}`;
+  }
+  get dbProvider() {
+    return "postgresql" as const;
+  }
+  async prepareTemplate(blueprint: string, data: PopulatorData[]): Promise<void> {
+    await this.compileApp(blueprint);
+    await initializeDb(this.templateConnUrl, this.schemaPath);
+    const dbConn = createDbConn(this.templateConnUrl);
+    await populateDb(this.definition!, dbConn, data);
+    await dbConn.destroy();
+  }
+
+  async createNewEnvironment(id: string): Promise<string> {
+    const dbConn = createDbConn(this.templateConnUrl);
+    await dbConn.raw(
+      `CREATE DATABASE "gaudi-e2e-${this.templateId}-${id}" WITH TEMPLATE "gaudi-e2e-template-${this.templateId}"`
+    );
+    await dbConn.destroy();
+    return `${this.dbConnUrl}/gaudi-e2e-${this.templateId}-${id}`;
+  }
+
+  async cleanup(): Promise<void> {
+    await super.cleanup();
+    const dbConn = createDbConn(`${this.dbConnUrl}/template1`);
+    await Promise.all(
+      this.instances.map(async ([id, _server]) => {
+        await dbConn.raw(`DROP DATABASE "gaudi-e2e-${this.templateId}-${id}"`);
+      })
+    );
+    await dbConn.raw(`DROP DATABASE "gaudi-e2e-template-${this.templateId}"`);
+    await dbConn.destroy();
+  }
 }
