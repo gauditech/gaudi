@@ -40,6 +40,7 @@ import {
   GlobalAtom,
   Hook,
   Identifier,
+  IdentifierRef,
   Identify,
   InputAtom,
   IntegerLiteral,
