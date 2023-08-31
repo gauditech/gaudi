@@ -238,7 +238,7 @@ export type ActionAtomInput = {
   kind: "input";
   target: RefModelField;
   optional: boolean;
-  default?: Expr;
+  default?: Expr<"code">;
 };
 export type ActionAtomSet = {
   kind: "set";
