@@ -73,6 +73,10 @@ function getCode(): string {
     }
     error { code "invalid-email" }
   }
+
+  runtime GaudiImplicitJavascriptRuntime {
+    source path ""
+  }
   `;
 }
 

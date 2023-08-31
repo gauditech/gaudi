@@ -3,6 +3,11 @@
 exports[`execution runtime composer composes multiple execution runtimes 1`] = `
 [
   {
+    "name": "GaudiImplicitJavascriptRuntime",
+    "sourcePath": "",
+    "type": "node",
+  },
+  {
     "name": "MyRuntime1",
     "sourcePath": "./some/path/to/file1.js",
     "type": "node",
@@ -23,6 +28,11 @@ exports[`execution runtime composer composes multiple execution runtimes 1`] = `
 exports[`execution runtime composer composes single execution runtime 1`] = `
 [
   {
+    "name": "GaudiImplicitJavascriptRuntime",
+    "sourcePath": "",
+    "type": "node",
+  },
+  {
     "name": "MyRuntime1",
     "sourcePath": "./some/path/to/file1.js",
     "type": "node",
@@ -37,6 +47,11 @@ exports[`execution runtime composer composes single execution runtime 1`] = `
 
 exports[`execution runtime composer makes a single runtime the default one 1`] = `
 [
+  {
+    "name": "GaudiImplicitJavascriptRuntime",
+    "sourcePath": "",
+    "type": "node",
+  },
   {
     "name": "MyRuntime1",
     "sourcePath": "./some/path/to/file1.js",

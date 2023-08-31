@@ -1,3 +1,5 @@
+import path from "path";
+
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
@@ -66,6 +68,7 @@ import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@compiler/common/kindFilter";
+import { getExecutionRuntimeDefinition } from "@compiler/common/refs";
 import { getInternalExecutionRuntimeName } from "@compiler/composer/executionRuntimes";
 
 export function resolve(projectASTs: ProjectASTs) {
@@ -125,7 +128,8 @@ export function resolve(projectASTs: ProjectASTs) {
       ErrorCode.DuplicateRuntime
     );
 
-    const runtimes = getRuntimes();
+    const userRuntimes = getRuntimes();
+    const runtimes = userRuntimes.length > 0 ? userRuntimes : getRuntimes(true);
     if (runtimes.length > 1) {
       let hasDefaultRuntime = false;
       runtimes.forEach((runtime) => {
@@ -1193,29 +1197,41 @@ export function resolve(projectASTs: ProjectASTs) {
   function resolveHook(hook: Hook<"model" | "validator" | "action">) {
     const source = kindFind(hook.atoms, "source");
     if (source) {
-      const runtimes = getRuntimes();
+      const userRuntimes = getRuntimes();
+      const runtimes = userRuntimes.length > 0 ? userRuntimes : getRuntimes(true);
       const runtimeAtom = kindFind(hook.atoms, "runtime");
 
-      if (!runtimeAtom) {
-        const defaultRuntime =
-          runtimes.find((r) => kindFind(r.atoms, "default")) ??
-          (runtimes.length === 1 ? runtimes[0] : undefined);
-        if (defaultRuntime) {
-          source.runtime = defaultRuntime.name.text;
-        } else {
-          errors.push(new CompilerError(source.keyword, ErrorCode.NoRuntimeDefinedForHook));
-        }
+      // FIXME this skips further checks if runtime is internal
+      if (runtimeAtom?.identifier.text === getInternalExecutionRuntimeName()) {
+        source.runtime = getInternalExecutionRuntimeName();
         return;
       }
 
-      const runtime = runtimeAtom.identifier.text;
-      if (
-        runtimes.find((r) => r.name.text === runtime) ||
-        getInternalExecutionRuntimeName() === runtime
-      ) {
-        source.runtime = runtime;
+      let selectedRuntime: Runtime | undefined;
+      if (runtimeAtom) {
+        const runtimeName = runtimeAtom.identifier.text;
+        selectedRuntime = runtimes.find((r) => r.name.text === runtimeName);
+        if (!selectedRuntime) {
+          errors.push(new CompilerError(runtimeAtom.identifier.token, ErrorCode.CantFindRuntime));
+        }
       } else {
-        errors.push(new CompilerError(runtimeAtom.identifier.token, ErrorCode.CantFindRuntime));
+        selectedRuntime =
+          runtimes.length === 1
+            ? runtimes[0]
+            : runtimes.find((r) => !!kindFind(r.atoms, "default"));
+        if (!selectedRuntime) {
+          errors.push(new CompilerError(source.keyword, ErrorCode.NoRuntimeDefinedForHook));
+        }
+      }
+
+      if (selectedRuntime) {
+        source.runtime = selectedRuntime.name.text;
+        // validate source path
+        const runtimePath = kindFind(selectedRuntime.atoms, "sourcePath")?.path.value ?? "";
+        const fullPath = path.join(runtimePath, source.file.value);
+        if (!fullPath.startsWith(runtimePath)) {
+          errors.push(new CompilerError(source.file.token, ErrorCode.InvalidPath));
+        }
       }
     }
   }
