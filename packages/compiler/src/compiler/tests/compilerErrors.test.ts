@@ -722,7 +722,7 @@ describe("compiler errors", () => {
           }
         }
         `;
-      expectError(bp, `Path must not contain '../' fragments`);
+      expectError(bp, `Hook path is outside of runtime directory`);
     });
   });
 
