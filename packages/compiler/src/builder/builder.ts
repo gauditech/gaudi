@@ -9,18 +9,27 @@ import {
   render as renderApiClientTpl,
 } from "@compiler/builder/renderer/templates/apiClient.tpl";
 import {
+  OpenApiBuilderData,
+  render as renderOpenApiTpl,
+} from "@compiler/builder/renderer/templates/openapi.tpl";
+import {
   BuildDbSchemaData,
   render as renderDbSchemaTpl,
 } from "@compiler/builder/renderer/templates/schema.prisma.tpl";
-import { kindFilter } from "@compiler/common/kindFilter";
+import { kindFilter, kindFind } from "@compiler/common/kindFilter";
+import { initLogger } from "@compiler/common/logger";
 import { assertUnreachable } from "@compiler/common/utils";
 import { Definition } from "@compiler/types/definition";
 
-const DB_PROVIDER = "postgresql";
+const logger = initLogger("gaudi:compiler");
+
+export const BUILDER_OPENAPI_SPEC_FOLDER = "api-spec";
+export const BUILDER_OPENAPI_SPEC_FILE_NAME = "api.openapi.json";
 
 export type BuilderConfig = {
   outputFolder: string;
   gaudiFolder: string;
+  dbProvider: "postgresql" | "sqlite";
 };
 
 export async function build(definition: Definition, config: BuilderConfig): Promise<void> {
@@ -28,8 +37,9 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
   setupFolder(config.gaudiFolder);
 
   await buildDefinition({ definition }, config.outputFolder);
-  await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
+  await buildDb({ definition, dbProvider: config.dbProvider }, config.gaudiFolder);
   await buildApiClients(definition, config.outputFolder);
+  await buildOpenApi(definition, config.outputFolder);
 }
 
 // -------------------- part builders
@@ -74,6 +84,32 @@ async function buildDb(data: BuildDbSchemaData, outputFolder: string): Promise<u
     // render DB schema
     renderDbSchema(data).then((content) => storeTemplateOutput(outFile, content))
   );
+}
+
+// ---------- OpenAPI
+
+export async function renderOpenApi(data: OpenApiBuilderData): Promise<string> {
+  return renderOpenApiTpl(data);
+}
+
+async function buildOpenApi(definition: Definition, outputFolder: string): Promise<unknown> {
+  const apidocsGenerator = kindFind(definition.generators, "generator-apidocs");
+
+  if (apidocsGenerator) {
+    const outFile = path.join(
+      outputFolder,
+      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_FILE_NAME
+    );
+
+    return (
+      // render DB schema
+      renderOpenApi({ definition, basePath: apidocsGenerator.basePath }).then((content) =>
+        storeTemplateOutput(outFile, content)
+      )
+    );
+  }
+  // no generator
 }
 
 // ---------- API client
@@ -128,7 +164,7 @@ export async function buildApiClients(
                   sourceFile.formatText({ indentSize: 2 });
                   sourceFile.save();
 
-                  console.log(`Source file created [${Date.now() - t0} ms]: ${outPath}`);
+                  logger.debug(`Source file created [${Date.now() - t0} ms]: ${outPath}`);
                 }
                 // has errors, no emit
                 else {
@@ -174,7 +210,7 @@ export async function buildApiClients(
 
                   return project.emit().then(() => {
                     // TODO: do we need to check after-emit diagnostics? this is truly an isolated module so maybe not?
-                    console.log(`Source file compiled [${Date.now() - t0} ms]: ${outPath}`);
+                    logger.debug(`Source file compiled [${Date.now() - t0} ms]: ${outPath}`);
                   });
                 }
                 // has errors, no emit
@@ -200,7 +236,7 @@ export async function buildApiClients(
 
   function printTsError(diagnostics: Diagnostic<ts.Diagnostic>[]) {
     for (const diagnostic of diagnostics) {
-      console.log(
+      logger.debug(
         `  ${DiagnosticCategory[diagnostic.getCategory()]}:`,
         `${diagnostic.getSourceFile()?.getBaseName()}:${diagnostic.getLineNumber()}`,
         diagnostic.getMessageText()

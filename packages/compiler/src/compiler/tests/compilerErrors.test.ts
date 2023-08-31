@@ -70,6 +70,16 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Circular model definition detected in model member definition`);
     });
+    it("fails when default value doesn't match field type", () => {
+      const bp = `
+      model Org {
+       field name { type string, default 0 }
+      }`;
+      expectError(
+        bp,
+        `Unexpected type\nexpected:\n{"kind":"primitive","primitiveKind":"string"}\ngot:\n{"kind":"primitive","primitiveKind":"integer"}`
+      );
+    });
   });
 
   describe("validator", () => {
@@ -103,8 +113,8 @@ describe("compiler errors", () => {
         `;
       expectError(
         bp,
-        `Validator must contain "action" or "action hook" definition`,
-        `Validator can't have more than one "action" or "action hook" definition`
+        `Validator must contain "assert" or "assert hook" definition`,
+        `Validator can't have more than one "assert" or "assert hook" definition`
       );
     });
     it("fails when can't find validator", () => {
@@ -257,8 +267,7 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Field used multiple times in a single action`);
     });
-
-    it("fails when there's an input and deny for the same field", () => {
+    it("fails when trying to input excluded field", () => {
       const bp = `
         model Org {
           field name { type string }
@@ -268,8 +277,8 @@ describe("compiler errors", () => {
             update endpoint {
               action {
                 update org as ox {
+                  input * except { name }
                   input { name }
-                  deny { name }
                 }
               }
             }
@@ -665,11 +674,11 @@ describe("compiler errors", () => {
       const bp = `
         runtime DuplicateRuntime {
           default
-          source path "./some/path/to/file1.js"
+          source path "./some/path/to/directory1"
         }
 
         runtime DuplicateRuntime {
-          source path "./some/path/to/file2.js"
+          source path "./some/path/to/directory2"
         }
         `;
       expectError(bp, `Duplicate runtime definition`);
@@ -677,11 +686,11 @@ describe("compiler errors", () => {
     it("fails on no default runtime", () => {
       const bp = `
         runtime MyRuntime1 {
-          source path "./some/path/to/file1.js"
+          source path "./some/path/to/directory1"
         }
 
         runtime MyRuntime2 {
-          source path "./some/path/to/file2.js"
+          source path "./some/path/to/directory2"
         }
         `;
       expectError(bp, `When using multiple runtimes one runtime must be set as default`);
@@ -690,20 +699,35 @@ describe("compiler errors", () => {
       const bp = `
         runtime MyRuntime1 {
           default
-          source path "./some/path/to/file1.js"
+          source path "./some/path/to/directory1"
         }
 
         runtime MyRuntime2 {
           default
-          source path "./some/path/to/file2.js"
+          source path "./some/path/to/directory2"
         }
         `;
       expectError(bp, `Duplicate default runtime definition`);
     });
+    it("fails on invalid paths", () => {
+      const bp = `
+        runtime MyRuntime {
+          default
+          source path "./some/path/to/directory1"
+        }
+
+        model Post {
+          hook myHook {
+            source run from "../hooks.js"
+          }
+        }
+        `;
+      expectError(bp, `Path must not contain '../' fragments`);
+    });
   });
 
   describe("generator", () => {
-    it("fails for multiple generators with the same target/api", () => {
+    it("fails for multiple client generators with the same target/api", () => {
       const bp = `
         generate client {
           target js
@@ -715,7 +739,17 @@ describe("compiler errors", () => {
           output "a/b/c"
         }
         `;
-      expectError(bp, `Found duplicate generator "client", targeting the same target "js"`);
+      expectError(bp, `Found duplicate "client" generators with the same target "js"`);
+    });
+    it("fails for multiple apidocs generators", () => {
+      const bp = `
+        generate apidocs {
+        }
+
+        generate apidocs {
+        }
+      `;
+      expectError(bp, `Multiple "apidocs" generators are not allowed`);
     });
   });
 

@@ -1,27 +1,34 @@
 import { ensureEqual, ensureNot } from "@gaudi/compiler/dist/common/utils";
 import { TypeCardinality } from "@gaudi/compiler/dist/compiler/ast/type";
-import { Definition, QueryDef, SelectItem } from "@gaudi/compiler/dist/types/definition";
-import { DbConn } from "@runtime/server/dbConn";
+import {
+  Definition,
+  QueryDef,
+  SelectItem,
+  TypedExprDef,
+} from "@gaudi/compiler/dist/types/definition";
 import _ from "lodash";
 
 import { executeHook } from "../hooks";
 import { Vars } from "../server/vars";
 
-import { GAUDI_INTERNAL_TARGET_ID_ALIAS, QueryTree } from "./build";
+import {
+  GAUDI_INTERNAL_TARGET_ID_ALIAS,
+  NamePath,
+  QueryTree,
+  queryFromParts,
+  selectableId,
+} from "./build";
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
-export type Result = {
-  rowCount: number;
-  rows: Row[];
-};
+import { DbConn } from "@runtime/server/dbConn";
 
 export interface NestedRow {
-  [key: string]: string | number | NestedRow | NestedRow[];
+  [key: string]: string | number | boolean | NestedRow | NestedRow[];
 }
 
 export interface Row {
-  [key: string]: string | number;
+  [key: string]: string | number | boolean;
 }
 
 export async function executeQuery(
@@ -36,17 +43,24 @@ export async function executeQuery(
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  const result: Result = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
-  return result.rows.map((row: Row): Row => {
-    const cast = query.select.map((item: SelectItem): [string, string | number] => {
+  let results = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
+  if ("rows" in results) {
+    results = results.rows;
+  }
+  return results.map((row: Row): Row => {
+    const cast = query.select.map((item: SelectItem): [string, string | number | boolean] => {
       const value = row[item.alias];
       // FIXME this casts strings that are expected to be integers
       // but it should be some kind of bigint instead
-      if (item.kind === "expression" && item.type.kind === "integer" && typeof value === "string") {
-        return [item.alias, parseInt(value, 10)];
-      } else {
-        return [item.alias, value];
+      if (item.kind === "expression") {
+        if (item.type.kind === "integer" && typeof value === "string") {
+          return [item.alias, parseInt(value, 10)];
+        }
+        if (item.type.kind === "boolean" && typeof value === "number") {
+          return [item.alias, !!value];
+        }
       }
+      return [item.alias, value];
     });
     return Object.fromEntries(cast) as Row;
   });
@@ -130,6 +144,28 @@ export async function executeQueryTree(
     return results.map((r) => _.omit(r, GAUDI_INTERNAL_TARGET_ID_ALIAS));
   }
   return results;
+}
+
+export async function findIdBy(
+  def: Definition,
+  conn: DbConn,
+  modelName: string,
+  targetPath: NamePath,
+  value: unknown
+): Promise<number | null> {
+  const filter: TypedExprDef = {
+    kind: "function",
+    name: "is",
+    args: [
+      { kind: "alias", namePath: [modelName, ...targetPath] },
+      { kind: "variable", name: "findBy_input" },
+    ],
+  };
+  const query = queryFromParts(def, "findBy", [modelName], filter, [selectableId([modelName])]);
+  const [result] = await executeQuery(conn, def, query, new Vars({ findBy_input: value }), []);
+
+  if (!result) return null;
+  return (result[GAUDI_INTERNAL_TARGET_ID_ALIAS] as number) ?? null;
 }
 
 // ----- QueryExecutor

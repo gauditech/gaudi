@@ -1,13 +1,13 @@
-import { promises as fs } from "fs";
 import path from "path";
 
-import { Request, Response } from "express";
-
-import { getExecutionRuntime } from "@gaudi/compiler/dist/common/refs";
+import { initLogger } from "@gaudi/compiler";
+import { getExecutionRuntimeDefinition } from "@gaudi/compiler/dist/common/refs";
 import { getInternalExecutionRuntimeName } from "@gaudi/compiler/dist/composer/executionRuntimes";
 import { HookCode, HookInline, HookSource } from "@gaudi/compiler/dist/types/common";
 import { Definition, ExecutionRuntimeDef } from "@gaudi/compiler/dist/types/definition";
+import { Request, Response } from "express";
 
+const logger = initLogger("gaudi:runtime:hooks");
 const EXECUTION_RUNTIMES: Record<string, ExecutionRuntimeClient> = {};
 
 /**
@@ -22,7 +22,7 @@ export async function executeHook<T>(
   args: Record<string, unknown>
 ): Promise<T> {
   if (hook.kind === "inline") return executeInlineHook(hook, args);
-  const execRuntime = getExecutionRuntime(def, hook.runtimeName);
+  const execRuntime = getExecutionRuntimeDefinition(def, hook.runtimeName);
   return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook, args);
 }
 
@@ -43,7 +43,7 @@ export async function executeActionHook<T>(
   }
 ): Promise<T> {
   if (hook.kind === "inline") return executeInlineHook(hook, args);
-  const execRuntime = getExecutionRuntime(def, hook.runtimeName);
+  const execRuntime = getExecutionRuntimeDefinition(def, hook.runtimeName);
   return (await createExecutionRuntime(execRuntime)).executeHook<T>(hook, args, ctx);
 }
 
@@ -107,7 +107,22 @@ export type ExecutionRuntimeClient = {
   ) => Promise<T>;
 };
 
-const HOOKS_FILES_PATTERN = /.+\.[tj]s$/;
+function loadModule(root: string, file: string, modules: HookModules) {
+  if (modules[file]) {
+    return modules[file];
+  }
+  const fullPath = path.join(root, file);
+
+  try {
+    const contents = loadFileAsModule(fullPath);
+    modules[file] = contents;
+    return contents;
+  } catch (_) {
+    const err = `Hook file "${file}" not found (${fullPath})`;
+    logger.error(err);
+    throw new Error(err);
+  }
+}
 
 export async function createLocalExecutionRuntime(
   runtime: ExecutionRuntimeDef
@@ -115,22 +130,32 @@ export async function createLocalExecutionRuntime(
   const modules: HookModules = {};
 
   const sourcePath = resolveSourcePath(runtime.name, runtime.sourcePath);
-  await importHooks(sourcePath, modules);
 
   return {
     runtimeName: runtime.name,
     executeHook(hook, args, ctx) {
-      const hookFile = modules[hook.file];
-      if (hookFile == null) {
-        throw new Error(`Hook file "${hook.file}" not found`);
-      }
-
+      const hookFile = loadModule(sourcePath, hook.file, modules);
       const hookFn = hookFile[hook.target];
       if (hookFn == null) {
-        throw new Error(`Hook "${hook.target}" in file "${hook.file}" not found`);
+        const err = `Hook "${hook.target}" in file "${hook.file}" not found`;
+        logger.error(err);
+        throw new Error(err);
       }
 
-      return hookFn(args, ctx);
+      logger.debug(`Running hook ${hook.file}::${hook.target}`);
+      return (async () => {
+        try {
+          const result = await hookFn(args, ctx);
+          logger.debug(`Hook ${hook.file}::${hook.target} finished successfully: %O`, result);
+          return result;
+        } catch (e: any) {
+          logger.error(`Hook ${hook.file}::${hook.target} failed: %O`, {
+            message: e.message,
+            stack: e.stack,
+          });
+          throw e;
+        }
+      })();
     },
   };
 }
@@ -153,31 +178,6 @@ function resolveSourcePath(name: string, sourcePath: string): string {
   } else {
     return path.resolve(sourcePath);
   }
-}
-
-async function importHooks(sourcePath: string, modules: HookModules) {
-  console.log("Loading hooks sources from:", path.resolve(sourcePath));
-
-  async function loadHooksFromDir(dir: string) {
-    const entities = await fs.readdir(path.join(sourcePath, dir));
-
-    const promises = entities.map(async (entityFilename) => {
-      const hookPath = path.join(dir, entityFilename);
-      const entity = path.join(sourcePath, hookPath);
-
-      const stats = await fs.lstat(entity);
-
-      if (stats.isDirectory()) {
-        await loadHooksFromDir(hookPath);
-      } else if (stats.isFile() && HOOKS_FILES_PATTERN.test(entityFilename)) {
-        modules[hookPath] = loadFileAsModule(entity);
-      }
-    });
-
-    await Promise.all(promises);
-  }
-
-  await loadHooksFromDir("");
 }
 
 function loadFileAsModule(filepath: string) {

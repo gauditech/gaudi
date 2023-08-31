@@ -36,6 +36,16 @@ model Org {
     limit 5
   }
 
+  query newest_repo {
+    from repos,
+    order by { id desc },
+    first
+  }
+
+  computed newest_repo_name {
+    newest_repo.name
+  }
+
   hook nameAndDesc {
     arg test query {
       select { name, description }
@@ -80,7 +90,7 @@ api {
   // Orgs
   entrypoint Org as org {
     identify { through slug }
-    response { name, slug, description, summary, nameAndDesc, blank_repos { id, total_issues, nameAndDesc: name + " " + description } }
+    response { name, slug, description, summary, nameAndDesc, blank_repos { id, total_issues, nameAndDesc: name + " " + description }, newest_repo_name }
 
     // --- endpoints with "execute" actions
     // register BEFORE other endpoints to avoid mismatching with other endpoints
@@ -190,7 +200,7 @@ api {
         }
       }
     }
-    
+
     // custom many endpoint - "respond" action with simple response
     custom endpoint {
       cardinality many
@@ -319,7 +329,9 @@ api {
       method PATCH
       path "customUpdate"
       action {
-        update org as newOrg {}
+        update org as newOrg {
+          input { name, description }
+        }
       }
     }
     custom endpoint {
@@ -361,7 +373,9 @@ api {
     }
     update endpoint {
       action {
-        update {}
+        update {
+          input { name, description }
+        }
       }
     }
     delete endpoint {}
@@ -380,7 +394,7 @@ api {
         action {
           create as repo {
             set latest_num 0
-            set description "Description: " + raw_description
+            input { description { default "Description: " + raw_description } }
             set slug hook {
               arg org org.name
               arg sequence [1,2,3]
@@ -391,7 +405,9 @@ api {
       }
       update endpoint {
         action {
-          update {}
+          update {
+            input { description }
+          }
         }
       }
       delete endpoint {}
@@ -408,7 +424,6 @@ api {
             }
 
             update repo as repo2 {
-              deny *
               set latest_num repo.latest_num + 1
             }
 

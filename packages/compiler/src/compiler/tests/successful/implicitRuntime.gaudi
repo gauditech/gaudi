@@ -1,0 +1,5 @@
+model User {
+  hook random {
+    source randomise from "./dist/hooks.js"
+  }
+}

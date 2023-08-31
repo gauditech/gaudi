@@ -394,7 +394,7 @@ exports[`Query plan supports 'in' array or subqueries: QueryPlan snapshot 1`] = 
           "__join_connection",
         ],
       ],
-      "joinType": "inner",
+      "joinType": "left",
       "kind": "subquery",
       "namePath": [
         "Org",
@@ -458,7 +458,7 @@ exports[`Query plan supports 'in' array or subqueries: SQL snapshot 1`] = `
   "Org"."id" AS "id"
 FROM
   "org" AS "Org"
-  INNER JOIN (
+  LEFT JOIN (
     SELECT
       *
     FROM
@@ -927,9 +927,9 @@ exports[`Query plan works with complex aggregates: SQL snapshot 1`] = `
   "Org.owner"."full_name" AS "owner_name"
 FROM
   "org" AS "Org"
-  INNER JOIN "owner" AS "Org.owner" ON "Org"."owner_id" = "Org.owner"."id"
+  LEFT JOIN "owner" AS "Org.owner" ON "Org"."owner_id" = "Org.owner"."id"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
-  INNER JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
+  LEFT JOIN "org" AS "Org.repos.org" ON "Org.repos"."org_id" = "Org.repos.org"."id"
   LEFT JOIN (
     SELECT
       "Org"."id" AS "__join_connection",

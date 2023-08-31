@@ -77,7 +77,7 @@ exports[`runtime validation build fieldset with validation 1`] = `
     "nullable": {
       "kind": "field",
       "nullable": true,
-      "required": false,
+      "required": true,
       "type": "string",
       "validate": undefined,
     },

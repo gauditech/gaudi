@@ -2,6 +2,7 @@
 
 import path from "path";
 
+import { initLogger } from "@gaudi/compiler";
 import { createAsyncQueueContext } from "@gaudi/compiler/dist/common/async/queueAsync";
 import { EngineConfig, readConfig } from "@gaudi/compiler/dist/config";
 import _ from "lodash";
@@ -25,6 +26,7 @@ import { Controllable } from "@cli/types";
 import { resolveModulePath } from "@cli/utils";
 import { watchResources } from "@cli/watcher";
 
+const logger = initLogger("gaudi:cli");
 parseArguments();
 
 function parseArguments() {
@@ -32,7 +34,7 @@ function parseArguments() {
     .usage("$0 <command> [arguments]")
     .command({
       command: "build [root]",
-      describe: "Build entire project. Compiles Gaudi code, and copies files to output folder",
+      describe: "Build entire project. Compiles Gaudi code and copies files to output folder",
       handler: (args) => {
         buildCommandHandler(args);
       },
@@ -62,7 +64,7 @@ function parseArguments() {
     })
     .command({
       command: "start [root]",
-      describe: "Start Gaudi projects",
+      describe: "Start application server",
       handler: (args) => {
         startCommandHandler(args);
       },
@@ -86,48 +88,73 @@ function parseArguments() {
             handler: (args) => {
               dbPushCommandHandler(args);
             },
+            builder: (yargs) =>
+              yargs.positional("root", {
+                type: "string",
+                describe: "project root folder",
+              }),
           })
           .command({
             command: "reset [root]",
-            describe: "Reset DB",
+            describe: "Reset database",
             handler: (args) => {
               dbResetCommandHandler(args);
             },
+            builder: (yargs) =>
+              yargs.positional("root", {
+                type: "string",
+                describe: "project root folder",
+              }),
           })
           .command({
-            command: "populate [root]",
-            describe: "Reset DB and populate it using populator",
+            command: "populate [root] --populator=<populator name>",
+            describe: "Reset database and populate it using given populator",
             handler: (args) => {
               dbPopulateCommandHandler(args);
             },
             builder: (yargs) =>
-              yargs.option("populator", {
-                alias: "p",
-                type: "string",
-                description: "Name of populator to use in population",
-                demandOption: '  try adding: "--populator=<populator name>"',
-              }),
+              yargs
+                .positional("root", {
+                  type: "string",
+                  describe: "project root folder",
+                })
+                .option("populator", {
+                  alias: "p",
+                  type: "string",
+                  description: "Name of populator to use in population",
+                  demandOption: '  try adding: "--populator=<populator name>"',
+                }),
           })
           .command({
-            command: "migrate [root]",
-            builder: (yargs) =>
-              yargs.option("name", {
-                alias: "n",
-                type: "string",
-                description: "Name of migration to be created",
-                demandOption: '  try adding "--name=<migration name>"',
-              }),
+            command: "migrate [root] --name=<migration name>",
             describe: "Create DB migration file",
+            builder: (yargs) =>
+              yargs
+                .positional("root", {
+                  type: "string",
+                  describe: "project root folder",
+                })
+                .option("name", {
+                  alias: "n",
+                  type: "string",
+                  description: "Name of a migration to be created",
+                  demandOption: '  try adding "--name=<migration name>"',
+                }),
             handler: (args) => {
               dbMigrateCommandHandler(args);
             },
           })
           .command({
             command: "deploy [root]",
-            describe: "Deploy migrations to production database",
+            describe: "Deploy yet undeployed migrations to target database",
             handler: (args) => {
               dbDeployCommandHandler(args);
             },
+            builder: (yargs) =>
+              yargs.positional("root", {
+                type: "string",
+                describe: "project root folder",
+              }),
           })
           // fallback to help message
           .command({
@@ -177,18 +204,18 @@ function setupCommandEnv(args: ArgumentsCamelCase<CommonCommandArgs>) {
   if (args.root) {
     const resolvedRoot = path.resolve(args.root);
     process.chdir(resolvedRoot);
-    console.log(`Working directory set to "${resolvedRoot}"`);
+    logger.debug(`Working directory set to "${resolvedRoot}"`);
   }
   // gaudi development
   if (args.gaudiDev) {
-    console.log("Gaudi dev mode enabled.");
+    logger.debug("Gaudi dev mode enabled.");
   }
 }
 
 // --- build command
 
 async function buildCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
-  console.log("Building entire project ...");
+  logger.debug("Building entire project ...");
 
   setupCommandEnv(args);
 
@@ -201,7 +228,7 @@ async function buildCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) 
 // --- dev command
 
 async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
-  console.log("Starting project dev build ... ");
+  logger.debug("Starting project dev build ... ");
 
   setupCommandEnv(args);
 
@@ -217,7 +244,7 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
       // check for errors during stopping
       results.forEach((r) => {
         if (r.status === "rejected") {
-          console.error("Dev mode start error: ", r.reason);
+          logger.error("Dev mode start error: ", r.reason);
         }
       });
     }
@@ -231,7 +258,7 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
       // check for errors during stopping
       results.forEach((r) => {
         if (r.status === "rejected") {
-          console.error("Dev mode cleanup error: ", r.reason);
+          logger.error("Dev mode cleanup error: ", r.reason);
         }
       });
     }
@@ -263,7 +290,7 @@ function watchCompileCommand(
         .catch((err) => {
           // just use catch to prevent error from leaking to node and finishing entire watch process
           // command will be reexecuted anyway on next change
-          console.error("Error running compile command:", err);
+          logger.error("Error running compile command:", err);
         })
     );
 
@@ -301,7 +328,7 @@ function watchDbPushCommand(
         .catch((err) => {
           // just use catch to prevent error from leaking to node and finishing entire watch process
           // command will be reexecuted anyway on next change
-          console.error("Error running DB push command:", err);
+          logger.error("Error running DB push command:", err);
         })
     );
 
@@ -335,7 +362,7 @@ function watchCopyStaticCommand(
       copyStatic(config).catch((err) => {
         // just use catch to prevent error from leaking to node and finishing entire watch process
         // command will be reexecuted anyway on next change
-        console.error("Error running copy static command:", err);
+        logger.error("Error running copy static command:", err);
       })
     );
 
@@ -371,7 +398,7 @@ function watchStartCommand(
       await command.start().catch((err) => {
         // just use catch to prevent error from leaking to node and finishing entire watch process
         // nodemon will restart process on change anyway
-        console.error("Error running start command:", err);
+        logger.error("Error running start command:", err);
       });
     } else {
       // ask `nodemon` to restart monitored process
@@ -447,7 +474,7 @@ function dbPopulateCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs & D
     .catch((err) => {
       // just use catch to prevent error from leaking to node and finishing entire watch process
       // command will be reexecuted anyway on next change
-      console.error("Error running db populate command:", err);
+      logger.error("Error running db populate command:", err);
     });
 }
 

@@ -2,8 +2,8 @@ import { EmbeddedActionsParser, IToken, ParserMethod, TokenType } from "chevrota
 
 import {
   Action,
-  ActionAtomDeny,
   ActionAtomInput,
+  ActionAtomInputAll,
   ActionAtomReferenceThrough,
   ActionAtomSet,
   ActionHook,
@@ -33,6 +33,7 @@ import {
   FieldAtom,
   FloatLiteral,
   Generator,
+  GeneratorApidocsAtom,
   GeneratorClientAtom,
   GeneratorClientAtomTarget,
   GeneratorType,
@@ -59,8 +60,6 @@ import {
   QueryAction,
   QueryActionAtom,
   QueryAtom,
-  RefModelField,
-  RefModelReference,
   Reference,
   ReferenceAtom,
   Relation,
@@ -143,7 +142,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: ValidatorAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Validator));
-    const name = this.SUBRULE(this.identifierRef);
+    const name = this.SUBRULE(this.identifierDef);
     this.CONSUME1(L.LCurly);
     this.MANY(() => {
       this.OR([
@@ -176,7 +175,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: ValidatorArgAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Arg));
-    const name = this.SUBRULE1(this.identifierRef);
+    const name = this.SUBRULE1(this.identifierDef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -221,7 +220,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: ModelAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Model));
-    const name = this.SUBRULE(this.identifierRef);
+    const name = this.SUBRULE(this.identifierDef);
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR([
@@ -247,7 +246,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: FieldAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Field));
-    const name = this.SUBRULE1(this.identifierRef);
+    const name = this.SUBRULE1(this.identifierDef);
     this.CONSUME1(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -263,8 +262,8 @@ class GaudiParser extends EmbeddedActionsParser {
           {
             ALT: () => {
               const keyword = this.createTokenData(this.CONSUME(L.Default));
-              const literal = this.SUBRULE(this.literal);
-              atoms.push({ kind: "default", literal, keyword });
+              const expr = this.SUBRULE(this.expr);
+              atoms.push({ kind: "default", expr, keyword });
             },
           },
           {
@@ -316,7 +315,7 @@ class GaudiParser extends EmbeddedActionsParser {
   validateCallExpr = this.RULE("validateCallExpr", (): ValidateExpr => {
     const args: Expr[] = [];
 
-    const validator = this.SUBRULE(this.identifier);
+    const validator = this.SUBRULE(this.identifierRef);
     this.CONSUME(L.LRound);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -356,7 +355,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: ReferenceAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Reference));
-    const name = this.SUBRULE1(this.identifierRef);
+    const name = this.SUBRULE1(this.identifierDef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -423,7 +422,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: RelationAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Relation));
-    const name = this.SUBRULE1(this.identifierRef);
+    const name = this.SUBRULE1(this.identifierDef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -453,7 +452,7 @@ class GaudiParser extends EmbeddedActionsParser {
 
   computed = this.RULE("computed", (): Computed => {
     const keyword = this.createTokenData(this.CONSUME(L.Computed));
-    const name = this.SUBRULE(this.identifierRef);
+    const name = this.SUBRULE(this.identifierDef);
     this.CONSUME(L.LCurly);
     const expr = this.SUBRULE(this.expr) as Expr<Db>;
     this.CONSUME(L.RCurly);
@@ -465,7 +464,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const atoms: QueryAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Query));
-    const name = this.SUBRULE(this.identifierRef);
+    const name = this.SUBRULE(this.identifierDef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -484,7 +483,7 @@ class GaudiParser extends EmbeddedActionsParser {
           const identifierPath = this.SUBRULE1(this.identifierRefPath);
           const as = this.OPTION(() => {
             const keyword = this.createTokenData(this.CONSUME(L.As));
-            const identifierPath = this.SUBRULE2(this.identifierRefPath);
+            const identifierPath = this.SUBRULE2(this.identifierDefPath);
             return { keyword, identifierPath };
           });
           return {
@@ -594,7 +593,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const target = this.SUBRULE1(this.identifierRef);
     const as = this.OPTION(() => {
       const keyword = this.createTokenData(this.CONSUME(L.As));
-      const identifier = this.SUBRULE2(this.identifierRef);
+      const identifier = this.SUBRULE2(this.identifierDef);
       return { identifier, keyword };
     });
     this.CONSUME1(L.LCurly);
@@ -803,7 +802,7 @@ class GaudiParser extends EmbeddedActionsParser {
       {
         ALT: () => {
           const keyword = this.createTokenData(this.CONSUME2(L.As));
-          const identifier = this.SUBRULE2(this.identifierRef);
+          const identifier = this.SUBRULE2(this.identifierDef);
           this.CONSUME1(L.LCurly);
           return { target: undefined, as: { keyword, identifier } };
         },
@@ -813,7 +812,7 @@ class GaudiParser extends EmbeddedActionsParser {
           const target = this.SUBRULE(this.identifierRefPath);
           const as = this.OPTION(() => {
             const keyword = this.createTokenData(this.CONSUME1(L.As));
-            const identifier = this.SUBRULE1(this.identifierRef);
+            const identifier = this.SUBRULE1(this.identifierDef);
             return { keyword, identifier };
           });
           this.CONSUME2(L.LCurly);
@@ -832,8 +831,8 @@ class GaudiParser extends EmbeddedActionsParser {
       this.OR3([
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomSet)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomReference)) },
-        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomDeny)) },
         { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInput)) },
+        { ALT: () => atoms.push(this.SUBRULE(this.actionAtomInputAll)) },
       ]);
     });
     this.CONSUME(L.RCurly);
@@ -857,7 +856,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = this.createTokenData(this.CONSUME(L.Execute));
     const alias = this.OPTION(() => {
       const keywordAs = this.createTokenData(this.CONSUME(L.As));
-      const name = this.SUBRULE(this.identifierRef);
+      const name = this.SUBRULE(this.identifierDef);
       return { keywordAs, name };
     });
 
@@ -937,7 +936,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = this.createTokenData(this.CONSUME(L.Query));
     const alias = this.OPTION(() => {
       const keyword = this.createTokenData(this.CONSUME(L.As));
-      const name = this.SUBRULE(this.identifierRef);
+      const name = this.SUBRULE(this.identifierDef);
       return { keyword, name };
     });
 
@@ -1025,34 +1024,6 @@ class GaudiParser extends EmbeddedActionsParser {
     };
   });
 
-  actionAtomDeny = this.RULE("actionAtomDeny", (): ActionAtomDeny => {
-    const keyword = this.createTokenData(this.CONSUME(L.Deny));
-    const fields = this.OR<ActionAtomDeny["fields"]>([
-      {
-        ALT: () => {
-          const keyword = this.createTokenData(this.CONSUME(L.Mul));
-          return { kind: "all", keyword };
-        },
-      },
-      {
-        ALT: () => {
-          const fields: IdentifierRef<RefModelField | RefModelReference>[] = [];
-
-          this.CONSUME(L.LCurly);
-          this.MANY_SEP({
-            SEP: L.Comma,
-            DEF: () => fields.push(this.SUBRULE(this.identifierRef)),
-          });
-          this.CONSUME(L.RCurly);
-
-          return { kind: "list", fields };
-        },
-      },
-    ]);
-
-    return { kind: "deny", fields, keyword };
-  });
-
   actionAtomInput = this.RULE("actionAtomInput", (): ActionAtomInput => {
     const fields: ActionAtomInput["fields"] = [];
 
@@ -1071,11 +1042,29 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "input", fields, keyword };
   });
 
+  actionAtomInputAll = this.RULE("actionAtomInputAll", (): ActionAtomInputAll => {
+    const except: ActionAtomInputAll["except"] = [];
+    const keyword = this.createTokenData(this.CONSUME(L.Input), this.CONSUME(L.Mul));
+
+    const keywordExcept = this.OPTION(() => {
+      const keyword = this.createTokenData(this.CONSUME(L.Except));
+      this.CONSUME(L.LCurly);
+      this.MANY_SEP({
+        SEP: L.Comma,
+        DEF: () => except.push(this.SUBRULE(this.identifierRef)),
+      });
+      this.CONSUME(L.RCurly);
+      return keyword;
+    });
+
+    return { kind: "input-all", keyword, keywordExcept, except };
+  });
+
   extraInput = this.RULE("extraInput", (): ExtraInput => {
     const atoms: ExtraInputAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Field));
-    const name = this.SUBRULE(this.identifierRef);
+    const name = this.SUBRULE(this.identifierDef);
     this.CONSUME(L.LCurly);
     this.MANY_SEP({
       SEP: L.Comma,
@@ -1121,8 +1110,8 @@ class GaudiParser extends EmbeddedActionsParser {
           this.OR([
             {
               ALT: () => {
-                const keyword = this.createTokenData(this.CONSUME(L.Optional));
-                atoms.push({ kind: "optional", keyword });
+                const keyword = this.createTokenData(this.CONSUME(L.Required));
+                atoms.push({ kind: "required", keyword });
               },
             },
             {
@@ -1161,7 +1150,7 @@ class GaudiParser extends EmbeddedActionsParser {
     const target = this.SUBRULE1(this.identifierRef);
     const as = this.OPTION1(() => {
       const keyword = this.createTokenData(this.CONSUME1(L.As));
-      const identifier = this.SUBRULE2(this.identifierRef);
+      const identifier = this.SUBRULE2(this.identifierDef);
       return { identifier, keyword };
     });
     this.CONSUME(L.LCurly);
@@ -1172,7 +1161,7 @@ class GaudiParser extends EmbeddedActionsParser {
             const keyword = this.createTokenData(this.CONSUME(L.Repeat));
             const as = this.OPTION2(() => {
               const keyword = this.createTokenData(this.CONSUME2(L.As));
-              const identifier = this.SUBRULE3(this.identifierRef);
+              const identifier = this.SUBRULE3(this.identifierDef);
               return { keyword, identifier };
             });
             const repeatValue = this.SUBRULE(this.repeatValue);
@@ -1279,12 +1268,20 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   generator = this.RULE("generator", (): Generator => {
+    return this.OR<Generator>([
+      { ALT: () => this.SUBRULE(this.generatorClient) },
+      { ALT: () => this.SUBRULE(this.generatorApidocs) },
+    ]);
+  });
+
+  generatorClient = this.RULE("generatorClient", (): Generator => {
     const atoms: GeneratorClientAtom[] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Generate));
-    const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Client) }]);
+    const typeToken = this.CONSUME(L.Client);
     const keywordType = this.createTokenData(typeToken);
-    const type = typeToken.image as GeneratorType;
+    const type = typeToken.image as Extract<GeneratorType, "client">;
+
     this.CONSUME(L.LCurly);
     this.MANY(() => {
       this.OR2([
@@ -1314,6 +1311,31 @@ class GaudiParser extends EmbeddedActionsParser {
     return { kind: "generator", type, atoms, keyword, keywordType };
   });
 
+  generatorApidocs = this.RULE("generatorApidocs", (): Generator => {
+    const atoms: GeneratorApidocsAtom[] = [];
+
+    const keyword = this.createTokenData(this.CONSUME(L.Generate));
+    const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Apidocs) }]);
+    const keywordType = this.createTokenData(typeToken);
+    const type = typeToken.image as Extract<GeneratorType, "apidocs">;
+
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR2([
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.BasePath));
+            const path = this.SUBRULE(this.string);
+            atoms.push({ kind: "basePath", path, keyword });
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "generator", type, atoms, keyword, keywordType };
+  });
+
   modelHook: ParserMethod<[], ModelHook> = this.GENERATE_HOOK("modelHook", "model");
   validatorHook: ParserMethod<[], ValidatorHook> = this.GENERATE_HOOK("validatorHook", "validator");
   actionHook: ParserMethod<[], ActionHook> = this.GENERATE_HOOK("actionHook", "action");
@@ -1325,7 +1347,7 @@ class GaudiParser extends EmbeddedActionsParser {
     return this.RULE(ruleName, (): h => {
       const keyword = this.createTokenData(this.CONSUME(L.Hook));
 
-      const name = kind === "model" ? this.SUBRULE1(this.identifierRef) : undefined;
+      const name = kind === "model" ? this.SUBRULE1(this.identifierDef) : undefined;
 
       const atoms: unknown[] = [];
 
@@ -1634,18 +1656,38 @@ class GaudiParser extends EmbeddedActionsParser {
     return { text: token.image, token: this.createTokenData(token) };
   });
 
-  identifierRef = this.RULE("identifierRef", (): Identifier & { type: Type } => {
+  identifierRef = this.RULE(
+    "identifierRef",
+    (): Identifier & { type: Type; isDefinition: false } => {
+      const identifier = this.SUBRULE(this.identifier);
+      return { ...identifier, type: Type.any, isDefinition: false };
+    }
+  );
+
+  identifierDef = this.RULE("identifierDef", (): IdentifierRef<never> => {
     const identifier = this.SUBRULE(this.identifier);
-    return { ...identifier, type: Type.any };
+    return { ...identifier, type: Type.any, isDefinition: true };
   });
 
-  identifierRefPath = this.RULE("identifierRefPath", (): (Identifier & { type: Type })[] => {
-    const identifiers: (Identifier & { type: Type })[] = [];
+  identifierRefPath = this.RULE("identifierRefPath", (): IdentifierRef<never>[] => {
+    const identifiers: IdentifierRef<never>[] = [];
 
     identifiers.push(this.SUBRULE1(this.identifierRef));
     this.MANY(() => {
       this.CONSUME(L.Dot);
       identifiers.push(this.SUBRULE2(this.identifierRef));
+    });
+
+    return identifiers;
+  });
+
+  identifierDefPath = this.RULE("identifierDefPath", (): IdentifierRef<never>[] => {
+    const identifiers: IdentifierRef<never>[] = [];
+
+    identifiers.push(this.SUBRULE1(this.identifierDef));
+    this.MANY(() => {
+      this.CONSUME(L.Dot);
+      identifiers.push(this.SUBRULE2(this.identifierDef));
     });
 
     return identifiers;

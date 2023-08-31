@@ -1,7 +1,13 @@
+validator Test {
+  arg foo { type string }
+  assert { foo is not "error" }
+  error { code "test-string" }
+}
+
 model User {
   field fullName {
     type string,
-    validate { minLength(4) and maxLength(20) }
+    validate { minLength(4) and maxLength(20) and Test() }
   }
   field size { type integer, validate { minInt(0) } }
 }

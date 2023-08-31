@@ -1,11 +1,12 @@
 import {
   Ref,
+  RefEntrypoint,
   RefModel,
   RefModelAtom,
   RefModelField,
   RefModelReference,
   RefModelRelation,
-  RefTarget,
+  RefPopulate,
 } from "@compiler/compiler/ast/ast";
 import { FieldType, Type, TypeCardinality } from "@compiler/compiler/ast/type";
 import { HookCode } from "@compiler/types/common";
@@ -63,7 +64,7 @@ export type Model = {
 export type Field = {
   ref: RefModelField;
   primary: boolean;
-  default?: Literal;
+  default?: Expr;
   validate?: ValidateExpr;
 };
 
@@ -124,7 +125,7 @@ export type Entrypoint<c extends TypeCardinality = TypeCardinality> = {
   model: string;
   cardinality: c;
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
-  alias: IdentifierRef<RefTarget>;
+  alias: IdentifierRef<RefEntrypoint>;
   identifyThrough: c extends "collection" ? IdentifierRef<RefModelAtom>[] : undefined;
   endpoints: Endpoint[];
   entrypoints: Entrypoint[];
@@ -237,9 +238,7 @@ export type ActionAtomInput = {
   kind: "input";
   target: RefModelField;
   optional: boolean;
-  default?:
-    | { kind: "literal"; literal: Literal }
-    | { kind: "reference"; reference: IdentifierRef[] };
+  default?: Expr;
 };
 export type ActionAtomSet = {
   kind: "set";
@@ -272,7 +271,7 @@ export type Populator = {
 export type Populate<c extends TypeCardinality = TypeCardinality> = {
   target: IdentifierRef<RefModel | RefModelReference | RefModelRelation>;
   cardinality: c;
-  alias: IdentifierRef<RefTarget>;
+  alias: IdentifierRef<RefPopulate>;
   setters: ActionAtomSet[];
   populates: Populate[];
   repeater?: Repeater;
@@ -322,8 +321,13 @@ export type AuthenticatorBasicMethod = {
 
 // ----- Generators
 
-export type Generator = {
-  kind: "generator-client";
-  target: string;
-  output?: string;
-};
+export type Generator =
+  | {
+      kind: "generator-client";
+      target: string;
+      output?: string;
+    }
+  | {
+      kind: "generator-apidocs";
+      basePath?: string;
+    };

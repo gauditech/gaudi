@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import { EngineConfig } from "@gaudi/compiler/dist/config";
 import * as dotenv from "dotenv";
 import _ from "lodash";
@@ -5,8 +6,10 @@ import nodemon from "nodemon";
 
 import { CommandRunner } from "@cli/runner";
 
+const logger = initLogger("gaudi:cli");
+
 export function start(_config: EngineConfig): CommandRunner {
-  console.log("Starting Gaudi project ... ", process.cwd());
+  logger.debug("Starting Gaudi project ... ", process.cwd());
 
   dotenv.config();
 
@@ -24,7 +27,7 @@ export function start(_config: EngineConfig): CommandRunner {
     start: () => {
       return new Promise((resolve, reject) => {
         try {
-          console.log(`Starting "nodemon" ${JSON.stringify(nodemonOpts)}`);
+          logger.debug(`Starting "nodemon" ${JSON.stringify(nodemonOpts)}`);
 
           p = nodemon(nodemonOpts);
 
@@ -69,7 +72,7 @@ export function start(_config: EngineConfig): CommandRunner {
         return Promise.reject("Nodemon process not initialized. Did you call `start()`?");
       }
 
-      console.log("Sending message to child process: ", message);
+      logger.debug("Sending message to child process: ", message);
 
       p.emit(message);
     },

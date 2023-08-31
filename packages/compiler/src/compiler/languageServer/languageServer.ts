@@ -2,14 +2,14 @@ import fs from "fs";
 import path from "path";
 
 import { sync as glob } from "fast-glob";
+import _ from "lodash";
 import {
   Diagnostic,
   DiagnosticSeverity,
   DidChangeWatchedFilesNotification,
   FileChangeType,
-  LSPErrorCodes,
+  Location,
   ProposedFeatures,
-  ResponseError,
   SemanticTokens,
   SemanticTokensBuilder,
   TextDocumentSyncKind,
@@ -23,6 +23,7 @@ import { compileToAST } from "..";
 import { GlobalAtom, ProjectASTs, TokenData } from "../ast/ast";
 import { CompilerError } from "../compilerError";
 
+import { SourceRef, findIdentifierFromPosition, getIdentifiers } from "./identifierSearch";
 import { TokenModifiers, TokenTypes, buildTokens } from "./tokenBuilder";
 
 import { readConfig } from "@compiler/config";
@@ -36,6 +37,8 @@ connection.onInitialize((params) => {
   return {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Full,
+      definitionProvider: !!params.capabilities.textDocument?.definition,
+      referencesProvider: !!params.capabilities.textDocument?.references,
       semanticTokensProvider: {
         documentSelector: [{ language: "gaudi" }],
         legend: {
@@ -56,9 +59,15 @@ type Project = {
   configUri: string;
   inputFolder: string;
   ast: ProjectASTs;
+  identifiers: SourceRef[];
 };
 const projects: Map<string, Project> = new Map();
-const nonProjectFiles: Map<string, GlobalAtom[]> = new Map();
+type NonProjectFile = {
+  fileUri: string;
+  ast: GlobalAtom[];
+  identifiers: SourceRef[];
+};
+const nonProjectFiles: Map<string, NonProjectFile> = new Map();
 
 connection.onInitialized(() => {
   connection.workspace.connection.client.register(DidChangeWatchedFilesNotification.type, {
@@ -78,7 +87,9 @@ connection.onDidChangeWatchedFiles(({ changes }) => {
       continue;
     }
 
-    const { inputFolder } = readConfig(configFile);
+    const config = readConfig(configFile);
+    // paths from readConfig must be converted to absolute paths
+    const inputFolder = path.resolve(process.cwd(), config.inputFolder);
     const project = projects.get(uri);
 
     if (project && inputFolder === project.inputFolder) {
@@ -132,7 +143,8 @@ function compileProject(configUri: string, inputFolder: string) {
   }
 
   if (result.ast) {
-    const project: Project = { configUri, inputFolder, ast: result.ast };
+    const identifiers = getIdentifiers(result.ast);
+    const project: Project = { configUri, inputFolder, ast: result.ast, identifiers };
     projects.set(configUri, project);
   } else {
     projects.delete(configUri);
@@ -147,8 +159,9 @@ function compileNonProjectFile(document: TextDocument) {
   connection.sendDiagnostics({ uri: document.uri, diagnostics });
 
   const ast = result.ast?.documents.get(document.uri);
-  if (ast) {
-    nonProjectFiles.set(document.uri, ast);
+  if (result.ast && ast) {
+    const identifiers = getIdentifiers(result.ast);
+    nonProjectFiles.set(document.uri, { fileUri: document.uri, ast, identifiers });
   } else {
     nonProjectFiles.delete(document.uri);
   }
@@ -178,22 +191,34 @@ function findProjectFromFile(uri: string): Project | undefined {
       return project;
     }
   }
+  return undefined;
+}
+
+function getAstFromUri(uri: string): GlobalAtom[] | undefined {
+  return findProjectFromFile(uri)?.ast.documents.get(uri) ?? nonProjectFiles.get(uri)?.ast;
+}
+
+function getIdentifiersFromUri(uri: string): SourceRef[] | undefined {
+  return findProjectFromFile(uri)?.identifiers ?? nonProjectFiles.get(uri)?.identifiers;
 }
 
 documents.onDidChangeContent((change) => {
-  managedFiles.set(change.document.uri, change.document.getText());
-  const project = findProjectFromFile(change.document.uri);
+  const uri = change.document.uri;
+  managedFiles.set(uri, change.document.getText());
+  const project = findProjectFromFile(uri);
   let configUri, inputFolder;
   if (!project) {
-    const filename = uriToPath(change.document.uri);
+    const filename = uriToPath(uri);
     let config;
     try {
       config = filename ? readConfig(path.dirname(filename)) : undefined;
     } catch {
       config = undefined;
     }
-    configUri = config && URI.file(config.configFile).toString();
-    inputFolder = config?.inputFolder;
+    // paths from readConfig must be converted to absolute paths
+    const cwd = process.cwd();
+    configUri = config && URI.file(path.resolve(cwd, config.configFile)).toString();
+    inputFolder = config && path.resolve(cwd, config.inputFolder);
     if (!configUri || !inputFolder || !filename?.startsWith(inputFolder)) {
       return compileNonProjectFile(change.document);
     }
@@ -204,12 +229,11 @@ documents.onDidChangeContent((change) => {
   compileProject(configUri, inputFolder);
 });
 
-function buildSemanticTokens(document: TextDocument): SemanticTokens | ResponseError {
-  const ast =
-    findProjectFromFile(document.uri)?.ast.documents.get(document.uri) ??
-    nonProjectFiles.get(document.uri);
+connection.languages.semanticTokens.on((params): SemanticTokens => {
+  const uri = params.textDocument.uri;
+  const ast = getAstFromUri(uri);
   if (!ast) {
-    return new ResponseError<void>(LSPErrorCodes.ServerCancelled, "");
+    return { data: [] };
   }
 
   const builder = new SemanticTokensBuilder();
@@ -226,15 +250,71 @@ function buildSemanticTokens(document: TextDocument): SemanticTokens | ResponseE
   }
   buildTokens(ast, addToken);
   return builder.build();
+});
+
+function gaudiTokenToLSPLocation({ filename, start, end }: TokenData): Location | undefined {
+  if (filename.startsWith("plugin::")) {
+    return undefined;
+  }
+  return {
+    uri: filename,
+    range: {
+      start: { line: start.line - 1, character: start.column - 1 },
+      end: { line: end.line - 1, character: end.column },
+    },
+  };
 }
 
-connection.languages.semanticTokens.on((params) => {
-  const document = documents.get(params.textDocument.uri);
-  if (document === undefined) {
-    return { data: [] };
+connection.onDefinition((params): Location | undefined => {
+  const uri = params.textDocument.uri;
+  const ids = getIdentifiersFromUri(uri);
+  if (!ids) {
+    return undefined;
   }
-  const r = buildSemanticTokens(document);
-  return r;
+  const clickedId = findIdentifierFromPosition(
+    ids,
+    {
+      line: params.position.line + 1,
+      column: params.position.character,
+    },
+    uri
+  );
+  if (!clickedId) {
+    return undefined;
+  }
+  if (clickedId.isDefinition) {
+    return gaudiTokenToLSPLocation(clickedId.token);
+  }
+  for (const { isDefinition, ref, token } of ids) {
+    if (isDefinition && _.isEqual(ref, clickedId.ref)) {
+      return gaudiTokenToLSPLocation(token);
+    }
+  }
+  return undefined;
+});
+
+connection.onReferences((params): Location[] | undefined => {
+  const uri = params.textDocument.uri;
+  const ids = getIdentifiersFromUri(uri);
+  if (!ids) {
+    return undefined;
+  }
+  const clickedId = findIdentifierFromPosition(
+    ids,
+    {
+      line: params.position.line + 1,
+      column: params.position.character,
+    },
+    uri
+  );
+  if (!clickedId) {
+    return undefined;
+  }
+  return _.compact(
+    ids
+      .filter(({ isDefinition, ref }) => !isDefinition && _.isEqual(ref, clickedId.ref))
+      .map(({ token }) => gaudiTokenToLSPLocation(token))
+  );
 });
 
 connection.listen();
