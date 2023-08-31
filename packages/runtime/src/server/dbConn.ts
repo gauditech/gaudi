@@ -36,7 +36,7 @@ export function parseConnectionString(conn: string): Config {
       connection: conn,
     };
   }
-  throw new Error(`Invalid connection string ${conn}`);
+  throw new Error(`Unsupported database provider: ${conn}`);
 }
 
 function createPostgres(config: PostgresqlConfig): DbConn {
