@@ -15,6 +15,8 @@ import {
   BinaryOperator,
   BooleanLiteral,
   Computed,
+  Cors,
+  CorsAtom,
   Db,
   DeleteAction,
   Endpoint,
@@ -579,11 +581,54 @@ class GaudiParser extends EmbeddedActionsParser {
             atoms.push(this.SUBRULE(this.entrypoint));
           },
         },
+        {
+          ALT: () => {
+            atoms.push(this.SUBRULE(this.cors));
+          },
+        },
       ]);
     });
     this.CONSUME(L.RCurly);
 
     return { kind: "api", keyword, name, atoms };
+  });
+
+  cors = this.RULE("cors", (): Cors => {
+    const atoms: CorsAtom[] = [];
+
+    const keyword = this.createTokenData(this.CONSUME(L.Cors));
+
+    this.CONSUME(L.LCurly);
+    this.MANY(() => {
+      this.OR2([
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.Origin));
+            const value = this.SUBRULE(this.string);
+
+            atoms.push({ kind: "origin", value, keyword });
+          },
+        },
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME2(L.Origin));
+            const value: StringLiteral[] = [];
+
+            this.CONSUME2(L.LSquare);
+            this.MANY_SEP({
+              SEP: L.Comma,
+              DEF: () => value.push(this.SUBRULE2(this.string)),
+            });
+            this.CONSUME2(L.RSquare);
+
+            atoms.push({ kind: "origin", value, keyword });
+          },
+        },
+      ]);
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "cors", atoms, keyword };
   });
 
   entrypoint = this.RULE("entrypoint", (): Entrypoint => {

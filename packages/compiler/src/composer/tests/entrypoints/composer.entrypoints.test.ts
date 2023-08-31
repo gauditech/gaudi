@@ -5,6 +5,47 @@ import {
   ExecuteHookAction,
 } from "@compiler/types/definition";
 
+describe("api", () => {
+  describe("cors", () => {
+    test("empty body", () => {
+      const bp = `
+        api {
+          cors {}
+        }
+      `;
+
+      const def = compileFromString(bp);
+      expect(def.apis[0].cors).toEqual({ origin: "*" });
+    });
+
+    test("origin as a string", () => {
+      const bp = `
+        api {
+          cors {
+            origin "aaa"
+          }
+        }
+      `;
+
+      const def = compileFromString(bp);
+      expect(def.apis[0].cors).toEqual({ origin: "aaa" });
+    });
+
+    test("origin as an array", () => {
+      const bp = `
+        api {
+          cors {
+            origin ["aaa", "bbb"]
+          }
+        }
+      `;
+
+      const def = compileFromString(bp);
+      expect(def.apis[0].cors).toEqual({ origin: ["aaa", "bbb"] });
+    });
+  });
+});
+
 describe("entrypoint", () => {
   it("composes basic example", () => {
     // Orgs assumes default response

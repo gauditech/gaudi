@@ -11,6 +11,7 @@ import {
   Api,
   Authenticator,
   Computed,
+  Cors,
   Endpoint,
   Entrypoint,
   ExecuteAction,
@@ -276,7 +277,24 @@ export function buildTokens(
   function buildApi({ keyword, name, atoms }: Api) {
     buildKeyword(keyword);
     if (name) push(name.token, TokenTypes.variable);
-    atoms.forEach((a) => match(a).with({ kind: "entrypoint" }, buildEntrypoint).exhaustive());
+    atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "entrypoint" }, buildEntrypoint)
+        .with({ kind: "cors" }, buildCors)
+        .exhaustive()
+    );
+  }
+
+  function buildCors({ keyword, atoms }: Cors) {
+    buildKeyword(keyword);
+
+    atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "origin" }, ({ keyword }) => {
+          buildKeyword(keyword);
+        })
+        .exhaustive()
+    );
   }
 
   function buildEntrypoint({ keyword, target, as, atoms }: Entrypoint) {

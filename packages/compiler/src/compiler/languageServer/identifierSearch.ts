@@ -5,6 +5,7 @@ import {
   Action,
   Api,
   Computed,
+  Cors,
   Endpoint,
   Entrypoint,
   Expr,
@@ -152,7 +153,22 @@ function getIdentifiersComputed({ name, expr }: Computed): FuzzySourceRef[] {
 }
 
 function getIdentifiersApi({ atoms }: Api): FuzzySourceRef[] {
-  return atoms.flatMap(getIdentifiersEntrypoint);
+  return atoms.flatMap((atom) =>
+    match(atom)
+      .with({ kind: "entrypoint" }, getIdentifiersEntrypoint)
+      .with({ kind: "cors" }, getIdentifiersCors)
+      .exhaustive()
+  );
+
+  //return atoms.filter((a) => a.kind === "entrypoint").flatMap(getIdentifiersEntrypoint);
+}
+
+function getIdentifiersCors({ atoms }: Cors): FuzzySourceRef[] {
+  return [];
+  // const atomIdentifiers = atoms.map((atom) =>
+  //   match(atom)
+  //     .with({ kind: "origin" }, ({ value }) => getIdentifiersSelect(value))
+  //     .exhaustive()
 }
 
 function getIdentifiersEntrypoint({ target, as, atoms }: Entrypoint): FuzzySourceRef[] {

@@ -1,0 +1,21 @@
+
+// --- CORS
+
+// default cors
+api {
+  cors {}
+}
+
+// single domain
+api {
+  cors {
+    origin "some.domain.example"
+  }
+}
+
+// multiple domains
+api {
+  cors {
+    origin ["first.domain.example", "second.domain.example"]
+  }
+}

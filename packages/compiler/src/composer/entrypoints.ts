@@ -19,6 +19,7 @@ import { composeExpression, composeOrderBy, composeSelect } from "@compiler/comp
 import {
   ActionDef,
   ApiDef,
+  CorsDef,
   Definition,
   EndpointDef,
   EntrypointDef,
@@ -37,11 +38,21 @@ import {
 import * as Spec from "@compiler/types/specification";
 
 export function composeApis(def: Definition, input: Spec.Api[]): void {
-  def.apis = input.map<ApiDef>(({ name, entrypoints }) => ({
+  def.apis = input.map<ApiDef>(({ name, entrypoints, cors }) => ({
     name,
     path: "/api" + (name ? "/" + name.toLocaleLowerCase() : ""),
     entrypoints: composeEntrypoints(def, entrypoints),
+    cors: composeCors(def, cors),
   }));
+}
+
+export function composeCors(def: Definition, cors: Spec.Cors | undefined): CorsDef | undefined {
+  if (cors == null) return;
+
+  return {
+    // if cors exists but origin is empty than fallback to "*"
+    origin: cors.origin ?? "*",
+  };
 }
 
 export function composeEntrypoints(def: Definition, input: Spec.Entrypoint[]): EntrypointDef[] {

@@ -1,4 +1,4 @@
-import { FieldType, Type } from "./type";
+import { CollectionType, FieldType, Type } from "./type";
 
 export type ProjectASTs = {
   plugins: GlobalAtom[][];
@@ -125,7 +125,21 @@ export type Api = {
   kind: "api";
   keyword: TokenData;
   name?: Identifier;
-  atoms: Entrypoint[];
+  atoms: ApiAtom[];
+};
+
+export type ApiAtom = Entrypoint | Cors;
+
+export type Cors = {
+  kind: "cors";
+  keyword: TokenData;
+  atoms: CorsAtom[];
+};
+export type CorsAtom = CorsOrigin;
+export type CorsOrigin = {
+  kind: "origin";
+  keyword: TokenData;
+  value: StringLiteral | StringLiteral[];
 };
 
 export type Entrypoint = {

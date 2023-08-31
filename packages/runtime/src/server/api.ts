@@ -9,6 +9,7 @@ import {
 import { kindFind } from "@gaudi/compiler/dist/common/kindFilter";
 import { concatUrlFragments } from "@gaudi/compiler/dist/common/utils";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
+import cors from "cors";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
 import { OpenAPIV3 } from "openapi-types";
 import { serve, setup } from "swagger-ui-express";
@@ -29,6 +30,17 @@ export function setupServerApis(definition: Definition, app: Express) {
 
 export function setupDefinitionApis(def: Definition, app: Express) {
   def.apis.forEach((api) => {
+    // add CORS for API route
+    if (api.cors) {
+      const corsConfig = {
+        origin: api.cors.origin,
+      };
+
+      logger.debug(`Applying CORS config to route "${api.path}":`, corsConfig);
+
+      app.use(api.path, cors(corsConfig));
+    }
+
     buildEndpointConfig(def, api.entrypoints).forEach((epc) =>
       registerServerEndpoint(app, epc, api.path)
     );

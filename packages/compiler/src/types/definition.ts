@@ -219,6 +219,11 @@ export type ApiDef = {
   name?: string;
   path: string;
   entrypoints: EntrypointDef[];
+  cors?: CorsDef;
+};
+
+export type CorsDef = {
+  origin?: string | string[];
 };
 
 /**

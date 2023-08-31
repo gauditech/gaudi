@@ -7,6 +7,7 @@ import {
   Api,
   Authenticator,
   Computed,
+  Cors,
   DeleteAction,
   Endpoint,
   EndpointType,
@@ -169,7 +170,16 @@ export function checkForm(document: GlobalAtom[]) {
   }
 
   function checkApi(api: Api) {
-    api.atoms.forEach((a) => match(a).with({ kind: "entrypoint" }, checkEntrypoint).exhaustive());
+    api.atoms.forEach((a) =>
+      match(a)
+        .with({ kind: "entrypoint" }, checkEntrypoint)
+        .with({ kind: "cors" }, checkCors)
+        .exhaustive()
+    );
+  }
+
+  function checkCors(cors: Cors) {
+    noDuplicateAtoms(cors, ["origin"]);
   }
 
   function checkEntrypoint(entrypoint: Entrypoint) {

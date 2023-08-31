@@ -11,6 +11,7 @@ import {
   Api,
   BinaryOperator,
   Computed,
+  Cors,
   DeleteAction,
   Endpoint,
   EndpointId,
@@ -582,6 +583,7 @@ export function resolve(projectASTs: ProjectASTs) {
     api.atoms.forEach((a) =>
       match(a)
         .with({ kind: "entrypoint" }, (entrypoint) => resolveEntrypoint(entrypoint, ref, scope))
+        .with({ kind: "cors" }, () => ({}))
         .exhaustive()
     );
   }

@@ -118,6 +118,11 @@ export type Expr = { type: Type } & (
 export type Api = {
   name?: string;
   entrypoints: Entrypoint[];
+  cors?: Cors;
+};
+
+export type Cors = {
+  origin?: string | string[];
 };
 
 export type Entrypoint<c extends TypeCardinality = TypeCardinality> = {

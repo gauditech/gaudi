@@ -8,6 +8,7 @@ import { accessTokenModelName, authUserModelName } from "./plugins/authenticator
 import { kindFilter, kindFind, kindReject } from "@compiler/common/kindFilter";
 import { ensureEqual, ensureExists } from "@compiler/common/utils";
 import { HookCode } from "@compiler/types/common";
+import { CorsDef } from "@compiler/types/definition";
 import * as Spec from "@compiler/types/specification";
 
 export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
@@ -266,10 +267,30 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   function migrateApi(api: AST.Api): Spec.Api {
     return {
       name: api.name?.text,
-      entrypoints: api.atoms.map((entrypoint) =>
+      entrypoints: kindFilter(api.atoms, "entrypoint").map((entrypoint) =>
         migrateEntrypoint(entrypoint, undefined, undefined, 0)
       ),
+      cors: kindFilter(api.atoms, "cors").map(migrateCors).shift(),
     };
+  }
+
+  function migrateCors(cors: AST.Cors): Spec.Cors | undefined {
+    if (cors) {
+      const origin = kindFilter(cors.atoms, "origin")
+        .map((a) => {
+          //
+          if (_.isArray(a.value)) {
+            return a.value.map((item) => item.value);
+          } else {
+            return a.value.value;
+          }
+        })
+        .shift();
+
+      return {
+        origin,
+      };
+    }
   }
 
   function migrateEntrypoint(

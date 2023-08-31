@@ -77,6 +77,7 @@ export const Path = createWeakKeyword("path");
 export const PATCH = createWeakKeyword("PATCH");
 export const Pageable = createWeakKeyword("pageable");
 export const Output = createWeakKeyword("output");
+export const Origin = createWeakKeyword("origin");
 export const Order = createWeakKeyword("order");
 export const One = createWeakKeyword("one");
 export const On = createWeakKeyword("on");
@@ -118,6 +119,7 @@ export const Default = createWeakKeyword("default");
 export const Custom = createWeakKeyword("custom");
 export const Create = createWeakKeyword("create");
 export const Count = createWeakKeyword("count");
+export const Cors = createWeakKeyword("cors");
 export const Computed = createWeakKeyword("computed");
 export const Code = createWeakKeyword("code");
 export const Client = createWeakKeyword("client");
@@ -222,6 +224,7 @@ export const GaudiTokens = [
   PATCH,
   Pageable,
   Output,
+  Origin,
   Order,
   One,
   On,
@@ -263,6 +266,7 @@ export const GaudiTokens = [
   Custom,
   Create,
   Count,
+  Cors,
   Computed,
   Code,
   Client,

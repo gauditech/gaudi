@@ -1071,5 +1071,10 @@ exports[`openAPI build spec 1`] = `
       },
     },
   },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+    },
+  ],
 }
 `;

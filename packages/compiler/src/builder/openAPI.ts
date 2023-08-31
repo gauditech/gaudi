@@ -266,6 +266,7 @@ export function buildOpenAPI(definition: Definition, basePath?: string): OpenAPI
     openapi: "3.0.3",
     info: { title: "Title", version: "1.0.0" },
     paths,
+    servers: [{ url: "http://localhost:3001" }],
     components: {
       securitySchemes,
     },
