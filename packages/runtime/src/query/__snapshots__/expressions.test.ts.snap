@@ -122,7 +122,7 @@ WHERE
       (
         (
           char_length("Repo"."name") = 4
-          OR concat("Repo"."name", "Repo"."name") = 'foofoo'
+          OR "Repo"."name" || "Repo"."name" = 'foofoo'
         )
         OR lower("Repo"."name") = lower('FOO')
       )
@@ -138,5 +138,5 @@ exports[`Expressions to queries composes a complex filter expression and compute
 FROM
   "item" AS "Item"
 WHERE
-  "Item"."multiplier" * ("Item"."value" + 1) / char_length(concat("Item"."textual", 'tail')) = "Item"."multiplier" * ("Item"."value" + 1) / char_length(concat("Item"."textual", 'tail'))"
+  "Item"."multiplier" * ("Item"."value" + 1) / char_length("Item"."textual" || 'tail') = "Item"."multiplier" * ("Item"."value" + 1) / char_length("Item"."textual" || 'tail')"
 `;

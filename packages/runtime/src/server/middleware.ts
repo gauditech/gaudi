@@ -70,9 +70,7 @@ export function requestLogger(req: Request, resp: Response, next: NextFunction) 
 
 export function createAppContext(config: AppConfig) {
   return {
-    dbConn: createDbConn(config.dbConnUrl, {
-      schema: config.dbSchema,
-    }),
+    dbConn: createDbConn(config.dbConnUrl),
     config: config,
   };
 }
@@ -87,4 +85,6 @@ export function gaudiMiddleware(app: Express, def: Definition, config: AppConfig
   setupServerApis(def, app);
 
   app.use(errorHandler);
+
+  app.on("gaudi:cleanup", () => ctx.dbConn.destroy());
 }

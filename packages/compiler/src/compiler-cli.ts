@@ -9,4 +9,5 @@ const { inputFolder, outputFolder, gaudiFolder } = readConfig();
 
 const definition = compose(compileProject(inputFolder));
 
-build(definition, { outputFolder, gaudiFolder });
+const provider = process.env.USE_SQLITE ? "sqlite" : "postgresql";
+build(definition, { outputFolder, gaudiFolder, dbProvider: provider });

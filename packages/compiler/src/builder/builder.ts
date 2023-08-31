@@ -22,13 +22,14 @@ import { assertUnreachable } from "@compiler/common/utils";
 import { Definition } from "@compiler/types/definition";
 
 const logger = initLogger("gaudi:compiler");
-const DB_PROVIDER = "postgresql";
+
 export const BUILDER_OPENAPI_SPEC_FOLDER = "api-spec";
 export const BUILDER_OPENAPI_SPEC_FILE_NAME = "api.openapi.json";
 
 export type BuilderConfig = {
   outputFolder: string;
   gaudiFolder: string;
+  dbProvider: "postgresql" | "sqlite";
 };
 
 export async function build(definition: Definition, config: BuilderConfig): Promise<void> {
@@ -36,7 +37,7 @@ export async function build(definition: Definition, config: BuilderConfig): Prom
   setupFolder(config.gaudiFolder);
 
   await buildDefinition({ definition }, config.outputFolder);
-  await buildDb({ definition, dbProvider: DB_PROVIDER }, config.gaudiFolder);
+  await buildDb({ definition, dbProvider: config.dbProvider }, config.gaudiFolder);
   await buildApiClients(definition, config.outputFolder);
   await buildOpenApi(definition, config.outputFolder);
 }
