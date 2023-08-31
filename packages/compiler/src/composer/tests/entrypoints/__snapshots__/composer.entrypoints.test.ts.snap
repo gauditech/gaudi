@@ -574,6 +574,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "name": "title",
                     "setter": {
+                      "default": undefined,
                       "fieldsetAccess": [
                         "title",
                       ],
@@ -789,6 +790,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "name": "slug",
                     "setter": {
+                      "default": undefined,
                       "fieldsetAccess": [
                         "newOrg",
                         "slug",
@@ -801,6 +803,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "name": "name",
                     "setter": {
+                      "default": undefined,
                       "fieldsetAccess": [
                         "newOrg",
                         "name",
@@ -1098,6 +1101,7 @@ exports[`entrypoint composes single cardinality 1`] = `
             {
               "name": "name",
               "setter": {
+                "default": undefined,
                 "fieldsetAccess": [
                   "name",
                 ],
@@ -1351,6 +1355,7 @@ exports[`entrypoint composes single cardinality 2`] = `
             {
               "name": "text",
               "setter": {
+                "default": undefined,
                 "fieldsetAccess": [
                   "text",
                 ],
@@ -1647,6 +1652,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "name": "name",
               "setter": {
+                "default": undefined,
                 "fieldsetAccess": [
                   "name",
                 ],
@@ -1670,11 +1676,12 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "name": "details_id",
               "setter": {
+                "default": undefined,
                 "fieldsetAccess": [
                   "details_id",
                 ],
                 "kind": "fieldset-input",
-                "required": false,
+                "required": true,
                 "type": "integer",
               },
             },
@@ -1713,7 +1720,7 @@ exports[`entrypoint composes single cardinality 3`] = `
           "details_id": {
             "kind": "field",
             "nullable": true,
-            "required": false,
+            "required": true,
             "type": "integer",
             "validate": undefined,
           },
@@ -2000,6 +2007,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "name": "name",
               "setter": {
+                "default": undefined,
                 "fieldsetAccess": [
                   "name",
                 ],
@@ -2011,6 +2019,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "name": "address_id",
               "setter": {
+                "default": undefined,
                 "fieldsetAccess": [
                   "address_id",
                 ],
@@ -2022,6 +2031,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "name": "details_id",
               "setter": {
+                "default": undefined,
                 "fieldsetAccess": [
                   "details_id",
                 ],

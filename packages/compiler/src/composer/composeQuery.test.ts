@@ -66,7 +66,9 @@ describe("compose action queries", () => {
           // test in native endpoint
           update endpoint {
             action {
-              update {}
+              update {
+                input { name, description }
+              }
               // target
               query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
               // other model

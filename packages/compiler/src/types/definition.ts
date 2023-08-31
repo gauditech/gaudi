@@ -487,8 +487,7 @@ export type FieldSetterInput = {
   type: FieldType;
   fieldsetAccess: string[];
   required: boolean;
-  // FIXME implement default
-  // default?: LiteralValueDef | FieldSetterReferenceValue;
+  default?: FieldSetter;
 };
 
 export type FieldSetterReferenceInput = {
@@ -593,7 +592,7 @@ export type AuthenticatorBasicMethodDef = {
 
 // ----- Generators
 
-export type GeneratorDef = GeneratorClientDef;
+export type GeneratorDef = GeneratorClientDef | GeneratorApidocsDef;
 
 export type GeneratorClientTarget = "js" | "ts";
 
@@ -601,4 +600,9 @@ export type GeneratorClientDef = {
   kind: "generator-client";
   target: GeneratorClientTarget;
   output?: string;
+};
+
+export type GeneratorApidocsDef = {
+  kind: "generator-apidocs";
+  basePath?: string;
 };

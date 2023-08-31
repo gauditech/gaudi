@@ -75,7 +75,7 @@ export declare function createClient(options: ApiClientOptions): {
                 }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND">;
                 create: CreateApiClientFn<{
                     name: string;
-                    is_public: boolean;
+                    description?: string | undefined;
                     raw_description: string;
                 }, {
                     id: number;
@@ -84,12 +84,7 @@ export declare function createClient(options: ApiClientOptions): {
                     org_id: number;
                 }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
                 update: UpdateApiClientManyFn<number, {
-                    name?: string | undefined;
-                    slug?: string | undefined;
                     description?: string | undefined;
-                    is_public?: boolean | undefined;
-                    latest_num?: number | undefined;
-                    org_id?: number | undefined;
                 }, {
                     id: number;
                     slug: string;
@@ -142,7 +137,6 @@ export declare function createClient(options: ApiClientOptions): {
             customUpdate: CustomOneSubmitApiClientManyFn<string, {
                 newOrg: {
                     name?: string | undefined;
-                    slug?: string | undefined;
                     description?: string | undefined;
                 };
             }, any, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION">;
@@ -200,7 +194,6 @@ export declare function createClient(options: ApiClientOptions): {
             }, "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION">;
             update: UpdateApiClientManyFn<string, {
                 name?: string | undefined;
-                slug?: string | undefined;
                 description?: string | undefined;
             }, {
                 name: string;

@@ -66,6 +66,7 @@ exports[`compose action queries "query" action native endpoint 1`] = `
     {
       "name": "name",
       "setter": {
+        "default": undefined,
         "fieldsetAccess": [
           "name",
         ],
@@ -77,6 +78,7 @@ exports[`compose action queries "query" action native endpoint 1`] = `
     {
       "name": "description",
       "setter": {
+        "default": undefined,
         "fieldsetAccess": [
           "description",
         ],

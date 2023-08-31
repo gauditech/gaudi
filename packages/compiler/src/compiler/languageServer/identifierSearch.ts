@@ -61,7 +61,7 @@ export function getIdentifiers(projectASTs: ProjectASTs): SourceRef[] {
       .with({ kind: "model" }, getIdentifiersModel)
       .with({ kind: "api" }, getIdentifiersApi)
       .with({ kind: "populator" }, getIdentifiersPopulator)
-      .with({ kind: "runtime" }, (runtime) => [])
+      .with({ kind: "runtime" }, () => [])
       .with({ kind: "authenticator" }, () => [])
       .with({ kind: "generator" }, () => [])
       .exhaustive()
@@ -252,8 +252,8 @@ function getIdentifiersModelActionAtom(atom: ModelActionAtom): FuzzySourceRef[] 
       ...(set.kind === "hook" ? getIdentifiersHook(set) : getIdentifiersExpr(set.expr)),
     ])
     .with({ kind: "referenceThrough" }, ({ target, through }) => [target, ...through])
-    .with({ kind: "deny" }, ({ fields }) => (fields.kind === "all" ? [] : fields.fields))
     .with({ kind: "input" }, ({ fields }) => fields.map(({ field }) => field))
+    .with({ kind: "input-all" }, ({ except }) => except)
     .exhaustive();
 }
 

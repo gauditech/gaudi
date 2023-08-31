@@ -81,7 +81,6 @@ function buildApi(options: ApiClientOptions) {
     type CustomUpdateData = {
       newOrg: {
         name?: string,
-        slug?: string,
         description?: string
       }
     };
@@ -120,7 +119,6 @@ function buildApi(options: ApiClientOptions) {
     type CreateError = CustomManyActionError;
     type UpdateData = {
       name?: string,
-      slug?: string,
       description?: string
     };
     type UpdateResp = GetResp;
@@ -175,19 +173,12 @@ function buildApi(options: ApiClientOptions) {
     type ListError = GetError;
     type CreateData = {
       name: string,
-      is_public: boolean,
+      description?: string,
       raw_description: string
     };
     type CreateResp = GetResp;
     type CreateError = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_RESOURCE_NOT_FOUND" | "ERROR_CODE_VALIDATION";
-    type UpdateData = {
-      name?: string,
-      slug?: string,
-      description?: string,
-      is_public?: boolean,
-      latest_num?: number,
-      org_id?: number
-    };
+    type UpdateData = { description?: string };
     type UpdateResp = GetResp;
     type UpdateError = CreateError;
     type DeleteError = GetError;

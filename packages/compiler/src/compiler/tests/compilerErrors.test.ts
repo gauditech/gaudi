@@ -70,6 +70,16 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Circular model definition detected in model member definition`);
     });
+    it("fails when default value doesn't match field type", () => {
+      const bp = `
+      model Org {
+       field name { type string, default 0 }
+      }`;
+      expectError(
+        bp,
+        `Unexpected type\nexpected:\n{"kind":"primitive","primitiveKind":"string"}\ngot:\n{"kind":"primitive","primitiveKind":"integer"}`
+      );
+    });
   });
 
   describe("validator", () => {
@@ -257,8 +267,7 @@ describe("compiler errors", () => {
         `;
       expectError(bp, `Field used multiple times in a single action`);
     });
-
-    it("fails when there's an input and deny for the same field", () => {
+    it("fails when trying to input excluded field", () => {
       const bp = `
         model Org {
           field name { type string }
@@ -268,8 +277,8 @@ describe("compiler errors", () => {
             update endpoint {
               action {
                 update org as ox {
+                  input * except { name }
                   input { name }
-                  deny { name }
                 }
               }
             }
@@ -703,7 +712,7 @@ describe("compiler errors", () => {
   });
 
   describe("generator", () => {
-    it("fails for multiple generators with the same target/api", () => {
+    it("fails for multiple client generators with the same target/api", () => {
       const bp = `
         generate client {
           target js
@@ -715,7 +724,17 @@ describe("compiler errors", () => {
           output "a/b/c"
         }
         `;
-      expectError(bp, `Found duplicate generator "client", targeting the same target "js"`);
+      expectError(bp, `Found duplicate "client" generators with the same target "js"`);
+    });
+    it("fails for multiple apidocs generators", () => {
+      const bp = `
+        generate apidocs {
+        }
+
+        generate apidocs {
+        }
+      `;
+      expectError(bp, `Multiple "apidocs" generators are not allowed`);
     });
   });
 

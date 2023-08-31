@@ -103,14 +103,15 @@ describe("Single Cardinality Entrypoint", () => {
       const deleteResponse = await request(server).delete("/api/address/1/user");
       expect(deleteResponse.statusCode).toBe(204);
 
-      const data = { name: "Second" };
+      const data = { name: "Second", details_id: null };
       const postResponse = await request(server).post("/api/address/1/user").send(data);
+
       expect(postResponse.statusCode).toBe(200);
       expect(postResponse.body).toMatchSnapshot();
     });
 
     it("fail to create when already existing", async () => {
-      const data = { name: "Third" };
+      const data = { name: "Third", details_id: null };
       const server = await runner.createServerInstance();
       const postResponse = await request(server).post("/api/address/1/user").send(data);
       expect(postResponse.statusCode).toBe(500); // FIXME response with better data

@@ -33,9 +33,7 @@ import * as Spec from "@compiler/types/specification";
 
 const logger = initLogger("gaudi:compiler");
 /**
- * Composes the custom actions block for an endpoint. Adds a default action
- * based on `endpoint.kind` if one is not defined in blueprint.
- * Requires `targets` to construct an initial variable context.
+ * Composes the custom actions block for an endpoint.
  */
 export function composeActionBlock(specs: Spec.Action[]): ActionDef[] {
   // Collect actions from the spec, updating the context during the pass through.
@@ -196,6 +194,7 @@ function expandSetterExpression(
           };
         }
         case "extraInput": {
+          // fixme fieldset-reference ??
           return {
             kind: "fieldset-input",
             fieldsetAccess: [head.text],
@@ -284,6 +283,14 @@ function atomToChangesetOperation(
           type: atom.target.type,
           required: !atom.optional,
           fieldsetAccess: [...fieldsetNamespace, atom.target.name],
+          default: atom.default
+            ? expandSetterExpression(atom.default, (name) => {
+                const siblingOp = _.find(changeset, { name });
+                if (!siblingOp) {
+                  throw new Error(`Circular reference: ${name}`);
+                }
+              })
+            : undefined,
         },
       };
     }

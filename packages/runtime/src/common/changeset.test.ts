@@ -2,6 +2,7 @@ import crypto from "crypto";
 
 import {
   ChangesetDef,
+  ChangesetOperationDef,
   Definition,
   FieldSetter,
   FieldSetterChangesetReference,
@@ -9,6 +10,7 @@ import {
   FunctionName,
 } from "@gaudi/compiler/dist/types/definition";
 import bcrypt, { hash } from "bcrypt";
+import _ from "lodash";
 
 import { ActionContext } from "@runtime/common/action";
 import {
@@ -48,7 +50,7 @@ describe("runtime", () => {
     });
 
     it("build action changeset object", async () => {
-      const data: ChangesetDef = [
+      const changeset: ChangesetDef = [
         {
           name: "value_prop",
           setter: { kind: "literal", literal: { kind: "string", value: "just value" } },
@@ -120,10 +122,17 @@ describe("runtime", () => {
       };
 
       expect(
-        await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
+        await buildChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          changeset,
+          context
+        )
       ).toMatchSnapshot();
     });
 
+    // FIXME no longer needed?
     it("build strict action changeset object", async () => {
       const data: ChangesetDef = [
         // lept field
@@ -144,6 +153,59 @@ describe("runtime", () => {
 
       expect(
         await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
+      ).toMatchSnapshot();
+    });
+
+    it("passes default values correctly", async () => {
+      function makeOp(name: string, required: boolean, hasDefault: boolean): ChangesetOperationDef {
+        return {
+          name,
+          setter: {
+            kind: "fieldset-input",
+            fieldsetAccess: [name],
+            required,
+            type: "string",
+            default: hasDefault
+              ? {
+                  kind: "literal",
+                  literal: { kind: "string", value: "this is default value" },
+                }
+              : undefined,
+          },
+        };
+      }
+
+      /**
+       * NOTE: while this test checks the current implementation,
+       * it doesn't make sense that 'required' fields have a 'default'
+       */
+
+      const changeset: ChangesetDef = [
+        makeOp("required_default_provided", true, true),
+        makeOp("required_default_missing", true, true),
+        makeOp("optional_default_provided", false, true),
+        makeOp("optional_default_missing", false, true),
+        makeOp("required_no_default", true, false),
+        makeOp("optional_no_default", false, false),
+      ];
+
+      const context: ActionContext = {
+        input: {
+          required_default_provided: "this is user value",
+          optional_default_provided: "this is another user value",
+        },
+        referenceIds: [],
+        vars: new Vars(),
+      };
+
+      expect(
+        await buildChangeset(
+          createTestDefinition(),
+          mockQueryExecutor(),
+          undefined,
+          changeset,
+          context
+        )
       ).toMatchSnapshot();
     });
 

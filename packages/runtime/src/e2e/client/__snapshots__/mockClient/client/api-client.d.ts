@@ -50,7 +50,7 @@ export declare function createClient(options: ApiClientOptions): {
                     slug: string;
                     name: string;
                     description: string;
-                    owner_id?: number | null | undefined;
+                    owner_id: number | null;
                     virtProp: string;
                 }, {
                     slug: string;
@@ -59,8 +59,6 @@ export declare function createClient(options: ApiClientOptions): {
                 update: UpdateApiClientManyFn<number, {
                     name?: string | undefined;
                     description?: string | undefined;
-                    org_id?: number | undefined;
-                    owner_id?: number | null | undefined;
                 }, {
                     slug: string;
                     name: string;

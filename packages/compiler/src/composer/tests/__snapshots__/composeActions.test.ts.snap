@@ -55,6 +55,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
           {
             "name": "name",
             "setter": {
+              "default": undefined,
               "fieldsetAccess": [
                 "newOrg",
                 "name",
@@ -251,6 +252,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
           {
             "name": "name",
             "setter": {
+              "default": undefined,
               "fieldsetAccess": [
                 "org",
                 "name",
@@ -351,6 +353,7 @@ exports[`compose actions native actions can create nested relations through tran
       {
         "name": "name",
         "setter": {
+          "default": undefined,
           "fieldsetAccess": [
             "name",
           ],
@@ -362,6 +365,7 @@ exports[`compose actions native actions can create nested relations through tran
       {
         "name": "org_id",
         "setter": {
+          "default": undefined,
           "fieldsetAccess": [
             "org_id",
           ],
@@ -472,19 +476,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
 [
   {
     "alias": "$action_0",
-    "changeset": [
-      {
-        "name": "repo_id",
-        "setter": {
-          "fieldsetAccess": [
-            "repo_id",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "integer",
-        },
-      },
-    ],
+    "changeset": [],
     "filter": undefined,
     "isPrimary": true,
     "kind": "update-one",
@@ -516,6 +508,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
       {
         "name": "name",
         "setter": {
+          "default": undefined,
           "fieldsetAccess": [
             "org",
             "name",
@@ -556,6 +549,476 @@ exports[`compose actions native actions can update deeply nested references 1`] 
 ]
 `;
 
+exports[`compose actions native actions correctly implements default values: create 1`] = `
+{
+  "actions": [
+    {
+      "alias": "ox",
+      "changeset": [
+        {
+          "name": "name",
+          "setter": {
+            "default": undefined,
+            "fieldsetAccess": [
+              "name",
+            ],
+            "kind": "fieldset-input",
+            "required": true,
+            "type": "string",
+          },
+        },
+        {
+          "name": "description",
+          "setter": {
+            "default": undefined,
+            "fieldsetAccess": [
+              "description",
+            ],
+            "kind": "fieldset-input",
+            "required": true,
+            "type": "string",
+          },
+        },
+        {
+          "name": "uuid",
+          "setter": {
+            "default": {
+              "args": [
+                {
+                  "kind": "literal",
+                  "literal": {
+                    "kind": "string",
+                    "value": "uuid-",
+                  },
+                },
+                {
+                  "args": [
+                    {
+                      "args": [],
+                      "kind": "function",
+                      "name": "now",
+                    },
+                  ],
+                  "kind": "function",
+                  "name": "stringify",
+                },
+              ],
+              "kind": "function",
+              "name": "concat",
+            },
+            "fieldsetAccess": [
+              "uuid",
+            ],
+            "kind": "fieldset-input",
+            "required": false,
+            "type": "string",
+          },
+        },
+        {
+          "name": "extras_id",
+          "setter": {
+            "default": undefined,
+            "fieldsetAccess": [
+              "extras_id",
+            ],
+            "kind": "fieldset-input",
+            "required": true,
+            "type": "integer",
+          },
+        },
+      ],
+      "isPrimary": true,
+      "kind": "create-one",
+      "model": "Org",
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "ox",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
+      "targetPath": [
+        "Org",
+      ],
+    },
+  ],
+  "authSelect": [],
+  "authorize": undefined,
+  "fieldset": {
+    "kind": "record",
+    "nullable": false,
+    "record": {
+      "description": {
+        "kind": "field",
+        "nullable": false,
+        "required": true,
+        "type": "string",
+        "validate": undefined,
+      },
+      "extras_id": {
+        "kind": "field",
+        "nullable": false,
+        "required": true,
+        "type": "integer",
+        "validate": undefined,
+      },
+      "name": {
+        "kind": "field",
+        "nullable": false,
+        "required": true,
+        "type": "string",
+        "validate": undefined,
+      },
+      "uuid": {
+        "kind": "field",
+        "nullable": false,
+        "required": false,
+        "type": "string",
+        "validate": undefined,
+      },
+    },
+  },
+  "kind": "create",
+  "parentContext": [],
+  "response": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "name",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "string",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "description",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "description",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "string",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "uuid",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "uuid",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "string",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "extras_id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "extras_id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
+  "target": {
+    "alias": "org",
+    "kind": "model",
+    "name": "Org",
+    "namePath": [
+      "Org",
+    ],
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose actions native actions correctly implements default values: update 1`] = `
+{
+  "actions": [
+    {
+      "alias": "ox",
+      "changeset": [
+        {
+          "name": "name",
+          "setter": {
+            "default": undefined,
+            "fieldsetAccess": [
+              "name",
+            ],
+            "kind": "fieldset-input",
+            "required": false,
+            "type": "string",
+          },
+        },
+        {
+          "name": "description",
+          "setter": {
+            "default": undefined,
+            "fieldsetAccess": [
+              "description",
+            ],
+            "kind": "fieldset-input",
+            "required": true,
+            "type": "string",
+          },
+        },
+        {
+          "name": "uuid",
+          "setter": {
+            "kind": "literal",
+            "literal": {
+              "kind": "string",
+              "value": "new uuid",
+            },
+          },
+        },
+        {
+          "name": "extras",
+          "setter": {
+            "fieldsetAccess": [
+              "extras_name",
+            ],
+            "kind": "fieldset-reference-input",
+            "through": [
+              "name",
+            ],
+          },
+        },
+      ],
+      "filter": undefined,
+      "isPrimary": true,
+      "kind": "update-one",
+      "model": "Org",
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "ox",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
+      "targetPath": [
+        "org",
+      ],
+    },
+  ],
+  "authSelect": [],
+  "authorize": undefined,
+  "fieldset": {
+    "kind": "record",
+    "nullable": false,
+    "record": {
+      "description": {
+        "kind": "field",
+        "nullable": false,
+        "required": true,
+        "type": "string",
+        "validate": undefined,
+      },
+      "extras_name": {
+        "kind": "field",
+        "nullable": false,
+        "required": true,
+        "type": "string",
+        "validate": undefined,
+      },
+      "name": {
+        "kind": "field",
+        "nullable": false,
+        "required": false,
+        "type": "string",
+        "validate": undefined,
+      },
+    },
+  },
+  "kind": "update",
+  "parentContext": [],
+  "response": [
+    {
+      "alias": "id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "name",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "name",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "string",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "description",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "description",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "string",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "uuid",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "uuid",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "string",
+        "nullable": false,
+      },
+    },
+    {
+      "alias": "extras_id",
+      "expr": {
+        "kind": "alias",
+        "namePath": [
+          "Org",
+          "extras_id",
+        ],
+      },
+      "kind": "expression",
+      "type": {
+        "kind": "integer",
+        "nullable": false,
+      },
+    },
+  ],
+  "target": {
+    "alias": "org",
+    "identifyWith": {
+      "paramName": "org_id",
+      "path": [
+        "id",
+      ],
+      "type": "integer",
+    },
+    "kind": "model",
+    "name": "Org",
+    "namePath": [
+      "Org",
+    ],
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
 exports[`compose actions native actions correctly sets parent context 1`] = `
 [
   {
@@ -564,6 +1027,7 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
       {
         "name": "name",
         "setter": {
+          "default": undefined,
           "fieldsetAccess": [
             "name",
           ],
@@ -612,6 +1076,22 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
 ]
 `;
 
+exports[`compose actions native actions create action doesn't produce inputs for fields with default 1`] = `
+{
+  "kind": "record",
+  "nullable": false,
+  "record": {
+    "description": {
+      "kind": "field",
+      "nullable": true,
+      "required": true,
+      "type": "string",
+      "validate": undefined,
+    },
+  },
+}
+`;
+
 exports[`compose actions native actions sets default action if not given 1`] = `
 [
   {
@@ -620,6 +1100,7 @@ exports[`compose actions native actions sets default action if not given 1`] = `
       {
         "name": "name",
         "setter": {
+          "default": undefined,
           "fieldsetAccess": [
             "name",
           ],
@@ -702,6 +1183,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
       {
         "name": "name",
         "setter": {
+          "default": undefined,
           "fieldsetAccess": [
             "name",
           ],
@@ -785,72 +1267,6 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     ],
     "targetPath": [
       "OrgOwner",
-    ],
-  },
-]
-`;
-
-exports[`compose actions native actions succeeds for basic update with a deny rule 1`] = `
-[
-  {
-    "alias": "ox",
-    "changeset": [
-      {
-        "name": "name",
-        "setter": {
-          "kind": "literal",
-          "literal": {
-            "kind": "string",
-            "value": "new name",
-          },
-        },
-      },
-      {
-        "name": "description",
-        "setter": {
-          "fieldsetAccess": [
-            "description",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "string",
-        },
-      },
-      {
-        "name": "extras_id",
-        "setter": {
-          "fieldsetAccess": [
-            "extras_id",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "integer",
-        },
-      },
-    ],
-    "filter": undefined,
-    "isPrimary": true,
-    "kind": "update-one",
-    "model": "Org",
-    "select": [
-      {
-        "alias": "id",
-        "expr": {
-          "kind": "alias",
-          "namePath": [
-            "ox",
-            "id",
-          ],
-        },
-        "kind": "expression",
-        "type": {
-          "kind": "integer",
-          "nullable": false,
-        },
-      },
-    ],
-    "targetPath": [
-      "org",
     ],
   },
 ]
@@ -1030,84 +1446,6 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
 ]
 `;
 
-exports[`compose actions native actions succeeds with custom inputs 1`] = `
-[
-  {
-    "alias": "ox",
-    "changeset": [
-      {
-        "name": "name",
-        "setter": {
-          "kind": "literal",
-          "literal": {
-            "kind": "string",
-            "value": "new name",
-          },
-        },
-      },
-      {
-        "name": "description",
-        "setter": {
-          "fieldsetAccess": [
-            "description",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "string",
-        },
-      },
-      {
-        "name": "uuid",
-        "setter": {
-          "fieldsetAccess": [
-            "uuid",
-          ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "string",
-        },
-      },
-      {
-        "name": "extras",
-        "setter": {
-          "fieldsetAccess": [
-            "extras_name",
-          ],
-          "kind": "fieldset-reference-input",
-          "through": [
-            "name",
-          ],
-        },
-      },
-    ],
-    "filter": undefined,
-    "isPrimary": true,
-    "kind": "update-one",
-    "model": "Org",
-    "select": [
-      {
-        "alias": "id",
-        "expr": {
-          "kind": "alias",
-          "namePath": [
-            "ox",
-            "id",
-          ],
-        },
-        "kind": "expression",
-        "type": {
-          "kind": "integer",
-          "nullable": false,
-        },
-      },
-    ],
-    "targetPath": [
-      "org",
-    ],
-  },
-]
-`;
-
 exports[`compose actions native actions succeeds with nested sibling reference 1`] = `
 [
   {
@@ -1116,6 +1454,7 @@ exports[`compose actions native actions succeeds with nested sibling reference 1
       {
         "name": "name",
         "setter": {
+          "default": undefined,
           "fieldsetAccess": [
             "name",
           ],

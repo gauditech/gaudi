@@ -656,6 +656,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               {
                 "name": "name",
                 "setter": {
+                  "default": undefined,
                   "fieldsetAccess": [
                     "authUser",
                     "name",
@@ -668,6 +669,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               {
                 "name": "username",
                 "setter": {
+                  "default": undefined,
                   "fieldsetAccess": [
                     "authUser",
                     "username",

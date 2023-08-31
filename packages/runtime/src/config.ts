@@ -18,8 +18,6 @@ export type AppConfig = {
   outputFolder: string;
   /** DB connection URL */
   dbConnUrl: string;
-  /** Base URL path on which an app is mounted on. */
-  basePath?: string;
 };
 
 /** Read runtime config from environment or provide default values. */
