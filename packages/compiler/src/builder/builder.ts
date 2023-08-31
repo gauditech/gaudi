@@ -23,7 +23,7 @@ import { Definition } from "@compiler/types/definition";
 
 const logger = initLogger("gaudi:compiler");
 
-export const BUILDER_OPENAPI_SPEC_FOLDER = "api-spec";
+export const BUILDER_OPENAPI_SPEC_DIRECTORY = "api-spec";
 export const BUILDER_OPENAPI_SPEC_FILE_NAME = "api.openapi.json";
 
 export type BuilderConfig = {
@@ -98,7 +98,7 @@ async function buildOpenApi(definition: Definition, outputDirectory: string): Pr
   if (apidocsGenerator) {
     const outFile = path.join(
       outputDirectory,
-      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_DIRECTORY,
       BUILDER_OPENAPI_SPEC_FILE_NAME
     );
 

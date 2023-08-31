@@ -7,7 +7,7 @@ import { compileFromString } from "@runtime/common/testUtils";
 import { loadBlueprint } from "@runtime/e2e/api/setup";
 
 const logger = initLogger("gaudi:test:e2e:client");
-const CLIENT_LIB_DIST_FOLDER = path.join(__dirname, "__snapshots__");
+const CLIENT_LIB_DIST_DIRECTORY = path.join(__dirname, "__snapshots__");
 
 /**
  * Build API client lib files that are used in these tests
@@ -30,7 +30,7 @@ async function setupTests() {
 }
 
 async function setupClient(name: string, bpPath: string, appendGenerators = false) {
-  const clientDest = path.join(CLIENT_LIB_DIST_FOLDER, name);
+  const clientDest = path.join(CLIENT_LIB_DIST_DIRECTORY, name);
 
   logger.debug(`    building client "${name}"`);
 

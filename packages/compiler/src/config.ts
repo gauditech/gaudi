@@ -19,7 +19,7 @@ export type EngineConfig = {
 };
 
 /** Name of directory where Gaudi stores generated files that need to be source controlled (eg. DB migration files) */
-export const GAUDI_FOLDER_NAME = "gaudi";
+export const GAUDI_DIRECTORY_NAME = "gaudi";
 
 /** Read runtime config from environment or provide default values. */
 export function readConfig(configPath?: string): EngineConfig {
@@ -49,7 +49,7 @@ export function readConfig(configPath?: string): EngineConfig {
   const inputDirectory = path.join(projectRoot, config?.rootDir ?? "");
   const outputDirectory = path.join(projectRoot, config?.outDir ?? "");
   // TODO: gaudi directory's path should probably be determined by the position of gaudi config file
-  const gaudiDirectory = path.join(inputDirectory, GAUDI_FOLDER_NAME);
+  const gaudiDirectory = path.join(inputDirectory, GAUDI_DIRECTORY_NAME);
 
   const finalConfig = { inputDirectory, outputDirectory, gaudiDirectory, configFile };
 
