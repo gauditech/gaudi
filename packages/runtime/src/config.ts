@@ -15,7 +15,7 @@ export type AppConfig = {
   /** Path to "definition.json" file. */
   definitionPath: string;
   /** Directory where runtime should output generated files */
-  outputFolder: string;
+  outputDirectory: string;
   /** DB connection URL */
   dbConnUrl: string;
 };
@@ -28,11 +28,11 @@ export function readConfig(): RuntimeConfig {
       ? parseInt(process.env.GAUDI_RUNTIME_SERVER_PORT, 10)
       : 3001;
   const definitionPath = process.env.GAUDI_RUNTIME_DEFINITION_PATH || "definition.json";
-  const outputFolder = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
+  const outputDirectory = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
 
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
 
-  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl };
+  const finalConfig = { host, port, definitionPath, outputDirectory, dbConnUrl };
 
   logger.debug("Gaudi runtime config", finalConfig);
 

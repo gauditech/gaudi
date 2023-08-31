@@ -13,7 +13,7 @@ export const RESOURCE_WATCH_DELAY = 500;
 
 /** Returns path to prisma schema file */
 export function getDbSchemaPath(config: EngineConfig): string {
-  return `${config.gaudiFolder}/db/schema.prisma`;
+  return `${config.gaudiDirectory}/db/schema.prisma`;
 }
 
 /**

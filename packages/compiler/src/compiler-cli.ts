@@ -5,9 +5,9 @@ import { compileProject } from "@compiler/compiler";
 import { compose } from "@compiler/composer/composer";
 import { readConfig } from "@compiler/config";
 
-const { inputFolder, outputFolder, gaudiFolder } = readConfig();
+const { inputDirectory, outputDirectory, gaudiDirectory } = readConfig();
 
-const definition = compose(compileProject(inputFolder));
+const definition = compose(compileProject(inputDirectory));
 
 const provider = process.env.USE_SQLITE ? "sqlite" : "postgresql";
-build(definition, { outputFolder, gaudiFolder, dbProvider: provider });
+build(definition, { outputDirectory, gaudiDirectory, dbProvider: provider });

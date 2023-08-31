@@ -10,7 +10,7 @@ runtime JsRuntime {
 
 generate client {
     target ts
-    // output directly to client folder so it can be imported
+    // output directly to client directory so it can be imported
     output "../client/src/api"
 }
 

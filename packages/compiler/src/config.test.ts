@@ -19,9 +19,9 @@ describe("engine", () => {
       const config = readConfig(path.join(__dirname, "config.test.empty.yaml"));
 
       expect(config).toEqual({
-        inputFolder: "src",
-        outputFolder: "src",
-        gaudiFolder: path.join("src", "gaudi"),
+        inputDirectory: "src",
+        outputDirectory: "src",
+        gaudiDirectory: path.join("src", "gaudi"),
         configFile: path.join("src", "config.test.empty.yaml"),
       });
     });
@@ -30,9 +30,9 @@ describe("engine", () => {
       const config = readConfig(path.join(__dirname, "config.test.yaml"));
 
       const expected: Required<EngineConfig> = {
-        inputFolder: path.join("src", "rootDir"),
-        outputFolder: path.join("src", "outDir"),
-        gaudiFolder: path.join("src", "rootDir", "gaudi"),
+        inputDirectory: path.join("src", "rootDir"),
+        outputDirectory: path.join("src", "outDir"),
+        gaudiDirectory: path.join("src", "rootDir", "gaudi"),
         configFile: path.join("src", "config.test.yaml"),
       };
 

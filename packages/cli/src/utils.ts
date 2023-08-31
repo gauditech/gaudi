@@ -28,9 +28,9 @@ export function resolveModulePath(module: string) {
 
 /** Create dir recursively if it doesn't exist already */
 export function createDir(path: string) {
-  // clear output folder
+  // clear output directory
   if (!pathExists(path)) {
-    // (re)create output folder
+    // (re)create output directory
     fs.mkdirSync(path, { recursive: true });
   }
 }

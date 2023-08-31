@@ -21,7 +21,7 @@ model Owner {
 
 generate client {
   target js
-  // test custom output folder
+  // test custom output directory
   output "src/e2e/client/__snapshots__/mockClient/client"
 }
 
@@ -30,7 +30,7 @@ generate client {
 //  target js
 //  // test modela API
 //  api model
-//  // test custom output folder
+//  // test custom output directory
 //  output "src/e2e/client/__snapshots__/mockClient/client"
 //}
 runtime MyRuntime {
