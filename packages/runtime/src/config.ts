@@ -18,6 +18,26 @@ export type AppConfig = {
   outputFolder: string;
   /** DB connection URL */
   dbConnUrl: string;
+  /** CORS settings */
+  cors?: {
+    /**
+     * CORS allowed origin.
+     *
+     * Read from env variable GAUDI_CORS_ORIGIN.
+     *
+     * Multiple values are separated by comma.
+     *
+     * E.g.
+     * ```
+     * # single value
+     * GAUDI_CORS_ORIGIN=http://domain.example
+     *
+     * # multiple value
+     * GAUDI_CORS_ORIGIN=http://domain.one.example,http://domain.two.example
+     * ```
+     */
+    origin?: string[];
+  };
 };
 
 /** Read runtime config from environment or provide default values. */
@@ -32,7 +52,17 @@ export function readConfig(): RuntimeConfig {
 
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
 
-  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl };
+  // CORS
+  let cors: AppConfig["cors"] | undefined;
+  // origin
+  const corsOrigin = process.env.GAUDI_CORS_ORIGIN?.split(",").map((o) => o.trim());
+  if (corsOrigin) {
+    cors = {
+      origin: corsOrigin,
+    };
+  }
+
+  const finalConfig = { host, port, definitionPath, outputFolder, dbConnUrl, cors };
 
   logger.debug("Gaudi runtime config", finalConfig);
 
