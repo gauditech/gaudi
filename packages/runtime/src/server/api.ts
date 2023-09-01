@@ -98,6 +98,7 @@ export function loadFile(filePath: string): string {
   return fs.readFileSync(filePath).toString("utf-8");
 }
 
+/** Add CORS config for API route */
 function setupApiCors(def: Definition, app: Express, api: ApiDef) {
   const config = getAppContext(app).config;
 
@@ -105,6 +106,8 @@ function setupApiCors(def: Definition, app: Express, api: ApiDef) {
   if (config.cors) {
     const corsConfig: cors.CorsOptions = {
       origin: config.cors.origin,
+      // always allow credentials because it allows users to choose if they wish to send them or not
+      credentials: true,
     };
 
     logger.debug(`Applying CORS config to route "${api.path}":`, corsConfig);
