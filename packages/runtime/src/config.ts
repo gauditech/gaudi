@@ -27,6 +27,9 @@ export type AppConfig = {
      *
      * Multiple values are separated by comma.
      *
+     * If value equals `*` then `true` is used to allow `cors` middleware to allow any domain.
+     * Using `*` as a header value is flaky so middleware will simply mirror incoming origin to allow all of them.
+     *
      * E.g.
      * ```
      * # single value
@@ -34,9 +37,12 @@ export type AppConfig = {
      *
      * # multiple value
      * GAUDI_CORS_ORIGIN=http://domain.one.example,http://domain.two.example
+     *
+     * # allow all domains
+     * GAUDI_CORS_ORIGIN=*
      * ```
      */
-    origin?: string[];
+    origin?: string[] | boolean;
   };
 };
 
@@ -55,7 +61,10 @@ export function readConfig(): RuntimeConfig {
   // CORS
   let cors: AppConfig["cors"] | undefined;
   // origin
-  const corsOrigin = process.env.GAUDI_CORS_ORIGIN?.split(",").map((o) => o.trim());
+  const corsOrigin =
+    process.env.GAUDI_CORS_ORIGIN === "*"
+      ? true
+      : process.env.GAUDI_CORS_ORIGIN?.split(",").map((o) => o.trim());
   if (corsOrigin) {
     cors = {
       origin: corsOrigin,
