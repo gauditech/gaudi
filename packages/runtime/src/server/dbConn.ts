@@ -23,11 +23,11 @@ type SqliteConfig = {
 };
 
 export function parseConnectionString(conn: string): Config {
-  if (conn.startsWith("sqlite")) {
+  if (conn.startsWith("file")) {
     return {
       provider: "sqlite",
-      // remove `sqlite://` part
-      filename: conn.substring(9),
+      // remove `file://` part
+      filename: conn.substring(5),
     };
   }
   if (conn.startsWith("postgres")) {

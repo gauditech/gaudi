@@ -190,7 +190,7 @@ export class SQLiteTestRunner extends TestRunner {
     const templatePath = path.join(this.rootPath, `db-template.sqlite`);
     const instancePath = path.join(this.rootPath, `db-${id}.sqlite`);
     fs.copyFileSync(templatePath, instancePath);
-    return `sqlite://${instancePath}`;
+    return `file://${instancePath}`;
   }
 }
 
