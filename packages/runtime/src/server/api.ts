@@ -8,7 +8,8 @@ import {
 } from "@gaudi/compiler/dist/builder/builder";
 import { kindFind } from "@gaudi/compiler/dist/common/kindFilter";
 import { concatUrlFragments } from "@gaudi/compiler/dist/common/utils";
-import { Definition } from "@gaudi/compiler/dist/types/definition";
+import { ApiDef, Definition } from "@gaudi/compiler/dist/types/definition";
+import cors from "cors";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
 import { OpenAPIV3 } from "openapi-types";
 import { serve, setup } from "swagger-ui-express";
@@ -29,6 +30,8 @@ export function setupServerApis(definition: Definition, app: Express) {
 
 export function setupDefinitionApis(def: Definition, app: Express) {
   def.apis.forEach((api) => {
+    setupApiCors(def, app, api);
+
     buildEndpointConfig(def, api.entrypoints).forEach((epc) =>
       registerServerEndpoint(app, epc, api.path)
     );
@@ -93,4 +96,22 @@ export function loadFile(filePath: string): string {
     throw new Error(`File not found: "${filePath}"`);
   }
   return fs.readFileSync(filePath).toString("utf-8");
+}
+
+/** Add CORS config for API route */
+function setupApiCors(def: Definition, app: Express, api: ApiDef) {
+  const config = getAppContext(app).config;
+
+  // add CORS for API route
+  if (config.cors) {
+    const corsConfig: cors.CorsOptions = {
+      origin: config.cors.origin,
+      // always allow credentials because it allows users to choose if they wish to send them or not
+      credentials: true,
+    };
+
+    logger.debug(`Applying CORS config to route "${api.path}":`, corsConfig);
+
+    app.use(api.path, cors(corsConfig));
+  }
 }
