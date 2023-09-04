@@ -23,34 +23,34 @@ import { Definition } from "@compiler/types/definition";
 
 const logger = initLogger("gaudi:compiler");
 
-export const BUILDER_OPENAPI_SPEC_FOLDER = "api-spec";
+export const BUILDER_OPENAPI_SPEC_DIRECTORY = "api-spec";
 export const BUILDER_OPENAPI_SPEC_FILE_NAME = "api.openapi.json";
 
 export type BuilderConfig = {
-  outputFolder: string;
-  gaudiFolder: string;
+  outputDirectory: string;
+  gaudiDirectory: string;
   dbProvider: "postgresql" | "sqlite";
 };
 
 export async function build(definition: Definition, config: BuilderConfig): Promise<void> {
-  setupFolder(config.outputFolder);
-  setupFolder(config.gaudiFolder);
+  setupDirectory(config.outputDirectory);
+  setupDirectory(config.gaudiDirectory);
 
-  await buildDefinition({ definition }, config.outputFolder);
-  await buildDb({ definition, dbProvider: config.dbProvider }, config.gaudiFolder);
-  await buildApiClients(definition, config.outputFolder);
-  await buildOpenApi(definition, config.outputFolder);
+  await buildDefinition({ definition }, config.outputDirectory);
+  await buildDb({ definition, dbProvider: config.dbProvider }, config.gaudiDirectory);
+  await buildApiClients(definition, config.outputDirectory);
+  await buildOpenApi(definition, config.outputDirectory);
 }
 
 // -------------------- part builders
 
-// ---------- Setup folders
+// ---------- Setup directories
 
-/** Make sure folder exists */
-function setupFolder(path: string) {
-  // clear output folder
+/** Make sure directory exists */
+function setupDirectory(path: string) {
+  // clear output directory
   if (!fs.existsSync(path)) {
-    // (re)create output folder
+    // (re)create output directory
     fs.mkdirSync(path, { recursive: true });
   }
 }
@@ -65,8 +65,8 @@ export async function renderDefinition(data: BuildDefinitionData): Promise<strin
   return JSON.stringify(data.definition);
 }
 
-async function buildDefinition(data: BuildDefinitionData, outputFolder: string) {
-  const outFile = path.join(outputFolder, "definition.json");
+async function buildDefinition(data: BuildDefinitionData, outputDirectory: string) {
+  const outFile = path.join(outputDirectory, "definition.json");
 
   return renderDefinition(data).then((content) => storeTemplateOutput(outFile, content));
 }
@@ -77,8 +77,8 @@ export async function renderDbSchema(data: BuildDbSchemaData): Promise<string> {
   return renderDbSchemaTpl(data);
 }
 
-async function buildDb(data: BuildDbSchemaData, outputFolder: string): Promise<unknown> {
-  const outFile = path.join(outputFolder, "db/schema.prisma");
+async function buildDb(data: BuildDbSchemaData, outputDirectory: string): Promise<unknown> {
+  const outFile = path.join(outputDirectory, "db/schema.prisma");
 
   return (
     // render DB schema
@@ -92,13 +92,13 @@ export async function renderOpenApi(data: OpenApiBuilderData): Promise<string> {
   return renderOpenApiTpl(data);
 }
 
-async function buildOpenApi(definition: Definition, outputFolder: string): Promise<unknown> {
+async function buildOpenApi(definition: Definition, outputDirectory: string): Promise<unknown> {
   const apidocsGenerator = kindFind(definition.generators, "generator-apidocs");
 
   if (apidocsGenerator) {
     const outFile = path.join(
-      outputFolder,
-      BUILDER_OPENAPI_SPEC_FOLDER,
+      outputDirectory,
+      BUILDER_OPENAPI_SPEC_DIRECTORY,
       BUILDER_OPENAPI_SPEC_FILE_NAME
     );
 
@@ -120,7 +120,7 @@ export async function renderApiClient(data: BuildApiClientData): Promise<string>
 
 export async function buildApiClients(
   definition: Definition,
-  outputFolder: string
+  outputDirectory: string
 ): Promise<unknown> {
   const clientGenerators = kindFilter(definition.generators, "generator-client");
 
@@ -129,10 +129,10 @@ export async function buildApiClients(
       const kind = g.target;
       switch (kind) {
         case "ts": {
-          // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
-          const outFolder = g.output ?? path.join(outputFolder, "client");
+          // TODO: define a fixed starting point for relative generator output directories (eg. blueprint location)
+          const outDirectory = g.output ?? path.join(outputDirectory, "client");
           const outFileName = `api-client.ts`;
-          const outPath = path.join(outFolder, outFileName);
+          const outPath = path.join(outDirectory, outFileName);
 
           const t0 = Date.now(); // start timer
 
@@ -176,10 +176,10 @@ export async function buildApiClients(
           );
         }
         case "js": {
-          // TODO: define a fixed starting point for relative generator output folders (eg. blueprint location)
-          const outFolder = g.output ?? path.join(outputFolder, "client");
+          // TODO: define a fixed starting point for relative generator output directories (eg. blueprint location)
+          const outDirectory = g.output ?? path.join(outputDirectory, "client");
           const outFileName = `api-client.ts`;
-          const outPath = path.join(outFolder, outFileName);
+          const outPath = path.join(outDirectory, outFileName);
 
           const t0 = Date.now(); // start timer
 

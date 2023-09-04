@@ -13,7 +13,7 @@ export default defineConfig((config) => {
   return {
     plugins: [react()],
     build: {
-      /** Output to common "dist" folder */
+      /** Output to common "dist" directory */
       outDir: "../../dist/client",
     },
 

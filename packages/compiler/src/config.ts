@@ -8,18 +8,18 @@ import { initLogger } from "./common/logger";
 const logger = initLogger("gaudi:compiler");
 
 export type EngineConfig = {
-  /** Path to Gaudi blueprint folder */
-  inputFolder: string;
-  /** Folder where runtime should output generated files */
-  outputFolder: string;
-  /** Gaudi folder */
-  gaudiFolder: string;
+  /** Path to Gaudi blueprint directory */
+  inputDirectory: string;
+  /** Directory where runtime should output generated files */
+  outputDirectory: string;
+  /** Gaudi directory */
+  gaudiDirectory: string;
   /** Location of the loaded config file */
   configFile: string;
 };
 
-/** Name of folder where Gaudi stores generated files that need to be source controlled (eg. DB migration files) */
-export const GAUDI_FOLDER_NAME = "gaudi";
+/** Name of directory where Gaudi stores generated files that need to be source controlled (eg. DB migration files) */
+export const GAUDI_DIRECTORY_NAME = "gaudi";
 
 /** Read runtime config from environment or provide default values. */
 export function readConfig(configPath?: string): EngineConfig {
@@ -46,12 +46,12 @@ export function readConfig(configPath?: string): EngineConfig {
   // read config
   const config = result.config;
 
-  const inputFolder = path.join(projectRoot, config?.rootDir ?? "");
-  const outputFolder = path.join(projectRoot, config?.outDir ?? "");
-  // TODO: gaudi folder's path should probably be determined by the position of gaudi config file
-  const gaudiFolder = path.join(inputFolder, GAUDI_FOLDER_NAME);
+  const inputDirectory = path.join(projectRoot, config?.rootDir ?? "");
+  const outputDirectory = path.join(projectRoot, config?.outDir ?? "");
+  // TODO: gaudi directory's path should probably be determined by the position of gaudi config file
+  const gaudiDirectory = path.join(inputDirectory, GAUDI_DIRECTORY_NAME);
 
-  const finalConfig = { inputFolder, outputFolder, gaudiFolder, configFile };
+  const finalConfig = { inputDirectory, outputDirectory, gaudiDirectory, configFile };
 
   logger.debug("Gaudi compiler config", finalConfig);
 

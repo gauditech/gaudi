@@ -10,7 +10,7 @@ To initialize a new starter project use Gaudi CLI
 npm create gaudi-app
 ```
 
-Enter project name used for folder name
+Enter project name used for directory name
 
 ```sh
 ✔ Project name: project1
@@ -24,7 +24,7 @@ Select project template using navigation keys
     Gaudi backend project
 ```
 
-Go to your project folder, initialize it and start developing
+Go to your project directory, initialize it and start developing
 
 ```sh
 Initializing project in "/path/to/projects/proj1" ...

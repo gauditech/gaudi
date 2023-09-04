@@ -26,7 +26,7 @@ describe("runtime", () => {
         host: "127.0.0.1",
         port: 3001,
         definitionPath: "definition.json",
-        outputFolder: ".",
+        outputDirectory: ".",
       };
 
       expect(config).toEqual(expected);
@@ -47,7 +47,7 @@ describe("runtime", () => {
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
-        outputFolder: "test/output/path",
+        outputDirectory: "test/output/path",
       };
 
       expect(config).toEqual(expected);
@@ -62,7 +62,7 @@ describe("runtime", () => {
         host: "file-test-host",
         port: 31337000,
         definitionPath: "file-test/definition/path",
-        outputFolder: "file-test/output/path",
+        outputDirectory: "file-test/output/path",
       };
 
       expect(config).toEqual(expected);
@@ -84,7 +84,7 @@ describe("runtime", () => {
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
-        outputFolder: "test/output/path",
+        outputDirectory: "test/output/path",
       };
 
       expect(config).toEqual(expected);

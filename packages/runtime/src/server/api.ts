@@ -3,8 +3,8 @@ import path from "path";
 
 import { initLogger } from "@gaudi/compiler";
 import {
+  BUILDER_OPENAPI_SPEC_DIRECTORY,
   BUILDER_OPENAPI_SPEC_FILE_NAME,
-  BUILDER_OPENAPI_SPEC_FOLDER,
 } from "@gaudi/compiler/dist/builder/builder";
 import { kindFind } from "@gaudi/compiler/dist/common/kindFilter";
 import { concatUrlFragments } from "@gaudi/compiler/dist/common/utils";
@@ -47,14 +47,14 @@ function setupDefinitionApisSpec(definition: Definition, app: Express) {
 
   const config = getAppContext(app).config;
 
-  const specFolderOutputPath = path.join(config.outputFolder, BUILDER_OPENAPI_SPEC_FOLDER);
-  const specFileOutputPath = path.join(specFolderOutputPath, BUILDER_OPENAPI_SPEC_FILE_NAME);
+  const specDirectoryOutputPath = path.join(config.outputDirectory, BUILDER_OPENAPI_SPEC_DIRECTORY);
+  const specFileOutputPath = path.join(specDirectoryOutputPath, BUILDER_OPENAPI_SPEC_FILE_NAME);
 
-  // --- static folder for serving API specs
-  app.use(`/${BUILDER_OPENAPI_SPEC_FOLDER}`, staticHandler(specFolderOutputPath));
+  // --- static directory for serving API specs
+  app.use(`/${BUILDER_OPENAPI_SPEC_DIRECTORY}`, staticHandler(specDirectoryOutputPath));
   logger.debug(
     `registered OpenAPI specification on: ${concatUrlFragments(
-      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_DIRECTORY,
       BUILDER_OPENAPI_SPEC_FILE_NAME
     )}`
   );

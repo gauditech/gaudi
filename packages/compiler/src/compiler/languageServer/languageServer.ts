@@ -62,7 +62,7 @@ connection.onInitialize((params) => {
 const managedFiles: Map<string, string> = new Map();
 type Project = {
   configUri: string;
-  inputFolder: string;
+  inputDirectory: string;
   ast: ProjectASTs;
   identifiers: SourceRef[];
 };
@@ -94,14 +94,14 @@ connection.onDidChangeWatchedFiles(({ changes }) => {
 
     const config = readConfig(configFile);
     // paths from readConfig must be converted to absolute paths
-    const inputFolder = path.resolve(process.cwd(), config.inputFolder);
+    const inputDirectory = path.resolve(process.cwd(), config.inputDirectory);
     const project = projects.get(uri);
 
-    if (project && inputFolder === project.inputFolder) {
+    if (project && inputDirectory === project.inputDirectory) {
       continue;
     }
 
-    compileProject(uri, inputFolder);
+    compileProject(uri, inputDirectory);
   }
 });
 
@@ -128,8 +128,8 @@ function readGaudiFiles(directory: string): Map<string, string> {
   return files;
 }
 
-function compileProject(configUri: string, inputFolder: string) {
-  const files = readGaudiFiles(inputFolder);
+function compileProject(configUri: string, inputDirectory: string) {
+  const files = readGaudiFiles(inputDirectory);
   const inputs = [...files.entries()].map(([filename, source]) => ({ source, filename }));
 
   const result = compileToAST(inputs);
@@ -149,7 +149,7 @@ function compileProject(configUri: string, inputFolder: string) {
 
   if (result.ast) {
     const identifiers = getIdentifiers(result.ast);
-    const project: Project = { configUri, inputFolder, ast: result.ast, identifiers };
+    const project: Project = { configUri, inputDirectory, ast: result.ast, identifiers };
     projects.set(configUri, project);
   } else {
     projects.delete(configUri);
@@ -192,7 +192,7 @@ function errorToDiagnostic(error: CompilerError): Diagnostic {
 
 function findProjectFromFile(uri: string): Project | undefined {
   for (const project of projects.values()) {
-    if (uriToPath(uri)?.startsWith(project.inputFolder)) {
+    if (uriToPath(uri)?.startsWith(project.inputDirectory)) {
       return project;
     }
   }
@@ -211,7 +211,7 @@ documents.onDidChangeContent((change) => {
   const uri = change.document.uri;
   managedFiles.set(uri, change.document.getText());
   const project = findProjectFromFile(uri);
-  let configUri, inputFolder;
+  let configUri, inputDirectory;
   if (!project) {
     const filename = uriToPath(uri);
     let config;
@@ -223,15 +223,15 @@ documents.onDidChangeContent((change) => {
     // paths from readConfig must be converted to absolute paths
     const cwd = process.cwd();
     configUri = config && URI.file(path.resolve(cwd, config.configFile)).toString();
-    inputFolder = config && path.resolve(cwd, config.inputFolder);
-    if (!configUri || !inputFolder || !filename?.startsWith(inputFolder)) {
+    inputDirectory = config && path.resolve(cwd, config.inputDirectory);
+    if (!configUri || !inputDirectory || !filename?.startsWith(inputDirectory)) {
       return compileNonProjectFile(change.document);
     }
   } else {
     configUri = project.configUri;
-    inputFolder = project.inputFolder;
+    inputDirectory = project.inputDirectory;
   }
-  compileProject(configUri, inputFolder);
+  compileProject(configUri, inputDirectory);
 });
 
 connection.languages.semanticTokens.on((params): SemanticTokens => {

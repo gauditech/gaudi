@@ -38,7 +38,7 @@ export function watchResources(
             .on("add", debouncedCallback)
             .on("change", debouncedCallback)
             .on("unlink", debouncedCallback)
-            // folder listeners
+            // directory listeners
             .on("addDir", debouncedCallback)
             .on("unlinkDir", debouncedCallback)
             // attached all listeners

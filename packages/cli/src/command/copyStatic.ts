@@ -14,7 +14,7 @@ export function copyStatic(config: EngineConfig) {
 
   return new Promise((resolve, reject) => {
     copyfiles(
-      [path.join(config.gaudiFolder, "db", "**"), config.outputFolder],
+      [path.join(config.gaudiDirectory, "db", "**"), config.outputDirectory],
       { up: -1, verbose: true, error: true },
       (err) => {
         if (err) {
