@@ -14,9 +14,10 @@ import {
   SemanticTokensBuilder,
   TextDocumentSyncKind,
   TextDocuments,
+  WorkspaceEdit,
   createConnection,
 } from "vscode-languageserver/node";
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { TextDocument, TextEdit } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
 
 import { compileToAST } from "..";
@@ -39,6 +40,10 @@ connection.onInitialize((params) => {
       textDocumentSync: TextDocumentSyncKind.Full,
       definitionProvider: !!params.capabilities.textDocument?.definition,
       referencesProvider: !!params.capabilities.textDocument?.references,
+      renameProvider: !!params.capabilities.textDocument?.rename && {
+        prepareProvider: false,
+        workDoneProgress: false,
+      },
       semanticTokensProvider: {
         documentSelector: [{ language: "gaudi" }],
         legend: {
@@ -315,6 +320,36 @@ connection.onReferences((params): Location[] | undefined => {
       .filter(({ isDefinition, ref }) => !isDefinition && _.isEqual(ref, clickedId.ref))
       .map(({ token }) => gaudiTokenToLSPLocation(token))
   );
+});
+
+connection.onRenameRequest((params): WorkspaceEdit | undefined => {
+  const uri = params.textDocument.uri;
+  const ids = getIdentifiersFromUri(uri);
+  if (!ids) {
+    return undefined;
+  }
+  const clickedId = findIdentifierFromPosition(
+    ids,
+    {
+      line: params.position.line + 1,
+      column: params.position.character,
+    },
+    uri
+  );
+  if (!clickedId) {
+    return undefined;
+  }
+
+  const changes = _.chain(ids)
+    .filter(({ ref }) => _.isEqual(ref, clickedId.ref))
+    .map(({ token }) => gaudiTokenToLSPLocation(token))
+    .compact()
+    .map(({ uri, range }) => [uri, { range, newText: params.newName }] as [string, TextEdit])
+    .groupBy(([uri]) => uri)
+    .mapValues((edits) => edits.map(([_, edit]) => edit))
+    .value();
+
+  return { changes };
 });
 
 connection.listen();
