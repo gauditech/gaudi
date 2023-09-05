@@ -4,10 +4,16 @@ export type ApiClientOptions = {
     /**
      * Function that implements HTTP calls and returns it's result.
      *
-     * This lib does not implement it's own HTTP calls which allows users
-     * to use any HTTP client lib of their choice.
+     * Default implementation depends on the existence of global `fetch` API.
+     * That API should be supported in relevant browsers and node v 18+.
+     * If it's not found, default implementation fallbacks to `undefined`
+     * and users must provide their own implementation.
+     * See `resolveDefaultRequestFn()` for details
+     *
+     * If the default implementation is not sufficient, users are always free to
+     * provide their own implementation using HTTP client lib of their choice.
      */
-    requestFn: ApiRequestFn;
+    requestFn?: ApiRequestFn;
     /** Default request headers which are added to all requests. */
     headers?: Record<string, string>;
 };

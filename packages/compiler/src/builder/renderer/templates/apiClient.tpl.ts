@@ -37,6 +37,9 @@ function buildClient(def: Definition, apis: ApiDef[]): string {
   // TODO: read target and api from generator def block
 
   return `
+
+  ${buildHeaderCode()}
+
   // ----- API client
 
   export type ApiClientOptions = {
@@ -45,28 +48,34 @@ function buildClient(def: Definition, apis: ApiDef[]): string {
     /**
      * Function that implements HTTP calls and returns it's result.
      *
-     * This lib does not implement it's own HTTP calls which allows users
-     * to use any HTTP client lib of their choice.
+     * Default implementation depends on the existence of global \`fetch\` API.
+     * That API should be supported in relevant browsers and node v 18+. 
+     * If it's not found, default implementation fallbacks to \`undefined\` 
+     * and users must provide their own implementation.
+     * See \`resolveDefaultRequestFn()\` for details
+     * 
+     * If the default implementation is not sufficient, users are always free to
+     * provide their own implementation using HTTP client lib of their choice.
      */
-    requestFn: ApiRequestFn;
+    requestFn?: ApiRequestFn;
     /** Default request headers which are added to all requests. */
     headers?: Record<string, string>
   };
 
+  
   export function createClient(options: ApiClientOptions) {
     const internalOptions: ApiClientOptions = {
       rootPath: options.rootPath,
-      requestFn: options.requestFn,
+      requestFn: (options.requestFn ?? resolveDefaultRequestFn()),
       headers: {...(options.headers ?? {})},
     }
-
+    
     return ${buildApisObject(apis)};
   }
-
+  
   ${buildApis(def, apis)}
-
+  
   ${buildCommonCode()}
-
   `;
 }
 
@@ -505,6 +514,17 @@ function buildEndpointApi(def: Definition, endpoint: EndpointDef): EndpointApiEn
       assertUnreachable(epKind);
     }
   }
+}
+
+/** Builds code that must be on top of the file such as imports and declarations. */
+function buildHeaderCode(): string {
+  return `
+    // ---- imports & declarations
+
+    // declare global fetch API as \`any\` to avoid Typescript typings problems
+    declare let fetch: any;
+    declare let Headers: any;
+  `;
 }
 
 function buildCommonCode(): string {
@@ -977,6 +997,60 @@ function buildCommonCode(): string {
         }
       }
     });
+  }
+
+  /**
+   * Create a default request function implementation for API client (see \`ApiClientOptions.requestFn\`).
+   * 
+   * Depends on the existence of global \`fetch\` API.
+   * This should exist in all relevant browsers and node versions 18+.
+   * 
+   * If global \`fetch\` is not found, it returns \`undefined\` and user
+   * must provide it's own implementation.
+   * 
+   * Since we make a runtime check for global \`fetch\` we declare it and other parts
+   * of it's API as \`any\` to avoid unnecessary Typescript typings problems.
+   */
+  function resolveDefaultRequestFn() {
+    // no global fetch, no function
+    if (fetch === undefined) return;
+
+    return (url: string, init: any) => {
+      const method = init.method;
+      const headers = new Headers({
+        // presume JSON request but allow overriding by \`init.headers\`
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(init.headers ?? {})
+      })
+      // detect JSON request
+      const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") != -1;
+      const body = init.body != null && isJsonReq ? JSON.stringify(init.body) : init.body;
+
+      return (
+        // call API
+        fetch(url, {
+          method,
+          body,
+          headers,
+        })
+          // transform to struct required by API client
+          .then(async (response: any) => {
+            // detect JSON response
+            const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") != -1;
+
+            const status = response.status
+            const data = isJsonResp ? await response.json() : await response.text(); // pick response data type
+            const headers = Object.fromEntries(response.headers.entries()); // copy headers structure
+
+            return {
+              status,
+              data,
+              headers
+            };
+          })
+      );
+    }
   }
 
 `;
