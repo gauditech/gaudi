@@ -1,15 +1,11 @@
 import { Server } from "http";
 import path from "path";
 
-import { assertUnreachable, ensureEqual } from "@gaudi/compiler/dist/common/utils";
+import { ensureEqual } from "@gaudi/compiler/dist/common/utils";
 import * as dotenv from "dotenv";
-import request from "supertest";
 
 import { createTestInstance, loadBlueprint, loadPopulatorData } from "@runtime/e2e/api/setup";
-import {
-  ApiRequestInit,
-  createClient,
-} from "@runtime/e2e/client/__snapshots__/apiClient/client/api-client";
+import { createClient } from "@runtime/e2e/client/__snapshots__/apiClient/client/api-client";
 
 // test are slow
 jest.setTimeout(10000);
@@ -21,50 +17,14 @@ describe("api client lib", () => {
     loadPopulatorData(path.join(__dirname, "../api/api.data.json"))
   );
 
-  function makeTestRequestFn(server: Server) {
-    /**
-     * Request function used in API client for HTTP calls
-     *
-     * It uses `supertest` for making HTTP calls
-     */
-    return async function testRequestFn(url: string, init: ApiRequestInit) {
-      return (
-        Promise.resolve()
-          .then(() => {
-            const httpClient = request(server);
-            if (init.method === "GET") {
-              return httpClient.get(url).set(init.headers ?? {});
-            } else if (init.method === "POST") {
-              return httpClient
-                .post(url)
-                .set(init.headers ?? {})
-                .send(init.body);
-            } else if (init.method === "PATCH") {
-              return httpClient
-                .patch(url)
-                .set(init.headers ?? {})
-                .send(init.body);
-            } else if (init.method === "DELETE") {
-              return httpClient.delete(url).set(init.headers ?? {});
-            } else {
-              assertUnreachable(init.method);
-            }
-          })
-          // transform to struct required by API client
-          .then((response) => {
-            // superagent returns "{}" (empty object) as a body even if it's eg. plain text
-            // we have no way of knowing wether we should use body or text property
-            // so will presume that json response will contain "body" and all other "text"
-            const isJson = (response.headers["content-type"] ?? "").indexOf("/json") != -1;
+  function getServerURL(server: Server): string {
+    const address = server.address();
 
-            return {
-              status: response.status,
-              data: isJson ? response.body : response.text,
-              headers: { ...response.headers },
-            };
-          })
-      );
-    };
+    if (typeof address === "string" || address == null) {
+      return address ?? "";
+    }
+
+    return `http://[${address.address}]:${address.port ?? 80}`;
   }
 
   describe("Org", () => {
@@ -73,7 +33,7 @@ describe("api client lib", () => {
     it("get", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const response = await client.api.org.get("org1");
@@ -108,7 +68,7 @@ describe("api client lib", () => {
     it("list with paging", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const response = await client.api.org.list();
@@ -184,7 +144,7 @@ describe("api client lib", () => {
     it("list with non default paging", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const response = await client.api.org.list({ page: 2, pageSize: 2 });
@@ -242,7 +202,7 @@ describe("api client lib", () => {
     it("create", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = {
@@ -279,7 +239,7 @@ describe("api client lib", () => {
     it("update", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { slug: "org2", name: "Org 2A", description: "Org 2A description" };
@@ -318,7 +278,7 @@ describe("api client lib", () => {
     it("delete", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const deleteResp = await client.api.org.delete("org3");
@@ -336,7 +296,7 @@ describe("api client lib", () => {
     it("custom get", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const postResp = await client.api.org.customGet("org2");
@@ -348,7 +308,7 @@ describe("api client lib", () => {
     it("custom create", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = {
@@ -383,7 +343,7 @@ describe("api client lib", () => {
     it("custom update", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = {
@@ -424,7 +384,7 @@ describe("api client lib", () => {
     it("custom delete", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const patchResp = await client.api.org.customDelete("org4");
@@ -438,7 +398,7 @@ describe("api client lib", () => {
     it("custom list", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const postResp = await client.api.org.customList();
@@ -453,7 +413,7 @@ describe("api client lib", () => {
     it("custom one action", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { name: "Org Custom One", counter: 1, customProp: "custom prop value" };
@@ -467,7 +427,7 @@ describe("api client lib", () => {
     it("custom many action", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { name: "Org Custom Many", counter: 1 };
@@ -483,7 +443,7 @@ describe("api client lib", () => {
     it("custom one endpoint - action responds", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { name: "Org Custom One", counter: 1 };
@@ -502,7 +462,7 @@ describe("api client lib", () => {
     it("custom many endpoint - action responds", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { name: "Org Custom Many", counter: 1 };
@@ -521,7 +481,7 @@ describe("api client lib", () => {
     it("custom many endpoint - respond action with complex response", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = {
@@ -553,7 +513,7 @@ describe("api client lib", () => {
     it("custom one endpoint - action with query", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { name: "Org 1", orgId: 1 };
@@ -582,7 +542,7 @@ describe("api client lib", () => {
     it("custom endpoint - fetch action", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { name: "Fetch me org 1" };
@@ -605,7 +565,7 @@ describe("api client lib", () => {
     it("Hook throws specific HTTP error response", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = { status: 451, message: "Unavailable For Legal Reasons" };
@@ -625,7 +585,7 @@ describe("api client lib", () => {
     it("Hook throws generic HTTP error response", async () => {
       const server = await runner.createServerInstance();
       const client = createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
       });
 
       const data = {

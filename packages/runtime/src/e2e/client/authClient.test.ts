@@ -1,17 +1,13 @@
 import { Server } from "http";
 import path from "path";
 
-import { assertUnreachable, ensureEqual } from "@gaudi/compiler/dist/common/utils";
+import { ensureEqual } from "@gaudi/compiler/dist/common/utils";
 import * as dotenv from "dotenv";
 import _ from "lodash";
-import request from "supertest";
 
 import { DATA } from "@runtime/e2e/api/auth.data";
 import { createTestInstance, loadBlueprint } from "@runtime/e2e/api/setup";
-import {
-  ApiRequestInit,
-  createClient,
-} from "@runtime/e2e/client/__snapshots__/authClient/client/api-client";
+import { createClient } from "@runtime/e2e/client/__snapshots__/authClient/client/api-client";
 
 // these tests last longer than default 5s timeout so this seems to help
 jest.setTimeout(20000);
@@ -24,9 +20,19 @@ describe("auth client lib", () => {
     DATA
   );
 
+  function getServerURL(server: Server): string {
+    const address = server.address();
+
+    if (typeof address === "string" || address == null) {
+      return address ?? "";
+    }
+
+    return `http://[${address.address}]:${address.port ?? 80}`;
+  }
+
   async function loginOwner(server: Server): Promise<string> {
     const client = createClient({
-      requestFn: makeTestRequestFn(server),
+      rootPath: getServerURL(server),
     });
     const resp = await client.api.auth.authUser.login({ username: "first", password: "1234" });
 
@@ -37,56 +43,10 @@ describe("auth client lib", () => {
     return (resp.data as any).token;
   }
 
-  function makeTestRequestFn(server: Server) {
-    /**
-     * Request function used in API client for HTTP calls
-     *
-     * It uses `supertest` for making HTTP calls
-     */
-    return async function testRequestFn(url: string, init: ApiRequestInit) {
-      return (
-        Promise.resolve()
-          .then(() => {
-            const httpClient = request(server);
-            if (init.method === "GET") {
-              return httpClient.get(url).set(init.headers ?? {});
-            } else if (init.method === "POST") {
-              return httpClient
-                .post(url)
-                .set(init.headers ?? {})
-                .send(init.body);
-            } else if (init.method === "PATCH") {
-              return httpClient
-                .patch(url)
-                .set(init.headers ?? {})
-                .send(init.body);
-            } else if (init.method === "DELETE") {
-              return httpClient.delete(url).set(init.headers ?? {});
-            } else {
-              assertUnreachable(init.method);
-            }
-          })
-          // transform to struct required by API client
-          .then((response) => {
-            // superagent returns "{}" (empty object) as a body even if it's eg. plain text
-            // we have no way of knowing wether we should use body or text property
-            // so will presume that json response will contain "body" and all other "text"
-            const isJson = (response.headers["content-type"] ?? "").indexOf("/json") != -1;
-
-            return {
-              status: response.status,
-              data: isJson ? response.body : response.text,
-              headers: { ...response.headers },
-            };
-          })
-      );
-    };
-  }
-
   describe("authentication", () => {
     function createNewClient(server: Server, token?: string) {
       return createClient({
-        requestFn: makeTestRequestFn(server),
+        rootPath: getServerURL(server),
         headers: {
           ...(token ? { Authorization: `bearer ${token}` } : {}),
         },
