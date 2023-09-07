@@ -47,11 +47,11 @@ async function setupClient(name: string, bpPath: string, appendGenerators = fals
 /** External blueprints don't have client generators so we'll add them here. */
 function appendClientGenerator(bp: string) {
   return `
-generate client {
+generator client {
   target ts
 }
 
-generate client {
+generator client {
   target js
 }
 

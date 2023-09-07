@@ -51,8 +51,8 @@ export function checkForm(document: GlobalAtom[]) {
         .with({ kind: "api" }, checkApi)
         .with({ kind: "populator" }, checkPopulator)
         .with({ kind: "runtime" }, () => undefined) // runtime is checked first
-        .with({ kind: "authenticator" }, () => checkAuthenticator)
-        .with({ kind: "generator" }, () => checkGenerator)
+        .with({ kind: "authenticator" }, checkAuthenticator)
+        .with({ kind: "generator" }, checkGenerator)
         .exhaustive()
     );
 

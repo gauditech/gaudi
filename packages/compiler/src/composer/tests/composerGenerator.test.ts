@@ -3,7 +3,7 @@ import { compileFromString } from "@compiler/common/testUtils";
 describe("generator composer", () => {
   it("succeeds for JS client generator", () => {
     const bp = `
-      generate client {
+      generator client {
         target js
       }
     `;
@@ -16,7 +16,7 @@ describe("generator composer", () => {
 
   it("succeeds for JS client generator with output", () => {
     const bp = `
-      generate client {
+      generator client {
         target js
         output "a/b/c"
       }

@@ -8,7 +8,7 @@ runtime JsRuntime {
     source path "./dist/hooks"
 }
 
-generate client {
+generator client {
     target ts
     // output directly to client directory so it can be imported
     output "../client/src/api"

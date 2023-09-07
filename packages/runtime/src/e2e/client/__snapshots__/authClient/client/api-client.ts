@@ -5,7 +5,7 @@
 
 // declare global fetch API as `any` to avoid Typescript typings problems
 declare let fetch: any;
-declare let Headers: any
+declare let Headers: any;
 
 
 // ----- API client

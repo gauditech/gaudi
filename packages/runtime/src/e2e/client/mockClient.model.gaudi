@@ -19,14 +19,14 @@ model Owner {
   relation repo { from Repo, through owner }
 }
 
-generate client {
+generator client {
   target js
   // test custom output directory
   output "src/e2e/client/__snapshots__/mockClient/client"
 }
 
 // "api model" is not implemented
-//generate client {
+//generator client {
 //  target js
 //  // test modela API
 //  api model
