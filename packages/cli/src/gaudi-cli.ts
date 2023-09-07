@@ -27,6 +27,9 @@ import { resolveModulePath } from "@cli/utils";
 import { watchResources } from "@cli/watcher";
 
 const logger = initLogger("gaudi:cli");
+
+logger.debug("CLI argv:", process.argv);
+
 parseArguments();
 
 function parseArguments() {
@@ -45,7 +48,7 @@ function parseArguments() {
         }),
     })
     .command({
-      command: "dev [root]",
+      command: "dev [root] [options]",
       describe: "Start project dev builder which rebuilds project on detected code changes.",
       handler: (args) => {
         devCommandHandler(args);
@@ -107,7 +110,7 @@ function parseArguments() {
               }),
           })
           .command({
-            command: "populate [root] --populator=<populator name>",
+            command: "populate [root] [options]",
             describe: "Reset database and populate it using given populator",
             handler: (args) => {
               dbPopulateCommandHandler(args);
@@ -126,7 +129,7 @@ function parseArguments() {
                 }),
           })
           .command({
-            command: "migrate [root] --name=<migration name>",
+            command: "migrate [root] [options]",
             describe: "Create DB migration file",
             builder: (yargs) =>
               yargs
@@ -174,9 +177,9 @@ function parseArguments() {
     })
 
     .example([
-      ["$0 init <project-name>", "Initialize new project"],
       ["$0 dev", "Run Gaudi in dev mode"],
       ["$0 db populate -p <populator-name>", "Populate database using named populator"],
+      ["$0 db push", "Sync model and database"],
       ["$0 start", "Start project"],
     ])
 
