@@ -63,11 +63,13 @@ function buildClient(def: Definition, apis: ApiDef[]): string {
   };
 
   
-  export function createClient(options: ApiClientOptions) {
+  export function createClient(options?: ApiClientOptions) {
+    const resolvedOptions = options ?? {}
+
     const internalOptions: ApiClientOptions = {
-      rootPath: options.rootPath,
-      requestFn: (options.requestFn ?? resolveDefaultRequestFn()),
-      headers: {...(options.headers ?? {})},
+      rootPath: resolvedOptions.rootPath,
+      requestFn: (resolvedOptions.requestFn ?? resolveDefaultRequestFn()),
+      headers: {...(resolvedOptions.headers ?? {})},
     }
     
     return ${buildApisObject(apis)};
