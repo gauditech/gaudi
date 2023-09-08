@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 
+import { configDotenv } from "dotenv";
+
 import { readConfig } from "@runtime/config";
 import { createServer } from "@runtime/server/server";
 
-// read environment
+// read ".env" file form cwd
+configDotenv({});
+
+// read cofig
 const config = readConfig();
 
 (async () => {
