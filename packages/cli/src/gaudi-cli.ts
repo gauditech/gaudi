@@ -27,6 +27,9 @@ import { resolveModulePath } from "@cli/utils";
 import { watchResources } from "@cli/watcher";
 
 const logger = initLogger("gaudi:cli");
+
+logger.debug("CLI argv:", process.argv);
+
 parseArguments();
 
 function parseArguments() {
@@ -34,18 +37,18 @@ function parseArguments() {
     .usage("$0 <command> [arguments]")
     .command({
       command: "build [root]",
-      describe: "Build entire project. Compiles Gaudi code and copies files to output folder",
+      describe: "Build entire project. Compiles Gaudi code and copies files to output directory",
       handler: (args) => {
         buildCommandHandler(args);
       },
       builder: (yargs) =>
         yargs.positional("root", {
           type: "string",
-          describe: "project root folder",
+          describe: "project root directory",
         }),
     })
     .command({
-      command: "dev [root]",
+      command: "dev [root] [options]",
       describe: "Start project dev builder which rebuilds project on detected code changes.",
       handler: (args) => {
         devCommandHandler(args);
@@ -54,7 +57,7 @@ function parseArguments() {
         yargs
           .positional("root", {
             type: "string",
-            describe: "project root folder",
+            describe: "project root directory",
           })
           .option("gaudi-dev", {
             hidden: true, // this is a hidden option for developing gaudi itself
@@ -71,7 +74,7 @@ function parseArguments() {
       builder: (yargs) =>
         yargs.positional("root", {
           type: "string",
-          describe: "project root folder",
+          describe: "project root directory",
         }),
     })
     .command({
@@ -91,7 +94,7 @@ function parseArguments() {
             builder: (yargs) =>
               yargs.positional("root", {
                 type: "string",
-                describe: "project root folder",
+                describe: "project root directory",
               }),
           })
           .command({
@@ -103,11 +106,11 @@ function parseArguments() {
             builder: (yargs) =>
               yargs.positional("root", {
                 type: "string",
-                describe: "project root folder",
+                describe: "project root directory",
               }),
           })
           .command({
-            command: "populate [root] --populator=<populator name>",
+            command: "populate [root] [options]",
             describe: "Reset database and populate it using given populator",
             handler: (args) => {
               dbPopulateCommandHandler(args);
@@ -116,7 +119,7 @@ function parseArguments() {
               yargs
                 .positional("root", {
                   type: "string",
-                  describe: "project root folder",
+                  describe: "project root directory",
                 })
                 .option("populator", {
                   alias: "p",
@@ -126,13 +129,13 @@ function parseArguments() {
                 }),
           })
           .command({
-            command: "migrate [root] --name=<migration name>",
+            command: "migrate [root] [options]",
             describe: "Create DB migration file",
             builder: (yargs) =>
               yargs
                 .positional("root", {
                   type: "string",
-                  describe: "project root folder",
+                  describe: "project root directory",
                 })
                 .option("name", {
                   alias: "n",
@@ -153,7 +156,7 @@ function parseArguments() {
             builder: (yargs) =>
               yargs.positional("root", {
                 type: "string",
-                describe: "project root folder",
+                describe: "project root directory",
               }),
           })
           // fallback to help message
@@ -174,9 +177,9 @@ function parseArguments() {
     })
 
     .example([
-      ["$0 init <project-name>", "Initialize new project"],
       ["$0 dev", "Run Gaudi in dev mode"],
       ["$0 db populate -p <populator-name>", "Populate database using named populator"],
+      ["$0 db push", "Sync model and database"],
       ["$0 start", "Start project"],
     ])
 
@@ -193,7 +196,7 @@ function parseArguments() {
 // --- common
 
 type CommonCommandArgs = {
-  /** Project root folder */
+  /** Project root directory */
   root?: string;
   /** Gaudi dev mode. Adds `node_modules/@gaudi/*` to file watch list. Option convenient when developing Gaudi itself */
   gaudiDev?: boolean;
@@ -297,7 +300,7 @@ function watchCompileCommand(
 
   const resources = _.compact([
     // watch compiler input path
-    path.join(config.inputFolder, "**/*.gaudi"),
+    path.join(config.inputDirectory, "**/*.gaudi"),
     // watch gaudi files (during Gaudi dev)
     args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
   ]);
@@ -335,7 +338,7 @@ function watchDbPushCommand(
 
   const resources = [
     // prisma schema
-    path.join(config.gaudiFolder, "db", "schema.prisma"),
+    path.join(config.gaudiDirectory, "db", "schema.prisma"),
   ];
 
   const watcher = watchResources(resources, run, { ignoreInitial: true });
@@ -369,8 +372,8 @@ function watchCopyStaticCommand(
 
   // keep these resources in sync with the list of files this command actually copies
   const resources = [
-    // gaudi DB folder
-    path.join(config.gaudiFolder, "db"),
+    // gaudi DB directory
+    path.join(config.gaudiDirectory, "db"),
   ];
 
   const watcher = watchResources(resources, run, { ignoreInitial: true });
@@ -409,8 +412,8 @@ function watchStartCommand(
   };
 
   const resources = _.compact([
-    // gaudi output folder
-    path.join(config.outputFolder),
+    // gaudi output directory
+    path.join(config.outputDirectory),
     // watch gaudi files (during Gaudi dev)
     args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
     args.gaudiDev ? resolveModulePath("@gaudi/runtime/") : null,

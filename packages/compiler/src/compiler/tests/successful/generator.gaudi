@@ -1,15 +1,15 @@
 
-generate client {
+generator client {
   target js
   output "test/path/something"
 }
 
-generate client {
+generator client {
   target ts
   output "test/path/something"
 }
 
-generate apidocs {
+generator apidocs {
   basePath "/subpath"
 }
 

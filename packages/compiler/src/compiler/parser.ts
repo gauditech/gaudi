@@ -1265,7 +1265,7 @@ class GaudiParser extends EmbeddedActionsParser {
   generatorClient = this.RULE("generatorClient", (): Generator => {
     const atoms: GeneratorClientAtom[] = [];
 
-    const keyword = this.createTokenData(this.CONSUME(L.Generate));
+    const keyword = this.createTokenData(this.CONSUME(L.Generator));
     const typeToken = this.CONSUME(L.Client);
     const keywordType = this.createTokenData(typeToken);
     const type = typeToken.image as Extract<GeneratorType, "client">;
@@ -1302,7 +1302,7 @@ class GaudiParser extends EmbeddedActionsParser {
   generatorApidocs = this.RULE("generatorApidocs", (): Generator => {
     const atoms: GeneratorApidocsAtom[] = [];
 
-    const keyword = this.createTokenData(this.CONSUME(L.Generate));
+    const keyword = this.createTokenData(this.CONSUME(L.Generator));
     const typeToken = this.OR1([{ ALT: () => this.CONSUME(L.Apidocs) }]);
     const keywordType = this.createTokenData(typeToken);
     const type = typeToken.image as Extract<GeneratorType, "apidocs">;

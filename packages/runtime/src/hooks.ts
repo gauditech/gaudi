@@ -161,13 +161,13 @@ export async function createLocalExecutionRuntime(
 }
 
 /**
- * Resolves absolute source folder path.
+ * Resolves absolute source directory path.
  *
  * If sources path is already absolute it is returned as umchanged.
  *
  * Relative paths are resolved with different base path:
  *  - internal exec runtimes are resolved using `__dirname` as base path
- *  - user defined exec runtimes are resolved using current process working folder
+ *  - user defined exec runtimes are resolved using current process working directory
  */
 function resolveSourcePath(name: string, sourcePath: string): string {
   if (path.isAbsolute(sourcePath)) return sourcePath;

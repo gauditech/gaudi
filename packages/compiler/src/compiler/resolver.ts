@@ -67,7 +67,6 @@ import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@compiler/common/kindFilter";
-import { getExecutionRuntimeDefinition } from "@compiler/common/refs";
 import { getInternalExecutionRuntimeName } from "@compiler/composer/executionRuntimes";
 
 export function resolve(projectASTs: ProjectASTs) {
@@ -1216,7 +1215,8 @@ export function resolve(projectASTs: ProjectASTs) {
         // validate source path
         const runtimePath = kindFind(selectedRuntime.atoms, "sourcePath")?.path.value ?? "";
         const fullPath = path.join(runtimePath, source.file.value);
-        if (!fullPath.startsWith(runtimePath)) {
+        const relativePath = path.relative(runtimePath, fullPath);
+        if (relativePath.startsWith("..")) {
           errors.push(new CompilerError(source.file.token, ErrorCode.InvalidPath));
         }
       }

@@ -26,7 +26,8 @@ describe("runtime", () => {
         host: "127.0.0.1",
         port: 3001,
         definitionPath: "definition.json",
-        outputFolder: ".",
+        outputDirectory: ".",
+        cors: undefined,
       };
 
       expect(config).toEqual(expected);
@@ -39,6 +40,7 @@ describe("runtime", () => {
       process.env.GAUDI_RUNTIME_SERVER_PORT = "31337";
       process.env.GAUDI_RUNTIME_DEFINITION_PATH = "test/definition/path";
       process.env.GAUDI_RUNTIME_OUTPUT_PATH = "test/output/path";
+      process.env.GAUDI_CORS_ORIGIN = "test.origin";
 
       const config: RuntimeConfig = readConfig();
 
@@ -47,7 +49,8 @@ describe("runtime", () => {
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
-        outputFolder: "test/output/path",
+        outputDirectory: "test/output/path",
+        cors: { origin: ["test.origin"] },
       };
 
       expect(config).toEqual(expected);
@@ -62,7 +65,8 @@ describe("runtime", () => {
         host: "file-test-host",
         port: 31337000,
         definitionPath: "file-test/definition/path",
-        outputFolder: "file-test/output/path",
+        outputDirectory: "file-test/output/path",
+        cors: { origin: ["test.origin"] },
       };
 
       expect(config).toEqual(expected);
@@ -75,6 +79,7 @@ describe("runtime", () => {
       process.env.GAUDI_RUNTIME_SERVER_PORT = "31337";
       process.env.GAUDI_RUNTIME_DEFINITION_PATH = "test/definition/path";
       process.env.GAUDI_RUNTIME_OUTPUT_PATH = "test/output/path";
+      process.env.GAUDI_CORS_ORIGIN = "*";
 
       dotenv.config({ path: path.join(__dirname, "config.test.env") });
       const config = readConfig();
@@ -84,7 +89,8 @@ describe("runtime", () => {
         host: "test-host",
         port: 31337,
         definitionPath: "test/definition/path",
-        outputFolder: "test/output/path",
+        outputDirectory: "test/output/path",
+        cors: { origin: true },
       };
 
       expect(config).toEqual(expected);

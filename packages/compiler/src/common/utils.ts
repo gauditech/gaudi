@@ -250,7 +250,7 @@ export class UnreachableError extends Error {
  * Check existing file's content and avoid saving if content has not changed. This avoids triggering any possible watches.
  */
 export function saveOutputFile(destination: string, content: string): boolean {
-  // create folder(s) if they don't exist
+  // create directory(s) if they don't exist
   const dir = path.dirname(destination);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

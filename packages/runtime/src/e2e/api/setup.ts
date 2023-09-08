@@ -125,8 +125,8 @@ abstract class TestRunner {
   async compileApp(blueprint: string) {
     this.definition = compileFromString(blueprint);
     await build(this.definition, {
-      gaudiFolder: this.rootPath,
-      outputFolder: this.rootPath,
+      gaudiDirectory: this.rootPath,
+      outputDirectory: this.rootPath,
       dbProvider: this.dbProvider,
     });
   }
@@ -140,8 +140,8 @@ abstract class TestRunner {
     // setup the server
     const app = express();
     const definitionPath = path.join(this.rootPath, "definition.json");
-    const outputFolder = this.rootPath;
-    const gaudi = useGaudi({ definitionPath, outputFolder, dbConnUrl });
+    const outputDirectory = this.rootPath;
+    const gaudi = useGaudi({ definitionPath, outputDirectory, dbConnUrl });
     app.use(gaudi);
     const server = app.listen();
     // tell Gaudi to close the DB connections so process can gracefully exit

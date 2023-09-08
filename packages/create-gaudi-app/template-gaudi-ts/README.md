@@ -48,8 +48,8 @@ Project can be configured through `.env` file. Available configuration options:
 
 Gaudi compiler is configured via `gaudiconfig.json`
 
-- `rootDir` [_"src/gaudi"_] - path to folder containing Gaudi files
-- `outDir` [_"dist"_] - path to folder where Gaudi engine will output it's files
+- `rootDir` [_"src/gaudi"_] - path to directory containing Gaudi files
+- `outDir` [_"dist"_] - path to directory where Gaudi engine will output it's files
 
 ##### **Server configuration**
 
@@ -59,7 +59,7 @@ Gaudi compiler is configured via `gaudiconfig.json`
 ##### **Runtime configuration**
 
 - `GAUDI_RUNTIME_DEFINITION_PATH` [_"dist/definition.json"_] - path to Gaudi definition file
-- `GAUDI_RUNTIME_OUTPUT_PATH` [_"dist"_] - path to folder where Gaudi runtime will output it's files
+- `GAUDI_RUNTIME_OUTPUT_PATH` [_"dist"_] - path to directory where Gaudi runtime will output it's files
 
 ##### **Database**
 
@@ -67,9 +67,9 @@ Gaudi compiler is configured via `gaudiconfig.json`
 
 ## Gaudi source code
 
-Gaudi source code files are located in `<root>/src/gaudi/demo.gaudi` file. It is compiled by Gaudi compiler and output to `dist` folder.
+Gaudi source code files are located in `<root>/src/gaudi/demo.gaudi` file. It is compiled by Gaudi compiler and output to `dist` directory.
 
-Gaudi compiler also produces DB schema and migration files. Since those files need to be source controlled they are output to `<root>/gaudi` folder and then copied to output folder so they are available to app.
+Gaudi compiler also produces DB schema and migration files. Since those files need to be source controlled they are output to `<root>/gaudi` directory and then copied to output directory so they are available to app.
 
 ## Hooks
 

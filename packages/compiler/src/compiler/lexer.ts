@@ -98,7 +98,7 @@ export const HttpHeaders = createKeyword("httpHeaders");
 export const Hook = createWeakKeyword("hook");
 export const GET = createWeakKeyword("GET");
 export const Get = createWeakKeyword("get");
-export const Generate = createWeakKeyword("generate");
+export const Generator = createWeakKeyword("generator");
 export const From = createWeakKeyword("from");
 export const First = createWeakKeyword("first");
 export const Filter = createWeakKeyword("filter");
@@ -243,7 +243,7 @@ export const GaudiTokens = [
   Hook,
   GET,
   Get,
-  Generate,
+  Generator,
   From,
   First,
   Filter,

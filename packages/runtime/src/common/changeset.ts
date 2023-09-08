@@ -171,7 +171,7 @@ export async function buildChangeset(
  * - true - real boolean true
  * - everything else is converted to `false`
  *
- * TODO: move to some utils folder if it's ok
+ * TODO: move to some utils directory if it's ok
  */
 export function formatFieldValue(
   value: unknown,

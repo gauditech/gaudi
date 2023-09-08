@@ -1,11 +1,11 @@
 "use strict";
-// ----- API client
+// ---- imports & declarations
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createClient = void 0;
 function createClient(options) {
     const internalOptions = {
         rootPath: options.rootPath,
-        requestFn: options.requestFn,
+        requestFn: (options.requestFn ?? resolveDefaultRequestFn()),
         headers: { ...(options.headers ?? {}) },
     };
     return {
@@ -295,4 +295,53 @@ async function makeRequest(clientOptions, url, init) {
             }
         }
     });
+}
+/**
+ * Create a default request function implementation for API client (see `ApiClientOptions.requestFn`).
+ *
+ * Depends on the existence of global `fetch` API.
+ * This should exist in all relevant browsers and node versions 18+.
+ *
+ * If global `fetch` is not found, it returns `undefined` and user
+ * must provide it's own implementation.
+ *
+ * Since we make a runtime check for global `fetch` we declare it and other parts
+ * of it's API as `any` to avoid unnecessary Typescript typings problems.
+ */
+function resolveDefaultRequestFn() {
+    // no global fetch, no function
+    if (fetch === undefined)
+        return;
+    return (url, init) => {
+        const method = init.method;
+        const headers = new Headers({
+            // presume JSON request but allow overriding by `init.headers`
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(init.headers ?? {})
+        });
+        // detect JSON request
+        const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") != -1;
+        const body = init.body != null && isJsonReq ? JSON.stringify(init.body) : init.body;
+        return (
+        // call API
+        fetch(url, {
+            method,
+            body,
+            headers,
+        })
+            // transform to struct required by API client
+            .then(async (response) => {
+            // detect JSON response
+            const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") != -1;
+            const status = response.status;
+            const data = isJsonResp ? await response.json() : await response.text(); // pick response data type
+            const headers = Object.fromEntries(response.headers.entries()); // copy headers structure
+            return {
+                status,
+                data,
+                headers
+            };
+        }));
+    };
 }

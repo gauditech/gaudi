@@ -3,12 +3,13 @@ import path from "path";
 
 import { initLogger } from "@gaudi/compiler";
 import {
+  BUILDER_OPENAPI_SPEC_DIRECTORY,
   BUILDER_OPENAPI_SPEC_FILE_NAME,
-  BUILDER_OPENAPI_SPEC_FOLDER,
 } from "@gaudi/compiler/dist/builder/builder";
 import { kindFind } from "@gaudi/compiler/dist/common/kindFilter";
 import { concatUrlFragments } from "@gaudi/compiler/dist/common/utils";
-import { Definition } from "@gaudi/compiler/dist/types/definition";
+import { ApiDef, Definition } from "@gaudi/compiler/dist/types/definition";
+import cors from "cors";
 import { Express, NextFunction, Request, Response, static as staticHandler } from "express";
 import { OpenAPIV3 } from "openapi-types";
 import { serve, setup } from "swagger-ui-express";
@@ -29,6 +30,8 @@ export function setupServerApis(definition: Definition, app: Express) {
 
 export function setupDefinitionApis(def: Definition, app: Express) {
   def.apis.forEach((api) => {
+    setupApiCors(def, app, api);
+
     buildEndpointConfig(def, api.entrypoints).forEach((epc) =>
       registerServerEndpoint(app, epc, api.path)
     );
@@ -44,14 +47,14 @@ function setupDefinitionApisSpec(definition: Definition, app: Express) {
 
   const config = getAppContext(app).config;
 
-  const specFolderOutputPath = path.join(config.outputFolder, BUILDER_OPENAPI_SPEC_FOLDER);
-  const specFileOutputPath = path.join(specFolderOutputPath, BUILDER_OPENAPI_SPEC_FILE_NAME);
+  const specDirectoryOutputPath = path.join(config.outputDirectory, BUILDER_OPENAPI_SPEC_DIRECTORY);
+  const specFileOutputPath = path.join(specDirectoryOutputPath, BUILDER_OPENAPI_SPEC_FILE_NAME);
 
-  // --- static folder for serving API specs
-  app.use(`/${BUILDER_OPENAPI_SPEC_FOLDER}`, staticHandler(specFolderOutputPath));
+  // --- static directory for serving API specs
+  app.use(`/${BUILDER_OPENAPI_SPEC_DIRECTORY}`, staticHandler(specDirectoryOutputPath));
   logger.debug(
     `registered OpenAPI specification on: ${concatUrlFragments(
-      BUILDER_OPENAPI_SPEC_FOLDER,
+      BUILDER_OPENAPI_SPEC_DIRECTORY,
       BUILDER_OPENAPI_SPEC_FILE_NAME
     )}`
   );
@@ -93,4 +96,22 @@ export function loadFile(filePath: string): string {
     throw new Error(`File not found: "${filePath}"`);
   }
   return fs.readFileSync(filePath).toString("utf-8");
+}
+
+/** Add CORS config for API route */
+function setupApiCors(def: Definition, app: Express, api: ApiDef) {
+  const config = getAppContext(app).config;
+
+  // add CORS for API route
+  if (config.cors) {
+    const corsConfig: cors.CorsOptions = {
+      origin: config.cors.origin,
+      // always allow credentials because it allows users to choose if they wish to send them or not
+      credentials: true,
+    };
+
+    logger.debug(`Applying CORS config to route "${api.path}":`, corsConfig);
+
+    app.use(api.path, cors(corsConfig));
+  }
 }

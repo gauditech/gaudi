@@ -722,19 +722,26 @@ describe("compiler errors", () => {
           }
         }
         `;
-      expectError(bp, `Path must not contain '../' fragments`);
+      expectError(bp, `Hook path is outside of runtime directory`);
     });
   });
 
   describe("generator", () => {
-    it("fails for multiple client generators with the same target/api", () => {
+    it("fails for client generators without target", () => {
       const bp = `
-        generate client {
+        generator client {}
+      `;
+
+      expectError(bp, `"generator" must contain a "target"`);
+    });
+    it("fails for multiple client generators with the same target", () => {
+      const bp = `
+        generator client {
           target js
           output "a/b/c"
         }
 
-        generate client {
+        generator client {
           target js
           output "a/b/c"
         }
@@ -743,10 +750,10 @@ describe("compiler errors", () => {
     });
     it("fails for multiple apidocs generators", () => {
       const bp = `
-        generate apidocs {
+        generator apidocs {
         }
 
-        generate apidocs {
+        generator apidocs {
         }
       `;
       expectError(bp, `Multiple "apidocs" generators are not allowed`);

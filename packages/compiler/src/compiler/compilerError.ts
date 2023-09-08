@@ -213,7 +213,7 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
     case ErrorCode.InvalidDefaultAction:
       return `When overriding default action, its kind must match with current endpoint kind. "${params?.action}" is not a valid default action override in "${params?.endpoint}" endpoint`;
     case ErrorCode.InvalidPath:
-      return `Path must not contain '../' fragments`;
+      return `Hook path is outside of runtime directory`;
     case ErrorCode.NonDefaultModelActionRequiresAlias:
       return `Non default "create" or "update" actions require alias`;
     case ErrorCode.NonUniquePathItem:
