@@ -5,6 +5,7 @@ import fs from "fs";
 import prompts from "prompts";
 import chalk from "chalk";
 import initDebug, { Debugger } from "debug";
+
 const logger = initLogger("gaudi:create-gaudi-app");
 
 // --- templates
@@ -15,13 +16,11 @@ type Template = {
 };
 
 type PromptResult = {
-  rootDir: string;
-  projectName: string;
+  projectDir: string;
   templateName: Template;
   overwriteDir: boolean;
 };
 
-const DefaultTemplateName: TemplateName = "template-gaudi-ts";
 const TEMPLATES: Template[] = [
   { name: "template-gaudi-ts", displayName: "Gaudi backend project" },
   { name: "template-vite-react-ts", displayName: "Gaudi backend with React+TS+Vite frontend" },
@@ -32,10 +31,10 @@ const IGNORED_PATHS = [".git"];
 async function init() {
   // TODO: read initial template from args
 
-  const rootDir = process.argv[2] ?? process.cwd();
-  logger.debug(`Arguments: rootDir="${rootDir}"`);
+  const targetDir = process.argv.at(2);
+  logger.debug(`Arguments: workingDir=${targetDir}`);
 
-  prompts.override({ rootDir });
+  prompts.override({ projectDir: targetDir });
 
   let answers: prompts.Answers<keyof PromptResult>;
   try {
@@ -43,33 +42,28 @@ async function init() {
       [
         // project name
         {
-          type: "text",
-          name: "projectName",
-          message: "Project name:",
-          format: (value) => value.trim() || DefaultTemplateName,
-        },
-        // root dir - injected at the begining and should not be asked
-        {
-          type: "text",
-          name: "rootDir",
-          message: "Root dir:",
-          initial: rootDir,
+          type: () => (targetDir != null ? null : "text"),
+          name: "projectDir",
+          message: "Project dir:",
+          initial: targetDir,
+          format: (value) => value.trim() || process.cwd(),
         },
         // check if target dir already exists
         {
-          type: (_, { rootDir, projectName }) => {
-            const projectDir = path.join(rootDir, projectName);
+          type: (_, { projectDir }) => {
+            const pr = projectDir ?? targetDir;
 
-            return !pathExists(projectDir) || isDirEmpty(projectDir) ? null : "confirm";
+            return !pathExists(pr) || isDirEmpty(pr) ? null : "confirm";
           },
           name: "overwriteDir",
-          message: (_, { projectName }) => {
-            const projectDir = path.join(rootDir, projectName);
+          message: (_, { projectDir }) => {
+            const answerProjectDir = projectDir ?? targetDir;
 
-            return `Target directory "${projectDir}" is not empty. Remove existing files and continue?`;
+            console.log(chalk.gray("»") + ` Target directory "${answerProjectDir}" is not empty.`);
+            return `Remove existing files and continue?`;
           },
         },
-        // shoul we overwrite it
+        // should we overwrite it
         {
           type: (_, { overwriteDir }) => {
             if (overwriteDir === false) {
@@ -96,10 +90,10 @@ async function init() {
     logger.debug("Answers", answers);
 
     // define template source dir and target dir
-    const projectDir = path.resolve(answers.rootDir, answers.projectName);
-    logger.debug("Project dir (target)", projectDir);
+    const projectDir = answers.projectDir ?? targetDir;
+    logger.debug(`Project dir (target): "${projectDir}"`);
     const templateDir = path.join(__dirname, "..", answers.templateName);
-    logger.debug("Template dir (source)", templateDir);
+    logger.debug(`Template dir (source): "${templateDir}"`);
 
     // prepare project dir
     createDir(projectDir, answers.overwriteDir);
@@ -212,7 +206,6 @@ function ensurePathExists(path: string, message: string) {
     throw new Error(message);
   }
 }
-
 function initLogger(namespace: string): Record<"debug" | "error", Debugger> {
   return {
     debug: initDebug(namespace),
