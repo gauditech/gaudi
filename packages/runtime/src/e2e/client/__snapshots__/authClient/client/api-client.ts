@@ -31,11 +31,13 @@ export type ApiClientOptions = {
 };
 
 
-export function createClient(options: ApiClientOptions) {
+export function createClient(options?: ApiClientOptions) {
+  const resolvedOptions = options ?? {}
+
   const internalOptions: ApiClientOptions = {
-    rootPath: options.rootPath,
-    requestFn: (options.requestFn ?? resolveDefaultRequestFn()),
-    headers: { ...(options.headers ?? {}) },
+    rootPath: resolvedOptions.rootPath,
+    requestFn: (resolvedOptions.requestFn ?? resolveDefaultRequestFn()),
+    headers: { ...(resolvedOptions.headers ?? {}) },
   }
 
   return {
@@ -217,16 +219,16 @@ export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
   }
   : never;
 
-export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
+export type ApiResponse<D, E extends string> = ApiResponseSuccess<D> | ApiResponseError<E>;
 
-export type ApiResponseSuccess<D, E extends string> = {
+export type ApiResponseSuccess<D> = {
   kind: "success";
   status: number;
   headers: { [name: string]: string },
   data: D;
 };
 
-export type ApiResponseError<D, E extends string> = {
+export type ApiResponseError<E extends string> = {
   kind: "error";
   status: number;
   headers: { [name: string]: string },
@@ -663,7 +665,7 @@ function resolveDefaultRequestFn() {
       ...(init.headers ?? {})
     })
     // detect JSON request
-    const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") != -1;
+    const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") !== -1;
     const body = init.body != null && isJsonReq ? JSON.stringify(init.body) : init.body;
 
     return (
@@ -676,7 +678,7 @@ function resolveDefaultRequestFn() {
         // transform to struct required by API client
         .then(async (response: any) => {
           // detect JSON response
-          const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") != -1;
+          const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") !== -1;
 
           const status = response.status
           const data = isJsonResp ? await response.json() : await response.text(); // pick response data type

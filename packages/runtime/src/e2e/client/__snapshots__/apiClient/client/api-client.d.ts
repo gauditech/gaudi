@@ -17,7 +17,7 @@ export type ApiClientOptions = {
     /** Default request headers which are added to all requests. */
     headers?: Record<string, string>;
 };
-export declare function createClient(options: ApiClientOptions): {
+export declare function createClient(options?: ApiClientOptions): {
     api: {
         org: ((id: string) => {
             repos: ((id: number) => {
@@ -272,8 +272,8 @@ export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any 
     message: string;
     data?: D;
 } : never;
-export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
-export type ApiResponseSuccess<D, E extends string> = {
+export type ApiResponse<D, E extends string> = ApiResponseSuccess<D> | ApiResponseError<E>;
+export type ApiResponseSuccess<D> = {
     kind: "success";
     status: number;
     headers: {
@@ -281,7 +281,7 @@ export type ApiResponseSuccess<D, E extends string> = {
     };
     data: D;
 };
-export type ApiResponseError<D, E extends string> = {
+export type ApiResponseError<E extends string> = {
     kind: "error";
     status: number;
     headers: {

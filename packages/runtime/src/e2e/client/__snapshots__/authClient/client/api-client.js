@@ -3,10 +3,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createClient = void 0;
 function createClient(options) {
+    const resolvedOptions = options ?? {};
     const internalOptions = {
-        rootPath: options.rootPath,
-        requestFn: (options.requestFn ?? resolveDefaultRequestFn()),
-        headers: { ...(options.headers ?? {}) },
+        rootPath: resolvedOptions.rootPath,
+        requestFn: (resolvedOptions.requestFn ?? resolveDefaultRequestFn()),
+        headers: { ...(resolvedOptions.headers ?? {}) },
     };
     return {
         api: {
@@ -310,7 +311,7 @@ function resolveDefaultRequestFn() {
             ...(init.headers ?? {})
         });
         // detect JSON request
-        const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") != -1;
+        const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") !== -1;
         const body = init.body != null && isJsonReq ? JSON.stringify(init.body) : init.body;
         return (
         // call API
@@ -322,7 +323,7 @@ function resolveDefaultRequestFn() {
             // transform to struct required by API client
             .then(async (response) => {
             // detect JSON response
-            const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") != -1;
+            const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") !== -1;
             const status = response.status;
             const data = isJsonResp ? await response.json() : await response.text(); // pick response data type
             const headers = Object.fromEntries(response.headers.entries()); // copy headers structure
