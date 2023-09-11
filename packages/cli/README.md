@@ -1,7 +1,7 @@
 # Gaudi
 
 <p style="text-align: center">
-<a href="https://gitlab.com/gaudiorg/gaudi/-/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
+<a href="https://github.com/gauditech/gaudi/-/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
 </p>
 
 ---

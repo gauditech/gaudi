@@ -26,12 +26,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/gaudiorg/gaudi.git"
+    "url": "git+ssh://git@github.com/gauditech/gaudi.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/gaudiorg/gaudi/issues"
+    "url": "https://github.com/gauditech/gaudi/issues"
   },
-  "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
+  "homepage": "https://github.com/gauditech/gaudi#readme",
   "files": [
     "dist",
     "!*.tsbuildinfo",
