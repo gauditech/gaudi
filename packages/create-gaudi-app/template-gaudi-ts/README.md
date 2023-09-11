@@ -53,8 +53,9 @@ Gaudi compiler is configured via `gaudiconfig.json`
 
 ##### **Server configuration**
 
-- `SERVER_HOST` [_"localhost"_] - Gaudi runtime app host name
-- `SERVER_PORT` [_3001_] - Gaudi runtime app port
+- `GAUDI_RUNTIME_SERVER_HOST` [_"localhost"_] - Gaudi runtime app host name
+- `GAUDI_RUNTIME_SERVER_PORT` [_3001_] - Gaudi runtime app port
+- `GAUDI_CORS_ORIGIN` [_undefined_] - configure CORS origin ([see MDN for details](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin))
 
 ##### **Runtime configuration**
 
