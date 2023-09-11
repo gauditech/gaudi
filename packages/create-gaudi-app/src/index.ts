@@ -9,7 +9,7 @@ import initDebug, { Debugger } from "debug";
 const logger = initLogger("gaudi:create-gaudi-app");
 
 // --- templates
-type TemplateName = "template-vite-react-ts" | "template-gaudi-ts";
+type TemplateName = "template-vite-react-ts" | "template-gaudi-ts" | "template-todomvc-gaudi";
 type Template = {
   name: TemplateName;
   displayName: string;
@@ -24,6 +24,7 @@ type PromptResult = {
 const TEMPLATES: Template[] = [
   { name: "template-gaudi-ts", displayName: "Gaudi backend project" },
   { name: "template-vite-react-ts", displayName: "Gaudi backend with React+TS+Vite frontend" },
+  { name: "template-todomvc-gaudi", displayName: "Todo MVC with Gaudi backend" },
 ];
 // list of files that are ignored when checking empty dir
 const IGNORED_PATHS = [".git"];

@@ -1,0 +1,33 @@
+
+generator apidocs {}
+
+generator client {
+  target ts
+  output "../frontend/src"
+}
+
+model Todo {
+  field title { type string }
+  field completed { type boolean, default false }
+}
+
+api {
+  entrypoint Todo {
+    get endpoint {}
+    list endpoint {
+      order by { id desc }
+    }
+    create endpoint {}
+    update endpoint {}
+    delete endpoint {}
+  }
+}
+
+populator Dev {
+  populate Todo as todo {
+      repeat as iter 3
+
+      set title "Todo #" + stringify(iter.current)
+      set completed false
+  }
+}
