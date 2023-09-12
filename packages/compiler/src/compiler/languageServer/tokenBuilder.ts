@@ -37,6 +37,7 @@ import {
   Runtime,
   Select,
   TokenData,
+  Unique,
   ValidateAction,
   ValidateExpr,
   Validator,
@@ -167,6 +168,7 @@ export function buildTokens(
         .with({ kind: "query" }, buildQuery)
         .with({ kind: "computed" }, buildComputed)
         .with({ kind: "hook" }, buildModelHook)
+        .with({ kind: "unique" }, buildUnique)
         .exhaustive()
     );
   }
@@ -271,6 +273,12 @@ export function buildTokens(
     buildKeyword(keyword);
     push(name.token, TokenTypes.property);
     buildExpr(expr);
+  }
+
+  function buildUnique({ keyword, name, fields }: Unique) {
+    buildKeyword(keyword);
+    if (name) push(name.token, TokenTypes.variable);
+    fields.forEach((field) => buildIdentifierRef(field));
   }
 
   function buildApi({ keyword, name, atoms }: Api) {

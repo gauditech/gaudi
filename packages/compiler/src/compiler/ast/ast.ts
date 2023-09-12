@@ -35,7 +35,7 @@ export type Model = {
   kind: "model";
   keyword: TokenData;
   name: IdentifierRef<RefModel>;
-  atoms: ModelAtom[];
+  atoms: (ModelAtom | Unique)[];
 };
 export type ModelAtom = Field | Reference | Relation | Query | Computed | ModelHook;
 
@@ -119,6 +119,13 @@ export type Computed = {
   keyword: TokenData;
   name: IdentifierRef<RefModelComputed>;
   expr: Expr<Db>;
+};
+
+export type Unique = {
+  kind: "unique";
+  keyword: TokenData;
+  name?: Identifier;
+  fields: IdentifierRef<RefModelField | RefModelReference>[];
 };
 
 export type Api = {

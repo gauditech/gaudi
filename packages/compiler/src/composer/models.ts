@@ -12,6 +12,7 @@ import {
   QueryDef,
   ReferenceDef,
   RelationDef,
+  UniqueDef,
   VariablePrimitiveType,
 } from "@compiler/types/definition";
 import * as Spec from "@compiler/types/specification";
@@ -33,6 +34,7 @@ function defineModel(spec: Spec.Model): ModelDef {
     aggregates: [],
     computeds: spec.computeds.map(defineComputed),
     hooks: spec.hooks.map(defineModelHook),
+    uniques: spec.uniques.map((unique) => defineUnique(spec, unique)),
   };
 }
 
@@ -115,6 +117,15 @@ function defineModelHook(hspec: Spec.ModelHook): ModelHookDef {
     name: hspec.name,
     args,
     hook: hspec.code,
+  };
+}
+
+function defineUnique(model: Spec.Model, unique: Spec.Unique): UniqueDef {
+  return {
+    kind: "unique",
+    name: unique.name,
+    modelRefKey: model.name,
+    fields: unique.fields.map((field) => refKeyFromRef(field)),
   };
 }
 
