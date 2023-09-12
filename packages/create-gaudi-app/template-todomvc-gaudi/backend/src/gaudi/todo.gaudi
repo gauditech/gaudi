@@ -1,15 +1,12 @@
 
-generator apidocs {}
-
-generator client {
-  target ts
-  output "../frontend/src"
-}
+// ----- models
 
 model Todo {
   field title { type string }
   field completed { type boolean, default false }
 }
+
+// ----- APIs
 
 api {
   entrypoint Todo {
@@ -22,6 +19,17 @@ api {
     delete endpoint {}
   }
 }
+
+// ----- generators
+
+generator apidocs {}
+
+generator client {
+  target ts
+  output "../frontend/src"
+}
+
+// ----- populators
 
 populator Dev {
   populate Todo as todo {
