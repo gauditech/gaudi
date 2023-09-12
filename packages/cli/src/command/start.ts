@@ -4,9 +4,7 @@ import * as dotenv from "dotenv";
 import _ from "lodash";
 import nodemon from "nodemon";
 
-import { GAUDI_SCRIPTS } from "@cli/config";
 import { CommandRunner } from "@cli/runner";
-import { makeCliSafePath } from "@cli/utils";
 
 const logger = initLogger("gaudi:cli");
 
@@ -21,7 +19,7 @@ export function start(_config: EngineConfig): CommandRunner {
     // make sure "*" is wrapped in quotes to prevent it being replaced by shell
     ignore: ["*"],
     // runtime script
-    exec: `node ${makeCliSafePath(GAUDI_SCRIPTS.RUNTIME)}`,
+    exec: `npx gaudi-runtime`,
   };
   let isRunning = false;
 
