@@ -86,5 +86,3 @@ Gaudi compiler produces following API resources:
 
 - API - http://localhost:3001/api
 - API docs - http://localhost:3001/api-docs
-- Admin API - http://localhost:3001/api-admin
-- Admin API docs - http://localhost:3001/api-admin-docs
