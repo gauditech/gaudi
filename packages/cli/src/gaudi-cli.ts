@@ -218,7 +218,7 @@ function setupCommandEnv(args: ArgumentsCamelCase<CommonCommandArgs>) {
 // --- build command
 
 async function buildCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
-  logger.debug("Building entire project ...");
+  console.log("Building entire project ...");
 
   setupCommandEnv(args);
 
@@ -232,7 +232,7 @@ async function buildCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) 
 // --- dev command
 
 async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
-  logger.debug("Starting project dev build ... ");
+  console.log("Starting project dev build ... ");
 
   setupCommandEnv(args);
 

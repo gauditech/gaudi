@@ -123,7 +123,7 @@ async function init() {
     console.log("");
   } catch (err: any) {
     logger.error(err.message);
-    return;
+    console.error("Error creating Gaudi app");
   }
 }
 

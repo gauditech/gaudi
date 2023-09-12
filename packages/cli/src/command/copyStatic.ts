@@ -1,16 +1,13 @@
 import path from "path";
 
-import { initLogger } from "@gaudi/compiler";
 import { EngineConfig } from "@gaudi/compiler/dist/config";
 import copyfiles from "copyfiles";
 import _ from "lodash";
 
-const logger = initLogger("gaudi:cli");
-
 // --- copy static
 
 export function copyStatic(config: EngineConfig) {
-  logger.debug("Copying static resources ...");
+  console.log("Copying static resources ...");
 
   return new Promise((resolve, reject) => {
     copyfiles(
