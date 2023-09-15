@@ -2,7 +2,7 @@ import { ChildProcessWithoutNullStreams, exec, spawn } from "child_process";
 
 import { initLogger } from "@gaudi/compiler";
 
-const logger = initLogger("gaudi:cli");
+const logger = initLogger("gaudi:cli:process");
 
 // ---------- Process control
 
@@ -146,8 +146,10 @@ function killPid(pid: number, signal: NodeJS.Signals) {
   try {
     process.kill(pid, signal);
   } catch (err) {
+    // error code when target process doesn't exist
     if ((err as any).code === "ESRCH") {
       console.warn(`Process ${pid} does not exist`);
+      return;
     }
 
     throw err;

@@ -24,7 +24,10 @@ const commandCounters: { [key: string]: number } = {};
 export function createCommandRunner(
   command: string,
   argv: string[],
-  options?: { commandName?: string } & SpawnOptions
+  options?: {
+    /** Command name for nicer display */
+    commandName?: string;
+  } & SpawnOptions
 ): CommandRunner {
   const fullCmd = `${command} ${argv.join(" ")}`;
   const cmdName = options?.commandName ?? `${fullCmd}`;
@@ -43,6 +46,8 @@ export function createCommandRunner(
     start: () => {
       logger.debug(`[${displayName}] Starting command: ${fullCmd}`);
 
+      isRunning = true;
+
       return new Promise<number | null>((resolve) => {
         try {
           ph = spawn(command, argv, {
@@ -56,8 +61,6 @@ export function createCommandRunner(
 
           // process has spawned
           ph.once("spawn", () => {
-            isRunning = true;
-            resolve(0);
             logger.debug(`[${displayName}] command started}`);
           });
 
@@ -65,17 +68,18 @@ export function createCommandRunner(
           ph.on("error", (err) => {
             logger.error(`[${displayName}] command error`, err);
 
+            // resolve but with error code
+            resolve(1);
+
             isRunning = false;
             ph = undefined;
           });
 
           // process exited
           ph.on("exit", (code) => {
-            if (code === 0) {
-              logger.debug(`[${displayName}] Command stopped`);
-            } else {
-              logger.error(`[${displayName}] Command stopped (${code})`);
-            }
+            logger.error(`[${displayName}] command finished (${code})`);
+
+            resolve(code);
 
             isRunning = false;
             ph = undefined;

@@ -14,21 +14,17 @@ export function start(_config: EngineConfig): CommandRunner {
 
   // using nodemon only to handle runtime errors
   // nodmeon doesn't watch files because we have our own command pipeline
-  return createCommandRunner(
-    "nodemon",
-    [
-      // ignore everything, gaudi watcher will restart nodemon
-      "--ignore",
-      "'*'",
-      // all extensions
-      "--ext",
-      "'*'",
-      // keep quiet
-      "--quiet",
-      // exec gaudi runtime
-      "--exec",
-      "npx gaudi-runtime",
-    ],
-    { commandName: "runtime" }
-  );
+  return createCommandRunner("nodemon", [
+    // ignore everything, gaudi watcher will restart nodemon
+    "--ignore",
+    "'*'",
+    // all extensions
+    "--ext",
+    "'*'",
+    // keep quiet
+    "--quiet",
+    // exec gaudi runtime
+    "--exec",
+    "npx gaudi-runtime",
+  ]);
 }

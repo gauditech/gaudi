@@ -238,36 +238,58 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
 
   const config = readConfig();
 
-  const children: Controllable[] = [];
+  let watcher: Controllable | undefined;
+  const commands = [
+    watchCompileCommand(args, config),
+    watchCopyStaticCommand(args, config),
+    watchDbPushCommand(args, config),
+    watchRuntimeCommand(args, config),
+  ];
 
-  async function start() {
-    if (children.length > 0) {
-      for (const c of children) {
-        await c.start().catch((err) => {
-          logger.error("Dev mode start error: ", err);
-        });
+  const runCommands = async () => {
+    for (const c of commands) {
+      try {
+        await c.start();
+      } catch (err) {
+        logger.error(`Error stopping command`, err);
       }
     }
+  };
+
+  async function start() {
+    const resources = _.compact([
+      // watch compiler input path
+      path.join(config.inputDirectory, "**/*.gaudi"),
+      // gaudi DB directory
+      path.join(config.gaudiDirectory, "db"),
+      // watch gaudi files (during Gaudi dev)
+      args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
+    ]);
+    // create async queue to serialize multiple calls
+    const enqueue = createAsyncQueueContext();
+
+    const run = async () => enqueue(runCommands);
+
+    // TODO: if commands change watched files, new watch events will be fired
+    // otoh, if we disable watching during command execution we might miss user's manual changes
+    watcher = watchResources(resources, run);
+
+    await watcher.start();
   }
 
   async function cleanup() {
-    if (children.length > 0) {
-      for (const c of children) {
-        await c.stop().catch((err) => {
-          logger.error("Dev mode cleanup error: ", err);
-        });
+    await watcher?.stop();
+
+    for (const c of commands) {
+      try {
+        await c.stop();
+      } catch (err) {
+        logger.error(`Error stopping command`, err);
       }
     }
   }
 
   attachProcessCleanup(process, cleanup);
-
-  // --- start dev commands
-
-  children.push(watchCompileCommand(args, config));
-  children.push(watchDbPushCommand(args, config));
-  children.push(watchCopyStaticCommand(args, config));
-  children.push(watchRuntimeCommand(args, config));
 
   await start();
 }
@@ -289,23 +311,10 @@ function watchCompileCommand(
           logger.error("Error running compile command:", err);
         })
     );
-
-  const resources = _.compact([
-    // watch compiler input path
-    path.join(config.inputDirectory, "**/*.gaudi"),
-    // watch gaudi files (during Gaudi dev)
-    args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
-  ]);
-
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
-
   return {
-    start: async () => {
-      await run();
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
+      //
     },
   };
 }
@@ -327,21 +336,10 @@ function watchDbPushCommand(
           logger.error("Error running DB push command:", err);
         })
     );
-
-  const resources = [
-    // prisma schema
-    path.join(config.gaudiDirectory, "db", "schema.prisma"),
-  ];
-
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
-
   return {
-    start: async () => {
-      await run();
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
+      //
     },
   };
 }
@@ -362,21 +360,10 @@ function watchCopyStaticCommand(
       })
     );
 
-  // keep these resources in sync with the list of files this command actually copies
-  const resources = [
-    // gaudi DB directory
-    path.join(config.gaudiDirectory, "db"),
-  ];
-
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
-
   return {
-    start: async () => {
-      await run();
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
+      //
     },
   };
 }
@@ -410,22 +397,10 @@ function watchRuntimeCommand(
         })
     );
 
-  const resources = _.compact([
-    // watch compiler input path
-    path.join(config.inputDirectory, "**/*.gaudi"),
-    // watch gaudi files (during Gaudi dev)
-    args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
-  ]);
-
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
-
   return {
-    start: async () => {
-      await run();
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
+      command?.stop();
     },
   };
 }
