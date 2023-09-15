@@ -226,7 +226,6 @@ async function buildCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) 
   const config = readConfig();
 
   await compile(config).start();
-  await dbPush(config).start();
   await copyStatic(config);
 }
 
