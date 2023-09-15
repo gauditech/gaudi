@@ -9,14 +9,18 @@ import { createCommandRunner } from "@cli/runner";
 export function dbPush(config: EngineConfig) {
   console.log("Pushing DB change ...");
 
-  return createCommandRunner("npx", [
-    "prisma",
-    "db",
-    "push",
-    "--accept-data-loss",
-    "--skip-generate",
-    `--schema=${getDbSchemaPath(config)}`,
-  ]);
+  return createCommandRunner(
+    "npx",
+    [
+      "prisma",
+      "db",
+      "push",
+      "--accept-data-loss",
+      "--skip-generate",
+      `--schema=${getDbSchemaPath(config)}`,
+    ],
+    { commandName: "db-push" }
+  );
 }
 
 // --- DB reset
@@ -24,14 +28,18 @@ export function dbPush(config: EngineConfig) {
 export function dbReset(config: EngineConfig) {
   console.log("Resetting DB ...");
 
-  return createCommandRunner("npx", [
-    "prisma",
-    "db",
-    "push",
-    "--force-reset",
-    "--skip-generate",
-    `--schema=${getDbSchemaPath(config)}`,
-  ]);
+  return createCommandRunner(
+    "npx",
+    [
+      "prisma",
+      "db",
+      "push",
+      "--force-reset",
+      "--skip-generate",
+      `--schema=${getDbSchemaPath(config)}`,
+    ],
+    { commandName: "db-reset" }
+  );
 }
 
 // --- DB populate
@@ -48,7 +56,9 @@ export function dbPopulate(options: DbPopulateOptions, _config: EngineConfig) {
 
   console.log(`Populating DB using populator "${populatorName} ..."`);
 
-  return createCommandRunner("npx", ["gaudi-populator", "-p", populatorName]);
+  return createCommandRunner("npx", ["gaudi-populator", "-p", populatorName], {
+    commandName: "db-populate",
+  });
 }
 
 // --- DB migrate
@@ -64,13 +74,11 @@ export function dbMigrate(options: DbMigrateOptions, config: EngineConfig) {
 
   console.log(`Creating DB migration "${migrationName}" ...`);
 
-  return createCommandRunner("npx", [
-    "prisma",
-    "migrate",
-    "dev",
-    `--name=${migrationName}`,
-    `--schema=${getDbSchemaPath(config)}`,
-  ]);
+  return createCommandRunner(
+    "npx",
+    ["prisma", "migrate", "dev", `--name=${migrationName}`, `--schema=${getDbSchemaPath(config)}`],
+    { commandName: "db-migrate" }
+  );
 }
 
 // --- DB deploy
@@ -78,10 +86,9 @@ export function dbMigrate(options: DbMigrateOptions, config: EngineConfig) {
 export function dbDeploy(config: EngineConfig) {
   console.log(`Deploying DB migrations ...`);
 
-  return createCommandRunner("npx", [
-    "prisma",
-    "migrate",
-    "deploy",
-    `--schema=${getDbSchemaPath(config)}`,
-  ]);
+  return createCommandRunner(
+    "npx",
+    ["prisma", "migrate", "deploy", `--schema=${getDbSchemaPath(config)}`],
+    { commandName: "db-deploy" }
+  );
 }

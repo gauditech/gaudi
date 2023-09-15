@@ -22,6 +22,7 @@ import {
 } from "@cli/command/db";
 import { start } from "@cli/command/start";
 import { attachProcessCleanup } from "@cli/process";
+import { CommandRunner } from "@cli/runner";
 import { Controllable } from "@cli/types";
 import { resolveModulePath } from "@cli/utils";
 import { watchResources } from "@cli/watcher";
@@ -242,29 +243,21 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
 
   async function start() {
     if (children.length > 0) {
-      const promises = children.map((c) => c.start());
-
-      const results = await Promise.allSettled(promises);
-      // check for errors during stopping
-      results.forEach((r) => {
-        if (r.status === "rejected") {
-          logger.error("Dev mode start error: ", r.reason);
-        }
-      });
+      for (const c of children) {
+        await c.start().catch((err) => {
+          logger.error("Dev mode start error: ", err);
+        });
+      }
     }
   }
 
   async function cleanup() {
     if (children.length > 0) {
-      const promises = children.map((c) => c.stop());
-
-      const results = await Promise.allSettled(promises);
-      // check for errors during stopping
-      results.forEach((r) => {
-        if (r.status === "rejected") {
-          logger.error("Dev mode cleanup error: ", r.reason);
-        }
-      });
+      for (const c of children) {
+        await c.stop().catch((err) => {
+          logger.error("Dev mode cleanup error: ", err);
+        });
+      }
     }
   }
 
@@ -275,7 +268,7 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
   children.push(watchCompileCommand(args, config));
   children.push(watchDbPushCommand(args, config));
   children.push(watchCopyStaticCommand(args, config));
-  children.push(watchStartCommand(args, config));
+  children.push(watchRuntimeCommand(args, config));
 
   await start();
 }
@@ -389,47 +382,51 @@ function watchCopyStaticCommand(
   };
 }
 
-function watchStartCommand(
+function watchRuntimeCommand(
   args: ArgumentsCamelCase<CommonCommandArgs>,
   config: EngineConfig
 ): Controllable {
-  // no need for async enqueueing since `nodemon` is a long running process and we cannot await for it to finish
+  // create async queue to serialize multiple command calls
+  const enqueue = createAsyncQueueContext();
 
-  const command = start(config);
+  let command: CommandRunner | undefined;
 
-  const run = async () => {
-    if (!command.isRunning()) {
-      await command.start().catch((err) => {
-        // just use catch to prevent error from leaking to node and finishing entire watch process
-        // nodemon will restart process on change anyway
-        logger.error("Error running start command:", err);
-      });
-    } else {
-      // ask `nodemon` to restart monitored process
-      // https://github.com/remy/nodemon/wiki/Events
-      command.sendMessage("restart");
-    }
-  };
+  const run = () =>
+    enqueue(() =>
+      Promise.resolve()
+        .then(async () => {
+          if (command != null && command.isRunning()) {
+            return command.stop();
+          }
+        })
+        .then(() => {
+          // create new command
+          command = start(config);
+          command.start();
+        })
+        .catch((err) => {
+          // just use catch to prevent error from leaking to node and finishing entire watch process
+          // command will be reexecuted anyway on next change
+          logger.error("Error running runtime command:", err);
+        })
+    );
 
   const resources = _.compact([
-    // gaudi output directory
-    path.join(config.outputDirectory),
+    // watch compiler input path
+    path.join(config.inputDirectory, "**/*.gaudi"),
     // watch gaudi files (during Gaudi dev)
     args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
-    args.gaudiDev ? resolveModulePath("@gaudi/runtime/") : null,
   ]);
 
-  // use our resource watcher instead of `nodemon`'s watching to keep to consistent
   const watcher = watchResources(resources, run, { ignoreInitial: true });
 
   return {
     start: async () => {
-      run(); // long running process, dont await - see `run()` for more info
+      await run();
       await watcher.start();
     },
     stop: async () => {
       await watcher.stop();
-      command.stop(); // manually stop command - see `run()` for more info
     },
   };
 }
