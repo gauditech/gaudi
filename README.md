@@ -1,18 +1,26 @@
-# Gaudi
+<div align="center">
+    <h1>Gaudi</h1>
+</div>
 
-_<p style="text-align: center">Build better apps in a fraction of time</p>_
+_<p align="center">Build better apps in a fraction of time</p>_
 
-<p style="text-align: center">
+<p align="center">
 <a href="https://github.com/gauditech/gaudi/-/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
 </p>
 
+<p align="center">
+  <a href="https://gaudi.tech">Web site</a> | <a href="https://docs.gaudi.tech">Docs</a>
+</p>
+
 ---
+
 
 ## About
 
 Gaudi is a declarative programming language and a backend framework that makes it easier to build and maintain web application APIs. Describe your models and APIs in a declarative way and instantly get your app with batteries included.
 
 With Gaudi out of the box you get expressive data modeling, customizable APIs, automatic database migration and population, powerful declarative database query engine, full stack type-safety, client library generators and much more.
+
 
 ## Project
 
