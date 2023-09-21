@@ -48,7 +48,6 @@ import {
   Model,
   ModelAction,
   ModelActionAtom,
-  ModelAtom,
   ModelHook,
   NullLiteral,
   OrderBy,
@@ -74,6 +73,7 @@ import {
   Select,
   StringLiteral,
   TokenData,
+  Unique,
   ValidateAction,
   ValidateExpr,
   Validator,
@@ -217,7 +217,7 @@ class GaudiParser extends EmbeddedActionsParser {
   });
 
   model = this.RULE("model", (): Model => {
-    const atoms: ModelAtom[] = [];
+    const atoms: Model["atoms"] = [];
 
     const keyword = this.createTokenData(this.CONSUME(L.Model));
     const name = this.SUBRULE(this.identifierDef);
@@ -235,6 +235,7 @@ class GaudiParser extends EmbeddedActionsParser {
             atoms.push(modelHook);
           },
         },
+        { ALT: () => atoms.push(this.SUBRULE(this.unique)) },
       ]);
     });
     this.CONSUME(L.RCurly);
@@ -563,6 +564,23 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return orderBy;
+  });
+
+  unique = this.RULE("unique", (): Unique => {
+    const fields: Unique["fields"] = [];
+
+    const keyword = this.createTokenData(this.CONSUME(L.Unique));
+    const name = this.OPTION(() => this.SUBRULE(this.identifier));
+    this.CONSUME(L.LCurly);
+    this.MANY_SEP({
+      SEP: L.Comma,
+      DEF: () => {
+        fields.push(this.SUBRULE(this.identifierRef));
+      },
+    });
+    this.CONSUME(L.RCurly);
+
+    return { kind: "unique", keyword, name, fields };
   });
 
   api = this.RULE("api", (): Api => {

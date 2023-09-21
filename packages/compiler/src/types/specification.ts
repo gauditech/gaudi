@@ -59,6 +59,7 @@ export type Model = {
   queries: Query[];
   computeds: Computed[];
   hooks: ModelHook[];
+  uniques: Unique[];
 };
 
 export type Field = {
@@ -107,6 +108,8 @@ export type Computed = {
   ref: RefModelAtom;
   expr: Expr;
 };
+
+export type Unique = { name: string; fields: (RefModelField | RefModelReference)[] };
 
 export type Expr = { type: Type } & (
   | { kind: "identifier"; identifier: IdentifierRef[] }

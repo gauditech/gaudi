@@ -77,6 +77,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     const queries = kindFilter(model.atoms, "query").map(migrateModelQuery);
     const computeds = kindFilter(model.atoms, "computed").map(migrateComputed);
     const hooks = kindFilter(model.atoms, "hook").map(migrateModelHook);
+    const uniques = kindFilter(model.atoms, "unique").map(migrateUnique);
 
     return {
       name: model.name.text,
@@ -86,6 +87,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       queries,
       computeds,
       hooks,
+      uniques,
     };
   }
 
@@ -261,6 +263,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       ref: computed.name.ref,
       expr: migrateExpr(computed.expr),
     };
+  }
+
+  function migrateUnique(unique: AST.Unique): Spec.Unique {
+    const fields = unique.fields.map(({ ref }) => {
+      ensureExists(ref);
+      return ref;
+    });
+    return { name: unique.name?.text || "", fields };
   }
 
   function migrateApi(api: AST.Api): Spec.Api {

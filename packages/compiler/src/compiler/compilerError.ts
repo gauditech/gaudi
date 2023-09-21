@@ -22,6 +22,8 @@ export enum ErrorCode {
   DuplicateAuthBlock,
   DuplicateEndpoint,
   DuplicateModelAtom,
+  UniqueMustHaveAtLeastTwoFields,
+  DuplicateUniqueField,
   DuplicateCustomEndpointPath,
   CustomEndpointPathClashesWithEnrtrypoint,
   DuplicateActionAtom,
@@ -118,6 +120,10 @@ function getErrorMessage(errorCode: ErrorCode, params?: Record<string, unknown>)
       return `Duplicate "${params?.type}" endpoint definition`;
     case ErrorCode.DuplicateModelAtom:
       return `Duplicate model member definition`;
+    case ErrorCode.UniqueMustHaveAtLeastTwoFields:
+      return `Composite "unique" constraint must have at least two fields or references`;
+    case ErrorCode.DuplicateUniqueField:
+      return `Duplicate composite unique field or reference`;
     case ErrorCode.DuplicateCustomEndpointPath:
       return `Custom endpoints on the same HTTP method must have unique paths in one entrypoint`;
     case ErrorCode.CustomEndpointPathClashesWithEnrtrypoint:

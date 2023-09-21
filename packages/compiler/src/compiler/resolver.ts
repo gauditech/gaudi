@@ -47,6 +47,7 @@ import {
   Runtime,
   Select,
   UnaryOperator,
+  Unique,
   ValidateExpr,
   Validator,
   ValidatorHook,
@@ -67,7 +68,7 @@ import {
 import { CompilerError, ErrorCode } from "./compilerError";
 import { authUserModelName } from "./plugins/authenticator";
 
-import { kindFilter, kindFind } from "@compiler/common/kindFilter";
+import { kindFilter, kindFind, kindReject } from "@compiler/common/kindFilter";
 import { getInternalExecutionRuntimeName } from "@compiler/composer/executionRuntimes";
 
 export function resolve(projectASTs: ProjectASTs) {
@@ -262,7 +263,8 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function resolveModel(model: Model) {
     model.name.ref = { kind: "model", model: model.name.text };
-    model.atoms.forEach((a) => resolveModelAtom(model, a));
+    kindReject(model.atoms, "unique").forEach((a) => resolveModelAtom(model, a));
+    kindFilter(model.atoms, "unique").forEach((unique) => resolveUnique(model, unique));
   }
 
   function resolveModelAtom(model: Model, atom: ModelAtom) {
@@ -569,6 +571,12 @@ export function resolve(projectASTs: ProjectASTs) {
         new CompilerError(computed.keyword, ErrorCode.ComputedType, { exprType: exprType.kind })
       );
     }
+  }
+
+  function resolveUnique(model: Model, unique: Unique) {
+    unique.fields.forEach((field) =>
+      resolveModelAtomRef(field, model.name.text, "field", "reference")
+    );
   }
 
   function resolveApi(api: Api) {
@@ -1530,7 +1538,8 @@ export function resolve(projectASTs: ProjectASTs) {
     if (!model) return false;
     const name = identifier.text;
 
-    const atom = model.atoms.find((m) => m.name.text === name);
+    const atoms = kindReject(model.atoms, "unique");
+    const atom = atoms.find((m) => m.name.text === name);
 
     // Id of a reference in model can be targeted
     if (atom) {
@@ -1541,7 +1550,7 @@ export function resolve(projectASTs: ProjectASTs) {
     }
 
     if (name.endsWith("_id")) {
-      const referenceAtom = model.atoms.find((m) => m.name.text === name.slice(0, -3));
+      const referenceAtom = atoms.find((m) => m.name.text === name.slice(0, -3));
       if (referenceAtom?.kind === "reference") {
         const nullable = referenceAtom.name.ref?.nullable ?? false;
         identifier.ref = {

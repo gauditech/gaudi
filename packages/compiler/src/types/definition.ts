@@ -41,6 +41,7 @@ export type ModelDef = {
   aggregates: AggregateDef[];
   computeds: ComputedDef[];
   hooks: ModelHookDef[];
+  uniques: UniqueDef[];
 };
 
 export type FieldDef = {
@@ -126,6 +127,8 @@ export type ModelHookDef = {
   args: { name: string; query: QueryDef }[];
   hook: HookCode;
 };
+
+export type UniqueDef = { kind: "unique"; name: string; modelRefKey: string; fields: string[] };
 
 export type VariablePrimitiveType = {
   kind: FieldType | "null";

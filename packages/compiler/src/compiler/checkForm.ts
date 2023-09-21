@@ -29,11 +29,12 @@ import {
   RespondAction,
   Select,
   TokenData,
+  Unique,
   Validator,
 } from "./ast/ast";
 import { CompilerError, ErrorCode } from "./compilerError";
 
-import { kindFilter, kindFind } from "@compiler/common/kindFilter";
+import { kindFilter, kindFind, kindReject } from "@compiler/common/kindFilter";
 
 export function checkForm(document: GlobalAtom[]) {
   const errors: CompilerError[] = [];
@@ -80,7 +81,7 @@ export function checkForm(document: GlobalAtom[]) {
 
   function checkModel(model: Model) {
     noDuplicateNames(
-      model.atoms.map(({ name }) => name),
+      kindReject(model.atoms, "unique").map(({ name }) => name),
       ErrorCode.DuplicateModelAtom
     );
     model.atoms.forEach((a) =>
@@ -91,6 +92,7 @@ export function checkForm(document: GlobalAtom[]) {
         .with({ kind: "query" }, checkQuery)
         .with({ kind: "computed" }, checkComputed)
         .with({ kind: "hook" }, checkHook)
+        .with({ kind: "unique" }, checkUnique)
         .exhaustive()
     );
   }
@@ -166,6 +168,13 @@ export function checkForm(document: GlobalAtom[]) {
 
   function checkComputed(_computed: Computed) {
     // TODO: do nothing?
+  }
+
+  function checkUnique(unique: Unique) {
+    if (unique.fields.length < 2) {
+      errors.push(new CompilerError(unique.keyword, ErrorCode.UniqueMustHaveAtLeastTwoFields));
+    }
+    noDuplicateNames(unique.fields, ErrorCode.DuplicateUniqueField);
   }
 
   function checkApi(api: Api) {

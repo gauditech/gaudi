@@ -26,6 +26,7 @@ import {
   Relation,
   Select,
   TokenData,
+  Unique,
   ValidateExpr,
   Validator,
 } from "../ast/ast";
@@ -109,6 +110,7 @@ function getIdentifiersModel({ name, atoms }: Model): FuzzySourceRef[] {
       .with({ kind: "query" }, getIdentifiersModelQuery)
       .with({ kind: "computed" }, getIdentifiersComputed)
       .with({ kind: "hook" }, getIdentifiersHook)
+      .with({ kind: "unique" }, getIdentifiersUnique)
       .exhaustive()
   );
   return [name, ...atomIdentifiers];
@@ -149,6 +151,10 @@ function getIdentifiersModelQuery({ name, atoms }: Query): FuzzySourceRef[] {
 
 function getIdentifiersComputed({ name, expr }: Computed): FuzzySourceRef[] {
   return [name, ...getIdentifiersExpr(expr)];
+}
+
+function getIdentifiersUnique({ fields }: Unique): FuzzySourceRef[] {
+  return fields;
 }
 
 function getIdentifiersApi({ atoms }: Api): FuzzySourceRef[] {
