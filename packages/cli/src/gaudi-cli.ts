@@ -251,7 +251,7 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
       try {
         await c.start();
       } catch (err) {
-        logger.error(`Error stopping command`, err);
+        logger.error(`Error starting command`, err);
       }
     }
   };
@@ -314,7 +314,7 @@ function watchCompileCommand(
   return {
     start: run,
     stop: async () => {
-      //
+      // no-op
     },
   };
 }
