@@ -11,7 +11,5 @@ configDotenv({});
 // read cofig
 const config = readConfig();
 
-(async () => {
-  // start server
-  createServer(config);
-})();
+// start server
+createServer(config);

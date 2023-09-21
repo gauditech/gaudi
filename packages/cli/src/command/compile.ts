@@ -8,5 +8,5 @@ import { createCommandRunner } from "@cli/runner";
 export function compile(_config: EngineConfig) {
   console.log("Compiling Gaudi code ...");
 
-  return createCommandRunner("npx", ["gaudi-compiler"]);
+  return createCommandRunner("npx", ["gaudi-compiler"], { commandName: "compile" });
 }
