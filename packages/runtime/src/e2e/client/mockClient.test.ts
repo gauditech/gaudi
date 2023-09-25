@@ -1,10 +1,16 @@
 import { ensureEqual } from "@gaudi/compiler/dist/common/utils";
 
 import {
+  ApiRequestParametersType,
+  ApiResponseErrorCodeType,
+  ApiResponseErrorDataType,
+  ApiResponseErrorType,
+  ApiResponseSuccessDataType,
+  ApiResponseSuccessType,
   ApiRequestFn as EntrypointApiRequestFn,
   ApiRequestInit as EntrypointApiRequestInit,
   PaginatedListResponse,
-  createClient as createClientEntrypoint,
+  createClient,
 } from "@runtime/e2e/client/__snapshots__/mockClient/client/api-client";
 
 // test are slow
@@ -1022,6 +1028,90 @@ describe("mock client lib", () => {
       });
     });
   });
+
+  describe("API helper types", () => {
+    it("get types ", async () => {
+      const client = createClient();
+
+      // test request type
+      assert<
+        Equal<
+          ApiRequestParametersType<typeof client.api.org.get>,
+          [id: string, options?: Partial<EntrypointApiRequestInit>]
+        >
+      >(true);
+
+      // test response type
+      assert<
+        Equal<
+          ApiResponseSuccessType<typeof client.api.org.get>,
+          {
+            kind: "success";
+            status: number;
+            headers: { [name: string]: string };
+            data: {
+              id: number;
+              slug: string;
+              name: string;
+            };
+          }
+        >
+      >(true);
+
+      // test response data type
+      assert<
+        Equal<
+          ApiResponseSuccessDataType<typeof client.api.org.get>,
+          {
+            id: number;
+            slug: string;
+            name: string;
+          }
+        >
+      >(true);
+
+      // ----- test errors
+
+      type ErrorCode =
+        | "ERROR_CODE_OTHER"
+        | "ERROR_CODE_RESOURCE_NOT_FOUND"
+        | "ERROR_CODE_SERVER_ERROR";
+
+      // test error type
+      assert<
+        Equal<
+          ApiResponseErrorType<typeof client.api.org.get>,
+          {
+            kind: "error";
+            status: number;
+            headers: { [name: string]: string };
+            error: {
+              code: ErrorCode;
+              message: string;
+              data?: unknown;
+            };
+          }
+        >
+      >(true);
+
+      // test error data type
+      assert<
+        Equal<
+          ApiResponseErrorDataType<typeof client.api.org.get>,
+          {
+            code: ErrorCode;
+            message: string;
+            data?: unknown;
+          }
+        >
+      >(true);
+
+      // test error code type
+      assert<Equal<ApiResponseErrorCodeType<typeof client.api.org.get>, ErrorCode>>(true);
+    });
+
+    // TODO: add types for other API endpoints
+  });
 });
 
 /**
@@ -1031,7 +1121,7 @@ function createTestEntrypointClient(
   requestFn: EntrypointApiRequestFn,
   defaultHeaders?: Record<string, string>
 ) {
-  return createClientEntrypoint({
+  return createClient({
     rootPath: "/rootPath", // test root path
     // request implementation fn that returns hardcoded values
     requestFn: async function (url: string, init: EntrypointApiRequestInit) {
@@ -1039,4 +1129,14 @@ function createTestEntrypointClient(
     },
     headers: defaultHeaders,
   });
+}
+
+// ----- utils
+
+/** Meta type that resolves to `true` if two types are equal, `false` otherwise */
+type Equal<T, U> = [T] extends [U] ? ([U] extends [T] ? true : false) : false;
+
+/** Assertion function that throws compile error if generic type and function parameter do not match */
+function assert<T extends true | false>(_: T) {
+  // no-op, this throws compile time error
 }
