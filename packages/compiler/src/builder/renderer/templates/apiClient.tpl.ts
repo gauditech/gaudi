@@ -1070,13 +1070,13 @@ function buildCommonCode(): string {
    * Example:
    * 
    * \`\`\`ts
-   * type MyApiDataReqType = ApiRequestType<typeof client.api.org.get>;
+   * type MyApiDataReqParamsType = ApiRequestParametersType<typeof client.api.org.get>;
    * // =>
-   * // type MyApiDataReqType = [data: CreateData, options?: Partial<ApiRequestInit> | undefined]
+   * // type MyApiDataReqParamsType = [data: CreateData, options?: Partial<ApiRequestInit> | undefined]
    * \`\`\`
    * 
    */
-  export type ApiRequestType<T extends ApiMethod> = Parameters<T> extends [...infer Rest] ? Rest : never;
+  export type ApiRequestParametersType<T extends ApiMethod> = Parameters<T> extends [...infer Rest] ? Rest : never;
 
   /**
    * Returns API success response type.

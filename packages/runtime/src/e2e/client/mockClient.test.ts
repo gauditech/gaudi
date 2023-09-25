@@ -1,7 +1,7 @@
 import { ensureEqual } from "@gaudi/compiler/dist/common/utils";
 
 import {
-  ApiRequestType,
+  ApiRequestParametersType,
   ApiResponseErrorCodeType,
   ApiResponseErrorDataType,
   ApiResponseErrorType,
@@ -1036,7 +1036,7 @@ describe("mock client lib", () => {
       // test request type
       assert<
         Equal<
-          ApiRequestType<typeof client.api.org.get>,
+          ApiRequestParametersType<typeof client.api.org.get>,
           [id: string, options?: Partial<EntrypointApiRequestInit>]
         >
       >(true);
