@@ -91,6 +91,7 @@ export type QueryDef = {
   retType: string;
   retCardinality: TypeCardinality;
   fromPath: string[];
+  fromAlias: string[] | undefined;
   // unique: boolean;
   filter: TypedExprDef;
   select: SelectDef;
@@ -456,8 +457,24 @@ export type RespondAction = {
   httpHeaders?: { name: string; value: FieldSetter }[];
 };
 
-export type QueryAction = {
-  kind: "query";
+export type QueryAction = QuerSelectyAction | QueryUpdateAction | QueryDeleteAction;
+
+export type QuerSelectyAction = {
+  kind: "query-select";
+  alias: string;
+  model: string;
+  query: QueryDef;
+};
+
+export type QueryUpdateAction = {
+  kind: "query-update";
+  alias: string;
+  model: string;
+  query: QueryDef;
+  changeset: ChangesetDef;
+};
+export type QueryDeleteAction = {
+  kind: "query-delete";
   alias: string;
   model: string;
   query: QueryDef;

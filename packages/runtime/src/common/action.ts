@@ -9,13 +9,17 @@ import {
 } from "@gaudi/compiler/dist/types/definition";
 import _ from "lodash";
 
-import { applyFilterIdInContext, buildQueryTree, queryTreeFromParts } from "../query/build";
-import { castToCardinality, createQueryExecutor, executeQueryTree } from "../query/exec";
-
-import { ValidReferenceIdResult } from "./constraintValidation";
-
 import { buildChangeset } from "@runtime/common/changeset";
+import { ValidReferenceIdResult } from "@runtime/common/constraintValidation";
 import { HookActionContext, executeActionHook } from "@runtime/hooks";
+import { applyFilterIdInContext, queryTreeFromParts } from "@runtime/query/build";
+import { buildQueryOperation as buildQueryOperation } from "@runtime/query/endpointQueries";
+import {
+  NestedRow,
+  castToCardinality,
+  createQueryExecutor,
+  executeQueryTree,
+} from "@runtime/query/exec";
 import { DbConn } from "@runtime/server/dbConn";
 import { HookError } from "@runtime/server/error";
 import { Vars } from "@runtime/server/vars";
@@ -84,19 +88,102 @@ async function _internalExecuteActions(
       const targetId = resolveTargetId(ctx, action.targetPath);
 
       await deleteData(dbConn, dbModel, targetId);
-    } else if (actionKind === "query") {
-      const qt = buildQueryTree(def, action.query);
+    } else if (
+      actionKind === "query-select" ||
+      actionKind === "query-update" ||
+      actionKind === "query-delete"
+    ) {
       // FIXME this ugly
       const varsObj = Object.fromEntries(
         Object.keys(ctx.input).map((k) => [`___changeset___${k}`, ctx.input[k]])
       );
       varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
 
-      const result = castToCardinality(
-        await qx.executeQueryTree(def, qt, new Vars(varsObj), []),
-        action.query.retCardinality
-      );
-      ctx.vars.set(action.alias, result);
+      let returnResult: NestedRow[] | null;
+
+      const aKind = action.kind;
+      switch (aKind) {
+        case "query-select": {
+          const qop = buildQueryOperation(def, action);
+
+          // return results
+          returnResult = await qx.executeQueryTree(
+            def,
+            qop.responseQueryTree,
+            new Vars(varsObj),
+            []
+          );
+
+          break;
+        }
+        case "query-update": {
+          const model = getRef.model(def, action.query.modelRefKey);
+          const dbModel = model.dbname;
+
+          const qop = buildQueryOperation(def, action);
+
+          // collect targets
+          const targets = await qx.executeQueryTree(
+            def,
+            qop.targetQueryTree,
+            new Vars(varsObj),
+            []
+          );
+          ctx.vars.set(qop.targetQueryTree.alias, targets);
+
+          // build changeset
+          const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
+          
+          // execute operation on targets
+          const dbData = dataToFieldDbnames(model, actionChangeset);
+          await updateData(
+            dbConn,
+            dbModel,
+            dbData,
+            targets.map((t) => t.id as number)
+          );
+
+          // return results - only if select
+          returnResult =
+            qop.responseQueryTree.query.select.length > 0
+              ? await qx.executeQueryTree(def, qop.responseQueryTree, new Vars(varsObj), [])
+              : null;
+
+          break;
+        }
+        case "query-delete": {
+          const model = getRef.model(def, action.model);
+          const dbModel = model.dbname;
+
+          const qop = buildQueryOperation(def, action);
+
+          // collect targets
+          const targets = await qx.executeQueryTree(
+            def,
+            qop.targetQueryTree,
+            new Vars(varsObj),
+            []
+          );
+
+          // execute operation on targets
+          await deleteData(
+            dbConn,
+            dbModel,
+            targets.map((t) => t.id as number)
+          );
+
+          returnResult = null;
+          break;
+        }
+        default:
+          assertUnreachable(aKind);
+      }
+
+      if (returnResult != null) {
+        const result = castToCardinality(returnResult, action.query.retCardinality);
+
+        ctx.vars.set(action.alias, result);
+      }
     } else if (actionKind === "execute-hook") {
       ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
 
@@ -169,13 +256,15 @@ async function fetchActionDeps(
   def: Definition,
   dbConn: DbConn,
   action: CreateOneAction | UpdateOneAction,
-  id: number
+  id: number | number[]
 ): Promise<Record<string, unknown>[] | undefined> {
   if (!action.alias) return;
+
   // no need to fetch if only ID is requested
   if (action.select.findIndex((item) => item.alias !== "id") < 0) {
-    return [{ id }];
+    return (_.isArray(id) ? id : [id]).map((id) => ({ id }));
   }
+
   const qt = queryTreeFromParts(
     def,
     action.alias,
@@ -183,7 +272,8 @@ async function fetchActionDeps(
     applyFilterIdInContext([action.model]),
     transformSelectPath(action.select, [action.alias], [action.model])
   );
-  return executeQueryTree(dbConn, def, qt, new Vars(), [id]);
+
+  return executeQueryTree(dbConn, def, qt, new Vars(), _.isArray(id) ? id : [id]);
 }
 
 function resolveTargetId(ctx: ActionContext, targetPath: string[]): number {
@@ -201,14 +291,19 @@ async function updateData(
   dbConn: DbConn,
   model: string,
   data: Record<string, unknown>,
-  targetId: number
-): Promise<number> {
+  targetId: number | number[]
+): Promise<number | number[]> {
   // avoid malformed query by skipping the update if no data is passed
   if (Object.keys(data).length === 0) {
     return targetId;
   }
-  const ret = await dbConn(model).update(data).where({ id: targetId }).returning("id");
-  return findOne(ret);
+
+  if (_.isArray(targetId)) {
+    return await dbConn(model).update(data).whereIn("id", targetId).returning("id");
+  } else {
+    const ret = await dbConn(model).update(data).where({ id: targetId }).returning("id");
+    return findOne(ret);
+  }
 }
 
 async function insertData(
@@ -221,10 +316,17 @@ async function insertData(
   return findOne(ret);
 }
 
-async function deleteData(dbConn: DbConn, model: string, targetId: number): Promise<number> {
-  const ret = await dbConn(model).delete().where({ id: targetId }).returning("id");
-
-  return findOne(ret);
+async function deleteData(
+  dbConn: DbConn,
+  model: string,
+  targetId: number | number[]
+): Promise<number | number[]> {
+  if (_.isArray(targetId)) {
+    return await dbConn(model).delete().whereIn("id", targetId).returning("id");
+  } else {
+    const ret = await dbConn(model).delete().where({ id: targetId }).returning("id");
+    return findOne(ret);
+  }
 }
 
 function findOne(rows: any[], message?: string) {

@@ -1,13 +1,18 @@
+import { FilteredByKind } from "@gaudi/compiler/dist/common/kindFilter";
 import { transformSelectPath } from "@gaudi/compiler/dist/common/query";
 import { getRef } from "@gaudi/compiler/dist/common/refs";
+import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import {
   Definition,
   EndpointDef,
   ListEndpointDef,
+  QueryAction,
   QueryOrderByAtomDef,
   TargetDef,
   TypedExprDef,
 } from "@gaudi/compiler/dist/types/definition";
+import _ from "lodash";
+
 import { pagingToQueryLimit } from "@runtime/common/utils";
 import {
   QueryTree,
@@ -15,7 +20,6 @@ import {
   buildQueryTree,
   queryFromParts,
 } from "@runtime/query/build";
-import _ from "lodash";
 
 /**
  * Endpoint query builder
@@ -86,6 +90,79 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
   const responseQueryTree = buildResponseQueryTree(def, endpoint);
 
   return { authQueryTree, parentContextQueryTrees, targetQueryTree, responseQueryTree };
+}
+
+// ----- action operation builder
+
+export type QueryOperation =
+  | { kind: "query-select"; responseQueryTree: QueryTree }
+  | { kind: "query-update"; targetQueryTree: QueryTree; responseQueryTree: QueryTree }
+  | { kind: "query-delete"; targetQueryTree: QueryTree; responseQueryTree: QueryTree };
+
+export function buildQueryOperation<A extends QueryAction, K extends A["kind"]>(
+  def: Definition,
+  action: A
+): FilteredByKind<QueryOperation, K> {
+  const kind = action.kind;
+  switch (kind) {
+    case "query-select": {
+      return {
+        kind,
+        responseQueryTree: buildQueryTree(def, action.query),
+      } as FilteredByKind<QueryOperation, K>;
+    }
+    case "query-update": {
+      return {
+        kind,
+        targetQueryTree: buildQueryTree(def, {
+          ...action.query,
+          select:
+            // add "id" to select se we can target it later
+            // TODO: can "id" be added in compile time?
+            [
+              ...action.query.select,
+              {
+                kind: "expression",
+                type: { kind: "integer", nullable: false },
+                alias: "id",
+                expr: {
+                  kind: "alias",
+                  namePath: [...action.query.fromPath, "id"],
+                },
+              },
+            ],
+        }),
+        responseQueryTree: buildQueryTree(def, action.query),
+      } as FilteredByKind<QueryOperation, K>;
+    }
+    case "query-delete": {
+      return {
+        kind,
+        targetQueryTree: buildQueryTree(def, {
+          ...action.query,
+          select:
+            // add "id" to select se we can target it later
+            // TODO: can "id" be added in compile time?
+            [
+              ...action.query.select,
+              {
+                kind: "expression",
+                type: { kind: "integer", nullable: false },
+                alias: "id",
+                expr: {
+                  kind: "alias",
+                  namePath: [...action.query.fromPath, "id"],
+                },
+              },
+            ],
+        }),
+        responseQueryTree: buildQueryTree(def, action.query),
+      } as FilteredByKind<QueryOperation, K>;
+    }
+    default: {
+      assertUnreachable(kind);
+    }
+  }
 }
 
 // ----- query decorators

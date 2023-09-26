@@ -22,6 +22,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
   }
 
   const fromPath = qspec.from.map((i) => i.text);
+  const fromAlias = qspec.fromAlias?.map((i) => i.text);
 
   const filter = qspec.filter && composeExpression(qspec.filter, fromPath);
 
@@ -35,6 +36,7 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
     modelRefKey: qspec.sourceModel,
     filter,
     fromPath,
+    fromAlias,
     name: qspec.name ?? "$query",
     retCardinality: qspec.cardinality,
     retType: qspec.targetModel,
