@@ -326,7 +326,7 @@ type ApiMethod = (...args: any) => any;
  * ```ts
  * type MyApiDataReqParamsType = ApiRequestParametersType<typeof client.api.org.get>;
  * // =>
- * // type MyApiDataReqType = [data: CreateData, options?: Partial<ApiRequestInit> | undefined]
+ * // type MyApiDataReqParamsType = [data: CreateData, options?: Partial<ApiRequestInit> | undefined]
  * ```
  *
  */
