@@ -146,6 +146,7 @@ exports[`compose hooks composes action hook 1`] = `
               "kind": "function",
               "name": "is",
             },
+            "fromAlias": undefined,
             "fromPath": [
               "Org",
             ],
