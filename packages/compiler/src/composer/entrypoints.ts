@@ -510,27 +510,32 @@ export function wrapActionsWithSelect(
     if (
       a.kind !== "create-one" &&
       a.kind !== "update-one" &&
-      !(a.kind === "query-select" || a.kind === "query-update" || a.kind === "query-delete")
-    )
+      !(a.kind === "query-update" || a.kind === "query-select" || a.kind === "query-delete")
+    ) {
       return a;
-    // don't select deps for query action if it is already selected
-    if (
-      (a.kind === "query-select" || a.kind === "query-update" || a.kind === "query-delete") &&
-      a.query.select.length > 0
-    )
+    }
+
+    // don't select deps for query action if it already has selected define
+    // for query-update action we still have to add it's deps so they can be evaluated in changeset
+    if ((a.kind === "query-select" || a.kind === "query-delete") && a.query.select.length > 0) {
       return a;
+    }
 
     const paths = deps.filter((d) => d.alias === a.alias).map((a) => a.access);
+
     // make sure we always request an `id` for a target
     paths.push(["id"]);
     const model = getRef.model(def, a.model);
 
     const select = pathsToSelectDef(def, model, paths, [a.alias]);
-    if (a.kind === "query-select" || a.kind === "query-update" || a.kind === "query-delete") {
+
+    if (a.kind === "query-update" || a.kind === "query-select" || a.kind === "query-delete") {
       a.query.select = transformSelectPath(select, [a.alias], a.query.fromPath);
+
       return a;
+    } else {
+      return { ...a, select };
     }
-    return { ...a, select };
   });
 }
 

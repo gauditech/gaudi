@@ -114,48 +114,14 @@ export function buildQueryOperation<A extends QueryAction, K extends A["kind"]>(
     case "query-update": {
       return {
         kind,
-        targetQueryTree: buildQueryTree(def, {
-          ...action.query,
-          select:
-            // add "id" to select se we can target it later
-            // TODO: can "id" be added in compile time?
-            [
-              ...action.query.select,
-              {
-                kind: "expression",
-                type: { kind: "integer", nullable: false },
-                alias: "id",
-                expr: {
-                  kind: "alias",
-                  namePath: [...action.query.fromPath, "id"],
-                },
-              },
-            ],
-        }),
+        targetQueryTree: buildQueryTree(def, action.query),
         responseQueryTree: buildQueryTree(def, action.query),
       } as FilteredByKind<QueryOperation, K>;
     }
     case "query-delete": {
       return {
         kind,
-        targetQueryTree: buildQueryTree(def, {
-          ...action.query,
-          select:
-            // add "id" to select se we can target it later
-            // TODO: can "id" be added in compile time?
-            [
-              ...action.query.select,
-              {
-                kind: "expression",
-                type: { kind: "integer", nullable: false },
-                alias: "id",
-                expr: {
-                  kind: "alias",
-                  namePath: [...action.query.fromPath, "id"],
-                },
-              },
-            ],
-        }),
+        targetQueryTree: buildQueryTree(def, action.query),
         responseQueryTree: buildQueryTree(def, action.query),
       } as FilteredByKind<QueryOperation, K>;
     }
