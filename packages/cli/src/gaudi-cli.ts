@@ -260,6 +260,8 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
     const resources = _.compact([
       // watch compiler input path
       path.join(config.inputDirectory, "**/*.gaudi"),
+      // custom scripts
+      path.join(config.inputDirectory, "../dist", "**/*.js"),
       // gaudi DB directory
       path.join(config.gaudiDirectory, "db"),
       // watch gaudi files (during Gaudi dev)
