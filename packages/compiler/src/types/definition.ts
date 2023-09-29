@@ -142,7 +142,7 @@ type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 export type LiteralValueDef = { kind: "literal"; literal: Literal };
 
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
-type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
+type TypedVariable = { kind: "variable"; type?: TypedVariableType; path: string[] };
 
 export type BinaryOperator =
   | "or"

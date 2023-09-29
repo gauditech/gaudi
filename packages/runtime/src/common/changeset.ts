@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import {
   assertUnreachable,
   ensureEqual,
@@ -19,6 +20,8 @@ import { executeArithmetics } from "./arithmetics";
 import { ActionContext } from "@runtime/common/action";
 import { HookActionContext, executeHook } from "@runtime/hooks";
 import { QueryExecutor, castToCardinality } from "@runtime/query/exec";
+
+const logger = initLogger("gaudi:runtime:changeset");
 
 type Changeset = Record<string, unknown>;
 
@@ -109,6 +112,7 @@ export async function buildChangeset(
       case "request-auth-token": {
         ensureExists(epCtx, `HTTP handle context is required for "${setter.kind}" changesets`);
         const handler = epCtx.request;
+        logger.debug("Setting session: %O", setter.access);
 
         return getFieldsetProperty(handler, setter.access);
       }
@@ -120,9 +124,12 @@ export async function buildChangeset(
       }
       case "query": {
         const vars = actionContext.vars.copy();
-        vars.set("___requestAuthToken", await getValue({ kind: "request-auth-token", access: [] }));
+        vars.set(
+          ["session", "authToken"],
+          await getValue({ kind: "request-auth-token", access: [] })
+        );
         Object.keys(actionContext.input).forEach((key) => {
-          vars.set(`___changeset___${key}`, actionContext.input[key]);
+          vars.set(["changesets", key], actionContext.input[key]);
         });
 
         const qt = buildQueryTree(def, setter.query);

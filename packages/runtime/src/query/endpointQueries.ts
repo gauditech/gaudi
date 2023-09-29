@@ -1,5 +1,6 @@
 import { transformSelectPath } from "@gaudi/compiler/dist/common/query";
 import { getRef } from "@gaudi/compiler/dist/common/refs";
+import { safeInvoke } from "@gaudi/compiler/dist/common/utils";
 import {
   Definition,
   EndpointDef,
@@ -8,6 +9,8 @@ import {
   TargetDef,
   TypedExprDef,
 } from "@gaudi/compiler/dist/types/definition";
+import _ from "lodash";
+
 import { pagingToQueryLimit } from "@runtime/common/utils";
 import {
   QueryTree,
@@ -15,7 +18,6 @@ import {
   buildQueryTree,
   queryFromParts,
 } from "@runtime/query/build";
-import _ from "lodash";
 
 /**
  * Endpoint query builder
@@ -30,14 +32,18 @@ export type EndpointQueries = {
 
 export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
   let authQueryTree;
-  if (def.authenticator) {
-    const authModel = getRef.model(def, def.authenticator.authUserModel.refKey);
+
+  const hasAuth = safeInvoke(() =>
+    getRef.model(def, def.authenticator?.authUserModel.refKey ?? "AuthUser")
+  );
+  if (hasAuth.kind === "success") {
+    const authModel = hasAuth.result;
     const filter: TypedExprDef = {
       kind: "function",
       name: "is",
       args: [
         { kind: "alias", namePath: [authModel.refKey, "id"] },
-        { kind: "variable", name: "id" },
+        { kind: "variable", path: ["id"] },
       ],
     };
     const query = queryFromParts(def, "@auth", [authModel.name], filter, endpoint.authSelect);
@@ -218,7 +224,7 @@ function targetToFilter(target: TargetDef): TypedExprDef {
       {
         kind: "variable",
         type: { kind: target.identifyWith.type, nullable: false },
-        name: target.identifyWith.paramName,
+        path: ["pathParams", target.identifyWith.paramName],
       },
     ],
   };

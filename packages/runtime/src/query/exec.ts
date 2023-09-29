@@ -1,3 +1,4 @@
+import { initLogger } from "@gaudi/compiler";
 import { ensureEqual, ensureNot } from "@gaudi/compiler/dist/common/utils";
 import { TypeCardinality } from "@gaudi/compiler/dist/compiler/ast/type";
 import {
@@ -23,6 +24,7 @@ import { queryPlanToString } from "./stringify";
 
 import { DbConn } from "@runtime/server/dbConn";
 
+const logger = initLogger("gaudi:runtime");
 export interface NestedRow {
   [key: string]: string | number | boolean | NestedRow | NestedRow[];
 }
@@ -43,7 +45,7 @@ export async function executeQuery(
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  let results = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
+  let results = await conn.raw(sqlTpl, { ...params.flatten(), ...idMap });
   if ("rows" in results) {
     results = results.rows;
   }
@@ -158,7 +160,7 @@ export async function findIdBy(
     name: "is",
     args: [
       { kind: "alias", namePath: [modelName, ...targetPath] },
-      { kind: "variable", name: "findBy_input" },
+      { kind: "variable", path: ["findBy_input"] },
     ],
   };
   const query = queryFromParts(def, "findBy", [modelName], filter, [selectableId([modelName])]);
