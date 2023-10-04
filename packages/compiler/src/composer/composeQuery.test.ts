@@ -1,5 +1,5 @@
 import { compileFromString } from "@compiler/common/testUtils";
-import { CustomOneEndpointDef } from "@compiler/types/definition";
+import { CustomOneEndpointDef, UpdateEndpointDef } from "@compiler/types/definition";
 
 describe("compose model queries", () => {
   it("nested example without filters", () => {
@@ -51,14 +51,53 @@ describe("compose model queries", () => {
 });
 
 describe("compose action queries", () => {
-  describe('"query" action', () => {
-    it("native endpoint", () => {
-      const bp = `
+  describe("actions 2", () => {
+    // diffrent "query" action types
+    const actions = [
+      // --- query action
+      // target
+      {
+        name: "'query' action on target",
+        action: `query { from Org, filter { id is 1 }, select {name} }`, // TODO: read from ctx - id
+      },
+      // other model
+      {
+        name: "'query' action on other model",
+        action: `query { from Repo, filter { id is 1 } }`, // TODO: read from ctx - id
+      },
+
+      // --- update action
+      // target
+      {
+        name: "'update' action on target",
+        action: `query { from Org as uo, filter { uo.id is 1 }, select {name}, update { set description uo.description + " [updated]" }}`,
+      },
+      // other model
+      {
+        name: "'update' action on other model",
+        action: `query { from Repo as ur, filter { ur.id is 1 }, update { set name ur.name + " [update]" }}`,
+      },
+
+      // --- delete action
+      // target
+      {
+        name: "'delete' action on target",
+        action: `query { from Org, filter { description is "test content" }, delete }`,
+      },
+      // other model
+      {
+        name: "'delete' action on other model",
+        action: `query { from Repo, filter { id is 1 }, delete }`,
+      },
+    ];
+
+    const bpDefaultEndpoint = (action: string) => `
       model Org {
         field name { type string }
         field description { type string }
       }
       model Repo {
+        field name { type string }
       }
 
       api {
@@ -66,31 +105,25 @@ describe("compose action queries", () => {
           // test in native endpoint
           update endpoint {
             action {
+              // required default action
               update {
                 input { name, description }
               }
-              // target
-              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-              // other model
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+
+              ${action}
             }
           }
         }
       }
-      `;
+    `;
 
-      const def = compileFromString(bp);
-      expect(
-        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
-      ).toMatchSnapshot();
-    });
-    it("custom endpoint", () => {
-      const bp = `
+    const bpCustomEndpoint = (action: string) => `
       model Org {
         field name { type string }
         field description { type string }
       }
       model Repo {
+        field name { type string }
       }
 
       api {
@@ -103,53 +136,33 @@ describe("compose action queries", () => {
             cardinality one
 
             action {
-              // target
-              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-              // other model
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+              ${action}
             }
           }
         }
       }
-      `;
+    `;
 
-      const def = compileFromString(bp);
-      expect(
-        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
-      ).toMatchSnapshot();
-    });
-    it("query first", () => {
-      const bp = `
-      model Device {
-        relation measurements { from Measurement, through device }
-      }
+    // iterate actions through different endpoint types
+    actions.forEach((a) => {
+      describe("default endpoint", () => {
+        it(a.name, () => {
+          const def = compileFromString(bpDefaultEndpoint(a.action));
+          const ep = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
+          // take the second action after the default one
+          expect(ep.actions[1]).toMatchSnapshot();
+        });
+      });
 
-      model Measurement {
-        field value { type integer }
-        field timestamp { type integer }
-        reference device { to Device }
-      }
+      describe("custom endpoint", () => {
+        it(a.name, () => {
+          const def = compileFromString(bpCustomEndpoint(a.action));
+          const ep = def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef;
 
-      api {
-        entrypoint Device as device {
-
-          custom endpoint {
-            path "current_measurement"
-            method GET
-            cardinality one
-
-            action {
-              query { from device.measurements, order by { timestamp desc }, first }
-            }
-          }
-        }
-      }
-      `;
-
-      const def = compileFromString(bp);
-      expect(
-        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
-      ).toMatchSnapshot();
+          // take the first action
+          expect(ep.actions[0]).toMatchSnapshot();
+        });
+      });
     });
   });
 });

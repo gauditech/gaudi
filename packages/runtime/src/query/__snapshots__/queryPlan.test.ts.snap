@@ -837,6 +837,10 @@ exports[`Query plan works with complex aggregates: QueryDef snapshot 1`] = `
     "kind": "function",
     "name": ">",
   },
+  "fromAlias": [
+    "o",
+    "r",
+  ],
   "fromPath": [
     "Org",
     "repos",

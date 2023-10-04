@@ -452,6 +452,7 @@ export function resolve(projectASTs: ProjectASTs) {
           const path = [...initialPath, ...from.identifierPath.slice(0, i + 1).map((i) => i.text)];
           as.ref = { kind: "queryTarget", parent: parentRef, path };
           as.type = target.type;
+
           addToScope(scope, as);
         });
         scope.model = undefined;
@@ -480,6 +481,11 @@ export function resolve(projectASTs: ProjectASTs) {
     const select = kindFind(atoms, "select");
     if (select) {
       resolveSelect(select.select, currentModel, scope);
+    }
+
+    const update = kindFind(atoms, "update");
+    if (update) {
+      update.atoms.forEach((s) => resolveActionAtomSet(s, currentModel, scope));
     }
 
     let type: Type = Type.any;

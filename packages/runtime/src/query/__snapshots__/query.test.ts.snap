@@ -23,6 +23,10 @@ exports[` 1`] = `
     "kind": "function",
     "name": "is",
   },
+  "fromAlias": [
+    "r",
+    "i",
+  ],
   "fromPath": [
     "Org",
     "repos",
@@ -65,6 +69,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
     ],
@@ -148,6 +153,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "repos",
@@ -205,6 +211,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Repo",
       "issues",
@@ -262,6 +269,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Issue",
     ],
@@ -501,6 +509,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
     ],
@@ -584,6 +593,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "repos",
@@ -669,6 +679,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Repo",
       "issues",
@@ -726,6 +737,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Issue",
     ],
@@ -941,6 +953,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
     ],
@@ -1024,6 +1037,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "repos",
@@ -1109,6 +1123,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Repo",
       "issues",
@@ -1166,6 +1181,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Issue",
     ],
@@ -1413,6 +1429,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
     ],
@@ -1496,6 +1513,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "repos",
@@ -1553,6 +1571,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Repo",
       "issues",
@@ -1610,6 +1629,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Repo",
       "issues",
@@ -1854,6 +1874,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
     ],
@@ -1937,6 +1958,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "repos",
@@ -2022,6 +2044,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Repo",
       "issues",
@@ -2079,6 +2102,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 1`] = `
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Issue",
     ],
@@ -2306,6 +2330,7 @@ exports[`Endpoint queries List endpoint response queries test orderBy query endp
 [
   {
     "filter": undefined,
+    "fromAlias": undefined,
     "fromPath": [
       "Item",
     ],
@@ -2384,6 +2409,7 @@ exports[`Endpoint queries List endpoint response queries test paging query endpo
 [
   {
     "filter": undefined,
+    "fromAlias": undefined,
     "fromPath": [
       "Item",
     ],
@@ -2478,6 +2504,7 @@ exports[`Endpoint queries List endpoint response queries test paging/order/filte
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Item",
     ],
@@ -2563,6 +2590,7 @@ exports[`Endpoint queries List endpoint response queries test plain query endpoi
 [
   {
     "filter": undefined,
+    "fromAlias": undefined,
     "fromPath": [
       "Item",
     ],
@@ -2651,6 +2679,7 @@ exports[`Endpoint queries List nested endpoint response queries test orderBy que
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Item1",
       "item2",
@@ -2776,6 +2805,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging quer
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Item1",
       "item2",
@@ -2918,6 +2948,7 @@ exports[`Endpoint queries List nested endpoint response queries test paging/orde
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Item1",
       "item2",
@@ -3048,6 +3079,7 @@ exports[`Endpoint queries List nested endpoint response queries test plain query
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Item1",
       "item2",
@@ -3136,6 +3168,7 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
 [
   {
     "filter": undefined,
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
     ],
@@ -3191,6 +3224,7 @@ exports[`Orderby, limit and offset supports orderby, limit and offset in batchin
       "kind": "function",
       "name": "in",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "recent_repos",

@@ -142,6 +142,7 @@ export function queryFromParts(
     modelRefKey: sourceModel.refKey,
     filter,
     fromPath,
+    fromAlias: undefined,
     name,
     retCardinality: "collection",
     retType: getPathRetType(def, fromPath).refKey,
@@ -193,7 +194,7 @@ export function buildQueryTree(def: Definition, q: QueryDef): QueryTree {
 
   return {
     name: query.name,
-    alias: query.name,
+    alias: query.fromAlias?.join(".") ?? query.name,
     query,
     queryIdAlias: findTargetIdAlias(q),
     hooks,

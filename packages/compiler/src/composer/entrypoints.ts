@@ -363,11 +363,11 @@ type SelectDep = FieldSetterReferenceValue["target"];
  */
 export function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
   // collect all update paths
-  const changesetActions = kindFilter(actions, "create-one", "update-one");
-
-  const targetPaths = _.chain(changesetActions)
+  const changesetActions = kindFilter(actions, "create-one", "update-one", "query-update");
+  const changesetActionTargetPaths = _.chain(changesetActions)
     .flatMap((a) => {
-      switch (a.kind) {
+      const aKind = a.kind;
+      switch (aKind) {
         case "create-one": {
           // there's already a parent setter resolving this path, so we can skip it
           return null;
@@ -383,6 +383,19 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
             return { alias, access };
           }
         }
+        case "query-update": {
+          try {
+            // make sure we're not updating a model directly
+            getRef.model(def, _.first(a.query.fromPath)!);
+            return null;
+          } catch (e) {
+            // last item is what's being updated, we need to collect the id
+            const [alias, ...access] = [...a.query.fromPath, "id"];
+            return { alias, access };
+          }
+        }
+        default:
+          assertUnreachable(aKind);
       }
     })
     .compact()
@@ -408,7 +421,8 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
 
   // --- collect changeset targets
   // action changeset setters
-  const actionSetters = changesetActions.flatMap((a) => a.changeset).map((c) => c.setter);
+  const changesetActionSetters = changesetActions.flatMap((a) => a.changeset).map((c) => c.setter);
+
   // hooks changeset setters
   const actionHookSetters = kindFilter(actions, "execute-hook")
     .flatMap((a) => a.hook.args)
@@ -422,11 +436,11 @@ export function collectActionDeps(def: Definition, actions: ActionDef[]): Select
     );
   });
 
-  const setters = [...actionSetters, ...actionHookSetters, ...respondSetters];
+  const setters = [...changesetActionSetters, ...actionHookSetters, ...respondSetters];
   const referenceValues = setters.flatMap(collectReferenceValues);
   const setterTargets = referenceValues.map((rv) => rv.target);
 
-  return [...setterTargets, ...targetPaths];
+  return [...setterTargets, ...changesetActionTargetPaths];
 }
 
 function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] {
@@ -493,21 +507,35 @@ export function wrapActionsWithSelect(
   deps: SelectDep[]
 ): ActionDef[] {
   return actions.map((a): ActionDef => {
-    if (a.kind !== "create-one" && a.kind !== "update-one" && a.kind !== "query") return a;
-    // don't select deps for query action if it is already selected
-    if (a.kind === "query" && a.query.select.length > 0) return a;
+    if (
+      a.kind !== "create-one" &&
+      a.kind !== "update-one" &&
+      !(a.kind === "query-update" || a.kind === "query-select" || a.kind === "query-delete")
+    ) {
+      return a;
+    }
+
+    // don't select deps for query action if it already has selected define
+    // for query-update action we still have to add it's deps so they can be evaluated in changeset
+    if ((a.kind === "query-select" || a.kind === "query-delete") && a.query.select.length > 0) {
+      return a;
+    }
 
     const paths = deps.filter((d) => d.alias === a.alias).map((a) => a.access);
+
     // make sure we always request an `id` for a target
     paths.push(["id"]);
     const model = getRef.model(def, a.model);
 
     const select = pathsToSelectDef(def, model, paths, [a.alias]);
-    if (a.kind === "query") {
+
+    if (a.kind === "query-update" || a.kind === "query-select" || a.kind === "query-delete") {
       a.query.select = transformSelectPath(select, [a.alias], a.query.fromPath);
+
       return a;
+    } else {
+      return { ...a, select };
     }
-    return { ...a, select };
   });
 }
 

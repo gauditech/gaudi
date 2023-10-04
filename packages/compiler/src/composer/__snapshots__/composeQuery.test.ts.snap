@@ -1,9 +1,189 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`compose action queries "query" action custom endpoint 1`] = `
+exports[`compose action queries actions 2 custom endpoint 'delete' action on other model 1`] = `
 {
   "alias": "$action_0",
-  "kind": "query",
+  "kind": "query-delete",
+  "model": "Repo",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": undefined,
+    "fromPath": [
+      "Repo",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Repo",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Repo",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 custom endpoint 'delete' action on target 1`] = `
+{
+  "alias": "$action_0",
+  "kind": "query-delete",
+  "model": "Org",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "description",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "string",
+            "value": "test content",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": undefined,
+    "fromPath": [
+      "Org",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 custom endpoint 'query' action on other model 1`] = `
+{
+  "alias": "$action_0",
+  "kind": "query-select",
+  "model": "Repo",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": undefined,
+    "fromPath": [
+      "Repo",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Repo",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Repo",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 custom endpoint 'query' action on target 1`] = `
+{
+  "alias": "$action_0",
+  "kind": "query-select",
   "model": "Org",
   "query": {
     "filter": {
@@ -26,6 +206,7 @@ exports[`compose action queries "query" action custom endpoint 1`] = `
       "kind": "function",
       "name": "is",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
     ],
@@ -59,108 +240,594 @@ exports[`compose action queries "query" action custom endpoint 1`] = `
 }
 `;
 
-exports[`compose action queries "query" action native endpoint 1`] = `
+exports[`compose action queries actions 2 custom endpoint 'update' action on other model 1`] = `
 {
   "alias": "$action_0",
   "changeset": [
     {
       "name": "name",
       "setter": {
-        "default": undefined,
-        "fieldsetAccess": [
-          "name",
+        "args": [
+          {
+            "kind": "reference-value",
+            "target": {
+              "access": [
+                "name",
+              ],
+              "alias": "ur",
+            },
+          },
+          {
+            "kind": "literal",
+            "literal": {
+              "kind": "string",
+              "value": " [update]",
+            },
+          },
         ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "string",
-      },
-    },
-    {
-      "name": "description",
-      "setter": {
-        "default": undefined,
-        "fieldsetAccess": [
-          "description",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "string",
-      },
-    },
-  ],
-  "filter": undefined,
-  "isPrimary": true,
-  "kind": "update-one",
-  "model": "Org",
-  "select": [
-    {
-      "alias": "id",
-      "expr": {
-        "kind": "alias",
-        "namePath": [
-          "$action_0",
-          "id",
-        ],
-      },
-      "kind": "expression",
-      "type": {
-        "kind": "integer",
-        "nullable": false,
+        "kind": "function",
+        "name": "concat",
       },
     },
   ],
-  "targetPath": [
-    "$target_0",
-  ],
-}
-`;
-
-exports[`compose action queries "query" action query first 1`] = `
-{
-  "alias": "$action_0",
-  "kind": "query",
-  "model": "Measurement",
+  "kind": "query-update",
+  "model": "Repo",
   "query": {
-    "filter": undefined,
-    "fromPath": [
-      "device",
-      "measurements",
-    ],
-    "kind": "query",
-    "limit": 1,
-    "modelRefKey": "Device",
-    "name": "$query",
-    "offset": undefined,
-    "orderBy": [
-      {
-        "direction": "desc",
-        "exp": {
+    "filter": {
+      "args": [
+        {
           "kind": "alias",
           "namePath": [
-            "device",
-            "measurements",
-            "timestamp",
+            "Repo",
+            "id",
           ],
         },
-      },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": [
+      "ur",
     ],
+    "fromPath": [
+      "Repo",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Repo",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
     "refKey": "N/A",
-    "retCardinality": "nullable",
-    "retType": "Measurement",
+    "retCardinality": "collection",
+    "retType": "Repo",
     "select": [
       {
         "alias": "id",
         "expr": {
           "kind": "alias",
           "namePath": [
-            "device",
-            "measurements",
+            "Repo",
             "id",
           ],
         },
         "kind": "expression",
         "type": {
           "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 custom endpoint 'update' action on target 1`] = `
+{
+  "alias": "$action_0",
+  "changeset": [
+    {
+      "name": "description",
+      "setter": {
+        "args": [
+          {
+            "kind": "reference-value",
+            "target": {
+              "access": [
+                "description",
+              ],
+              "alias": "uo",
+            },
+          },
+          {
+            "kind": "literal",
+            "literal": {
+              "kind": "string",
+              "value": " [updated]",
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "concat",
+      },
+    },
+  ],
+  "kind": "query-update",
+  "model": "Org",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": [
+      "uo",
+    ],
+    "fromPath": [
+      "Org",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "string",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 default endpoint 'delete' action on other model 1`] = `
+{
+  "alias": "$action_1",
+  "kind": "query-delete",
+  "model": "Repo",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": undefined,
+    "fromPath": [
+      "Repo",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Repo",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Repo",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 default endpoint 'delete' action on target 1`] = `
+{
+  "alias": "$action_1",
+  "kind": "query-delete",
+  "model": "Org",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "description",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "string",
+            "value": "test content",
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": undefined,
+    "fromPath": [
+      "Org",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 default endpoint 'query' action on other model 1`] = `
+{
+  "alias": "$action_1",
+  "kind": "query-select",
+  "model": "Repo",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": undefined,
+    "fromPath": [
+      "Repo",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Repo",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Repo",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 default endpoint 'query' action on target 1`] = `
+{
+  "alias": "$action_1",
+  "kind": "query-select",
+  "model": "Org",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": undefined,
+    "fromPath": [
+      "Org",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "string",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 default endpoint 'update' action on other model 1`] = `
+{
+  "alias": "$action_1",
+  "changeset": [
+    {
+      "name": "name",
+      "setter": {
+        "args": [
+          {
+            "kind": "reference-value",
+            "target": {
+              "access": [
+                "name",
+              ],
+              "alias": "ur",
+            },
+          },
+          {
+            "kind": "literal",
+            "literal": {
+              "kind": "string",
+              "value": " [update]",
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "concat",
+      },
+    },
+  ],
+  "kind": "query-update",
+  "model": "Repo",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": [
+      "ur",
+    ],
+    "fromPath": [
+      "Repo",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Repo",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Repo",
+    "select": [
+      {
+        "alias": "id",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Repo",
+            "id",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "integer",
+          "nullable": false,
+        },
+      },
+    ],
+  },
+}
+`;
+
+exports[`compose action queries actions 2 default endpoint 'update' action on target 1`] = `
+{
+  "alias": "$action_1",
+  "changeset": [
+    {
+      "name": "description",
+      "setter": {
+        "args": [
+          {
+            "kind": "reference-value",
+            "target": {
+              "access": [
+                "description",
+              ],
+              "alias": "uo",
+            },
+          },
+          {
+            "kind": "literal",
+            "literal": {
+              "kind": "string",
+              "value": " [updated]",
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "concat",
+      },
+    },
+  ],
+  "kind": "query-update",
+  "model": "Org",
+  "query": {
+    "filter": {
+      "args": [
+        {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "id",
+          ],
+        },
+        {
+          "kind": "literal",
+          "literal": {
+            "kind": "integer",
+            "value": 1,
+          },
+        },
+      ],
+      "kind": "function",
+      "name": "is",
+    },
+    "fromAlias": [
+      "uo",
+    ],
+    "fromPath": [
+      "Org",
+    ],
+    "kind": "query",
+    "limit": undefined,
+    "modelRefKey": "Org",
+    "name": "$query",
+    "offset": undefined,
+    "orderBy": undefined,
+    "refKey": "N/A",
+    "retCardinality": "collection",
+    "retType": "Org",
+    "select": [
+      {
+        "alias": "name",
+        "expr": {
+          "kind": "alias",
+          "namePath": [
+            "Org",
+            "name",
+          ],
+        },
+        "kind": "expression",
+        "type": {
+          "kind": "string",
           "nullable": false,
         },
       },
@@ -208,6 +875,7 @@ exports[`compose model queries example with nested filters 1`] = `
       "kind": "function",
       "name": "and",
     },
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "repos",
@@ -230,6 +898,7 @@ exports[`compose model queries nested example without filters 1`] = `
 [
   {
     "filter": undefined,
+    "fromAlias": undefined,
     "fromPath": [
       "Org",
       "repos",
@@ -252,6 +921,7 @@ exports[`compose model queries nested example without filters 1`] = `
 exports[`compose model queries order and limit 1`] = `
 {
   "filter": undefined,
+  "fromAlias": undefined,
   "fromPath": [
     "Org",
     "repos",

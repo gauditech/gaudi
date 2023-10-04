@@ -229,7 +229,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "actions": [
           {
             "alias": "existingAuthUser",
-            "kind": "query",
+            "kind": "query-select",
             "model": "AuthUser",
             "query": {
               "filter": {
@@ -249,6 +249,9 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "kind": "function",
                 "name": "is",
               },
+              "fromAlias": [
+                "a",
+              ],
               "fromPath": [
                 "AuthUser",
               ],
@@ -528,7 +531,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
         "actions": [
           {
             "alias": "accessToken",
-            "kind": "query",
+            "kind": "query-select",
             "model": "AuthUserAccessToken",
             "query": {
               "filter": {
@@ -548,6 +551,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 "kind": "function",
                 "name": "is",
               },
+              "fromAlias": undefined,
               "fromPath": [
                 "AuthUserAccessToken",
               ],

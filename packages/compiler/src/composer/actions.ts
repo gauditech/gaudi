@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { match } from "ts-pattern";
 
 import { composeValidate } from "./validators";
 
@@ -72,12 +73,30 @@ function composeDeleteAction(spec: FilteredByKind<Spec.Action, "delete">): Delet
 
 function composeQueryAction(spec: FilteredByKind<Spec.Action, "query">): QueryAction {
   const query = composeQuery(spec.query);
-  return {
-    kind: "query",
-    alias: spec.alias,
-    model: query.retType,
-    query: query,
-  };
+
+  return match(spec.operation)
+    .with({ kind: "select" }, () => ({
+      kind: "query-select" as const,
+      alias: spec.alias,
+      model: query.retType,
+      query,
+    }))
+    .with({ kind: "update" }, (o) => ({
+      kind: "query-update" as const,
+      alias: spec.alias,
+      model: query.retType,
+      query,
+      changeset: o.atoms.map((a) =>
+        atomToChangesetOperation(a, spec.alias != null ? [spec.alias] : [], [])
+      ),
+    }))
+    .with({ kind: "delete" }, () => ({
+      kind: "query-delete" as const,
+      alias: spec.alias,
+      model: query.retType,
+      query,
+    }))
+    .exhaustive();
 }
 
 function composeValidateAction(spec: FilteredByKind<Spec.Action, "validate">): ValidateAction {
