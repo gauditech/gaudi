@@ -1,7 +1,8 @@
-import { assertUnreachable, ensureEqual } from "@compiler/common/utils";
-import { SelectDef, SelectItem, TypedExprDef } from "@compiler/types/definition";
 import _ from "lodash";
 import { match } from "ts-pattern";
+
+import { assertUnreachable, ensureEqual } from "@compiler/common/utils";
+import { SelectDef, SelectItem, TypedExprDef } from "@compiler/types/definition";
 
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
   return select.map((item: SelectItem): SelectItem => {
