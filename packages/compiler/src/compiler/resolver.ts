@@ -482,6 +482,12 @@ export function resolve(projectASTs: ProjectASTs) {
       resolveSelect(select.select, currentModel, scope);
     }
 
+    const update = kindFind(atoms, "update");
+    if (update) {
+      // FIXME this should not resolve hooks, only db expressions
+      update.atoms.forEach((atom) => resolveActionAtomSet(atom, currentModel, scope));
+    }
+
     let type: Type = Type.any;
     if (currentModel) {
       let baseType: Type;

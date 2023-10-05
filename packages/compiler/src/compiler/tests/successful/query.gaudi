@@ -44,6 +44,15 @@ api {
           from Class, filter { id is 1 }
         }
 
+        // test query update action
+        query as uClass {
+          from Class as c,
+          filter { c.id < 5 },
+          update {
+            set year c.year + 1900
+          }
+        }
+
         execute {
 
           // test arg query

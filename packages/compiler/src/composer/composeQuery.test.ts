@@ -1,5 +1,5 @@
 import { compileFromString } from "@compiler/common/testUtils";
-import { CustomOneEndpointDef } from "@compiler/types/definition";
+import { CustomOneEndpointDef, UpdateEndpointDef } from "@compiler/types/definition";
 
 describe("compose model queries", () => {
   it("nested example without filters", () => {
@@ -52,45 +52,15 @@ describe("compose model queries", () => {
 
 describe("compose action queries", () => {
   describe('"query" action', () => {
-    it("native endpoint", () => {
-      const bp = `
-      model Org {
-        field name { type string }
-        field description { type string }
-      }
-      model Repo {
-      }
-
-      api {
-        entrypoint Org {
-          // test in native endpoint
-          update endpoint {
-            action {
-              update {
-                input { name, description }
-              }
-              // target
-              query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-              // other model
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
-            }
-          }
-        }
-      }
-      `;
-
-      const def = compileFromString(bp);
-      expect(
-        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
-      ).toMatchSnapshot();
-    });
     it("custom endpoint", () => {
       const bp = `
       model Org {
         field name { type string }
         field description { type string }
+        relation repos { from Repo, through org }
       }
       model Repo {
+        reference org { to Org }
       }
 
       api {
@@ -103,10 +73,14 @@ describe("compose action queries", () => {
             cardinality one
 
             action {
-              // target
+              // fetch
               query { from Org, filter { id is 1 }, select {name} } // TODO: read from ctx - id
-              // other model
-              query { from Repo, filter { id is 1 } } // TODO: read from ctx - id
+              // update
+              query { from Repo as r, update { set org_id r.org.id } }
+              // delete
+              query {
+                from Org.repos, delete
+              }
             }
           }
         }
@@ -115,7 +89,7 @@ describe("compose action queries", () => {
 
       const def = compileFromString(bp);
       expect(
-        (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0]
+        (def.apis[0].entrypoints[0].endpoints[0] as UpdateEndpointDef).actions
       ).toMatchSnapshot();
     });
     it("query first", () => {

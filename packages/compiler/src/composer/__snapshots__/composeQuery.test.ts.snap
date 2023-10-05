@@ -1,118 +1,140 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`compose action queries "query" action custom endpoint 1`] = `
-{
-  "alias": "$action_0",
-  "kind": "query",
-  "model": "Org",
-  "query": {
-    "filter": {
-      "args": [
+[
+  {
+    "alias": "$action_0",
+    "kind": "query",
+    "model": "Org",
+    "query": {
+      "filter": {
+        "args": [
+          {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          {
+            "kind": "literal",
+            "literal": {
+              "kind": "integer",
+              "value": 1,
+            },
+          },
+        ],
+        "kind": "function",
+        "name": "is",
+      },
+      "fromPath": [
+        "Org",
+      ],
+      "kind": "query",
+      "limit": undefined,
+      "modelRefKey": "Org",
+      "name": "$query",
+      "offset": undefined,
+      "orderBy": undefined,
+      "refKey": "N/A",
+      "retCardinality": "collection",
+      "retType": "Org",
+      "select": [
         {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "id",
-          ],
-        },
-        {
-          "kind": "literal",
-          "literal": {
-            "kind": "integer",
-            "value": 1,
+          "alias": "name",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "string",
+            "nullable": false,
           },
         },
       ],
-      "kind": "function",
-      "name": "is",
     },
-    "fromPath": [
-      "Org",
-    ],
-    "kind": "query",
-    "limit": undefined,
-    "modelRefKey": "Org",
-    "name": "$query",
-    "offset": undefined,
-    "orderBy": undefined,
-    "refKey": "N/A",
-    "retCardinality": "collection",
-    "retType": "Org",
-    "select": [
-      {
-        "alias": "name",
-        "expr": {
-          "kind": "alias",
-          "namePath": [
-            "Org",
-            "name",
-          ],
-        },
-        "kind": "expression",
-        "type": {
-          "kind": "string",
-          "nullable": false,
-        },
-      },
-    ],
   },
-}
-`;
-
-exports[`compose action queries "query" action native endpoint 1`] = `
-{
-  "alias": "$action_0",
-  "changeset": [
-    {
-      "name": "name",
-      "setter": {
-        "default": undefined,
-        "fieldsetAccess": [
-          "name",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "string",
-      },
+  {
+    "alias": "$action_1",
+    "kind": "query",
+    "model": "Repo",
+    "query": {
+      "filter": undefined,
+      "fromPath": [
+        "Repo",
+      ],
+      "kind": "query",
+      "limit": undefined,
+      "modelRefKey": "Repo",
+      "name": "$query",
+      "offset": undefined,
+      "orderBy": undefined,
+      "refKey": "N/A",
+      "retCardinality": "collection",
+      "retType": "Repo",
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Repo",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
     },
-    {
-      "name": "description",
-      "setter": {
-        "default": undefined,
-        "fieldsetAccess": [
-          "description",
-        ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "string",
-      },
+  },
+  {
+    "alias": "$action_2",
+    "kind": "query",
+    "model": "Repo",
+    "query": {
+      "filter": undefined,
+      "fromPath": [
+        "Org",
+        "repos",
+      ],
+      "kind": "query",
+      "limit": undefined,
+      "modelRefKey": "Org",
+      "name": "$query",
+      "offset": undefined,
+      "orderBy": undefined,
+      "refKey": "N/A",
+      "retCardinality": "collection",
+      "retType": "Repo",
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "alias",
+            "namePath": [
+              "Org",
+              "repos",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+      ],
     },
-  ],
-  "filter": undefined,
-  "isPrimary": true,
-  "kind": "update-one",
-  "model": "Org",
-  "select": [
-    {
-      "alias": "id",
-      "expr": {
-        "kind": "alias",
-        "namePath": [
-          "$action_0",
-          "id",
-        ],
-      },
-      "kind": "expression",
-      "type": {
-        "kind": "integer",
-        "nullable": false,
-      },
-    },
-  ],
-  "targetPath": [
-    "$target_0",
-  ],
-}
+  },
+]
 `;
 
 exports[`compose action queries "query" action query first 1`] = `
