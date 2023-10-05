@@ -1,4 +1,5 @@
 import { pagingToQueryLimit } from "@runtime/common/utils";
+import { flattenTree } from "@runtime/server/vars";
 
 describe("runtime common utils", () => {
   describe("paging", () => {
@@ -103,6 +104,72 @@ describe("runtime common utils", () => {
           }
         `);
       });
+    });
+  });
+  describe("flattenTree", () => {
+    it("works as expected", () => {
+      const ctx = {
+        obj: {
+          nestedObj: {
+            foo: 1,
+          },
+          key: "string",
+          arr: [1, 2, "three", true, null, undefined, { foo: "bar" }, ["x", "y"]],
+        },
+        val: new Date(2222, 2, 2, 2, 2, 2, 2).toISOString(),
+      };
+      expect(flattenTree(ctx, [])).toMatchInlineSnapshot(`
+        [
+          [
+            "obj__nestedObj__foo",
+            1,
+          ],
+          [
+            "obj__key",
+            "string",
+          ],
+          [
+            "obj__arr__0",
+            1,
+          ],
+          [
+            "obj__arr__1",
+            2,
+          ],
+          [
+            "obj__arr__2",
+            "three",
+          ],
+          [
+            "obj__arr__3",
+            true,
+          ],
+          [
+            "obj__arr__4",
+            null,
+          ],
+          [
+            "obj__arr__5",
+            undefined,
+          ],
+          [
+            "obj__arr__6__foo",
+            "bar",
+          ],
+          [
+            "obj__arr__7__0",
+            "x",
+          ],
+          [
+            "obj__arr__7__1",
+            "y",
+          ],
+          [
+            "val",
+            "2222-03-02T01:02:02.002Z",
+          ],
+        ]
+      `);
     });
   });
 });

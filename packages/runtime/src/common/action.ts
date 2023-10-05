@@ -86,14 +86,14 @@ async function _internalExecuteActions(
       await deleteData(dbConn, dbModel, targetId);
     } else if (actionKind === "query") {
       const qt = buildQueryTree(def, action.query);
-      // FIXME this ugly
-      const varsObj = Object.fromEntries(
-        Object.keys(ctx.input).map((k) => [`___changeset___${k}`, ctx.input[k]])
-      );
-      varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
+
+      const vars = new Vars({
+        changesets: ctx.input,
+        session: { authToken: epCtx?.request.user?.token },
+      });
 
       const result = castToCardinality(
-        await qx.executeQueryTree(def, qt, new Vars(varsObj), []),
+        await qx.executeQueryTree(def, qt, vars, []),
         action.query.retCardinality
       );
       ctx.vars.set(action.alias, result);

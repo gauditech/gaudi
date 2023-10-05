@@ -181,7 +181,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
 export function composeRefPath(
   path: Spec.IdentifierRef[],
   namePath: string[]
-): { kind: "alias"; namePath: string[] } | { kind: "variable"; name: string } {
+): { kind: "alias"; namePath: string[] } | { kind: "variable"; path: string[] } {
   const [head, ...tail] = path;
   switch (head.ref.kind) {
     case "model":
@@ -202,7 +202,7 @@ export function composeRefPath(
     case "extraInput":
       return {
         kind: "variable",
-        name: `___changeset___${path.map((i) => i.text).join("___")}`,
+        path: ["changesets", ...path.map((i) => i.text)],
       };
     case "validatorArg":
     case "target":
@@ -210,7 +210,7 @@ export function composeRefPath(
     case "auth":
       return { kind: "alias", namePath: path.map((i) => i.text) };
     case "authToken":
-      return { kind: "variable", name: `___requestAuthToken` };
+      return { kind: "variable", path: ["session", "authToken"] };
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "validator":

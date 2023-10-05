@@ -25,6 +25,6 @@ export function start(_config: EngineConfig): CommandRunner {
     "--quiet",
     // exec gaudi runtime
     "--exec",
-    "npx gaudi-runtime",
+    "node ./dist/server.js",
   ]);
 }

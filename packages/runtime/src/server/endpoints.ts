@@ -110,7 +110,9 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
           logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const pathParamVars = new Vars({
+            pathParams: extractPathParams(endpointPath, req.params),
+          });
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -185,7 +187,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           tx = await getAppContext(req).dbConn.transaction();
 
           const params = Object.assign({}, req.params, req.query);
-          const pathParamVars = new Vars(extractPathParams(endpointPath, params));
+          const pathParamVars = new Vars({ pathParams: extractPathParams(endpointPath, params) });
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -267,7 +269,9 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const pathParamVars = new Vars({
+            pathParams: extractPathParams(endpointPath, req.params),
+          });
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -384,7 +388,9 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const pathParamVars = new Vars({
+            pathParams: extractPathParams(endpointPath, req.params),
+          });
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -494,7 +500,9 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
           logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const pathParamVars = new Vars({
+            pathParams: extractPathParams(endpointPath, req.params),
+          });
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -559,7 +567,9 @@ export function buildCustomOneEndpoint(
           logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const pathParamVars = new Vars({
+            pathParams: extractPathParams(endpointPath, req.params),
+          });
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -657,7 +667,9 @@ export function buildCustomManyEndpoint(
           logger.debug("AUTH INFO", req.user);
           tx = await getAppContext(req).dbConn.transaction();
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
+          const pathParamVars = new Vars({
+            pathParams: extractPathParams(endpointPath, req.params),
+          });
           const contextVars = new Vars();
 
           if (queries.authQueryTree && req.user) {
@@ -872,7 +884,7 @@ export async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): P
     }
     case "variable": {
       throw new Error(
-        `Unexpected kind variable in runtime execution of expression, name: ${expr.name}`
+        `Unexpected kind variable in runtime execution of expression, path: ${expr.path.join(".")}`
       );
     }
     case "array": {
@@ -913,8 +925,8 @@ async function createListEndpointResponse(
   if (endpoint.pageable) {
     // add paging
     resultQuery = decorateWithPaging(endpoint, resultQuery, {
-      pageSize: params.get("pageSize"),
-      page: params.get("page"),
+      pageSize: params.get("pathParams", ["pageSize"]),
+      page: params.get("pathParams", ["page"]),
     });
 
     // exec data query

@@ -13,6 +13,7 @@ import {
   assertUnreachable,
   ensureEqual,
   ensureOneOf,
+  safeInvoke,
 } from "@compiler/common/utils";
 import { composeActionBlock } from "@compiler/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@compiler/composer/query";
@@ -512,9 +513,16 @@ export function wrapActionsWithSelect(
 }
 
 function getAuthSelect(def: Definition, deps: SelectDep[]): SelectDef {
-  if (!def.authenticator) return [];
+  // if (!def.authenticator && !"foo".startsWith("f")) return [];
   const paths = deps.filter((dep) => dep.alias === "@auth").map((dep) => dep.access);
-  const model = getRef.model(def, def.authenticator.authUserModel.refKey);
+
+  const hasAuth = safeInvoke(() =>
+    getRef.model(def, def.authenticator?.authUserModel.refKey ?? "AuthUser")
+  );
+  if (hasAuth.kind === "error") {
+    return [];
+  }
+  const model = hasAuth.result;
   return pathsToSelectDef(def, model, paths, [model.name]);
 }
 
