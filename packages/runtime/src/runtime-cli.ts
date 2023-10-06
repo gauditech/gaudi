@@ -5,7 +5,7 @@ import { configDotenv } from "dotenv";
 import { readConfig } from "@runtime/config";
 import { createServer } from "@runtime/server/server";
 
-// read ".env" file form cwd
+// read ".env" file from cwd
 configDotenv({});
 
 // read cofig
