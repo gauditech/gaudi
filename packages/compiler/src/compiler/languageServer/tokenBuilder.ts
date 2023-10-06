@@ -11,6 +11,7 @@ import {
   Api,
   Authenticator,
   Computed,
+  DbSetter,
   Endpoint,
   Entrypoint,
   ExecuteAction,
@@ -452,7 +453,7 @@ export function buildTokens(
       match(a)
         .with({ kind: "update" }, ({ keyword, atoms }) => {
           buildKeyword(keyword);
-          atoms.forEach(buildActionAtomSet);
+          atoms.forEach(buildDbSetter);
         })
         .with({ kind: "delete" }, ({ keyword }) => buildKeyword(keyword))
         .with({ kind: "select" }, ({ keyword, select }) => {
@@ -467,6 +468,12 @@ export function buildTokens(
     buildKeyword(keyword);
     buildLiteral(key);
     buildValidateExpr(expr);
+  }
+
+  function buildDbSetter({ keyword, field, expr }: DbSetter) {
+    buildKeyword(keyword);
+    buildIdentifierRef(field);
+    buildExpr(expr);
   }
 
   function buildActionAtomSet({ keyword, target, set }: ActionAtomSet) {

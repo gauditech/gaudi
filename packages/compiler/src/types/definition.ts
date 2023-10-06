@@ -94,6 +94,7 @@ export type QueryDef = {
   // unique: boolean;
   filter: TypedExprDef;
   select: SelectDef;
+  update?: DbSetter[];
   orderBy: QueryOrderByAtomDef[] | undefined;
   limit: number | undefined;
   offset: number | undefined;
@@ -525,6 +526,29 @@ export type FieldSetterFunction = {
   kind: "function";
   name: FunctionName; // TODO rename to `fnName` to make it more clear, see line 124 as well
   args: FieldSetter[];
+};
+
+export type DbSetter = {
+  field: string;
+  expr: DbExpression;
+};
+
+export type DbExpression = DbFunction | DbIdentifier | ContextValue | LiteralValueDef;
+
+type DbFunction = {
+  kind: "function";
+  name: FunctionName;
+  args: DbExpression[];
+};
+
+type DbIdentifier = {
+  kind: "identifier";
+  path: string[];
+};
+
+type ContextValue = {
+  kind: "context-value";
+  access: string[];
 };
 
 export type FieldSetterContextReference = {

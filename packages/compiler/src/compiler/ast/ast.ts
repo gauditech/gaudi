@@ -225,7 +225,7 @@ export type QueryAction = {
 };
 export type QueryActionAtom =
   | QueryAtom
-  | { kind: "update"; keyword: TokenData; atoms: ActionAtomSet[] }
+  | { kind: "update"; keyword: TokenData; atoms: DbSetter[] }
   | { kind: "delete"; keyword: TokenData }
   | { kind: "select"; keyword: TokenData; select: Select };
 
@@ -279,6 +279,13 @@ export type ActionAtomSet = {
   target: IdentifierRef<RefModelField | RefModelReference>;
   set: ActionHook | { kind: "expr"; expr: Expr<Code> };
 };
+
+export type DbSetter = {
+  keyword: TokenData;
+  field: IdentifierRef<RefModelField | RefModelReference>;
+  expr: Expr<Db>;
+};
+
 export type ActionAtomReferenceThrough = {
   kind: "referenceThrough";
   keyword: TokenData;

@@ -11,6 +11,7 @@ import {
   Api,
   BinaryOperator,
   Computed,
+  DbSetter,
   DeleteAction,
   Endpoint,
   EndpointId,
@@ -484,8 +485,7 @@ export function resolve(projectASTs: ProjectASTs) {
 
     const update = kindFind(atoms, "update");
     if (update) {
-      // FIXME this should not resolve hooks, only db expressions
-      update.atoms.forEach((atom) => resolveActionAtomSet(atom, currentModel, scope));
+      update.atoms.forEach((atom) => resolveDbSetter(atom, currentModel, scope));
     }
 
     let type: Type = Type.any;
@@ -1037,6 +1037,12 @@ export function resolve(projectASTs: ProjectASTs) {
 
       addToScope(scope, action.name);
     }
+  }
+
+  function resolveDbSetter(setter: DbSetter, model: string | undefined, scope: Scope) {
+    resolveModelAtomRef(setter.field, model, "field", "reference");
+    resolveExpression(setter.expr, scope);
+    checkExprType(setter.expr, setter.field.type);
   }
 
   function resolveActionAtomSet(set: ActionAtomSet, model: string | undefined, scope: Scope) {

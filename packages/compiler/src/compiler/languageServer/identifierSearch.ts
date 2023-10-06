@@ -5,6 +5,7 @@ import {
   Action,
   Api,
   Computed,
+  DbSetter,
   Endpoint,
   Entrypoint,
   Expr,
@@ -212,7 +213,7 @@ function getIdentifiersAction(action: Action): FuzzySourceRef[] {
     .with({ kind: "queryAction" }, ({ name, atoms }) => {
       const atomIdentifiers = atoms.flatMap((atom) =>
         match(atom)
-          .with({ kind: "update" }, ({ atoms }) => atoms.flatMap(getIdentifiersModelActionAtom))
+          .with({ kind: "update" }, ({ atoms }) => atoms.flatMap(getIdentifiersDbSetter))
           .with({ kind: "delete" }, () => [])
           .with({ kind: "select" }, ({ select }) => getIdentifiersSelect(select))
           .otherwise(getIdentifiersQueryAtom)
@@ -243,6 +244,10 @@ function getIdentifiersPopulate({ target, as, atoms }: Populate): FuzzySourceRef
       .otherwise(() => [])
   );
   return [target, as?.identifier, ...atomIdentifiers];
+}
+
+function getIdentifiersDbSetter(setter: DbSetter): FuzzySourceRef[] {
+  return [setter.field, ...getIdentifiersExpr(setter.expr)];
 }
 
 function getIdentifiersModelActionAtom(atom: ModelActionAtom): FuzzySourceRef[] {

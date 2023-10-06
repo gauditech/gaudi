@@ -222,13 +222,18 @@ export type Action =
     };
 
 export type ActionQueryOperation =
-  | { kind: "update"; atoms: ActionAtomSet[] }
+  | { kind: "update"; atoms: DbSetter[] }
   | { kind: "delete" }
   | { kind: "select" };
 
 export type ModelAction = Extract<Action, { kind: "create" | "update" }>;
 
 export type ModelActionAtom = ActionAtomInput | ActionAtomSet | ActionAtomRefThrough;
+
+export type DbSetter = {
+  field: IdentifierRef<RefModelField | RefModelReference>;
+  expr: Expr;
+};
 
 export type ActionAtomSetHook = { kind: "hook"; hook: ActionHook };
 export type ActionAtomSetExp = { kind: "expression"; expr: Expr };

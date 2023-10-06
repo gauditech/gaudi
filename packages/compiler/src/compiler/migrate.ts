@@ -640,7 +640,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     if (update) {
       operation = {
         kind: "update",
-        atoms: update.atoms.map(migrateActionAtomSet),
+        atoms: update.atoms.map(migrateDbSetter),
       };
     } else if (delete_) {
       operation = { kind: "delete" };
@@ -661,6 +661,12 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       key: action.key.value,
       validate: migrateValidateExpr(action.expr),
     };
+  }
+
+  function migrateDbSetter(setter: AST.DbSetter): Spec.DbSetter {
+    const field = migrateIdentifierRef(setter.field);
+    const expr = migrateExpr(setter.expr);
+    return { field, expr };
   }
 
   function migrateActionAtomSet(set: AST.ActionAtomSet): Spec.ActionAtomSet {

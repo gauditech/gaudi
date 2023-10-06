@@ -16,6 +16,7 @@ import {
   BooleanLiteral,
   Computed,
   Db,
+  DbSetter,
   DeleteAction,
   Endpoint,
   EndpointAtom,
@@ -948,10 +949,10 @@ class GaudiParser extends EmbeddedActionsParser {
           { ALT: () => atoms.push(this.SUBRULE(this.queryAtom)) },
           {
             ALT: () => {
-              const updateAtoms: ActionAtomSet[] = [];
+              const updateAtoms: DbSetter[] = [];
               const keyword = this.createTokenData(this.CONSUME(L.Update));
               this.CONSUME2(L.LCurly);
-              this.MANY2(() => updateAtoms.push(this.SUBRULE(this.actionAtomSet)));
+              this.MANY2(() => updateAtoms.push(this.SUBRULE(this.dbSetter)));
               this.CONSUME2(L.RCurly);
               atoms.push({ kind: "update", atoms: updateAtoms, keyword });
             },
@@ -997,6 +998,13 @@ class GaudiParser extends EmbeddedActionsParser {
     this.CONSUME(L.RCurly);
 
     return { kind: "validate", key, expr, keyword };
+  });
+
+  dbSetter = this.RULE("dbSetter", (): DbSetter => {
+    const keyword = this.createTokenData(this.CONSUME(L.Set));
+    const field = this.SUBRULE(this.identifierRef);
+    const expr = this.SUBRULE(this.expr);
+    return { keyword, field, expr };
   });
 
   actionAtomSet = this.RULE("actionAtomSet", (): ActionAtomSet => {

@@ -27,6 +27,8 @@ export function composeQuery(qspec: Spec.Query): QueryDef {
 
   const select = qspec.select ? composeSelect(qspec.select, fromPath) : [];
 
+  const update = qspec.update ? null : null;
+
   const orderBy = composeOrderBy(fromPath, qspec.orderBy);
 
   return {
