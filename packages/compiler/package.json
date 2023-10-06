@@ -35,7 +35,8 @@
   "files": [
     "dist",
     "!*.tsbuildinfo",
-    "!*.d.ts.map"
+    "!*.d.ts.map",
+    "!*.js.map"
   ],
   "devDependencies": {
     "@types/common-tags": "^1.8.1",

@@ -11,6 +11,7 @@
     "declaration": true,
     "incremental": true,
     "declarationMap": true,
+    "sourceMap": true,
     "strict": true,
     "lib": ["es2021"],
     "paths": {

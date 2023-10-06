@@ -41,7 +41,8 @@
   "files": [
     "dist",
     "!*.tsbuildinfo",
-    "!*.d.ts.map"
+    "!*.d.ts.map",
+    "!*.js.map"
   ],
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

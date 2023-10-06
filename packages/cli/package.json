@@ -28,11 +28,11 @@
   "bugs": {
     "url": "https://github.com/gauditech/gaudi/issues"
   },
-  "homepage": "https://github.com/gauditech/gaudi#readme",
   "files": [
     "dist",
     "!*.tsbuildinfo",
-    "!*.d.ts.map"
+    "!*.d.ts.map",
+    "!*.js.map"
   ],
   "devDependencies": {
     "@types/lodash": "^4.14.192",
