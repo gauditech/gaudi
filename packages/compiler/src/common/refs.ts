@@ -104,7 +104,11 @@ export function getRef<T extends RefKind>(
   if (kinds.find((k) => k === ref.kind)) {
     return ref as Ref<T>;
   } else {
-    throw new Error(`Expected one of: [${kinds.join(", ")}], got ${ref.kind}`);
+    throw new Error(
+      `Expected "${modelNameOrRefKey + (relName ? `.${relName}` : "")}" to be one of: [${kinds.join(
+        ", "
+      )}], got ${ref.kind}`
+    );
   }
 }
 
