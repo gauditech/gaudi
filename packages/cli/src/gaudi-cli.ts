@@ -70,6 +70,11 @@ function parseArguments() {
             alias: "r",
             type: "string",
             description: "Path to custom server runtime script relative to CWD",
+          })
+          .option("watch", {
+            alias: "w",
+            type: "array",
+            description: "Additional resource path to watch",
           }),
     })
     .command({
@@ -213,6 +218,8 @@ type CommonCommandArgs = {
   root?: string;
   /** Gaudi dev mode. Adds `node_modules/@gaudi/*` to file watch list. Option convenient when developing Gaudi itself */
   gaudiDev?: boolean;
+  /** Resource path to watch */
+  watch?: string[];
 };
 
 function setupCommandEnv(args: ArgumentsCamelCase<CommonCommandArgs>) {
@@ -270,14 +277,18 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
   };
 
   async function start() {
-    const resources = _.compact([
+    const resources: string[] = _.compact([
       // watch compiler input path
       path.join(config.inputDirectory, "**/*.gaudi"),
       // gaudi DB directory
       path.join(config.gaudiDirectory, "db"),
       // watch gaudi files (during Gaudi dev)
       args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
+      // watch additional resources provided from args
+      ...(args.watch ?? []),
     ]);
+    logger.debug(`Watched resources: ${resources.join(", ")}`);
+
     // create async queue to serialize multiple calls
     const enqueue = createAsyncQueueContext();
 
