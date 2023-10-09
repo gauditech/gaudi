@@ -58,7 +58,11 @@ export function composeOrderBy(
     })
   );
 }
-function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: string[]): TypedExprDef {
+function typedFunctionFromParts(
+  name: string,
+  args: Spec.Expr<"db" | "code">[],
+  namePath: string[]
+): TypedExprDef {
   // Change name to concat if using "+" with "string" type
   const firstType = args.at(0)?.type;
   if (name === "+" && firstType?.kind === "primitive" && firstType.primitiveKind === "string") {
@@ -72,7 +76,7 @@ function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: strin
   };
 }
 
-export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExprDef {
+export function composeExpression(expr: Spec.Expr<"code">, namePath: string[]): TypedExprDef {
   return match<typeof expr, TypedExprDef>(expr)
     .with({ kind: "literal" }, ({ literal }) => ({
       kind: "literal",
@@ -136,9 +140,11 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
               literal,
             }))
             .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
-            .with({ kind: "array" }, () => {
-              throw new UnreachableError(`"array" is not a valid lookup expression`);
-            })
+            .with(
+              { kind: "array" },
+              shouldBeUnreachableCb('"array" is not a valid lookup expression')
+            )
+            .with({ kind: "hook" }, shouldBeUnreachableCb("Not implemented"))
             .exhaustive();
 
           const arg1 = fn.args[1];
@@ -175,6 +181,7 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
         })
         .otherwise((fn) => typedFunctionFromParts(fn.name, fn.args, namePath));
     })
+    .with({ kind: "hook" }, shouldBeUnreachableCb("Not implemented"))
     .exhaustive();
 }
 

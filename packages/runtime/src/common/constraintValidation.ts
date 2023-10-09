@@ -3,8 +3,6 @@ import {
   ActionDef,
   Definition,
   FieldDef,
-  FieldSetterInput,
-  FieldSetterReferenceInput,
   FieldsetDef,
   FieldsetFieldDef,
   ReferenceDef,
@@ -43,21 +41,20 @@ export async function fetchReferenceIds(
 ): Promise<ReferenceIdResult[]> {
   const referenceInputs = actions.flatMap((action) => {
     if (action.kind !== "create-one" && action.kind !== "update-one") return [];
-    return action.changeset.flatMap(({ name, setter }) => {
-      if (setter.kind !== "fieldset-reference-input") return [];
-      const reference = getRef.reference(def, action.model, name);
-      return [[reference, setter] as [ReferenceDef, FieldSetterReferenceInput]];
+    return action.changeset.flatMap((operation) => {
+      if (operation.kind !== "reference-through") return [];
+      const reference = getRef.reference(def, action.model, operation.name);
+      return [[reference, operation] as [ReferenceDef, typeof operation]];
     });
   });
 
   const promiseEntries = referenceInputs.map(
-    async ([reference, setter]): Promise<ReferenceIdResult> => {
-      const inputValue = _.get(input, setter.fieldsetAccess);
-      const { fieldsetAccess } = setter;
+    async ([reference, operation]): Promise<ReferenceIdResult> => {
+      const inputValue = _.get(input, operation.fieldsetPath);
       if (_.isNil(inputValue)) {
         return {
           kind: "reference-input-missing",
-          fieldsetAccess,
+          fieldsetAccess: operation.fieldsetPath,
           inputValue,
         };
       }
@@ -66,18 +63,18 @@ export async function fetchReferenceIds(
         def,
         dbConn,
         reference.toModelRefKey,
-        setter.through,
+        operation.through,
         inputValue
       );
       console.dir({ resultId });
 
       if (resultId === null) {
-        return { kind: "reference-not-found", fieldsetAccess };
+        return { kind: "reference-not-found", fieldsetAccess: operation.fieldsetPath };
       }
 
       return {
         kind: "reference-found",
-        fieldsetAccess: setter.fieldsetAccess,
+        fieldsetAccess: operation.fieldsetPath,
         value: resultId,
       };
     }
@@ -94,11 +91,11 @@ export async function fetchExistingUniqueValues(
 ): Promise<ReferenceIdResult[]> {
   const uniqueInputs = actions.flatMap((action) => {
     if (action.kind !== "create-one" && action.kind !== "update-one") return [];
-    return action.changeset.flatMap(({ name, setter }) => {
-      if (setter.kind === "fieldset-input") {
-        const field = getRef.field(def, action.model, name);
+    return action.changeset.flatMap((operation) => {
+      if (operation.kind === "input") {
+        const field = getRef.field(def, action.model, operation.name);
         if (field.unique) {
-          return [[field, setter] as [FieldDef, FieldSetterInput]];
+          return [[field, operation] as [FieldDef, typeof operation]];
         }
       }
       return [];
@@ -106,47 +103,46 @@ export async function fetchExistingUniqueValues(
   });
 
   const inputPromiseEntries = uniqueInputs.map(
-    async ([field, setter]: [FieldDef, FieldSetterInput]): Promise<ReferenceIdResult> => {
-      const { fieldsetAccess } = setter;
-      const inputValue = _.get(input, fieldsetAccess);
+    async ([field, operation]): Promise<ReferenceIdResult> => {
+      const inputValue = _.get(input, operation.fieldsetPath);
       if (_.isNil(inputValue)) {
         return {
           kind: "reference-input-missing",
-          fieldsetAccess,
+          fieldsetAccess: operation.fieldsetPath,
           inputValue,
         };
       }
 
       const resultId = await findIdBy(def, dbConn, field.modelRefKey, [field.name], inputValue);
       if (resultId === null) {
-        return { kind: "reference-not-found", fieldsetAccess };
+        return { kind: "reference-not-found", fieldsetAccess: operation.fieldsetPath };
       } else {
-        return { kind: "reference-found", fieldsetAccess, value: inputValue };
+        return {
+          kind: "reference-found",
+          fieldsetAccess: operation.fieldsetPath,
+          value: inputValue,
+        };
       }
     }
   );
 
   const referenceInputs = actions.flatMap((action) => {
     if (action.kind !== "create-one" && action.kind !== "update-one") return [];
-    return action.changeset.flatMap(({ name, setter }) => {
-      if (setter.kind !== "fieldset-reference-input") return [];
-      const reference = getRef.reference(def, action.model, name);
+    return action.changeset.flatMap((operation) => {
+      if (operation.kind !== "reference-through") return [];
+      const reference = getRef.reference(def, action.model, operation.name);
       if (!reference.unique) {
         return [];
       }
       // find a value in inputs, if any
       const result = referenceIds.find((result) => {
-        if (result.fieldsetAccess === setter.fieldsetAccess && result.kind === "reference-found") {
+        if (result.fieldsetAccess === operation.fieldsetPath && result.kind === "reference-found") {
           return true;
         }
       });
       if (result) {
         return [
-          [reference, setter, result] as [
-            ReferenceDef,
-            FieldSetterReferenceInput,
-            ReferenceIdResult
-          ],
+          [reference, operation, result] as [ReferenceDef, typeof operation, ReferenceIdResult],
         ];
       }
       return [];
@@ -154,9 +150,7 @@ export async function fetchExistingUniqueValues(
   });
 
   const refUniqPromises = referenceInputs.map(
-    async ([reference, setter, result]): Promise<ReferenceIdResult> => {
-      const { fieldsetAccess } = setter;
-
+    async ([reference, operation, result]): Promise<ReferenceIdResult> => {
       if (result.kind !== "reference-found") {
         return result;
       }
@@ -171,9 +165,9 @@ export async function fetchExistingUniqueValues(
         result.value
       );
       if (relId === null) {
-        return { kind: "reference-not-found", fieldsetAccess };
+        return { kind: "reference-not-found", fieldsetAccess: operation.fieldsetPath };
       } else {
-        return { kind: "reference-found", fieldsetAccess, value: relId };
+        return { kind: "reference-found", fieldsetAccess: operation.fieldsetPath, value: relId };
       }
     }
   );

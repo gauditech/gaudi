@@ -4,15 +4,9 @@ import { composeValidate } from "./validators";
 
 import { FilteredByKind } from "@compiler/common/kindFilter";
 import { initLogger } from "@compiler/common/logger";
-import {
-  assertUnreachable,
-  ensureEmpty,
-  ensureEqual,
-  ensureExists,
-  resolveItems,
-} from "@compiler/common/utils";
+import { ensureEmpty, ensureExists, resolveItems } from "@compiler/common/utils";
 import { getTypeModel } from "@compiler/compiler/ast/type";
-import { composeQuery } from "@compiler/composer/query";
+import { composeExpression, composeQuery } from "@compiler/composer/query";
 import {
   ActionDef,
   ActionHookDef,
@@ -21,11 +15,10 @@ import {
   CreateOneAction,
   DeleteOneAction,
   ExecuteHookAction,
-  FieldSetter,
-  FunctionName,
   QueryAction,
   QueryDef,
   RespondAction,
+  TypedExprDef,
   UpdateOneAction,
   ValidateAction,
 } from "@compiler/types/definition";
@@ -92,7 +85,8 @@ function composeExecuteAction(spec: FilteredByKind<Spec.Action, "execute">): Exe
   const actionHook: ActionHookDef = {
     args: spec.hook.args.map((arg) => ({
       name: arg.name,
-      setter: setterToFieldSetter(arg, []),
+      setter: composeExpression(arg.expr, []),
+      kind: "basic",
     })),
     hook: spec.hook.code,
   };
@@ -106,12 +100,11 @@ function composeExecuteAction(spec: FilteredByKind<Spec.Action, "execute">): Exe
 }
 
 function componseRespondAction(spec: FilteredByKind<Spec.Action, "respond">): RespondAction {
-  const body = expandSetterExpression(spec.body, () => true);
-  const httpStatus =
-    spec.httpStatus != null ? expandSetterExpression(spec.httpStatus, () => true) : undefined;
+  const body = composeExpression(spec.body, []);
+  const httpStatus = spec.httpStatus != null ? composeExpression(spec.httpStatus, []) : undefined;
   const httpHeaders = (spec.httpHeaders ?? []).map(({ name, value }) => ({
     name,
-    value: expandSetterExpression(value, () => true),
+    value: composeExpression(value, []),
   }));
 
   return {
@@ -137,7 +130,7 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
     (atom) => atom.target.name,
     // item resolver
     (atom) => {
-      const op = atomToChangesetOperation(atom, spec.isPrimary ? [] : [spec.alias], changeset);
+      const op = atomToChangesetOperation(atom, spec.isPrimary ? [] : [spec.alias]);
       // Add the changeset operation only if not added before
       if (!_.find(changeset, { name: op.name })) {
         changeset.push(op);
@@ -160,155 +153,125 @@ function composeModelAction(spec: Spec.ModelAction): CreateOneAction | UpdateOne
   return modelActionFromParts(spec, model, changeset);
 }
 
-function expandSetterExpression(
-  expr: Spec.Expr,
-  verifySibling: (name: string) => void
-): FieldSetter {
-  switch (expr.kind) {
-    case "literal": {
-      return { kind: "literal", literal: expr.literal };
-    }
-    case "identifier": {
-      const [head, ...tail] = expr.identifier;
-      const access = tail.map((i) => i.text);
-      switch (head.ref.kind) {
-        case "auth":
-        case "model":
-        case "queryTarget":
-        case "target":
-        case "action":
-        case "repeat":
-        case "struct": {
-          return {
-            kind: "reference-value",
-            target: {
-              alias: head.text,
-              access,
-            },
-          };
-        }
-        case "authToken": {
-          return {
-            kind: "request-auth-token",
-            access: ["user", "token"],
-          };
-        }
-        case "extraInput": {
-          // fixme fieldset-reference ??
-          return {
-            kind: "fieldset-input",
-            fieldsetAccess: [head.text],
-            required: head.ref.nullable,
-            type: head.ref.type,
-          };
-        }
-        case "modelAtom": {
-          // if path has more than 1 element, it can't be a sibling call
-          ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
+// function expandSetterExpression(
+//   expr: Spec.Expr<"code">,
+//   verifySibling: (name: string) => void
+// ): FieldSetter {
+//   switch (expr.kind) {
+//     case "literal": {
+//       return { kind: "literal", literal: expr.literal };
+//     }
+//     case "identifier": {
+//       const [head, ...tail] = expr.identifier;
+//       const access = tail.map((i) => i.text);
+//       switch (head.ref.kind) {
+//         case "auth":
+//         case "model":
+//         case "queryTarget":
+//         case "target":
+//         case "action":
+//         case "repeat":
+//         case "struct": {
+//           return {
+//             kind: "reference-value",
+//             target: {
+//               alias: head.text,
+//               access,
+//             },
+//           };
+//         }
+//         case "authToken": {
+//           return {
+//             kind: "request-auth-token",
+//             access: ["user", "token"],
+//           };
+//         }
+//         case "extraInput": {
+//           // fixme fieldset-reference ??
+//           return {
+//             kind: "fieldset-input",
+//             fieldsetAccess: [head.text],
+//             required: head.ref.nullable,
+//             type: head.ref.type,
+//           };
+//         }
+//         case "modelAtom": {
+//           // if path has more than 1 element, it can't be a sibling call
+//           ensureEqual(access.length, 0, `Unexpected nested sibling ${head.text}: ${access}`);
 
-          // verify siblings in eg. action changeset
-          verifySibling(head.text);
+//           // verify siblings in eg. action changeset
+//           verifySibling(head.text);
 
-          return { kind: "changeset-reference", referenceName: head.text };
-        }
-        case "validator":
-          throw new Error("Unexpected validator ref in action");
-        case "validatorArg":
-          throw new Error("Unexpected validator arg ref in action");
-        default:
-          return assertUnreachable(head.ref);
-      }
-    }
-    case "array": {
-      return {
-        kind: "array",
-        elements: expr.elements.map((a) => expandSetterExpression(a, verifySibling)),
-      };
-    }
-    case "function": {
-      return {
-        kind: "function",
-        name: expr.name as FunctionName, // FIXME proper validation
-        args: expr.args.map((a) => expandSetterExpression(a, verifySibling)),
-      };
-    }
-  }
-}
-
-function setterToChangesetOperation(
-  atom: Spec.ActionAtomSet,
-  changeset: ChangesetDef
-): ChangesetOperationDef {
-  return { name: atom.target.name, setter: setterToFieldSetter(atom.set, changeset) };
-}
-
-function setterToFieldSetter(
-  set: Spec.ActionAtomSetHook | Spec.ActionAtomSetExp | Spec.ActionAtomSetQuery,
-  changeset: ChangesetDef
-): FieldSetter {
-  switch (set.kind) {
-    case "hook": {
-      const args = set.hook.args.map((arg) => {
-        const setter = setterToFieldSetter(arg, changeset);
-        return { name: arg.name, setter };
-      });
-      return { kind: "fieldset-hook", hook: set.hook.code, args };
-    }
-    case "expression": {
-      const exp = set.expr;
-      return expandSetterExpression(exp, (name) => {
-        const siblingOp = _.find(changeset, { name });
-        if (!siblingOp) {
-          throw new Error(`Circular reference: ${name}`);
-        }
-      });
-    }
-    case "query": {
-      return { kind: "query", query: queryFromSpec(set.query) };
-    }
-  }
-}
+//           return { kind: "changeset-reference", referenceName: head.text };
+//         }
+//         case "validator":
+//           throw new Error("Unexpected validator ref in action");
+//         case "validatorArg":
+//           throw new Error("Unexpected validator arg ref in action");
+//         default:
+//           return assertUnreachable(head.ref);
+//       }
+//     }
+//     case "array": {
+//       return {
+//         kind: "array",
+//         elements: expr.elements.map((a) => expandSetterExpression(a, verifySibling)),
+//       };
+//     }
+//     case "function": {
+//       return {
+//         kind: "function",
+//         name: expr.name as FunctionName, // FIXME proper validation
+//         args: expr.args.map((a) => expandSetterExpression(a, verifySibling)),
+//       };
+//     }
+//     case "hook": {
+//       throw new Error("TODO");
+//     }
+//   }
+// }
 
 function atomToChangesetOperation(
   atom: Spec.ModelActionAtom,
-  fieldsetNamespace: string[],
-  changeset: ChangesetDef
+  fieldsetNamespace: string[]
 ): ChangesetOperationDef {
   switch (atom.kind) {
     case "input": {
+      const setter: TypedExprDef = {
+        kind: "variable",
+        name: "FIXME",
+        contextPath: ["fieldset", ...fieldsetNamespace, atom.target.name],
+      };
       return {
+        kind: "input",
+        fieldsetPath: [...fieldsetNamespace, atom.target.name],
+        // FIXME validate
+        validate: undefined,
         name: atom.target.name,
-        setter: {
-          kind: "fieldset-input",
-          type: atom.target.type,
-          required: !atom.optional,
-          fieldsetAccess: [...fieldsetNamespace, atom.target.name],
-          default: atom.default
-            ? expandSetterExpression(atom.default, (name) => {
-                const siblingOp = _.find(changeset, { name });
-                if (!siblingOp) {
-                  throw new Error(`Circular reference: ${name}`);
-                }
-              })
-            : undefined,
-        },
+        setter: atom.default
+          ? {
+              kind: "function",
+              name: "concat", // FIXME coalesce
+              args: [setter, composeExpression(atom.default, [])],
+            }
+          : setter,
       };
     }
     case "reference": {
       return {
+        kind: "reference-through",
+        through: atom.through.map((t) => t.name),
+        fieldsetPath: [...fieldsetNamespace, atom.target.name],
         name: atom.target.name,
         setter: {
-          kind: "fieldset-reference-input",
-          through: atom.through.map((r) => r.name),
-          fieldsetAccess: [
-            ...fieldsetNamespace,
-            `${atom.target.name}_${atom.through.map((r) => r.name).join("_")}`,
-          ],
+          kind: "variable",
+          name: "FIXME",
+          contextPath: ["referenceThroughs", ...fieldsetNamespace, atom.target.name, "id"],
         },
       };
     }
     case "set": {
-      return setterToChangesetOperation(atom, changeset);
+      return { kind: "basic", name: atom.target.name, setter: composeExpression(atom.expr, []) };
     }
   }
 }

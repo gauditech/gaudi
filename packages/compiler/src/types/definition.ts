@@ -142,7 +142,12 @@ type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 export type LiteralValueDef = { kind: "literal"; literal: Literal };
 
 type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
-type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
+type TypedVariable = {
+  kind: "variable";
+  type?: TypedVariableType;
+  name: string;
+  contextPath?: string[];
+};
 
 export type BinaryOperator =
   | "or"
@@ -183,6 +188,19 @@ export type TypedFunction = {
   type?: TypedVariableType;
 };
 
+export type FinalExpr<Kind extends "model" | "validator" | "action" = never> =
+  | TypedExprDef
+  | (Kind extends "model"
+      ? ModelHookDef
+      : Kind extends "validator"
+      ? ValidatorHookDef
+      : Kind extends "action"
+      ? ExecuteHookAction
+      : never);
+
+type X = FinalExpr<"model" | "validator" | "action">;
+type Y = FinalExpr;
+
 export type TypedExprDef =
   | LiteralValueDef
   | TypedArray
@@ -192,6 +210,19 @@ export type TypedExprDef =
   | TypedAggregateFunction
   | TypedExistsSubquery
   | undefined;
+
+/**
+ * Unified expression / setter types include:
+ *
+ * - literal value
+ * - array
+ * - db identifier
+ * - context value
+ * - exists subquery
+ * - aggregate function
+ * - function
+ * - hook (code)
+ */
 
 type TypedArray = {
   kind: "array";
@@ -386,12 +417,6 @@ export type FieldsetRecordDef = {
   nullable: boolean;
 };
 
-export type IValidatorDef = {
-  name: string;
-  inputType: FieldType;
-  args: Literal[];
-};
-
 export type FieldsetFieldDef = {
   kind: "field";
   type: FieldType;
@@ -451,9 +476,9 @@ export type ExecuteHookAction = {
 
 export type RespondAction = {
   kind: "respond";
-  body: FieldSetter;
-  httpStatus?: FieldSetter;
-  httpHeaders?: { name: string; value: FieldSetter }[];
+  body: TypedExprDef;
+  httpStatus?: TypedExprDef;
+  httpHeaders?: { name: string; value: TypedExprDef }[];
 };
 
 export type QueryAction = {
@@ -475,7 +500,15 @@ export type ActionHookDef = {
 };
 
 export type ChangesetDef = ChangesetOperationDef[];
-export type ChangesetOperationDef = { name: string; setter: FieldSetter };
+export type ChangesetOperationDef = { name: string; setter: TypedExprDef } & (
+  | {
+      kind: "input";
+      fieldsetPath: string[];
+      validate: ValidateExprDef | undefined;
+    }
+  | { kind: "reference-through"; through: string[]; fieldsetPath: string[] }
+  | { kind: "basic" }
+);
 
 export type FieldSetterReferenceValue = {
   kind: "reference-value";
@@ -548,7 +581,7 @@ export type FieldSetterArray = {
   elements: FieldSetter[];
 };
 
-export type FieldSetter =
+type FieldSetter =
   // TODO add composite expression setter
   | LiteralValueDef
   | FieldSetterReferenceValue

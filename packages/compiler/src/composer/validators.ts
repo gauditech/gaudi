@@ -1,5 +1,3 @@
-import { match } from "ts-pattern";
-
 import { composeExpression } from "./query";
 
 import { Definition, ValidateExprDef, ValidatorDef } from "@compiler/types/definition";
@@ -10,16 +8,8 @@ export function composeValidators(def: Definition, validators: Spec.Validator[])
 }
 
 function defineValidator(vspec: Spec.Validator): ValidatorDef {
-  const assert = match<Spec.Validator["assert"], ValidatorDef["assert"]>(vspec.assert)
-    .with({ kind: "expr" }, ({ expr }) => ({ kind: "expr", expr: composeExpression(expr, []) }))
-    .with({ kind: "hook" }, ({ hook }) => ({
-      kind: "hook",
-      hook: {
-        args: hook.args.map(({ name, expr }) => ({ name, expr: composeExpression(expr, []) })),
-        hook: hook.code,
-      },
-    }))
-    .exhaustive();
+  const assert = composeExpression(vspec.assert, []);
+
   return {
     name: vspec.name,
     args: vspec.args,
