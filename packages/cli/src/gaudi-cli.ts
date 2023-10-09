@@ -64,6 +64,17 @@ function parseArguments() {
             hidden: true, // this is a hidden option for developing gaudi itself
             type: "boolean",
             description: "Watch additional Gaudi resources when developing Gaudi itself",
+          })
+          // start command args
+          .option("runtimePath", {
+            alias: "r",
+            type: "string",
+            description: "Path to custom server runtime script relative to CWD",
+          })
+          .option("watch", {
+            alias: "w",
+            type: "array",
+            description: "Additional resource path to watch",
           }),
     })
     .command({
@@ -73,10 +84,16 @@ function parseArguments() {
         startCommandHandler(args);
       },
       builder: (yargs) =>
-        yargs.positional("root", {
-          type: "string",
-          describe: "project root directory",
-        }),
+        yargs
+          .positional("root", {
+            type: "string",
+            describe: "project root directory",
+          })
+          .option("runtimePath", {
+            alias: "r",
+            type: "string",
+            description: "Path to custom server runtime script relative to CWD",
+          }),
     })
     .command({
       command: "db",
@@ -201,6 +218,8 @@ type CommonCommandArgs = {
   root?: string;
   /** Gaudi dev mode. Adds `node_modules/@gaudi/*` to file watch list. Option convenient when developing Gaudi itself */
   gaudiDev?: boolean;
+  /** Resource path to watch */
+  watch?: string[];
 };
 
 function setupCommandEnv(args: ArgumentsCamelCase<CommonCommandArgs>) {
@@ -208,8 +227,9 @@ function setupCommandEnv(args: ArgumentsCamelCase<CommonCommandArgs>) {
   if (args.root) {
     const resolvedRoot = path.resolve(args.root);
     process.chdir(resolvedRoot);
-    logger.debug(`Working directory set to "${resolvedRoot}"`);
   }
+  logger.debug(`Working directory: "${process.cwd()}"`);
+
   // gaudi development
   if (args.gaudiDev) {
     logger.debug("Gaudi dev mode enabled.");
@@ -257,14 +277,18 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
   };
 
   async function start() {
-    const resources = _.compact([
+    const resources: string[] = _.compact([
       // watch compiler input path
       path.join(config.inputDirectory, "**/*.gaudi"),
       // gaudi DB directory
       path.join(config.gaudiDirectory, "db"),
       // watch gaudi files (during Gaudi dev)
       args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
+      // watch additional resources provided from args
+      ...(args.watch ?? []),
     ]);
+    logger.debug(`Watched resources: ${resources.join(", ")}`);
+
     // create async queue to serialize multiple calls
     const enqueue = createAsyncQueueContext();
 
@@ -368,8 +392,10 @@ function watchCopyStaticCommand(
   };
 }
 
+type DevCommandArgs = CommonCommandArgs & StartCommandArgs;
+
 function watchRuntimeCommand(
-  args: ArgumentsCamelCase<CommonCommandArgs>,
+  args: ArgumentsCamelCase<DevCommandArgs>,
   config: EngineConfig
 ): Controllable {
   // create async queue to serialize multiple command calls
@@ -387,7 +413,7 @@ function watchRuntimeCommand(
         })
         .then(() => {
           // create new command
-          command = start(config);
+          command = start(args, config);
           command.start();
         })
         .catch((err) => {
@@ -407,12 +433,16 @@ function watchRuntimeCommand(
 
 // --- start command
 
-async function startCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
+type StartCommandArgs = CommonCommandArgs & {
+  runtimePath?: string;
+};
+
+async function startCommandHandler(args: ArgumentsCamelCase<StartCommandArgs>) {
   setupCommandEnv(args);
 
   const config = readConfig();
 
-  return start(config).start();
+  return start(args, config).start();
 }
 
 // --- DB commands

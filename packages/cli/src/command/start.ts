@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import { initLogger } from "@gaudi/compiler";
 import { EngineConfig } from "@gaudi/compiler/dist/config";
 import * as dotenv from "dotenv";
@@ -7,10 +10,33 @@ import { CommandRunner, createCommandRunner } from "@cli/runner";
 
 const logger = initLogger("gaudi:cli:start");
 
-export function start(_config: EngineConfig): CommandRunner {
-  logger.debug("Starting Gaudi project ... ", process.cwd());
+export type StartCommandConfig = {
+  runtimePath?: string;
+};
+
+export function start(
+  commandConfig: StartCommandConfig,
+  _engineConfig: EngineConfig
+): CommandRunner {
+  logger.debug("Starting Gaudi project ... ");
 
   dotenv.config();
+
+  let commandScript;
+  // custom runtime server
+  if (commandConfig.runtimePath) {
+    const runtimePath = path.resolve(commandConfig.runtimePath);
+    if (!fs.existsSync(runtimePath) || !fs.lstatSync(runtimePath).isFile()) {
+      throw new Error(`Runtime path file does not exist: "${runtimePath}"`);
+    }
+
+    commandScript = `node "${commandConfig.runtimePath}"`;
+  }
+  // integrated runtime server
+  else {
+    commandScript = `npx gaudi-runtime`;
+  }
+  logger.debug(`Runtime server command: "${commandScript}"`);
 
   // using nodemon only to handle runtime errors
   // nodmeon doesn't watch files because we have our own command pipeline
@@ -25,6 +51,7 @@ export function start(_config: EngineConfig): CommandRunner {
     "--quiet",
     // exec gaudi runtime
     "--exec",
-    "npx gaudi-runtime",
+    // "npx gaudi-runtime",
+    commandScript,
   ]);
 }

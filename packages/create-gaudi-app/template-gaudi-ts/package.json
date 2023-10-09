@@ -10,13 +10,14 @@
     "// --- dev": "",
     "dev": "concurrently --names ts,gaudi --prefix-colors magenta,blue \"npm run dev:ts\" \"npm run dev:gaudi\"",
     "dev:ts": "npm run build:ts -- --watch --incremental",
-    "dev:gaudi": "npx gaudi dev",
+    "dev:gaudi": "npx gaudi dev --runtimePath=dist/server.js --watch=dist/**/*.js",
     "// --- start": "",
-    "start": "dotenv -e .env nodemon --watch dist dist/server.js",
+    "start": "npx gaudi start --runtimePath=dist/server.js",
     "// --- other": "",
     "clean": "rimraf dist"
   },
   "devDependencies": {
+    "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.17",
     "@types/node": "^20.4.2",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
@@ -31,8 +32,8 @@
   "dependencies": {
     "@gaudi/compiler": "0.0.3",
     "@gaudi/runtime": "0.0.3",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "gaudi": "0.0.3",
-    "nodemon": "^3.0.1"
+    "gaudi": "0.0.3"
   }
 }
