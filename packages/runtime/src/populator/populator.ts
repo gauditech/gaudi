@@ -4,8 +4,8 @@ import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/type
 import { ActionContext, executeActions } from "@runtime/common/action";
 import { createIterator } from "@runtime/common/iterator";
 import { RuntimeConfig, loadDefinition } from "@runtime/config";
+import { Storage } from "@runtime/server/context";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
-import { Vars } from "@runtime/server/vars";
 
 const logger = initLogger("gaudi:populator");
 
@@ -33,7 +33,11 @@ export async function populate(options: PopulateOptions, config: RuntimeConfig) 
 
     logger.debug(`Running populator ${populator.name}`);
 
-    const targetCtx: ActionContext = { input: {}, vars: new Vars(), referenceIds: [] };
+    const targetCtx: ActionContext = {
+      input: {},
+      requestContext: new Storage({}) as any, // FIXME not a real request context
+      referenceIds: [],
+    };
 
     // wrap entire populator process in a single transaction
     await dbConn.transaction(async (tx) => {
@@ -79,7 +83,7 @@ async function processPopulate(
     // add repeater to new context
     if (repeaterAlias) {
       // add only readonly props so other populates/setters/hooks/... cannot mess with iterator state
-      actionCtx.vars.set(repeaterAlias, {
+      actionCtx.requestContext.set(repeaterAlias, {
         current: iter.current,
         total: iter.total,
       });
@@ -100,5 +104,9 @@ async function processPopulate(
  * but `vars` is copied to a new instance.
  */
 function createNewCtx(ctx: ActionContext): ActionContext {
-  return { input: ctx.input, vars: ctx.vars?.copy() ?? new Vars(), referenceIds: ctx.referenceIds };
+  return {
+    input: ctx.input,
+    requestContext: ctx.requestContext.copy(),
+    referenceIds: ctx.referenceIds,
+  };
 }

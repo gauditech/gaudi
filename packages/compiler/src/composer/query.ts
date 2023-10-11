@@ -200,46 +200,41 @@ export function composeExpression(expr: Spec.Expr<"code">, namePath: string[]): 
 export function composeRefPath(
   path: Spec.IdentifierRef[],
   namePath: string[]
-): { kind: "alias"; namePath: string[] } | { kind: "variable"; name: string } {
+): { kind: "alias"; namePath: string[] } | { kind: "variable"; contextPath: string[] } {
   const [head, ...tail] = path;
   switch (head.ref.kind) {
     case "model":
       return {
         kind: "alias",
-        namePath: [...namePath, ...tail.map((i) => i.text)],
+        namePath: [...namePath, ...tail.map((i) => i.text), "hey model"],
       };
     case "modelAtom":
       return {
         kind: "alias",
-        namePath: [...namePath, ...path.map((i) => i.text)],
+        namePath: [...namePath, ...path.map((i) => i.text), "hey marin"],
       };
     case "queryTarget":
       return {
         kind: "alias",
-        namePath: [...head.ref.path, ...tail.map((i) => i.text)],
+        namePath: [...head.ref.path, ...tail.map((i) => i.text), "hey query"],
       };
     case "extraInput":
       return {
         kind: "variable",
-        name: `___changeset___${path.map((i) => i.text).join("___")}`,
+        contextPath: ["fieldset", ...path.map((p) => p.text)],
       };
     case "validatorArg":
     case "target":
     case "action":
     case "auth":
-      return { kind: "alias", namePath: path.map((i) => i.text) };
+    case "repeat":
+      return { kind: "variable", contextPath: ["aliases", ...path.map((i) => i.text)] };
     case "authToken":
-      return { kind: "variable", name: `___requestAuthToken` };
+      return { kind: "variable", contextPath: ["_express", "req", "user", "token"] };
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "validator":
       throw new UnreachableError("Unexpected validator reference in expression");
-    case "repeat": {
-      return {
-        kind: "variable",
-        name: "FIXME",
-      };
-    }
   }
 }
 

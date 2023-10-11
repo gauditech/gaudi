@@ -1,10 +1,4 @@
-import {
-  assertUnreachable,
-  ensureEqual,
-  ensureExists,
-  ensureNot,
-  shouldBeUnreachableCb,
-} from "@gaudi/compiler/dist/common/utils";
+import { shouldBeUnreachableCb } from "@gaudi/compiler/dist/common/utils";
 import {
   ChangesetDef,
   Definition,
@@ -14,15 +8,11 @@ import {
 import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 import { match } from "ts-pattern";
 
-import { buildQueryTree } from "../query/build";
-
 import { executeArithmetics } from "./arithmetics";
 
 import { ActionContext } from "@runtime/common/action";
-import { HookActionContext, executeHook } from "@runtime/hooks";
-import { QueryExecutor, castToCardinality } from "@runtime/query/exec";
-import { executeTypedExpr } from "@runtime/server/endpoints";
-import { Vars } from "@runtime/server/vars";
+import { HookActionContext } from "@runtime/hooks";
+import { QueryExecutor } from "@runtime/query/exec";
 
 type Changeset = Record<string, unknown>;
 
@@ -44,7 +34,9 @@ export async function buildChangeset(
       match(expr)
         .with({ kind: "literal" }, ({ literal }) => formatFieldValue(literal.value, literal.kind))
         .with({ kind: "array" }, (arr) => Promise.all(arr.elements.map(_.unary(getValueFromExpr))))
-        .with({ kind: "variable" }, (variable) => actionContext.vars.collect(variable.contextPath!)) // FIXME remove !
+        .with({ kind: "variable" }, (variable) =>
+          actionContext.requestContext.collect(variable.contextPath)
+        )
         .with({ kind: "function" }, (expr) => executeArithmetics(expr, _.unary(getValueFromExpr)))
         // FIXME add `query` as expr type
         .otherwise(

@@ -4,7 +4,6 @@ import {
   ChangesetDef,
   ChangesetOperationDef,
   Definition,
-  FieldSetter,
   FieldSetterChangesetReference,
   FieldSetterFunction,
   FunctionName,

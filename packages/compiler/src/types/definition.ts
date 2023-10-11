@@ -145,8 +145,7 @@ type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType 
 type TypedVariable = {
   kind: "variable";
   type?: TypedVariableType;
-  name: string;
-  contextPath?: string[];
+  contextPath: string[];
 };
 
 export type BinaryOperator =

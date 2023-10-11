@@ -11,8 +11,8 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 
 import { executeTypedExpr } from "../server/endpoints";
-import { Vars } from "../server/vars";
 
+import { Storage } from "@runtime/server/context";
 import { BusinessError } from "@runtime/server/error";
 
 // ----- validation&transformation
@@ -103,7 +103,7 @@ async function validateField(
   }
 
   return fieldset.validate
-    ? await executeValidateExpr(def, fieldset.validate, field, new Vars())
+    ? await executeValidateExpr(def, fieldset.validate, field, new Storage({}))
     : fieldset.referenceNotFound
     ? [{ code: "reference-not-found", params: { value: field } }]
     : fieldset.uniqueExists
@@ -115,7 +115,7 @@ export async function executeValidateExpr(
   def: Definition,
   validate: ValidateExprDef,
   field: unknown | undefined,
-  ctx: Vars
+  ctx: Storage
 ): Promise<ValidateFieldError | undefined> {
   if (validate.kind === "call") {
     return executeValidateExprCall(def, validate, field, ctx);
@@ -144,7 +144,7 @@ async function executeValidateExprCall(
   def: Definition,
   validate: ValidateExprCallDef,
   field: unknown | undefined,
-  ctx: Vars
+  ctx: Storage
 ): Promise<ValidateFieldError | undefined> {
   const validator = def.validators.find((v) => v.name === validate.validator);
   ensureExists(validator);
@@ -158,8 +158,8 @@ async function executeValidateExprCall(
     params[name] = value;
   }
 
-  const contextVars = new Vars(params);
-  const assertResult = await executeTypedExpr(def, validator.assert, contextVars);
+  const argResults = new Storage(params);
+  const assertResult = await executeTypedExpr(def, validator.assert, argResults);
   if (assertResult) {
     return undefined;
   }

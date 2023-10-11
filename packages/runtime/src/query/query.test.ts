@@ -1,3 +1,5 @@
+import { EndpointDef, ListEndpointDef, QueryDef } from "@gaudi/compiler/dist/types/definition";
+
 import { QueryTree, queryTreeFromParts } from "./build";
 import {
   EndpointQueries,
@@ -10,7 +12,6 @@ import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
 import { compileFromString } from "@runtime/common/testUtils";
-import { EndpointDef, ListEndpointDef, QueryDef } from "@gaudi/compiler/dist/types/definition";
 
 describe("Endpoint queries", () => {
   describe("Deeply nested entrypoints", () => {

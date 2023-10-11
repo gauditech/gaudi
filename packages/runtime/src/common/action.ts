@@ -17,13 +17,13 @@ import { ValidReferenceIdResult } from "./constraintValidation";
 
 import { buildChangeset } from "@runtime/common/changeset";
 import { HookActionContext, executeActionHook } from "@runtime/hooks";
+import { RequestContext, Storage } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { HookError } from "@runtime/server/error";
-import { Vars } from "@runtime/server/vars";
 
 export type ActionContext = {
   input: Record<string, unknown>;
-  vars: Vars;
+  requestContext: RequestContext;
   referenceIds: ValidReferenceIdResult[];
 };
 
@@ -65,7 +65,7 @@ async function _internalExecuteActions(
 
       const id = await insertData(dbConn, dbModel, dbData);
       const deps = await fetchActionDeps(def, dbConn, action, id);
-      deps && ctx.vars.set(action.alias, deps[0]);
+      deps && ctx.requestContext.set(action.alias, deps[0]);
     } else if (actionKind === "update-one") {
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
@@ -77,7 +77,7 @@ async function _internalExecuteActions(
 
       const id = await updateData(dbConn, dbModel, dbData, targetId);
       const deps = await fetchActionDeps(def, dbConn, action, id);
-      deps && ctx.vars.set(action.alias, deps[0]);
+      deps && ctx.requestContext.set(action.alias, deps[0]);
     } else if (actionKind === "delete-one") {
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
@@ -94,10 +94,10 @@ async function _internalExecuteActions(
       varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
 
       const result = castToCardinality(
-        await qx.executeQueryTree(def, qt, new Vars(varsObj), []),
+        await qx.executeQueryTree(def, qt, new Storage(varsObj), []),
         action.query.retCardinality
       );
-      ctx.vars.set(action.alias, result);
+      ctx.requestContext.set(action.alias, result);
     } else if (actionKind === "execute-hook") {
       ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
 
@@ -105,7 +105,7 @@ async function _internalExecuteActions(
 
       try {
         const result = await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
-        ctx.vars.set(action.alias, result);
+        ctx.requestContext.set(action.alias, result);
       } catch (err) {
         throw new HookError(err);
       }
@@ -187,7 +187,7 @@ async function fetchActionDeps(
     applyFilterIdInContext([action.model]),
     transformSelectPath(action.select, [action.alias], [action.model])
   );
-  return executeQueryTree(dbConn, def, qt, new Vars(), [id]);
+  return executeQueryTree(dbConn, def, qt, new Storage({}), [id]);
 }
 
 function resolveTargetId(ctx: ActionContext, targetPath: string[]): number {
@@ -196,7 +196,7 @@ function resolveTargetId(ctx: ActionContext, targetPath: string[]): number {
   // [org, repo, issue] -> [org, repo, issue, id] -> [org, [repo, issue, id]]
   const [rootTargetName, ...path] = [...targetPath, "id"];
 
-  return ctx.vars.get(rootTargetName, path);
+  return ctx.requestContext.get([rootTargetName, ...path]) as number;
 }
 
 // ---------- DB functions
@@ -212,7 +212,7 @@ async function updateData(
     return targetId;
   }
   const ret = await dbConn(model).update(data).where({ id: targetId }).returning("id");
-  return findOne(ret);
+  return findOne(ret).id;
 }
 
 async function insertData(
@@ -222,16 +222,16 @@ async function insertData(
 ): Promise<number> {
   const ret = await dbConn.insert(data).into(model).returning("id");
 
-  return findOne(ret);
+  return findOne(ret).id;
 }
 
 async function deleteData(dbConn: DbConn, model: string, targetId: number): Promise<number> {
   const ret = await dbConn(model).delete().where({ id: targetId }).returning("id");
 
-  return findOne(ret);
+  return findOne(ret).id;
 }
 
-function findOne(rows: any[], message?: string) {
+function findOne<T>(rows: T[], message?: string): T {
   if (rows.length === 0) {
     throw new Error(message ?? `Record not found`);
   }
@@ -239,5 +239,5 @@ function findOne(rows: any[], message?: string) {
     throw new Error(`Unexpected error: multiple records found`);
   }
 
-  return rows[0].id;
+  return rows[0];
 }

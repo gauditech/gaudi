@@ -8,9 +8,10 @@ import {
   QueryAction,
   QueryDef,
 } from "@gaudi/compiler/dist/types/definition";
+
 import { QueryTree } from "@runtime/query/build";
 import { NestedRow, QueryExecutor } from "@runtime/query/exec";
-import { Vars } from "@runtime/server/vars";
+import { Storage } from "@runtime/server/context";
 
 /**
  * Helper function that compiles directly to definition. This is used in tests.
@@ -35,7 +36,7 @@ export function mockQueryExecutor(): QueryExecutor {
     executeQuery(
       _def: Definition,
       _q: QueryDef,
-      _params: Vars,
+      _ctx: Storage,
       _contextIds: number[]
     ): Promise<NestedRow[]> {
       return Promise.resolve([]);
@@ -44,7 +45,7 @@ export function mockQueryExecutor(): QueryExecutor {
     executeQueryTree(
       _def: Definition,
       _qt: QueryTree,
-      _params: Vars,
+      _ctx: Storage,
       _contextIds: number[]
     ): Promise<NestedRow[]> {
       return Promise.resolve([]);

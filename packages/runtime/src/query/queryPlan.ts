@@ -76,7 +76,7 @@ export type QueryPlanExpression =
       fnName: FunctionName | AggregateFunctionName;
       args: QueryPlanExpression[];
     }
-  | { kind: "variable"; name: string }
+  | { kind: "variable"; contextPath: string[] }
   | {
       kind: "in-subquery";
       plan: QueryPlan;
@@ -370,7 +370,7 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
       args: fn.args.map((arg) => toQueryExpr(def, arg)),
     }))
     .with({ kind: "literal" }, ({ literal }) => ({ kind: "literal", literal }))
-    .with({ kind: "variable" }, (v) => ({ kind: "variable", name: v.name }))
+    .with({ kind: "variable" }, (v) => ({ kind: "variable", contextPath: v.contextPath }))
     .with({ kind: "aggregate-function" }, (aggr) => ({
       kind: "alias",
       value: [...aggr.sourcePath, aggr.fnName.toUpperCase(), ...aggr.targetPath, "result"],

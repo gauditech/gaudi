@@ -8,6 +8,8 @@ import {
   TargetDef,
   TypedExprDef,
 } from "@gaudi/compiler/dist/types/definition";
+import _ from "lodash";
+
 import { pagingToQueryLimit } from "@runtime/common/utils";
 import {
   QueryTree,
@@ -15,7 +17,6 @@ import {
   buildQueryTree,
   queryFromParts,
 } from "@runtime/query/build";
-import _ from "lodash";
 
 /**
  * Endpoint query builder
@@ -37,7 +38,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
       name: "is",
       args: [
         { kind: "alias", namePath: [authModel.refKey, "id"] },
-        { kind: "variable", name: "id" },
+        { kind: "variable", contextPath: ["id"] },
       ],
     };
     const query = queryFromParts(def, "@auth", [authModel.name], filter, endpoint.authSelect);
@@ -218,7 +219,7 @@ function targetToFilter(target: TargetDef): TypedExprDef {
       {
         kind: "variable",
         type: { kind: target.identifyWith.type, nullable: false },
-        name: target.identifyWith.paramName,
+        contextPath: ["pathParams", target.identifyWith.paramName],
       },
     ],
   };

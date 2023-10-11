@@ -29,8 +29,7 @@ import { Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { RequestContext, buildInitialContext, getAppContext } from "./context";
-import { Vars } from "./vars";
+import { RequestContext, Storage } from "./context";
 
 import { executeArithmetics } from "@runtime//common/arithmetics";
 import { executeEndpointActions } from "@runtime/common/action";
@@ -43,7 +42,6 @@ import {
   fetchReferenceIds,
 } from "@runtime/common/constraintValidation";
 import { validateEndpointFieldset } from "@runtime/common/validation";
-import { executeActionHook } from "@runtime/hooks";
 import { QueryTree } from "@runtime/query/build";
 import {
   EndpointQueries,
@@ -110,37 +108,22 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const dbConn = getAppContext(req).dbConn;
-          tx = await dbConn.transaction();
-          const reqCtx = await buildInitialContext(req, resp, endpointPath);
-          await loadAuthIntoContext(reqCtx, queries);
+          const reqCtx = new RequestContext(req, resp, endpointPath);
+          await loadAuthIntoContext(def, reqCtx, queries);
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
-          const contextVars = new Vars();
-
-          if (queries.authQueryTree && req.user) {
-            const results = await executeQueryTree(
-              tx,
-              def,
-              queries.authQueryTree,
-              new Vars({ id: req.user.userId }),
-              []
-            );
-            const result = findOne(results);
-            contextVars.set("@auth", result);
-          }
+          tx = await reqCtx._db.conn.transaction();
 
           // group context and target queries since all are findOne
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           let pids: number[] = [];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            contextVars.set(qt.alias, result);
+            _.set(reqCtx, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, reqCtx);
 
           // FIXME run custom actions
 
@@ -148,12 +131,12 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
            * actions may have modified the record. We can only reliably identify it via `id` collected
            * before the actions were executed.
            */
-          const targetId = contextVars.get(endpoint.target.alias, ["id"]);
+          const targetId = reqCtx.get([endpoint.target.alias, "id"]) as number;
           const responseResults = await executeQueryTree(
             tx,
             def,
             queries.responseQueryTree,
-            pathParamVars,
+            reqCtx,
             [targetId]
           );
 
@@ -186,34 +169,20 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
+          const reqCtx = new RequestContext(req, resp, endpointPath);
+          await loadAuthIntoContext(def, reqCtx, queries);
 
-          tx = await getAppContext(req).dbConn.transaction();
-
-          const params = Object.assign({}, req.params, req.query);
-          const pathParamVars = new Vars(extractPathParams(endpointPath, params));
-          const contextVars = new Vars();
-
-          if (queries.authQueryTree && req.user) {
-            const results = await executeQueryTree(
-              tx,
-              def,
-              queries.authQueryTree,
-              new Vars({ id: req.user.userId }),
-              []
-            );
-            const result = findOne(results);
-            contextVars.set("@auth", result);
-          }
+          tx = await reqCtx._db.conn.transaction();
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            contextVars.set(qt.alias, result);
+            reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, reqCtx);
 
           // TODO: this query is not doing anything at the time
           // fetch target query (list, so no findOne here)
@@ -229,7 +198,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           let parentIds: number[] = [];
           const parentTarget = _.last(endpoint.parentContext);
           if (parentTarget) {
-            parentIds = _.castArray(contextVars.collect([parentTarget.alias, "id"]));
+            parentIds = reqCtx.collect([parentTarget.alias, "id"]) as number[];
           }
 
           const responseResults = await createListEndpointResponse(
@@ -237,7 +206,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             def,
             endpoint,
             queries.responseQueryTree,
-            pathParamVars,
+            reqCtx,
             parentIds
           );
 
@@ -270,38 +239,37 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          tx = await getAppContext(req).dbConn.transaction();
+          const reqCtx = new RequestContext(req, resp, endpointPath);
+          await loadAuthIntoContext(def, reqCtx, queries);
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
-          const contextVars = new Vars();
+          tx = await reqCtx._db.conn.transaction();
 
           if (queries.authQueryTree && req.user) {
             const results = await executeQueryTree(
               tx,
               def,
               queries.authQueryTree,
-              new Vars({ id: req.user.userId }),
+              new Storage({ id: req.user.userId }),
               []
             );
             const result = findOne(results);
-            contextVars.set("@auth", result);
+            reqCtx.set("@auth", result);
           }
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            contextVars.set(qt.alias, result);
+            reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, contextVars);
-          logger.debug("CTX PARAMS", pathParamVars);
+          await authorizeEndpoint(def, endpoint, reqCtx);
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
           let uniqueIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET %O", endpoint.fieldset);
+
           if (endpoint.fieldset) {
             const body = req.body;
             logger.debug("BODY", body);
@@ -330,7 +298,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             tx,
             {
               input: validationResult,
-              vars: contextVars,
+              requestContext: reqCtx,
               referenceIds: referenceIds as ValidReferenceIdResult[],
             },
             { request: req, response: resp },
@@ -340,7 +308,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const primaryAlias = kindFilter(endpoint.actions, "create-one").find(
             (a) => a.isPrimary
           )!.alias;
-          const targetId = contextVars.get(primaryAlias)?.id;
+          const targetId = reqCtx.get([primaryAlias, "id"]) as number | undefined;
 
           if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
@@ -354,7 +322,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             tx,
             def,
             queries.responseQueryTree,
-            new Vars(),
+            new Storage({}),
             [targetId]
           );
 
@@ -387,44 +355,30 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          tx = await getAppContext(req).dbConn.transaction();
+          const reqCtx = new RequestContext(req, resp, endpointPath);
+          await loadAuthIntoContext(def, reqCtx, queries);
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
-          const contextVars = new Vars();
-
-          if (queries.authQueryTree && req.user) {
-            const results = await executeQueryTree(
-              tx,
-              def,
-              queries.authQueryTree,
-              new Vars({ id: req.user.userId }),
-              []
-            );
-            const result = findOne(results);
-            contextVars.set("@auth", result);
-          }
+          tx = await reqCtx._db.conn.transaction();
 
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
           let pids: number[] = [];
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            contextVars.set(qt.alias, result);
+            reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, contextVars);
-
-          logger.debug("CTX PARAMS", pathParamVars);
+          await authorizeEndpoint(def, endpoint, reqCtx);
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
           if (endpoint.fieldset) {
             const body = req.body;
             logger.debug("BODY", body);
-            logger.debug("FIELDSET %O", endpoint.fieldset);
+
             referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
             logger.debug("Reference IDs", referenceIds);
 
@@ -439,7 +393,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             tx,
             {
               input: validationResult,
-              vars: contextVars,
+              requestContext: reqCtx,
               referenceIds: referenceIds as ValidReferenceIdResult[],
             },
             { request: req, response: resp },
@@ -449,9 +403,9 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const primaryAlias = kindFilter(endpoint.actions, "update-one").find(
             (a) => a.isPrimary
           )!.alias;
-          const targetId = contextVars.get(primaryAlias, ["id"]);
+          const targetId = reqCtx.get([primaryAlias, "id"]) as number | undefined;
 
-          if (targetId === null) {
+          if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
           }
           logger.debug("Query result", targetId);
@@ -464,7 +418,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             tx,
             def,
             queries.responseQueryTree,
-            new Vars(),
+            new Storage({}),
             [targetId]
           );
 
@@ -497,38 +451,26 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          tx = await getAppContext(req).dbConn.transaction();
+          const reqCtx = new RequestContext(req, resp, endpointPath);
+          await loadAuthIntoContext(def, reqCtx, queries);
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
-          const contextVars = new Vars();
-
-          if (queries.authQueryTree && req.user) {
-            const results = await executeQueryTree(
-              tx,
-              def,
-              queries.authQueryTree,
-              new Vars({ id: req.user.userId }),
-              []
-            );
-            const result = findOne(results);
-            contextVars.set("@auth", result);
-          }
+          tx = await reqCtx._db.conn.transaction();
 
           let pids: number[] = [];
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            contextVars.set(qt.alias, result);
+            reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, reqCtx);
 
-          const target = contextVars.get(endpoint.target.alias);
-          await deleteData(def, tx, endpoint, target.id);
+          const targetId = reqCtx.get([endpoint.target.alias, "id"]) as number;
+          await deleteData(def, tx, endpoint, targetId);
 
           await tx.commit();
 
@@ -562,39 +504,25 @@ export function buildCustomOneEndpoint(
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          tx = await getAppContext(req).dbConn.transaction();
+          const reqCtx = new RequestContext(req, resp, endpointPath);
+          await loadAuthIntoContext(def, reqCtx, queries);
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
-          const contextVars = new Vars();
-
-          if (queries.authQueryTree && req.user) {
-            const results = await executeQueryTree(
-              tx,
-              def,
-              queries.authQueryTree,
-              new Vars({ id: req.user.userId }),
-              []
-            );
-            const result = findOne(results);
-            contextVars.set("@auth", result);
-          }
+          tx = await reqCtx._db.conn.transaction();
 
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
           let pids: number[] = [];
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
           for (const qt of allQueries) {
-            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            contextVars.set(qt.alias, result);
+            reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, reqCtx);
 
           // --- run custom actions
-
-          logger.debug("CTX PARAMS", pathParamVars);
 
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
@@ -618,7 +546,7 @@ export function buildCustomOneEndpoint(
               tx,
               {
                 input: validationResult,
-                vars: contextVars,
+                requestContext: reqCtx,
                 referenceIds: referenceIds as ValidReferenceIdResult[],
               },
               { request: req, response: resp },
@@ -660,43 +588,28 @@ export function buildCustomManyEndpoint(
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          tx = await getAppContext(req).dbConn.transaction();
+          const reqCtx = new RequestContext(req, resp, endpointPath);
+          await loadAuthIntoContext(def, reqCtx, queries);
 
-          const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
-          const contextVars = new Vars();
-
-          if (queries.authQueryTree && req.user) {
-            const results = await executeQueryTree(
-              tx,
-              def,
-              queries.authQueryTree,
-              new Vars({ id: req.user.userId }),
-              []
-            );
-            const result = findOne(results);
-
-            contextVars.set("@auth", result);
-          }
+          tx = await reqCtx._db.conn.transaction();
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
-            const results = await executeQueryTree(tx, def, qt, pathParamVars, pids);
+            const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            contextVars.set(qt.alias, result);
+            reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
           // no target query here because this is endpoint has "many" cardinality, all we know are parents
 
-          await authorizeEndpoint(def, endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, reqCtx);
 
           // --- run custom actions
 
-          logger.debug("CTX PARAMS", pathParamVars);
-
           let validationResult: Record<string, unknown> = {};
           let referenceIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET %O", endpoint.fieldset);
+
           if (endpoint.fieldset != null) {
             const body = req.body;
             logger.debug("BODY", body);
@@ -715,7 +628,7 @@ export function buildCustomManyEndpoint(
               tx,
               {
                 input: validationResult,
-                vars: contextVars,
+                requestContext: reqCtx,
                 referenceIds: referenceIds as ValidReferenceIdResult[],
               },
               { request: req, response: resp },
@@ -834,13 +747,13 @@ function findOne<T>(result: T[]): T {
   return result[0];
 }
 
-async function authorizeEndpoint(def: Definition, endpoint: EndpointDef, contextVars: Vars) {
+async function authorizeEndpoint(def: Definition, endpoint: EndpointDef, ctx: RequestContext) {
   if (!endpoint.authorize) return;
 
-  const authorizeResult = await executeTypedExpr(def, endpoint.authorize, contextVars);
+  const authorizeResult = await executeTypedExpr(def, endpoint.authorize, ctx);
   if (!authorizeResult) {
     // this can either be result unauthenticated or forbidden
-    const isLoggedIn = contextVars.get("@auth") !== undefined;
+    const isLoggedIn = _.get(ctx, ["@auth", "id"]) !== undefined;
     const hasAuthentication = endpointUsesAuthentication(endpoint);
 
     if (isLoggedIn) {
@@ -861,16 +774,16 @@ async function authorizeEndpoint(def: Definition, endpoint: EndpointDef, context
 export async function executeTypedExpr(
   def: Definition,
   expr: TypedExprDef,
-  contextVars: Vars
+  ctx: Storage
 ): Promise<unknown> {
   if (!expr) return null;
 
   switch (expr.kind) {
     case "alias": {
-      return contextVars.collect(expr.namePath) ?? null;
+      return ctx.collect(expr.namePath) ?? null;
     }
     case "function": {
-      return executeTypedFunction(def, expr, contextVars);
+      return executeTypedFunction(def, expr, ctx);
     }
     case "in-subquery":
     case "aggregate-function": {
@@ -880,15 +793,15 @@ export async function executeTypedExpr(
       return expr.literal.value;
     }
     case "variable": {
-      throw new Error(
-        `Unexpected kind variable in runtime execution of expression, name: ${expr.name}`
-      );
+      // FIXME collect??
+      return ctx.get(expr.contextPath);
     }
     case "array": {
-      return expr.elements.map((e) => executeTypedExpr(def, e, contextVars));
+      return expr.elements.map((e) => executeTypedExpr(def, e, ctx));
     }
     case "hook": {
-      return executeActionHook(def, expr.hook.hook, expr.hook.args, {});
+      throw new Error("Not implemented");
+      // return executeActionHook(def, expr.hook.hook, expr.hook.args, {});
     }
     default: {
       return assertUnreachable(expr);
@@ -898,10 +811,10 @@ export async function executeTypedExpr(
 async function executeTypedFunction(
   def: Definition,
   func: TypedFunction,
-  contextVars: Vars
+  ctx: Storage
 ): Promise<unknown> {
   async function getValue(expr: TypedExprDef) {
-    return executeTypedExpr(def, expr, contextVars);
+    return executeTypedExpr(def, expr, ctx);
   }
 
   return executeArithmetics(func, getValue);
@@ -915,7 +828,7 @@ async function createListEndpointResponse(
   def: Definition,
   endpoint: ListEndpointDef,
   qt: QueryTree,
-  params: Vars,
+  ctx: RequestContext,
   contextIds: number[]
 ): Promise<PaginatedListResponse<NestedRow> | NestedRow[]> {
   let resultQuery: QueryTree = qt;
@@ -929,12 +842,12 @@ async function createListEndpointResponse(
   if (endpoint.pageable) {
     // add paging
     resultQuery = decorateWithPaging(endpoint, resultQuery, {
-      pageSize: params.get("pageSize"),
-      page: params.get("page"),
+      pageSize: ctx.queryParams.pageSize as any, // FIXME
+      page: ctx.queryParams.page as any, // FIXME
     });
 
     // exec data query
-    const data = await executeQueryTree(conn, def, resultQuery, params, contextIds);
+    const data = await executeQueryTree(conn, def, resultQuery, ctx, contextIds);
 
     // exec count query
     // using query from original `qt` without any paging/ordering/...
@@ -953,7 +866,7 @@ async function createListEndpointResponse(
         },
       ],
     };
-    const total = await executeQuery(conn, def, query, params, contextIds);
+    const total = await executeQuery(conn, def, query, ctx, contextIds);
     const totalCount = (findOne(total)["totalCount"] as number | null) ?? 0;
 
     // resolve paging data
@@ -972,7 +885,7 @@ async function createListEndpointResponse(
   // --- unpaged list (returns all data)
   else {
     // simply fetch all data
-    return await executeQueryTree(conn, def, resultQuery, params, contextIds);
+    return await executeQueryTree(conn, def, resultQuery, ctx, contextIds);
   }
 }
 
@@ -984,18 +897,22 @@ type PaginatedListResponse<T = any> = {
   data: T[];
 };
 
-export async function loadAuthIntoContext(ctx: RequestContext, queries: EndpointQueries) {
-  if (queries.authQueryTree && ctx._express.request.user) {
+export async function loadAuthIntoContext(
+  def: Definition,
+  ctx: RequestContext,
+  queries: EndpointQueries
+) {
+  if (queries.authQueryTree && ctx._express.req.user) {
     const results = await executeQueryTree(
-      ctx._db.connection,
-      ctx._definition,
+      ctx._db.conn,
+      def,
       queries.authQueryTree,
-      new Vars({ id: ctx._express.request.user.userId }),
+      new Storage({ id: ctx._express.req.user.userId }),
       []
     );
     const result = findOne(results);
-    ctx["@auth"] = result;
+    ctx.set(["aliases", "@auth"], result);
   } else {
-    ctx["@auth"] = null;
+    ctx.set(["aliases", "@auth"], null);
   }
 }

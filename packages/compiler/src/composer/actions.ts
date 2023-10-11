@@ -239,7 +239,6 @@ function atomToChangesetOperation(
     case "input": {
       const setter: TypedExprDef = {
         kind: "variable",
-        name: "FIXME",
         contextPath: ["fieldset", ...fieldsetNamespace, atom.target.name],
       };
       return {
@@ -265,7 +264,6 @@ function atomToChangesetOperation(
         name: atom.target.name,
         setter: {
           kind: "variable",
-          name: "FIXME",
           contextPath: ["referenceThroughs", ...fieldsetNamespace, atom.target.name, "id"],
         },
       };
