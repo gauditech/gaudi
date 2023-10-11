@@ -1,4 +1,8 @@
-import { Express, Request, Router } from "express";
+import { EndpointPath } from "@gaudi/compiler/dist/builder/query";
+import { Express, Request, Response, Router } from "express";
+import { Knex } from "knex";
+
+import { extractPathParams } from "./endpoints";
 
 import { AppConfig } from "@runtime/config";
 import { DbConn } from "@runtime/server/dbConn";
@@ -44,4 +48,29 @@ function bindContext(key: object, ctx: any): void {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getAContext<M = any>(key: object): M | undefined {
   return bindings.get(key);
+}
+
+/**
+ * REQUEST CONTEXT
+ */
+
+export type RequestContext = Record<string, unknown> & {
+  _express: { request: Request; response: Response };
+  _db: { connection: Knex; transaction: null };
+};
+
+export async function buildInitialContext(
+  request: Request,
+  response: Response,
+  endpointPath: EndpointPath
+): Promise<RequestContext> {
+  const ctx = getAppContext(request);
+  // const tx = await ctx.dbConn.transaction();
+  const tx = null;
+  const pathParams = extractPathParams(endpointPath, request.params);
+  return {
+    _express: { request, response },
+    _db: { connection: ctx.dbConn, transaction: tx },
+    pathParams,
+  };
 }

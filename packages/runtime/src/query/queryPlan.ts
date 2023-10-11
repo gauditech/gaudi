@@ -173,6 +173,7 @@ function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
     ])
     .with({ kind: "in-subquery" }, (sub) => pathsFromExpr(sub.lookupExpression))
     .with({ kind: "array" }, (array) => array.elements.flatMap((e) => pathsFromExpr(e)))
+    .with({ kind: "hook" }, shouldBeUnreachableCb("Hooks can't be executed in DB context"))
     .exhaustive();
 }
 
@@ -412,8 +413,11 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
       kind: "array",
       elements: array.elements.map((element) => toQueryExpr(def, expandExpression(def, element))),
     }))
+    .with({ kind: "hook" }, () => {
+      throw new UnreachableError("Hooks cannot be executed in DB query context");
+    })
     .with(undefined, () => {
-      throw new UnreachableError("");
+      throw new Error("Expected a filter, got undefined");
     })
     .exhaustive();
 }
@@ -465,6 +469,9 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
         ...exp,
         elements: exp.elements.map((arg) => expandExpression(def, arg)),
       };
+    }
+    case "hook": {
+      throw new UnreachableError("Hooks cannot be executed in DB query context");
     }
     default: {
       assertUnreachable(exp);

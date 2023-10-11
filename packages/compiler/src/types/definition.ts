@@ -209,7 +209,13 @@ export type TypedExprDef =
   | TypedFunction
   | TypedAggregateFunction
   | TypedExistsSubquery
+  | TypedHook
   | undefined;
+
+export type TypedHook = {
+  kind: "hook";
+  hook: ActionHookDef;
+};
 
 /**
  * Unified expression / setter types include:

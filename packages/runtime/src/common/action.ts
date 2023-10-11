@@ -3,6 +3,7 @@ import { dataToFieldDbnames, getRef } from "@gaudi/compiler/dist/common/refs";
 import { assertUnreachable, ensureExists } from "@gaudi/compiler/dist/common/utils";
 import {
   ActionDef,
+  ChangesetDef,
   CreateOneAction,
   Definition,
   UpdateOneAction,
@@ -113,13 +114,16 @@ async function _internalExecuteActions(
 
       try {
         // construct changeset and resolve action parts
-        const actionChangesetDef = _.compact([
-          { name: "body", setter: action.body },
-          action.httpStatus != null ? { name: "httpStatus", setter: action.httpStatus } : undefined,
+        const actionChangesetDef: ChangesetDef = _.compact([
+          { kind: "basic", name: "body", setter: action.body },
+          action.httpStatus != null
+            ? { kind: "basic", name: "httpStatus", setter: action.httpStatus }
+            : undefined,
         ]);
         const changeset = await buildChangeset(def, qx, epCtx, actionChangesetDef, ctx);
         // http headers are a separate changeset
-        const httpHeadersChangesetDef = (action.httpHeaders ?? []).map((h) => ({
+        const httpHeadersChangesetDef: ChangesetDef = (action.httpHeaders ?? []).map((h) => ({
+          kind: "basic",
           name: h.name,
           setter: h.value,
         }));

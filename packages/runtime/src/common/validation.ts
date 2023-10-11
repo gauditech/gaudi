@@ -10,7 +10,6 @@ import {
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { executeHook } from "../hooks";
 import { executeTypedExpr } from "../server/endpoints";
 import { Vars } from "../server/vars";
 
@@ -149,7 +148,7 @@ async function executeValidateExprCall(
 ): Promise<ValidateFieldError | undefined> {
   const validator = def.validators.find((v) => v.name === validate.validator);
   ensureExists(validator);
-  const tailArgs = await Promise.all(validate.args.map((arg) => executeTypedExpr(arg, ctx)));
+  const tailArgs = await Promise.all(validate.args.map((arg) => executeTypedExpr(def, arg, ctx)));
   const args = field === undefined ? tailArgs : [field, ...tailArgs];
 
   const params: Record<string, unknown> = {};
@@ -160,20 +159,7 @@ async function executeValidateExprCall(
   }
 
   const contextVars = new Vars(params);
-
-  const assertResult = await match(validator.assert)
-    .with({ kind: "expr" }, ({ expr }) => executeTypedExpr(expr, contextVars))
-    .with({ kind: "hook" }, async ({ hook }) => {
-      const argEntries = await Promise.all(
-        hook.args.map(
-          async ({ name, expr }) => [name, await executeTypedExpr(expr, contextVars)] as const
-        )
-      );
-      const args = Object.fromEntries(argEntries);
-      return executeHook(def, hook.hook, args);
-    })
-    .exhaustive();
-
+  const assertResult = await executeTypedExpr(def, validator.assert, contextVars);
   if (assertResult) {
     return undefined;
   }

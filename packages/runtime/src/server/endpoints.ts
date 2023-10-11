@@ -29,6 +29,7 @@ import { Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
+import { RequestContext, buildInitialContext, getAppContext } from "./context";
 import { Vars } from "./vars";
 
 import { executeArithmetics } from "@runtime//common/arithmetics";
@@ -42,8 +43,10 @@ import {
   fetchReferenceIds,
 } from "@runtime/common/constraintValidation";
 import { validateEndpointFieldset } from "@runtime/common/validation";
+import { executeActionHook } from "@runtime/hooks";
 import { QueryTree } from "@runtime/query/build";
 import {
+  EndpointQueries,
   buildEndpointQueries,
   decorateWithFilter,
   decorateWithOrderBy,
@@ -51,7 +54,6 @@ import {
 } from "@runtime/query/endpointQueries";
 import { NestedRow, executeQuery, executeQueryTree } from "@runtime/query/exec";
 import { buildAuthenticationHandler } from "@runtime/server/authentication";
-import { getAppContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@runtime/server/error";
 import { EndpointConfig } from "@runtime/server/types";
@@ -108,7 +110,10 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          tx = await getAppContext(req).dbConn.transaction();
+          const dbConn = getAppContext(req).dbConn;
+          tx = await dbConn.transaction();
+          const reqCtx = await buildInitialContext(req, resp, endpointPath);
+          await loadAuthIntoContext(reqCtx, queries);
 
           const pathParamVars = new Vars(extractPathParams(endpointPath, req.params));
           const contextVars = new Vars();
@@ -135,7 +140,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, contextVars);
 
           // FIXME run custom actions
 
@@ -208,7 +213,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, contextVars);
 
           // TODO: this query is not doing anything at the time
           // fetch target query (list, so no findOne here)
@@ -290,7 +295,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, contextVars);
           logger.debug("CTX PARAMS", pathParamVars);
 
           let validationResult: Record<string, unknown> = {};
@@ -410,7 +415,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, contextVars);
 
           logger.debug("CTX PARAMS", pathParamVars);
 
@@ -520,7 +525,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, contextVars);
 
           const target = contextVars.get(endpoint.target.alias);
           await deleteData(def, tx, endpoint, target.id);
@@ -585,7 +590,7 @@ export function buildCustomOneEndpoint(
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, contextVars);
 
           // --- run custom actions
 
@@ -683,7 +688,7 @@ export function buildCustomManyEndpoint(
 
           // no target query here because this is endpoint has "many" cardinality, all we know are parents
 
-          await authorizeEndpoint(endpoint, contextVars);
+          await authorizeEndpoint(def, endpoint, contextVars);
 
           // --- run custom actions
 
@@ -829,10 +834,10 @@ function findOne<T>(result: T[]): T {
   return result[0];
 }
 
-async function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
+async function authorizeEndpoint(def: Definition, endpoint: EndpointDef, contextVars: Vars) {
   if (!endpoint.authorize) return;
 
-  const authorizeResult = await executeTypedExpr(endpoint.authorize, contextVars);
+  const authorizeResult = await executeTypedExpr(def, endpoint.authorize, contextVars);
   if (!authorizeResult) {
     // this can either be result unauthenticated or forbidden
     const isLoggedIn = contextVars.get("@auth") !== undefined;
@@ -853,7 +858,11 @@ async function authorizeEndpoint(endpoint: EndpointDef, contextVars: Vars) {
   }
 }
 
-export async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): Promise<unknown> {
+export async function executeTypedExpr(
+  def: Definition,
+  expr: TypedExprDef,
+  contextVars: Vars
+): Promise<unknown> {
   if (!expr) return null;
 
   switch (expr.kind) {
@@ -861,7 +870,7 @@ export async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): P
       return contextVars.collect(expr.namePath) ?? null;
     }
     case "function": {
-      return executeTypedFunction(expr, contextVars);
+      return executeTypedFunction(def, expr, contextVars);
     }
     case "in-subquery":
     case "aggregate-function": {
@@ -876,16 +885,23 @@ export async function executeTypedExpr(expr: TypedExprDef, contextVars: Vars): P
       );
     }
     case "array": {
-      return expr.elements.map((e) => executeTypedExpr(e, contextVars));
+      return expr.elements.map((e) => executeTypedExpr(def, e, contextVars));
+    }
+    case "hook": {
+      return executeActionHook(def, expr.hook.hook, expr.hook.args, {});
     }
     default: {
       return assertUnreachable(expr);
     }
   }
 }
-async function executeTypedFunction(func: TypedFunction, contextVars: Vars): Promise<unknown> {
+async function executeTypedFunction(
+  def: Definition,
+  func: TypedFunction,
+  contextVars: Vars
+): Promise<unknown> {
   async function getValue(expr: TypedExprDef) {
-    return executeTypedExpr(expr, contextVars);
+    return executeTypedExpr(def, expr, contextVars);
   }
 
   return executeArithmetics(func, getValue);
@@ -967,3 +983,19 @@ type PaginatedListResponse<T = any> = {
   totalCount: number;
   data: T[];
 };
+
+export async function loadAuthIntoContext(ctx: RequestContext, queries: EndpointQueries) {
+  if (queries.authQueryTree && ctx._express.request.user) {
+    const results = await executeQueryTree(
+      ctx._db.connection,
+      ctx._definition,
+      queries.authQueryTree,
+      new Vars({ id: ctx._express.request.user.userId }),
+      []
+    );
+    const result = findOne(results);
+    ctx["@auth"] = result;
+  } else {
+    ctx["@auth"] = null;
+  }
+}

@@ -506,6 +506,9 @@ function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] 
     case "array": {
       return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
     }
+    case "hook": {
+      return expr.hook.args.flatMap((arg) => collectAuthorizeDeps(def, arg.setter));
+    }
     default: {
       assertUnreachable(expr);
     }

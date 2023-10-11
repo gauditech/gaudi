@@ -181,7 +181,19 @@ export function composeExpression(expr: Spec.Expr<"code">, namePath: string[]): 
         })
         .otherwise((fn) => typedFunctionFromParts(fn.name, fn.args, namePath));
     })
-    .with({ kind: "hook" }, shouldBeUnreachableCb("Not implemented"))
+    .with({ kind: "hook" }, ({ hook }) => {
+      return {
+        kind: "hook",
+        hook: {
+          args: hook.args.map((arg) => ({
+            name: arg.name,
+            setter: composeExpression(arg.expr, []),
+            kind: "basic",
+          })),
+          hook: hook.code,
+        },
+      };
+    })
     .exhaustive();
 }
 
@@ -222,8 +234,12 @@ export function composeRefPath(
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "validator":
       throw new UnreachableError("Unexpected validator reference in expression");
-    case "repeat":
-      throw new Error("TODO");
+    case "repeat": {
+      return {
+        kind: "variable",
+        name: "FIXME",
+      };
+    }
   }
 }
 
