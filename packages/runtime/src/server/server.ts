@@ -8,9 +8,9 @@ export function createServer(config: RuntimeConfig) {
 
   app.use(useGaudi(config));
 
-  app.listen(config.port, config.host, () => {
+  const server = app.listen(config.port, config.host, () => {
     console.log(`App is started on ${config.host}:${config.port}`);
   });
 
-  return app;
+  return server;
 }

@@ -22,6 +22,7 @@ import {
 } from "@cli/command/db";
 import { start } from "@cli/command/start";
 import { attachProcessCleanup } from "@cli/process";
+import { CommandRunner } from "@cli/runner";
 import { Controllable } from "@cli/types";
 import { resolveModulePath } from "@cli/utils";
 import { watchResources } from "@cli/watcher";
@@ -218,64 +219,77 @@ function setupCommandEnv(args: ArgumentsCamelCase<CommonCommandArgs>) {
 // --- build command
 
 async function buildCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
-  logger.debug("Building entire project ...");
+  console.log("Building entire project ...");
 
   setupCommandEnv(args);
 
   const config = readConfig();
 
   await compile(config).start();
-  await dbPush(config).start();
   await copyStatic(config);
 }
 
 // --- dev command
 
 async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
-  logger.debug("Starting project dev build ... ");
+  console.log("Starting project dev build ... ");
 
   setupCommandEnv(args);
 
   const config = readConfig();
 
-  const children: Controllable[] = [];
+  let watcher: Controllable | undefined;
+  const commands = [
+    watchCompileCommand(args, config),
+    watchCopyStaticCommand(args, config),
+    watchDbPushCommand(args, config),
+    watchRuntimeCommand(args, config),
+  ];
+
+  const runCommands = async () => {
+    for (const c of commands) {
+      try {
+        await c.start();
+      } catch (err) {
+        logger.error(`Error starting command`, err);
+      }
+    }
+  };
 
   async function start() {
-    if (children.length > 0) {
-      const promises = children.map((c) => c.start());
+    const resources = _.compact([
+      // watch compiler input path
+      path.join(config.inputDirectory, "**/*.gaudi"),
+      // gaudi DB directory
+      path.join(config.gaudiDirectory, "db"),
+      // watch gaudi files (during Gaudi dev)
+      args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
+    ]);
+    // create async queue to serialize multiple calls
+    const enqueue = createAsyncQueueContext();
 
-      const results = await Promise.allSettled(promises);
-      // check for errors during stopping
-      results.forEach((r) => {
-        if (r.status === "rejected") {
-          logger.error("Dev mode start error: ", r.reason);
-        }
-      });
-    }
+    const run = async () => enqueue(runCommands);
+
+    // TODO: if commands change watched files, new watch events will be fired
+    // otoh, if we disable watching during command execution we might miss user's manual changes
+    watcher = watchResources(resources, run);
+
+    await watcher.start();
   }
 
   async function cleanup() {
-    if (children.length > 0) {
-      const promises = children.map((c) => c.stop());
+    await watcher?.stop();
 
-      const results = await Promise.allSettled(promises);
-      // check for errors during stopping
-      results.forEach((r) => {
-        if (r.status === "rejected") {
-          logger.error("Dev mode cleanup error: ", r.reason);
-        }
-      });
+    for (const c of commands) {
+      try {
+        await c.stop();
+      } catch (err) {
+        logger.error(`Error stopping command`, err);
+      }
     }
   }
 
   attachProcessCleanup(process, cleanup);
-
-  // --- start dev commands
-
-  children.push(watchCompileCommand(args, config));
-  children.push(watchDbPushCommand(args, config));
-  children.push(watchCopyStaticCommand(args, config));
-  children.push(watchStartCommand(args, config));
 
   await start();
 }
@@ -297,23 +311,10 @@ function watchCompileCommand(
           logger.error("Error running compile command:", err);
         })
     );
-
-  const resources = _.compact([
-    // watch compiler input path
-    path.join(config.inputDirectory, "**/*.gaudi"),
-    // watch gaudi files (during Gaudi dev)
-    args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
-  ]);
-
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
-
   return {
-    start: async () => {
-      await run();
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
+      // no-op
     },
   };
 }
@@ -335,21 +336,10 @@ function watchDbPushCommand(
           logger.error("Error running DB push command:", err);
         })
     );
-
-  const resources = [
-    // prisma schema
-    path.join(config.gaudiDirectory, "db", "schema.prisma"),
-  ];
-
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
-
   return {
-    start: async () => {
-      await run();
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
+      //
     },
   };
 }
@@ -370,66 +360,47 @@ function watchCopyStaticCommand(
       })
     );
 
-  // keep these resources in sync with the list of files this command actually copies
-  const resources = [
-    // gaudi DB directory
-    path.join(config.gaudiDirectory, "db"),
-  ];
-
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
-
   return {
-    start: async () => {
-      await run();
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
+      //
     },
   };
 }
 
-function watchStartCommand(
+function watchRuntimeCommand(
   args: ArgumentsCamelCase<CommonCommandArgs>,
   config: EngineConfig
 ): Controllable {
-  // no need for async enqueueing since `nodemon` is a long running process and we cannot await for it to finish
+  // create async queue to serialize multiple command calls
+  const enqueue = createAsyncQueueContext();
 
-  const command = start(config);
+  let command: CommandRunner | undefined;
 
-  const run = async () => {
-    if (!command.isRunning()) {
-      await command.start().catch((err) => {
-        // just use catch to prevent error from leaking to node and finishing entire watch process
-        // nodemon will restart process on change anyway
-        logger.error("Error running start command:", err);
-      });
-    } else {
-      // ask `nodemon` to restart monitored process
-      // https://github.com/remy/nodemon/wiki/Events
-      command.sendMessage("restart");
-    }
-  };
-
-  const resources = _.compact([
-    // gaudi output directory
-    path.join(config.outputDirectory),
-    // watch gaudi files (during Gaudi dev)
-    args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
-    args.gaudiDev ? resolveModulePath("@gaudi/runtime/") : null,
-  ]);
-
-  // use our resource watcher instead of `nodemon`'s watching to keep to consistent
-  const watcher = watchResources(resources, run, { ignoreInitial: true });
+  const run = () =>
+    enqueue(() =>
+      Promise.resolve()
+        .then(async () => {
+          if (command != null && command.isRunning()) {
+            return command.stop();
+          }
+        })
+        .then(() => {
+          // create new command
+          command = start(config);
+          command.start();
+        })
+        .catch((err) => {
+          // just use catch to prevent error from leaking to node and finishing entire watch process
+          // command will be reexecuted anyway on next change
+          logger.error("Error running runtime command:", err);
+        })
+    );
 
   return {
-    start: async () => {
-      run(); // long running process, dont await - see `run()` for more info
-      await watcher.start();
-    },
+    start: run,
     stop: async () => {
-      await watcher.stop();
-      command.stop(); // manually stop command - see `run()` for more info
+      command?.stop();
     },
   };
 }

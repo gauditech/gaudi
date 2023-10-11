@@ -31,11 +31,13 @@ export type ApiClientOptions = {
 };
 
 
-export function createClient(options: ApiClientOptions) {
+export function createClient(options?: ApiClientOptions) {
+  const resolvedOptions = options ?? {}
+
   const internalOptions: ApiClientOptions = {
-    rootPath: options.rootPath,
-    requestFn: (options.requestFn ?? resolveDefaultRequestFn()),
-    headers: { ...(options.headers ?? {}) },
+    rootPath: resolvedOptions.rootPath,
+    requestFn: (resolvedOptions.requestFn ?? resolveDefaultRequestFn()),
+    headers: { ...(resolvedOptions.headers ?? {}) },
   }
 
   return {
@@ -351,16 +353,16 @@ export type ApiResponseErrorBody<C extends string, D = unknown> = C extends any
   }
   : never;
 
-export type ApiResponse<D, E extends string> = ApiResponseSuccess<D, E> | ApiResponseError<D, E>;
+export type ApiResponse<D, E extends string> = ApiResponseSuccess<D> | ApiResponseError<E>;
 
-export type ApiResponseSuccess<D, E extends string> = {
+export type ApiResponseSuccess<D> = {
   kind: "success";
   status: number;
   headers: { [name: string]: string },
   data: D;
 };
 
-export type ApiResponseError<D, E extends string> = {
+export type ApiResponseError<E extends string> = {
   kind: "error";
   status: number;
   headers: { [name: string]: string },
@@ -797,7 +799,7 @@ function resolveDefaultRequestFn() {
       ...(init.headers ?? {})
     })
     // detect JSON request
-    const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") != -1;
+    const isJsonReq = (headers.get("content-type") ?? "").indexOf("/json") !== -1;
     const body = init.body != null && isJsonReq ? JSON.stringify(init.body) : init.body;
 
     return (
@@ -810,7 +812,7 @@ function resolveDefaultRequestFn() {
         // transform to struct required by API client
         .then(async (response: any) => {
           // detect JSON response
-          const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") != -1;
+          const isJsonResp = (response.headers.get("content-type") ?? "").indexOf("/json") !== -1;
 
           const status = response.status
           const data = isJsonResp ? await response.json() : await response.text(); // pick response data type
@@ -825,5 +827,145 @@ function resolveDefaultRequestFn() {
     );
   }
 }
+
+
+// ----- Helper types
+
+// define API method - helper type that shortens other types
+// maybe it could list a union of actual API method types but no need for now 
+type ApiMethod = (...args: any) => any;
+
+/**
+ * Returns an array of API method request parameters.
+ * 
+ * Uses "infer" to force TS to resolve actual types instead of showing only this type's definition. 
+ * 
+ * Example:
+ * 
+ * ```ts
+ * type MyApiDataReqParamsType = ApiRequestParametersType<typeof client.api.org.get>;
+ * // =>
+ * // type MyApiDataReqParamsType = [data: CreateData, options?: Partial<ApiRequestInit> | undefined]
+ * ```
+ * 
+ */
+export type ApiRequestParametersType<T extends ApiMethod> = Parameters<T> extends [...infer Rest] ? Rest : never;
+
+/**
+ * Returns API success response type.
+ * 
+ * ```ts
+ * type MyApiDataRespType = ApiResponseSuccessType<typeof client.api.org.create>;
+ * // =>
+ * // type MyApiDataRespType = {
+ * //   kind: "success";
+ * //   status: number;
+ * //   headers: {
+ * //       [name: string]: string;
+ * //   };
+ * //   data: GetResp;
+ * // }
+ * ```
+ * 
+ */
+export type ApiResponseSuccessType<T extends ApiMethod> = Extract<Awaited<ReturnType<T>>, { kind: "success" }>;
+
+/**
+ * Returns API success response data type.
+ * 
+ * Example:
+ * 
+ * ```ts
+ * type MyApiSuccessDataType = ApiResponseSuccessDataType<typeof client.api.org.create>;
+ * // =>
+ * // type MyApiSuccessDataType = {
+ * //   name: string;
+ * //   slug: string;
+ * //   description: string;
+ * //   summary: string;
+ * //   nameAndDesc: unknown;
+ * //   blank_repos: {
+ * //       id: number;
+ * //       total_issues: number;
+ * //       nameAndDesc: string;
+ * //   }[];
+ * //   newest_repo_name: string | null;
+ * // }Type
+ * ```
+ * 
+ */
+export type ApiResponseSuccessDataType<T extends ApiMethod> = ApiResponseSuccessType<T>["data"];
+
+/**
+ * Returns API error response type.
+ * 
+ * Example:
+ * 
+ * ```ts
+ * type MyApiErrResp = ApiResponseErrorType<typeof client.api.org.create>;
+ * // =>
+ * // type MyApiErrResp = {
+ * //   kind: "error";
+ * //   status: number;
+ * //   headers: {
+ * //       [name: string]: string;
+ * //   };
+ * //   error: {
+ * //       code: "ERROR_CODE_SERVER_ERROR";
+ * //       message: string;
+ * //       data?: unknown;
+ * //   } | {
+ * //       code: "ERROR_CODE_OTHER";
+ * //       message: string;
+ * //       data?: unknown;
+ * //   } | {
+ * //       ...;
+ * //   };
+ * // }
+ * ```
+ * 
+ */
+export type ApiResponseErrorType<T extends ApiMethod> = Extract<Awaited<ReturnType<T>>, { kind: "error" }>;
+
+/**
+ * Returns API error response data type.
+ * 
+ * Example:
+ * 
+ * ```ts
+ * type MyApiErrData = ApiResponseErrorDataType<typeof client.api.org.create>;
+ * // =>
+ * // type MyApiErrData = {
+ * //       code: "ERROR_CODE_SERVER_ERROR";
+ * //       message: string;
+ * //       data?: unknown;
+ * //   } | {
+ * //       code: "ERROR_CODE_OTHER";
+ * //       message: string;
+ * //       data?: unknown;
+ * //   } | {
+ * //       code: "ERROR_CODE_VALIDATION";
+ * //       message: string;
+ * //       data?: unknown;
+ * //   };
+ * // }
+ * ```
+ * 
+ */
+export type ApiResponseErrorDataType<T extends ApiMethod> = ApiResponseErrorType<T>["error"];
+
+/**
+ * Returns a union of API error response codes.
+ * 
+ * Example:
+ * 
+ * ```ts
+ * type MyApiErrRespCode = ApiResponseErrorCode<typeof client.api.org.create>;
+ * // =>
+ * // type MyApiErrRespCode = "ERROR_CODE_SERVER_ERROR" | "ERROR_CODE_OTHER" | "ERROR_CODE_VALIDATION"
+ * ```
+ * 
+*/
+export type ApiResponseErrorCodeType<T extends ApiMethod> = ApiResponseErrorType<T>["error"]["code"];
 
 

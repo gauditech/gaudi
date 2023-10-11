@@ -25,8 +25,8 @@ describe("runtime", () => {
         dbConnUrl: "",
         host: "127.0.0.1",
         port: 3001,
-        definitionPath: "definition.json",
-        outputDirectory: ".",
+        definitionPath: "dist/definition.json",
+        outputDirectory: "dist",
         cors: undefined,
       };
 

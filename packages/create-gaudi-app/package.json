@@ -22,13 +22,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/gaudiorg/gaudi.git",
+    "url": "git+https://github.com/gauditech/gaudi.git",
     "directory": "packages/create-gaudi-app"
   },
   "bugs": {
-    "url": "https://gitlab.com/gaudiorg/gaudi/issues"
+    "url": "https://github.com/gauditech/gaudi/issues"
   },
-  "homepage": "https://gitlab.com/gaudiorg/gaudi#readme",
+  "homepage": "https://github.com/gauditech/gaudi#readme",
   "files": [
     "dist",
     "template-*/**"
@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "chalk": "^4.1.2",
+    "debug": "^4.3.4",
     "minimist": "^1.2.8",
     "prompts": "^2.4.2"
   }

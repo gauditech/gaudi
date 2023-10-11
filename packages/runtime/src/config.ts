@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 import { initLogger } from "@gaudi/compiler";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
@@ -53,8 +54,9 @@ export function readConfig(): RuntimeConfig {
     process.env.GAUDI_RUNTIME_SERVER_PORT != null
       ? parseInt(process.env.GAUDI_RUNTIME_SERVER_PORT, 10)
       : 3001;
-  const definitionPath = process.env.GAUDI_RUNTIME_DEFINITION_PATH || "definition.json";
-  const outputDirectory = process.env.GAUDI_RUNTIME_OUTPUT_PATH || ".";
+  const outputDirectory = process.env.GAUDI_RUNTIME_OUTPUT_PATH || "dist";
+  const definitionPath =
+    process.env.GAUDI_RUNTIME_DEFINITION_PATH || path.join(outputDirectory, "definition.json");
 
   const dbConnUrl = process.env.GAUDI_DATABASE_URL || "";
 

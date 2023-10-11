@@ -269,7 +269,7 @@ export function composeFieldsetPairsFromActions(
             .with({ kind: "input" }, (input): FieldsetPair => {
               const field = getRef.field(def, input.target.parentModel, input.target.name);
               return [
-                ["TODO ACCESS"],
+                [input.target.name],
                 {
                   kind: "field",
                   nullable: field.nullable,
@@ -284,7 +284,7 @@ export function composeFieldsetPairsFromActions(
               const leaf = _.last(reference.through)!;
               const field = getRef.field(def, leaf.parentModel, leaf.name);
               return [
-                ["TODO ACCESS"],
+                [reference.target.name],
                 {
                   kind: "field",
                   nullable: ref.nullable,

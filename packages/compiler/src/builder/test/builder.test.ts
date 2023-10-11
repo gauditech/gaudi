@@ -1,6 +1,6 @@
 import { renderDbSchema } from "@compiler/builder/builder";
-import definition from "@compiler/composer/tests/data/definition.json";
 import { compileFromString } from "@compiler/common/testUtils";
+import definition from "@compiler/composer/tests/data/definition.json";
 import { Definition } from "@compiler/types/definition";
 
 describe("builder", () => {

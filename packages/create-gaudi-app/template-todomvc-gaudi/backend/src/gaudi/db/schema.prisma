@@ -1,0 +1,17 @@
+datasource db {
+      provider = "postgresql"
+      url      = env("GAUDI_DATABASE_URL")
+    }
+
+    model todo {
+// fields
+id Int @id @unique @default(autoincrement())
+title String
+completed Boolean
+
+// relations
+
+
+// references
+
+}
