@@ -307,16 +307,7 @@ export type ExecutionRuntime = {
 // ---------- authenticator
 
 export type Authenticator = {
-  name?: string;
-  authUserModelName: string;
-  accessTokenModelName: string;
-  method: AuthenticatorMethod;
-};
-
-export type AuthenticatorMethod = AuthenticatorBasicMethod;
-
-export type AuthenticatorBasicMethod = {
-  kind: "basic";
+  model: IdentifierRef<RefModel>;
 };
 
 // ----- Generators

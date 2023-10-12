@@ -187,12 +187,6 @@ function expandSetterExpression(
             },
           };
         }
-        case "authToken": {
-          return {
-            kind: "request-auth-token",
-            access: ["user", "token"],
-          };
-        }
         case "extraInput": {
           // fixme fieldset-reference ??
           return {

@@ -1252,15 +1252,20 @@ class GaudiParser extends EmbeddedActionsParser {
     const keyword = this.createTokenData(this.CONSUME(L.Auth));
     this.CONSUME1(L.LCurly);
     this.MANY(() => {
-      const keyword = this.createTokenData(this.CONSUME(L.Method));
-      const methodKeyword = this.createTokenData(this.CONSUME(L.Basic));
-      this.CONSUME2(L.LCurly);
-      this.CONSUME2(L.RCurly);
-      atoms.push({
-        kind: "method",
-        method: { kind: "basic", keyword: methodKeyword },
-        keyword,
-      });
+      this.OR2([
+        {
+          ALT: () => {
+            const keyword = this.createTokenData(this.CONSUME(L.Model));
+            const name = this.SUBRULE(this.identifierRef);
+
+            atoms.push({
+              kind: "model",
+              model: name,
+              keyword,
+            });
+          },
+        },
+      ]);
     });
     this.CONSUME(L.RCurly);
 

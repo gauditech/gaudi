@@ -50,7 +50,6 @@ import {
   decorateWithPaging,
 } from "@runtime/query/endpointQueries";
 import { NestedRow, executeQuery, executeQueryTree } from "@runtime/query/exec";
-import { buildAuthenticationHandler } from "@runtime/server/authentication";
 import { getAppContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@runtime/server/error";
@@ -101,8 +100,6 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
     path: endpointPath.fullPath,
     method: "get",
     handlers: _.compact([
-      // prehandlers
-      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -174,8 +171,6 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
     path: endpointPath.fullPath,
     method: "get",
     handlers: _.compact([
-      // prehandlers
-      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -258,8 +253,6 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
     path: endpointPath.fullPath,
     method: "post",
     handlers: _.compact([
-      // prehandlers
-      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -375,8 +368,6 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
     path: endpointPath.fullPath,
     method: "patch",
     handlers: _.compact([
-      // prehandlers
-      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -485,8 +476,6 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
     path: endpointPath.fullPath,
     method: "delete",
     handlers: _.compact([
-      // prehandlers
-      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -550,8 +539,6 @@ export function buildCustomOneEndpoint(
     path: endpointPath.fullPath,
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
-      // prehandlers
-      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;
@@ -648,8 +635,6 @@ export function buildCustomManyEndpoint(
     path: endpointPath.fullPath,
     method: endpoint.method.toLowerCase() as Lowercase<EndpointHttpMethod>,
     handlers: _.compact([
-      // prehandlers
-      buildAuthenticationHandler(def),
       // handler
       async (req: Request, resp: Response) => {
         let tx;

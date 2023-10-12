@@ -573,9 +573,9 @@ export function buildTokens(
     buildKeyword(keyword);
     atoms.forEach((a) =>
       match(a)
-        .with({ kind: "method" }, ({ keyword, method }) => {
+        .with({ kind: "model" }, ({ keyword, model }) => {
           buildKeyword(keyword);
-          buildKeyword(method.keyword);
+          buildIdentifierRef(model);
         })
         .exhaustive()
     );

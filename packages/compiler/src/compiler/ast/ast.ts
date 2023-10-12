@@ -395,8 +395,11 @@ export type Authenticator = {
   keyword: TokenData;
   atoms: AuthenticatorAtom[];
 };
-export type AuthenticatorAtom = { kind: "method"; keyword: TokenData; method: AuthenticatorMethod };
-export type AuthenticatorMethod = { kind: "basic"; keyword: TokenData };
+export type AuthenticatorAtom = {
+  kind: "model";
+  keyword: TokenData;
+  model: IdentifierRef<RefModel>;
+};
 
 export type Hook<kind extends "model" | "validator" | "action"> = {
   kind: "hook";
@@ -598,7 +601,6 @@ export type RefValidatorArg = {
   type: FieldType;
 };
 export type RefAuth = { kind: "auth"; model: string };
-export type RefAuthToken = { kind: "authToken" };
 export type RefStruct = { kind: "struct" };
 export type Ref =
   | RefModel
@@ -612,7 +614,6 @@ export type Ref =
   | RefValidatorArg
   | RefExtraInput
   | RefAuth
-  | RefAuthToken
   | RefStruct;
 
 export type Identifier = { text: string; token: TokenData };

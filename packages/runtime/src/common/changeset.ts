@@ -106,12 +106,6 @@ export async function buildChangeset(
         );
         return referenceIdResult.value;
       }
-      case "request-auth-token": {
-        ensureExists(epCtx, `HTTP handle context is required for "${setter.kind}" changesets`);
-        const handler = epCtx.request;
-
-        return getFieldsetProperty(handler, setter.access);
-      }
       case "function": {
         return executeArithmetics(setter, (s) => getValue(s));
       }
@@ -120,7 +114,6 @@ export async function buildChangeset(
       }
       case "query": {
         const vars = actionContext.vars.copy();
-        vars.set("___requestAuthToken", await getValue({ kind: "request-auth-token", access: [] }));
         Object.keys(actionContext.input).forEach((key) => {
           vars.set(`___changeset___${key}`, actionContext.input[key]);
         });

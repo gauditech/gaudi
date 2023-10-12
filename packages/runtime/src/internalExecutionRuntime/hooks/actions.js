@@ -1,19 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const bcrypt = require("bcrypt");
 const _ = require("lodash");
-
-module.exports.authenticateUser = async function ({ clearPassword, hashPassword }) {
-  console.log("[EXEC] authenticateUser", clearPassword, hashPassword);
-
-  let match = false;
-  if (clearPassword != null && hashPassword != null) {
-    match = await bcrypt.compare(clearPassword, hashPassword);
-  }
-
-  if (!match) {
-    throw { status: 401, message: "Unauthorized" };
-  }
-};
 
 /**
  * Send HTTP response with given status and body
