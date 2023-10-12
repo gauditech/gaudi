@@ -40,7 +40,6 @@ import {
   ValidateAction,
   ValidateExpr,
   Validator,
-  ValidatorHook,
 } from "../ast/ast";
 
 export enum TokenTypes {
@@ -121,10 +120,6 @@ export function buildTokens(
         .with({ kind: "assert" }, ({ keyword, expr }) => {
           buildKeyword(keyword);
           buildExpr(expr);
-        })
-        .with({ kind: "assertHook" }, ({ keyword, hook }) => {
-          buildKeyword(keyword);
-          buildValidatorHook(hook);
         })
         .with({ kind: "error" }, ({ keyword, atoms }) => {
           buildKeyword(keyword);
@@ -469,13 +464,10 @@ export function buildTokens(
     buildValidateExpr(expr);
   }
 
-  function buildActionAtomSet({ keyword, target, set }: ActionAtomSet) {
+  function buildActionAtomSet({ keyword, target, expr }: ActionAtomSet) {
     buildKeyword(keyword);
     buildIdentifierRef(target);
-    match(set)
-      .with({ kind: "hook" }, buildActionHook)
-      .with({ kind: "expr" }, ({ expr }) => buildExpr(expr))
-      .exhaustive();
+    buildExpr(expr);
   }
 
   function buildActionAtomReferenceThrough({
@@ -605,11 +597,6 @@ export function buildTokens(
       .exhaustive();
   }
 
-  function buildValidatorHook(hook: ValidatorHook) {
-    buildKeyword(hook.keyword);
-    hook.atoms.forEach(buildHookAtom);
-  }
-
   function buildModelHook(hook: ModelHook) {
     buildKeyword(hook.keyword);
     push(hook.name.token, TokenTypes.property);
@@ -621,7 +608,7 @@ export function buildTokens(
     hook.atoms.forEach(buildHookAtom);
   }
 
-  function buildHookAtom(atom: (ModelHook | ValidatorHook | ActionHook)["atoms"][number]) {
+  function buildHookAtom(atom: (ModelHook | ActionHook)["atoms"][number]) {
     match(atom)
       .with({ kind: "arg_expr" }, ({ keyword, name, expr }) => {
         buildKeyword(keyword);
@@ -665,7 +652,7 @@ export function buildTokens(
     });
   }
 
-  function buildExpr(expr: Expr) {
+  function buildExpr(expr: Expr<"db" | "code">) {
     match(expr)
       .with({ kind: "binary" }, ({ lhs, operator, keyword, rhs }) => {
         buildExpr(lhs);
@@ -689,6 +676,7 @@ export function buildTokens(
         push(name.token, TokenTypes.function);
         args.forEach(buildExpr);
       })
+      .with({ kind: "hook" }, ({ hook }) => buildActionHook(hook))
       .exhaustive();
   }
 

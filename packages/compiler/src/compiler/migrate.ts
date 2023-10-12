@@ -21,15 +21,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   const authenticator = authenticatorAst && migrateAuthenticator(authenticatorAst);
 
   function migrateValidator(validator: AST.Validator): Spec.Validator {
-    let assert: Spec.Validator["assert"];
-    const assertExpr = kindFind(validator.atoms, "assert")?.expr;
-    if (assertExpr) {
-      assert = { kind: "expr", expr: migrateExpr(assertExpr) };
-    } else {
-      const assertHook = kindFind(validator.atoms, "assertHook")?.hook;
-      ensureExists(assertHook);
-      assert = { kind: "hook", hook: migrateValidatorHook(assertHook) };
-    }
+    const assertAst = kindFind(validator.atoms, "assert")?.expr;
+    ensureExists(assertAst);
+    const assert = migrateExpr(assertAst);
 
     const errorAst = kindFind(validator.atoms, "error");
     ensureExists(errorAst);
@@ -275,7 +269,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   function migrateEntrypoint(
     entrypoint: AST.Entrypoint,
     parentAlias: Spec.IdentifierRef<AST.RefEntrypoint> | undefined,
-    parentAuthorize: Spec.Expr | undefined,
+    parentAuthorize: Spec.Expr<"code"> | undefined,
     depth: number
   ): Spec.Entrypoint {
     const target = migrateIdentifierRef(entrypoint.target);
@@ -329,7 +323,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     target: Spec.IdentifierRef,
     alias: Spec.IdentifierRef,
     parentAlias: Spec.IdentifierRef | undefined,
-    parentAuthorize: Spec.Expr | undefined,
+    parentAuthorize: Spec.Expr<"code"> | undefined,
     response: Spec.Select
   ): Spec.Endpoint {
     const input = kindFind(endpoint.atoms, "extraInputs")?.extraInputs.map(migrateExtraInput) ?? [];
@@ -418,9 +412,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function combineExprWithAnd(
-    a: Spec.Expr | undefined,
-    b: Spec.Expr | undefined
-  ): Spec.Expr | undefined {
+    a: Spec.Expr<"code"> | undefined,
+    b: Spec.Expr<"code"> | undefined
+  ): Spec.Expr<"code"> | undefined {
     if (!a) return b;
     if (!b) return a;
     return {
@@ -497,13 +491,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           {
             kind: "set",
             target: field.ref,
-            set: {
-              kind: "expression",
-              expr: {
-                kind: "identifier",
-                identifier: [...parentPath, generateModelIdIdentifier(contextRelation.parentModel)],
-                type: Type.integer,
-              },
+            expr: {
+              kind: "identifier",
+              identifier: [...parentPath, generateModelIdIdentifier(contextRelation.parentModel)],
+              type: Type.integer,
             },
           },
         ];
@@ -524,7 +515,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
             {
               kind: "set",
               target: field.ref,
-              set: { kind: "expression", expr: field.default },
+              expr: field.default,
             },
           ];
         } else {
@@ -575,13 +566,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           {
             kind: "set",
             target: referenceToIdRef(last.ref),
-            set: {
-              kind: "expression",
-              expr: {
-                kind: "identifier",
-                identifier: [...parentPath, generateModelIdIdentifier(last.ref.parentModel)],
-                type: Type.integer,
-              },
+            expr: {
+              kind: "identifier",
+              identifier: [...parentPath, generateModelIdIdentifier(last.ref.parentModel)],
+              type: Type.integer,
             },
           },
         ],
@@ -668,8 +656,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
     // simplify all reference sets to _id sets
     if (target.ref.atomKind === "reference") {
-      ensureEqual(set.set.kind, "expr");
-      const expr = migrateExpr(set.set.expr);
+      const expr = migrateExpr(set.expr);
       if (expr.kind === "literal") {
         ensureEqual(expr.literal.kind, "null");
       } else {
@@ -682,7 +669,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       return {
         kind: "set",
         target: referenceToIdRef(target.ref),
-        set: { kind: "expression", expr },
+        expr,
       };
     }
 
@@ -690,10 +677,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       kind: "set",
       // Typescript bug? just 'target' should be allowed
       target: target.ref,
-      set:
-        set.set.kind === "expr"
-          ? { kind: "expression", expr: migrateExpr(set.set.expr) }
-          : { kind: "hook", hook: migrateActionHook(set.set) },
+      expr: migrateExpr(set.expr),
     };
   }
 
@@ -754,13 +738,10 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           nullable: false,
           unique: false,
         },
-        set: {
-          kind: "expression",
-          expr: {
-            kind: "identifier",
-            identifier: [parentAlias, generateModelIdIdentifier(target.ref.parentModel)],
-            type: Type.integer,
-          },
+        expr: {
+          kind: "identifier",
+          identifier: [parentAlias, generateModelIdIdentifier(target.ref.parentModel)],
+          type: Type.integer,
         },
       };
       setters = [contextIdSet, ...setters];
@@ -830,15 +811,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       .exhaustive();
   }
 
-  function migrateValidatorHook(hook: AST.ValidatorHook): Spec.ValidatorHook {
-    const code = getHookCode(hook);
-    const args = kindFilter(hook.atoms, "arg_expr").map((a) => ({
-      name: a.name.text,
-      expr: migrateExpr(a.expr),
-    }));
-    return { code, args };
-  }
-
   function migrateModelHook(hook: AST.ModelHook): Spec.ModelHook {
     const code = getHookCode(hook);
     ensureExists(hook.name.ref);
@@ -856,24 +828,14 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateActionHook(hook: AST.ActionHook): Spec.ActionHook {
     const code = getHookCode(hook);
-    const exprArgs = kindFilter(hook.atoms, "arg_expr").map(
-      (a): Spec.ActionHook["args"][number] => ({
-        kind: "expression",
-        name: a.name.text,
-        expr: migrateExpr(a.expr),
-      })
-    );
-    const queryArgs = kindFilter(hook.atoms, "arg_query").map(
-      (a): Spec.ActionHook["args"][number] => ({
-        kind: "query",
-        name: a.name.text,
-        query: migrateHookQuery(a.query),
-      })
-    );
-    return { code, args: [...exprArgs, ...queryArgs] };
+    const args = kindFilter(hook.atoms, "arg_expr").map((a): Spec.ActionHook["args"][number] => ({
+      name: a.name.text,
+      expr: migrateExpr(a.expr),
+    }));
+    return { code, args };
   }
 
-  function getHookCode(hook: AST.Hook<"model" | "validator" | "action">): HookCode {
+  function getHookCode(hook: AST.Hook<"model" | "action">): HookCode {
     const inline = kindFind(hook.atoms, "inline");
     if (inline) {
       return { kind: "inline", inline: inline.code.value };
@@ -889,7 +851,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
 
   function migrateSelect(select: AST.Select): Spec.Select {
     return select.map((s): Spec.SingleSelect => {
-      let expr: Spec.Expr;
+      let expr: Spec.Expr<"db">;
       if (s.target.kind === "long") {
         expr = migrateExpr(s.target.expr);
       } else {
@@ -924,7 +886,7 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
     });
   }
 
-  function migrateExpr(expr: AST.Expr): Spec.Expr {
+  function migrateExpr<kind extends "db" | "code">(expr: AST.Expr<kind>): Spec.Expr<kind> {
     switch (expr.kind) {
       case "binary": {
         // this is a quick fix to convert "+" to "concat" when strings are involved
@@ -961,6 +923,12 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
           ],
           type: expr.type,
         };
+      case "hook":
+        return {
+          kind: "hook",
+          hook: migrateActionHook(expr.hook),
+          type: expr.type,
+        } as Spec.Expr<kind>;
       case "path":
         return {
           kind: "identifier",
