@@ -283,7 +283,9 @@ async function devCommandHandler(args: ArgumentsCamelCase<CommonCommandArgs>) {
       // gaudi DB directory
       path.join(config.gaudiDirectory, "db"),
       // watch gaudi files (during Gaudi dev)
-      args.gaudiDev ? resolveModulePath("@gaudi/compiler/") : null,
+      ...(args.gaudiDev
+        ? [resolveModulePath("@gaudi/compiler/"), resolveModulePath("@gaudi/runtime/")]
+        : []),
       // watch additional resources provided from args
       ...(args.watch ?? []),
     ]);
