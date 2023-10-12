@@ -1,7 +1,6 @@
 import _ from "lodash";
 
 import { compileToAST } from "../index";
-import { authUserModelName } from "../plugins/authenticator";
 
 function expectError(source: string, ...errorMessages: string[]) {
   const { errors } = compileToAST([{ source }]);
@@ -647,17 +646,23 @@ describe("compiler errors", () => {
   });
 
   describe("authenticator", () => {
-    it("fails if authenticator model names are already taken", () => {
+    it("fails for multiple models", () => {
       const bp1 = `
-        model ${authUserModelName} {}
-        auth { method basic {} }
+        model AuthUser {}
+
+        auth {
+          model AuthUser
+          model AuthUser
+        }
         `;
-      expectError(bp1, `Duplicate model definition`);
-      const bp2 = `
-        model ${authUserModelName}AccessToken {}
-        auth { method basic {} }
+      expectError(bp1, `Duplicate \"model\" in a \"authenticator\"`);
+    });
+
+    it("fails for inexisting model", () => {
+      const bp1 = `
+        auth { model InexistingModel }
         `;
-      expectError(bp2, `Duplicate model definition`);
+      expectError(bp1, `Can't resolve model with this name`);
     });
   });
 
