@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "preinstall": "cd backend && npm i; cd ../frontend && npm i",
-    "start": "concurrently --names BE,FE \"cd backend; npm run dev\" \"cd frontend; npm run start\""
+    "dev": "concurrently --names BE,FE \"cd backend; npm run dev\" \"cd frontend; npm run start\""
   },
   "author": "hrvoje.kasabasic@mashpipe.io",
   "license": "ISC",
