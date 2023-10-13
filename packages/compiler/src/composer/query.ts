@@ -12,7 +12,9 @@ import {
   QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
+  TypedAliasReference,
   TypedExprDef,
+  TypedIdentifierPath,
 } from "@compiler/types/definition";
 import * as Spec from "@compiler/types/specification";
 
@@ -76,8 +78,12 @@ function typedFunctionFromParts(
   };
 }
 
-export function composeExpression(expr: Spec.Expr<"code">, namePath: string[]): TypedExprDef {
+export function composeExpression(
+  expr: Spec.Expr<"code"> | undefined,
+  namePath: string[]
+): TypedExprDef {
   return match<typeof expr, TypedExprDef>(expr)
+    .with(undefined, () => undefined)
     .with({ kind: "literal" }, ({ literal }) => ({
       kind: "literal",
       literal,
@@ -124,11 +130,11 @@ export function composeExpression(expr: Spec.Expr<"code">, namePath: string[]): 
               return (
                 match<typeof head.ref, TypedExprDef>(head.ref)
                   .with({ kind: "modelAtom" }, () => ({
-                    kind: "alias",
+                    kind: "identifier-path",
                     namePath: [...namePath, ...arg.identifier.map((i) => i.text)],
                   }))
                   .with({ kind: "queryTarget" }, (ref) => ({
-                    kind: "alias",
+                    kind: "identifier-path",
                     namePath: [...ref.path, ...tail.map((i) => i.text)],
                   }))
                   // FIXME support context vars: auth, struct, target...
@@ -200,37 +206,37 @@ export function composeExpression(expr: Spec.Expr<"code">, namePath: string[]): 
 export function composeRefPath(
   path: Spec.IdentifierRef[],
   namePath: string[]
-): { kind: "alias"; namePath: string[] } | { kind: "variable"; contextPath: string[] } {
+): TypedAliasReference | TypedIdentifierPath {
   const [head, ...tail] = path;
   switch (head.ref.kind) {
     case "model":
       return {
-        kind: "alias",
-        namePath: [...namePath, ...tail.map((i) => i.text), "hey model"],
+        kind: "identifier-path",
+        namePath: [...namePath, ...tail.map((i) => i.text)],
       };
     case "modelAtom":
       return {
-        kind: "alias",
-        namePath: [...namePath, ...path.map((i) => i.text), "hey marin"],
+        kind: "identifier-path",
+        namePath: [...namePath, ...path.map((i) => i.text)],
       };
     case "queryTarget":
       return {
-        kind: "alias",
-        namePath: [...head.ref.path, ...tail.map((i) => i.text), "hey query"],
+        kind: "identifier-path",
+        namePath: [...head.ref.path, ...tail.map((i) => i.text)],
       };
     case "extraInput":
       return {
-        kind: "variable",
-        contextPath: ["fieldset", ...path.map((p) => p.text)],
+        kind: "alias-reference",
+        source: "fieldset",
+        path: path.map((p) => p.text),
       };
     case "validatorArg":
     case "target":
     case "action":
     case "auth":
     case "repeat":
-      return { kind: "variable", contextPath: ["aliases", ...path.map((i) => i.text)] };
     case "authToken":
-      return { kind: "variable", contextPath: ["_express", "req", "user", "token"] };
+      return { kind: "alias-reference", path: path.map((i) => i.text), source: "alias" };
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "validator":

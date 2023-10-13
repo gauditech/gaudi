@@ -157,8 +157,8 @@ export async function findIdBy(
     kind: "function",
     name: "is",
     args: [
-      { kind: "alias", namePath: [modelName, ...targetPath] },
-      { kind: "variable", contextPath: ["findBy_input"] },
+      { kind: "identifier-path", namePath: [modelName, ...targetPath] },
+      { kind: "alias-reference", path: ["findBy_input"], source: undefined },
     ],
   };
   const query = queryFromParts(def, "findBy", [modelName], filter, [selectableId([modelName])]);

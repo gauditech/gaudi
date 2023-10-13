@@ -63,20 +63,20 @@ export class Storage<T extends object = object> {
     this._storage = initial as T as any;
   }
 
-  get(path: string | string[]): unknown {
-    return _.get(this._storage, path);
+  get(...path: (undefined | string | string[])[]): unknown {
+    return _.get(this._storage, _.compact(_.castArray(...path)));
   }
 
   set(path: string | string[], value: unknown): void {
     _.set(this._storage, path, value);
   }
 
-  collect(path: string | string[]): unknown[] {
-    return collect(this._storage, _.castArray(path));
+  collect(...path: (undefined | string | string[])[]): unknown[] {
+    return collect(this._storage, _.compact(_.castArray(...path)));
   }
 
   flatten(): Record<string, unknown> {
-    return flatten(this._storage);
+    return flatten(_.pick(this._storage, "aliases", "fieldset", "changesets", "pathParams"));
   }
 
   copy(): Storage<T> {

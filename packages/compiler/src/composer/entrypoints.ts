@@ -121,8 +121,8 @@ function processEndpoints(
     const actionDeps = collectActionDeps(endSpec.actions);
 
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
-    const authorize = endSpec.authorize ? composeExpression(endSpec.authorize, []) : undefined;
-    const authorizeDeps = collectAuthorizeDeps(def, authorize);
+    const authorize = composeExpression(endSpec.authorize, []);
+    const authorizeDeps = collectDepsFromExpression(endSpec.authorize);
     const selectDeps = [...actionDeps, ...authorizeDeps];
 
     const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
@@ -265,11 +265,16 @@ export function composeFieldsetPairsFromActions(
       .with({ kind: "create" }, { kind: "update" }, (action) => {
         const inputOrReferenceAtoms = kindFilter(action.actionAtoms, "input", "reference");
         const explicit = inputOrReferenceAtoms.map((atom) => {
+          // calculate fieldset path
+          const fieldsetPath = action.isPrimary
+            ? [atom.target.name]
+            : [action.alias, atom.target.name];
+
           return match<typeof atom, FieldsetPair>(atom)
             .with({ kind: "input" }, (input): FieldsetPair => {
               const field = getRef.field(def, input.target.parentModel, input.target.name);
               return [
-                [input.target.name],
+                fieldsetPath,
                 {
                   kind: "field",
                   nullable: field.nullable,
@@ -284,7 +289,7 @@ export function composeFieldsetPairsFromActions(
               const leaf = _.last(reference.through)!;
               const field = getRef.field(def, leaf.parentModel, leaf.name);
               return [
-                [reference.target.name],
+                fieldsetPath,
                 {
                   kind: "field",
                   nullable: ref.nullable,
@@ -453,16 +458,21 @@ export function collectActionDeps(actions: Spec.Action[]): SelectDep[] {
   return [...targetDeps, ...setterDeps];
 }
 
-function collectDepsFromExpression(expr: Spec.Expr<"code">): SelectDep[] {
+function collectDepsFromExpression(expr: Spec.Expr<"code"> | undefined): SelectDep[] {
   return match(expr)
+    .with(undefined, () => [])
     .with({ kind: "array" }, (arr) => arr.elements.flatMap(_.unary(collectDepsFromExpression)))
     .with({ kind: "function" }, (expr) => expr.args.flatMap(_.unary(collectDepsFromExpression)))
     .with({ kind: "hook" }, ({ hook }) =>
       hook.args.flatMap(({ expr }) => collectDepsFromExpression(expr))
     )
     .with({ kind: "identifier" }, ({ identifier }) => {
-      const [alias, ...access] = identifier.map((i) => i.text);
-      return [{ alias, access }];
+      return match(identifier[0].ref)
+        .with({ kind: P.union("action", "auth", "target") }, () => {
+          const [alias, ...access] = identifier.map((i) => i.text);
+          return [{ alias, access }];
+        })
+        .otherwise(() => []);
     })
     .with({ kind: "literal" }, () => [])
     .exhaustive();
@@ -477,43 +487,44 @@ function collectExpressionsFromValidators(vexpr: Spec.ValidateExpr): Spec.Expr<"
     .exhaustive();
 }
 
-function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] {
-  if (!expr) return [];
-  switch (expr.kind) {
-    case "alias": {
-      const [alias, ...access] = expr.namePath;
-      return [{ alias, access }];
-    }
-    case "literal": {
-      return [];
-    }
-    case "variable": {
-      return [];
-    }
-    case "function": {
-      return expr.args.flatMap((arg) => collectAuthorizeDeps(def, arg));
-    }
-    case "in-subquery":
-    case "aggregate-function": {
-      /**
-       * Fixme we should support aggregate functions & subqueries inside of authorize expressions.
-       * SelectableExpression support is here, so even these deps can be collected.
-       * This would require a significant rewrite of `deps` logic because it doesn't support
-       * anonymous expressions, even though they are selectable.
-       */
-      throw new Error("Not implemented");
-    }
-    case "array": {
-      return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
-    }
-    case "hook": {
-      return expr.hook.args.flatMap((arg) => collectAuthorizeDeps(def, arg.setter));
-    }
-    default: {
-      assertUnreachable(expr);
-    }
-  }
-}
+// function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] {
+//   // replace with `collectDepsFromExpression`??
+//   if (!expr) return [];
+//   switch (expr.kind) {
+//     case "alias-reference": {
+//       const [alias, ...access] = expr.path;
+//       return [{ alias, access }];
+//     }
+//     case "literal": {
+//       return [];
+//     }
+//     case "identifier-path": {
+//       throw new UnreachableError("'identifier-path' is not allowed in authorize deps");
+//     }
+//     case "function": {
+//       return expr.args.flatMap((arg) => collectAuthorizeDeps(def, arg));
+//     }
+//     case "in-subquery":
+//     case "aggregate-function": {
+//       /**
+//        * Fixme we should support aggregate functions & subqueries inside of authorize expressions.
+//        * SelectableExpression support is here, so even these deps can be collected.
+//        * This would require a significant rewrite of `deps` logic because it doesn't support
+//        * anonymous expressions, even though they are selectable.
+//        */
+//       throw new Error("Not implemented");
+//     }
+//     case "array": {
+//       return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
+//     }
+//     case "hook": {
+//       return expr.hook.args.flatMap((arg) => collectAuthorizeDeps(def, arg.setter));
+//     }
+//     default: {
+//       assertUnreachable(expr);
+//     }
+//   }
+// }
 
 /**
  * Converts `TargetDef`s into `TargetWithSelectDef`s using select deps to resolve each target's `SelectDef`.
@@ -604,7 +615,7 @@ function pathsToSelectDef(
         return {
           kind: "expression",
           alias: name,
-          expr: { kind: "alias", namePath: [...namespace, name] },
+          expr: { kind: "identifier-path", namePath: [...namespace, name] },
           type: { kind: ref.type, nullable: ref.nullable },
         };
       }
@@ -612,7 +623,7 @@ function pathsToSelectDef(
         return {
           kind: "expression",
           alias: name,
-          expr: { kind: "alias", namePath: [...namespace, name] },
+          expr: { kind: "identifier-path", namePath: [...namespace, name] },
           type: { kind: ref.type.kind, nullable: ref.type.nullable },
         };
       }
@@ -655,7 +666,7 @@ export function endpointUsesAuthentication(endpoint: EndpointDef): boolean {
   // find @auth in context
   function isAuthInExpression(expr: TypedExprDef): boolean {
     return match(expr)
-      .with({ kind: "alias" }, (a) => a.namePath[0] === "@auth")
+      .with({ kind: "alias-reference" }, (v) => v.path[0] === "@auth")
       .with({ kind: "function" }, (fn) => {
         return _.some(fn.args, isAuthInExpression);
       })
@@ -680,7 +691,7 @@ export function endpointUsesAuthorization(endpoint: EndpointDef): boolean {
       return expr?.kind === "literal" && expr.literal.kind === "null";
     }
     function isAuthId(expr: TypedExprDef): boolean {
-      return expr?.kind === "alias" && _.isEqual(expr.namePath, ["@auth", "id"]);
+      return expr?.kind === "alias-reference" && _.isEqual(expr.path, ["@auth", "id"]);
     }
     return match(expr)
       .with(undefined, () => false)

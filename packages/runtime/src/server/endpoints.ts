@@ -7,7 +7,7 @@ import {
 } from "@gaudi/compiler/dist/builder/query";
 import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
 import { getRef } from "@gaudi/compiler/dist/common/refs";
-import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
+import { UnreachableError, assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import { endpointUsesAuthentication } from "@gaudi/compiler/dist/composer/entrypoints";
 import {
   CreateEndpointDef,
@@ -779,8 +779,8 @@ export async function executeTypedExpr(
   if (!expr) return null;
 
   switch (expr.kind) {
-    case "alias": {
-      return ctx.collect(expr.namePath) ?? null;
+    case "alias-reference": {
+      return ctx.collect(expr.source, ...expr.path) ?? null;
     }
     case "function": {
       return executeTypedFunction(def, expr, ctx);
@@ -792,9 +792,8 @@ export async function executeTypedExpr(
     case "literal": {
       return expr.literal.value;
     }
-    case "variable": {
-      // FIXME collect??
-      return ctx.get(expr.contextPath);
+    case "identifier-path": {
+      throw new UnreachableError("Identifier paths can't be executed");
     }
     case "array": {
       return expr.elements.map((e) => executeTypedExpr(def, e, ctx));

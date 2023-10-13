@@ -34,8 +34,8 @@ export async function buildChangeset(
       match(expr)
         .with({ kind: "literal" }, ({ literal }) => formatFieldValue(literal.value, literal.kind))
         .with({ kind: "array" }, (arr) => Promise.all(arr.elements.map(_.unary(getValueFromExpr))))
-        .with({ kind: "variable" }, (variable) =>
-          actionContext.requestContext.collect(variable.contextPath)
+        .with({ kind: "alias-reference" }, (ref) =>
+          actionContext.requestContext.collect(ref.source, ref.path)
         )
         .with({ kind: "function" }, (expr) => executeArithmetics(expr, _.unary(getValueFromExpr)))
         // FIXME add `query` as expr type

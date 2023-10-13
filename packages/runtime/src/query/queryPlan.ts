@@ -16,6 +16,7 @@ import {
   InCollectionFunctionName,
   QueryDef,
   SelectItem,
+  TypedAliasReference,
   TypedExprDef,
 } from "@gaudi/compiler/dist/types/definition";
 import { Literal } from "@gaudi/compiler/dist/types/specification";
@@ -160,9 +161,11 @@ export function collectQueryAtoms(def: Definition, q: QueryDef): QueryAtom[] {
 
 function pathsFromExpr(expr: TypedExprDef): QueryAtom[] {
   return match<typeof expr, QueryAtom[]>(expr)
-    .with({ kind: "alias" }, (a) => [{ kind: "table-namespace", namePath: _.initial(a.namePath) }])
+    .with({ kind: "identifier-path" }, (a) => [
+      { kind: "table-namespace", namePath: _.initial(a.namePath) },
+    ])
     .with({ kind: "function" }, (fn) => fn.args.flatMap((a) => pathsFromExpr(a)))
-    .with({ kind: "literal" }, { kind: "variable" }, undefined, () => [])
+    .with({ kind: "literal" }, { kind: "alias-reference" }, undefined, () => [])
     .with({ kind: "aggregate-function" }, (aggr) => [
       {
         kind: "aggregate",
@@ -286,7 +289,7 @@ function buildJoins(
                 getFinalQueryAtoms(
                   pathsFromExpr(
                     expandExpression(def, {
-                      kind: "alias",
+                      kind: "identifier-path",
                       namePath: [entryModel.name, ...atom.targetPath],
                     })
                   )
@@ -302,7 +305,7 @@ function buildJoins(
                     toQueryExpr(
                       def,
                       expandExpression(def, {
-                        kind: "alias",
+                        kind: "identifier-path",
                         namePath: [entryModel.name, ...atom.targetPath],
                       })
                     ),
@@ -355,7 +358,7 @@ function calculateJoinOn(def: Definition, path: NamePath): [NamePath, NamePath] 
 
 function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression {
   return match<typeof texpr, QueryPlanExpression>(texpr)
-    .with({ kind: "alias" }, (a) => {
+    .with({ kind: "identifier-path" }, (a) => {
       /**
        * FIXME this function needs access to `Definition` in order to extract `dbname`.
        * Perhaps there is a better way?
@@ -370,7 +373,7 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
       args: fn.args.map((arg) => toQueryExpr(def, arg)),
     }))
     .with({ kind: "literal" }, ({ literal }) => ({ kind: "literal", literal }))
-    .with({ kind: "variable" }, (v) => ({ kind: "variable", contextPath: v.contextPath }))
+    .with({ kind: "alias-reference" }, _.unary(aliasReferenceToVariable))
     .with({ kind: "aggregate-function" }, (aggr) => ({
       kind: "alias",
       value: [...aggr.sourcePath, aggr.fnName.toUpperCase(), ...aggr.targetPath, "result"],
@@ -388,7 +391,7 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
           getFinalQueryAtoms(
             pathsFromExpr(
               expandExpression(def, {
-                kind: "alias",
+                kind: "identifier-path",
                 namePath: [entryModel.name, ...sub.targetPath],
               })
             )
@@ -398,7 +401,10 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
         select: {
           target: toQueryExpr(
             def,
-            expandExpression(def, { kind: "alias", namePath: [entryModel.name, ...sub.targetPath] })
+            expandExpression(def, {
+              kind: "identifier-path",
+              namePath: [entryModel.name, ...sub.targetPath],
+            })
           ),
         },
       };
@@ -422,6 +428,10 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
     .exhaustive();
 }
 
+function aliasReferenceToVariable(ref: TypedAliasReference): QueryPlanExpression {
+  return { kind: "variable", contextPath: _.compact([ref.source, ...ref.path]) };
+}
+
 /**
  * Expands computeds in the expression to build an expression consisting only
  * of fields.
@@ -436,9 +446,9 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
     }
     case "aggregate-function":
     case "literal":
-    case "variable":
+    case "alias-reference":
       return exp;
-    case "alias": {
+    case "identifier-path": {
       const tpath = getTypedPath(def, exp.namePath, {});
       ensureNot(tpath.leaf, null, `${exp.namePath.join(".")} ends without leaf`);
       switch (tpath.leaf.kind) {

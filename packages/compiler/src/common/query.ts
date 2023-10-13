@@ -50,10 +50,10 @@ export function transformExpressionPaths(
   }
   switch (exp.kind) {
     case "literal":
-    case "variable": {
+    case "alias-reference": {
       return exp;
     }
-    case "alias": {
+    case "identifier-path": {
       return { ...exp, namePath: transformNamePath(exp.namePath, from, to) };
     }
     case "function": {

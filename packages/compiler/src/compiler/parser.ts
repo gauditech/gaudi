@@ -1347,7 +1347,6 @@ class GaudiParser extends EmbeddedActionsParser {
               const name = this.SUBRULE3(this.identifier);
               this.OR2([
                 {
-                  GATE: () => kind === "model",
                   ALT: () => {
                     const query = this.SUBRULE(this.anonymousQuery);
                     atoms.push({ kind: "arg_query", name, query, keyword });

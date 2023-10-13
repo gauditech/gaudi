@@ -107,15 +107,11 @@ describe("compiler errors", () => {
         validator HookAndExpression {
           arg value { type string }
           assert { string is "foo" }
-          assert hook { inline "0 == '0'" }
+          assert { hook { inline "0 == '0'" } }
           error { code "check-foo" }
         }
         `;
-      expectError(
-        bp,
-        `Validator must contain "assert" or "assert hook" definition`,
-        `Validator can't have more than one "assert" or "assert hook" definition`
-      );
+      expectError(bp, `"validator" must contain a "assert"`, `Duplicate "assert" in a "validator"`);
     });
     it("fails when can't find validator", () => {
       const bp = `

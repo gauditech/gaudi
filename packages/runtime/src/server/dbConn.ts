@@ -26,8 +26,8 @@ export function parseConnectionString(conn: string): Config {
   if (conn.startsWith("sqlite")) {
     return {
       provider: "sqlite",
-      // remove `sqlite://` part
-      filename: conn.substring(9),
+      // remove `file://` part
+      filename: conn.substring(7),
     };
   }
   if (conn.startsWith("postgres")) {

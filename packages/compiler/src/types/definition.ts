@@ -141,11 +141,26 @@ type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 
 export type LiteralValueDef = { kind: "literal"; literal: Literal };
 
-type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
-type TypedVariable = {
-  kind: "variable";
+type CtxSource =
+  | "fieldset"
+  | "alias"
+  | "changesets"
+  | "referenceThroughs"
+  | "pathParams"
+  | "queryParams"
+  | undefined;
+
+export type TypedAliasReference = {
+  kind: "alias-reference";
+  source: CtxSource;
+  path: string[];
   type?: TypedVariableType;
-  contextPath: string[];
+};
+
+export type TypedIdentifierPath = {
+  kind: "identifier-path";
+  type?: TypedVariableType;
+  namePath: string[];
 };
 
 export type BinaryOperator =
@@ -187,24 +202,11 @@ export type TypedFunction = {
   type?: TypedVariableType;
 };
 
-export type FinalExpr<Kind extends "model" | "validator" | "action" = never> =
-  | TypedExprDef
-  | (Kind extends "model"
-      ? ModelHookDef
-      : Kind extends "validator"
-      ? ValidatorHookDef
-      : Kind extends "action"
-      ? ExecuteHookAction
-      : never);
-
-type X = FinalExpr<"model" | "validator" | "action">;
-type Y = FinalExpr;
-
 export type TypedExprDef =
   | LiteralValueDef
   | TypedArray
-  | TypedAlias
-  | TypedVariable
+  | TypedAliasReference
+  | TypedIdentifierPath
   | TypedFunction
   | TypedAggregateFunction
   | TypedExistsSubquery
