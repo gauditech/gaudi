@@ -235,15 +235,18 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "filter": {
                 "args": [
                   {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "AuthUser",
                       "username",
                     ],
                   },
                   {
-                    "kind": "variable",
-                    "name": "___changeset___username",
+                    "kind": "alias-reference",
+                    "path": [
+                      "username",
+                    ],
+                    "source": "fieldset",
                   },
                 ],
                 "kind": "function",
@@ -263,24 +266,9 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "retType": "AuthUser",
               "select": [
                 {
-                  "alias": "id",
-                  "expr": {
-                    "kind": "alias",
-                    "namePath": [
-                      "AuthUser",
-                      "id",
-                    ],
-                  },
-                  "kind": "expression",
-                  "type": {
-                    "kind": "integer",
-                    "nullable": false,
-                  },
-                },
-                {
                   "alias": "passwordHash",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "AuthUser",
                       "passwordHash",
@@ -292,6 +280,21 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                     "nullable": false,
                   },
                 },
+                {
+                  "alias": "id",
+                  "expr": {
+                    "kind": "identifier-path",
+                    "namePath": [
+                      "AuthUser",
+                      "id",
+                    ],
+                  },
+                  "kind": "expression",
+                  "type": {
+                    "kind": "integer",
+                    "nullable": false,
+                  },
+                },
               ],
             },
           },
@@ -300,26 +303,26 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "hook": {
               "args": [
                 {
+                  "kind": "basic",
                   "name": "clearPassword",
                   "setter": {
-                    "fieldsetAccess": [
+                    "kind": "alias-reference",
+                    "path": [
                       "password",
                     ],
-                    "kind": "fieldset-input",
-                    "required": false,
-                    "type": "string",
+                    "source": "fieldset",
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "hashPassword",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "passwordHash",
-                      ],
-                      "alias": "existingAuthUser",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "existingAuthUser",
+                      "passwordHash",
+                    ],
+                    "source": "alias",
                   },
                 },
               ],
@@ -337,6 +340,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "alias": "accessToken",
             "changeset": [
               {
+                "kind": "basic",
                 "name": "token",
                 "setter": {
                   "args": [
@@ -353,6 +357,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               },
               {
+                "kind": "basic",
                 "name": "expiryDate",
                 "setter": {
                   "args": [
@@ -380,15 +385,15 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 },
               },
               {
+                "kind": "basic",
                 "name": "authUser_id",
                 "setter": {
-                  "kind": "reference-value",
-                  "target": {
-                    "access": [
-                      "id",
-                    ],
-                    "alias": "existingAuthUser",
-                  },
+                  "kind": "alias-reference",
+                  "path": [
+                    "existingAuthUser",
+                    "id",
+                  ],
+                  "source": "alias",
                 },
               },
             ],
@@ -399,7 +404,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               {
                 "alias": "token",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "accessToken",
                     "token",
@@ -414,7 +419,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               {
                 "alias": "id",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "accessToken",
                     "id",
@@ -436,6 +441,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "hook": {
               "args": [
                 {
+                  "kind": "basic",
                   "name": "status",
                   "setter": {
                     "kind": "literal",
@@ -446,15 +452,15 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "body_token",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "token",
-                      ],
-                      "alias": "accessToken",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "accessToken",
+                      "token",
+                    ],
+                    "source": "alias",
                   },
                 },
               ],
@@ -509,7 +515,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "AuthUser",
                   "id",
@@ -534,15 +540,18 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               "filter": {
                 "args": [
                   {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "AuthUserAccessToken",
                       "token",
                     ],
                   },
                   {
-                    "kind": "variable",
-                    "name": "___requestAuthToken",
+                    "kind": "alias-reference",
+                    "path": [
+                      "@requestAuthToken",
+                    ],
+                    "source": "alias",
                   },
                 ],
                 "kind": "function",
@@ -564,7 +573,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "AuthUserAccessToken",
                       "id",
@@ -591,6 +600,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "hook": {
               "args": [
                 {
+                  "kind": "basic",
                   "name": "status",
                   "setter": {
                     "kind": "literal",
@@ -633,7 +643,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "AuthUser",
                   "id",
@@ -654,42 +664,50 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "alias": "authUser",
             "changeset": [
               {
+                "fieldsetPath": [
+                  "authUser",
+                  "name",
+                ],
+                "kind": "input",
                 "name": "name",
                 "setter": {
-                  "default": undefined,
-                  "fieldsetAccess": [
+                  "kind": "alias-reference",
+                  "path": [
                     "authUser",
                     "name",
                   ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "string",
+                  "source": "fieldset",
                 },
+                "validate": undefined,
               },
               {
+                "fieldsetPath": [
+                  "authUser",
+                  "username",
+                ],
+                "kind": "input",
                 "name": "username",
                 "setter": {
-                  "default": undefined,
-                  "fieldsetAccess": [
+                  "kind": "alias-reference",
+                  "path": [
                     "authUser",
                     "username",
                   ],
-                  "kind": "fieldset-input",
-                  "required": true,
-                  "type": "string",
+                  "source": "fieldset",
                 },
+                "validate": undefined,
               },
               {
+                "kind": "basic",
                 "name": "passwordHash",
                 "setter": {
                   "args": [
                     {
-                      "fieldsetAccess": [
+                      "kind": "alias-reference",
+                      "path": [
                         "password",
                       ],
-                      "kind": "fieldset-input",
-                      "required": false,
-                      "type": "string",
+                      "source": "fieldset",
                     },
                     {
                       "kind": "literal",
@@ -711,7 +729,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               {
                 "alias": "id",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "authUser",
                     "id",
@@ -726,7 +744,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               {
                 "alias": "name",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "authUser",
                     "name",
@@ -741,7 +759,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
               {
                 "alias": "username",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "authUser",
                     "username",
@@ -763,6 +781,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             "hook": {
               "args": [
                 {
+                  "kind": "basic",
                   "name": "status",
                   "setter": {
                     "kind": "literal",
@@ -773,39 +792,39 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "body_id",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "id",
-                      ],
-                      "alias": "authUser",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "authUser",
+                      "id",
+                    ],
+                    "source": "alias",
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "body_name",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "name",
-                      ],
-                      "alias": "authUser",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "authUser",
+                      "name",
+                    ],
+                    "source": "alias",
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "body_username",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "username",
-                      ],
-                      "alias": "authUser",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "authUser",
+                      "username",
+                    ],
+                    "source": "alias",
                   },
                 },
               ],
@@ -909,7 +928,7 @@ exports[`authenticator composer succeeds for simple authenticator 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "AuthUser",
                   "id",

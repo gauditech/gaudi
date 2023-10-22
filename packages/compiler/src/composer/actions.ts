@@ -251,7 +251,7 @@ function atomToChangesetOperation(
         setter: atom.default
           ? {
               kind: "function",
-              name: "concat", // FIXME coalesce
+              name: "coalesce",
               args: [setter, composeExpression(atom.default, [])],
             }
           : setter,

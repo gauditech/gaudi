@@ -11,7 +11,7 @@ import { match } from "ts-pattern";
 import { executeArithmetics } from "./arithmetics";
 
 import { ActionContext } from "@runtime/common/action";
-import { HookActionContext } from "@runtime/hooks";
+import { HookActionContext, executeHook } from "@runtime/hooks";
 import { QueryExecutor } from "@runtime/query/exec";
 
 type Changeset = Record<string, unknown>;
@@ -30,19 +30,26 @@ export async function buildChangeset(
   const changeset: Changeset = {};
 
   async function getValueFromExpr(expr: TypedExprDef): Promise<unknown> {
-    return (
-      match(expr)
-        .with({ kind: "literal" }, ({ literal }) => formatFieldValue(literal.value, literal.kind))
-        .with({ kind: "array" }, (arr) => Promise.all(arr.elements.map(_.unary(getValueFromExpr))))
-        .with({ kind: "alias-reference" }, (ref) =>
-          actionContext.requestContext.collect(ref.source, ref.path)
-        )
-        .with({ kind: "function" }, (expr) => executeArithmetics(expr, _.unary(getValueFromExpr)))
-        // FIXME add `query` as expr type
-        .otherwise(
-          shouldBeUnreachableCb(`'${expr?.kind}' cannot be executed in server environment`)
-        )
-    );
+    return match(expr)
+      .with({ kind: "literal" }, ({ literal }) => formatFieldValue(literal.value, literal.kind))
+      .with({ kind: "array" }, (arr) => Promise.all(arr.elements.map(_.unary(getValueFromExpr))))
+      .with({ kind: "alias-reference" }, (ref) =>
+        actionContext.requestContext.collect(ref.source, ref.path)
+      )
+      .with({ kind: "function" }, (expr) => executeArithmetics(expr, _.unary(getValueFromExpr)))
+      .with({ kind: "identifier-path" }, (e) => {
+        // actionContext.requestContext.collect("@currentContext", e.namePath)
+        if (e.namePath[0] in changeset) {
+          return _.get(changeset, e.namePath);
+        } else {
+          throw new Error("Changeset value doesn't exist. Bad order?");
+        }
+      })
+      .with({ kind: "hook" }, async (hook) => {
+        const chx = await buildChangeset(def, qx, epCtx, hook.hook.args, actionContext);
+        return executeHook(def, hook.hook.hook, chx);
+      })
+      .otherwise(shouldBeUnreachableCb(`'${expr?.kind}' cannot be executed in server environment`));
   }
 
   // async function getValue(setter: FieldSetter): Promise<unknown> {

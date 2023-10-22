@@ -32,7 +32,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Org",
               "id",
@@ -53,17 +53,21 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "alias": "newOrg",
         "changeset": [
           {
+            "fieldsetPath": [
+              "newOrg",
+              "name",
+            ],
+            "kind": "input",
             "name": "name",
             "setter": {
-              "default": undefined,
-              "fieldsetAccess": [
+              "kind": "alias-reference",
+              "path": [
                 "newOrg",
                 "name",
               ],
-              "kind": "fieldset-input",
-              "required": false,
-              "type": "string",
+              "source": "fieldset",
             },
+            "validate": undefined,
           },
         ],
         "filter": undefined,
@@ -74,7 +78,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "newOrg",
                 "id",
@@ -138,7 +142,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Org",
               "id",
@@ -191,7 +195,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Org",
               "id",
@@ -229,7 +233,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Org",
               "id",
@@ -250,17 +254,21 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         "alias": "org",
         "changeset": [
           {
+            "fieldsetPath": [
+              "org",
+              "name",
+            ],
+            "kind": "input",
             "name": "name",
             "setter": {
-              "default": undefined,
-              "fieldsetAccess": [
+              "kind": "alias-reference",
+              "path": [
                 "org",
                 "name",
               ],
-              "kind": "fieldset-input",
-              "required": true,
-              "type": "string",
+              "source": "fieldset",
             },
+            "validate": undefined,
           },
         ],
         "isPrimary": false,
@@ -270,7 +278,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "org",
                 "id",
@@ -327,7 +335,7 @@ exports[`compose actions custom actions creates actions in custom endpoint 1`] =
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Org",
               "id",
@@ -351,28 +359,34 @@ exports[`compose actions native actions can create nested relations through tran
     "alias": "repo",
     "changeset": [
       {
+        "fieldsetPath": [
+          "name",
+        ],
+        "kind": "input",
         "name": "name",
         "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
+          "kind": "alias-reference",
+          "path": [
             "name",
           ],
-          "kind": "fieldset-input",
-          "required": true,
-          "type": "string",
+          "source": "fieldset",
         },
+        "validate": undefined,
       },
       {
+        "fieldsetPath": [
+          "org_id",
+        ],
+        "kind": "input",
         "name": "org_id",
         "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
+          "kind": "alias-reference",
+          "path": [
             "org_id",
           ],
-          "kind": "fieldset-input",
-          "required": true,
-          "type": "integer",
+          "source": "fieldset",
         },
+        "validate": undefined,
       },
     ],
     "isPrimary": true,
@@ -391,7 +405,7 @@ exports[`compose actions native actions can create nested relations through tran
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "repo",
                 "org",
@@ -409,7 +423,7 @@ exports[`compose actions native actions can create nested relations through tran
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "repo",
             "id",
@@ -430,16 +444,16 @@ exports[`compose actions native actions can create nested relations through tran
     "alias": "log",
     "changeset": [
       {
+        "kind": "basic",
         "name": "org_id",
         "setter": {
-          "kind": "reference-value",
-          "target": {
-            "access": [
-              "org",
-              "id",
-            ],
-            "alias": "repo",
-          },
+          "kind": "alias-reference",
+          "path": [
+            "repo",
+            "org",
+            "id",
+          ],
+          "source": "alias",
         },
       },
     ],
@@ -450,7 +464,7 @@ exports[`compose actions native actions can create nested relations through tran
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "log",
             "id",
@@ -485,7 +499,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "$action_0",
             "id",
@@ -506,17 +520,21 @@ exports[`compose actions native actions can update deeply nested references 1`] 
     "alias": "org",
     "changeset": [
       {
+        "fieldsetPath": [
+          "org",
+          "name",
+        ],
+        "kind": "input",
         "name": "name",
         "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
+          "kind": "alias-reference",
+          "path": [
             "org",
             "name",
           ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "string",
+          "source": "fieldset",
         },
+        "validate": undefined,
       },
     ],
     "filter": undefined,
@@ -527,7 +545,7 @@ exports[`compose actions native actions can update deeply nested references 1`] 
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "org",
             "id",
@@ -556,75 +574,94 @@ exports[`compose actions native actions correctly implements default values: cre
       "alias": "ox",
       "changeset": [
         {
+          "fieldsetPath": [
+            "name",
+          ],
+          "kind": "input",
           "name": "name",
           "setter": {
-            "default": undefined,
-            "fieldsetAccess": [
+            "kind": "alias-reference",
+            "path": [
               "name",
             ],
-            "kind": "fieldset-input",
-            "required": true,
-            "type": "string",
+            "source": "fieldset",
           },
+          "validate": undefined,
         },
         {
+          "fieldsetPath": [
+            "description",
+          ],
+          "kind": "input",
           "name": "description",
           "setter": {
-            "default": undefined,
-            "fieldsetAccess": [
+            "kind": "alias-reference",
+            "path": [
               "description",
             ],
-            "kind": "fieldset-input",
-            "required": true,
-            "type": "string",
+            "source": "fieldset",
           },
+          "validate": undefined,
         },
         {
+          "fieldsetPath": [
+            "uuid",
+          ],
+          "kind": "input",
           "name": "uuid",
           "setter": {
-            "default": {
-              "args": [
-                {
-                  "kind": "literal",
-                  "literal": {
-                    "kind": "string",
-                    "value": "uuid-",
-                  },
-                },
-                {
-                  "args": [
-                    {
-                      "args": [],
-                      "kind": "function",
-                      "name": "now",
+            "args": [
+              {
+                "kind": "alias-reference",
+                "path": [
+                  "uuid",
+                ],
+                "source": "fieldset",
+              },
+              {
+                "args": [
+                  {
+                    "kind": "literal",
+                    "literal": {
+                      "kind": "string",
+                      "value": "uuid-",
                     },
-                  ],
-                  "kind": "function",
-                  "name": "stringify",
-                },
-              ],
-              "kind": "function",
-              "name": "concat",
-            },
-            "fieldsetAccess": [
-              "uuid",
+                  },
+                  {
+                    "args": [
+                      {
+                        "args": [],
+                        "kind": "function",
+                        "name": "now",
+                      },
+                    ],
+                    "kind": "function",
+                    "name": "stringify",
+                  },
+                ],
+                "kind": "function",
+                "name": "concat",
+              },
             ],
-            "kind": "fieldset-input",
-            "required": false,
-            "type": "string",
+            "kind": "function",
+            "name": "coalesce",
           },
+          "validate": undefined,
         },
         {
+          "fieldsetPath": [
+            "extras_id",
+          ],
+          "kind": "input",
           "name": "extras_id",
           "setter": {
-            "default": undefined,
-            "fieldsetAccess": [
+            "kind": "alias-reference",
+            "path": [
               "extras_id",
             ],
-            "kind": "fieldset-input",
-            "required": true,
-            "type": "integer",
+            "source": "fieldset",
           },
+          "validate": undefined,
         },
       ],
       "isPrimary": true,
@@ -634,7 +671,7 @@ exports[`compose actions native actions correctly implements default values: cre
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "ox",
               "id",
@@ -682,7 +719,7 @@ exports[`compose actions native actions correctly implements default values: cre
       "uuid": {
         "kind": "field",
         "nullable": false,
-        "required": false,
+        "required": true,
         "type": "string",
         "validate": undefined,
       },
@@ -694,7 +731,7 @@ exports[`compose actions native actions correctly implements default values: cre
     {
       "alias": "id",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "id",
@@ -709,7 +746,7 @@ exports[`compose actions native actions correctly implements default values: cre
     {
       "alias": "name",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "name",
@@ -724,7 +761,7 @@ exports[`compose actions native actions correctly implements default values: cre
     {
       "alias": "description",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "description",
@@ -739,7 +776,7 @@ exports[`compose actions native actions correctly implements default values: cre
     {
       "alias": "uuid",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "uuid",
@@ -754,7 +791,7 @@ exports[`compose actions native actions correctly implements default values: cre
     {
       "alias": "extras_id",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "extras_id",
@@ -779,7 +816,7 @@ exports[`compose actions native actions correctly implements default values: cre
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "Org",
             "id",
@@ -803,30 +840,37 @@ exports[`compose actions native actions correctly implements default values: upd
       "alias": "ox",
       "changeset": [
         {
+          "fieldsetPath": [
+            "name",
+          ],
+          "kind": "input",
           "name": "name",
           "setter": {
-            "default": undefined,
-            "fieldsetAccess": [
+            "kind": "alias-reference",
+            "path": [
               "name",
             ],
-            "kind": "fieldset-input",
-            "required": false,
-            "type": "string",
+            "source": "fieldset",
           },
+          "validate": undefined,
         },
         {
+          "fieldsetPath": [
+            "description",
+          ],
+          "kind": "input",
           "name": "description",
           "setter": {
-            "default": undefined,
-            "fieldsetAccess": [
+            "kind": "alias-reference",
+            "path": [
               "description",
             ],
-            "kind": "fieldset-input",
-            "required": true,
-            "type": "string",
+            "source": "fieldset",
           },
+          "validate": undefined,
         },
         {
+          "kind": "basic",
           "name": "uuid",
           "setter": {
             "kind": "literal",
@@ -837,16 +881,22 @@ exports[`compose actions native actions correctly implements default values: upd
           },
         },
         {
+          "fieldsetPath": [
+            "extras",
+          ],
+          "kind": "reference-through",
           "name": "extras",
           "setter": {
-            "fieldsetAccess": [
-              "extras_name",
+            "kind": "alias-reference",
+            "path": [
+              "extras",
+              "id",
             ],
-            "kind": "fieldset-reference-input",
-            "through": [
-              "name",
-            ],
+            "source": "referenceThroughs",
           },
+          "through": [
+            "name",
+          ],
         },
       ],
       "filter": undefined,
@@ -857,7 +907,7 @@ exports[`compose actions native actions correctly implements default values: upd
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "ox",
               "id",
@@ -888,10 +938,10 @@ exports[`compose actions native actions correctly implements default values: upd
         "type": "string",
         "validate": undefined,
       },
-      "extras_name": {
+      "extras": {
         "kind": "field",
         "nullable": false,
-        "required": true,
+        "required": false,
         "type": "string",
         "validate": undefined,
       },
@@ -910,7 +960,7 @@ exports[`compose actions native actions correctly implements default values: upd
     {
       "alias": "id",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "id",
@@ -925,7 +975,7 @@ exports[`compose actions native actions correctly implements default values: upd
     {
       "alias": "name",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "name",
@@ -940,7 +990,7 @@ exports[`compose actions native actions correctly implements default values: upd
     {
       "alias": "description",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "description",
@@ -955,7 +1005,7 @@ exports[`compose actions native actions correctly implements default values: upd
     {
       "alias": "uuid",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "uuid",
@@ -970,7 +1020,7 @@ exports[`compose actions native actions correctly implements default values: upd
     {
       "alias": "extras_id",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "extras_id",
@@ -1002,7 +1052,7 @@ exports[`compose actions native actions correctly implements default values: upd
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "Org",
             "id",
@@ -1025,27 +1075,30 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
     "alias": "$action_0",
     "changeset": [
       {
+        "fieldsetPath": [
+          "name",
+        ],
+        "kind": "input",
         "name": "name",
         "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
+          "kind": "alias-reference",
+          "path": [
             "name",
           ],
-          "kind": "fieldset-input",
-          "required": true,
-          "type": "string",
+          "source": "fieldset",
         },
+        "validate": undefined,
       },
       {
+        "kind": "basic",
         "name": "org_id",
         "setter": {
-          "kind": "reference-value",
-          "target": {
-            "access": [
-              "id",
-            ],
-            "alias": "myorg",
-          },
+          "kind": "alias-reference",
+          "path": [
+            "myorg",
+            "id",
+          ],
+          "source": "alias",
         },
       },
     ],
@@ -1056,7 +1109,7 @@ exports[`compose actions native actions correctly sets parent context 1`] = `
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "$action_0",
             "id",
@@ -1098,16 +1151,19 @@ exports[`compose actions native actions sets default action if not given 1`] = `
     "alias": "$action_0",
     "changeset": [
       {
+        "fieldsetPath": [
+          "name",
+        ],
+        "kind": "input",
         "name": "name",
         "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
+          "kind": "alias-reference",
+          "path": [
             "name",
           ],
-          "kind": "fieldset-input",
-          "required": false,
-          "type": "string",
+          "source": "fieldset",
         },
+        "validate": undefined,
       },
     ],
     "filter": undefined,
@@ -1118,7 +1174,7 @@ exports[`compose actions native actions sets default action if not given 1`] = `
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "$action_0",
             "id",
@@ -1150,7 +1206,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "e",
             "id",
@@ -1171,6 +1227,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     "alias": "org",
     "changeset": [
       {
+        "kind": "basic",
         "name": "is_new",
         "setter": {
           "kind": "literal",
@@ -1181,27 +1238,30 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
         },
       },
       {
+        "fieldsetPath": [
+          "name",
+        ],
+        "kind": "input",
         "name": "name",
         "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
+          "kind": "alias-reference",
+          "path": [
             "name",
           ],
-          "kind": "fieldset-input",
-          "required": true,
-          "type": "string",
+          "source": "fieldset",
         },
+        "validate": undefined,
       },
       {
+        "kind": "basic",
         "name": "extras_id",
         "setter": {
-          "kind": "reference-value",
-          "target": {
-            "access": [
-              "id",
-            ],
-            "alias": "e",
-          },
+          "kind": "alias-reference",
+          "path": [
+            "e",
+            "id",
+          ],
+          "source": "alias",
         },
       },
     ],
@@ -1212,7 +1272,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "org",
             "id",
@@ -1233,15 +1293,15 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
     "alias": "oo",
     "changeset": [
       {
+        "kind": "basic",
         "name": "org_id",
         "setter": {
-          "kind": "reference-value",
-          "target": {
-            "access": [
-              "id",
-            ],
-            "alias": "org",
-          },
+          "kind": "alias-reference",
+          "path": [
+            "org",
+            "id",
+          ],
+          "source": "alias",
         },
       },
     ],
@@ -1252,7 +1312,7 @@ exports[`compose actions native actions succeeds for basic composite create 1`] 
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "oo",
             "id",
@@ -1278,6 +1338,7 @@ exports[`compose actions native actions succeeds when extra input is defined and
     "alias": "org",
     "changeset": [
       {
+        "kind": "basic",
         "name": "name",
         "setter": {
           "args": [
@@ -1289,12 +1350,11 @@ exports[`compose actions native actions succeeds when extra input is defined and
               },
             },
             {
-              "fieldsetAccess": [
+              "kind": "alias-reference",
+              "path": [
                 "iname",
               ],
-              "kind": "fieldset-input",
-              "required": false,
-              "type": "string",
+              "source": "fieldset",
             },
           ],
           "kind": "function",
@@ -1309,7 +1369,7 @@ exports[`compose actions native actions succeeds when extra input is defined and
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "org",
             "id",
@@ -1363,6 +1423,7 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
     "alias": "$action_0",
     "changeset": [
       {
+        "kind": "basic",
         "name": "name",
         "setter": {
           "kind": "literal",
@@ -1373,12 +1434,15 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
         },
       },
       {
+        "kind": "basic",
         "name": "description",
         "setter": {
           "args": [
             {
-              "kind": "changeset-reference",
-              "referenceName": "name",
+              "kind": "identifier-path",
+              "namePath": [
+                "name",
+              ],
             },
             {
               "kind": "literal",
@@ -1393,14 +1457,17 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
         },
       },
       {
+        "kind": "basic",
         "name": "descLength",
         "setter": {
           "args": [
             {
               "args": [
                 {
-                  "kind": "changeset-reference",
-                  "referenceName": "description",
+                  "kind": "identifier-path",
+                  "namePath": [
+                    "description",
+                  ],
                 },
               ],
               "kind": "function",
@@ -1426,7 +1493,7 @@ exports[`compose actions native actions succeeds with arithmetic expressions in 
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "$action_0",
             "id",
@@ -1452,30 +1519,39 @@ exports[`compose actions native actions succeeds with nested sibling reference 1
     "alias": "$action_0",
     "changeset": [
       {
-        "name": "name",
-        "setter": {
-          "default": undefined,
-          "fieldsetAccess": [
-            "name",
-          ],
-          "kind": "fieldset-input",
-          "required": true,
-          "type": "string",
-        },
-      },
-      {
-        "name": "name2",
-        "setter": {
-          "kind": "changeset-reference",
-          "referenceName": "name",
-        },
-      },
-      {
+        "kind": "basic",
         "name": "name3",
         "setter": {
-          "kind": "changeset-reference",
-          "referenceName": "name2",
+          "kind": "identifier-path",
+          "namePath": [
+            "name2",
+          ],
         },
+      },
+      {
+        "kind": "basic",
+        "name": "name2",
+        "setter": {
+          "kind": "identifier-path",
+          "namePath": [
+            "name",
+          ],
+        },
+      },
+      {
+        "fieldsetPath": [
+          "name",
+        ],
+        "kind": "input",
+        "name": "name",
+        "setter": {
+          "kind": "alias-reference",
+          "path": [
+            "name",
+          ],
+          "source": "fieldset",
+        },
+        "validate": undefined,
       },
     ],
     "isPrimary": true,
@@ -1485,7 +1561,7 @@ exports[`compose actions native actions succeeds with nested sibling reference 1
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "$action_0",
             "id",

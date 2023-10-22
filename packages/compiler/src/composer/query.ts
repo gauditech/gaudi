@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
+import { compose } from "./composer";
 import { defineType } from "./models";
 
 import { UnreachableError, ensureEqual, shouldBeUnreachableCb } from "@compiler/common/utils";
@@ -141,18 +142,15 @@ export function composeExpression(
                   .otherwise(shouldBeUnreachableCb(`${head.ref.kind} is not a valid lookup`))
               );
             })
-            .with({ kind: "literal" }, ({ literal }) => ({
-              kind: "literal",
-              literal,
-            }))
-            .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
             .with(
               { kind: "array" },
               shouldBeUnreachableCb('"array" is not a valid lookup expression')
             )
-            .with({ kind: "hook" }, shouldBeUnreachableCb("Not implemented"))
-            .exhaustive();
-
+            .with(
+              { kind: "hook" },
+              shouldBeUnreachableCb("Hooks not implemented for 'in' / 'not in'")
+            )
+            .otherwise((exp) => composeExpression(exp, namePath));
           const arg1 = fn.args[1];
           return match<typeof arg1, TypedExprDef>(arg1)
             .with({ kind: "identifier" }, (arg) => {
@@ -214,6 +212,7 @@ export function composeRefPath(
         kind: "identifier-path",
         namePath: [...namePath, ...tail.map((i) => i.text)],
       };
+    case "validatorArg":
     case "modelAtom":
       return {
         kind: "identifier-path",
@@ -230,7 +229,6 @@ export function composeRefPath(
         source: "fieldset",
         path: path.map((p) => p.text),
       };
-    case "validatorArg":
     case "target":
     case "action":
     case "auth":

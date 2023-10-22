@@ -41,15 +41,14 @@ api {
 
         // test query in fetch action
         query as fClass {
-          from Class, filter { id is 1 }
+          from Class, filter { id is 1 }, select { id, year }
         }
 
         execute {
 
-          // test arg query
+          // pass query result as arg
           hook {
-            arg prop2 query { from Class, filter { id is 1 } }
-
+            arg prop2 fClass
             source foo from "bar"
           }
         }

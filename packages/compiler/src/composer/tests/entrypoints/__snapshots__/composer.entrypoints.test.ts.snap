@@ -50,8 +50,8 @@ exports[`entrypoint collects dependencies 1`] = `
 {
   "actionSelects": [
     [
-      "name",
       "id",
+      "name",
     ],
     [
       "id",
@@ -65,8 +65,8 @@ exports[`entrypoint collects dependencies 1`] = `
     "coef",
   ],
   "repoSelect": [
-    "name",
     "id",
+    "name",
   ],
 }
 `;
@@ -84,7 +84,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "direction": "desc",
             "exp": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "slug",
@@ -98,7 +98,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "id",
@@ -113,7 +113,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "alias": "slug",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "slug",
@@ -128,7 +128,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "alias": "name",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "name",
@@ -153,7 +153,7 @@ exports[`entrypoint composes basic example 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "Org",
                   "id",
@@ -177,7 +177,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "id",
@@ -192,7 +192,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "alias": "slug",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "slug",
@@ -207,7 +207,7 @@ exports[`entrypoint composes basic example 1`] = `
           {
             "alias": "name",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "name",
@@ -239,7 +239,7 @@ exports[`entrypoint composes basic example 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "Org",
                   "id",
@@ -285,7 +285,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "id",
@@ -304,7 +304,7 @@ exports[`entrypoint composes basic example 1`] = `
               {
                 "alias": "id",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "Org",
                     "repos",
@@ -330,7 +330,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -347,7 +347,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "slug",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -364,7 +364,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "name",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -394,7 +394,7 @@ exports[`entrypoint composes basic example 1`] = `
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "Org",
                       "repos",
@@ -434,7 +434,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "id",
@@ -453,7 +453,7 @@ exports[`entrypoint composes basic example 1`] = `
               {
                 "alias": "id",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "Org",
                     "repos",
@@ -479,7 +479,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -496,7 +496,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "slug",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -513,7 +513,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "name",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -550,7 +550,7 @@ exports[`entrypoint composes basic example 1`] = `
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "Org",
                       "repos",
@@ -572,27 +572,30 @@ exports[`entrypoint composes basic example 1`] = `
                 "alias": "$action_0",
                 "changeset": [
                   {
+                    "fieldsetPath": [
+                      "title",
+                    ],
+                    "kind": "input",
                     "name": "title",
                     "setter": {
-                      "default": undefined,
-                      "fieldsetAccess": [
+                      "kind": "alias-reference",
+                      "path": [
                         "title",
                       ],
-                      "kind": "fieldset-input",
-                      "required": true,
-                      "type": "string",
+                      "source": "fieldset",
                     },
+                    "validate": undefined,
                   },
                   {
+                    "kind": "basic",
                     "name": "org_id",
                     "setter": {
-                      "kind": "reference-value",
-                      "target": {
-                        "access": [
-                          "id",
-                        ],
-                        "alias": "org",
-                      },
+                      "kind": "alias-reference",
+                      "path": [
+                        "org",
+                        "id",
+                      ],
+                      "source": "alias",
                     },
                   },
                 ],
@@ -603,7 +606,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "$action_0",
                         "id",
@@ -657,7 +660,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "id",
@@ -676,7 +679,7 @@ exports[`entrypoint composes basic example 1`] = `
               {
                 "alias": "id",
                 "expr": {
-                  "kind": "alias",
+                  "kind": "identifier-path",
                   "namePath": [
                     "Org",
                     "repos",
@@ -702,7 +705,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -719,7 +722,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "slug",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -736,7 +739,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "name",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "repos",
@@ -766,7 +769,7 @@ exports[`entrypoint composes basic example 1`] = `
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "Org",
                       "repos",
@@ -788,30 +791,38 @@ exports[`entrypoint composes basic example 1`] = `
                 "alias": "newOrg",
                 "changeset": [
                   {
+                    "fieldsetPath": [
+                      "newOrg",
+                      "slug",
+                    ],
+                    "kind": "input",
                     "name": "slug",
                     "setter": {
-                      "default": undefined,
-                      "fieldsetAccess": [
+                      "kind": "alias-reference",
+                      "path": [
                         "newOrg",
                         "slug",
                       ],
-                      "kind": "fieldset-input",
-                      "required": false,
-                      "type": "string",
+                      "source": "fieldset",
                     },
+                    "validate": undefined,
                   },
                   {
+                    "fieldsetPath": [
+                      "newOrg",
+                      "name",
+                    ],
+                    "kind": "input",
                     "name": "name",
                     "setter": {
-                      "default": undefined,
-                      "fieldsetAccess": [
+                      "kind": "alias-reference",
+                      "path": [
                         "newOrg",
                         "name",
                       ],
-                      "kind": "fieldset-input",
-                      "required": false,
-                      "type": "string",
+                      "source": "fieldset",
                     },
+                    "validate": undefined,
                   },
                 ],
                 "filter": undefined,
@@ -822,7 +833,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "newOrg",
                         "id",
@@ -890,7 +901,7 @@ exports[`entrypoint composes basic example 1`] = `
                   {
                     "alias": "id",
                     "expr": {
-                      "kind": "alias",
+                      "kind": "identifier-path",
                       "namePath": [
                         "Org",
                         "id",
@@ -928,7 +939,7 @@ exports[`entrypoint composes basic example 1`] = `
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "Org",
                       "repos",
@@ -1014,7 +1025,7 @@ exports[`entrypoint composes single cardinality 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "User",
                   "id",
@@ -1033,7 +1044,7 @@ exports[`entrypoint composes single cardinality 1`] = `
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "User",
               "address",
@@ -1049,7 +1060,7 @@ exports[`entrypoint composes single cardinality 1`] = `
         {
           "alias": "name",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "User",
               "address",
@@ -1077,7 +1088,7 @@ exports[`entrypoint composes single cardinality 1`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "User",
                 "address",
@@ -1099,16 +1110,19 @@ exports[`entrypoint composes single cardinality 1`] = `
           "alias": "$action_0",
           "changeset": [
             {
+              "fieldsetPath": [
+                "name",
+              ],
+              "kind": "input",
               "name": "name",
               "setter": {
-                "default": undefined,
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "name",
                 ],
-                "kind": "fieldset-input",
-                "required": false,
-                "type": "string",
+                "source": "fieldset",
               },
+              "validate": undefined,
             },
           ],
           "filter": undefined,
@@ -1119,7 +1133,7 @@ exports[`entrypoint composes single cardinality 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "$action_0",
                   "id",
@@ -1173,7 +1187,7 @@ exports[`entrypoint composes single cardinality 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "User",
                   "id",
@@ -1192,7 +1206,7 @@ exports[`entrypoint composes single cardinality 1`] = `
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "User",
               "address",
@@ -1208,7 +1222,7 @@ exports[`entrypoint composes single cardinality 1`] = `
         {
           "alias": "name",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "User",
               "address",
@@ -1236,7 +1250,7 @@ exports[`entrypoint composes single cardinality 1`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "User",
                 "address",
@@ -1279,7 +1293,7 @@ exports[`entrypoint composes single cardinality 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "User",
                   "id",
@@ -1311,7 +1325,7 @@ exports[`entrypoint composes single cardinality 1`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "User",
                 "address",
@@ -1353,16 +1367,19 @@ exports[`entrypoint composes single cardinality 2`] = `
           "alias": "$action_0",
           "changeset": [
             {
+              "fieldsetPath": [
+                "text",
+              ],
+              "kind": "input",
               "name": "text",
               "setter": {
-                "default": undefined,
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "text",
                 ],
-                "kind": "fieldset-input",
-                "required": true,
-                "type": "string",
+                "source": "fieldset",
               },
+              "validate": undefined,
             },
           ],
           "isPrimary": true,
@@ -1372,7 +1389,7 @@ exports[`entrypoint composes single cardinality 2`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "$action_0",
                   "id",
@@ -1393,15 +1410,15 @@ exports[`entrypoint composes single cardinality 2`] = `
           "alias": "$action_0_reference",
           "changeset": [
             {
+              "kind": "basic",
               "name": "details_id",
               "setter": {
-                "kind": "reference-value",
-                "target": {
-                  "access": [
-                    "id",
-                  ],
-                  "alias": "$target_0",
-                },
+                "kind": "alias-reference",
+                "path": [
+                  "$target_0",
+                  "id",
+                ],
+                "source": "alias",
               },
             },
           ],
@@ -1413,7 +1430,7 @@ exports[`entrypoint composes single cardinality 2`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "$action_0_reference",
                   "id",
@@ -1467,7 +1484,7 @@ exports[`entrypoint composes single cardinality 2`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "User",
                   "id",
@@ -1486,7 +1503,7 @@ exports[`entrypoint composes single cardinality 2`] = `
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "User",
               "details",
@@ -1502,7 +1519,7 @@ exports[`entrypoint composes single cardinality 2`] = `
         {
           "alias": "text",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "User",
               "details",
@@ -1529,7 +1546,7 @@ exports[`entrypoint composes single cardinality 2`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "User",
                 "details",
@@ -1578,7 +1595,7 @@ exports[`entrypoint composes single cardinality 2`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "User",
                   "id",
@@ -1608,7 +1625,7 @@ exports[`entrypoint composes single cardinality 2`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "User",
                 "details",
@@ -1650,40 +1667,46 @@ exports[`entrypoint composes single cardinality 3`] = `
           "alias": "$action_0",
           "changeset": [
             {
+              "fieldsetPath": [
+                "name",
+              ],
+              "kind": "input",
               "name": "name",
               "setter": {
-                "default": undefined,
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "name",
                 ],
-                "kind": "fieldset-input",
-                "required": true,
-                "type": "string",
+                "source": "fieldset",
               },
+              "validate": undefined,
             },
             {
+              "kind": "basic",
               "name": "address_id",
               "setter": {
-                "kind": "reference-value",
-                "target": {
-                  "access": [
-                    "id",
-                  ],
-                  "alias": "$target_0",
-                },
+                "kind": "alias-reference",
+                "path": [
+                  "$target_0",
+                  "id",
+                ],
+                "source": "alias",
               },
             },
             {
+              "fieldsetPath": [
+                "details_id",
+              ],
+              "kind": "input",
               "name": "details_id",
               "setter": {
-                "default": undefined,
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "details_id",
                 ],
-                "kind": "fieldset-input",
-                "required": true,
-                "type": "integer",
+                "source": "fieldset",
               },
+              "validate": undefined,
             },
           ],
           "isPrimary": true,
@@ -1693,7 +1716,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "$action_0",
                   "id",
@@ -1754,7 +1777,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "Address",
                   "id",
@@ -1773,7 +1796,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1789,7 +1812,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "name",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1805,7 +1828,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "address_id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1821,7 +1844,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "details_id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1848,7 +1871,7 @@ exports[`entrypoint composes single cardinality 3`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Address",
                 "user",
@@ -1888,7 +1911,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "Address",
                   "id",
@@ -1907,7 +1930,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1923,7 +1946,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "name",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1939,7 +1962,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "address_id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1955,7 +1978,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "details_id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -1983,7 +2006,7 @@ exports[`entrypoint composes single cardinality 3`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Address",
                 "user",
@@ -2005,40 +2028,49 @@ exports[`entrypoint composes single cardinality 3`] = `
           "alias": "$action_0",
           "changeset": [
             {
+              "fieldsetPath": [
+                "name",
+              ],
+              "kind": "input",
               "name": "name",
               "setter": {
-                "default": undefined,
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "name",
                 ],
-                "kind": "fieldset-input",
-                "required": false,
-                "type": "string",
+                "source": "fieldset",
               },
+              "validate": undefined,
             },
             {
+              "fieldsetPath": [
+                "address_id",
+              ],
+              "kind": "input",
               "name": "address_id",
               "setter": {
-                "default": undefined,
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "address_id",
                 ],
-                "kind": "fieldset-input",
-                "required": false,
-                "type": "integer",
+                "source": "fieldset",
               },
+              "validate": undefined,
             },
             {
+              "fieldsetPath": [
+                "details_id",
+              ],
+              "kind": "input",
               "name": "details_id",
               "setter": {
-                "default": undefined,
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "details_id",
                 ],
-                "kind": "fieldset-input",
-                "required": false,
-                "type": "integer",
+                "source": "fieldset",
               },
+              "validate": undefined,
             },
           ],
           "filter": undefined,
@@ -2049,7 +2081,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "$action_0",
                   "id",
@@ -2117,7 +2149,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "Address",
                   "id",
@@ -2136,7 +2168,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -2152,7 +2184,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "name",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -2168,7 +2200,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "address_id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -2184,7 +2216,7 @@ exports[`entrypoint composes single cardinality 3`] = `
         {
           "alias": "details_id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Address",
               "user",
@@ -2212,7 +2244,7 @@ exports[`entrypoint composes single cardinality 3`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Address",
                 "user",
@@ -2261,7 +2293,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "Address",
                   "id",
@@ -2291,7 +2323,7 @@ exports[`entrypoint composes single cardinality 3`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Address",
                 "user",
@@ -2334,7 +2366,7 @@ exports[`entrypoint composes single cardinality 3`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "Address",
                   "id",
@@ -2366,7 +2398,7 @@ exports[`entrypoint composes single cardinality 3`] = `
           {
             "alias": "id",
             "expr": {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Address",
                 "user",

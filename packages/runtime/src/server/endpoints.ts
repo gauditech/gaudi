@@ -793,7 +793,7 @@ export async function executeTypedExpr(
       return expr.literal.value;
     }
     case "identifier-path": {
-      throw new UnreachableError("Identifier paths can't be executed");
+      return ctx.get("@currentContext", expr.namePath);
     }
     case "array": {
       return expr.elements.map((e) => executeTypedExpr(def, e, ctx));

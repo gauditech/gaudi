@@ -64,7 +64,8 @@ export class Storage<T extends object = object> {
   }
 
   get(...path: (undefined | string | string[])[]): unknown {
-    return _.get(this._storage, _.compact(_.castArray(...path)));
+    const finalPath = _.compact(path.flatMap((p) => _.castArray(p)));
+    return _.get(this._storage, finalPath);
   }
 
   set(path: string | string[], value: unknown): void {
@@ -72,7 +73,8 @@ export class Storage<T extends object = object> {
   }
 
   collect(...path: (undefined | string | string[])[]): unknown[] {
-    return collect(this._storage, _.compact(_.castArray(...path)));
+    const finalPath = _.compact(path.flatMap((p) => _.castArray(p)));
+    return collect(this._storage, finalPath);
   }
 
   flatten(): Record<string, unknown> {

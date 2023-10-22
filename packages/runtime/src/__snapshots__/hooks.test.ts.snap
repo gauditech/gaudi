@@ -5,71 +5,81 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
   "alias": "$action_0",
   "changeset": [
     {
+      "kind": "basic",
       "name": "name",
       "setter": {
-        "args": [
-          {
-            "name": "value",
-            "setter": {
-              "kind": "literal",
-              "literal": {
-                "kind": "string",
-                "value": "First Last",
-              },
-            },
-          },
-          {
-            "name": "prefix",
-            "setter": {
-              "kind": "literal",
-              "literal": {
-                "kind": "string",
-                "value": "Mr. ",
-              },
-            },
-          },
-        ],
         "hook": {
-          "file": "hooks2.js",
-          "kind": "source",
-          "runtimeName": "TextRuntime",
-          "target": "prefix",
+          "args": [
+            {
+              "kind": "basic",
+              "name": "value",
+              "setter": {
+                "kind": "literal",
+                "literal": {
+                  "kind": "string",
+                  "value": "First Last",
+                },
+              },
+            },
+            {
+              "kind": "basic",
+              "name": "prefix",
+              "setter": {
+                "kind": "literal",
+                "literal": {
+                  "kind": "string",
+                  "value": "Mr. ",
+                },
+              },
+            },
+          ],
+          "hook": {
+            "file": "hooks2.js",
+            "kind": "source",
+            "runtimeName": "TextRuntime",
+            "target": "prefix",
+          },
         },
-        "kind": "fieldset-hook",
+        "kind": "hook",
       },
     },
     {
+      "kind": "basic",
       "name": "avg",
       "setter": {
-        "args": [
-          {
-            "name": "x",
-            "setter": {
-              "kind": "literal",
-              "literal": {
-                "kind": "integer",
-                "value": 100,
-              },
-            },
-          },
-          {
-            "name": "y",
-            "setter": {
-              "kind": "literal",
-              "literal": {
-                "kind": "integer",
-                "value": 20,
-              },
-            },
-          },
-        ],
         "hook": {
-          "file": "hooks.js",
-          "kind": "source",
-          "runtimeName": "MathRuntime",
-          "target": "prefix",
+          "args": [
+            {
+              "kind": "basic",
+              "name": "x",
+              "setter": {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 100,
+                },
+              },
+            },
+            {
+              "kind": "basic",
+              "name": "y",
+              "setter": {
+                "kind": "literal",
+                "literal": {
+                  "kind": "integer",
+                  "value": 20,
+                },
+              },
+            },
+          ],
+          "hook": {
+            "file": "hooks.js",
+            "kind": "source",
+            "runtimeName": "MathRuntime",
+            "target": "prefix",
+          },
         },
-        "kind": "fieldset-hook",
+        "kind": "hook",
       },
     },
   ],
@@ -80,7 +90,7 @@ exports[`hooks execution runtime should execute hooks from multiple exec runtime
     {
       "alias": "id",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "$action_0",
           "id",

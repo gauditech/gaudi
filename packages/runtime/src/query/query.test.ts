@@ -250,7 +250,7 @@ describe("Orderby, limit and offset", () => {
             kind: "expression",
             alias: "id",
             expr: {
-              kind: "alias",
+              kind: "identifier-path",
               namePath: ["Org", "recent_repos", "id"],
             },
             type: { kind: "integer", nullable: false },

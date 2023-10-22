@@ -357,6 +357,9 @@ function calculateJoinOn(def: Definition, path: NamePath): [NamePath, NamePath] 
 }
 
 function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression {
+  if (!texpr) {
+    throw new UnreachableError(`Expected an expression, got undefined`);
+  }
   return match<typeof texpr, QueryPlanExpression>(texpr)
     .with({ kind: "identifier-path" }, (a) => {
       /**
@@ -420,10 +423,7 @@ function toQueryExpr(def: Definition, texpr: TypedExprDef): QueryPlanExpression 
       elements: array.elements.map((element) => toQueryExpr(def, expandExpression(def, element))),
     }))
     .with({ kind: "hook" }, () => {
-      throw new UnreachableError("Hooks cannot be executed in DB query context");
-    })
-    .with(undefined, () => {
-      throw new Error("Expected a filter, got undefined");
+      throw new UnreachableError(`${texpr.kind} cannot be executed in DB query context`);
     })
     .exhaustive();
 }
@@ -481,7 +481,7 @@ function expandExpression(def: Definition, exp: TypedExprDef): TypedExprDef {
       };
     }
     case "hook": {
-      throw new UnreachableError("Hooks cannot be executed in DB query context");
+      throw new UnreachableError("Hooks and queries cannot be executed in DB query context");
     }
     default: {
       assertUnreachable(exp);

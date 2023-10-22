@@ -158,7 +158,7 @@ async function executeValidateExprCall(
     params[name] = value;
   }
 
-  const argResults = new Storage(params);
+  const argResults = new Storage({ "@currentContext": params });
   const assertResult = await executeTypedExpr(def, validator.assert, argResults);
   if (assertResult) {
     return undefined;

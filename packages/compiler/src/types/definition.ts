@@ -183,6 +183,7 @@ export type FunctionName =
   | BinaryOperator
   | "length"
   | "concat"
+  | "coalesce"
   | "lower"
   | "upper"
   | "now"

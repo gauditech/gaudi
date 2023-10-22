@@ -1,6 +1,10 @@
 import crypto from "crypto";
 
-import { assertUnreachable, ensureEqual } from "@gaudi/compiler/dist/common/utils";
+import {
+  UnreachableError,
+  assertUnreachable,
+  ensureEqual,
+} from "@gaudi/compiler/dist/common/utils";
 import { FunctionName } from "@gaudi/compiler/dist/types/definition";
 import { compare, hash } from "bcrypt";
 import _ from "lodash";
@@ -56,6 +60,9 @@ export function fnNameToFunction(name: FunctionName): (...args: any[]) => unknow
     }
     case "cryptoToken": {
       return (size) => crypto.randomBytes(size).toString("base64url");
+    }
+    case "coalesce": {
+      throw new UnreachableError(`${name} does not implement a function`);
     }
     default:
       return assertUnreachable(name);
@@ -114,6 +121,15 @@ export async function executeArithmetics<T>(
       );
 
       return fnNameToFunction(func.name)(vals);
+    }
+    case "coalesce": {
+      for (const argp of func.args) {
+        const arg = await getValue(argp);
+        if (!_.isNil(arg)) {
+          return arg;
+        }
+      }
+      return undefined;
     }
     case "stringify": {
       ensureEqual(func.args.length, 1, `Function "${func.name}" expects 1 parameter`);
