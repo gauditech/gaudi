@@ -276,7 +276,7 @@ export function composeFieldsetPairsFromActions(
                 {
                   kind: "field",
                   nullable: field.nullable,
-                  required: !input.optional || !!input.default,
+                  required: !(input.optional || !!input.default),
                   type: field.type,
                   validate: field.validate && _.cloneDeep(field.validate),
                 },

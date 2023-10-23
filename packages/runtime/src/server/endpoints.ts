@@ -35,6 +35,7 @@ import { RequestContext, Storage } from "./context";
 
 import { executeArithmetics } from "@runtime//common/arithmetics";
 import { executeEndpointActions } from "@runtime/common/action";
+import { buildChangeset } from "@runtime/common/changeset";
 import {
   assignNoReferenceValidators,
   assignUniqueExistsValidators,
@@ -42,6 +43,7 @@ import {
   fetchReferenceIds,
 } from "@runtime/common/constraintValidation";
 import { validateEndpointFieldset } from "@runtime/common/validation";
+import { executeActionHook } from "@runtime/hooks";
 import { QueryTree } from "@runtime/query/build";
 import {
   EndpointQueries,
@@ -50,7 +52,13 @@ import {
   decorateWithOrderBy,
   decorateWithPaging,
 } from "@runtime/query/endpointQueries";
-import { NestedRow, executeQuery, executeQueryTree } from "@runtime/query/exec";
+import {
+  NestedRow,
+  QueryExecutor,
+  createQueryExecutor,
+  executeQuery,
+  executeQueryTree,
+} from "@runtime/query/exec";
 import { buildAuthenticationHandler } from "@runtime/server/authentication";
 import { DbConn } from "@runtime/server/dbConn";
 import { BusinessError, errorResponse } from "@runtime/server/error";
@@ -123,7 +131,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, reqCtx);
+          await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
           // FIXME run custom actions
 
@@ -181,8 +189,9 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
             reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
+          logger.debug("Authorizing endpoint");
 
-          await authorizeEndpoint(def, endpoint, reqCtx);
+          await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
           // TODO: this query is not doing anything at the time
           // fetch target query (list, so no findOne here)
@@ -198,7 +207,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           let parentIds: number[] = [];
           const parentTarget = _.last(endpoint.parentContext);
           if (parentTarget) {
-            parentIds = reqCtx.collect([parentTarget.alias, "id"]) as number[];
+            parentIds = [reqCtx.get(["aliases", parentTarget.alias, "id"]) as number];
           }
 
           const responseResults = await createListEndpointResponse(
@@ -264,7 +273,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, reqCtx);
+          await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
           await executeActions(def, tx, endpoint.fieldset, endpoint.actions, reqCtx);
 
@@ -334,7 +343,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, reqCtx);
+          await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
           await executeActions(def, tx, endpoint.fieldset, endpoint.actions, reqCtx);
 
@@ -405,7 +414,7 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, reqCtx);
+          await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
           const targetId = reqCtx.get(["aliases", endpoint.target.alias, "id"]) as number;
           // FIXME execute actions??
@@ -459,7 +468,7 @@ export function buildCustomOneEndpoint(
             pids = [result[qt.queryIdAlias!] as number];
           }
 
-          await authorizeEndpoint(def, endpoint, reqCtx);
+          await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
           // --- run custom actions
 
@@ -514,7 +523,7 @@ export function buildCustomManyEndpoint(
 
           // no target query here because this is endpoint has "many" cardinality, all we know are parents
 
-          await authorizeEndpoint(def, endpoint, reqCtx);
+          await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
           // --- run custom actions
           await executeActions(def, tx, endpoint.fieldset, endpoint.actions, reqCtx);
@@ -630,10 +639,15 @@ function findOne<T>(result: T[]): T {
   return result[0];
 }
 
-async function authorizeEndpoint(def: Definition, endpoint: EndpointDef, ctx: RequestContext) {
+async function authorizeEndpoint(
+  def: Definition,
+  endpoint: EndpointDef,
+  qx: QueryExecutor,
+  ctx: RequestContext
+) {
   if (!endpoint.authorize) return;
 
-  const authorizeResult = await executeTypedExpr(def, endpoint.authorize, ctx);
+  const authorizeResult = await executeTypedExpr(def, endpoint.authorize, qx, ctx);
   if (!authorizeResult) {
     // this can either be result unauthenticated or forbidden
     const isLoggedIn = _.get(ctx, ["@auth", "id"]) !== undefined;
@@ -657,6 +671,7 @@ async function authorizeEndpoint(def: Definition, endpoint: EndpointDef, ctx: Re
 export async function executeTypedExpr(
   def: Definition,
   expr: TypedExprDef,
+  qx: QueryExecutor,
   ctx: Storage
 ): Promise<unknown> {
   if (!expr) return null;
@@ -666,7 +681,7 @@ export async function executeTypedExpr(
       return ctx.collect(expr.source, ...expr.path) ?? null;
     }
     case "function": {
-      return executeTypedFunction(def, expr, ctx);
+      return executeTypedFunction(def, expr, qx, ctx);
     }
     case "in-subquery":
     case "aggregate-function": {
@@ -679,11 +694,15 @@ export async function executeTypedExpr(
       return ctx.get("@currentContext", expr.namePath);
     }
     case "array": {
-      return expr.elements.map((e) => executeTypedExpr(def, e, ctx));
+      return expr.elements.map((e) => executeTypedExpr(def, e, qx, ctx));
     }
     case "hook": {
-      throw new Error("Not implemented");
-      // return executeActionHook(def, expr.hook.hook, expr.hook.args, {});
+      const chx = await buildChangeset(def, qx, ctx as any, expr.hook.args);
+      const actionCtx = {
+        request: ctx.get("_express", "req") as Request,
+        response: ctx.get("_express", "res") as Response,
+      };
+      return executeActionHook(def, expr.hook.hook, chx, actionCtx);
     }
     default: {
       return assertUnreachable(expr);
@@ -693,10 +712,11 @@ export async function executeTypedExpr(
 async function executeTypedFunction(
   def: Definition,
   func: TypedFunction,
+  qx: QueryExecutor,
   ctx: Storage
 ): Promise<unknown> {
   async function getValue(expr: TypedExprDef) {
-    return executeTypedExpr(def, expr, ctx);
+    return executeTypedExpr(def, expr, qx, ctx);
   }
 
   return executeArithmetics(func, getValue);
@@ -724,8 +744,8 @@ async function createListEndpointResponse(
   if (endpoint.pageable) {
     // add paging
     resultQuery = decorateWithPaging(endpoint, resultQuery, {
-      pageSize: ctx.queryParams.pageSize as unknown as number,
-      page: ctx.queryParams.page as unknown as number,
+      pageSize: ctx.pathParams.pageSize as unknown as number,
+      page: ctx.pathParams.page as unknown as number,
     });
 
     // exec data query
@@ -807,7 +827,7 @@ async function executeActions(
   reqCtx: RequestContext
 ) {
   if (fieldset) {
-    // logger.debug("FIELDSET", endpoint.fieldset);
+    logger.debug("FIELDSET", fieldset);
     const body = reqCtx._express.req.body;
     logger.debug("BODY", body);
     const referenceIds = await fetchReferenceIds(def, tx, actions, body);

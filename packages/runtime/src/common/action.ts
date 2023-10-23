@@ -73,19 +73,12 @@ async function _internalExecuteActions(
       const dbModel = model.dbname;
 
       const targetId = resolveTargetId(reqCtx, action.targetPath);
-
       await deleteData(dbConn, dbModel, targetId);
     } else if (actionKind === "query") {
       const qt = buildQueryTree(def, action.query);
-      // FIXME this ugly
-      const fieldset = reqCtx.get("fieldset") as Record<string, unknown>;
-      const varsObj = Object.fromEntries(
-        Object.keys(fieldset).map((k) => [`___changeset___${k}`, fieldset[k]])
-      );
-      varsObj["___requestAuthToken"] = reqCtx._express.req.user?.token;
 
       const result = castToCardinality(
-        await qx.executeQueryTree(def, qt, new Storage(varsObj), []),
+        await qx.executeQueryTree(def, qt, reqCtx, []),
         action.query.retCardinality
       );
       reqCtx.set(["aliases", action.alias], result);
@@ -173,12 +166,12 @@ async function fetchActionDeps(
 }
 
 function resolveTargetId(reqCtx: RequestContext, targetPath: string[]): number {
-  // append "id" to the end of the target path and separate it from it's root
-  // eg.
-  // [org, repo, issue] -> [org, repo, issue, id] -> [org, [repo, issue, id]]
-  const [rootTargetName, ...path] = [...targetPath, "id"];
-
-  return reqCtx.get([rootTargetName, ...path]) as number;
+  // append id to the path
+  const id = reqCtx.get(["aliases", ...targetPath, "id"]);
+  if (_.isNil(id)) {
+    throw new Error(`Target id not found`);
+  }
+  return id as number;
 }
 
 // ---------- DB functions
@@ -213,7 +206,8 @@ async function deleteData(dbConn: DbConn, model: string, targetId: number): Prom
   return findOne(ret).id;
 }
 
-function findOne<T>(rows: T[], message?: string): T {
+function findOne<T>(rows: T | T[], message?: string): T {
+  rows = _.castArray(rows);
   if (rows.length === 0) {
     throw new Error(message ?? `Record not found`);
   }

@@ -131,7 +131,7 @@ export function decorateWithOrderBy(endpoint: ListEndpointDef, qt: QueryTree): Q
 
 /** Decorate query with paging when required. */
 export function decorateWithPaging(
-  endpoint: ListEndpointDef,
+  _endpoint: ListEndpointDef,
   qt: QueryTree,
   params: { pageSize: number | undefined; page: number | undefined }
 ): QueryTree {

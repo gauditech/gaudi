@@ -94,20 +94,18 @@ type RequestContextParams = {
   _db: { conn: Knex };
   fieldset: Record<string, unknown>;
   pathParams: Record<string, string | number>;
-  queryParams: Request["query"];
 };
 export class RequestContext extends Storage<RequestContextParams> {
   constructor(req: Request, res: Response, ePath: EndpointPath) {
     const appCtx = getAppContext(req);
-    const pathParams = extractPathParams(ePath, req.params);
-    const queryParams = req.query;
+    const params = Object.assign({}, req.query, req.params);
+    const pathParams = extractPathParams(ePath, params);
     super({
       _express: { req, res },
       _db: { conn: appCtx.dbConn },
       // FIXME whitelist using FieldsetDef
       fieldset: req.body,
       pathParams,
-      queryParams,
     });
   }
 
@@ -125,10 +123,6 @@ export class RequestContext extends Storage<RequestContextParams> {
 
   get pathParams() {
     return this.get("pathParams") as RequestContextParams["pathParams"];
-  }
-
-  get queryParams() {
-    return this.get("queryParams") as RequestContextParams["queryParams"];
   }
 }
 

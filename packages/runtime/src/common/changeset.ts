@@ -25,7 +25,7 @@ export async function buildChangeset(
   reqCtx: RequestContext,
   actionChangsetDefinition: ChangesetDef
 ): Promise<Changeset> {
-  const changeset: Changeset = {};
+  const changeset: Changeset = Object.assign({}, _.cloneDeep(reqCtx.get("@currentContext")));
 
   async function getSetterFromExpr(expr: TypedExprDef): Promise<unknown> {
     return match(expr)
@@ -38,6 +38,7 @@ export async function buildChangeset(
         if (e.namePath[0] in changeset) {
           return _.get(changeset, e.namePath);
         } else {
+          console.dir({ np: e.namePath, changeset, actionChangsetDefinition }, { depth: 10 });
           throw new Error("Changeset value doesn't exist. Bad order?");
         }
       })

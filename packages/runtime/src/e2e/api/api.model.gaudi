@@ -268,12 +268,14 @@ api {
         query as orgByName {
           from Org as o,
           filter { lower(o.name) is lower(name) },
-          select { name }
+          select { name },
+          first
         }
         query as orgById {
           from Org as o,
           filter { o.id is orgId },
-          select { name }
+          select { name },
+          first
         }
         execute {
           responds
