@@ -219,19 +219,6 @@ export type TypedHook = {
   hook: ActionHookDef;
 };
 
-/**
- * Unified expression / setter types include:
- *
- * - literal value
- * - array
- * - db identifier
- * - context value
- * - exists subquery
- * - aggregate function
- * - function
- * - hook (code)
- */
-
 type TypedArray = {
   kind: "array";
   elements: TypedExprDef[];
