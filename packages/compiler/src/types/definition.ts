@@ -518,26 +518,6 @@ export type ChangesetOperationDef = { name: string; setter: TypedExprDef } & (
   | { kind: "basic" }
 );
 
-export type FieldSetterReferenceValue = {
-  kind: "reference-value";
-  target: { alias: string; access: string[] };
-};
-
-export type FieldSetterInput = {
-  kind: "fieldset-input";
-  type: FieldType;
-  fieldsetAccess: string[];
-  required: boolean;
-  default?: FieldSetter;
-};
-
-export type FieldSetterReferenceInput = {
-  kind: "fieldset-reference-input";
-  fieldsetAccess: string[];
-  through: string[];
-  // required: boolean;
-};
-
 export type PopulatorDef = {
   name: string;
   populates: PopulateDef[];
@@ -551,57 +531,6 @@ export type PopulateDef = {
 };
 
 export type RepeaterDef = { alias?: string; start: number; end: number };
-
-export type FieldSetterChangesetReference = {
-  kind: "changeset-reference";
-  referenceName: string;
-};
-
-export type FieldSetterHttpHandler = {
-  kind: "request-auth-token";
-  access: string[];
-};
-
-export type FieldSetterFunction = {
-  kind: "function";
-  name: FunctionName; // TODO rename to `fnName` to make it more clear, see line 124 as well
-  args: FieldSetter[];
-};
-
-export type FieldSetterContextReference = {
-  kind: "context-reference";
-  referenceName: string;
-};
-
-export type FieldSetterHook = {
-  kind: "fieldset-hook";
-  hook: HookCode;
-  args: ChangesetDef;
-};
-
-export type FieldSetterQuery = {
-  kind: "query";
-  query: QueryDef;
-};
-
-export type FieldSetterArray = {
-  kind: "array";
-  elements: FieldSetter[];
-};
-
-type FieldSetter =
-  // TODO add composite expression setter
-  | LiteralValueDef
-  | FieldSetterReferenceValue
-  | FieldSetterInput
-  | FieldSetterReferenceInput
-  | FieldSetterChangesetReference
-  | FieldSetterHook
-  | FieldSetterHttpHandler
-  | FieldSetterFunction
-  | FieldSetterContextReference
-  | FieldSetterQuery
-  | FieldSetterArray;
 
 export type ExecutionRuntimeDef = {
   name: string;
