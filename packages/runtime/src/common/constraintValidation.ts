@@ -15,13 +15,18 @@ import { DbConn } from "../server/dbConn";
 
 export type ReferenceIdResult =
   | ValidReferenceIdResult
+  | NullReferenceIdResult
   | InvalidReferenceIdResult
   | InputMissingReferenceIdResult;
 
 export type ValidReferenceIdResult = {
   kind: "reference-found";
   fieldsetAccess: string[];
-  value: number;
+  value: number | null;
+};
+export type NullReferenceIdResult = {
+  kind: "reference-null";
+  fieldsetAccess: string[];
 };
 type InvalidReferenceIdResult = {
   kind: "reference-not-found";
@@ -51,7 +56,13 @@ export async function fetchReferenceIds(
   const promiseEntries = referenceInputs.map(
     async ([reference, operation]): Promise<ReferenceIdResult> => {
       const inputValue = _.get(input, operation.fieldsetPath);
-      if (_.isNil(inputValue)) {
+      if (inputValue === null) {
+        return {
+          kind: "reference-null",
+          fieldsetAccess: operation.fieldsetPath,
+        };
+      }
+      if (inputValue === undefined) {
         return {
           kind: "reference-input-missing",
           fieldsetAccess: operation.fieldsetPath,
@@ -66,9 +77,8 @@ export async function fetchReferenceIds(
         operation.through,
         inputValue
       );
-      console.dir({ resultId });
 
-      if (resultId === null) {
+      if (!resultId) {
         return { kind: "reference-not-found", fieldsetAccess: operation.fieldsetPath };
       }
 
@@ -105,7 +115,13 @@ export async function fetchExistingUniqueValues(
   const inputPromiseEntries = uniqueInputs.map(
     async ([field, operation]): Promise<ReferenceIdResult> => {
       const inputValue = _.get(input, operation.fieldsetPath);
-      if (_.isNil(inputValue)) {
+      if (inputValue === null) {
+        return {
+          kind: "reference-null",
+          fieldsetAccess: operation.fieldsetPath,
+        };
+      }
+      if (inputValue === undefined) {
         return {
           kind: "reference-input-missing",
           fieldsetAccess: operation.fieldsetPath,
@@ -114,7 +130,7 @@ export async function fetchExistingUniqueValues(
       }
 
       const resultId = await findIdBy(def, dbConn, field.modelRefKey, [field.name], inputValue);
-      if (resultId === null) {
+      if (!resultId) {
         return { kind: "reference-not-found", fieldsetAccess: operation.fieldsetPath };
       } else {
         return {
@@ -164,7 +180,7 @@ export async function fetchExistingUniqueValues(
         [refField.name],
         result.value
       );
-      if (relId === null) {
+      if (!relId) {
         return { kind: "reference-not-found", fieldsetAccess: operation.fieldsetPath };
       } else {
         return { kind: "reference-found", fieldsetAccess: operation.fieldsetPath, value: relId };
@@ -182,7 +198,7 @@ export async function fetchExistingUniqueValues(
 export function assignNoReferenceValidators(
   fieldset: FieldsetDef,
   referenceIds: ReferenceIdResult[]
-): asserts referenceIds is ValidReferenceIdResult[] {
+): asserts referenceIds is (ValidReferenceIdResult | NullReferenceIdResult)[] {
   referenceIds.forEach((referenceIdResult) => {
     match(referenceIdResult)
       .with({ kind: "reference-not-found" }, ({ fieldsetAccess }) => {

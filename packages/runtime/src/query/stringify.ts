@@ -37,7 +37,7 @@ function exprToString(expr: QueryPlanExpression): string {
         .exhaustive();
     }
     case "variable": {
-      return `:${expr.contextPath.join(".")}`;
+      return `:${expr.contextPath.join("__")}`;
     }
     case "function": {
       switch (expr.fnName) {

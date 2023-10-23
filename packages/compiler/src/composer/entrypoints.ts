@@ -266,15 +266,13 @@ export function composeFieldsetPairsFromActions(
         const inputOrReferenceAtoms = kindFilter(action.actionAtoms, "input", "reference");
         const explicit = inputOrReferenceAtoms.map((atom) => {
           // calculate fieldset path
-          const fieldsetPath = action.isPrimary
-            ? [atom.target.name]
-            : [action.alias, atom.target.name];
+          const fieldsetNamespace = action.isPrimary ? [] : [action.alias];
 
           return match<typeof atom, FieldsetPair>(atom)
             .with({ kind: "input" }, (input): FieldsetPair => {
               const field = getRef.field(def, input.target.parentModel, input.target.name);
               return [
-                fieldsetPath,
+                [...fieldsetNamespace, input.target.name],
                 {
                   kind: "field",
                   nullable: field.nullable,
@@ -289,7 +287,10 @@ export function composeFieldsetPairsFromActions(
               const leaf = _.last(reference.through)!;
               const field = getRef.field(def, leaf.parentModel, leaf.name);
               return [
-                fieldsetPath,
+                [
+                  ...fieldsetNamespace,
+                  [reference.target.name, ...reference.through.map((t) => t.name)].join("_"),
+                ],
                 {
                   kind: "field",
                   nullable: ref.nullable,

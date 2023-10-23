@@ -12,7 +12,6 @@ import {
 import bcrypt, { hash } from "bcrypt";
 import _ from "lodash";
 
-import { ActionContext } from "@runtime/common/action";
 import {
   buildChangeset,
   fieldsetAccessToPath,
@@ -21,7 +20,7 @@ import {
   setFieldsetProperty,
 } from "@runtime/common/changeset";
 import { compileFromString, mockQueryExecutor } from "@runtime/common/testUtils";
-import { RequestContext, Storage } from "@runtime/server/context";
+import { Storage } from "@runtime/server/context";
 
 describe("runtime", () => {
   describe("changeset", () => {
@@ -88,22 +87,22 @@ describe("runtime", () => {
         },
         {
           kind: "reference-through",
-          name: "other_model_id",
+          name: "other_model",
           setter: {
             kind: "alias-reference",
             source: "referenceThroughs",
-            path: ["other_model", "id"],
+            path: ["other_slug", "id"],
           },
           fieldsetPath: ["other_slug"],
           through: ["other_slug"],
         },
         {
           kind: "reference-through",
-          name: "deep_other_model_id",
+          name: "deep_other_model",
           setter: {
             kind: "alias-reference",
             source: "referenceThroughs",
-            path: ["deep_other_model", "id"],
+            path: ["other_myref_slug", "id"],
           },
           fieldsetPath: ["other_myref_slug"],
           through: ["myref", "slug"],
@@ -135,31 +134,20 @@ describe("runtime", () => {
       const input = {
         input_prop: "input value",
         extra_input_prop: "extra input value",
+        other_slug: "slug-1",
+        other_myref_slug: "slug-40",
       };
       const requestContext = new Storage({
         fieldset: input,
+        validatedFieldset: input,
         referenceThroughs: {
-          other_model: { id: 1 },
-          deep_other_model: { id: 40 },
+          other_slug: { id: 1 },
+          other_myref_slug: { id: 40 },
         },
       }) as any;
-      const context: ActionContext = {
-        input,
-        requestContext,
-        referenceIds: [
-          { kind: "reference-found", fieldsetAccess: ["other_slug"], value: 1 },
-          { kind: "reference-found", fieldsetAccess: ["other_myref_slug"], value: 40 },
-        ],
-      };
 
       expect(
-        await buildChangeset(
-          createTestDefinition(),
-          mockQueryExecutor(),
-          undefined,
-          changeset,
-          context
-        )
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), requestContext, changeset)
       ).toMatchSnapshot();
     });
 
@@ -204,21 +192,10 @@ describe("runtime", () => {
         required_default_provided: "this is user value",
         optional_default_provided: "this is another user value",
       };
-      const requestContext = new Storage({ fieldset: input }) as any;
-      const context: ActionContext = {
-        input,
-        referenceIds: [],
-        requestContext,
-      };
+      const requestContext = new Storage({ fieldset: input, validatedFieldset: input }) as any;
 
       expect(
-        await buildChangeset(
-          createTestDefinition(),
-          mockQueryExecutor(),
-          undefined,
-          changeset,
-          context
-        )
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), requestContext, changeset)
       ).toMatchSnapshot();
     });
 
@@ -408,18 +385,13 @@ describe("runtime", () => {
           ]),
         },
       ];
-      const context: ActionContext = {
-        input: {},
-        requestContext: new Storage({ fieldset: {} }) as any,
-        referenceIds: [],
-      };
+
       expect(
         await buildChangeset(
           createTestDefinition(),
           mockQueryExecutor(),
-          undefined,
-          changeset,
-          context
+          new Storage({ fieldset: {}, validatedFieldset: {} }) as any,
+          changeset
         )
       ).toMatchSnapshot();
     });

@@ -180,7 +180,7 @@ export class SQLiteTestRunner extends TestRunner {
       },
     });
     // populate
-    const dbConn = createDbConn(`sqlite://${dbPath}`);
+    const dbConn = createDbConn(`file://${dbPath}`);
     await populateDb(this.definition!, dbConn, data);
     await dbConn.destroy();
   }

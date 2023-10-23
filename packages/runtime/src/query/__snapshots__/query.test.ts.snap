@@ -347,7 +347,7 @@ exports[`Endpoint queries Deeply nested entrypoints test create endpoint 2`] = `
 FROM
   "org" AS "Org"
 WHERE
-  "Org"."slug" = :pathParams.org_slug
+  "Org"."slug" = :pathParams__org_slug
 
 
 ",
@@ -357,7 +357,7 @@ FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
-  "Org.repos"."id" = :pathParams.repo_id
+  "Org.repos"."id" = :pathParams__repo_id
   AND "Org"."id" IN :@context_ids
 
 
@@ -799,7 +799,7 @@ exports[`Endpoint queries Deeply nested entrypoints test delete endpoint 2`] = `
 FROM
   "org" AS "Org"
 WHERE
-  "Org"."slug" = :pathParams.org_slug
+  "Org"."slug" = :pathParams__org_slug
 
 
 ",
@@ -809,7 +809,7 @@ FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
-  "Org.repos"."id" = :pathParams.repo_id
+  "Org.repos"."id" = :pathParams__repo_id
   AND "Org"."id" IN :@context_ids
 
 
@@ -820,7 +820,7 @@ FROM
   "repo" AS "Repo"
   INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
-  "Repo.issues"."id" = :pathParams.issue_id
+  "Repo.issues"."id" = :pathParams__issue_id
   AND "Repo"."id" IN :@context_ids
 
 
@@ -1287,7 +1287,7 @@ exports[`Endpoint queries Deeply nested entrypoints test get endpoint 2`] = `
 FROM
   "org" AS "Org"
 WHERE
-  "Org"."slug" = :pathParams.org_slug
+  "Org"."slug" = :pathParams__org_slug
 
 
 ",
@@ -1297,7 +1297,7 @@ FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
-  "Org.repos"."id" = :pathParams.repo_id
+  "Org.repos"."id" = :pathParams__repo_id
   AND "Org"."id" IN :@context_ids
 
 
@@ -1308,7 +1308,7 @@ FROM
   "repo" AS "Repo"
   INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
-  "Repo.issues"."id" = :pathParams.issue_id
+  "Repo.issues"."id" = :pathParams__issue_id
   AND "Repo"."id" IN :@context_ids
 
 
@@ -1750,7 +1750,7 @@ exports[`Endpoint queries Deeply nested entrypoints test list endpoint 2`] = `
 FROM
   "org" AS "Org"
 WHERE
-  "Org"."slug" = :pathParams.org_slug
+  "Org"."slug" = :pathParams__org_slug
 
 
 ",
@@ -1760,7 +1760,7 @@ FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
-  "Org.repos"."id" = :pathParams.repo_id
+  "Org.repos"."id" = :pathParams__repo_id
   AND "Org"."id" IN :@context_ids
 
 
@@ -2233,7 +2233,7 @@ exports[`Endpoint queries Deeply nested entrypoints test update endpoint 2`] = `
 FROM
   "org" AS "Org"
 WHERE
-  "Org"."slug" = :pathParams.org_slug
+  "Org"."slug" = :pathParams__org_slug
 
 
 ",
@@ -2243,7 +2243,7 @@ FROM
   "org" AS "Org"
   INNER JOIN "repo" AS "Org.repos" ON "Org"."id" = "Org.repos"."org_id"
 WHERE
-  "Org.repos"."id" = :pathParams.repo_id
+  "Org.repos"."id" = :pathParams__repo_id
   AND "Org"."id" IN :@context_ids
 
 
@@ -2254,7 +2254,7 @@ FROM
   "repo" AS "Repo"
   INNER JOIN "issue" AS "Repo.issues" ON "Repo"."id" = "Repo.issues"."repo_id"
 WHERE
-  "Repo.issues"."id" = :pathParams.issue_id
+  "Repo.issues"."id" = :pathParams__issue_id
   AND "Repo"."id" IN :@context_ids
 
 

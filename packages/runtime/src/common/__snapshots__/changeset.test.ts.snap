@@ -12,12 +12,6 @@ exports[`runtime changeset build action changeset object 1`] = `
 }
 `;
 
-exports[`runtime changeset build strict action changeset object 1`] = `
-{
-  "input_prop": "just value",
-}
-`;
-
 exports[`runtime changeset calculate changeset arithmetic operations 1`] = `
 {
   "a": 2,

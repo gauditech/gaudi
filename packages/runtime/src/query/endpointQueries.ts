@@ -38,7 +38,7 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
       name: "is",
       args: [
         { kind: "identifier-path", namePath: [authModel.refKey, "id"] },
-        { kind: "alias-reference", path: ["id"], source: "alias" },
+        { kind: "alias-reference", path: ["id"], source: "aliases" },
       ],
     };
     const query = queryFromParts(def, "@auth", [authModel.name], filter, endpoint.authSelect);

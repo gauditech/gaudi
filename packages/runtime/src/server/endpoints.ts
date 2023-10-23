@@ -7,9 +7,10 @@ import {
 } from "@gaudi/compiler/dist/builder/query";
 import { kindFilter } from "@gaudi/compiler/dist/common/kindFilter";
 import { getRef } from "@gaudi/compiler/dist/common/refs";
-import { UnreachableError, assertUnreachable } from "@gaudi/compiler/dist/common/utils";
+import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import { endpointUsesAuthentication } from "@gaudi/compiler/dist/composer/entrypoints";
 import {
+  ActionDef,
   CreateEndpointDef,
   CustomManyEndpointDef,
   CustomOneEndpointDef,
@@ -18,6 +19,7 @@ import {
   EndpointDef,
   EndpointHttpMethod,
   EntrypointDef,
+  FieldsetDef,
   GetEndpointDef,
   ListEndpointDef,
   QueryDef,
@@ -34,8 +36,6 @@ import { RequestContext, Storage } from "./context";
 import { executeArithmetics } from "@runtime//common/arithmetics";
 import { executeEndpointActions } from "@runtime/common/action";
 import {
-  ReferenceIdResult,
-  ValidReferenceIdResult,
   assignNoReferenceValidators,
   assignUniqueExistsValidators,
   fetchExistingUniqueValues,
@@ -119,7 +119,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
           for (const qt of allQueries) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            _.set(reqCtx, qt.alias, result);
+            reqCtx.set(["aliases", qt.alias], result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
@@ -131,7 +131,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
            * actions may have modified the record. We can only reliably identify it via `id` collected
            * before the actions were executed.
            */
-          const targetId = reqCtx.get([endpoint.target.alias, "id"]) as number;
+          const targetId = reqCtx.get(["aliases", endpoint.target.alias, "id"]) as number;
           const responseResults = await executeQueryTree(
             tx,
             def,
@@ -253,7 +253,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
               []
             );
             const result = findOne(results);
-            reqCtx.set("@auth", result);
+            reqCtx.set(["aliases", "@auth"], result);
           }
 
           let pids: number[] = [];
@@ -266,49 +266,12 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
 
           await authorizeEndpoint(def, endpoint, reqCtx);
 
-          let validationResult: Record<string, unknown> = {};
-          let referenceIds: ReferenceIdResult[] = [];
-          let uniqueIds: ReferenceIdResult[] = [];
-
-          if (endpoint.fieldset) {
-            const body = req.body;
-            logger.debug("BODY", body);
-
-            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            logger.debug("Reference IDs", referenceIds);
-
-            uniqueIds = await fetchExistingUniqueValues(
-              def,
-              tx,
-              endpoint.actions,
-              body,
-              referenceIds
-            );
-            logger.debug("Unique IDs", uniqueIds);
-
-            const fieldset = _.cloneDeep(endpoint.fieldset);
-            assignNoReferenceValidators(fieldset, referenceIds);
-            assignUniqueExistsValidators(fieldset, uniqueIds);
-            validationResult = await validateEndpointFieldset(def, fieldset, body);
-            logger.debug("Validation result", validationResult);
-          }
-
-          await executeEndpointActions(
-            def,
-            tx,
-            {
-              input: validationResult,
-              requestContext: reqCtx,
-              referenceIds: referenceIds as ValidReferenceIdResult[],
-            },
-            { request: req, response: resp },
-            endpoint.actions
-          );
+          await executeActions(def, tx, endpoint.fieldset, endpoint.actions, reqCtx);
 
           const primaryAlias = kindFilter(endpoint.actions, "create-one").find(
             (a) => a.isPrimary
           )!.alias;
-          const targetId = reqCtx.get([primaryAlias, "id"]) as number | undefined;
+          const targetId = reqCtx.get(["aliases", primaryAlias, "id"]) as number | undefined;
 
           if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
@@ -373,37 +336,12 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
 
           await authorizeEndpoint(def, endpoint, reqCtx);
 
-          let validationResult: Record<string, unknown> = {};
-          let referenceIds: ReferenceIdResult[] = [];
-          if (endpoint.fieldset) {
-            const body = req.body;
-            logger.debug("BODY", body);
-
-            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            logger.debug("Reference IDs", referenceIds);
-
-            const fieldset = _.cloneDeep(endpoint.fieldset);
-            assignNoReferenceValidators(fieldset, referenceIds);
-            validationResult = await validateEndpointFieldset(def, fieldset, body);
-            logger.debug("Validation result", validationResult);
-          }
-
-          await executeEndpointActions(
-            def,
-            tx,
-            {
-              input: validationResult,
-              requestContext: reqCtx,
-              referenceIds: referenceIds as ValidReferenceIdResult[],
-            },
-            { request: req, response: resp },
-            endpoint.actions
-          );
+          await executeActions(def, tx, endpoint.fieldset, endpoint.actions, reqCtx);
 
           const primaryAlias = kindFilter(endpoint.actions, "update-one").find(
             (a) => a.isPrimary
           )!.alias;
-          const targetId = reqCtx.get([primaryAlias, "id"]) as number | undefined;
+          const targetId = reqCtx.get(["aliases", primaryAlias, "id"]) as number | undefined;
 
           if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
@@ -469,7 +407,8 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
 
           await authorizeEndpoint(def, endpoint, reqCtx);
 
-          const targetId = reqCtx.get([endpoint.target.alias, "id"]) as number;
+          const targetId = reqCtx.get(["aliases", endpoint.target.alias, "id"]) as number;
+          // FIXME execute actions??
           await deleteData(def, tx, endpoint, targetId);
 
           await tx.commit();
@@ -524,35 +463,7 @@ export function buildCustomOneEndpoint(
 
           // --- run custom actions
 
-          let validationResult: Record<string, unknown> = {};
-          let referenceIds: ReferenceIdResult[] = [];
-          logger.debug("FIELDSET %O", endpoint.fieldset);
-          if (endpoint.fieldset != null) {
-            const body = req.body;
-            logger.debug("BODY", body);
-
-            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            logger.debug("Reference IDs", referenceIds);
-
-            const fieldset = _.cloneDeep(endpoint.fieldset);
-            assignNoReferenceValidators(fieldset, referenceIds);
-            validationResult = await validateEndpointFieldset(def, fieldset, body);
-            logger.debug("Validation result", validationResult);
-          }
-
-          if (endpoint.actions.length > 0) {
-            await executeEndpointActions(
-              def,
-              tx,
-              {
-                input: validationResult,
-                requestContext: reqCtx,
-                referenceIds: referenceIds as ValidReferenceIdResult[],
-              },
-              { request: req, response: resp },
-              endpoint.actions
-            );
-          }
+          await executeActions(def, tx, endpoint.fieldset, endpoint.actions, reqCtx);
 
           await tx.commit();
 
@@ -606,35 +517,7 @@ export function buildCustomManyEndpoint(
           await authorizeEndpoint(def, endpoint, reqCtx);
 
           // --- run custom actions
-
-          let validationResult: Record<string, unknown> = {};
-          let referenceIds: ReferenceIdResult[] = [];
-
-          if (endpoint.fieldset != null) {
-            const body = req.body;
-            logger.debug("BODY", body);
-
-            referenceIds = await fetchReferenceIds(def, tx, endpoint.actions, body);
-            logger.debug("Reference IDs", referenceIds);
-            const fieldset = _.cloneDeep(endpoint.fieldset);
-            assignNoReferenceValidators(fieldset, referenceIds);
-            validationResult = await validateEndpointFieldset(def, fieldset, body);
-            logger.debug("Validation result", validationResult);
-          }
-
-          if (endpoint.actions.length > 0) {
-            await executeEndpointActions(
-              def,
-              tx,
-              {
-                input: validationResult,
-                requestContext: reqCtx,
-                referenceIds: referenceIds as ValidReferenceIdResult[],
-              },
-              { request: req, response: resp },
-              endpoint.actions
-            );
-          }
+          await executeActions(def, tx, endpoint.fieldset, endpoint.actions, reqCtx);
 
           await tx.commit();
 
@@ -841,8 +724,8 @@ async function createListEndpointResponse(
   if (endpoint.pageable) {
     // add paging
     resultQuery = decorateWithPaging(endpoint, resultQuery, {
-      pageSize: ctx.queryParams.pageSize as any, // FIXME
-      page: ctx.queryParams.page as any, // FIXME
+      pageSize: ctx.queryParams.pageSize as unknown as number,
+      page: ctx.queryParams.page as unknown as number,
     });
 
     // exec data query
@@ -914,4 +797,43 @@ export async function loadAuthIntoContext(
   } else {
     ctx.set(["aliases", "@auth"], null);
   }
+}
+
+async function executeActions(
+  def: Definition,
+  tx: DbConn,
+  fieldset: FieldsetDef | undefined,
+  actions: ActionDef[],
+  reqCtx: RequestContext
+) {
+  if (fieldset) {
+    // logger.debug("FIELDSET", endpoint.fieldset);
+    const body = reqCtx._express.req.body;
+    logger.debug("BODY", body);
+    const referenceIds = await fetchReferenceIds(def, tx, actions, body);
+    logger.debug("Reference IDs", referenceIds);
+
+    const uniqueIds = await fetchExistingUniqueValues(def, tx, actions, body, referenceIds);
+    logger.debug("Unique IDs", uniqueIds);
+
+    // clone a fieldset before mutating!
+    fieldset = _.cloneDeep(fieldset);
+    assignNoReferenceValidators(fieldset, referenceIds);
+    assignUniqueExistsValidators(fieldset, uniqueIds);
+    const validationResult = await validateEndpointFieldset(def, fieldset, body);
+    logger.debug("Validation result", validationResult);
+
+    reqCtx.set("validatedFieldset", validationResult);
+
+    // set reference throughs into context
+    referenceIds.forEach((result) => {
+      const value = match(result)
+        .with({ kind: "reference-found" }, (r) => r.value)
+        .with({ kind: "reference-null" }, () => null)
+        .exhaustive();
+      reqCtx.set(["referenceThroughs", ...result.fieldsetAccess, "id"], value);
+    });
+  }
+
+  await executeEndpointActions(def, tx, reqCtx, actions);
 }

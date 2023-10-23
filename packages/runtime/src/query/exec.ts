@@ -44,9 +44,12 @@ export async function executeQuery(
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
   let results = await conn.raw(sqlTpl, { ...ctx.flatten(), ...idMap });
+
+  // sqlite vs postgres drivers compat
   if ("rows" in results) {
     results = results.rows;
   }
+
   return results.map((row: Row): Row => {
     const cast = query.select.map((item: SelectItem): [string, string | number | boolean] => {
       const value = row[item.alias];
@@ -152,7 +155,7 @@ export async function findIdBy(
   modelName: string,
   targetPath: NamePath,
   value: unknown
-): Promise<number | null> {
+): Promise<number | undefined> {
   const filter: TypedExprDef = {
     kind: "function",
     name: "is",
@@ -162,11 +165,10 @@ export async function findIdBy(
     ],
   };
   const query = queryFromParts(def, "findBy", [modelName], filter, [selectableId([modelName])]);
-  // FIXME not passing context here
   const [result] = await executeQuery(conn, def, query, new Storage({ findBy_input: value }), []);
 
-  if (!result) return null;
-  return (result[GAUDI_INTERNAL_TARGET_ID_ALIAS] as number) ?? null;
+  if (!result) return undefined;
+  return (result[GAUDI_INTERNAL_TARGET_ID_ALIAS] as number) ?? undefined;
 }
 
 // ----- QueryExecutor

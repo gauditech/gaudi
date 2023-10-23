@@ -10,9 +10,9 @@ import { match } from "ts-pattern";
 
 import { executeArithmetics } from "./arithmetics";
 
-import { ActionContext } from "@runtime/common/action";
-import { HookActionContext, executeHook } from "@runtime/hooks";
+import { executeHook } from "@runtime/hooks";
 import { QueryExecutor } from "@runtime/query/exec";
+import { RequestContext } from "@runtime/server/context";
 
 type Changeset = Record<string, unknown>;
 
@@ -22,23 +22,19 @@ type Changeset = Record<string, unknown>;
 export async function buildChangeset(
   def: Definition,
   qx: QueryExecutor,
-  epCtx: HookActionContext | undefined,
-  actionChangsetDefinition: ChangesetDef,
-  actionContext: ActionContext
-  // `changesetContext` is used for hooks, to be able to pass the "parent context" changeset
+  reqCtx: RequestContext,
+  actionChangsetDefinition: ChangesetDef
 ): Promise<Changeset> {
   const changeset: Changeset = {};
 
-  async function getValueFromExpr(expr: TypedExprDef): Promise<unknown> {
+  async function getSetterFromExpr(expr: TypedExprDef): Promise<unknown> {
     return match(expr)
       .with({ kind: "literal" }, ({ literal }) => formatFieldValue(literal.value, literal.kind))
-      .with({ kind: "array" }, (arr) => Promise.all(arr.elements.map(_.unary(getValueFromExpr))))
-      .with({ kind: "alias-reference" }, (ref) =>
-        actionContext.requestContext.collect(ref.source, ref.path)
-      )
-      .with({ kind: "function" }, (expr) => executeArithmetics(expr, _.unary(getValueFromExpr)))
+      .with({ kind: "array" }, (arr) => Promise.all(arr.elements.map(_.unary(getSetterFromExpr))))
+      .with({ kind: "alias-reference" }, (ref) => reqCtx.collect(ref.source, ref.path))
+      .with({ kind: "function" }, (expr) => executeArithmetics(expr, _.unary(getSetterFromExpr)))
       .with({ kind: "identifier-path" }, (e) => {
-        // actionContext.requestContext.collect("@currentContext", e.namePath)
+        // reqCtx.collect("@currentContext", e.namePath)
         if (e.namePath[0] in changeset) {
           return _.get(changeset, e.namePath);
         } else {
@@ -46,106 +42,15 @@ export async function buildChangeset(
         }
       })
       .with({ kind: "hook" }, async (hook) => {
-        const chx = await buildChangeset(def, qx, epCtx, hook.hook.args, actionContext);
+        const chx = await buildChangeset(def, qx, reqCtx, hook.hook.args);
         return executeHook(def, hook.hook.hook, chx);
       })
       .otherwise(shouldBeUnreachableCb(`'${expr?.kind}' cannot be executed in server environment`));
   }
 
-  // async function getValue(setter: FieldSetter): Promise<unknown> {
-  //   switch (setter.kind) {
-  //     case "literal": {
-  //       return formatFieldValue(setter.literal.value, setter.literal.kind);
-  //     }
-  //     case "fieldset-input": {
-  //       return coalesce([
-  //         async () =>
-  //           formatFieldValue(
-  //             getFieldsetProperty(actionContext.input, setter.fieldsetAccess),
-  //             setter.type
-  //           ),
-  //         async () => (setter.default ? getValue(setter.default) : Promise.resolve(undefined)),
-  //         async () => undefined,
-  //       ]);
-  //     }
-  //     case "reference-value": {
-  //       return actionContext.vars.collect([setter.target.alias, ...setter.target.access]);
-  //     }
-  //     case "fieldset-hook": {
-  //       const args = await buildChangeset(def, qx, epCtx, setter.args, actionContext, changeset);
-  //       return await executeHook(def, setter.hook, args);
-  //     }
-  //     case "changeset-reference": {
-  //       /**
-  //        * Composer guarantees the correct order of array elements, so `setter.referenceName` should
-  //        * be in the context and we should be able to return `changeset[setter.referenceName]`.
-  //        *
-  //        * However, hooks inherit the action changeset context, but also build their own changeset,
-  //        * so we need to check which changeset `setter.referenceName` belongs to. In other words,
-  //        * it's possible that `setter.referenceName in changeset` is `false` when building a hooks changeset,
-  //        * but in that case we can assume it's in the `changesetContext`.
-  //        *
-  //        * NOTE the following code wouldn't work because `undefined` is a valid changeset value:
-  //        * `return changeset[setter.referenceName] || changesetContext[setter.referenceName];`
-  //        */
-  //       if (setter.referenceName in changeset) {
-  //         return changeset[setter.referenceName];
-  //       } else {
-  //         ensureEqual(
-  //           setter.referenceName in changesetContext,
-  //           true,
-  //           `Reference "${setter.referenceName}" not found in changeset context`
-  //         );
-  //         return changesetContext[setter.referenceName];
-  //       }
-  //     }
-  //     case "fieldset-reference-input": {
-  //       const referenceIdResult = actionContext.referenceIds.find((result) =>
-  //         _.isEqual(result.fieldsetAccess, setter.fieldsetAccess)
-  //       );
-  //       ensureNot(
-  //         referenceIdResult,
-  //         undefined,
-  //         `Reference ID result missing: ${JSON.stringify(actionContext.referenceIds)} -> ${
-  //           setter.fieldsetAccess
-  //         }`
-  //       );
-  //       return referenceIdResult.value;
-  //     }
-  //     case "request-auth-token": {
-  //       ensureExists(epCtx, `HTTP handle context is required for "${setter.kind}" changesets`);
-  //       const handler = epCtx.request;
-
-  //       return getFieldsetProperty(handler, setter.access);
-  //     }
-  //     case "function": {
-  //       return executeArithmetics(setter, (s) => getValue(s));
-  //     }
-  //     case "context-reference": {
-  //       return actionContext.vars.get(setter.referenceName);
-  //     }
-  //     case "query": {
-  //       const vars = actionContext.vars.copy();
-  //       vars.set("___requestAuthToken", await getValue({ kind: "request-auth-token", access: [] }));
-  //       Object.keys(actionContext.input).forEach((key) => {
-  //         vars.set(`___changeset___${key}`, actionContext.input[key]);
-  //       });
-
-  //       const qt = buildQueryTree(def, setter.query);
-  //       const results = await qx.executeQueryTree(def, qt, vars, []);
-  //       return castToCardinality(results, setter.query.retCardinality);
-  //     }
-  //     case "array": {
-  //       return await Promise.all(setter.elements.map((e) => getValue(e)));
-  //     }
-  //     default: {
-  //       return assertUnreachable(setter);
-  //     }
-  //   }
-  // }
-
-  for (const { name, setter } of actionChangsetDefinition) {
-    changeset[name] = await getValueFromExpr(setter);
+  for (const { name, setter, kind } of actionChangsetDefinition) {
+    const finalName = kind === "reference-through" ? `${name}_id` : name;
+    changeset[finalName] = await getSetterFromExpr(setter);
   }
 
   return changeset;

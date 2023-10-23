@@ -265,13 +265,23 @@ api {
         field orgId { type integer }
       }
       action {
+        query as orgByName {
+          from Org as o,
+          filter { lower(o.name) is lower(name) },
+          select { name }
+        }
+        query as orgById {
+          from Org as o,
+          filter { o.id is orgId },
+          select { name }
+        }
         execute {
           responds
           hook {
             arg inputName name
             arg inputOrgId orgId
-            arg orgByName query { from Org as o, filter {lower(o.name) is lower(name)}, select {name} }
-            arg orgById query { from Org as o, filter { o.id is orgId }, select {name} }
+            arg orgByName orgByName
+            arg orgById orgById
             // arg orgByInputId query { from Org as o, filter { o.id is inputOrgId }, select {name} }
             source customActionResponds from "hooks.js"
           }

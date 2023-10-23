@@ -17,7 +17,7 @@ exports[`compose hooks action hook 1`] = `
                   "org",
                   "name",
                 ],
-                "source": "alias",
+                "source": "aliases",
               },
             },
             {
@@ -138,7 +138,7 @@ exports[`compose hooks composes action hook 1`] = `
               "org",
               "id",
             ],
-            "source": "alias",
+            "source": "aliases",
           },
         ],
         "kind": "function",
@@ -202,7 +202,7 @@ exports[`compose hooks composes action hook 1`] = `
             "path": [
               "orgQ",
             ],
-            "source": "alias",
+            "source": "aliases",
           },
         },
         {

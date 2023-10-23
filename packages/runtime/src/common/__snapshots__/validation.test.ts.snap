@@ -167,7 +167,7 @@ exports[`runtime validation build validation action 1`] = `
           "newFoo",
           "from",
         ],
-        "source": "alias",
+        "source": "aliases",
       },
       {
         "kind": "alias-reference",
@@ -175,7 +175,7 @@ exports[`runtime validation build validation action 1`] = `
           "newFoo",
           "to",
         ],
-        "source": "alias",
+        "source": "aliases",
       },
     ],
     "kind": "call",

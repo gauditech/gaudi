@@ -234,7 +234,7 @@ export function composeRefPath(
     case "auth":
     case "repeat":
     case "authToken":
-      return { kind: "alias-reference", path: path.map((i) => i.text), source: "alias" };
+      return { kind: "alias-reference", path: path.map((i) => i.text), source: "aliases" };
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "validator":

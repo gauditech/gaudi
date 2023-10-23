@@ -78,7 +78,10 @@ export class Storage<T extends object = object> {
   }
 
   flatten(): Record<string, unknown> {
-    return flatten(_.pick(this._storage, "aliases", "fieldset", "changesets", "pathParams"));
+    // FIXME only collect paths needed in the expression
+    return flatten(_.omit(this._storage, "_express", "_db"), {
+      delimiter: "__",
+    });
   }
 
   copy(): Storage<T> {

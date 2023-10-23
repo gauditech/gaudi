@@ -143,7 +143,7 @@ export type LiteralValueDef = { kind: "literal"; literal: Literal };
 
 type CtxSource =
   | "fieldset"
-  | "alias"
+  | "aliases"
   | "changesets"
   | "referenceThroughs"
   | "pathParams"

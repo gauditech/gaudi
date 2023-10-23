@@ -258,15 +258,18 @@ function atomToChangesetOperation(
       };
     }
     case "reference": {
+      const through = _.map(atom.through, "name");
+      const field = [atom.target.name, ...through].join("_");
+      const fieldsetPath = [...fieldsetNamespace, field];
       return {
         kind: "reference-through",
-        through: atom.through.map((t) => t.name),
-        fieldsetPath: [...fieldsetNamespace, atom.target.name],
+        through,
+        fieldsetPath,
         name: atom.target.name,
         setter: {
           kind: "alias-reference",
           source: "referenceThroughs",
-          path: [...fieldsetNamespace, atom.target.name, "id"],
+          path: [...fieldsetPath, "id"],
         },
       };
     }
