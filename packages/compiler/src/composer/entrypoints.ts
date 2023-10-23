@@ -488,45 +488,6 @@ function collectExpressionsFromValidators(vexpr: Spec.ValidateExpr): Spec.Expr<"
     .exhaustive();
 }
 
-// function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] {
-//   // replace with `collectDepsFromExpression`??
-//   if (!expr) return [];
-//   switch (expr.kind) {
-//     case "alias-reference": {
-//       const [alias, ...access] = expr.path;
-//       return [{ alias, access }];
-//     }
-//     case "literal": {
-//       return [];
-//     }
-//     case "identifier-path": {
-//       throw new UnreachableError("'identifier-path' is not allowed in authorize deps");
-//     }
-//     case "function": {
-//       return expr.args.flatMap((arg) => collectAuthorizeDeps(def, arg));
-//     }
-//     case "in-subquery":
-//     case "aggregate-function": {
-//       /**
-//        * Fixme we should support aggregate functions & subqueries inside of authorize expressions.
-//        * SelectableExpression support is here, so even these deps can be collected.
-//        * This would require a significant rewrite of `deps` logic because it doesn't support
-//        * anonymous expressions, even though they are selectable.
-//        */
-//       throw new Error("Not implemented");
-//     }
-//     case "array": {
-//       return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
-//     }
-//     case "hook": {
-//       return expr.hook.args.flatMap((arg) => collectAuthorizeDeps(def, arg.setter));
-//     }
-//     default: {
-//       assertUnreachable(expr);
-//     }
-//   }
-// }
-
 /**
  * Converts `TargetDef`s into `TargetWithSelectDef`s using select deps to resolve each target's `SelectDef`.
  */

@@ -827,7 +827,7 @@ async function executeActions(
   reqCtx: RequestContext
 ) {
   if (fieldset) {
-    logger.debug("FIELDSET", fieldset);
+    // logger.debug("FIELDSET", fieldset);
     const body = reqCtx._express.req.body;
     logger.debug("BODY", body);
     const referenceIds = await fetchReferenceIds(def, tx, actions, body);
