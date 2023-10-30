@@ -8,6 +8,8 @@ import {
   TargetDef,
   TypedExprDef,
 } from "@gaudi/compiler/dist/types/definition";
+import _ from "lodash";
+
 import { pagingToQueryLimit } from "@runtime/common/utils";
 import {
   QueryTree,
@@ -15,7 +17,6 @@ import {
   buildQueryTree,
   queryFromParts,
 } from "@runtime/query/build";
-import _ from "lodash";
 
 /**
  * Endpoint query builder
@@ -31,7 +32,7 @@ export type EndpointQueries = {
 export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
   let authQueryTree;
   if (def.authenticator) {
-    const authModel = getRef.model(def, def.authenticator.authUserModel.refKey);
+    const authModel = getRef.model(def, def.authenticator.model);
     const filter: TypedExprDef = {
       kind: "function",
       name: "is",

@@ -14,11 +14,9 @@ import {
 import * as L from "./lexer";
 import { migrate } from "./migrate";
 import { parser } from "./parser";
-import { AuthPlugin } from "./plugins/authenticator";
 import { PreludePlugin } from "./plugins/prelude";
 import { resolve } from "./resolver";
 
-import { kindFind } from "@compiler/common/kindFilter";
 import { initLogger } from "@compiler/common/logger";
 import { Specification } from "@compiler/types/specification";
 
@@ -30,10 +28,6 @@ export type CompileResult =
 // plugin compilation is the first step in resolving
 function compilePlugins(projectASTs: ProjectASTs) {
   const plugins: Input[] = [{ source: PreludePlugin.code, filename: "plugin::prelude.gaudi" }];
-  const authenticator = kindFind(_.concat(...projectASTs.documents.values()), "authenticator");
-  if (authenticator) {
-    plugins.push({ source: AuthPlugin.code, filename: "plugin::auth.basic.gaudi" });
-  }
 
   const { ast, errors } = compileToAST(plugins, true);
   if (errors) {

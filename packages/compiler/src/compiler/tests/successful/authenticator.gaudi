@@ -1,5 +1,7 @@
 
+model AuthUser {}
+
 auth {
-  method basic {
-  }
+  // auth should reference AuthUser model
+  model AuthUser
 }

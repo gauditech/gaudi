@@ -90,7 +90,6 @@ async function _internalExecuteActions(
       const varsObj = Object.fromEntries(
         Object.keys(ctx.input).map((k) => [`___changeset___${k}`, ctx.input[k]])
       );
-      varsObj["___requestAuthToken"] = epCtx?.request.user?.token;
 
       const result = castToCardinality(
         await qx.executeQueryTree(def, qt, new Vars(varsObj), []),

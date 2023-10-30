@@ -1,6 +1,6 @@
 import { initLogger } from "@gaudi/compiler";
 import { Definition } from "@gaudi/compiler/dist/types/definition";
-import { Express, NextFunction, Request, Response, json } from "express";
+import { Express, NextFunction, Request, Response, Router, json } from "express";
 
 import { AppConfig } from "@runtime/config";
 import { setupServerApis } from "@runtime/server/api";
@@ -8,6 +8,18 @@ import { AppContext, bindAppContext } from "@runtime/server/context";
 import { createDbConn } from "@runtime/server/dbConn";
 import { HttpResponseError } from "@runtime/server/error";
 import { ServerRequestHandler } from "@runtime/server/types";
+
+/**
+ * Expand default request user object type with `userId` parameter required by Gaudi authenticator.
+ */
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface User {
+      userId: number;
+    }
+  }
+}
 
 const logger = initLogger("gaudi:runtime:server");
 
@@ -28,12 +40,7 @@ export function bindAppContextHandler(app: Express, ctx: AppContext) {
 }
 
 /**
- * Catch and handle any endpoint error. Start DB transaction for this handler.
- *
- * Express by default puts every SQL query in it's own transaction and this handler
- * creates a single transaction for entire request on this handler.
- * It would be better to put db stuff in it's own middleware but in `express@4.x`
- * one middleware cannot await on another async middleware)
+ * Catch and handle async endpoint handler error.
  */
 export function endpointGuardHandler(handler: ServerRequestHandler) {
   return async (req: Request, resp: Response, next: NextFunction) => {
@@ -75,12 +82,25 @@ export function createAppContext(config: AppConfig) {
   };
 }
 
-export function gaudiMiddleware(app: Express, def: Definition, config: AppConfig) {
+/**
+ * Setup Gaudi server, APIs and other express middlewares.
+ */
+export function gaudiMiddleware(
+  app: Express,
+  def: Definition,
+  config: AppConfig,
+  extra?: Express | Router
+) {
   const ctx = createAppContext(config);
   app.use(bindAppContextHandler(app, ctx));
 
   app.use(json()); // middleware for parsing application/json body
   app.use(requestLogger);
+
+  // extra middleware/handlers
+  if (extra) {
+    app.use(extra);
+  }
 
   setupServerApis(def, app);
 

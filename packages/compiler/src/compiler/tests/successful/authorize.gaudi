@@ -1,6 +1,3 @@
-auth {
-  method basic {}
-}
 
 model Box {
   field name { type string, unique }
@@ -13,6 +10,12 @@ model Item {
   field name { type string, unique }
   field is_public { type boolean }
   reference box { to Box }
+}
+
+model AuthUser {}
+
+auth {
+  model AuthUser
 }
 
 api {

@@ -1,6 +1,6 @@
 import { FieldType, TypeCardinality } from "@compiler/compiler/ast/type";
 import { HookCode } from "@compiler/types/common";
-import { Literal } from "@compiler/types/specification";
+import { IdentifierRef, Literal } from "@compiler/types/specification";
 
 export type Definition = {
   validators: ValidatorDef[];
@@ -516,11 +516,6 @@ export type FieldSetterChangesetReference = {
   referenceName: string;
 };
 
-export type FieldSetterHttpHandler = {
-  kind: "request-auth-token";
-  access: string[];
-};
-
 export type FieldSetterFunction = {
   kind: "function";
   name: FunctionName; // TODO rename to `fnName` to make it more clear, see line 124 as well
@@ -556,7 +551,6 @@ export type FieldSetter =
   | FieldSetterReferenceInput
   | FieldSetterChangesetReference
   | FieldSetterHook
-  | FieldSetterHttpHandler
   | FieldSetterFunction
   | FieldSetterContextReference
   | FieldSetterQuery
@@ -573,21 +567,7 @@ export type RuntimeEngineType = "node";
 // ---------- authenticator
 
 export type AuthenticatorDef = {
-  name: string;
-  authUserModel: AuthenticatorNamedModelDef;
-  accessTokenModel: AuthenticatorNamedModelDef;
-  method: AuthenticatorMethodDef;
-};
-
-export type AuthenticatorNamedModelDef = {
-  name: string;
-  refKey: string;
-};
-
-export type AuthenticatorMethodDef = AuthenticatorBasicMethodDef;
-
-export type AuthenticatorBasicMethodDef = {
-  kind: "basic";
+  model: string;
 };
 
 // ----- Generators

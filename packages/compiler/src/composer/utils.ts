@@ -48,7 +48,6 @@ export type VarContext = Record<string, ContextRecord | undefined>;
 type ContextRecord =
   | { kind: "record"; modelName: string }
   | { kind: "iterator" }
-  | { kind: "requestAuthToken" }
   | { kind: "changeset-value"; keys: string[] };
 
 export function getTypedPath(def: Definition, path: string[], ctx: VarContext): TypedPath {

@@ -9,6 +9,7 @@ import {
   ActionHook,
   AnonymousQuery,
   Api,
+  Authenticator,
   BinaryOperator,
   Computed,
   DeleteAction,
@@ -65,7 +66,6 @@ import {
   removeNullable,
 } from "./ast/type";
 import { CompilerError, ErrorCode } from "./compilerError";
-import { authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind } from "@compiler/common/kindFilter";
 import { getInternalExecutionRuntimeName } from "@compiler/composer/executionRuntimes";
@@ -89,6 +89,16 @@ export function resolve(projectASTs: ProjectASTs) {
 
   function getAllModels(): Model[] {
     return kindFilter(getSumDocument(true), "model");
+  }
+
+  function getAuthenticatorModel() {
+    let model: string | undefined;
+
+    const authenticator = kindFind(getSumDocument(true), "authenticator");
+    if (authenticator) {
+      model = kindFind(authenticator?.atoms, "model")?.model.ref?.model;
+    }
+    return model;
   }
 
   /**
@@ -159,7 +169,7 @@ export function resolve(projectASTs: ProjectASTs) {
         .with({ kind: "api" }, resolveApi)
         .with({ kind: "populator" }, resolvePopulator)
         .with({ kind: "runtime" }, () => undefined)
-        .with({ kind: "authenticator" }, () => undefined)
+        .with({ kind: "authenticator" }, resolveAuthenticator)
         .with({ kind: "generator" }, () => undefined)
         .exhaustive()
     );
@@ -1044,6 +1054,11 @@ export function resolve(projectASTs: ProjectASTs) {
       .exhaustive();
   }
 
+  function resolveAuthenticator(authenticator: Authenticator) {
+    const model = kindFind(authenticator.atoms, "model")!;
+    resolveModelRef(model.model);
+  }
+
   function resolvePopulator(populator: Populator) {
     populator.atoms.forEach((populate) =>
       resolvePopulate(
@@ -1383,20 +1398,15 @@ export function resolve(projectASTs: ProjectASTs) {
     }
     // special case, try to resolve @auth
     else if (headName === "@auth") {
-      const model = findModel(authUserModelName);
+      const model = getAuthenticatorModel();
       if (!model) {
         // fail resolve
         errors.push(new CompilerError(head.token, ErrorCode.CantResolveModel));
         return;
       } else {
-        head.ref = { kind: "auth", model: model.name.text };
-        head.type = Type.nullable(Type.model(model.name.text));
+        head.ref = { kind: "auth", model };
+        head.type = Type.nullable(Type.model(model));
       }
-    }
-    // simple nullable string, we don't check if auth plugin is present for this for now
-    else if (headName === "@requestAuthToken") {
-      head.ref = { kind: "authToken" };
-      head.type = Type.nullable(Type.string);
     } else {
       // fail resolve
       errors.push(new CompilerError(head.token, ErrorCode.CantFindNameInScope, { name: headName }));

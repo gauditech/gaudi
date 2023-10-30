@@ -1,11 +1,5 @@
-import { getRef } from "@compiler/common/refs";
-import { assertUnreachable } from "@compiler/common/utils";
-import {
-  AuthenticatorMethodDef,
-  AuthenticatorNamedModelDef,
-  Definition,
-} from "@compiler/types/definition";
-import { Authenticator, AuthenticatorMethod } from "@compiler/types/specification";
+import { Definition } from "@compiler/types/definition";
+import { Authenticator } from "@compiler/types/specification";
 
 /**
  * Compose authenticator block.
@@ -16,36 +10,9 @@ export function composeAuthenticator(def: Definition, spec: Authenticator | unde
   }
 
   // hardcoded authenticator name - not exposed through blueprint cause we don't support multiple auth blocks yet
-  const name = "Auth";
-  const authUserModel = composeTargetModel(def, spec.authUserModelName);
-  const accessTokenModel = composeTargetModel(def, spec.accessTokenModelName);
-  const method = composeMethod(def, spec.method);
+  const model = spec.model.ref.model;
 
   def.authenticator = {
-    name,
-    authUserModel,
-    accessTokenModel,
-    method,
+    model,
   };
-}
-
-function composeTargetModel(def: Definition, modelName: string): AuthenticatorNamedModelDef {
-  // get authenticator target model (injected in compiler)
-  const model = getRef.model(def, modelName);
-
-  return {
-    name: modelName,
-    refKey: model.refKey,
-  };
-}
-
-function composeMethod(def: Definition, methodSpec: AuthenticatorMethod): AuthenticatorMethodDef {
-  const kind = methodSpec.kind;
-  if (kind === "basic") {
-    return {
-      kind,
-    };
-  } else {
-    assertUnreachable(kind);
-  }
 }
