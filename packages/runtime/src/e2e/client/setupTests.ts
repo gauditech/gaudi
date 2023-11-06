@@ -24,9 +24,6 @@ async function setupTests() {
   // --- mock client (uses model from `src/e2e/client/mockClient.model.gaudi)
   // these clients are created in a directory defined in blueprint (that's why this name is different)
   await setupClient("mock-client", "./mockClient.model.gaudi");
-
-  // --- auth model client (uses model from `src/e2e/api/auth.model.gaudi)
-  await setupClient("authClient", "../api/auth.model.gaudi", true);
 }
 
 async function setupClient(name: string, bpPath: string, appendGenerators = false) {

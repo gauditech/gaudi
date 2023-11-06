@@ -3,7 +3,6 @@ import { match } from "ts-pattern";
 
 import * as AST from "./ast/ast";
 import { Type, getTypeCardinality, getTypeModel } from "./ast/type";
-import { accessTokenModelName, authUserModelName } from "./plugins/authenticator";
 
 import { kindFilter, kindFind, kindReject } from "@compiler/common/kindFilter";
 import { ensureEqual, ensureExists } from "@compiler/common/utils";
@@ -81,43 +80,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
       computeds,
       hooks,
     };
-  }
-
-  function migrateImplicitRelations(models: Spec.Model[]) {
-    if (!authenticator) return;
-
-    const implicitModelNames = [
-      authenticator.authUserModelName,
-      authenticator.accessTokenModelName,
-    ];
-    const implicitModels = models.filter((m) => implicitModelNames.includes(m.name));
-
-    models.forEach((model) => {
-      if (implicitModelNames.includes(model.name)) return;
-      model.references.forEach((reference) => {
-        implicitModels.forEach((implicitModel) => {
-          if (reference.to.model === implicitModel.name) {
-            const relationName = `${_.camelCase(reference.ref.parentModel)}${_.upperFirst(
-              _.camelCase(reference.name)
-            )}Rel`;
-            const relation: Spec.Relation = {
-              name: relationName,
-              ref: {
-                kind: "modelAtom",
-                atomKind: "relation",
-                parentModel: implicitModel.name,
-                name: relationName,
-                model: reference.ref.parentModel,
-                through: reference.ref.name,
-              },
-              through: reference.ref,
-              unique: reference.unique,
-            };
-            implicitModel.relations.push(relation);
-          }
-        });
-      });
-    });
   }
 
   function migrateFields(model: AST.Model): Spec.Field[] {
@@ -785,7 +747,9 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   function migrateAuthenticator(_authenticator: AST.Authenticator): Spec.Authenticator {
-    return { authUserModelName, accessTokenModelName, method: { kind: "basic" } };
+    const model = kindFind(_authenticator.atoms, "model")!.model;
+
+    return { model: migrateIdentifierRef(model) };
   }
 
   function migrateGenerator(generator: AST.Generator): Spec.Generator {
@@ -992,7 +956,6 @@ export function migrate(projectASTs: AST.ProjectASTs): Spec.Specification {
   }
 
   const models = globalModels.map(migrateModel);
-  migrateImplicitRelations(models);
 
   return {
     validators: kindFilter(globals, "validator").flatMap(migrateValidator),

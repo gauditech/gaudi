@@ -1,7 +1,6 @@
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
-import { compose } from "./composer";
 import { defineType } from "./models";
 
 import { UnreachableError, ensureEqual, shouldBeUnreachableCb } from "@compiler/common/utils";
@@ -233,8 +232,8 @@ export function composeRefPath(
     case "action":
     case "auth":
     case "repeat":
-    case "authToken":
       return { kind: "alias-reference", path: path.map((i) => i.text), source: "aliases" };
+
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "validator":

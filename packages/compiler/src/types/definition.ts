@@ -530,21 +530,7 @@ export type RuntimeEngineType = "node";
 // ---------- authenticator
 
 export type AuthenticatorDef = {
-  name: string;
-  authUserModel: AuthenticatorNamedModelDef;
-  accessTokenModel: AuthenticatorNamedModelDef;
-  method: AuthenticatorMethodDef;
-};
-
-export type AuthenticatorNamedModelDef = {
-  name: string;
-  refKey: string;
-};
-
-export type AuthenticatorMethodDef = AuthenticatorBasicMethodDef;
-
-export type AuthenticatorBasicMethodDef = {
-  kind: "basic";
+  model: string;
 };
 
 // ----- Generators

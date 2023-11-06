@@ -32,7 +32,7 @@ export type EndpointQueries = {
 export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): EndpointQueries {
   let authQueryTree;
   if (def.authenticator) {
-    const authModel = getRef.model(def, def.authenticator.authUserModel.refKey);
+    const authModel = getRef.model(def, def.authenticator.model);
     const filter: TypedExprDef = {
       kind: "function",
       name: "is",

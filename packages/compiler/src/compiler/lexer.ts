@@ -125,7 +125,6 @@ export const Cascade = createWeakKeyword("cascade");
 export const Cardinality = createWeakKeyword("cardinality");
 export const By = createWeakKeyword("by");
 export const Body = createWeakKeyword("body");
-export const Basic = createWeakKeyword("basic");
 export const BasePath = createWeakKeyword("basePath");
 export const Authorize = createWeakKeyword("authorize");
 export const Auth = createWeakKeyword("auth");
@@ -270,7 +269,6 @@ export const GaudiTokens = [
   Cardinality,
   By,
   Body,
-  Basic,
   BasePath,
   Authorize,
   Auth,

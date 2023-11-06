@@ -13,7 +13,11 @@ describe("openAPI", () => {
       reference org { to Org }
       field name { type string }
     }
-    auth { method basic {} }
+
+    model AuthUser {}
+
+    auth { model AuthUser }
+
     api Test {
       entrypoint Org as org {
         identify { through slug }

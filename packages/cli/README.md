@@ -6,26 +6,136 @@
 
 ---
 
-## What is Gaudi
+# CLI
 
-Gaudi is a declarative programming language and a backend framework that makes it easier to build and maintain web application APIs. Describe your models and APIs in a declarative way and instantly get your app with batteries included.
+Gaudi CLI is a command line tool that helps you utilize Gaudi toolkit.
 
-With Gaudi out of the box you get expressive data modeling, customizable APIs, automatic database migration and population, powerful declarative database query engine, full stack type-safety, client library generators and much more.
+## Building project
 
-## Geting started
+### build
 
-The fastest way to start is to use one of our template projects
-
-```sh
-$ npm create gaudi-app <project name>
-```
-
-Or you can add Gaudi to an existing application
+Build entire project. Compiles Gaudi code and copies files to output folder
 
 ```sh
-$ npm install gaudi
+gaudi build [root]
 ```
 
-## Learn more
+##### root
 
-Learn more about Gaudi in the [docs](https://docs.gaudi.tech)
+Set working directory
+
+### dev
+
+Start project dev builder which rebuilds project on detected code changes.
+
+```sh
+gaudi dev [root]
+```
+
+##### root
+
+Set working directory
+
+#### Options
+
+##### --runtimePath, -r
+
+Path to custom server runtime script. See [embedded Gaudi](../core-concepts/application.md#embedded-gaudi).
+
+##### --watch, -w
+
+Path to custom resources dev mode should include in watched resources list. Supports glob patterns. Use multiple parameters to set multiple paths.
+
+## Starting application
+
+### start
+
+Start application server
+
+```sh
+gaudi start [root]
+```
+
+#### Options
+
+##### root
+
+Set working directory
+
+##### --runtimePath, -r
+
+Path to custom server runtime script. See [embedded Gaudi](../core-concepts/application.md#embedded-gaudi).
+
+## Database management
+
+### db push
+
+Push model changes to development database
+
+```sh
+gaudi db push [root]
+```
+
+##### root
+
+Set working directory
+
+### db reset
+
+Reset database
+
+```sh
+gaudi db reset [root]
+```
+
+##### root
+
+Set working directory
+
+### db populate
+
+Reset DB and populate it using given populator
+
+```sh
+gaudi db populate [root] [options]
+```
+
+##### root
+
+Set working directory
+
+#### Options
+
+##### --populator, -p
+
+Set working directory **[required]**
+
+### db migrate
+
+Create DB migration file
+
+```sh
+gaudi db migrate [root] [options]
+```
+
+##### root
+
+Set working directory
+
+#### Options
+
+##### --name, -n
+
+Name of a migration to be created **[required]**
+
+### db deploy
+
+Deploy new migrations to target database
+
+```sh
+gaudi db deploy [root]
+```
+
+##### root
+
+Set working directory

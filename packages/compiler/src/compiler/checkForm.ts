@@ -429,8 +429,8 @@ export function checkForm(document: GlobalAtom[]) {
   }
 
   function checkAuthenticator(authenticator: Authenticator) {
-    containsAtoms(authenticator, ["method"]);
-    noDuplicateAtoms(authenticator, ["method"]);
+    containsAtoms(authenticator, ["model"]);
+    noDuplicateAtoms(authenticator, ["model"]);
   }
 
   function checkGenerator(generator: Generator) {

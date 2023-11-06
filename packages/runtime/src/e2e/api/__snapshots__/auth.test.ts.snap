@@ -1,9 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`Auth user registration should register and login new user 1`] = `
-{
-  "id": 3,
-  "name": "some name",
-  "username": "somename@example.com",
-}
-`;

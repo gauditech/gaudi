@@ -10,7 +10,7 @@
     "build:client": "vite build app/client",
     "// --- dev": "",
     "dev": "concurrently --names hooks,gaudi,client \"npm run dev:server:hooks\" \"npm run dev:server:api\" \"npm run dev:client\" ",
-    "dev:server:api": "npx gaudi dev app/server",
+    "dev:server:api": "npx gaudi dev app/server --runtimePath=../../dist/server/server.js --watch=../../dist/server/**/*.js",
     "dev:server:hooks": "npm run build:server:hooks -- --watch --incremental",
     "dev:client": "vite dev app/client",
     "// --- lint": "",
@@ -22,7 +22,7 @@
     "test:server": "jest --config=./app/server/jest.config.js",
     "test:client": "jest --config=./app/client/jest.config.js",
     "// --- start": "",
-    "start:server": "dotenv -e app/server/.env node dist/server/server.js",
+    "start:server": "npx gaudi start app/server --runtimePath=../../dist/server/server.js",
     "start:client": "vite preview app/client",
     "// --- other": "",
     "clean": "rimraf ./dist"
@@ -31,6 +31,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
+    "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.4.2",
@@ -54,10 +55,9 @@
     "vite": "^4.3.9"
   },
   "dependencies": {
-    "dotenv-cli": "^7.2.1",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "gaudi": "0.0.3",
-    "nodeman": "^1.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }

@@ -1,5 +1,6 @@
 
+model AuthUser {}
+
 auth {
-  method basic {
-  }
+  model AuthUser
 }
