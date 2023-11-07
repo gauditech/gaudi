@@ -9,10 +9,11 @@ import _, { get, indexOf, isString, set, toInteger, toString } from "lodash";
 import { match } from "ts-pattern";
 
 import { executeArithmetics } from "./arithmetics";
+import { collect } from "./utils";
 
 import { executeHook } from "@runtime/hooks";
 import { QueryExecutor } from "@runtime/query/exec";
-import { RequestContext } from "@runtime/server/context";
+import { GlobalContext } from "@runtime/server/context";
 
 type Changeset = Record<string, unknown>;
 
@@ -22,19 +23,20 @@ type Changeset = Record<string, unknown>;
 export async function buildChangeset(
   def: Definition,
   qx: QueryExecutor,
-  reqCtx: RequestContext,
+  reqCtx: GlobalContext,
   actionChangsetDefinition: ChangesetDef
 ): Promise<Changeset> {
-  const changeset: Changeset = Object.assign({}, _.cloneDeep(reqCtx.get("@currentContext")));
+  const changeset: Changeset = Object.assign({}, _.cloneDeep(reqCtx.localContext));
 
   async function getSetterFromExpr(expr: TypedExprDef): Promise<unknown> {
     return match(expr)
       .with({ kind: "literal" }, ({ literal }) => formatFieldValue(literal.value, literal.kind))
       .with({ kind: "array" }, (arr) => Promise.all(arr.elements.map(_.unary(getSetterFromExpr))))
-      .with({ kind: "alias-reference" }, (ref) => reqCtx.collect(ref.source, ref.path))
+      .with({ kind: "alias-reference" }, (ref) =>
+        collect(reqCtx, _.compact([ref.source, ...ref.path]))
+      )
       .with({ kind: "function" }, (expr) => executeArithmetics(expr, _.unary(getSetterFromExpr)))
       .with({ kind: "identifier-path" }, (e) => {
-        // reqCtx.collect("@currentContext", e.namePath)
         if (e.namePath[0] in changeset) {
           return _.get(changeset, e.namePath);
         } else {

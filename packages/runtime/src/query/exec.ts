@@ -20,7 +20,8 @@ import {
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
-import { Storage } from "@runtime/server/context";
+import { flatten } from "@runtime/common/utils";
+import { GlobalContext, initializeContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 
 export interface NestedRow {
@@ -35,7 +36,7 @@ export async function executeQuery(
   conn: DbConn,
   def: Definition,
   query: QueryDef,
-  ctx: Storage,
+  ctx: GlobalContext,
   contextIds: number[]
 ): Promise<NestedRow[]> {
   const sqlTpl = queryPlanToString(buildQueryPlan(def, query)).replace(
@@ -43,7 +44,7 @@ export async function executeQuery(
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  let results = await conn.raw(sqlTpl, { ...ctx.flatten(), ...idMap });
+  let results = await conn.raw(sqlTpl, { ...flatten(ctx), ...idMap });
 
   // sqlite vs postgres drivers compat
   if ("rows" in results) {
@@ -93,7 +94,7 @@ export async function executeQueryTree(
   conn: DbConn,
   def: Definition,
   qt: QueryTree,
-  ctx: Storage,
+  ctx: GlobalContext,
   contextIds: number[]
 ): Promise<NestedRow[]> {
   const results = await executeQuery(conn, def, qt.query, ctx, contextIds);
@@ -161,11 +162,17 @@ export async function findIdBy(
     name: "is",
     args: [
       { kind: "identifier-path", namePath: [modelName, ...targetPath] },
-      { kind: "alias-reference", path: ["findBy_input"], source: undefined },
+      { kind: "alias-reference", path: ["findBy_input"], source: "aliases" },
     ],
   };
   const query = queryFromParts(def, "findBy", [modelName], filter, [selectableId([modelName])]);
-  const [result] = await executeQuery(conn, def, query, new Storage({ findBy_input: value }), []);
+  const [result] = await executeQuery(
+    conn,
+    def,
+    query,
+    initializeContext({ aliases: { findBy_input: value } }),
+    []
+  );
 
   if (!result) return undefined;
   return (result[GAUDI_INTERNAL_TARGET_ID_ALIAS] as number) ?? undefined;
@@ -181,14 +188,14 @@ export type QueryExecutor = {
   executeQuery(
     def: Definition,
     q: QueryDef,
-    ctx: Storage,
+    ctx: GlobalContext,
     contextIds: number[]
   ): Promise<NestedRow[]>;
 
   executeQueryTree(
     def: Definition,
     qt: QueryTree,
-    ctx: Storage,
+    ctx: GlobalContext,
     contextIds: number[]
   ): Promise<NestedRow[]>;
 };

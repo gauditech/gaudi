@@ -31,7 +31,7 @@ import { Request, Response } from "express";
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { RequestContext, Storage, getAppContext } from "./context";
+import { GlobalContext, initializeContext, initializeRequestContext } from "./context";
 
 import { executeArithmetics } from "@runtime//common/arithmetics";
 import { executeEndpointActions } from "@runtime/common/action";
@@ -42,8 +42,9 @@ import {
   fetchExistingUniqueValues,
   fetchReferenceIds,
 } from "@runtime/common/constraintValidation";
+import { collect } from "@runtime/common/utils";
 import { validateEndpointFieldset } from "@runtime/common/validation";
-import { executeActionHook } from "@runtime/hooks";
+import { executeActionHook, executeHook } from "@runtime/hooks";
 import { QueryTree } from "@runtime/query/build";
 import {
   EndpointQueries,
@@ -113,10 +114,10 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const reqCtx = new RequestContext(req, resp, endpointPath);
+          const reqCtx = initializeRequestContext(req, resp, endpointPath);
           await loadAuthIntoContext(def, reqCtx, queries);
 
-          tx = await reqCtx._db.conn.transaction();
+          tx = await reqCtx._server!.dbConn.transaction();
 
           // group context and target queries since all are findOne
           const allQueries = [...queries.parentContextQueryTrees, queries.targetQueryTree];
@@ -124,7 +125,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
           for (const qt of allQueries) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            reqCtx.set(["aliases", qt.alias], result);
+            _.set(reqCtx.aliases, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
@@ -136,7 +137,7 @@ export function buildGetEndpoint(def: Definition, endpoint: GetEndpointDef): End
            * actions may have modified the record. We can only reliably identify it via `id` collected
            * before the actions were executed.
            */
-          const targetId = reqCtx.get(["aliases", endpoint.target.alias, "id"]) as number;
+          const targetId = _.get(reqCtx.aliases, [endpoint.target.alias, "id"]) as number;
           const responseResults = await executeQueryTree(
             tx,
             def,
@@ -172,16 +173,16 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const reqCtx = new RequestContext(req, resp, endpointPath);
+          const reqCtx = initializeRequestContext(req, resp, endpointPath);
           await loadAuthIntoContext(def, reqCtx, queries);
 
-          tx = await reqCtx._db.conn.transaction();
+          tx = await reqCtx._server!.dbConn.transaction();
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            reqCtx.set(["aliases", qt.alias], result);
+            _.set(reqCtx.aliases, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
           logger.debug("Authorizing endpoint");
@@ -202,7 +203,7 @@ export function buildListEndpoint(def: Definition, endpoint: ListEndpointDef): E
           let parentIds: number[] = [];
           const parentTarget = _.last(endpoint.parentContext);
           if (parentTarget) {
-            parentIds = [reqCtx.get(["aliases", parentTarget.alias, "id"]) as number];
+            parentIds = [_.get(reqCtx.aliases, [parentTarget.alias, "id"]) as number];
           }
 
           const responseResults = await createListEndpointResponse(
@@ -241,28 +242,28 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const reqCtx = new RequestContext(req, resp, endpointPath);
+          const reqCtx = initializeRequestContext(req, resp, endpointPath);
           await loadAuthIntoContext(def, reqCtx, queries);
 
-          tx = await reqCtx._db.conn.transaction();
+          tx = await reqCtx._server!.dbConn.transaction();
 
           if (queries.authQueryTree && req.user) {
             const results = await executeQueryTree(
               tx,
               def,
               queries.authQueryTree,
-              new Storage({ id: req.user.userId }),
+              initializeContext({ aliases: { id: req.user.userId } }),
               []
             );
             const result = findOne(results);
-            reqCtx.set(["aliases", "@auth"], result);
+            _.set(reqCtx.aliases, "@auth", result);
           }
 
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            reqCtx.set(["aliases", qt.alias], result);
+            _.set(reqCtx.aliases, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
@@ -273,7 +274,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
           const primaryAlias = kindFilter(endpoint.actions, "create-one").find(
             (a) => a.isPrimary
           )!.alias;
-          const targetId = reqCtx.get(["aliases", primaryAlias, "id"]) as number | undefined;
+          const targetId = _.get(reqCtx.aliases, [primaryAlias, "id"]) as number | undefined;
 
           if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Insert failed");
@@ -287,7 +288,7 @@ export function buildCreateEndpoint(def: Definition, endpoint: CreateEndpointDef
             tx,
             def,
             queries.responseQueryTree,
-            new Storage({}),
+            initializeContext({}),
             [targetId]
           );
 
@@ -318,10 +319,10 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const reqCtx = new RequestContext(req, resp, endpointPath);
+          const reqCtx = initializeRequestContext(req, resp, endpointPath);
           await loadAuthIntoContext(def, reqCtx, queries);
 
-          tx = await reqCtx._db.conn.transaction();
+          tx = await reqCtx._server!.dbConn.transaction();
 
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
@@ -330,7 +331,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           for (const qt of allQueries) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            reqCtx.set(["aliases", qt.alias], result);
+            _.set(reqCtx.aliases, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
@@ -341,7 +342,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
           const primaryAlias = kindFilter(endpoint.actions, "update-one").find(
             (a) => a.isPrimary
           )!.alias;
-          const targetId = reqCtx.get(["aliases", primaryAlias, "id"]) as number | undefined;
+          const targetId = _.get(reqCtx.aliases, [primaryAlias, "id"]) as number | undefined;
 
           if (!targetId) {
             throw new BusinessError("ERROR_CODE_SERVER_ERROR", "Update failed");
@@ -356,7 +357,7 @@ export function buildUpdateEndpoint(def: Definition, endpoint: UpdateEndpointDef
             tx,
             def,
             queries.responseQueryTree,
-            new Storage({}),
+            initializeContext({}),
             [targetId]
           );
 
@@ -387,10 +388,10 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const reqCtx = new RequestContext(req, resp, endpointPath);
+          const reqCtx = initializeRequestContext(req, resp, endpointPath);
           await loadAuthIntoContext(def, reqCtx, queries);
 
-          tx = await reqCtx._db.conn.transaction();
+          tx = await reqCtx._server!.dbConn.transaction();
 
           let pids: number[] = [];
           // group context and target queries since all are findOne
@@ -399,13 +400,13 @@ export function buildDeleteEndpoint(def: Definition, endpoint: DeleteEndpointDef
           for (const qt of allQueries) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            reqCtx.set(["aliases", qt.alias], result);
+            _.set(reqCtx.aliases, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
           await authorizeEndpoint(def, endpoint, createQueryExecutor(tx), reqCtx);
 
-          const targetId = reqCtx.get(["aliases", endpoint.target.alias, "id"]) as number;
+          const targetId = _.get(reqCtx.aliases, [endpoint.target.alias, "id"]) as number;
           // FIXME execute actions??
           await deleteData(def, tx, endpoint, targetId);
 
@@ -439,10 +440,10 @@ export function buildCustomOneEndpoint(
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const reqCtx = new RequestContext(req, resp, endpointPath);
+          const reqCtx = initializeRequestContext(req, resp, endpointPath);
           await loadAuthIntoContext(def, reqCtx, queries);
 
-          tx = await reqCtx._db.conn.transaction();
+          tx = await reqCtx._server!.dbConn.transaction();
 
           // group context and target queries since all are findOne
           // FIXME implement "SELECT FOR UPDATE"
@@ -451,7 +452,7 @@ export function buildCustomOneEndpoint(
           for (const qt of allQueries) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            reqCtx.set(["aliases", qt.alias], result);
+            _.set(reqCtx.aliases, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
@@ -493,16 +494,14 @@ export function buildCustomManyEndpoint(
         let tx;
         try {
           logger.debug("AUTH INFO", req.user);
-          const reqCtx = new RequestContext(req, resp, endpointPath);
+          const reqCtx = initializeRequestContext(req, resp, endpointPath);
           await loadAuthIntoContext(def, reqCtx, queries);
-
-          tx = await reqCtx._db.conn.transaction();
-
+          tx = await reqCtx._server!.dbConn.transaction();
           let pids: number[] = [];
           for (const qt of queries.parentContextQueryTrees) {
             const results = await executeQueryTree(tx, def, qt, reqCtx, pids);
             const result = findOne(results);
-            reqCtx.set(["aliases", qt.alias], result);
+            _.set(reqCtx.aliases, qt.alias, result);
             pids = [result[qt.queryIdAlias!] as number];
           }
 
@@ -628,7 +627,7 @@ async function authorizeEndpoint(
   def: Definition,
   endpoint: EndpointDef,
   qx: QueryExecutor,
-  ctx: RequestContext
+  ctx: GlobalContext
 ) {
   if (!endpoint.authorize) return;
 
@@ -657,13 +656,13 @@ export async function executeTypedExpr(
   def: Definition,
   expr: TypedExprDef,
   qx: QueryExecutor,
-  ctx: Storage
+  ctx: GlobalContext
 ): Promise<unknown> {
   if (!expr) return null;
 
   switch (expr.kind) {
     case "alias-reference": {
-      return ctx.collect(expr.source, ...expr.path) ?? null;
+      return collect(ctx, _.compact([expr.source, ...expr.path])) ?? null;
     }
     case "function": {
       return executeTypedFunction(def, expr, qx, ctx);
@@ -676,18 +675,15 @@ export async function executeTypedExpr(
       return expr.literal.value;
     }
     case "identifier-path": {
-      return ctx.get("@currentContext", expr.namePath);
+      return _.get(ctx.localContext, expr.namePath);
     }
     case "array": {
       return expr.elements.map((e) => executeTypedExpr(def, e, qx, ctx));
     }
     case "hook": {
       const chx = await buildChangeset(def, qx, ctx as any, expr.hook.args);
-      const actionCtx = {
-        request: ctx.get("_express", "req") as Request,
-        response: ctx.get("_express", "res") as Response,
-      };
-      return executeActionHook(def, expr.hook.hook, chx, actionCtx);
+      // NOTE: these hooks have no access to request / response context
+      return executeHook(def, expr.hook.hook, chx);
     }
     default: {
       return assertUnreachable(expr);
@@ -698,7 +694,7 @@ async function executeTypedFunction(
   def: Definition,
   func: TypedFunction,
   qx: QueryExecutor,
-  ctx: Storage
+  ctx: GlobalContext
 ): Promise<unknown> {
   async function getValue(expr: TypedExprDef) {
     return executeTypedExpr(def, expr, qx, ctx);
@@ -715,7 +711,7 @@ async function createListEndpointResponse(
   def: Definition,
   endpoint: ListEndpointDef,
   qt: QueryTree,
-  ctx: RequestContext,
+  ctx: GlobalContext,
   contextIds: number[]
 ): Promise<PaginatedListResponse<NestedRow> | NestedRow[]> {
   let resultQuery: QueryTree = qt;
@@ -786,21 +782,21 @@ type PaginatedListResponse<T = any> = {
 
 export async function loadAuthIntoContext(
   def: Definition,
-  ctx: RequestContext,
+  ctx: GlobalContext,
   queries: EndpointQueries
 ) {
-  if (queries.authQueryTree && ctx._express.req.user) {
+  if (queries.authQueryTree && ctx._server!.req.user) {
     const results = await executeQueryTree(
-      ctx._db.conn,
+      ctx._server!.dbConn,
       def,
       queries.authQueryTree,
-      new Storage({ id: ctx._express.req.user.userId }),
+      initializeContext({ aliases: { id: ctx._server!.req.user.userId } }),
       []
     );
     const result = findOne(results);
-    ctx.set(["aliases", "@auth"], result);
+    _.set(ctx.aliases, "@auth", result);
   } else {
-    ctx.set(["aliases", "@auth"], null);
+    _.set(ctx.aliases, "@auth", null);
   }
 }
 
@@ -809,11 +805,11 @@ async function executeActions(
   tx: DbConn,
   fieldset: FieldsetDef | undefined,
   actions: ActionDef[],
-  reqCtx: RequestContext
+  reqCtx: GlobalContext
 ) {
   if (fieldset) {
     // logger.debug("FIELDSET", fieldset);
-    const body = reqCtx._express.req.body;
+    const body = reqCtx._server!.req.body;
     logger.debug("BODY", body);
     const referenceIds = await fetchReferenceIds(def, tx, actions, body);
     logger.debug("Reference IDs", referenceIds);
@@ -828,7 +824,7 @@ async function executeActions(
     const validationResult = await validateEndpointFieldset(def, fieldset, body);
     logger.debug("Validation result", validationResult);
 
-    reqCtx.set("validatedFieldset", validationResult);
+    reqCtx.fieldset = validationResult;
 
     // set reference throughs into context
     referenceIds.forEach((result) => {
@@ -836,7 +832,7 @@ async function executeActions(
         .with({ kind: "reference-found" }, (r) => r.value)
         .with({ kind: "reference-null" }, () => null)
         .exhaustive();
-      reqCtx.set(["referenceThroughs", ...result.fieldsetAccess, "id"], value);
+      _.set(reqCtx.referenceThroughs, [...result.fieldsetAccess, "id"], value);
     });
   }
 

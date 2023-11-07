@@ -15,14 +15,14 @@ import { castToCardinality, createQueryExecutor, executeQueryTree } from "../que
 
 import { buildChangeset } from "@runtime/common/changeset";
 import { executeActionHook } from "@runtime/hooks";
-import { RequestContext, Storage } from "@runtime/server/context";
+import { GlobalContext, initializeContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { HookError } from "@runtime/server/error";
 
 export async function executeEndpointActions(
   def: Definition,
   dbConn: DbConn,
-  reqCtx: RequestContext,
+  reqCtx: GlobalContext,
   actions: ActionDef[]
 ) {
   //
@@ -31,7 +31,7 @@ export async function executeEndpointActions(
 export async function executeActions(
   def: Definition,
   dbConn: DbConn,
-  reqCtx: RequestContext,
+  reqCtx: GlobalContext,
   actions: ActionDef[]
 ) {
   return _internalExecuteActions(def, dbConn, reqCtx, actions);
@@ -39,7 +39,7 @@ export async function executeActions(
 async function _internalExecuteActions(
   def: Definition,
   dbConn: DbConn,
-  reqCtx: RequestContext,
+  reqCtx: GlobalContext,
   actions: ActionDef[]
 ) {
   const qx = createQueryExecutor(dbConn);
@@ -55,7 +55,7 @@ async function _internalExecuteActions(
 
       const id = await insertData(dbConn, dbModel, dbData);
       const deps = await fetchActionDeps(def, dbConn, action, id);
-      deps && reqCtx.set(["aliases", action.alias], findOne(deps));
+      deps && _.set(reqCtx.aliases, action.alias, findOne(deps));
     } else if (actionKind === "update-one") {
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
@@ -67,7 +67,7 @@ async function _internalExecuteActions(
 
       const id = await updateData(dbConn, dbModel, dbData, targetId);
       const deps = await fetchActionDeps(def, dbConn, action, id);
-      deps && reqCtx.set(["aliases", action.alias], findOne(deps));
+      deps && _.set(reqCtx.aliases, action.alias, findOne(deps));
     } else if (actionKind === "delete-one") {
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
@@ -81,14 +81,14 @@ async function _internalExecuteActions(
         await qx.executeQueryTree(def, qt, reqCtx, []),
         action.query.retCardinality
       );
-      reqCtx.set(["aliases", action.alias], result);
+      _.set(reqCtx.aliases, action.alias, result);
     } else if (actionKind === "execute-hook") {
       const argsChangeset = await buildChangeset(def, qx, reqCtx, action.hook.args);
-      const hookCtx = { request: reqCtx._express.req, response: reqCtx._express.res };
+      const hookCtx = { request: reqCtx._server!.req, response: reqCtx._server!.res };
 
       try {
         const result = await executeActionHook(def, action.hook.hook, argsChangeset, hookCtx);
-        reqCtx.set(["aliases", action.alias], result);
+        _.set(reqCtx.aliases, action.alias, result);
       } catch (err) {
         throw new HookError(err);
       }
@@ -117,19 +117,19 @@ async function _internalExecuteActions(
         Object.entries(httpHeadersChangeset).forEach(([name, value]) => {
           // null - remove current header
           if (value == null) {
-            reqCtx._express.res.removeHeader(name);
+            reqCtx._server!.res.removeHeader(name);
           }
           // multiple header values
           else if (_.isArray(value)) {
-            reqCtx._express.res.set(name, value);
+            reqCtx._server!.res.set(name, value);
           }
           // single value
           else {
             // we're forcing value to `any` cause our type system should've made sure that this resolves to appropriate type
-            reqCtx._express.res.set(name, value as any);
+            reqCtx._server!.res.set(name, value as any);
           }
         });
-        reqCtx._express.res.status(httpResponseCode).json(body);
+        reqCtx._server!.res.status(httpResponseCode).json(body);
       } catch (err: any) {
         throw new Error(err);
       }
@@ -162,12 +162,12 @@ async function fetchActionDeps(
     applyFilterIdInContext([action.model]),
     transformSelectPath(action.select, [action.alias], [action.model])
   );
-  return executeQueryTree(dbConn, def, qt, new Storage({}), [id]);
+  return executeQueryTree(dbConn, def, qt, initializeContext({}), [id]);
 }
 
-function resolveTargetId(reqCtx: RequestContext, targetPath: string[]): number {
+function resolveTargetId(reqCtx: GlobalContext, targetPath: string[]): number {
   // append id to the path
-  const id = reqCtx.get(["aliases", ...targetPath, "id"]);
+  const id = _.get(reqCtx.aliases, [...targetPath, "id"]);
   if (_.isNil(id)) {
     throw new Error(`Target id not found`);
   }

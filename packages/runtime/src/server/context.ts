@@ -1,7 +1,5 @@
 import { EndpointPath } from "@gaudi/compiler/dist/builder/query";
 import { Express, Request, Response, Router } from "express";
-import { flatten } from "flat";
-import { Knex } from "knex";
 import _ from "lodash";
 
 import { extractPathParams } from "./endpoints";
@@ -52,88 +50,42 @@ function getAContext<M = any>(key: object): M | undefined {
   return bindings.get(key);
 }
 
-/**
- * REQUEST CONTEXT
- */
+type RecursiveStorage = Record<string, any>;
 
-export class Storage<T extends object = object> {
-  private _storage: Record<string, unknown> & T;
-  constructor(initial: T) {
-    // commiting a TypeScript sin, it seems
-    this._storage = initial as T as any;
-  }
-
-  get(...path: (undefined | string | string[])[]): unknown {
-    const finalPath = _.compact(path.flatMap((p) => _.castArray(p)));
-    return _.get(this._storage, finalPath);
-  }
-
-  set(path: string | string[], value: unknown): void {
-    _.set(this._storage, path, value);
-  }
-
-  collect(...path: (undefined | string | string[])[]): unknown[] {
-    const finalPath = _.compact(path.flatMap((p) => _.castArray(p)));
-    return collect(this._storage, finalPath);
-  }
-
-  flatten(): Record<string, unknown> {
-    // FIXME only collect paths needed in the expression
-    return flatten(_.omit(this._storage, "_express", "_db"), {
-      delimiter: "__",
-    });
-  }
-
-  copy(): Storage<T> {
-    return new Storage(_.cloneDeep(this._storage));
-  }
-}
-
-type RequestContextParams = {
-  _express: { req: Request; res: Response };
-  _db: { conn: Knex };
-  fieldset: Record<string, unknown>;
-  pathParams: Record<string, string | number>;
+export type GlobalContext = {
+  _server?: {
+    req: Request;
+    res: Response;
+    dbConn: DbConn;
+  };
+  fieldset: RecursiveStorage;
+  pathParams: RecursiveStorage;
+  aliases: RecursiveStorage;
+  referenceThroughs: RecursiveStorage;
+  localContext: RecursiveStorage;
 };
-export class RequestContext extends Storage<RequestContextParams> {
-  constructor(req: Request, res: Response, ePath: EndpointPath) {
-    const appCtx = getAppContext(req);
-    const params = Object.assign({}, req.query, req.params);
-    const pathParams = extractPathParams(ePath, params);
-    super({
-      _express: { req, res },
-      _db: { conn: appCtx.dbConn },
-      // FIXME whitelist using FieldsetDef
-      fieldset: req.body,
-      pathParams,
-    });
-  }
 
-  copy(): RequestContext {
-    return super.copy() as RequestContext;
-  }
-
-  get _express() {
-    return this.get("_express") as RequestContextParams["_express"];
-  }
-
-  get _db() {
-    return this.get("_db") as RequestContextParams["_db"];
-  }
-
-  get pathParams() {
-    return this.get("pathParams") as RequestContextParams["pathParams"];
-  }
+export function initializeContext(initial: Partial<GlobalContext>): GlobalContext {
+  return Object.assign(
+    {
+      fieldset: {},
+      pathParams: {},
+      aliases: {},
+      referenceThroughs: {},
+      localContext: {},
+    },
+    initial
+  );
 }
 
-function collect(vars: any, path: string[]): unknown[] {
-  if (_.isEmpty(path)) {
-    return vars;
-  }
-  const [name, ...rest] = path;
-  if (_.isArray(vars)) {
-    return _.compact(vars.flatMap((v) => collect(_.get(v, name), rest)));
-  } else {
-    return collect(_.get(vars, name), rest);
-  }
+export function initializeRequestContext(
+  req: Request,
+  res: Response,
+  endpointPath: EndpointPath
+): GlobalContext {
+  const appCtx = getAppContext(req);
+  const dbConn = appCtx.dbConn;
+  const params = Object.assign({}, req.query, req.params);
+  const pathParams = extractPathParams(endpointPath, params);
+  return initializeContext({ pathParams, _server: { dbConn, req, res } });
 }

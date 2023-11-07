@@ -20,7 +20,7 @@ import {
   setFieldsetProperty,
 } from "@runtime/common/changeset";
 import { compileFromString, mockQueryExecutor } from "@runtime/common/testUtils";
-import { Storage } from "@runtime/server/context";
+import { initializeContext } from "@runtime/server/context";
 
 describe("runtime", () => {
   describe("changeset", () => {
@@ -137,14 +137,13 @@ describe("runtime", () => {
         other_slug: "slug-1",
         other_myref_slug: "slug-40",
       };
-      const requestContext = new Storage({
+      const requestContext = initializeContext({
         fieldset: input,
-        validatedFieldset: input,
         referenceThroughs: {
           other_slug: { id: 1 },
           other_myref_slug: { id: 40 },
         },
-      }) as any;
+      });
 
       expect(
         await buildChangeset(createTestDefinition(), mockQueryExecutor(), requestContext, changeset)
@@ -192,7 +191,7 @@ describe("runtime", () => {
         required_default_provided: "this is user value",
         optional_default_provided: "this is another user value",
       };
-      const requestContext = new Storage({ fieldset: input, validatedFieldset: input }) as any;
+      const requestContext = initializeContext({ fieldset: input });
 
       expect(
         await buildChangeset(createTestDefinition(), mockQueryExecutor(), requestContext, changeset)
@@ -390,7 +389,7 @@ describe("runtime", () => {
         await buildChangeset(
           createTestDefinition(),
           mockQueryExecutor(),
-          new Storage({ fieldset: {}, validatedFieldset: {} }) as any,
+          initializeContext({ fieldset: {} }),
           changeset
         )
       ).toMatchSnapshot();

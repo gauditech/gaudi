@@ -14,7 +14,7 @@ import { executeTypedExpr } from "../server/endpoints";
 
 import { mockQueryExecutor } from "./testUtils";
 
-import { Storage } from "@runtime/server/context";
+import { GlobalContext, initializeContext } from "@runtime/server/context";
 import { BusinessError } from "@runtime/server/error";
 
 // ----- validation&transformation
@@ -109,7 +109,7 @@ async function validateField(
         def,
         fieldset.validate,
         field,
-        new Storage({ "@currentContext": { value: field } })
+        initializeContext({ localContext: { value: field } })
       )
     : fieldset.referenceNotFound
     ? [{ code: "reference-not-found", params: { value: field } }]
@@ -122,7 +122,7 @@ export async function executeValidateExpr(
   def: Definition,
   validate: ValidateExprDef,
   field: unknown | undefined,
-  ctx: Storage
+  ctx: GlobalContext
 ): Promise<ValidateFieldError | undefined> {
   if (validate.kind === "call") {
     return executeValidateExprCall(def, validate, field, ctx);
@@ -151,7 +151,7 @@ async function executeValidateExprCall(
   def: Definition,
   validate: ValidateExprCallDef,
   field: unknown | undefined,
-  ctx: Storage
+  ctx: GlobalContext
 ): Promise<ValidateFieldError | undefined> {
   const validator = def.validators.find((v) => v.name === validate.validator);
   ensureExists(validator);
@@ -167,7 +167,7 @@ async function executeValidateExprCall(
     params[name] = value;
   }
 
-  const argResults = new Storage({ "@currentContext": params });
+  const argResults = initializeContext({ localContext: params });
   const assertResult = await executeTypedExpr(
     def,
     validator.assert,

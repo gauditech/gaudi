@@ -1,10 +1,11 @@
 import { initLogger } from "@gaudi/compiler";
 import { Definition, PopulateDef, PopulatorDef } from "@gaudi/compiler/dist/types/definition";
+import _ from "lodash";
 
 import { executeActions } from "@runtime/common/action";
 import { createIterator } from "@runtime/common/iterator";
 import { RuntimeConfig, loadDefinition } from "@runtime/config";
-import { Storage } from "@runtime/server/context";
+import { GlobalContext, initializeContext } from "@runtime/server/context";
 import { DbConn, createDbConn } from "@runtime/server/dbConn";
 
 const logger = initLogger("gaudi:populator");
@@ -33,7 +34,7 @@ export async function populate(options: PopulateOptions, config: RuntimeConfig) 
 
     logger.debug(`Running populator ${populator.name}`);
 
-    const ctx = new Storage({});
+    const ctx = initializeContext({});
 
     // wrap entire populator process in a single transaction
     await dbConn.transaction(async (tx) => {
@@ -53,7 +54,7 @@ export type PopulateOptions = {
 async function processPopulator(
   def: Definition,
   dbConn: DbConn,
-  ctx: Storage,
+  ctx: GlobalContext,
   populator: PopulatorDef
 ) {
   for (const p of populator.populates) {
@@ -64,7 +65,7 @@ async function processPopulator(
 async function processPopulate(
   def: Definition,
   dbConn: DbConn,
-  ctx: Storage,
+  ctx: GlobalContext,
   populate: PopulateDef
 ) {
   const repeater = populate.repeater;
@@ -74,18 +75,18 @@ async function processPopulate(
   for (const iter of iterator) {
     // each iteration has it's own context which prepopulated from parent context
     // by having it's own context iteration can override parent values without tinkering with parent's context
-    const actionCtx = ctx.copy();
+    const actionCtx = _.cloneDeep(ctx);
 
     // add repeater to new context
     if (repeaterAlias) {
       // add only readonly props so other populates/setters/hooks/... cannot mess with iterator state
-      actionCtx.set(repeaterAlias, {
+      _.set(actionCtx.aliases, repeaterAlias, {
         current: iter.current,
         total: iter.total,
       });
     }
 
-    await executeActions(def, dbConn, actionCtx as any, populate.actions);
+    await executeActions(def, dbConn, actionCtx, populate.actions);
 
     for (const p of populate.populates) {
       await processPopulate(def, dbConn, actionCtx, p);

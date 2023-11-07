@@ -11,7 +11,7 @@ import {
 
 import { QueryTree } from "@runtime/query/build";
 import { NestedRow, QueryExecutor } from "@runtime/query/exec";
-import { Storage } from "@runtime/server/context";
+import { GlobalContext } from "@runtime/server/context";
 
 /**
  * Helper function that compiles directly to definition. This is used in tests.
@@ -36,7 +36,7 @@ export function mockQueryExecutor(): QueryExecutor {
     executeQuery(
       _def: Definition,
       _q: QueryDef,
-      _ctx: Storage,
+      _ctx: GlobalContext,
       _contextIds: number[]
     ): Promise<NestedRow[]> {
       return Promise.resolve([]);
@@ -45,7 +45,7 @@ export function mockQueryExecutor(): QueryExecutor {
     executeQueryTree(
       _def: Definition,
       _qt: QueryTree,
-      _ctx: Storage,
+      _ctx: GlobalContext,
       _contextIds: number[]
     ): Promise<NestedRow[]> {
       return Promise.resolve([]);
