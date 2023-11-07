@@ -50,7 +50,7 @@ function getAContext<M = any>(key: object): M | undefined {
   return bindings.get(key);
 }
 
-type RecursiveStorage = Record<string, any>;
+type Storage = Record<string, any>;
 
 export type GlobalContext = {
   _server?: {
@@ -58,11 +58,11 @@ export type GlobalContext = {
     res: Response;
     dbConn: DbConn;
   };
-  fieldset: RecursiveStorage;
-  pathParams: RecursiveStorage;
-  aliases: RecursiveStorage;
-  referenceThroughs: RecursiveStorage;
-  localContext: RecursiveStorage;
+  fieldset: Storage;
+  pathParams: Storage;
+  aliases: Storage;
+  referenceThroughs: Storage;
+  localContext: Storage;
 };
 
 export function initializeContext(initial: Partial<GlobalContext>): GlobalContext {

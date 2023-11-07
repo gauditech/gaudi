@@ -1,4 +1,4 @@
-import { pagingToQueryLimit } from "@runtime/common/utils";
+import { collect, pagingToQueryLimit } from "@runtime/common/utils";
 
 describe("runtime common utils", () => {
   describe("paging", () => {
@@ -103,6 +103,32 @@ describe("runtime common utils", () => {
           }
         `);
       });
+    });
+  });
+
+  describe("collect", () => {
+    test("works on complete data", () => {
+      const record = {
+        users: [
+          { id: 1, profile: { id: 101 } },
+          { id: 2, profile: { id: 1001 } },
+        ],
+      };
+      expect(collect(record, ["users", "profile", "id"])).toEqual([101, 1001]);
+    });
+
+    test("skips missing records", () => {
+      const record = {
+        users: [{ id: 1, profile: { id: 101 } }, { id: 2, profile: null }, { id: 3 }],
+      };
+      expect(collect(record, ["users", "profile", "id"])).toEqual([101]);
+    });
+
+    test("can return single record", () => {
+      const record = {
+        user: { id: 4 },
+      };
+      expect(collect(record, ["user", "id"])).toEqual(4);
     });
   });
 });

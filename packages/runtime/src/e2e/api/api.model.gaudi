@@ -300,7 +300,7 @@ api {
         field name { type string }
       }
       action {
-        query as fRepo { from Repo, filter { id is 1 }, select {slug}} // TODO: read from ctx - id
+        query as fRepo { from Repo, filter { id is 1 }, select { slug } } // TODO: read from ctx - id
         execute {
           responds
           hook {

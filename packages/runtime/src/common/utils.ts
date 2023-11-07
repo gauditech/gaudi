@@ -25,7 +25,7 @@ export function pagingToQueryLimit(
 }
 
 /** Collect deeply-nested structures into a flat array. */
-export function collect(values: any, path: string[]): unknown[] {
+export function collect(values: any, path: string[]): unknown | unknown[] {
   if (_.isEmpty(path)) {
     return values;
   }
