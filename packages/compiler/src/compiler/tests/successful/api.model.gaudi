@@ -4,18 +4,22 @@ runtime Runtime {
 
 validator noUnicode {
   arg value { type string }
-  assert hook {
-    arg name value
-    source noUnicode from "hooks.js"
+  assert {
+    hook {
+      arg name value
+      source noUnicode from "hooks.js"
+    }
   }
   error { code "no-unicode" }
 }
 
 validator noSpaces {
   arg value { type string }
-  assert hook {
-    arg slug value
-    inline "!/\\s/.test(slug)"
+  assert {
+    hook {
+      arg slug value
+      inline "!/\\s/.test(slug)"
+    }
   }
   error { code "no-spaces" }
 }

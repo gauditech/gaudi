@@ -1,3 +1,6 @@
+import flat from "flat";
+import _ from "lodash";
+
 /** Calculate query limit/offset from page/pageSize. */
 export function pagingToQueryLimit(
   page: number | undefined,
@@ -19,4 +22,25 @@ export function pagingToQueryLimit(
   }
 
   return { limit, offset };
+}
+
+/** Collect deeply-nested structures into a flat array. */
+export function collect(values: any, path: string[]): unknown | unknown[] {
+  if (_.isEmpty(path)) {
+    return values;
+  }
+  const [name, ...rest] = path;
+  if (_.isArray(values)) {
+    return _.compact(values.flatMap((v) => collect(_.get(v, name), rest)));
+  } else {
+    return collect(_.get(values, name), rest);
+  }
+}
+
+/**
+ * Flattens a nested object/record.
+ * Keys are created recursively, using __ as delimiter.
+ * */
+export function flatten(record: Record<string, any>): Record<string, unknown> {
+  return flat.flatten(_.omit(record, "_server"), { delimiter: "__" });
 }

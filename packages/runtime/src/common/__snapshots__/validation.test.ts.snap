@@ -162,18 +162,20 @@ exports[`runtime validation build validation action 1`] = `
   "validate": {
     "args": [
       {
-        "kind": "alias",
-        "namePath": [
+        "kind": "alias-reference",
+        "path": [
           "newFoo",
           "from",
         ],
+        "source": "aliases",
       },
       {
-        "kind": "alias",
-        "namePath": [
+        "kind": "alias-reference",
+        "path": [
           "newFoo",
           "to",
         ],
+        "source": "aliases",
       },
     ],
     "kind": "call",

@@ -4,15 +4,14 @@ import {
   ChangesetDef,
   ChangesetOperationDef,
   Definition,
-  FieldSetter,
-  FieldSetterChangesetReference,
-  FieldSetterFunction,
   FunctionName,
+  LiteralValueDef,
+  TypedExprDef,
+  TypedFunction,
 } from "@gaudi/compiler/dist/types/definition";
 import bcrypt, { hash } from "bcrypt";
 import _ from "lodash";
 
-import { ActionContext } from "@runtime/common/action";
 import {
   buildChangeset,
   fieldsetAccessToPath,
@@ -21,7 +20,7 @@ import {
   setFieldsetProperty,
 } from "@runtime/common/changeset";
 import { compileFromString, mockQueryExecutor } from "@runtime/common/testUtils";
-import { Vars } from "@runtime/server/vars";
+import { initializeContext } from "@runtime/server/context";
 
 describe("runtime", () => {
   describe("changeset", () => {
@@ -52,125 +51,124 @@ describe("runtime", () => {
     it("build action changeset object", async () => {
       const changeset: ChangesetDef = [
         {
+          kind: "basic",
           name: "value_prop",
           setter: { kind: "literal", literal: { kind: "string", value: "just value" } },
         },
         {
+          kind: "input",
           name: "input_prop",
           setter: {
-            fieldsetAccess: ["input_prop"],
-            kind: "fieldset-input",
-            type: "string",
-            required: true,
+            kind: "alias-reference",
+            source: "fieldset",
+            path: ["input_prop"],
           },
+          fieldsetPath: ["input_prop"],
+          validate: undefined,
         },
         {
+          kind: "input",
           name: "input_prop_missing",
           setter: {
-            fieldsetAccess: ["__missing__"],
-            kind: "fieldset-input",
-            type: "string",
-            required: false,
+            kind: "alias-reference",
+            source: "fieldset",
+            path: ["__missing__"],
           },
+          fieldsetPath: ["__missing__"],
+          validate: undefined,
         },
         {
+          kind: "basic",
           name: "input_value_copy",
           setter: {
-            kind: "changeset-reference",
-            referenceName: "input_prop",
+            kind: "identifier-path",
+            namePath: ["input_prop"],
           },
         },
         {
+          kind: "reference-through",
           name: "other_model",
           setter: {
-            kind: "fieldset-reference-input",
-            through: ["slug"],
-            fieldsetAccess: ["other_slug"],
+            kind: "alias-reference",
+            source: "referenceThroughs",
+            path: ["other_slug", "id"],
           },
+          fieldsetPath: ["other_slug"],
+          through: ["other_slug"],
         },
         {
+          kind: "reference-through",
           name: "deep_other_model",
           setter: {
-            kind: "fieldset-reference-input",
-            through: ["myref", "slug"],
-            fieldsetAccess: ["other_myref_slug"],
+            kind: "alias-reference",
+            source: "referenceThroughs",
+            path: ["other_myref_slug", "id"],
           },
+          fieldsetPath: ["other_myref_slug"],
+          through: ["myref", "slug"],
         },
         {
+          kind: "basic",
           name: "hook_field",
           setter: {
-            kind: "fieldset-hook",
-            args: [
-              { name: "x", setter: { kind: "literal", literal: { kind: "integer", value: 6 } } },
-              { name: "y", setter: { kind: "literal", literal: { kind: "integer", value: 2 } } },
-            ],
-            hook: { kind: "inline", inline: "x / y" },
+            kind: "hook",
+            hook: {
+              args: [
+                {
+                  kind: "basic",
+                  name: "x",
+                  setter: { kind: "literal", literal: { kind: "integer", value: 6 } },
+                },
+                {
+                  kind: "basic",
+                  name: "y",
+                  setter: { kind: "literal", literal: { kind: "integer", value: 2 } },
+                },
+              ],
+              hook: { kind: "inline", inline: "x / y" },
+            },
           },
         },
       ];
 
-      const context: ActionContext = {
-        input: {
-          input_prop: "input value",
-          extra_input_prop: "extra input value",
-        },
-        vars: new Vars(),
-        referenceIds: [
-          { kind: "reference-found", fieldsetAccess: ["other_slug"], value: 1 },
-          { kind: "reference-found", fieldsetAccess: ["other_myref_slug"], value: 40 },
-        ],
+      const input = {
+        input_prop: "input value",
+        extra_input_prop: "extra input value",
+        other_slug: "slug-1",
+        other_myref_slug: "slug-40",
       };
+      const requestContext = initializeContext({
+        fieldset: input,
+        referenceThroughs: {
+          other_slug: { id: 1 },
+          other_myref_slug: { id: 40 },
+        },
+      });
 
       expect(
-        await buildChangeset(
-          createTestDefinition(),
-          mockQueryExecutor(),
-          undefined,
-          changeset,
-          context
-        )
-      ).toMatchSnapshot();
-    });
-
-    // FIXME no longer needed?
-    it("build strict action changeset object", async () => {
-      const data: ChangesetDef = [
-        // lept field
-        {
-          name: "input_prop",
-          setter: { kind: "literal", literal: { kind: "string", value: "just value" } },
-        },
-      ];
-
-      const context: ActionContext = {
-        input: {
-          input_prop: "input value",
-          extra_input_prop: "extra input value",
-        },
-        vars: new Vars(),
-        referenceIds: [{ kind: "reference-found", fieldsetAccess: ["slug"], value: 1 }],
-      };
-
-      expect(
-        await buildChangeset(createTestDefinition(), mockQueryExecutor(), undefined, data, context)
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), requestContext, changeset)
       ).toMatchSnapshot();
     });
 
     it("passes default values correctly", async () => {
       function makeOp(name: string, required: boolean, hasDefault: boolean): ChangesetOperationDef {
         return {
+          kind: "input",
           name,
+          fieldsetPath: [name],
+          validate: undefined,
           setter: {
-            kind: "fieldset-input",
-            fieldsetAccess: [name],
-            required,
-            type: "string",
-            default: hasDefault
-              ? {
-                  kind: "literal",
-                  literal: { kind: "string", value: "this is default value" },
-                }
-              : undefined,
+            kind: "function",
+            name: "coalesce",
+            args: _.compact([
+              { kind: "alias-reference", source: "fieldset", path: [name] },
+              hasDefault
+                ? {
+                    kind: "literal",
+                    literal: { kind: "string", value: "this is default value" },
+                  }
+                : undefined,
+            ]),
           },
         };
       }
@@ -189,45 +187,40 @@ describe("runtime", () => {
         makeOp("optional_no_default", false, false),
       ];
 
-      const context: ActionContext = {
-        input: {
-          required_default_provided: "this is user value",
-          optional_default_provided: "this is another user value",
-        },
-        referenceIds: [],
-        vars: new Vars(),
+      const input = {
+        required_default_provided: "this is user value",
+        optional_default_provided: "this is another user value",
       };
+      const requestContext = initializeContext({ fieldset: input });
 
       expect(
-        await buildChangeset(
-          createTestDefinition(),
-          mockQueryExecutor(),
-          undefined,
-          changeset,
-          context
-        )
+        await buildChangeset(createTestDefinition(), mockQueryExecutor(), requestContext, changeset)
       ).toMatchSnapshot();
     });
 
     it("calculate changeset arithmetic operations", async () => {
-      const mkRef = (referenceName: string): FieldSetterChangesetReference => ({
-        kind: "changeset-reference",
-        referenceName,
+      const mkRef = (name: string): TypedExprDef => ({
+        kind: "identifier-path",
+        namePath: [name],
       });
-      const mkFn = (name: FunctionName, args: FieldSetter[]): FieldSetterFunction => ({
+      const mkFn = (name: FunctionName, args: TypedExprDef[]): TypedFunction => ({
         kind: "function",
         name,
         args,
       });
+      const mkLiteral = (kind: "string" | "integer" | "boolean", value: any): LiteralValueDef => ({
+        kind: "literal",
+        literal: { kind, value },
+      });
 
       const changeset: ChangesetDef = [
-        { name: "a", setter: { kind: "literal", literal: { kind: "integer", value: 2 } } },
-
-        { name: "foo", setter: { kind: "literal", literal: { kind: "string", value: "foo1" } } },
-        { name: "bar", setter: { kind: "literal", literal: { kind: "string", value: "bar2" } } },
-        { name: "is_a", setter: { kind: "literal", literal: { kind: "boolean", value: true } } },
+        { kind: "basic", name: "a", setter: mkLiteral("integer", 2) },
+        { kind: "basic", name: "foo", setter: mkLiteral("string", "foo1") },
+        { kind: "basic", name: "bar", setter: mkLiteral("string", "bar2") },
+        { kind: "basic", name: "is_a", setter: mkLiteral("boolean", true) },
 
         {
+          kind: "basic",
           name: "plus",
           setter: mkFn("+", [
             mkRef("a"),
@@ -235,6 +228,7 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "minus",
           setter: mkFn("-", [
             mkRef("a"),
@@ -242,6 +236,7 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "multiply",
           setter: mkFn("*", [
             { kind: "literal", literal: { kind: "integer", value: 6 } },
@@ -249,14 +244,15 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "divide",
           setter: mkFn("/", [
             { kind: "literal", literal: { kind: "integer", value: 6 } },
             mkRef("a"),
           ]),
         },
-
         {
+          kind: "basic",
           name: "gt",
           setter: mkFn(">", [
             mkRef("a"),
@@ -264,6 +260,7 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "gte",
           setter: mkFn(">=", [
             mkRef("a"),
@@ -271,6 +268,7 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "lt",
           setter: mkFn("<", [
             mkRef("a"),
@@ -278,14 +276,15 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "lte",
           setter: mkFn("<=", [
             mkRef("a"),
             { kind: "literal", literal: { kind: "integer", value: 2 } },
           ]),
         },
-
         {
+          kind: "basic",
           name: "and",
           setter: mkFn("and", [
             mkRef("is_a"),
@@ -293,14 +292,15 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "or",
           setter: mkFn("or", [
             mkRef("is_a"),
             { kind: "literal", literal: { kind: "boolean", value: false } },
           ]),
         },
-
         {
+          kind: "basic",
           name: "is",
           setter: mkFn("is", [
             mkRef("a"),
@@ -308,17 +308,25 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "is not",
           setter: mkFn("is not", [
             mkRef("a"),
             { kind: "literal", literal: { kind: "integer", value: 4 } },
           ]),
         },
-
-        { name: "in", setter: { kind: "literal", literal: { kind: "string", value: "TODO" } } },
-        { name: "not in", setter: { kind: "literal", literal: { kind: "string", value: "TODO" } } },
-
         {
+          kind: "basic",
+          name: "in",
+          setter: { kind: "literal", literal: { kind: "string", value: "TODO" } },
+        },
+        {
+          kind: "basic",
+          name: "not in",
+          setter: { kind: "literal", literal: { kind: "string", value: "TODO" } },
+        },
+        {
+          kind: "basic",
           name: "concat",
           setter: mkFn("concat", [
             mkRef("foo"),
@@ -326,17 +334,19 @@ describe("runtime", () => {
             mkRef("bar"),
           ]),
         },
-        { name: "length", setter: mkFn("length", [mkRef("foo")]) },
-        { name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
-        { name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
-        { name: "now", setter: mkFn("now", []) },
+        { kind: "basic", name: "length", setter: mkFn("length", [mkRef("foo")]) },
+        { kind: "basic", name: "lower", setter: mkFn("lower", [mkRef("foo")]) },
+        { kind: "basic", name: "upper", setter: mkFn("upper", [mkRef("foo")]) },
+        { kind: "basic", name: "now", setter: mkFn("now", []) },
         {
+          kind: "basic",
           name: "stringify",
           setter: mkFn("stringify", [
             { kind: "literal", literal: { kind: "integer", value: 1234 } },
           ]),
         },
         {
+          kind: "basic",
           name: "cryptoHash",
           setter: mkFn("cryptoHash", [
             { kind: "literal", literal: { kind: "string", value: "1234567890" } },
@@ -344,6 +354,7 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "cryptoCompare",
           setter: mkFn("cryptoCompare", [
             { kind: "literal", literal: { kind: "string", value: "1234567890" } },
@@ -358,6 +369,7 @@ describe("runtime", () => {
         },
         // invalid password
         {
+          kind: "basic",
           name: "cryptoCompareFailed",
           setter: mkFn("cryptoCompare", [
             { kind: "literal", literal: { kind: "string", value: "1234567890" } },
@@ -365,24 +377,20 @@ describe("runtime", () => {
           ]),
         },
         {
+          kind: "basic",
           name: "cryptoToken",
           setter: mkFn("cryptoToken", [
             { kind: "literal", literal: { kind: "integer", value: 32 } },
           ]),
         },
       ];
-      const context: ActionContext = {
-        input: {},
-        vars: new Vars(),
-        referenceIds: [],
-      };
+
       expect(
         await buildChangeset(
           createTestDefinition(),
           mockQueryExecutor(),
-          undefined,
-          changeset,
-          context
+          initializeContext({ fieldset: {} }),
+          changeset
         )
       ).toMatchSnapshot();
     });

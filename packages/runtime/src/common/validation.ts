@@ -10,10 +10,11 @@ import {
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { executeHook } from "../hooks";
 import { executeTypedExpr } from "../server/endpoints";
-import { Vars } from "../server/vars";
 
+import { mockQueryExecutor } from "./testUtils";
+
+import { GlobalContext, initializeContext } from "@runtime/server/context";
 import { BusinessError } from "@runtime/server/error";
 
 // ----- validation&transformation
@@ -104,7 +105,12 @@ async function validateField(
   }
 
   return fieldset.validate
-    ? await executeValidateExpr(def, fieldset.validate, field, new Vars())
+    ? await executeValidateExpr(
+        def,
+        fieldset.validate,
+        field,
+        initializeContext({ localContext: { value: field } })
+      )
     : fieldset.referenceNotFound
     ? [{ code: "reference-not-found", params: { value: field } }]
     : fieldset.uniqueExists
@@ -116,7 +122,7 @@ export async function executeValidateExpr(
   def: Definition,
   validate: ValidateExprDef,
   field: unknown | undefined,
-  ctx: Vars
+  ctx: GlobalContext
 ): Promise<ValidateFieldError | undefined> {
   if (validate.kind === "call") {
     return executeValidateExprCall(def, validate, field, ctx);
@@ -145,11 +151,13 @@ async function executeValidateExprCall(
   def: Definition,
   validate: ValidateExprCallDef,
   field: unknown | undefined,
-  ctx: Vars
+  ctx: GlobalContext
 ): Promise<ValidateFieldError | undefined> {
   const validator = def.validators.find((v) => v.name === validate.validator);
   ensureExists(validator);
-  const tailArgs = await Promise.all(validate.args.map((arg) => executeTypedExpr(arg, ctx)));
+  const tailArgs = await Promise.all(
+    validate.args.map((arg) => executeTypedExpr(def, arg, mockQueryExecutor(), ctx))
+  );
   const args = field === undefined ? tailArgs : [field, ...tailArgs];
 
   const params: Record<string, unknown> = {};
@@ -159,21 +167,13 @@ async function executeValidateExprCall(
     params[name] = value;
   }
 
-  const contextVars = new Vars(params);
-
-  const assertResult = await match(validator.assert)
-    .with({ kind: "expr" }, ({ expr }) => executeTypedExpr(expr, contextVars))
-    .with({ kind: "hook" }, async ({ hook }) => {
-      const argEntries = await Promise.all(
-        hook.args.map(
-          async ({ name, expr }) => [name, await executeTypedExpr(expr, contextVars)] as const
-        )
-      );
-      const args = Object.fromEntries(argEntries);
-      return executeHook(def, hook.hook, args);
-    })
-    .exhaustive();
-
+  const argResults = initializeContext({ localContext: params });
+  const assertResult = await executeTypedExpr(
+    def,
+    validator.assert,
+    mockQueryExecutor(),
+    argResults
+  );
   if (assertResult) {
     return undefined;
   }

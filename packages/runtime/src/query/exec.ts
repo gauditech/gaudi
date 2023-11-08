@@ -9,7 +9,6 @@ import {
 import _ from "lodash";
 
 import { executeHook } from "../hooks";
-import { Vars } from "../server/vars";
 
 import {
   GAUDI_INTERNAL_TARGET_ID_ALIAS,
@@ -21,6 +20,8 @@ import {
 import { buildQueryPlan } from "./queryPlan";
 import { queryPlanToString } from "./stringify";
 
+import { flatten } from "@runtime/common/utils";
+import { GlobalContext, initializeContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 
 export interface NestedRow {
@@ -35,7 +36,7 @@ export async function executeQuery(
   conn: DbConn,
   def: Definition,
   query: QueryDef,
-  params: Vars,
+  ctx: GlobalContext,
   contextIds: number[]
 ): Promise<NestedRow[]> {
   const sqlTpl = queryPlanToString(buildQueryPlan(def, query)).replace(
@@ -43,10 +44,13 @@ export async function executeQuery(
     `(${contextIds.map((_, index) => `:context_id_${index}`).join(", ")})`
   );
   const idMap = Object.fromEntries(contextIds.map((id, index) => [`context_id_${index}`, id]));
-  let results = await conn.raw(sqlTpl, { ...params.all(), ...idMap });
+  let results = await conn.raw(sqlTpl, { ...flatten(ctx), ...idMap });
+
+  // sqlite vs postgres drivers compat
   if ("rows" in results) {
     results = results.rows;
   }
+
   return results.map((row: Row): Row => {
     const cast = query.select.map((item: SelectItem): [string, string | number | boolean] => {
       const value = row[item.alias];
@@ -90,10 +94,10 @@ export async function executeQueryTree(
   conn: DbConn,
   def: Definition,
   qt: QueryTree,
-  params: Vars,
+  ctx: GlobalContext,
   contextIds: number[]
 ): Promise<NestedRow[]> {
-  const results = await executeQuery(conn, def, qt.query, params, contextIds);
+  const results = await executeQuery(conn, def, qt.query, ctx, contextIds);
   if (results.length === 0) return [];
 
   const resultIds = qt.queryIdAlias
@@ -105,7 +109,7 @@ export async function executeQueryTree(
     const noAliasErrMsg = "Query has nested selects but 'id' field was not found in the parent";
     ensureNot(qt.queryIdAlias, undefined, noAliasErrMsg);
 
-    const relResults = await executeQueryTree(conn, def, rel, params, resultIds);
+    const relResults = await executeQueryTree(conn, def, rel, ctx, resultIds);
     const groupedById = _.groupBy(relResults, "__join_connection");
     results.forEach((r) => {
       const relResultsForId = (groupedById[r[qt.queryIdAlias!] as number] ?? []).map((relR) =>
@@ -122,7 +126,7 @@ export async function executeQueryTree(
     // collect hook arg queries
     const argResults: Record<string, NestedRow[]> = {};
     for (const arg of hook.args) {
-      const res = await executeQueryTree(conn, def, arg.query, params, resultIds);
+      const res = await executeQueryTree(conn, def, arg.query, ctx, resultIds);
       argResults[arg.name] = res;
     }
 
@@ -152,20 +156,26 @@ export async function findIdBy(
   modelName: string,
   targetPath: NamePath,
   value: unknown
-): Promise<number | null> {
+): Promise<number | undefined> {
   const filter: TypedExprDef = {
     kind: "function",
     name: "is",
     args: [
-      { kind: "alias", namePath: [modelName, ...targetPath] },
-      { kind: "variable", name: "findBy_input" },
+      { kind: "identifier-path", namePath: [modelName, ...targetPath] },
+      { kind: "alias-reference", path: ["findBy_input"], source: "aliases" },
     ],
   };
   const query = queryFromParts(def, "findBy", [modelName], filter, [selectableId([modelName])]);
-  const [result] = await executeQuery(conn, def, query, new Vars({ findBy_input: value }), []);
+  const [result] = await executeQuery(
+    conn,
+    def,
+    query,
+    initializeContext({ aliases: { findBy_input: value } }),
+    []
+  );
 
-  if (!result) return null;
-  return (result[GAUDI_INTERNAL_TARGET_ID_ALIAS] as number) ?? null;
+  if (!result) return undefined;
+  return (result[GAUDI_INTERNAL_TARGET_ID_ALIAS] as number) ?? undefined;
 }
 
 // ----- QueryExecutor
@@ -178,14 +188,14 @@ export type QueryExecutor = {
   executeQuery(
     def: Definition,
     q: QueryDef,
-    params: Vars,
+    ctx: GlobalContext,
     contextIds: number[]
   ): Promise<NestedRow[]>;
 
   executeQueryTree(
     def: Definition,
     qt: QueryTree,
-    params: Vars,
+    ctx: GlobalContext,
     contextIds: number[]
   ): Promise<NestedRow[]>;
 };
@@ -195,12 +205,12 @@ export type QueryExecutor = {
  */
 export function createQueryExecutor(dbConn: DbConn): QueryExecutor {
   return {
-    executeQuery(def, q, params, contextIds) {
-      return executeQuery(dbConn, def, q, params, contextIds);
+    executeQuery(def, q, ctx, contextIds) {
+      return executeQuery(dbConn, def, q, ctx, contextIds);
     },
 
-    executeQueryTree(def, qt, params, contextIds) {
-      return executeQueryTree(dbConn, def, qt, params, contextIds);
+    executeQueryTree(def, qt, ctx, contextIds) {
+      return executeQueryTree(dbConn, def, qt, ctx, contextIds);
     },
   };
 }

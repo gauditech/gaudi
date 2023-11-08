@@ -525,16 +525,12 @@ describe("api client lib", () => {
         {
           "inputName": "Org 1",
           "inputOrgId": 1,
-          "orgById": [
-            {
-              "name": "Org 1",
-            },
-          ],
-          "orgByName": [
-            {
-              "name": "Org 1",
-            },
-          ],
+          "orgById": {
+            "name": "Org 1",
+          },
+          "orgByName": {
+            "name": "Org 1",
+          },
         }
       `);
     });

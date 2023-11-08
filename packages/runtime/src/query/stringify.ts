@@ -37,7 +37,7 @@ function exprToString(expr: QueryPlanExpression): string {
         .exhaustive();
     }
     case "variable": {
-      return `:${expr.name}`;
+      return `:${expr.contextPath.join("__")}`;
     }
     case "function": {
       switch (expr.fnName) {
@@ -69,6 +69,7 @@ function exprToString(expr: QueryPlanExpression): string {
         case "count": {
           return `COALESCE(${stringifyFn("count", expr.args)}, 0)`;
         }
+        case "coalesce":
         case "sum":
         case "lower":
         case "upper":

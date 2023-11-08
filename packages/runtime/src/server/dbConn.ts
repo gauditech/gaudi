@@ -18,16 +18,16 @@ type PostgresqlConfig = {
   connection: string;
 };
 type SqliteConfig = {
-  provider: "sqlite";
+  provider: "file";
   filename: string;
 };
 
 export function parseConnectionString(conn: string): Config {
-  if (conn.startsWith("sqlite")) {
+  if (conn.startsWith("file")) {
     return {
-      provider: "sqlite",
-      // remove `sqlite://` part
-      filename: conn.substring(9),
+      provider: "file",
+      // remove `file://` part
+      filename: conn.substring(7),
     };
   }
   if (conn.startsWith("postgres")) {

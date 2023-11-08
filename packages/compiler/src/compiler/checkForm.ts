@@ -66,16 +66,8 @@ export function checkForm(document: GlobalAtom[]) {
       args.map(({ name }) => name),
       ErrorCode.DuplicateModelAtom
     );
-    containsAtoms(validator, ["arg", "error"]);
-    noDuplicateAtoms(validator, ["error"]);
-    const exprOrHook = kindFilter(validator.atoms, "assert", "assertHook");
-    if (exprOrHook.length === 0) {
-      errors.push(new CompilerError(validator.keyword, ErrorCode.ValidatorMustContainExprOrHook));
-    } else if (exprOrHook.length > 1) {
-      exprOrHook.forEach(({ keyword }) =>
-        errors.push(new CompilerError(keyword, ErrorCode.ValidatorOnlyOneExprOrHook))
-      );
-    }
+    containsAtoms(validator, ["arg", "error", "assert"]);
+    noDuplicateAtoms(validator, ["error", "assert"]);
   }
 
   function checkModel(model: Model) {
@@ -357,10 +349,7 @@ export function checkForm(document: GlobalAtom[]) {
 
     const allIdentifiers = action.atoms.flatMap((a): Identifier[] =>
       match(a)
-        .with({ kind: "set" }, ({ target, set }) => {
-          if (set.kind === "hook") checkHook(set);
-          return [target];
-        })
+        .with({ kind: "set" }, ({ target }) => [target])
         .with({ kind: "referenceThrough" }, ({ target }) => [target])
         .with({ kind: "input" }, ({ fields }) =>
           fields.map((field) => {
@@ -434,10 +423,7 @@ export function checkForm(document: GlobalAtom[]) {
 
   function checkPopulate(populate: Populate) {
     noDuplicateAtoms(populate, ["repeat"]);
-    const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target, set }) => {
-      if (set.kind === "hook") checkHook(set);
-      return target;
-    });
+    const setIdentifiers = kindFilter(populate.atoms, "set").map(({ target }) => target);
     noDuplicateNames(setIdentifiers, ErrorCode.DuplicatePopulateSet);
     kindFilter(populate.atoms, "populate").forEach(checkPopulate);
   }
@@ -499,7 +485,7 @@ export function checkForm(document: GlobalAtom[]) {
     });
   }
 
-  function checkHook(hook: Hook<"action" | "validator" | "model">) {
+  function checkHook(hook: Hook<"action" | "model">) {
     noDuplicateAtoms(hook, ["runtime"]);
     const sourceOrInline = kindFilter(hook.atoms, "source", "inline");
     if (sourceOrInline.length === 0) {

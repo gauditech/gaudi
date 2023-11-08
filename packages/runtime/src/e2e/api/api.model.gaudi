@@ -4,18 +4,22 @@ runtime MyRuntime {
 
 validator noUnicode {
   arg value { type string }
-  assert hook {
-    arg name value
-    source noUnicode from "hooks.js"
+  assert {
+    hook {
+      arg name value
+      source noUnicode from "hooks.js"
+    }
   }
   error { code "no-unicode" }
 }
 
 validator noSpaces {
   arg value { type string }
-  assert hook {
-    arg slug value
-    inline "!/\\s/.test(slug)"
+  assert {
+    hook {
+      arg slug value
+      inline "!/\\s/.test(slug)"
+    }
   }
   error { code "no-spaces" }
 }
@@ -261,13 +265,25 @@ api {
         field orgId { type integer }
       }
       action {
+        query as orgByName {
+          from Org as o,
+          filter { lower(o.name) is lower(name) },
+          select { name },
+          first
+        }
+        query as orgById {
+          from Org as o,
+          filter { o.id is orgId },
+          select { name },
+          first
+        }
         execute {
           responds
           hook {
             arg inputName name
             arg inputOrgId orgId
-            arg orgByName query { from Org as o, filter {lower(o.name) is lower(name)}, select {name} }
-            arg orgById query { from Org as o, filter { o.id is orgId }, select {name} }
+            arg orgByName orgByName
+            arg orgById orgById
             // arg orgByInputId query { from Org as o, filter { o.id is inputOrgId }, select {name} }
             source customActionResponds from "hooks.js"
           }
@@ -284,7 +300,7 @@ api {
         field name { type string }
       }
       action {
-        query as fRepo { from Repo, filter { id is 1 }, select {slug}} // TODO: read from ctx - id
+        query as fRepo { from Repo, filter { id is 1 }, select { slug } } // TODO: read from ctx - id
         execute {
           responds
           hook {

@@ -9,19 +9,23 @@ runtime OtherRuntime {
 
 validator customValidator {
   arg value { type string }
-  assert hook {
-    arg fieldOne value
-    runtime OtherRuntime
-    source foo from "customValidateHook"
+  assert {
+    hook {
+      arg fieldOne value
+      runtime OtherRuntime
+      source foo from "customValidateHook"
+    }
   }
   error { code "custom-validator" }
 }
 
 validator customValidatorInline {
   arg value { type string }
-  assert hook {
-    arg fieldTwo value
-    inline "fieldTwo.toLowerCase() === 'something';"
+  assert {
+    hook {
+      arg fieldTwo value
+      inline "fieldTwo.toLowerCase() === 'something';"
+    }
   }
   error { code "custom-validator-inline" }
 }

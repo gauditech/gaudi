@@ -1,6 +1,6 @@
 import { FieldType, TypeCardinality } from "@compiler/compiler/ast/type";
 import { HookCode } from "@compiler/types/common";
-import { IdentifierRef, Literal } from "@compiler/types/specification";
+import { Literal } from "@compiler/types/specification";
 
 export type Definition = {
   validators: ValidatorDef[];
@@ -15,7 +15,7 @@ export type Definition = {
 export type ValidatorDef = {
   name: string;
   args: { name: string; type: FieldType }[];
-  assert: { kind: "expr"; expr: TypedExprDef } | { kind: "hook"; hook: ValidatorHookDef };
+  assert: TypedExprDef;
   error: { code: string };
 };
 
@@ -141,8 +141,27 @@ type TypedVariableType = VariablePrimitiveType | VariableCollectionType;
 
 export type LiteralValueDef = { kind: "literal"; literal: Literal };
 
-type TypedAlias = { kind: "alias"; namePath: string[]; type?: TypedVariableType };
-type TypedVariable = { kind: "variable"; type?: TypedVariableType; name: string };
+type CtxSource =
+  | "fieldset"
+  | "aliases"
+  | "changesets"
+  | "referenceThroughs"
+  | "pathParams"
+  | "queryParams"
+  | undefined;
+
+export type TypedAliasReference = {
+  kind: "alias-reference";
+  source: CtxSource;
+  path: string[];
+  type?: TypedVariableType;
+};
+
+export type TypedIdentifierPath = {
+  kind: "identifier-path";
+  type?: TypedVariableType;
+  namePath: string[];
+};
 
 export type BinaryOperator =
   | "or"
@@ -164,6 +183,7 @@ export type FunctionName =
   | BinaryOperator
   | "length"
   | "concat"
+  | "coalesce"
   | "lower"
   | "upper"
   | "now"
@@ -186,12 +206,18 @@ export type TypedFunction = {
 export type TypedExprDef =
   | LiteralValueDef
   | TypedArray
-  | TypedAlias
-  | TypedVariable
+  | TypedAliasReference
+  | TypedIdentifierPath
   | TypedFunction
   | TypedAggregateFunction
   | TypedExistsSubquery
+  | TypedHook
   | undefined;
+
+export type TypedHook = {
+  kind: "hook";
+  hook: ActionHookDef;
+};
 
 type TypedArray = {
   kind: "array";
@@ -386,12 +412,6 @@ export type FieldsetRecordDef = {
   nullable: boolean;
 };
 
-export type IValidatorDef = {
-  name: string;
-  inputType: FieldType;
-  args: Literal[];
-};
-
 export type FieldsetFieldDef = {
   kind: "field";
   type: FieldType;
@@ -451,9 +471,9 @@ export type ExecuteHookAction = {
 
 export type RespondAction = {
   kind: "respond";
-  body: FieldSetter;
-  httpStatus?: FieldSetter;
-  httpHeaders?: { name: string; value: FieldSetter }[];
+  body: TypedExprDef;
+  httpStatus?: TypedExprDef;
+  httpHeaders?: { name: string; value: TypedExprDef }[];
 };
 
 export type QueryAction = {
@@ -475,27 +495,15 @@ export type ActionHookDef = {
 };
 
 export type ChangesetDef = ChangesetOperationDef[];
-export type ChangesetOperationDef = { name: string; setter: FieldSetter };
-
-export type FieldSetterReferenceValue = {
-  kind: "reference-value";
-  target: { alias: string; access: string[] };
-};
-
-export type FieldSetterInput = {
-  kind: "fieldset-input";
-  type: FieldType;
-  fieldsetAccess: string[];
-  required: boolean;
-  default?: FieldSetter;
-};
-
-export type FieldSetterReferenceInput = {
-  kind: "fieldset-reference-input";
-  fieldsetAccess: string[];
-  through: string[];
-  // required: boolean;
-};
+export type ChangesetOperationDef = { name: string; setter: TypedExprDef } & (
+  | {
+      kind: "input";
+      fieldsetPath: string[];
+      validate: ValidateExprDef | undefined;
+    }
+  | { kind: "reference-through"; through: string[]; fieldsetPath: string[] }
+  | { kind: "basic" }
+);
 
 export type PopulatorDef = {
   name: string;
@@ -510,51 +518,6 @@ export type PopulateDef = {
 };
 
 export type RepeaterDef = { alias?: string; start: number; end: number };
-
-export type FieldSetterChangesetReference = {
-  kind: "changeset-reference";
-  referenceName: string;
-};
-
-export type FieldSetterFunction = {
-  kind: "function";
-  name: FunctionName; // TODO rename to `fnName` to make it more clear, see line 124 as well
-  args: FieldSetter[];
-};
-
-export type FieldSetterContextReference = {
-  kind: "context-reference";
-  referenceName: string;
-};
-
-export type FieldSetterHook = {
-  kind: "fieldset-hook";
-  hook: HookCode;
-  args: ChangesetDef;
-};
-
-export type FieldSetterQuery = {
-  kind: "query";
-  query: QueryDef;
-};
-
-export type FieldSetterArray = {
-  kind: "array";
-  elements: FieldSetter[];
-};
-
-export type FieldSetter =
-  // TODO add composite expression setter
-  | LiteralValueDef
-  | FieldSetterReferenceValue
-  | FieldSetterInput
-  | FieldSetterReferenceInput
-  | FieldSetterChangesetReference
-  | FieldSetterHook
-  | FieldSetterFunction
-  | FieldSetterContextReference
-  | FieldSetterQuery
-  | FieldSetterArray;
 
 export type ExecutionRuntimeDef = {
   name: string;

@@ -37,8 +37,8 @@ export function buildEndpointQueries(def: Definition, endpoint: EndpointDef): En
       kind: "function",
       name: "is",
       args: [
-        { kind: "alias", namePath: [authModel.refKey, "id"] },
-        { kind: "variable", name: "id" },
+        { kind: "identifier-path", namePath: [authModel.refKey, "id"] },
+        { kind: "alias-reference", path: ["id"], source: "aliases" },
       ],
     };
     const query = queryFromParts(def, "@auth", [authModel.name], filter, endpoint.authSelect);
@@ -110,7 +110,7 @@ export function decorateWithOrderBy(endpoint: ListEndpointDef, qt: QueryTree): Q
     : [endpoint.target.retType];
 
   const defaultOrderBy: QueryOrderByAtomDef[] = [
-    { exp: { kind: "alias", namePath: [...namePath, "id"] }, direction: "asc" },
+    { exp: { kind: "identifier-path", namePath: [...namePath, "id"] }, direction: "asc" },
   ];
 
   // order: endpoint -> query -> default
@@ -131,7 +131,7 @@ export function decorateWithOrderBy(endpoint: ListEndpointDef, qt: QueryTree): Q
 
 /** Decorate query with paging when required. */
 export function decorateWithPaging(
-  endpoint: ListEndpointDef,
+  _endpoint: ListEndpointDef,
   qt: QueryTree,
   params: { pageSize: number | undefined; page: number | undefined }
 ): QueryTree {
@@ -215,11 +215,12 @@ function targetToFilter(target: TargetDef): TypedExprDef {
     kind: "function",
     name: "is",
     args: [
-      { kind: "alias", namePath: [...target.namePath, ...target.identifyWith.path] },
+      { kind: "identifier-path", namePath: [...target.namePath, ...target.identifyWith.path] },
       {
-        kind: "variable",
+        kind: "alias-reference",
+        source: "pathParams",
         type: { kind: target.identifyWith.type, nullable: false },
-        name: target.identifyWith.paramName,
+        path: [target.identifyWith.paramName],
       },
     ],
   };

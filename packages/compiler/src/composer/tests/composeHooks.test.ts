@@ -14,10 +14,12 @@ describe("compose hooks", () => {
 
       validator Test {
         arg name { type string }
-        assert hook {
-          arg name name
-          runtime MyRuntime
-          source someHook from "githubc.js"
+        assert {
+          hook {
+            arg name name
+            runtime MyRuntime
+            source someHook from "githubc.js"
+          }
         }
         error { code "test" }
       }
@@ -64,9 +66,11 @@ describe("compose hooks", () => {
 
       validator Test {
         arg name { type string }
-        assert hook {
-          arg name name
-          inline "name === 'name'"
+        assert {
+          hook {
+            arg name name
+            inline "name === 'name'"
+          }
         }
         error { code "test" }
       }
@@ -187,7 +191,7 @@ describe("compose hooks", () => {
       model Org { field name { type string} }
 
       api {
-        entrypoint Org {
+        entrypoint Org as org {
 
           // login
           custom endpoint {
@@ -200,10 +204,15 @@ describe("compose hooks", () => {
             }
 
             action {
+              query as orgQ {
+                from Org,
+                filter { id is org.id },
+                select { id, name }
+              }
               execute {
                 hook {
-                  // action arg hook
-                  arg user query { from Org, filter { id is 1 }, select { id, name }} // TODO: read from ctx - id
+                  arg org orgQ
+                  arg int 1
 
                   runtime @GAUDI_INTERNAL
                   source login from "hooks/auth"
@@ -215,7 +224,7 @@ describe("compose hooks", () => {
       }
     `;
     const def = compileFromString(bp);
-    const action = (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions[0];
+    const action = (def.apis[0].entrypoints[0].endpoints[0] as CustomOneEndpointDef).actions;
 
     expect(action).toMatchSnapshot();
   });

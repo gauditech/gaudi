@@ -10,6 +10,7 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
           "alias": "org",
           "changeset": [
             {
+              "kind": "basic",
               "name": "is_new",
               "setter": {
                 "kind": "literal",
@@ -20,6 +21,7 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
               },
             },
             {
+              "kind": "basic",
               "name": "name",
               "setter": {
                 "kind": "literal",
@@ -37,7 +39,7 @@ exports[`populator composer succeeds for fixed iteration 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "id",
@@ -92,6 +94,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
           "alias": "org",
           "changeset": [
             {
+              "kind": "basic",
               "name": "is_new",
               "setter": {
                 "kind": "literal",
@@ -102,6 +105,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
               },
             },
             {
+              "kind": "basic",
               "name": "name",
               "setter": {
                 "kind": "literal",
@@ -119,7 +123,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "id",
@@ -144,18 +148,19 @@ exports[`populator composer succeeds for nested iterations 1`] = `
               "alias": "repo",
               "changeset": [
                 {
+                  "kind": "basic",
                   "name": "org_id",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "id",
-                      ],
-                      "alias": "org",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "org",
+                      "id",
+                    ],
+                    "source": "aliases",
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "name",
                   "setter": {
                     "kind": "literal",
@@ -173,7 +178,7 @@ exports[`populator composer succeeds for nested iterations 1`] = `
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "repo",
                       "id",
@@ -252,6 +257,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
           "alias": "org",
           "changeset": [
             {
+              "kind": "basic",
               "name": "name",
               "setter": {
                 "kind": "literal",
@@ -269,7 +275,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "id",
@@ -284,7 +290,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
             {
               "alias": "name",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "name",
@@ -309,27 +315,27 @@ exports[`populator composer succeeds for nested populators 1`] = `
               "alias": "repo",
               "changeset": [
                 {
+                  "kind": "basic",
                   "name": "org_id",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "id",
-                      ],
-                      "alias": "org",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "org",
+                      "id",
+                    ],
+                    "source": "aliases",
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "name",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "name",
-                      ],
-                      "alias": "org",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "org",
+                      "name",
+                    ],
+                    "source": "aliases",
                   },
                 },
               ],
@@ -340,7 +346,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "repo",
                       "id",
@@ -355,7 +361,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
                 {
                   "alias": "name",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "repo",
                       "name",
@@ -380,27 +386,27 @@ exports[`populator composer succeeds for nested populators 1`] = `
                   "alias": "issue",
                   "changeset": [
                     {
+                      "kind": "basic",
                       "name": "repo_id",
                       "setter": {
-                        "kind": "reference-value",
-                        "target": {
-                          "access": [
-                            "id",
-                          ],
-                          "alias": "repo",
-                        },
+                        "kind": "alias-reference",
+                        "path": [
+                          "repo",
+                          "id",
+                        ],
+                        "source": "aliases",
                       },
                     },
                     {
+                      "kind": "basic",
                       "name": "title",
                       "setter": {
-                        "kind": "reference-value",
-                        "target": {
-                          "access": [
-                            "name",
-                          ],
-                          "alias": "repo",
-                        },
+                        "kind": "alias-reference",
+                        "path": [
+                          "repo",
+                          "name",
+                        ],
+                        "source": "aliases",
                       },
                     },
                   ],
@@ -411,7 +417,7 @@ exports[`populator composer succeeds for nested populators 1`] = `
                     {
                       "alias": "id",
                       "expr": {
-                        "kind": "alias",
+                        "kind": "identifier-path",
                         "namePath": [
                           "issue",
                           "id",
@@ -512,6 +518,7 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
           "alias": "org",
           "changeset": [
             {
+              "kind": "basic",
               "name": "is_new",
               "setter": {
                 "kind": "literal",
@@ -522,6 +529,7 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
               },
             },
             {
+              "kind": "basic",
               "name": "name",
               "setter": {
                 "kind": "literal",
@@ -539,7 +547,7 @@ exports[`populator composer succeeds for range iteration (only end) 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "id",
@@ -594,6 +602,7 @@ exports[`populator composer succeeds for range iteration 1`] = `
           "alias": "org",
           "changeset": [
             {
+              "kind": "basic",
               "name": "is_new",
               "setter": {
                 "kind": "literal",
@@ -604,6 +613,7 @@ exports[`populator composer succeeds for range iteration 1`] = `
               },
             },
             {
+              "kind": "basic",
               "name": "name",
               "setter": {
                 "kind": "literal",
@@ -621,7 +631,7 @@ exports[`populator composer succeeds for range iteration 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "id",
@@ -676,6 +686,7 @@ exports[`populator composer succeeds for simple populator 1`] = `
           "alias": "org",
           "changeset": [
             {
+              "kind": "basic",
               "name": "slug",
               "setter": {
                 "kind": "literal",
@@ -686,6 +697,7 @@ exports[`populator composer succeeds for simple populator 1`] = `
               },
             },
             {
+              "kind": "basic",
               "name": "name",
               "setter": {
                 "args": [
@@ -697,8 +709,10 @@ exports[`populator composer succeeds for simple populator 1`] = `
                     },
                   },
                   {
-                    "kind": "changeset-reference",
-                    "referenceName": "slug",
+                    "kind": "identifier-path",
+                    "namePath": [
+                      "slug",
+                    ],
                   },
                 ],
                 "kind": "function",
@@ -706,22 +720,28 @@ exports[`populator composer succeeds for simple populator 1`] = `
               },
             },
             {
+              "kind": "basic",
               "name": "description",
               "setter": {
-                "args": [
-                  {
-                    "name": "name",
-                    "setter": {
-                      "kind": "changeset-reference",
-                      "referenceName": "name",
-                    },
-                  },
-                ],
                 "hook": {
-                  "inline": "'Description of' + name",
-                  "kind": "inline",
+                  "args": [
+                    {
+                      "kind": "basic",
+                      "name": "name",
+                      "setter": {
+                        "kind": "identifier-path",
+                        "namePath": [
+                          "name",
+                        ],
+                      },
+                    },
+                  ],
+                  "hook": {
+                    "inline": "'Description of' + name",
+                    "kind": "inline",
+                  },
                 },
-                "kind": "fieldset-hook",
+                "kind": "hook",
               },
             },
           ],
@@ -732,7 +752,7 @@ exports[`populator composer succeeds for simple populator 1`] = `
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "id",
@@ -786,44 +806,51 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
           "alias": "org",
           "changeset": [
             {
-              "name": "index",
-              "setter": {
-                "kind": "reference-value",
-                "target": {
-                  "access": [
-                    "current",
-                  ],
-                  "alias": "oIter",
-                },
-              },
-            },
-            {
-              "name": "name",
-              "setter": {
-                "args": [
-                  {
-                    "name": "oIter",
-                    "setter": {
-                      "kind": "reference-value",
-                      "target": {
-                        "access": [],
-                        "alias": "oIter",
-                      },
-                    },
-                  },
-                ],
-                "hook": {
-                  "inline": "'Org ' + oIter.current",
-                  "kind": "inline",
-                },
-                "kind": "fieldset-hook",
-              },
-            },
-            {
+              "kind": "basic",
               "name": "name2",
               "setter": {
-                "kind": "changeset-reference",
-                "referenceName": "name",
+                "kind": "identifier-path",
+                "namePath": [
+                  "name",
+                ],
+              },
+            },
+            {
+              "kind": "basic",
+              "name": "index",
+              "setter": {
+                "kind": "alias-reference",
+                "path": [
+                  "oIter",
+                  "current",
+                ],
+                "source": "aliases",
+              },
+            },
+            {
+              "kind": "basic",
+              "name": "name",
+              "setter": {
+                "hook": {
+                  "args": [
+                    {
+                      "kind": "basic",
+                      "name": "oIter",
+                      "setter": {
+                        "kind": "alias-reference",
+                        "path": [
+                          "oIter",
+                        ],
+                        "source": "aliases",
+                      },
+                    },
+                  ],
+                  "hook": {
+                    "inline": "'Org ' + oIter.current",
+                    "kind": "inline",
+                  },
+                },
+                "kind": "hook",
               },
             },
           ],
@@ -834,7 +861,7 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
             {
               "alias": "id",
               "expr": {
-                "kind": "alias",
+                "kind": "identifier-path",
                 "namePath": [
                   "org",
                   "id",
@@ -859,39 +886,39 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
               "alias": "repo",
               "changeset": [
                 {
+                  "kind": "basic",
                   "name": "org_id",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "id",
-                      ],
-                      "alias": "org",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "org",
+                      "id",
+                    ],
+                    "source": "aliases",
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "index",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "current",
-                      ],
-                      "alias": "rIter",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "rIter",
+                      "current",
+                    ],
+                    "source": "aliases",
                   },
                 },
                 {
+                  "kind": "basic",
                   "name": "org_index",
                   "setter": {
-                    "kind": "reference-value",
-                    "target": {
-                      "access": [
-                        "current",
-                      ],
-                      "alias": "oIter",
-                    },
+                    "kind": "alias-reference",
+                    "path": [
+                      "oIter",
+                      "current",
+                    ],
+                    "source": "aliases",
                   },
                 },
               ],
@@ -902,7 +929,7 @@ exports[`populator composer succeeds with iterator variables in the context 1`] 
                 {
                   "alias": "id",
                   "expr": {
-                    "kind": "alias",
+                    "kind": "identifier-path",
                     "namePath": [
                       "repo",
                       "id",

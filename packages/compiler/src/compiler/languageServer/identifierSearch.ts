@@ -79,7 +79,6 @@ function getIdentifiersValidator({ name, atoms }: Validator): FuzzySourceRef[] {
     match(atom)
       .with({ kind: "arg" }, ({ name }) => name)
       .with({ kind: "assert" }, ({ expr }) => getIdentifiersExpr(expr))
-      .with({ kind: "assertHook" }, ({ hook }) => getIdentifiersHook(hook))
       .with({ kind: "error" }, () => [])
       .exhaustive()
   );
@@ -247,10 +246,7 @@ function getIdentifiersPopulate({ target, as, atoms }: Populate): FuzzySourceRef
 
 function getIdentifiersModelActionAtom(atom: ModelActionAtom): FuzzySourceRef[] {
   return match(atom)
-    .with({ kind: "set" }, ({ target, set }) => [
-      target,
-      ...(set.kind === "hook" ? getIdentifiersHook(set) : getIdentifiersExpr(set.expr)),
-    ])
+    .with({ kind: "set" }, ({ target, expr }) => [target, ...getIdentifiersExpr(expr)])
     .with({ kind: "referenceThrough" }, ({ target, through }) => [target, ...through])
     .with({ kind: "input" }, ({ fields }) => fields.map(({ field }) => field))
     .with({ kind: "input-all" }, ({ except }) => except)
@@ -279,7 +275,7 @@ function getIdentifiersSelect(select: Select): FuzzySourceRef[] {
   ]);
 }
 
-function getIdentifiersExpr(expr: Expr): FuzzySourceRef[] {
+function getIdentifiersExpr(expr: Expr<"db" | "code">): FuzzySourceRef[] {
   return match(expr)
     .with({ kind: "function" }, ({ args }) => args.flatMap(getIdentifiersExpr))
     .with({ kind: "array" }, ({ elements }) => elements.flatMap(getIdentifiersExpr))
@@ -291,13 +287,11 @@ function getIdentifiersExpr(expr: Expr): FuzzySourceRef[] {
     ])
     .with({ kind: "group" }, ({ expr }) => getIdentifiersExpr(expr))
     .with({ kind: "unary" }, ({ expr }) => getIdentifiersExpr(expr))
+    .with({ kind: "hook" }, ({ hook }) => getIdentifiersHook(hook))
     .exhaustive();
 }
 
-function getIdentifiersHook({
-  name,
-  atoms,
-}: Hook<"model" | "validator" | "action">): FuzzySourceRef[] {
+function getIdentifiersHook({ name, atoms }: Hook<"model" | "action">): FuzzySourceRef[] {
   const atomIdentifiers = atoms.flatMap((atom) =>
     match(atom)
       .with({ kind: "arg_expr" }, ({ expr }) => getIdentifiersExpr(expr))

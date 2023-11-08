@@ -1,5 +1,8 @@
 import _ from "lodash";
+import { match } from "ts-pattern";
 
+import { FilteredByKind } from "@compiler/common/kindFilter";
+import { getRef } from "@compiler/common/refs";
 import { assertUnreachable, ensureNot } from "@compiler/common/utils";
 import { composeActionBlock } from "@compiler/composer/actions";
 import {
@@ -8,8 +11,9 @@ import {
   wrapActionsWithSelect,
 } from "@compiler/composer/entrypoints";
 import {
-  ActionDef,
   Definition,
+  FieldDef,
+  ModelDef,
   PopulateDef,
   PopulatorDef,
   RepeaterDef,
@@ -36,19 +40,22 @@ function processPopulate(
 ): PopulateDef {
   const namePath = [...parentNamePath, populateSpec.target.text];
   const target = calculateTarget(populateSpec, namePath);
+  const model = getRef.model(def, target.retType);
 
   const targetParents = [...parents, target];
 
-  const rawActions = composeAction(populateSpec);
-  checkActionChangeset(rawActions);
+  const actionSpec = buildActionSpec(populateSpec);
+  const defaultSetters = calculateDefaultSetters(model, actionSpec.actionAtoms);
+  const rawActions = composeActionBlock([
+    { ...actionSpec, actionAtoms: [...actionSpec.actionAtoms, ...defaultSetters] },
+  ]);
 
   const populates = populateSpec.populates.map((p) =>
     processPopulate(def, targetParents, namePath, p)
   );
-  const subactions = populates.flatMap((p) => p.actions);
 
   // collect deps from this AND subpopupulates' actions
-  const selectDeps = collectActionDeps(def, [...rawActions, ...subactions]);
+  const selectDeps = collectActionDeps(extractActionSpecs(populateSpec));
   const actions = wrapActionsWithSelect(def, rawActions, selectDeps);
 
   const repeater = composeRepeater(populateSpec.repeater);
@@ -61,8 +68,18 @@ function processPopulate(
   };
 }
 
-function composeAction(populate: Spec.Populate): ActionDef[] {
-  const actionSpec: Spec.Action = {
+function extractActionSpecs(populate: Spec.Populate): Spec.Action[] {
+  const action = buildActionSpec(populate);
+  const subactions = populate.populates.flatMap(_.unary(extractActionSpecs));
+  return [action, ...subactions];
+}
+
+type PopulateAction = Omit<FilteredByKind<Spec.Action, "create">, "actionAtoms"> & {
+  actionAtoms: Spec.ActionAtomSet[];
+};
+
+function buildActionSpec(populate: Spec.Populate): PopulateAction {
+  return {
     kind: "create",
     // TODO: add default targetPath, alias
     targetPath: [populate.target],
@@ -70,51 +87,50 @@ function composeAction(populate: Spec.Populate): ActionDef[] {
     actionAtoms: populate.setters,
     isPrimary: false,
   };
-
-  return composeActionBlock([actionSpec]);
 }
 
-/**
- * Check that action changeset contains setters for all fields.
- *
- * Populator cannot handle fieldset input setters and all fields must be set using manually (literal, reference, hook, ...)
- * NOTE: this can create problems on models that have diamond shaped relations eg.
- *      Org
- *     /  |
- * Repo   |
- *    |   /
- *   Issue
- *
- * "issue" create action's changeset will contain reference setter for "repo_id" and input setter for "org_id"
- * which will fail in this check.
- */
-function checkActionChangeset(action: ActionDef | ActionDef[]) {
-  const inputSetters: string[] = [];
-  _.castArray(action).forEach((action) => {
-    if (action.kind === "create-one" || action.kind === "update-one") {
-      action.changeset.forEach((operation) => {
-        // search for input setters
-        if (
-          operation.setter.kind === "fieldset-input" ||
-          operation.setter.kind === "fieldset-reference-input"
-        ) {
-          inputSetters.push(operation.name);
-        }
-      });
-    }
-
-    // throw error if changeset contains input setters
-    if (inputSetters.length > 0) {
-      // concat action's target path IF it has one
-      const actionTargetPath = "targetPath" in action ? action.targetPath.join(".") : "";
-
-      throw new Error(
-        `Action ${
-          action.kind
-        } "${actionTargetPath}" is missing setters for fields: ${inputSetters.join()}`
-      );
-    }
+function calculateDefaultSetters(
+  model: ModelDef,
+  setters: Spec.ActionAtomSet[]
+): Spec.ActionAtomSet[] {
+  const usedFields = setters.map((setter) => setter.target.name);
+  const missingFields = model.fields.filter((f) => !usedFields.includes(f.name) && f.name !== "id");
+  return missingFields.map((field): Spec.ActionAtomSet => {
+    return {
+      kind: "set",
+      target: {
+        kind: "modelAtom",
+        atomKind: "field",
+        name: field.name,
+        nullable: field.nullable,
+        parentModel: model.name,
+        type: field.type,
+        unique: field.unique,
+      },
+      expr: defaultLiteralExpr(field),
+    };
   });
+}
+
+function defaultLiteralExpr(field: FieldDef): Spec.Expr<"code"> {
+  if (field.nullable) {
+    return {
+      kind: "literal",
+      type: { kind: "null" },
+      literal: { kind: "null", value: null },
+    };
+  }
+  const literal = match<typeof field, Spec.Literal>(field)
+    .with({ type: "boolean" }, (f) => ({ kind: f.type, value: false }))
+    .with({ type: "float" }, (f) => ({ kind: f.type, value: 0.0 }))
+    .with({ type: "integer" }, (f) => ({ kind: f.type, value: 0 }))
+    .with({ type: "string" }, (f) => ({ kind: f.type, value: "" }))
+    .exhaustive();
+  return {
+    kind: "literal",
+    type: { kind: "primitive", primitiveKind: field.type },
+    literal,
+  };
 }
 
 function composeRepeater(repeat?: Spec.Repeater): RepeaterDef {

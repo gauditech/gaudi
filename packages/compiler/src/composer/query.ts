@@ -12,7 +12,9 @@ import {
   QueryOrderByAtomDef,
   SelectDef,
   SelectItem,
+  TypedAliasReference,
   TypedExprDef,
+  TypedIdentifierPath,
 } from "@compiler/types/definition";
 import * as Spec from "@compiler/types/specification";
 
@@ -58,7 +60,11 @@ export function composeOrderBy(
     })
   );
 }
-function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: string[]): TypedExprDef {
+function typedFunctionFromParts(
+  name: string,
+  args: Spec.Expr<"db" | "code">[],
+  namePath: string[]
+): TypedExprDef {
   // Change name to concat if using "+" with "string" type
   const firstType = args.at(0)?.type;
   if (name === "+" && firstType?.kind === "primitive" && firstType.primitiveKind === "string") {
@@ -72,8 +78,12 @@ function typedFunctionFromParts(name: string, args: Spec.Expr[], namePath: strin
   };
 }
 
-export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExprDef {
+export function composeExpression(
+  expr: Spec.Expr<"code"> | undefined,
+  namePath: string[]
+): TypedExprDef {
   return match<typeof expr, TypedExprDef>(expr)
+    .with(undefined, () => undefined)
     .with({ kind: "literal" }, ({ literal }) => ({
       kind: "literal",
       literal,
@@ -120,27 +130,26 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
               return (
                 match<typeof head.ref, TypedExprDef>(head.ref)
                   .with({ kind: "modelAtom" }, () => ({
-                    kind: "alias",
+                    kind: "identifier-path",
                     namePath: [...namePath, ...arg.identifier.map((i) => i.text)],
                   }))
                   .with({ kind: "queryTarget" }, (ref) => ({
-                    kind: "alias",
+                    kind: "identifier-path",
                     namePath: [...ref.path, ...tail.map((i) => i.text)],
                   }))
                   // FIXME support context vars: auth, struct, target...
                   .otherwise(shouldBeUnreachableCb(`${head.ref.kind} is not a valid lookup`))
               );
             })
-            .with({ kind: "literal" }, ({ literal }) => ({
-              kind: "literal",
-              literal,
-            }))
-            .with({ kind: "function" }, (fn) => typedFunctionFromParts(fn.name, fn.args, namePath))
-            .with({ kind: "array" }, () => {
-              throw new UnreachableError(`"array" is not a valid lookup expression`);
-            })
-            .exhaustive();
-
+            .with(
+              { kind: "array" },
+              shouldBeUnreachableCb('"array" is not a valid lookup expression')
+            )
+            .with(
+              { kind: "hook" },
+              shouldBeUnreachableCb("Hooks not implemented for 'in' / 'not in'")
+            )
+            .otherwise((exp) => composeExpression(exp, namePath));
           const arg1 = fn.args[1];
           return match<typeof arg1, TypedExprDef>(arg1)
             .with({ kind: "identifier" }, (arg) => {
@@ -175,46 +184,60 @@ export function composeExpression(expr: Spec.Expr, namePath: string[]): TypedExp
         })
         .otherwise((fn) => typedFunctionFromParts(fn.name, fn.args, namePath));
     })
+    .with({ kind: "hook" }, ({ hook }) => {
+      return {
+        kind: "hook",
+        hook: {
+          args: hook.args.map((arg) => ({
+            name: arg.name,
+            setter: composeExpression(arg.expr, []),
+            kind: "basic",
+          })),
+          hook: hook.code,
+        },
+      };
+    })
     .exhaustive();
 }
 
 export function composeRefPath(
   path: Spec.IdentifierRef[],
   namePath: string[]
-): { kind: "alias"; namePath: string[] } | { kind: "variable"; name: string } {
+): TypedAliasReference | TypedIdentifierPath {
   const [head, ...tail] = path;
   switch (head.ref.kind) {
     case "model":
       return {
-        kind: "alias",
+        kind: "identifier-path",
         namePath: [...namePath, ...tail.map((i) => i.text)],
       };
+    case "validatorArg":
     case "modelAtom":
       return {
-        kind: "alias",
+        kind: "identifier-path",
         namePath: [...namePath, ...path.map((i) => i.text)],
       };
     case "queryTarget":
       return {
-        kind: "alias",
+        kind: "identifier-path",
         namePath: [...head.ref.path, ...tail.map((i) => i.text)],
       };
     case "extraInput":
       return {
-        kind: "variable",
-        name: `___changeset___${path.map((i) => i.text).join("___")}`,
+        kind: "alias-reference",
+        source: "fieldset",
+        path: path.map((p) => p.text),
       };
-    case "validatorArg":
     case "target":
     case "action":
     case "auth":
-      return { kind: "alias", namePath: path.map((i) => i.text) };
+    case "repeat":
+      return { kind: "alias-reference", path: path.map((i) => i.text), source: "aliases" };
+
     case "struct":
       throw new UnreachableError("Unexpected struct reference in first identifier");
     case "validator":
       throw new UnreachableError("Unexpected validator reference in expression");
-    case "repeat":
-      throw new Error("TODO");
   }
 }
 

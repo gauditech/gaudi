@@ -51,7 +51,7 @@ function queryToQueriable(query: QueryDef): QueryDef {
     selectables.push({
       kind: "expression",
       alias: GAUDI_INTERNAL_TARGET_ID_ALIAS,
-      expr: { kind: "alias", namePath: [...query.fromPath, "id"] },
+      expr: { kind: "identifier-path", namePath: [...query.fromPath, "id"] },
       type: { kind: "integer", nullable: false },
     });
   }
@@ -66,7 +66,7 @@ function findTargetIdAlias(query: QueryDef): string | undefined {
   const id = selectables.find(
     (s) =>
       s.alias === "id" &&
-      s.expr?.kind === "alias" &&
+      s.expr?.kind === "identifier-path" &&
       _.isEqual(s.expr.namePath, [...query.fromPath, "id"])
   );
   if (id) {
@@ -85,11 +85,12 @@ export function applyFilterIdInContext(namePath: NamePath, filter?: TypedExprDef
     kind: "function",
     name: "in",
     args: [
-      { kind: "alias", namePath: [...namePath, "id"] },
+      { kind: "identifier-path", namePath: [...namePath, "id"] },
       {
-        kind: "variable",
+        kind: "alias-reference",
         type: { kind: "collection", type: { kind: "integer", nullable: false } },
-        name: "@context_ids",
+        path: ["@context_ids"],
+        source: undefined,
       },
     ],
   };
@@ -233,7 +234,7 @@ function mkJoinConnection(model: ModelDef): SelectableExpression {
   return {
     kind: "expression",
     alias: "__join_connection",
-    expr: { kind: "alias", namePath: [model.name, "id"] },
+    expr: { kind: "identifier-path", namePath: [model.name, "id"] },
     type: { kind: "integer", nullable: false },
   };
 }
@@ -242,7 +243,7 @@ export function selectableId(namePath: NamePath): SelectableExpression {
   return {
     kind: "expression",
     alias: GAUDI_INTERNAL_TARGET_ID_ALIAS,
-    expr: { kind: "alias", namePath: [...namePath, "id"] },
+    expr: { kind: "identifier-path", namePath: [...namePath, "id"] },
     type: { kind: "integer", nullable: false },
   };
 }

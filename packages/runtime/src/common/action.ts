@@ -1,8 +1,9 @@
 import { transformSelectPath } from "@gaudi/compiler/dist/common/query";
 import { dataToFieldDbnames, getRef } from "@gaudi/compiler/dist/common/refs";
-import { assertUnreachable, ensureExists } from "@gaudi/compiler/dist/common/utils";
+import { assertUnreachable } from "@gaudi/compiler/dist/common/utils";
 import {
   ActionDef,
+  ChangesetDef,
   CreateOneAction,
   Definition,
   UpdateOneAction,
@@ -12,43 +13,33 @@ import _ from "lodash";
 import { applyFilterIdInContext, buildQueryTree, queryTreeFromParts } from "../query/build";
 import { castToCardinality, createQueryExecutor, executeQueryTree } from "../query/exec";
 
-import { ValidReferenceIdResult } from "./constraintValidation";
-
 import { buildChangeset } from "@runtime/common/changeset";
-import { HookActionContext, executeActionHook } from "@runtime/hooks";
+import { executeActionHook } from "@runtime/hooks";
+import { GlobalContext, initializeContext } from "@runtime/server/context";
 import { DbConn } from "@runtime/server/dbConn";
 import { HookError } from "@runtime/server/error";
-import { Vars } from "@runtime/server/vars";
-
-export type ActionContext = {
-  input: Record<string, unknown>;
-  vars: Vars;
-  referenceIds: ValidReferenceIdResult[];
-};
 
 export async function executeEndpointActions(
   def: Definition,
   dbConn: DbConn,
-  ctx: ActionContext,
-  epCtx: HookActionContext,
+  reqCtx: GlobalContext,
   actions: ActionDef[]
 ) {
   //
-  return _internalExecuteActions(def, dbConn, ctx, epCtx, actions);
+  return _internalExecuteActions(def, dbConn, reqCtx, actions);
 }
 export async function executeActions(
   def: Definition,
   dbConn: DbConn,
-  ctx: ActionContext,
+  reqCtx: GlobalContext,
   actions: ActionDef[]
 ) {
-  return _internalExecuteActions(def, dbConn, ctx, undefined, actions);
+  return _internalExecuteActions(def, dbConn, reqCtx, actions);
 }
 async function _internalExecuteActions(
   def: Definition,
   dbConn: DbConn,
-  ctx: ActionContext,
-  epCtx: HookActionContext | undefined,
+  reqCtx: GlobalContext,
   actions: ActionDef[]
 ) {
   const qx = createQueryExecutor(dbConn);
@@ -59,76 +50,65 @@ async function _internalExecuteActions(
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
+      const actionChangeset = await buildChangeset(def, qx, reqCtx, action.changeset);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
       const id = await insertData(dbConn, dbModel, dbData);
       const deps = await fetchActionDeps(def, dbConn, action, id);
-      deps && ctx.vars.set(action.alias, deps[0]);
+      deps && _.set(reqCtx.aliases, action.alias, findOne(deps));
     } else if (actionKind === "update-one") {
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const actionChangeset = await buildChangeset(def, qx, epCtx, action.changeset, ctx);
+      const actionChangeset = await buildChangeset(def, qx, reqCtx, action.changeset);
       const dbData = dataToFieldDbnames(model, actionChangeset);
 
-      const targetId = resolveTargetId(ctx, action.targetPath);
+      const targetId = resolveTargetId(reqCtx, action.targetPath);
 
       const id = await updateData(dbConn, dbModel, dbData, targetId);
       const deps = await fetchActionDeps(def, dbConn, action, id);
-      deps && ctx.vars.set(action.alias, deps[0]);
+      deps && _.set(reqCtx.aliases, action.alias, findOne(deps));
     } else if (actionKind === "delete-one") {
       const model = getRef.model(def, action.model);
       const dbModel = model.dbname;
 
-      const targetId = resolveTargetId(ctx, action.targetPath);
-
+      const targetId = resolveTargetId(reqCtx, action.targetPath);
       await deleteData(dbConn, dbModel, targetId);
     } else if (actionKind === "query") {
       const qt = buildQueryTree(def, action.query);
-      // FIXME this ugly
-      const varsObj = Object.fromEntries(
-        Object.keys(ctx.input).map((k) => [`___changeset___${k}`, ctx.input[k]])
-      );
 
       const result = castToCardinality(
-        await qx.executeQueryTree(def, qt, new Vars(varsObj), []),
+        await qx.executeQueryTree(def, qt, reqCtx, []),
         action.query.retCardinality
       );
-      ctx.vars.set(action.alias, result);
+      _.set(reqCtx.aliases, action.alias, result);
     } else if (actionKind === "execute-hook") {
-      ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
-
-      const argsChangeset = await buildChangeset(def, qx, epCtx, action.hook.args, ctx);
+      const argsChangeset = await buildChangeset(def, qx, reqCtx, action.hook.args);
+      const hookCtx = { request: reqCtx._server!.req, response: reqCtx._server!.res };
 
       try {
-        const result = await executeActionHook(def, action.hook.hook, argsChangeset, epCtx);
-        ctx.vars.set(action.alias, result);
+        const result = await executeActionHook(def, action.hook.hook, argsChangeset, hookCtx);
+        _.set(reqCtx.aliases, action.alias, result);
       } catch (err) {
         throw new HookError(err);
       }
     } else if (actionKind == "respond") {
-      ensureExists(epCtx, '"execute" actions can run only in endpoint context.');
-
       try {
         // construct changeset and resolve action parts
-        const actionChangesetDef = _.compact([
-          { name: "body", setter: action.body },
-          action.httpStatus != null ? { name: "httpStatus", setter: action.httpStatus } : undefined,
+        const actionChangesetDef: ChangesetDef = _.compact([
+          { kind: "basic", name: "body", setter: action.body },
+          action.httpStatus != null
+            ? { kind: "basic", name: "httpStatus", setter: action.httpStatus }
+            : undefined,
         ]);
-        const changeset = await buildChangeset(def, qx, epCtx, actionChangesetDef, ctx);
+        const changeset = await buildChangeset(def, qx, reqCtx, actionChangesetDef);
         // http headers are a separate changeset
-        const httpHeadersChangesetDef = (action.httpHeaders ?? []).map((h) => ({
+        const httpHeadersChangesetDef: ChangesetDef = (action.httpHeaders ?? []).map((h) => ({
+          kind: "basic",
           name: h.name,
           setter: h.value,
         }));
-        const httpHeadersChangeset = await buildChangeset(
-          def,
-          qx,
-          epCtx,
-          httpHeadersChangesetDef,
-          ctx
-        );
+        const httpHeadersChangeset = await buildChangeset(def, qx, reqCtx, httpHeadersChangesetDef);
 
         const body = changeset.body;
         // we're forcing number cause our type system should've made sure that this resolves to appropriate type
@@ -137,19 +117,19 @@ async function _internalExecuteActions(
         Object.entries(httpHeadersChangeset).forEach(([name, value]) => {
           // null - remove current header
           if (value == null) {
-            epCtx.response.removeHeader(name);
+            reqCtx._server!.res.removeHeader(name);
           }
           // multiple header values
           else if (_.isArray(value)) {
-            epCtx.response.set(name, value);
+            reqCtx._server!.res.set(name, value);
           }
           // single value
           else {
             // we're forcing value to `any` cause our type system should've made sure that this resolves to appropriate type
-            epCtx.response.set(name, value as any);
+            reqCtx._server!.res.set(name, value as any);
           }
         });
-        epCtx.response.status(httpResponseCode).json(body);
+        reqCtx._server!.res.status(httpResponseCode).json(body);
       } catch (err: any) {
         throw new Error(err);
       }
@@ -182,16 +162,16 @@ async function fetchActionDeps(
     applyFilterIdInContext([action.model]),
     transformSelectPath(action.select, [action.alias], [action.model])
   );
-  return executeQueryTree(dbConn, def, qt, new Vars(), [id]);
+  return executeQueryTree(dbConn, def, qt, initializeContext({}), [id]);
 }
 
-function resolveTargetId(ctx: ActionContext, targetPath: string[]): number {
-  // append "id" to the end of the target path and separate it from it's root
-  // eg.
-  // [org, repo, issue] -> [org, repo, issue, id] -> [org, [repo, issue, id]]
-  const [rootTargetName, ...path] = [...targetPath, "id"];
-
-  return ctx.vars.get(rootTargetName, path);
+function resolveTargetId(reqCtx: GlobalContext, targetPath: string[]): number {
+  // append id to the path
+  const id = _.get(reqCtx.aliases, [...targetPath, "id"]);
+  if (_.isNil(id)) {
+    throw new Error(`Target id not found`);
+  }
+  return id as number;
 }
 
 // ---------- DB functions
@@ -207,7 +187,7 @@ async function updateData(
     return targetId;
   }
   const ret = await dbConn(model).update(data).where({ id: targetId }).returning("id");
-  return findOne(ret);
+  return findOne(ret).id;
 }
 
 async function insertData(
@@ -217,16 +197,17 @@ async function insertData(
 ): Promise<number> {
   const ret = await dbConn.insert(data).into(model).returning("id");
 
-  return findOne(ret);
+  return findOne(ret).id;
 }
 
 async function deleteData(dbConn: DbConn, model: string, targetId: number): Promise<number> {
   const ret = await dbConn(model).delete().where({ id: targetId }).returning("id");
 
-  return findOne(ret);
+  return findOne(ret).id;
 }
 
-function findOne(rows: any[], message?: string) {
+function findOne<T>(rows: T | T[], message?: string): T {
+  rows = _.castArray(rows);
   if (rows.length === 0) {
     throw new Error(message ?? `Record not found`);
   }
@@ -234,5 +215,5 @@ function findOne(rows: any[], message?: string) {
     throw new Error(`Unexpected error: multiple records found`);
   }
 
-  return rows[0].id;
+  return rows[0];
 }

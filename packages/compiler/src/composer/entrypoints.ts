@@ -1,7 +1,6 @@
 import _ from "lodash";
 import { P, match } from "ts-pattern";
 
-import { getTypedPathWithLeaf } from "./utils";
 import { composeValidate } from "./validators";
 
 import { buildEndpointPath } from "@compiler/builder/query";
@@ -14,6 +13,7 @@ import {
   ensureEqual,
   ensureOneOf,
 } from "@compiler/common/utils";
+import { getTypeModel } from "@compiler/compiler/ast/type";
 import { composeActionBlock } from "@compiler/composer/actions";
 import { composeExpression, composeOrderBy, composeSelect } from "@compiler/composer/query";
 import {
@@ -22,8 +22,6 @@ import {
   Definition,
   EndpointDef,
   EntrypointDef,
-  FieldSetter,
-  FieldSetterReferenceValue,
   FieldsetDef,
   FieldsetFieldDef,
   FieldsetRecordDef,
@@ -120,11 +118,11 @@ function processEndpoints(
 
   return entrySpec.endpoints.map((endSpec): EndpointDef => {
     const rawActions = composeActionBlock(endSpec.actions);
-    const actionDeps = collectActionDeps(def, rawActions);
+    const actionDeps = collectActionDeps(endSpec.actions);
 
     const actions = wrapActionsWithSelect(def, rawActions, actionDeps);
-    const authorize = endSpec.authorize ? composeExpression(endSpec.authorize, []) : undefined;
-    const authorizeDeps = collectAuthorizeDeps(def, authorize);
+    const authorize = composeExpression(endSpec.authorize, []);
+    const authorizeDeps = collectDepsFromExpression(endSpec.authorize);
     const selectDeps = [...actionDeps, ...authorizeDeps];
 
     const targetsWithSelect = wrapTargetsWithSelect(def, targets, selectDeps);
@@ -138,7 +136,7 @@ function processEndpoints(
     );
     const responds = respondingActions.length === 0; // check if there are actions that "respond", if no, then endpoint should respond
 
-    const fieldset = composeFieldset(def, endSpec, actions);
+    const fieldset = composeFieldset(def, endSpec);
 
     switch (endSpec.kind) {
       case "get": {
@@ -241,17 +239,13 @@ function processEndpoints(
 
 export function composeFilter(
   fromPath: string[],
-  filter: Spec.Expr | undefined
+  filter: Spec.Expr<"db"> | undefined
 ): TypedExprDef | undefined {
   return filter && composeExpression(filter, fromPath);
 }
 
-function composeFieldset(
-  def: Definition,
-  endSpec: Spec.Endpoint,
-  actions: ActionDef[]
-): FieldsetRecordDef | undefined {
-  const actionFieldset = fieldsetFromActions(def, actions);
+function composeFieldset(def: Definition, endSpec: Spec.Endpoint): FieldsetRecordDef | undefined {
+  const actionFieldset = composeFieldsetPairsFromActions(def, endSpec.actions);
   const extraInputFieldset = fieldsetFromExtraInputs(def, endSpec);
 
   // return fieldset only if it's not empty, otherwise return "undefined"
@@ -260,49 +254,88 @@ function composeFieldset(
   }
 }
 
-export function fieldsetFromActions(
+type FieldsetPair = [string[], FieldsetFieldDef];
+
+export function composeFieldsetPairsFromActions(
   def: Definition,
-  actions: ActionDef[]
-): [string[], FieldsetFieldDef][] {
-  return kindFilter(actions, "create-one", "update-one").flatMap((action) => {
-    return _.chain(action.changeset)
-      .map(({ name, setter }): null | [string[], FieldsetFieldDef] => {
-        switch (setter.kind) {
-          case "fieldset-input": {
-            const field = getRef.field(def, `${action.model}.${name}`);
-            return [
-              setter.fieldsetAccess,
-              {
-                kind: "field",
-                required: setter.required,
-                type: setter.type,
-                nullable: field.nullable,
-                validate: field.validate && _.cloneDeep(field.validate),
-              },
-            ];
-          }
-          case "fieldset-reference-input": {
-            ensureOneOf(action.kind, ["create-one", "update-one"]);
-            const tpath = getTypedPathWithLeaf(def, [action.model, name, ...setter.through], {});
-            const reference = getRef.reference(def, action.model, name);
-            const field = getRef.field(def, tpath.leaf.refKey);
-            return [
-              setter.fieldsetAccess,
-              {
-                kind: "field",
-                required: true, // FIXME
-                nullable: reference.nullable,
-                type: field.type,
-                validate: field.validate && _.cloneDeep(field.validate),
-              },
-            ];
-          }
-          default:
-            return null;
+  actions: Spec.Action[]
+): FieldsetPair[] {
+  return actions.flatMap((action): FieldsetPair[] => {
+    return match(action)
+      .with({ kind: "create" }, { kind: "update" }, (action) => {
+        const inputOrReferenceAtoms = kindFilter(action.actionAtoms, "input", "reference");
+        const explicit = inputOrReferenceAtoms.map((atom) => {
+          // calculate fieldset path
+          const fieldsetNamespace = action.isPrimary ? [] : [action.alias];
+
+          return match<typeof atom, FieldsetPair>(atom)
+            .with({ kind: "input" }, (input): FieldsetPair => {
+              const field = getRef.field(def, input.target.parentModel, input.target.name);
+              return [
+                [...fieldsetNamespace, input.target.name],
+                {
+                  kind: "field",
+                  nullable: field.nullable,
+                  required: !(input.optional || !!input.default),
+                  type: field.type,
+                  validate: field.validate && _.cloneDeep(field.validate),
+                },
+              ];
+            })
+            .with({ kind: "reference" }, (reference) => {
+              const ref = reference.target;
+              const leaf = _.last(reference.through)!;
+              const field = getRef.field(def, leaf.parentModel, leaf.name);
+              return [
+                [
+                  ...fieldsetNamespace,
+                  [reference.target.name, ...reference.through.map((t) => t.name)].join("_"),
+                ],
+                {
+                  kind: "field",
+                  nullable: ref.nullable,
+                  required: action.kind === "create", // FIXME? no way to pass this from BP
+                  type: field.type,
+                  validate: field.validate && _.cloneDeep(field.validate),
+                },
+              ];
+            })
+            .exhaustive();
+        });
+        if (action.kind === "update") {
+          return explicit;
         }
+        // else - find all implicit inputs
+        const usedFields = action.actionAtoms.map((atom) =>
+          match(atom)
+            .with({ kind: "input" }, (input) => input.target.name)
+            .with({ kind: "reference" }, (ref) => ref.target.name + "_id")
+            .with({ kind: "set" }, (set) =>
+              match(set.target)
+                // FIXME a reference should be accessible here as well
+                .with({ atomKind: "field" }, (field) => field.name)
+                .exhaustive()
+            )
+            .exhaustive()
+        );
+        const model = getRef.model(def, getTypeModel(_.last(action.targetPath)!.type)!);
+        const implicit = model.fields
+          .filter((f) => !usedFields.includes(f.name) && f.name != "id")
+          .map((field): FieldsetPair => {
+            return [
+              ["FIXME ACCESS"],
+              {
+                kind: "field",
+                nullable: field.nullable,
+                required: true,
+                type: field.type,
+                validate: field.validate,
+              },
+            ];
+          });
+        return [...explicit, ...implicit];
       })
-      .compact()
-      .value();
+      .otherwise(() => []);
   });
 }
 
@@ -353,7 +386,7 @@ function collectFieldsetPaths(paths: [string[], FieldsetFieldDef][]): FieldsetRe
   return { kind: "record", nullable: false, record };
 }
 
-type SelectDep = FieldSetterReferenceValue["target"];
+type SelectDep = { alias: string; access: string[] };
 /**
  * Iterates over actions in order to collect, for each of the actions and a default target
  * context variables, which fields are required in the following actions, so that they can
@@ -361,107 +394,98 @@ type SelectDep = FieldSetterReferenceValue["target"];
  * Eg. if a `Repo` aliased as `myrepo` requires `myorg.id`, we need to instruct `myorg`
  * context variable to fetch the `id` so it can be referenced later by `myrepo`.
  */
-export function collectActionDeps(def: Definition, actions: ActionDef[]): SelectDep[] {
-  // collect all update paths
-  const changesetActions = kindFilter(actions, "create-one", "update-one");
 
-  const targetPaths = _.chain(changesetActions)
-    .flatMap((a) => {
-      switch (a.kind) {
-        case "create-one": {
-          // there's already a parent setter resolving this path, so we can skip it
-          return null;
-        }
-        case "update-one": {
-          try {
-            // make sure we're not updating a model directly
-            getRef.model(def, _.first(a.targetPath)!);
-            return null;
-          } catch (e) {
-            // last item is what's being updated, we need to collect the id
-            const [alias, ...access] = [...a.targetPath, "id"];
-            return { alias, access };
+export function collectActionDeps(actions: Spec.Action[]): SelectDep[] {
+  // collect all `create` parents, `update` targets or `delete` sources
+  const targetDeps: SelectDep[] = kindFilter(actions, "create", "update", "delete")
+    .map((action) =>
+      match(action)
+        .with({ kind: "create" }, (action) => [
+          // using initial, eg. `create owner.org.repos` resolves into `owner.org.id`
+          ..._.initial(action.targetPath).map((tp) => tp.text),
+          "id",
+        ])
+        .with({ kind: "update" }, (action) => [...action.targetPath.map((tp) => tp.text), "id"])
+        .with({ kind: "delete" }, (action) => {
+          const [source, ..._] = action.targetPath;
+          if (source.ref.kind === "modelAtom") {
+            // we need to keep track of source reference if it's a model atom
+            // (reference, relation, query).
+            return [source.text, "id"];
+          } else {
+            // If it's a model, nothing to collect.
+            // Other options are not valid.
+            return [];
           }
-        }
-      }
-    })
-    .compact()
-    .value();
+        })
+        .exhaustive()
+    )
+    .map(([alias, ...access]) => ({ alias, access }));
 
-  // collect all targets
-  function collectReferenceValues(setter: FieldSetter): FieldSetterReferenceValue[] {
-    switch (setter.kind) {
-      case "reference-value": {
-        return [setter];
-      }
-      case "function": {
-        return setter.args.flatMap((setter) => collectReferenceValues(setter));
-      }
-      case "fieldset-hook": {
-        return setter.args.flatMap(({ setter }) => collectReferenceValues(setter));
-      }
-      default: {
-        return [];
-      }
-    }
-  }
+  // NOTE: delete target paths are evaluated in SQL
 
-  // --- collect changeset targets
-  // action changeset setters
-  const actionSetters = changesetActions.flatMap((a) => a.changeset).map((c) => c.setter);
-  // hooks changeset setters
-  const actionHookSetters = kindFilter(actions, "execute-hook")
-    .flatMap((a) => a.hook.args)
-    .map((c) => c.setter);
-  // respond property setters
-  const respondSetters = kindFilter(actions, "respond").flatMap((a) => {
-    return (
-      _.compact([a.body, a.httpStatus, a.httpHeaders?.map((h) => h.value)])
-        // need another flatten due to httpHeaders
-        .flatMap((s) => s)
-    );
-  });
+  const setterExpressions: Spec.Expr<"code">[] = _.compact(
+    actions.flatMap((action) =>
+      match(action)
+        .with({ kind: "create" }, { kind: "update" }, (action) =>
+          action.actionAtoms.flatMap((atom) =>
+            match(atom)
+              .with({ kind: "input" }, (atom) => atom.default)
+              .with({ kind: "reference" }, () => [])
+              .with({ kind: "set" }, (set) => [set.expr])
+              .exhaustive()
+          )
+        )
+        .with({ kind: "respond" }, (respond) => [
+          respond.body,
+          respond.httpStatus,
+          ...(respond.httpHeaders?.map((h) => h.value) ?? []),
+        ])
+        .with({ kind: "execute" }, (execute) => execute.hook.args.map((a) => a.expr))
+        .with({ kind: "delete" }, () => [])
+        .with({ kind: "query" }, (q) => {
+          const selectExprs = q.query.select?.map((s) => s.expr) ?? [];
+          // FIXME `orderBy` should support expressions as well
+          return [...selectExprs, q.query.filter];
+        })
+        .with({ kind: "validate" }, (validate) =>
+          collectExpressionsFromValidators(validate.validate)
+        )
+        .exhaustive()
+    )
+  );
 
-  const setters = [...actionSetters, ...actionHookSetters, ...respondSetters];
-  const referenceValues = setters.flatMap(collectReferenceValues);
-  const setterTargets = referenceValues.map((rv) => rv.target);
-
-  return [...setterTargets, ...targetPaths];
+  const setterDeps = setterExpressions.flatMap(_.unary(collectDepsFromExpression));
+  return [...targetDeps, ...setterDeps];
 }
 
-function collectAuthorizeDeps(def: Definition, expr: TypedExprDef): SelectDep[] {
-  if (!expr) return [];
-  switch (expr.kind) {
-    case "alias": {
-      const [alias, ...access] = expr.namePath;
-      return [{ alias, access }];
-    }
-    case "literal": {
-      return [];
-    }
-    case "variable": {
-      return [];
-    }
-    case "function": {
-      return expr.args.flatMap((arg) => collectAuthorizeDeps(def, arg));
-    }
-    case "in-subquery":
-    case "aggregate-function": {
-      /**
-       * Fixme we should support aggregate functions & subqueries inside of authorize expressions.
-       * SelectableExpression support is here, so even these deps can be collected.
-       * This would require a significant rewrite of `deps` logic because it doesn't support
-       * anonymous expressions, even though they are selectable.
-       */
-      throw new Error("Not implemented");
-    }
-    case "array": {
-      return expr.elements.flatMap((e) => collectAuthorizeDeps(def, e));
-    }
-    default: {
-      assertUnreachable(expr);
-    }
-  }
+function collectDepsFromExpression(expr: Spec.Expr<"code"> | undefined): SelectDep[] {
+  return match(expr)
+    .with(undefined, () => [])
+    .with({ kind: "array" }, (arr) => arr.elements.flatMap(_.unary(collectDepsFromExpression)))
+    .with({ kind: "function" }, (expr) => expr.args.flatMap(_.unary(collectDepsFromExpression)))
+    .with({ kind: "hook" }, ({ hook }) =>
+      hook.args.flatMap(({ expr }) => collectDepsFromExpression(expr))
+    )
+    .with({ kind: "identifier" }, ({ identifier }) => {
+      return match(identifier[0].ref)
+        .with({ kind: P.union("action", "auth", "target") }, () => {
+          const [alias, ...access] = identifier.map((i) => i.text);
+          return [{ alias, access }];
+        })
+        .otherwise(() => []);
+    })
+    .with({ kind: "literal" }, () => [])
+    .exhaustive();
+}
+
+function collectExpressionsFromValidators(vexpr: Spec.ValidateExpr): Spec.Expr<"code">[] {
+  return match(vexpr)
+    .with({ kind: "and" }, { kind: "or" }, (vexpr) =>
+      vexpr.exprs.flatMap(_.unary(collectExpressionsFromValidators))
+    )
+    .with({ kind: "call" }, (vexpr) => vexpr.args)
+    .exhaustive();
 }
 
 /**
@@ -553,7 +577,7 @@ function pathsToSelectDef(
         return {
           kind: "expression",
           alias: name,
-          expr: { kind: "alias", namePath: [...namespace, name] },
+          expr: { kind: "identifier-path", namePath: [...namespace, name] },
           type: { kind: ref.type, nullable: ref.nullable },
         };
       }
@@ -561,7 +585,7 @@ function pathsToSelectDef(
         return {
           kind: "expression",
           alias: name,
-          expr: { kind: "alias", namePath: [...namespace, name] },
+          expr: { kind: "identifier-path", namePath: [...namespace, name] },
           type: { kind: ref.type.kind, nullable: ref.type.nullable },
         };
       }
@@ -604,7 +628,7 @@ export function endpointUsesAuthentication(endpoint: EndpointDef): boolean {
   // find @auth in context
   function isAuthInExpression(expr: TypedExprDef): boolean {
     return match(expr)
-      .with({ kind: "alias" }, (a) => a.namePath[0] === "@auth")
+      .with({ kind: "alias-reference" }, (v) => v.path[0] === "@auth")
       .with({ kind: "function" }, (fn) => {
         return _.some(fn.args, isAuthInExpression);
       })
@@ -629,7 +653,7 @@ export function endpointUsesAuthorization(endpoint: EndpointDef): boolean {
       return expr?.kind === "literal" && expr.literal.kind === "null";
     }
     function isAuthId(expr: TypedExprDef): boolean {
-      return expr?.kind === "alias" && _.isEqual(expr.namePath, ["@auth", "id"]);
+      return expr?.kind === "alias-reference" && _.isEqual(expr.path, ["@auth", "id"]);
     }
     return match(expr)
       .with(undefined, () => false)

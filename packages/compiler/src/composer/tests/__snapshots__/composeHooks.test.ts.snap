@@ -9,26 +9,26 @@ exports[`compose hooks action hook 1`] = `
         "hook": {
           "args": [
             {
+              "kind": "basic",
               "name": "name",
               "setter": {
-                "kind": "reference-value",
-                "target": {
-                  "access": [
-                    "name",
-                  ],
-                  "alias": "org",
-                },
+                "kind": "alias-reference",
+                "path": [
+                  "org",
+                  "name",
+                ],
+                "source": "aliases",
               },
             },
             {
+              "kind": "basic",
               "name": "terms",
               "setter": {
-                "fieldsetAccess": [
+                "kind": "alias-reference",
+                "path": [
                   "termsOfUse",
                 ],
-                "kind": "fieldset-input",
-                "required": false,
-                "type": "boolean",
+                "source": "fieldset",
               },
             },
           ],
@@ -83,7 +83,7 @@ exports[`compose hooks action hook 1`] = `
         {
           "alias": "name",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Org",
               "name",
@@ -98,7 +98,7 @@ exports[`compose hooks action hook 1`] = `
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "Org",
               "id",
@@ -117,108 +117,135 @@ exports[`compose hooks action hook 1`] = `
 `;
 
 exports[`compose hooks composes action hook 1`] = `
-{
-  "alias": "$action_0",
-  "hook": {
-    "args": [
-      {
-        "name": "user",
-        "setter": {
-          "kind": "query",
-          "query": {
-            "filter": {
-              "args": [
-                {
-                  "kind": "alias",
-                  "namePath": [
-                    "Org",
-                    "id",
-                  ],
-                },
-                {
-                  "kind": "literal",
-                  "literal": {
-                    "kind": "integer",
-                    "value": 1,
-                  },
-                },
-              ],
-              "kind": "function",
-              "name": "is",
-            },
-            "fromPath": [
+[
+  {
+    "alias": "orgQ",
+    "kind": "query",
+    "model": "Org",
+    "query": {
+      "filter": {
+        "args": [
+          {
+            "kind": "identifier-path",
+            "namePath": [
               "Org",
-            ],
-            "kind": "query",
-            "limit": undefined,
-            "modelRefKey": "Org",
-            "name": "$query",
-            "offset": undefined,
-            "orderBy": undefined,
-            "refKey": "N/A",
-            "retCardinality": "collection",
-            "retType": "Org",
-            "select": [
-              {
-                "alias": "id",
-                "expr": {
-                  "kind": "alias",
-                  "namePath": [
-                    "Org",
-                    "id",
-                  ],
-                },
-                "kind": "expression",
-                "type": {
-                  "kind": "integer",
-                  "nullable": false,
-                },
-              },
-              {
-                "alias": "name",
-                "expr": {
-                  "kind": "alias",
-                  "namePath": [
-                    "Org",
-                    "name",
-                  ],
-                },
-                "kind": "expression",
-                "type": {
-                  "kind": "string",
-                  "nullable": false,
-                },
-              },
+              "id",
             ],
           },
-        },
+          {
+            "kind": "alias-reference",
+            "path": [
+              "org",
+              "id",
+            ],
+            "source": "aliases",
+          },
+        ],
+        "kind": "function",
+        "name": "is",
       },
-    ],
-    "hook": {
-      "file": "hooks/auth",
-      "kind": "source",
-      "runtimeName": "@GAUDI_INTERNAL",
-      "target": "login",
+      "fromPath": [
+        "Org",
+      ],
+      "kind": "query",
+      "limit": undefined,
+      "modelRefKey": "Org",
+      "name": "$query",
+      "offset": undefined,
+      "orderBy": undefined,
+      "refKey": "N/A",
+      "retCardinality": "collection",
+      "retType": "Org",
+      "select": [
+        {
+          "alias": "id",
+          "expr": {
+            "kind": "identifier-path",
+            "namePath": [
+              "Org",
+              "id",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "integer",
+            "nullable": false,
+          },
+        },
+        {
+          "alias": "name",
+          "expr": {
+            "kind": "identifier-path",
+            "namePath": [
+              "Org",
+              "name",
+            ],
+          },
+          "kind": "expression",
+          "type": {
+            "kind": "string",
+            "nullable": false,
+          },
+        },
+      ],
     },
   },
-  "kind": "execute-hook",
-  "responds": false,
-}
+  {
+    "alias": "$action_1",
+    "hook": {
+      "args": [
+        {
+          "kind": "basic",
+          "name": "org",
+          "setter": {
+            "kind": "alias-reference",
+            "path": [
+              "orgQ",
+            ],
+            "source": "aliases",
+          },
+        },
+        {
+          "kind": "basic",
+          "name": "int",
+          "setter": {
+            "kind": "literal",
+            "literal": {
+              "kind": "integer",
+              "value": 1,
+            },
+          },
+        },
+      ],
+      "hook": {
+        "file": "hooks/auth",
+        "kind": "source",
+        "runtimeName": "@GAUDI_INTERNAL",
+        "target": "login",
+      },
+    },
+    "kind": "execute-hook",
+    "responds": false,
+  },
+]
 `;
 
 exports[`compose hooks composes source hooks 1`] = `
 {
   "actionHook": {
+    "kind": "basic",
     "name": "name",
     "setter": {
-      "args": [],
       "hook": {
-        "file": "hooks.js",
-        "kind": "source",
-        "runtimeName": "MyRuntime",
-        "target": "someHook",
+        "args": [],
+        "hook": {
+          "file": "hooks.js",
+          "kind": "source",
+          "runtimeName": "MyRuntime",
+          "target": "someHook",
+        },
       },
-      "kind": "fieldset-hook",
+      "kind": "hook",
     },
   },
   "modelHook": {
@@ -237,13 +264,14 @@ exports[`compose hooks composes source hooks 1`] = `
     "hook": {
       "args": [
         {
-          "expr": {
-            "kind": "alias",
+          "kind": "basic",
+          "name": "name",
+          "setter": {
+            "kind": "identifier-path",
             "namePath": [
               "name",
             ],
           },
-          "name": "name",
         },
       ],
       "hook": {
@@ -265,16 +293,19 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
       "alias": "$action_0",
       "changeset": [
         {
+          "kind": "basic",
           "name": "name",
           "setter": {
-            "args": [],
             "hook": {
-              "file": "hooks.js",
-              "kind": "source",
-              "runtimeName": "MyRuntime",
-              "target": "randomSlug",
+              "args": [],
+              "hook": {
+                "file": "hooks.js",
+                "kind": "source",
+                "runtimeName": "MyRuntime",
+                "target": "randomSlug",
+              },
             },
-            "kind": "fieldset-hook",
+            "kind": "hook",
           },
         },
       ],
@@ -285,7 +316,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
         {
           "alias": "id",
           "expr": {
-            "kind": "alias",
+            "kind": "identifier-path",
             "namePath": [
               "$action_0",
               "id",
@@ -312,7 +343,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
     {
       "alias": "id",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "id",
@@ -327,7 +358,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
     {
       "alias": "name",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "name",
@@ -352,7 +383,7 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "Org",
             "id",
@@ -372,14 +403,17 @@ exports[`compose hooks defaults to the default execution runtime when hook runti
 exports[`compose hooks inline hooks 1`] = `
 {
   "actionHook": {
+    "kind": "basic",
     "name": "name",
     "setter": {
-      "args": [],
       "hook": {
-        "inline": "'test name'",
-        "kind": "inline",
+        "args": [],
+        "hook": {
+          "inline": "'test name'",
+          "kind": "inline",
+        },
       },
-      "kind": "fieldset-hook",
+      "kind": "hook",
     },
   },
   "modelHook": {
@@ -396,13 +430,14 @@ exports[`compose hooks inline hooks 1`] = `
     "hook": {
       "args": [
         {
-          "expr": {
-            "kind": "alias",
+          "kind": "basic",
+          "name": "name",
+          "setter": {
+            "kind": "identifier-path",
             "namePath": [
               "name",
             ],
           },
-          "name": "name",
         },
       ],
       "hook": {

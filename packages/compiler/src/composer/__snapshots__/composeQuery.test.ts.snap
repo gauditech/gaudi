@@ -9,7 +9,7 @@ exports[`compose action queries "query" action custom endpoint 1`] = `
     "filter": {
       "args": [
         {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "Org",
             "id",
@@ -42,7 +42,7 @@ exports[`compose action queries "query" action custom endpoint 1`] = `
       {
         "alias": "name",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "Org",
             "name",
@@ -64,28 +64,34 @@ exports[`compose action queries "query" action native endpoint 1`] = `
   "alias": "$action_0",
   "changeset": [
     {
+      "fieldsetPath": [
+        "name",
+      ],
+      "kind": "input",
       "name": "name",
       "setter": {
-        "default": undefined,
-        "fieldsetAccess": [
+        "kind": "alias-reference",
+        "path": [
           "name",
         ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "string",
+        "source": "fieldset",
       },
+      "validate": undefined,
     },
     {
+      "fieldsetPath": [
+        "description",
+      ],
+      "kind": "input",
       "name": "description",
       "setter": {
-        "default": undefined,
-        "fieldsetAccess": [
+        "kind": "alias-reference",
+        "path": [
           "description",
         ],
-        "kind": "fieldset-input",
-        "required": false,
-        "type": "string",
+        "source": "fieldset",
       },
+      "validate": undefined,
     },
   ],
   "filter": undefined,
@@ -96,7 +102,7 @@ exports[`compose action queries "query" action native endpoint 1`] = `
     {
       "alias": "id",
       "expr": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "$action_0",
           "id",
@@ -135,7 +141,7 @@ exports[`compose action queries "query" action query first 1`] = `
       {
         "direction": "desc",
         "exp": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "device",
             "measurements",
@@ -151,7 +157,7 @@ exports[`compose action queries "query" action query first 1`] = `
       {
         "alias": "id",
         "expr": {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "device",
             "measurements",
@@ -177,7 +183,7 @@ exports[`compose model queries example with nested filters 1`] = `
         {
           "args": [
             {
-              "kind": "alias",
+              "kind": "identifier-path",
               "namePath": [
                 "Org",
                 "repos",
@@ -197,7 +203,7 @@ exports[`compose model queries example with nested filters 1`] = `
           "name": "is",
         },
         {
-          "kind": "alias",
+          "kind": "identifier-path",
           "namePath": [
             "Org",
             "repos",
@@ -265,7 +271,7 @@ exports[`compose model queries order and limit 1`] = `
     {
       "direction": "desc",
       "exp": {
-        "kind": "alias",
+        "kind": "identifier-path",
         "namePath": [
           "Org",
           "repos",

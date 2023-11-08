@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { match } from "ts-pattern";
 
-import { assertUnreachable, ensureEqual } from "@compiler/common/utils";
+import { UnreachableError, assertUnreachable, ensureEqual } from "@compiler/common/utils";
 import { SelectDef, SelectItem, TypedExprDef } from "@compiler/types/definition";
 
 export function transformSelectPath(select: SelectDef, from: string[], to: string[]): SelectDef {
@@ -40,6 +40,7 @@ export function transformNamePaths(paths: string[][], from: string[], to: string
 }
 
 export function transformExpressionPaths(
+  // FIXME `"db"` only!!
   exp: TypedExprDef,
   from: string[],
   to: string[]
@@ -49,10 +50,10 @@ export function transformExpressionPaths(
   }
   switch (exp.kind) {
     case "literal":
-    case "variable": {
+    case "alias-reference": {
       return exp;
     }
-    case "alias": {
+    case "identifier-path": {
       return { ...exp, namePath: transformNamePath(exp.namePath, from, to) };
     }
     case "function": {
@@ -76,6 +77,9 @@ export function transformExpressionPaths(
         ...exp,
         elements: exp.elements.map((arg) => transformExpressionPaths(arg, from, to)),
       };
+    }
+    case "hook": {
+      throw new UnreachableError("Hook can't be a part of DB query expression");
     }
     default: {
       assertUnreachable(exp);
