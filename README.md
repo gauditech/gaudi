@@ -21,6 +21,11 @@ Gaudi is a declarative programming language and a backend framework that makes i
 
 With Gaudi out of the box you get expressive data modeling, customizable APIs, automatic database migration and population, powerful declarative database query engine, full stack type-safety, client library generators and much more.
 
+## Status
+
+⚠️⚠️⚠️⚠️⚠️⚠️
+This is an experimental research project which is currently on hold. We are planning to focus on a subset its functionality, a database query engine, as a standalone project - you can follow [gauditech/gaudi-query-engine](https://github.com/gauditech/gaudi-query-engine) for more details.
+⚠️⚠️⚠️⚠️⚠️⚠️
 
 ## Project
 
